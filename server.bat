@@ -1,3 +1,3 @@
 @echo off
 
-hugo server -t hugo_theme_robust -D -b http://localhost
+hugo server -w -D -b http://localhost
