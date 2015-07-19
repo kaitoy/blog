@@ -34,7 +34,7 @@ It seems currently it supports only Linux but Windows support is in the roadmap.
 
 <br>
 
-* Prerequisits:
+* Prerequisites:
     * Docker is installed and Docker service is started
     * [Go](https://golang.org/) is installed
 
