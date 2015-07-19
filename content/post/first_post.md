@@ -5,7 +5,6 @@ title = "First Post"
 tags = [ "blog", "yegor256" ]
 categories = [ "Web" ]
 eyecatch = "teamedio_logo.svg"
-comments = true
 +++
 
 初投稿。
