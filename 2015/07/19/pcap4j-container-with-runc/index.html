@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Pcap4j container with runC | To Be Decided">
+    <meta property="og:url" content="http://tbd.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">
+    <meta property="og:description" content="I tried to run a Pcap4J container with runC. What is Pcap4J? Pcap4J a Java library for capturing, crafting, and sending packets. It&rsquo;s actually a Java wrapper for libpcap/WinPcap plus packet analyzer. We can see the details in its README. What is runC? runC is a container runtime developed by Docker and released on June 22, 2015. With runC, we can start a container from an docker image without the docker service or the docker command.">
+    
+    <meta property="og:image" content="http://tbd.kaitoy.xyz/images/runc.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      Pcap4j container with runC | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="http://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="http://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/solarized_dark.min.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="http://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Sun, Jul 19, 2015</span>
+      <h2 class="title">Pcap4j container with runC</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="http://tbd.kaitoy.xyz/images/runc.png" alt="Pcap4j container with runC">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>I tried to run a <a href="https://registry.hub.docker.com/u/kaitoy/pcap4j/">Pcap4J container</a> with <a href="https://runc.io/">runC</a>.</p>
+
+<h2 id="what-is-pcap4j:d8cdddcb3c661497917906608717271a">What is Pcap4J?</h2>
+
+<p>Pcap4J a Java library for capturing, crafting, and sending packets.
+It&rsquo;s actually a Java wrapper for libpcap/WinPcap plus packet analyzer.
+We can see the details in its <a href="https://github.com/kaitoy/pcap4j">README</a>.</p>
+
+<h2 id="what-is-runc:d8cdddcb3c661497917906608717271a">What is runC?</h2>
+
+<p>runC is a container runtime developed by Docker and released on June 22, 2015.
+With runC, we can start a container from an docker image without the docker service or the docker command.</p>
+
+<p>That said, as of now, runC cannot directory use docker images.
+We need to create a container form an docker image and export its filesystem before executing runC.</p>
+
+<p>It seems currently it supports only Linux but Windows support is in the roadmap.</p>
+
+<h2 id="what-i-did:d8cdddcb3c661497917906608717271a">What I did</h2>
+
+<ul>
+<li>Environment
+
+<ul>
+<li>OS: CentOS 7 (on VMware Player 7.1.0 on Windows 7)</li>
+<li>user: root</li>
+<li>runC version: 0.2</li>
+<li>Pcap4J version: 1.5.1-SNAPSHOT</li>
+<li>Docker version: 1.6.2</li>
+</ul></li>
+</ul>
+
+<p><br></p>
+
+<ul>
+<li>Prerequisits:
+
+<ul>
+<li>Docker is installed and Docker service is started</li>
+<li><a href="https://golang.org/">Go</a> is installed</li>
+</ul></li>
+</ul>
+
+<p><br></p>
+
+<ul>
+<li><p>Step by step</p>
+
+<ol>
+<li><p>Install runC</p>
+
+<pre><code>[root@localhost ~]# mkdir -p $GOPATH/src/github.com/opencontainers
+[root@localhost ~]# cd $GOPATH/src/github.com/opencontainers
+[root@localhost opencontainers]# git clone https://github.com/opencontainers/runc
+[root@localhost opencontainers]# cd runc
+[root@localhost runc]# make &amp;&amp; make install
+</code></pre></li>
+
+<li><p>Pull the Pcap4J docker image.</p>
+
+<pre><code>[root@localhost ~]# docker pull kaitoy/pcap4j
+</code></pre></li>
+
+<li><p>Create a container from the image.</p>
+
+<pre><code>[root@localhost ~]# docker run -d --name pcap4j-tmp kaitoy/pcap4j:latest /bin/bash
+</code></pre></li>
+
+<li><p>Export the container&rsquo;s file system.</p>
+
+<pre><code>[root@localhost ~]# mkdir /tmp/pcap4j-test
+[root@localhost pcap4j-test]# cd /tmp/pcap4j-test
+[root@localhost pcap4j-test]# docker export pcap4j-tmp &gt; pcap4j.tar
+[root@localhost pcap4j-test]# tar xf pcap4j.tar
+</code></pre>
+
+<p>We are now free from Docker. We don&rsquo;t need Docker service, Docker command, Docker images, nor Docker containers anymore.</p></li>
+
+<li><p>Generate a container config file.</p>
+
+<pre><code>[root@localhost pcap4j-test]# runc spec |sed -e 's/rootfs/\/root\/Desktop\/pcap4j-container/' -e 's/&quot;readonly&quot;: true/&quot;readonly&quot;: false/' -e 's/&quot;NET_BIND_SERVICE&quot;/&quot;NET_BIND_SERVICE&quot;,&quot;NET_ADMIN&quot;,&quot;NET_RAW&quot;/' &gt; config.json
+</code></pre>
+
+<p>In the above command, <code>runc spec</code> generates a standard container config file and <code>sed</code> modifies it for Pcap4J.</p></li>
+
+<li><p>Run a container.</p>
+
+<pre><code>[root@localhost pcap4j-test]# runc
+</code></pre></li>
+
+<li><p>In the container, enable lo.</p>
+
+<p>As far as I saw, lo is the only interface we can use in a container.
+So, I used it to capture packets.</p>
+
+<pre><code>sh-4.1# ifconfig lo up
+</code></pre></li>
+
+<li><p>Generate a script to ping localhost and run it background.</p>
+
+<pre><code>sh-4.1# cd /usr/local/src/pcap4j/bin
+sh-4.1# echo ping 127.0.0.1 \&gt; /dev/null &gt; pinger.sh
+sh-4.1# chmod +x pinger.sh
+sh-4.1# ./pinger.sh &amp;
+</code></pre>
+
+<p>In the next step, ICMP packets from this pinger.sh will be captured.</p></li>
+
+<li><p>Generate a script to start capturing packets with Pcap4J and run it.</p>
+
+<pre><code>sh-4.1# cat runGetNextPacket.sh | sed -e 's/eth0/lo/' &gt; foo.sh
+sh-4.1# chmod +x foo.sh
+sh-4.1# ./foo.sh
+</code></pre>
+
+<p>We will see the ICMP packets are dumped on the terminal. That&rsquo;s it!</p></li>
+</ol></li>
+</ul>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f07%2f19%2fpcap4j-container-with-runc%2f&t=Pcap4j%20container%20with%20runC" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f07%2f19%2fpcap4j-container-with-runc%2f&text=Pcap4j%20container%20with%20runC&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f07%2f19%2fpcap4j-container-with-runc%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f07%2f19%2fpcap4j-container-with-runc%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f07%2f19%2fpcap4j-container-with-runc%2f&title=Pcap4j%20container%20with%20runC" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="http://tbd.kaitoy.xyz/tags/pcap4j"><i class="fa fa-tags"></i> pcap4j </a>
+                
+                <a href="http://tbd.kaitoy.xyz/tags/runc"><i class="fa fa-tags"></i> runc </a>
+                
+                <a href="http://tbd.kaitoy.xyz/tags/docker"><i class="fa fa-tags"></i> docker </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="http://tbd.kaitoy.xyz/2015/07/18/first-post/">
+                  First Post
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    <h3>Profile</h3>
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        
+        <span id="profile-birth">Wed, Dec 14, 1983</span>
+        
+        <h4 id="profile-username" class="post-title"></h4>
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="http://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+
