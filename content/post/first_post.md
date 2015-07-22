@@ -19,7 +19,7 @@ Yegor Bugayenko (yegor256)のブログのエントリ、[How Much Do You Cost?](
 > And it was not just a single employer, but a group of other programmers and engineers.
 > This means that we also can rely on your opinions.
 >
-> <div style="font-size: 0.5em; text-align: right;">引用元: <a href="http://www.yegor256.com/2014/10/29/how-much-do-you-cost.html#talks-and-publications">http://www.yegor256.com/2014/10/29/how-much-do-you-cost.html#talks-and-publications</a></div>
+> <div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="http://www.yegor256.com/2014/10/29/how-much-do-you-cost.html#talks-and-publications">http://www.yegor256.com/2014/10/29/how-much-do-you-cost.html#talks-and-publications</a></cite></div>
 
 つまり、カンファレンスで発表したりブログで意見を発信すると、それらを見た様々な人たちによってレビューされフィードバックを受けることになるので、
 そういった経験が多いエンジニアは、より洗練された考えや技術を持っているとみなせるということ。
