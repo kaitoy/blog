@@ -35,4 +35,4 @@ Yegor Bugayenko (yegor256)のブログのエントリ、[How Much Do You Cost?](
 * [ORM Is an Offensive Anti-Pattern](http://www.yegor256.com/2014/12/01/orm-offensive-anti-pattern.html) (ORMはけしからんアンチパターン)
 * [Getters/Setters. Evil. Period.](http://www.yegor256.com/2014/09/16/getters-and-setters-are-evil.html) (GetterやSetterは悪だ。以上。)
 
-あまり下で働きたくないタイプな気はするが、言っていることは面白いし説得力もあるので、いくつかのエントリを和訳しておいおいここで紹介していこうかと思う。
+下で働くと苦労しそうなタイプな気はするが、言っていることは面白いし説得力もあるので、いくつかのエントリを和訳しておいおいここで紹介していこうかと思う。
