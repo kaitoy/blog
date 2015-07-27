@@ -139,6 +139,9 @@ What I actually did is as follows.
         [root@localhost pipework]# ./pipework eth0 pcap4j-br 192.168.1.200/24@192.168.1.1
         ```
 
+        pipework uses `ip netns exec` command instead of `nsenter` to manipulate a container.
+        Incidentally, `docker exec` didn't work for the step 3 due to an error "`RTNETLINK answers: Operation not permitted`".
+
         In addition, in my case, because I was doing it on a VMware VM, I needed to enable the promiscuous mode of `eth0` (on the docker host machine) as follows:
 
         ```sh
