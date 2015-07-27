@@ -6,8 +6,450 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2015</rights>
-    <updated>2015-07-22 00:21:15 -0600 MDT</updated>
+    <updated>2015-07-26 19:07:20 -0600 MDT</updated>
 
+    
+      
+        <item>
+          <title>なぜNullはダメか</title>
+          <link>http://tbd.kaitoy.xyz/2015/07/26/why-null-is-bad/</link>
+          <pubDate>Sun, 26 Jul 2015 19:07:20 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>http://tbd.kaitoy.xyz/2015/07/26/why-null-is-bad/</guid>
+          <description>
+
+&lt;p&gt;このエントリでは、Yegor Bugayenkoによる記事、&lt;a href=&#34;http://www.yegor256.com/2014/05/13/why-null-is-bad.html&#34;&gt;Why NULL is Bad?&lt;/a&gt;を紹介する。
+(Yegorから和訳と転載の許可は得た。)
+以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;Javaで&lt;code&gt;NULL&lt;/code&gt;を使う単純な例を以下に示す。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public Employee getByName(String name) {
+  int id = database.find(name);
+  if (id == 0) {
+    return null;
+  }
+  return new Employee(id);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;このメソッドの何が間違っているのか? オブジェクトの代わりに&lt;code&gt;NULL&lt;/code&gt;を返す可能性がある、というのが間違っているところだ。
+&lt;code&gt;NULL&lt;/code&gt;はオブジェクト指向パラダイムにおけるひどい慣習で、全力で避けるべきものだ。
+これについては多くの意見が既に発表されている。
+たとえば、Tony Hoareによるプレゼン&lt;a href=&#34;http://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare&#34;&gt;Null References, The Billion Dollar Mistake&lt;/a&gt;や、David Westの著書&lt;a href=&#34;http://www.amazon.com/gp/product/0735619654/ref=as_li_tl?ie=UTF8&amp;amp;camp=1789&amp;amp;creative=9325&amp;amp;creativeASIN=0735619654&amp;amp;linkCode=as2&amp;amp;tag=yegor256com-20&amp;amp;linkId=NQQHJZPHOKM6BTCT&#34;&gt;Object Thinking&lt;/a&gt;の全体に渡って述べられている。&lt;/p&gt;
+
+&lt;p&gt;ここで、その論拠のすべてをまとめ、&lt;code&gt;NULL&lt;/code&gt;の使用を回避して適切なオブジェクト指向構造に置き換える方法の例を紹介したいと思う。&lt;/p&gt;
+
+&lt;p&gt;基本的に、&lt;code&gt;NULL&lt;/code&gt;の代わりになり得るものはふたつある。&lt;/p&gt;
+
+&lt;p&gt;ひとつは&lt;a href=&#34;https://en.wikipedia.org/wiki/Null_Object_pattern&#34;&gt;Nullオブジェクト&lt;/a&gt;デザインパターンだ。(それをひとつの不変オブジェクトにするのが最善。)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public Employee getByName(String name) {
+  int id = database.find(name);
+  if (id == 0) {
+    return Employee.NOBODY;
+  }
+  return Employee(id);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;もうひとつは、オブジェクトを返せないときに例外を投げて&lt;a href=&#34;http://martinfowler.com/ieeeSoftware/failFast.pdf&#34;&gt;フェイルファスト&lt;/a&gt;することだ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public Employee getByName(String name) {
+  int id = database.find(name);
+  if (id == 0) {
+    throw new EmployeeNotFoundException(name);
+  }
+  return Employee(id);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;さて、&lt;code&gt;NULL&lt;/code&gt;に反対する論拠を見てみよう。&lt;/p&gt;
+
+&lt;p&gt;因みに、上記Tony HoareのプレゼンやDavid Westの著書に加えて、私はこの記事を書く前に以下の本や記事を読んだ。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Robert Martinの&lt;a href=&#34;http://www.amazon.com/dp/0132350882/&#34;&gt;Clean Code&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Steve McConnellの&lt;a href=&#34;http://www.amazon.com/dp/0735619670/&#34;&gt;Code Complete&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;John Sonmezの&lt;a href=&#34;http://elegantcode.com/2010/05/01/say-no-to-null/&#34;&gt;Say &amp;ldquo;No&amp;rdquo; to &amp;ldquo;Null&amp;rdquo;&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;StackOverflowの&lt;a href=&#34;http://stackoverflow.com/questions/1274792/is-returning-null-bad-design&#34;&gt;Is returning null bad design?&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;アドホック-場当たりな-エラー処理:08adb1e15fed47fdc6706e8240d4bde7&#34;&gt;アドホック(場当たりな)エラー処理&lt;/h3&gt;
+
+&lt;p&gt;インプットとしてオブジェクトを受け取った場合は常に、それが&lt;code&gt;NULL&lt;/code&gt;でないか、また有効なオブジェクト参照かどうかを確認しないといけない。
+その確認を忘れると、&lt;code&gt;NullPointerException&lt;/code&gt; (NPE)が実行時に処理を止めてしまう恐れがある。
+このため、ロジックが複数の確認処理やif/then/else分岐に汚染されてしまう。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// this is a terrible design, don&#39;t reuse
+Employee employee = dept.getByName(&amp;quot;Jeffrey&amp;quot;);
+if (employee == null) {
+  System.out.println(&amp;quot;can&#39;t find an employee&amp;quot;);
+  System.exit(-1);
+} else {
+  employee.transferTo(dept2);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これは、&lt;a href=&#34;https://ja.wikipedia.org/wiki/C%E8%A8%80%E8%AA%9E&#34;&gt;C&lt;/a&gt;などの命令文を並べる手続き型言語において、例外的な状況に対応する手法だ。
+OOPは、主にこういったアドホックエラー処理のブロックを排除する目的で、&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E4%BE%8B%E5%A4%96%E5%87%A6%E7%90%86&#34;&gt;例外処理&lt;/a&gt;を導入した。
+OOPでは、例外処理をアプリケーションレベルのエラーハンドラにまかせることで、コードをかなりきれいで短いものにできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;dept.getByName(&amp;quot;Jeffrey&amp;quot;).transferTo(dept2);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;NULL&lt;/code&gt;参照は手続き型言語から受け継がれたものだと認識し、Nullオブジェクトか例外を変わりに使うべきだ。&lt;/p&gt;
+
+&lt;h3 id=&#34;あいまいな意図:08adb1e15fed47fdc6706e8240d4bde7&#34;&gt;あいまいな意図&lt;/h3&gt;
+
+&lt;p&gt;上記メソッドの目的を明確に伝えるためには、&lt;code&gt;getByName()&lt;/code&gt;は&lt;code&gt;getByNameOrNullIfNotFound()&lt;/code&gt;という名前でなければいけない。
+これと同様の名前を、オブジェクトか&lt;code&gt;NULL&lt;/code&gt;を返す全ての関数が持たなければいけない。
+さもなくば、だれかがあいまいなコードを読むはめになる。だから、コードの意図を明確にするために、関数に長い名前をつけるべきだ。&lt;/p&gt;
+
+&lt;p&gt;このあいまいさを排除するために、関数は、実オブジェクトを返すか、Nullオブジェクトを返すか、例外を投げる、しかしてはいけない。&lt;/p&gt;
+
+&lt;p&gt;性能を考慮すると&lt;code&gt;NULL&lt;/code&gt;を返さざるを得ない場合もあるだろうと主張する人がいるかもしれない。
+たとえば、Javaの&lt;code&gt;&lt;a href=&#34;http://docs.oracle.com/javase/jp/7/api/java/util/Map.html&#34;&gt;Map&lt;/a&gt;&lt;/code&gt;インターフェースの&lt;code&gt;get()&lt;/code&gt;メソッドは、指定された要素がないときに&lt;code&gt;NULL&lt;/code&gt;を返す。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;Employee employee = employees.get(&amp;quot;Jeffrey&amp;quot;);
+if (employee == null) {
+  throw new EmployeeNotFoundException();
+}
+return employee;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;このコードでは、&lt;code&gt;Map&lt;/code&gt;が&lt;code&gt;NULL&lt;/code&gt;を使っているおかげで、mapを一回しか検索しない。
+もし、&lt;code&gt;Map&lt;/code&gt;の&lt;code&gt;get()&lt;/code&gt;を、要素が見つからないときに例外を投げるように修正したら、以下のようなコードになる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;if (!employees.containsKey(&amp;quot;Jeffrey&amp;quot;)) { // first search
+  throw new EmployeeNotFoundException();
+}
+return employees.get(&amp;quot;Jeffrey&amp;quot;); // second search
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;明らかに、この方法は最初のものより2倍遅い。さて、どうする?&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;Map&lt;/code&gt;インターフェースは、(作者を攻めるわけではないが、)設計に問題がある。
+その&lt;code&gt;get()&lt;/code&gt;メソッドは&lt;code&gt;Iterator&lt;/code&gt;を返すべきで、その場合以下のようなコードになる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;Iterator found = Map.search(&amp;quot;Jeffrey&amp;quot;);
+if (!found.hasNext()) {
+  throw new EmployeeNotFoundException();
+}
+return found.next();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;因みに、C++の標準ライブラリの&lt;a href=&#34;http://www.cppll.jp/cppreference/cppmap_details.html&#34;&gt;map::find()&lt;/a&gt;はまさにこのように設計されている。&lt;/p&gt;
+
+&lt;h3 id=&#34;コンピュータ思考-vs-オブジェクト思考:08adb1e15fed47fdc6706e8240d4bde7&#34;&gt;コンピュータ思考 vs. オブジェクト思考&lt;/h3&gt;
+
+&lt;p&gt;Javaのオブジェクトはデータ構造を指すポインタで、&lt;code&gt;NULL&lt;/code&gt;は何も指さないポインタ(Intel x86プロセッサでは0x00000000)であることを知っている人にとっては、&lt;code&gt;if (employee == null)&lt;/code&gt;という文は理解できる。&lt;/p&gt;
+
+&lt;p&gt;しかし、もし君がオブジェクトになって考えたとすると、この文はかなり意味のないものになる。オブジェクト視点で上記コードは以下のように見える。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;- もしもし、ソフトウェア部ですか?
+- はい。
+- Jeffreyと話したいのですが。
+- 少々お待ちください。。。
+- もしもし。
+- あなたはNULLですか?
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;会話の最後の質問が変だろ?&lt;/p&gt;
+
+&lt;p&gt;代わりに、もしJeffreyへの取り次ぎをお願いした後で電話が切れたら、自分に問題(例外)が発生した、ということにする。
+この時点で、もう一度電話してみるか、Jeffreyにつながらないので仕事が進みませんと上司に報告する。&lt;/p&gt;
+
+&lt;p&gt;あるいは、ソフトウェア部の人が、Jeffreyではないがだいたいの質問に答えられる人に取り次いでくれるかもしれないし、
+Jeffreyにしかわからない用事だから無理、と拒否してくるかもしれない(Nullオブジェクト)。&lt;/p&gt;
+
+&lt;h3 id=&#34;遅いエラー:08adb1e15fed47fdc6706e8240d4bde7&#34;&gt;遅いエラー&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://martinfowler.com/ieeeSoftware/failFast.pdf&#34;&gt;フェイルファスト&lt;/a&gt;な&lt;code&gt;getByName()&lt;/code&gt;に対して、Nullオブジェクトを使った方はゆっくり死のうとしている。途中で他のものを殺しながら。
+問題が発生したので例外処理をすぐに始めるべきだと周りに知らせる代わりに、クライアントからエラーを隠している。&lt;/p&gt;
+
+&lt;p&gt;この議論は、前述した「アドホックエラー処理」に近い。&lt;/p&gt;
+
+&lt;p&gt;コードはできるだけもろい方がいい。必要なときに壊れるように。&lt;/p&gt;
+
+&lt;p&gt;メソッドを、それが扱うデータに対してできるだけ厳しくさせ、与えられたデータに不備があったりメソッドの使用方法に反していたら、例外を投げるようにすべきだ。&lt;/p&gt;
+
+&lt;p&gt;もしくは、共通的な挙動をする他は常に例外を投げるNullオブジェクトを返すべきだ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public Employee getByName(String name) {
+  int id = database.find(name);
+  Employee employee;
+  if (id == 0) {
+    employee = new Employee() {
+      @Override
+      public String name() {
+        return &amp;quot;anonymous&amp;quot;;
+      }
+      @Override
+      public void transferTo(Department dept) {
+        throw new AnonymousEmployeeException(
+          &amp;quot;I can&#39;t be transferred, I&#39;m anonymous&amp;quot;
+        );
+      }
+    };
+  } else {
+    employee = Employee(id);
+  }
+  return employee;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;可変で不完全なオブジェクト:08adb1e15fed47fdc6706e8240d4bde7&#34;&gt;可変で不完全なオブジェクト&lt;/h3&gt;
+
+&lt;p&gt;一般的に、オブジェクトは&lt;a href=&#34;http://www.yegor256.com/2014/06/09/objects-should-be-immutable.html&#34;&gt;不変的&lt;/a&gt;に設計することが望ましい。
+これはつまり、オブジェクトはインスタンス化の際に必要な情報を全て受け取り、その後そのライフサイクル全体に渡ってその状態を変えないということだ。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;NULL&lt;/code&gt;は、&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E9%81%85%E5%BB%B6%E8%AA%AD%E3%81%BF%E8%BE%BC%E3%81%BF&#34;&gt;遅延読み込み&lt;/a&gt;をする際によく使われ、オブジェクトを不完全で可変にしてしまう。以下が例だ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public class Department {
+  private Employee found = null;
+  public synchronized Employee manager() {
+    if (this.found == null) {
+      this.found = new Employee(&amp;quot;Jeffrey&amp;quot;);
+    }
+    return this.found;
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;この手法は、広く使われてはいるが、OOPにおけるアンチパターンだ。
+主な理由は、実行環境の性能問題の責任をオブジェクトに負わせているからだ。本来それは&lt;code&gt;Employee&lt;/code&gt;オブジェクトが気にすべきことではない。&lt;/p&gt;
+
+&lt;p&gt;オブジェクトが、自身の状態を管理して、自身の役割に関するふるまいを公開する代わりに、戻り値のキャッシュの面倒を見なければいけない。これが遅延読み込みというものだ。&lt;/p&gt;
+
+&lt;p&gt;キャッシュはemployee(従業員)がオフィスでするようなことじゃないだろ?&lt;/p&gt;
+
+&lt;p&gt;解決策?
+遅延読み込みを上記の例みたいな原始的な方法でやらないことだ。代わりに、キャッシュ処理をアプリケーションの他のレイヤに移せばいい。&lt;/p&gt;
+
+&lt;p&gt;たとえば、Javaなら、アスペクト指向プログラミングのアスペクトが使える。
+たとえば、&lt;a href=&#34;http://aspects.jcabi.com/&#34;&gt;jcabi-aspects&lt;/a&gt;には&lt;code&gt;&lt;a href=&#34;http://aspects.jcabi.com/annotation-cacheable.html&#34;&gt;@Cacheable&lt;/a&gt;&lt;/code&gt;というアノテーションがあり、メソッドの戻り値をキャッシュできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import com.jcabi.aspects.Cacheable;
+public class Department {
+  @Cacheable(forever = true)
+  public Employee manager() {
+    return new Employee(&amp;quot;Jacky Brown&amp;quot;);
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;君がこの分析に納得して&lt;code&gt;NULL&lt;/code&gt;を使うのをやめることを願う。&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;embed video-player&#34; style=&#34;text-align: center&#34;&gt;
+  &lt;iframe class=&#34;youtube-player&#34; type=&#34;text/html&#34; width=&#34;320&#34; height=&#34;193&#34; src=&#34;http://www.youtube.com/embed/o3aNJX7AP3M&#34; allowfullscreen frameborder=&#34;0&#34;&gt;
+  &lt;/iframe&gt;
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;以上がYegorの記事。&lt;/p&gt;
+
+&lt;p&gt;Nullを使っちゃだめという意見はめずらしくないが、その根拠をコードの信頼性、可読性といった技術的な側面からだけでなく、
+オブジェクト界に降り立って見たときに感じる違和感というオブジェクト哲学的な側面からも説明する辺りが面白い。&lt;/p&gt;
+
+&lt;p&gt;まあNullを完全に使わないという境地には、少なくともJavaのコードでは一生たどり着ける気がしないが。
+メソッドの先頭で引数のNullチェックをするとかもダメなんだろうか。それがダメだとフェイルファストができなかったり、メッセージのないNullPointerExceptionが発生したりして微妙。
+あ、フルスクラッチで完全に自己完結したアプリケーションを作る場合の話か。それならそもそもNullを渡すなという話にしかならないか。&lt;/p&gt;
+
+&lt;p&gt;自分で書くクラスやライブラリについて、Nullは内部的には使うけど、APIには一切Nullを返させない、くらいなら実現するのは難しくなさそうだし、やったほうがいい気もする。(この場合遅延読み込みで一時的にNullをセットしておくのはあり。)
+ただ、性能を考えた場合は、例えばエラー処理はアドホックが一番軽くて、次にNullオブジェクトパターンで、例外はちょっと重めという風になるだろうから、Nullを返したくなることもありそう。&lt;/p&gt;
+
+&lt;p&gt;ことあるごとに例外を投げてくるAPIは使う側にとってはうっとうしいしなぁ。
+多彩な例外を投げ分けるJavaのリフレクションみたいなのは、使うとコードが散らかってかなわん。&lt;/p&gt;
+</description>
+        </item>
+      
+    
+      
+        <item>
+          <title>How to capture packets on a local network with Pcap4J container</title>
+          <link>http://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/</link>
+          <pubDate>Sat, 25 Jul 2015 19:05:06 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>http://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/</guid>
+          <description>
+
+&lt;p&gt;I&amp;rsquo;ll show how to capture packets on a local network with Pcap4J container.&lt;/p&gt;
+
+&lt;h3 id=&#34;docker-network:a3622224f79a64f15ba6f2b66e1010d9&#34;&gt;Docker network&lt;/h3&gt;
+
+&lt;p&gt;By default, Docker containers are not connected to a local network.
+They are connected only to a virtual network Docker creates as like below:&lt;/p&gt;
+
+&lt;p&gt;
+&lt;figure &gt;
+    
+        &lt;img src=&#34;http://tbd.kaitoy.xyz/images/docker_network.jpg&#34; alt=&#34;Docker network&#34; width=&#34;500&#34; /&gt;
+    
+    
+&lt;/figure&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Refer to &lt;a href=&#34;https://docs.docker.com/articles/networking/&#34;&gt;the Docker doc&lt;/a&gt; for more details.&lt;/p&gt;
+
+&lt;h3 id=&#34;what-s-a-challenge:a3622224f79a64f15ba6f2b66e1010d9&#34;&gt;What&amp;rsquo;s a challenge&lt;/h3&gt;
+
+&lt;p&gt;In order to let a Pcap4J container capture packets in a local (real) network,
+we need to directly connect the container to the local network,
+because docker0 forwards only packets the destinations of which are in the virtual network.&lt;/p&gt;
+
+&lt;p&gt;How to do it is explained in some articles.
+I referred to one of them, &lt;a href=&#34;http://blog.oddbit.com/2014/08/11/four-ways-to-connect-a-docker/&#34;&gt;Four ways to connect a docker container to a local network in Odd Bits blog&lt;/a&gt;, and succeeded in local network capturing using the 4th way.&lt;/p&gt;
+
+&lt;p&gt;What I actually did is as follows.&lt;/p&gt;
+
+&lt;h3 id=&#34;what-i-did:a3622224f79a64f15ba6f2b66e1010d9&#34;&gt;What I did&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Environment&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;OS: CentOS 7.0 (on VMware Player 7.1.0 on Windows 7)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# uname -a
+Linux localhost.localdomain 3.10.0-229.el7.x86_64 #1 SMP Fri Mar 6 11:36:42 UTC 2015 x86_64 x86_64 x86_64 GNU/Linux
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;user: root&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Pcap4J version: 1.5.1-SNAPSHOT&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Docker version: 1.6.2&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Network interfaces:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;  [root@localhost ~]# ip addr show
+  1: lo: &amp;lt;LOOPBACK,UP,LOWER_UP&amp;gt; mtu 65536 qdisc noqueue state UNKNOWN
+      link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+      inet 127.0.0.1/8 scope host lo
+         valid_lft forever preferred_lft forever
+      inet6 ::1/128 scope host
+         valid_lft forever preferred_lft forever
+  2: eth0: &amp;lt;BROADCAST,MULTICAST,UP,LOWER_UP&amp;gt; mtu 1500 qdisc pfifo_fast state UP qlen 1000
+      link/ether 00:0c:29:8e:95:27 brd ff:ff:ff:ff:ff:ff
+      inet 192.168.1.123/24 brd 192.168.1.255 scope global dynamic eth0
+         valid_lft 85975sec preferred_lft 85975sec
+      inet6 2601:282:8102:2623:20c:29ff:fe8e:9527/64 scope global dynamic
+         valid_lft 221469sec preferred_lft 221469sec
+      inet6 fe80::20c:29ff:fe8e:9527/64 scope link
+         valid_lft forever preferred_lft forever
+  3: docker0: &amp;lt;NO-CARRIER,BROADCAST,MULTICAST,UP&amp;gt; mtu 1500 qdisc noqueue state DOWN
+      link/ether 56:84:7a:fe:97:99 brd ff:ff:ff:ff:ff:ff
+      inet 172.17.42.1/16 scope global docker0
+         valid_lft forever preferred_lft forever
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Prerequisites:
+
+&lt;ul&gt;
+&lt;li&gt;Docker is installed and Docker service is started&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://man7.org/linux/man-pages/man1/nsenter.1.html&#34;&gt;nsenter&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Step by step&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Preparing&lt;/p&gt;
+
+&lt;p&gt;Create a utility script &lt;code&gt;docker-pid&lt;/code&gt; with the following content and place it somewhere in the &lt;code&gt;PATH&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;  #!/bin/sh
+  exec docker inspect --format &#39;{{ .State.Pid }}&#39; &amp;quot;$@&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This script show the PID of a docker container by name or ID.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Pull the latest Pcap4J image&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# docker pull kaitoy/pcap4j
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Start a Pcap4J container with wait mode&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# docker run --name pcap4j-br kaitoy/pcap4j:latest eth1 true
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This container (&lt;code&gt;pcap4j-br&lt;/code&gt;) waits for a ping to &lt;code&gt;eth0&lt;/code&gt; on the container before staring capturing packets with &lt;code&gt;eth1&lt;/code&gt; on the container.
+After the container starts, you will see messages like below:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;17:49:21.196 [main] INFO  org.pcap4j.core.Pcaps - 3 NIF(s) found.
+eth0 (null)
+IP address: /172.17.0.3
+IP address: /fe80:0:0:0:42:acff:fe11:3
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The messages say IP address of &lt;code&gt;eth0&lt;/code&gt; is &lt;code&gt;172.17.0.3&lt;/code&gt;. We will use it later.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Configure a bridge interface&lt;/p&gt;
+
+&lt;p&gt;Open another terminal and do the following:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# ip link add eth1 link eth0 type macvlan mode bridge
+[root@localhost ~]# ip link set netns $(docker-pid pcap4j-br) eth1
+[root@localhost ~]# nsenter -t $(docker-pid pcap4j-br) -n ip link set eth1 up
+[root@localhost ~]# nsenter -t $(docker-pid pcap4j-br) -n ip route del default
+[root@localhost ~]# nsenter -t $(docker-pid pcap4j-br) -n ip addr add 192.168.1.200/24 dev eth1
+[root@localhost ~]# nsenter -t $(docker-pid pcap4j-br) -n ip route add default via 192.168.1.1 dev eth1
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The above commands
+1) add an interface &lt;code&gt;eth1&lt;/code&gt; bridged to &lt;code&gt;eth0&lt;/code&gt; to the Docker host machine,
+2) move the &lt;code&gt;eth1&lt;/code&gt; to the name space of &lt;code&gt;pcap4j-br&lt;/code&gt;,
+3) start &lt;code&gt;eth1&lt;/code&gt;,
+4) delete the default route in &lt;code&gt;pcap4j-br&lt;/code&gt;,
+5) add an IP address &lt;code&gt;192.168.1.200/24&lt;/code&gt; to &lt;code&gt;eth1&lt;/code&gt;,
+6) and set the default route in &lt;code&gt;pcap4j-br&lt;/code&gt; to &lt;code&gt;192.168.1.1&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Too much hassle? I agree. Let&amp;rsquo;s use an awesome tool, &lt;a href=&#34;https://github.com/jpetazzo/pipework&#34;&gt;pipework&lt;/a&gt;.
+This tool accomplishes the above 6 steps in easier way as shown below:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# git clone https://github.com/jpetazzo/pipework.git
+[root@localhost ~]# cd pipework
+[root@localhost pipework]# ./pipework eth0 pcap4j-br 192.168.1.200/24@192.168.1.1
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In addition, in my case, because I was doing it on a VMware VM, I needed to enable the promiscuous mode of &lt;code&gt;eth0&lt;/code&gt; (on the docker host machine) as follows:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# ip link set dev eth0 promisc on
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Try to poke the container&lt;/p&gt;
+
+&lt;p&gt;You can now communicate with &lt;code&gt;pcap4j-br&lt;/code&gt; using &lt;code&gt;eth1&lt;/code&gt; &lt;strong&gt;from another host&lt;/strong&gt;.
+I tried some pings from the VM&amp;rsquo;s host to &lt;code&gt;pcap4j-br&lt;/code&gt; and saw replies.&lt;/p&gt;
+
+&lt;p&gt;Note that you can &lt;strong&gt;NOT&lt;/strong&gt; communicate with &lt;code&gt;pcap4j-br&lt;/code&gt; via &lt;code&gt;eth1&lt;/code&gt; from the docker host.
+See the &lt;a href=&#34;http://blog.oddbit.com/2014/08/11/four-ways-to-connect-a-docker/&#34;&gt;Odd Bits blog&lt;/a&gt; for the details.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Start packet capturing&lt;/p&gt;
+
+&lt;p&gt;Ping to &lt;code&gt;eth0&lt;/code&gt; of &lt;code&gt;pcap4j-br&lt;/code&gt; form the docker host to start packet capturing.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# ping -c 1 172.17.0.3
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ol&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -186,6 +628,12 @@ Rubyに付属するアクセッサ生成を簡易化する機能は?
 
 &lt;p&gt;追追伸: 言い忘れたが、setterを使った依存性注入もひどいアンチパターンだ。
 それについてはいずれ書く。&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;embed video-player&#34; style=&#34;text-align: center&#34;&gt;
+  &lt;iframe class=&#34;youtube-player&#34; type=&#34;text/html&#34; width=&#34;320&#34; height=&#34;193&#34; src=&#34;http://www.youtube.com/embed/WSgP85kr6eU&#34; allowfullscreen frameborder=&#34;0&#34;&gt;
+  &lt;/iframe&gt;
+&lt;/div&gt;
+&lt;/p&gt;
 
 &lt;hr /&gt;
 
