@@ -6,8 +6,56 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2015</rights>
-    <updated>2015-07-26 19:07:20 -0600 MDT</updated>
+    <updated>2015-07-27 23:41:49 -0600 MDT</updated>
 
+    
+      
+        <item>
+          <title>Another way to capture LAN packets with pcap4j container</title>
+          <link>http://tbd.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/</link>
+          <pubDate>Mon, 27 Jul 2015 23:41:49 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>http://tbd.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/</guid>
+          <description>
+
+&lt;p&gt;2 days ago, I posted an article &lt;a href=&#34;http://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/&#34;&gt;How to capture packets on a local network with Pcap4J container&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Today, I was reading &lt;a href=&#34;https://docs.docker.com/reference/run/#network-settings&#34;&gt;Docker Docs&lt;/a&gt; and found another way to do it.
+I&amp;rsquo;m writing about it here.&lt;/p&gt;
+
+&lt;h3 id=&#34;net-option-for-docker-run:f97b9d111096fe7f8a0f02c2ec62f598&#34;&gt;&amp;ndash;net option for docker run&lt;/h3&gt;
+
+&lt;p&gt;When we start a docker container we use &lt;code&gt;docker run&lt;/code&gt; command. It accepts some options.
+&lt;code&gt;--net&lt;/code&gt; is one of them, which is to set a network mode for a container.
+Network modes &lt;code&gt;--net&lt;/code&gt; takes are &lt;code&gt;bridge&lt;/code&gt;, &lt;code&gt;none&lt;/code&gt;, &lt;code&gt;container:&amp;lt;name|id&amp;gt;&lt;/code&gt;, and &lt;code&gt;host&lt;/code&gt;.
+The &lt;code&gt;bridge&lt;/code&gt; is the default mode where containers connect to the virtual Ethernet bridge &lt;code&gt;docker0&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;What I use in this article is &lt;code&gt;host&lt;/code&gt; mode. If it&amp;rsquo;s specified containers use the host network stack,
+which means Pcap4J on a container with the &lt;code&gt;host&lt;/code&gt; mode can see network interfaces on its host and sniff network traffic via them directly.&lt;/p&gt;
+
+&lt;p&gt;This sounds easy. And more, according to the Docker Docs, the &lt;code&gt;host&lt;/code&gt; mode gives significantly better networking performance than the &lt;code&gt;bridge&lt;/code&gt; mode. But instead, &lt;code&gt;host&lt;/code&gt; is insecure. (See &lt;a href=&#34;https://docs.docker.com/reference/run/#mode-host&#34;&gt;Docker Docs - Mode: host&lt;/a&gt; for the details.)&lt;/p&gt;
+
+&lt;h3 id=&#34;what-i-did:f97b9d111096fe7f8a0f02c2ec62f598&#34;&gt;What I did&lt;/h3&gt;
+
+&lt;p&gt;In the same environment with &lt;a href=&#34;http://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/#what-i-did:a3622224f79a64f15ba6f2b66e1010d9&#34;&gt;2 days ago&lt;/a&gt;, I did the followings:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Start a Pcap4J container with the network mode set to host&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;  [root@localhost ~]# docker run --name pcap4j-hostnet --net=host kaitoy/pcap4j:latest
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;That&amp;rsquo;s it.&lt;/p&gt;
+
+&lt;p&gt;The above command create a container named &lt;code&gt;pcap4j-hostnet&lt;/code&gt; from the image &lt;code&gt;kaitoy/pcap4j:latest&lt;/code&gt; and execute &lt;code&gt;/bin/sh /usr/local/src/pcap4j/bin/capture.sh eth0 false&lt;/code&gt; in the container.
+  The &lt;code&gt;capture.sh&lt;/code&gt; starts packet capturing on &lt;code&gt;eth0&lt;/code&gt; using Pcap4J.
+  This &lt;code&gt;eth0&lt;/code&gt; is the interface of the docker host mashine because the network mode is set to &lt;code&gt;host&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;What a easy way.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+        </item>
+      
     
       
         <item>
