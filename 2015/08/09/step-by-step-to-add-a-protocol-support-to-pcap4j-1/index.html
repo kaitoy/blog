@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Step by Step to Add a Protocol Support to Pcap4J (Part 1) | To Be Decided">
+    <meta property="og:url" content="http://tbd.kaitoy.xyz/2015/08/09/step-by-step-to-add-a-protocol-support-to-pcap4j-1/">
+    <meta property="og:description" content="I will show how to add a protocol support to Pcap4J in detail giving the example of DHCP via some posts. Named Number Class First of all, we need to know the packet format. It&rsquo;s explained in RFC 2131 as below: 0 1 2 3 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; | op (1) | htype (1) | hlen (1) | hops (1) | &#43;---------------&#43;---------------&#43;---------------&#43;---------------&#43; | xid (4) | &#43;-------------------------------&#43;-------------------------------&#43; | secs (2) | flags (2) | &#43;-------------------------------&#43;-------------------------------&#43; | ciaddr (4) | &#43;---------------------------------------------------------------&#43; | yiaddr (4) | &#43;---------------------------------------------------------------&#43; | siaddr (4) | &#43;---------------------------------------------------------------&#43; | giaddr (4) | &#43;---------------------------------------------------------------&#43; | | | chaddr (16) | | | | | &#43;---------------------------------------------------------------&#43; | | | sname (64) | &#43;---------------------------------------------------------------&#43; | | | file (128) | &#43;---------------------------------------------------------------&#43; | | | options (variable) | &#43;---------------------------------------------------------------&#43; FIELD OCTETS DESCRIPTION op 1 Message op code / message type.">
+    
+    <meta property="og:image" content="http://tbd.kaitoy.xyz/images/pcap4jlogo.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      Step by Step to Add a Protocol Support to Pcap4J (Part 1) | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="http://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="http://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/zenburn.min.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="http://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Sun, Aug 9, 2015</span>
+      <h2 class="title">Step by Step to Add a Protocol Support to Pcap4J (Part 1)</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="http://tbd.kaitoy.xyz/images/pcap4jlogo.png" alt="Step by Step to Add a Protocol Support to Pcap4J (Part 1)">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>I will show how to add a protocol support to <a href="https://github.com/kaitoy/pcap4j">Pcap4J</a> in detail giving the example of DHCP via some posts.</p>
+
+<h3 id="named-number-class:c50f65f25016b6b722110ac89d7f27f4">Named Number Class</h3>
+
+<p>First of all, we need to know the packet format. It&rsquo;s explained in <a href="http://www.ietf.org/rfc/rfc2131.txt">RFC 2131</a> as below:</p>
+
+<blockquote>
+<pre><code class="language-text">0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|     op (1)    |   htype (1)   |   hlen (1)    |   hops (1)    |
++---------------+---------------+---------------+---------------+
+|                            xid (4)                            |
++-------------------------------+-------------------------------+
+|           secs (2)            |           flags (2)           |
++-------------------------------+-------------------------------+
+|                          ciaddr  (4)                          |
++---------------------------------------------------------------+
+|                          yiaddr  (4)                          |
++---------------------------------------------------------------+
+|                          siaddr  (4)                          |
++---------------------------------------------------------------+
+|                          giaddr  (4)                          |
++---------------------------------------------------------------+
+|                                                               |
+|                          chaddr  (16)                         |
+|                                                               |
+|                                                               |
++---------------------------------------------------------------+
+|                                                               |
+|                          sname   (64)                         |
++---------------------------------------------------------------+
+|                                                               |
+|                          file    (128)                        |
++---------------------------------------------------------------+
+|                                                               |
+|                          options (variable)                   |
++---------------------------------------------------------------+
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>FIELD</th>
+<th>OCTETS</th>
+<th>DESCRIPTION</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>op</td>
+<td>1</td>
+<td>Message op code / message type.<br>1 = BOOTREQUEST, 2 = BOOTREPLY</td>
+</tr>
+
+<tr>
+<td>htype</td>
+<td>1</td>
+<td>Hardware address type, see ARP section in &ldquo;Assigned<br>Numbers&rdquo; RFC; e.g., &lsquo;1&rsquo; = 10mb ethernet.</td>
+</tr>
+
+<tr>
+<td>hlen</td>
+<td>1</td>
+<td>Hardware address length (e.g.  &lsquo;6&rsquo; for 10mb ethernet).</td>
+</tr>
+
+<tr>
+<td>hops</td>
+<td>1</td>
+<td>Client sets to zero, optionally used by relay agents when booting via a relay agent.</td>
+</tr>
+
+<tr>
+<td>xid</td>
+<td>4</td>
+<td>Transaction ID, a random number chosen by the client, used by the client and server to associate messages and responses between a client and a server.</td>
+</tr>
+
+<tr>
+<td>secs</td>
+<td>2</td>
+<td>Filled in by client, seconds elapsed since client began address acquisition or renewal process.</td>
+</tr>
+
+<tr>
+<td>flags</td>
+<td>2</td>
+<td>Flags (see figure 2).</td>
+</tr>
+
+<tr>
+<td>ciaddr</td>
+<td>4</td>
+<td>Client IP address; only filled in if client is in BOUND, RENEW or REBINDING state and can respond to ARP requests.</td>
+</tr>
+
+<tr>
+<td>yiaddr</td>
+<td>4</td>
+<td>&lsquo;your&rsquo; (client) IP address.</td>
+</tr>
+
+<tr>
+<td>siaddr</td>
+<td>4</td>
+<td>IP address of next server to use in bootstrap; returned in DHCPOFFER, DHCPACK by server.</td>
+</tr>
+
+<tr>
+<td>giaddr</td>
+<td>4</td>
+<td>Relay agent IP address, used in booting via a relay agent.</td>
+</tr>
+
+<tr>
+<td>chaddr</td>
+<td>16</td>
+<td>Client hardware address.</td>
+</tr>
+
+<tr>
+<td>sname</td>
+<td>64</td>
+<td>Optional server host name, null terminated string.</td>
+</tr>
+
+<tr>
+<td>file</td>
+<td>128</td>
+<td>Boot file name, null terminated string; &ldquo;generic&rdquo; name or null in DHCPDISCOVER, fully qualified directory-path name in DHCPOFFER.</td>
+</tr>
+
+<tr>
+<td>options</td>
+<td>var</td>
+<td>Optional parameters field.  See the options documents for a list of defined options.</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+
+<p>It looks DHCP has only one packet format, and the packet doesn&rsquo;t have a payload.
+So, we will need to write only one packet class, one header class, and one builder class for DHCP. Easy!</p>
+
+<p>The header class will have java fields which represent the packet fields listed above (e.g. op, htype, etc.).</p>
+
+<p>Let&rsquo;s start with writing named number classes, which we will use for types of some of the java fields of the header class.
+For example, <code>op</code> field, which holds a message op code, <code>1</code> or <code>2</code> in an octet.
+Although the value <code>op</code> field carries can be stored in a primitive <code>byte</code> field in the header class,
+it&rsquo;s recommended to create a named number class to store the value with its name (meaning) for more readability and usability.
+<code>new DhcpPacket.Builder().operationCode(DhcpOperationCode.BOOTREQUEST)</code> looks better than <code>new DhcpPacket.Builder().operationCode((byte)1)</code>, doesn&rsquo;t it?</p>
+
+<p>Named number classes are in <a href="https://github.com/kaitoy/pcap4j/tree/master/pcap4j-core/src/main/java/org/pcap4j/packet/namednumber"><code>org.pcap4j.packet.namednumber package</code></a> in pcap4j-core project.
+To write a named number class easily, extend <a href="https://github.com/kaitoy/pcap4j/blob/master/pcap4j-core/src/main/java/org/pcap4j/packet/namednumber/NamedNumber.java"><code>NamedNumber</code></a>.
+The minimum implementation of a number class looks like below:</p>
+
+<pre><code class="language-java">package org.pcap4j.packet.namednumber;
+
+/**
+ * @see &lt;a href=&quot;http://www.ietf.org/rfc/rfc2131.txt&quot;&gt;RFC 2131&lt;/a&gt;
+ */
+public final class DhcpOperationCode extends NamedNumber&lt;Byte, DhcpOperationCode&gt; {
+
+  /**
+   *
+   */
+  private static final long serialVersionUID = 3155818580398801532L;
+
+  /**
+   * @param value value
+   * @param name name
+   */
+  public DhcpOperationCode(Byte value, String name) {
+    super(value, name);
+  }
+
+  @Override
+  public int compareTo(DhcpOperationCode o) {
+    return value().compareTo(o.value());
+  }
+
+}
+</code></pre>
+
+<p>Only one method we must implement is <code>compareTo</code>. The code in the method is always the same: <code>return value().compareTo(o.value());</code>.</p>
+
+<p>And, because <code>NamedNumber</code> doesn&rsquo;t have the default constructor, we need to write a constructor with 2 arguments, <code>Byte value</code> and <code>String name</code>.</p>
+
+<p>Sometimes we may want to override <code>public String valueAsString()</code>. For example, in the case where the String representation of the value should be like <code>0x0a</code> instead of <code>10</code>. <code>DhcpOperationCode</code> isn&rsquo;t the case, though.</p>
+
+<p>Then, we&rsquo;d better to add pre-defined objects so that:</p>
+
+<ul>
+<li>we will not need to repeatedly instantiate them for the same value, and</li>
+<li>we will not need to refer to the RFC when you craft DHCP packets.</li>
+</ul>
+
+<pre><code class="language-java">(snip)
+
+  /**
+   *
+   */
+  private static final long serialVersionUID = 3155818580398801532L;
+
+//// Add below
+  /**
+   * BOOTREQUEST: 1
+   */
+  public static final DhcpOperationCode BOOTREQUEST
+    = new DhcpOperationCode((byte)1, &quot;BOOTREQUEST&quot;);
+
+  /**
+   * BOOTREQUEST: 2
+   */
+  public static final DhcpOperationCode BOOTREPLY
+    = new DhcpOperationCode((byte)2, &quot;BOOTREPLY&quot;);
+//// Add above
+
+  /**
+   * @param value value
+   * @param name name
+   */
+  public DhcpOperationCode(Byte value, String name) {
+    super(value, name);
+  }
+
+(snip)
+</code></pre>
+
+<p>From a pre-defined object, we can get its value by <code>DhcpOperationCode.BOOTREQUEST.value()</code>.
+But, how do we get a pre-defined object from a value? We need to do it when we parse a real packet (a byte array) captured and build a DHCP packet object.</p>
+
+<p>So, let&rsquo;s enhance the code as follows:</p>
+
+<pre><code class="language-java">(snip)
+
+  /**
+   *
+   */
+  private static final long serialVersionUID = 3155818580398801532L;
+
+  /**
+   * BOOTREQUEST: 1
+   */
+  public static final DhcpOperationCode BOOTREQUEST
+    = new DhcpOperationCode((byte)1, &quot;BOOTREQUEST&quot;);
+
+  /**
+   * BOOTREQUEST: 2
+   */
+  public static final DhcpOperationCode BOOTREPLY
+    = new DhcpOperationCode((byte)2, &quot;BOOTREPLY&quot;);
+
+//// Add below
+  private static final Map&lt;Byte, DhcpOperationCode&gt; registry
+    = new HashMap&lt;Byte, DhcpOperationCode&gt;();
+
+  static {
+    registry.put(BOOTREQUEST.value(), BOOTREQUEST);
+    registry.put(BOOTREPLY.value(), BOOTREPLY);
+  }
+
+  /**
+   * @param value value
+   * @return a DhcpOperationCode object.
+   */
+  public static DhcpOperationCode getInstance(Byte value) {
+    if (registry.containsKey(value)) {
+      return registry.get(value);
+    }
+    else {
+      return new DhcpOperationCode(value, &quot;unknown&quot;);
+    }
+  }
+//// Add above
+
+(snip)
+</code></pre>
+
+<p>The new field <code>registry</code> holds the mapping between values and pre-defined objects, and the <code>getInstance</code> method is the API to get a pre-defined objects (or new one if not registered) by a value by searching in the <code>registry</code>.</p>
+
+<p>We may want to add one more API which is to add an object instantiated outside of this class to the <code>registy</code> like below:</p>
+
+<pre><code class="language-java">  /**
+   * @param version version
+   * @return a DhcpOperationCode object.
+   */
+  public static DhcpOperationCode register(DhcpOperationCode version) {
+    return registry.put(version.value(), version);
+  }
+</code></pre>
+
+<p>Finally, the code becomes like below:</p>
+
+<pre><code class="language-java">package org.pcap4j.packet.namednumber;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * @see &lt;a href=&quot;http://www.ietf.org/rfc/rfc2131.txt&quot;&gt;RFC 2131&lt;/a&gt;
+ */
+public final class DhcpOperationCode extends NamedNumber&lt;Byte, DhcpOperationCode&gt; {
+
+  /**
+   *
+   */
+  private static final long serialVersionUID = 3155818580398801532L;
+
+  /**
+   * BOOTREQUEST: 1
+   */
+  public static final DhcpOperationCode BOOTREQUEST
+   = new DhcpOperationCode((byte)1, &quot;BOOTREQUEST&quot;);
+
+  /**
+   * BOOTREQUEST: 2
+   */
+  public static final DhcpOperationCode BOOTREPLY
+   = new DhcpOperationCode((byte)2, &quot;BOOTREPLY&quot;);
+
+  private static final Map&lt;Byte, DhcpOperationCode&gt; registry
+    = new HashMap&lt;Byte, DhcpOperationCode&gt;();
+
+  static {
+    registry.put(BOOTREQUEST.value(), BOOTREQUEST);
+    registry.put(BOOTREPLY.value(), BOOTREPLY);
+  }
+
+  /**
+   * @param value value
+   * @return a DhcpOperationCode object.
+   */
+  public static DhcpOperationCode getInstance(Byte value) {
+    if (registry.containsKey(value)) {
+      return registry.get(value);
+    }
+    else {
+      return new DhcpOperationCode(value, &quot;unknown&quot;);
+    }
+  }
+
+  /**
+   * @param version version
+   * @return a DhcpOperationCode object.
+   */
+  public static DhcpOperationCode register(DhcpOperationCode version) {
+    return registry.put(version.value(), version);
+  }
+
+  /**
+   * @param value value
+   * @param name name
+   */
+  public DhcpOperationCode(Byte value, String name) {
+    super(value, name);
+  }
+
+  @Override
+  public int compareTo(DhcpOperationCode o) {
+    return value().compareTo(o.value());
+  }
+
+}
+</code></pre>
+
+<p>Likewise, <code>htype</code> should be represented by a named number class.
+Fortunately, we can use the existing class <a href="https://github.com/kaitoy/pcap4j/blob/master/pcap4j-core/src/main/java/org/pcap4j/packet/namednumber/ArpHardwareType.java">ArpHardwareType</a> for it.</p>
+
+<p>In the next part, we will write a packet piece class for the <code>flags</code> field.</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f08%2f09%2fstep-by-step-to-add-a-protocol-support-to-pcap4j-1%2f&t=Step%20by%20Step%20to%20Add%20a%20Protocol%20Support%20to%20Pcap4J%20%28Part%201%29" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f08%2f09%2fstep-by-step-to-add-a-protocol-support-to-pcap4j-1%2f&text=Step%20by%20Step%20to%20Add%20a%20Protocol%20Support%20to%20Pcap4J%20%28Part%201%29&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f08%2f09%2fstep-by-step-to-add-a-protocol-support-to-pcap4j-1%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f08%2f09%2fstep-by-step-to-add-a-protocol-support-to-pcap4j-1%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f08%2f09%2fstep-by-step-to-add-a-protocol-support-to-pcap4j-1%2f&title=Step%20by%20Step%20to%20Add%20a%20Protocol%20Support%20to%20Pcap4J%20%28Part%201%29" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="http://tbd.kaitoy.xyz/tags/pcap4j"><i class="fa fa-tags"></i> pcap4j </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></li>
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="http://tbd.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">
+                  Another way to capture LAN packets with pcap4j container
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    <h3>Profile</h3>
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        
+        <span id="profile-birth">Wed, Dec 14, 1983</span>
+        
+        <h4 id="profile-username" class="post-title"></h4>
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="http://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+
