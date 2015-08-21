@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Atomのワード境界を日本語対応させるパッケージ - japanese-word-selection | To Be Decided">
+    <meta property="og:url" content="http://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/">
+    <meta property="og:description" content="このブログはAtomというGitHubが開発したテキストエディタを使って書いている。 このエントリは、そのAtomのパッケージを作ってみたというお話。 Atomとは Atomは、2015/6/25にバージョン1.0がリリースされたばかりの新しいテキストエディタで、そのせいもあってか日本語サポートはあまり充実していない。 例えば、テキストを画面の端で折り返す「Soft Wrap」という機能はマルチバイト文字に対応しておらず、日本語で横に長い文を書いたりすると画面からはみ出てしまって不便。 しかしAtomは、パッケージなる、機能を拡張できるプラグインみたいな仕組みを持っていて、例えば上記Soft Wrapの問題はjapanese-wrapというパッケージをインストールすることで解決できる。 パッケージは誰でも作って配布することができる。 日本語のワード境界 Atomでブログを書いていて不満を感じたのは、日本語のワード境界をちゃんと判定してくれないところ。 以前は(今もたまに)サクラエディタという和製テキストエディタを使っていて、日本語文の中の一語をダブルクリックで選択するという操作をよくやっていた。 例えば、「Atomのパッケージは便利」という文があったら、「パッケージ」の辺りをダブルクリックすると「パッケージ」という単語を選択できる。 Atomでも癖でこの操作をすると、妙に広い範囲が選択されてしまう。 上記例だと「Atomのパッケージは便利」全体が選択されてしまう。不便。 japanese-word-selection この問題を解決してくれそうなパッケージを探したけど見つからなかったので、いい機会と思い自分で作ったのがjapanese-word-selection。ソースはGitHubに。 インストールして有効にすると、日本語のワード境界を判定するようになる。実のところ、とりあえずは文字種の境目を見ているだけ。ひらがな、カタカナ、半角カタカナ、漢字に対応。 特殊文字の全角版の処理どうするとか、あまり深く考えて作ってないけど、使ってて変な挙動を見つけたらおいおい直すということで。 とりあえず、Edit &gt; Text の Delete to Previous Word Boundary と Delete to Next Word Boundary がちゃんと動かないのは見つけた。パッケージで上書きした処理を通っていない気がする。けど、デフォルトでキーバインディングもないし、あまり使われなそうな機能なのでほっておく。 Atomのパッケージの作り方 パッケージの作り方はAtomのオンラインドキュメントのCreate Your First PackageとかCreating Packagesに載ってる。 また、Atom Flight ManualにはAtomの使い方からパッケージの作り方まで体系的に纏められている。 パッケージ開発にあたって、前提として知っておくべきは、AtomはElectronという実行環境の上で動いているということ。 (Atomが先で、そこからElectronがスピンオフした。) ElectronはざっくりNode.jsとChromium(Google ChromeのOSS版)でできていて、その上で動くアプリケーションは、HTMLとCSSで書いた画面をChromiumで表示して、それをNode.jsで動かすJavaScriptで制御する、という形で実装される。AtomはJavaScriptの代わりに、より高級なCoffeeScriptを使っているので、パッケージを作る際は、CoffeeScriptのコードをがりがり書くことになる。 AtomはMVVMな感じの設計になっていて、コアのViewModelとかをパッケージからいじることでいろんな機能を実現できる。 以下、備忘録として、japanese-word-selectionを作った時にやったことを書いておく。Atomのバージョンは1.0.7。 1. プロジェクト作成 Atomを起動して、Ctrl&#43;Shift&#43;Pでコマンドパレットを開いて、generate packageと入力してEnter。 Package Generatorが起動して、作成するパッケージの名前を聞かれるのでjapanese-word-selectionを入力。(因みに、パッケージ名にatom-というプレフィックスを付けているのをたまに見るが、これは推奨されていない。) するとプロジェクトのテンプレートが作成され、それを読み込んだAtomウィンドウが開く(下図)。 プロジェクト構成については概ね以下の感じ。 keymaps: キーバインディングを定義するcsonファイルをいれる。 lib: パッケージの機能を実装するCoffeeスクリプトを入れる。 デフォルトで「パッケージ名.coffee」がメインスクリプト。 Package Generatorが作る「パッケージ名-view.coffee」というスクリプトは、Atomの画面に新たなペインを追加したいときとかに書くコードのサンプル。 menus: ツールバーとかコンテクストメニューに追加するメニューを定義するcsonファイルを入れる。 spec: パッケージのテストを入れる。テストはJasmineを使って書く。 styles: パッケージが追加するペインとかに独自のスタイルを指定したいときとかにLessかCSSを入れる。 package.json: パッケージの名前とか依存関係とかを定義するファイル。 japanese-word-selectionはメニューもコマンドもペインも追加しないので、keymaps、lib/japanese-word-selection-view.coffee、menus、spec/japanese-word-selection-view-spec.coffee、stylesは消す。 2.">
+    
+    <meta property="og:image" content="http://tbd.kaitoy.xyz/images/atom_editor_logo.svg.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      Atomのワード境界を日本語対応させるパッケージ - japanese-word-selection | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="http://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="http://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/zenburn.min.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="http://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Fri, Aug 21, 2015</span>
+      <h2 class="title">Atomのワード境界を日本語対応させるパッケージ - japanese-word-selection</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="http://tbd.kaitoy.xyz/images/atom_editor_logo.svg.png" alt="Atomのワード境界を日本語対応させるパッケージ - japanese-word-selection">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>このブログは<a href="https://atom.io/">Atom</a>というGitHubが開発したテキストエディタを使って書いている。
+このエントリは、そのAtomのパッケージを作ってみたというお話。</p>
+
+<h2 id="atomとは:6530adb68200e287e879e79539d73127">Atomとは</h2>
+
+<p>Atomは、2015/6/25にバージョン1.0がリリースされたばかりの新しいテキストエディタで、そのせいもあってか日本語サポートはあまり充実していない。
+例えば、テキストを画面の端で折り返す「Soft Wrap」という機能はマルチバイト文字に対応しておらず、日本語で横に長い文を書いたりすると画面からはみ出てしまって不便。</p>
+
+<p>しかしAtomは、パッケージなる、機能を拡張できるプラグインみたいな仕組みを持っていて、例えば上記Soft Wrapの問題は<a href="https://github.com/raccy/japanese-wrap">japanese-wrap</a>というパッケージをインストールすることで解決できる。
+パッケージは誰でも作って配布することができる。</p>
+
+<h2 id="日本語のワード境界:6530adb68200e287e879e79539d73127">日本語のワード境界</h2>
+
+<p>Atomでブログを書いていて不満を感じたのは、日本語のワード境界をちゃんと判定してくれないところ。</p>
+
+<p>以前は(今もたまに)<a href="http://sakura-editor.sourceforge.net/">サクラエディタ</a>という和製テキストエディタを使っていて、日本語文の中の一語をダブルクリックで選択するという操作をよくやっていた。
+例えば、「Atomのパッケージは便利」という文があったら、「パッケージ」の辺りをダブルクリックすると「パッケージ」という単語を選択できる。</p>
+
+<p>Atomでも癖でこの操作をすると、妙に広い範囲が選択されてしまう。
+上記例だと「Atomのパッケージは便利」全体が選択されてしまう。不便。</p>
+
+<h2 id="japanese-word-selection:6530adb68200e287e879e79539d73127">japanese-word-selection</h2>
+
+<p>この問題を解決してくれそうなパッケージを探したけど見つからなかったので、いい機会と思い自分で作ったのが<a href="https://atom.io/packages/japanese-word-selection">japanese-word-selection</a>。ソースは<a href="https://github.com/kaitoy/japanese-word-selection">GitHub</a>に。</p>
+
+<p>インストールして有効にすると、日本語のワード境界を判定するようになる。実のところ、とりあえずは文字種の境目を見ているだけ。ひらがな、カタカナ、半角カタカナ、漢字に対応。
+特殊文字の全角版の処理どうするとか、あまり深く考えて作ってないけど、使ってて変な挙動を見つけたらおいおい直すということで。</p>
+
+<p>とりあえず、<strong>Edit &gt; Text</strong> の <strong>Delete to Previous Word Boundary</strong> と <strong>Delete to Next Word Boundary</strong> がちゃんと動かないのは見つけた。パッケージで上書きした処理を通っていない気がする。けど、デフォルトでキーバインディングもないし、あまり使われなそうな機能なのでほっておく。</p>
+
+<h2 id="atomのパッケージの作り方:6530adb68200e287e879e79539d73127">Atomのパッケージの作り方</h2>
+
+<p>パッケージの作り方はAtomのオンラインドキュメントの<a href="https://atom.io/docs/latest/your-first-package">Create Your First Package</a>とか<a href="https://atom.io/docs/latest/creating-a-package">Creating Packages</a>に載ってる。
+また、<a href="https://atom.io/docs/latest/">Atom Flight Manual</a>にはAtomの使い方からパッケージの作り方まで体系的に纏められている。</p>
+
+<p>パッケージ開発にあたって、前提として知っておくべきは、Atomは<a href="http://electron.atom.io/">Electron</a>という実行環境の上で動いているということ。
+(Atomが先で、そこからElectronがスピンオフした。)</p>
+
+<p>Electronはざっくり<a href="https://nodejs.org/">Node.js</a>と<a href="https://www.chromium.org/Home">Chromium</a>(Google ChromeのOSS版)でできていて、その上で動くアプリケーションは、HTMLとCSSで書いた画面をChromiumで表示して、それをNode.jsで動かすJavaScriptで制御する、という形で実装される。AtomはJavaScriptの代わりに、より高級な<a href="http://coffeescript.org/">CoffeeScript</a>を使っているので、パッケージを作る際は、CoffeeScriptのコードをがりがり書くことになる。</p>
+
+<p>Atomは<a href="https://ja.wikipedia.org/wiki/Model_View_ViewModel">MVVM</a>な感じの設計になっていて、コアのViewModelとかをパッケージからいじることでいろんな機能を実現できる。</p>
+
+<p>以下、備忘録として、japanese-word-selectionを作った時にやったことを書いておく。Atomのバージョンは1.0.7。</p>
+
+<h4 id="1-プロジェクト作成:6530adb68200e287e879e79539d73127">1. プロジェクト作成</h4>
+
+<p>Atomを起動して、<code>Ctrl+Shift+P</code>でコマンドパレットを開いて、<code>generate package</code>と入力してEnter。
+<strong>Package Generator</strong>が起動して、作成するパッケージの名前を聞かれるのでjapanese-word-selectionを入力。(因みに、パッケージ名に<strong>atom-</strong>というプレフィックスを付けているのをたまに見るが、これは推奨されていない。)
+するとプロジェクトのテンプレートが作成され、それを読み込んだAtomウィンドウが開く(下図)。</p>
+
+<p><img src="/images/japanese-word-selection/project_tree.jpg" alt="project tree" />
+</p>
+
+<p>プロジェクト構成については概ね以下の感じ。</p>
+
+<ul>
+<li>keymaps: キーバインディングを定義する<a href="https://github.com/bevry/cson">cson</a>ファイルをいれる。</li>
+<li>lib: パッケージの機能を実装するCoffeeスクリプトを入れる。
+
+<ul>
+<li>デフォルトで「<strong>パッケージ名.coffee</strong>」がメインスクリプト。</li>
+<li>Package Generatorが作る「<strong>パッケージ名-view.coffee</strong>」というスクリプトは、Atomの画面に新たなペインを追加したいときとかに書くコードのサンプル。</li>
+</ul></li>
+<li>menus: ツールバーとかコンテクストメニューに追加するメニューを定義するcsonファイルを入れる。</li>
+<li>spec: パッケージのテストを入れる。テストは<a href="jasmine.github.io/">Jasmine</a>を使って書く。</li>
+<li>styles: パッケージが追加するペインとかに独自のスタイルを指定したいときとかに<a href="http://less-ja.studiomohawk.com/">Less</a>かCSSを入れる。</li>
+<li>package.json: パッケージの名前とか依存関係とかを定義するファイル。</li>
+</ul>
+
+<p>japanese-word-selectionはメニューもコマンドもペインも追加しないので、keymaps、lib/japanese-word-selection-view.coffee、menus、spec/japanese-word-selection-view-spec.coffee、stylesは消す。</p>
+
+<h4 id="2-メインスクリプト編集-概要:6530adb68200e287e879e79539d73127">2. メインスクリプト編集 - 概要</h4>
+
+<p>japanese-word-selection.coffeeを編集して機能を実装する。
+機能は特定のAPIをもったクラスに実装して、そのインスタンスを <strong>module.exports</strong> に渡す。
+今回は <strong>JapaneseWordSelection</strong> がそのクラス。「特定のAPI」というのは以下のメソッド。</p>
+
+<ul>
+<li>activate(state): パッケージが有効化されるときに呼ばれる。</li>
+<li>deactivate(): パッケージが無効化されるときに呼ばれる。無くてもいい。</li>
+<li>serialize(): Atomウィンドウを閉じるときに、パッケージの状態を保存したいときに実装するメソッド。無くてもいい。</li>
+</ul>
+
+<p>JapaneseWordSelectionには、activateとdeactivateを実装して、前者の中でワード境界判定処理をいじり、後者の中で元に戻すようにする。つまり、japanese-word-selection.coffeeはだいたい以下のようなコードになる。</p>
+
+<pre><code class="language-coffeescript">module.exports = JapaneseWordSelection =
+
+  activate: -&gt;
+    # ワード境界判定処理を日本語対応させる。
+
+  deactivate: -&gt;
+    # ワード境界判定処理を元に戻す。
+</code></pre>
+
+<h4 id="3-メインスクリプト編集-activate:6530adb68200e287e879e79539d73127">3. メインスクリプト編集 - activate</h4>
+
+<p>実際の処理を書く際には、<a href="https://atom.io/docs/api/latest">Atom APIのドキュメント</a>を参照する。また、<a href="https://github.com/atom/atom">Atomのソース</a>を見てAtom APIの実装の詳細を見るべきときもある。</p>
+
+<p>パッケージのスクリプトからは、Atomクラスのインスタンスである <strong>atom</strong> というグローバル変数が使えて、これを入り口にAtomウィンドウ内の各要素のViewModelオブジェクトをいじることができる。</p>
+
+<p>イベントを扱うときには、<a href="https://atom.io/docs/api/v1.0.7/CompositeDisposable">CompositeDisposable</a>が便利。これを使うと、以下のようにして、ViewModelオブジェクトとかに登録したイベントハンドラを後で簡単に削除できる。</p>
+
+<pre><code class="language-coffeescript">@disposables = new CompositeDisposable
+editor = atom.workspace.getActiveTextEditor()
+@disposables.add editor.onDidChange -&gt;  # editorにイベントハンドラを登録。
+@disposables.add editor.onDidChangePath -&gt;  # editorに別のイベントハンドラを登録。
+
+(snip)
+
+@disposables.dispose()  # 全てのイベントハンドラを削除。
+</code></pre>
+
+<p>JapaneseWordSelection#activate()では、<a href="https://atom.io/docs/api/v1.0.7/Workspace#instance-observeTextEditors">atom.workspace.observeTextEditors(callback)</a>というAPIを利用して<a href="https://atom.io/docs/api/v1.0.7/TextEditor">TextEditor</a>オブジェクトを取得して、それが持っている<a href="https://atom.io/docs/api/v1.0.7/Cursor">Cursor</a>オブジェクトの振る舞いを変更する。
+この、observeXXXXというAPIは他にもいろいろあって、実行すると既存の全てのXXXXのインスタンスをcallbackに渡してくれて、さらに、それ以降XXXXのインスタンスが作られるたびにcallbackを呼び出すイベントハンドラを登録してくれる。</p>
+
+<p>このobserveXXXXとかに上記CompositeDisposableが使えて、observeXXXXの場合、その戻り値をCompositeDisposableにaddしておくと、後でCompositeDisposable#dispose()でイベントハンドラを削除できる。</p>
+
+<p>まとめると、JapaneseWordSelection#activate()は以下のようになる。</p>
+
+<pre><code class="language-coffeescript">module.exports = JapaneseWordSelection =
+
+  disposables: null
+
+  activate: -&gt;
+    @disposables = new CompositeDisposable
+    @disposables.add atom.workspace.observeTextEditors (editor) -&gt;
+      JapaneseWordSelection.japanizeWordBoundary(editor, cursor) for cursor in editor.getCursors()
+
+  japanizeWordBoundary: (editor, cursor) -&gt;
+    # Cursorオブジェクトの振る舞いを変更する処理
+</code></pre>
+
+<p>(今見ると、Cursorの方もobserveした方がいいか。後で直そう。)</p>
+
+<h4 id="4-メインスクリプト編集-deactivate:6530adb68200e287e879e79539d73127">4. メインスクリプト編集 - deactivate</h4>
+
+<p>JapaneseWordSelection#deactivate()は、追加したイベントハンドラを削除して、全てのCursorオブジェクトの振る舞いを元に戻すだけ。</p>
+
+<pre><code class="language-coffeescript">  deactivate: -&gt;
+    @disposables.dispose()
+    for i, editor of atom.workspace.getTextEditors()
+      for j, cursor of editor.getCursors()
+        # Cursorオブジェクトの振る舞いを元に戻す処理
+</code></pre>
+
+<h4 id="5-package-json編集:6530adb68200e287e879e79539d73127">5.  package.json編集</h4>
+
+<p>package.jsonは、Package Generatorが以下のようなひな形を作ってくれている。</p>
+
+<pre><code class="language-json">{
+  &quot;name&quot;: &quot;japanese-word-selection&quot;,
+  &quot;main&quot;: &quot;./lib/japanese-word-selection&quot;,
+  &quot;version&quot;: &quot;0.0.0&quot;,
+  &quot;description&quot;: &quot;A short description of your package&quot;,
+  &quot;keywords&quot;: [
+  ],
+  &quot;activationCommands&quot;: {
+    &quot;atom-workspace&quot;: &quot;japanese-word-selection:toggle&quot;
+  },
+  &quot;repository&quot;: &quot;https://github.com/atom/japanese-word-selection&quot;,
+  &quot;license&quot;: &quot;MIT&quot;,
+  &quot;engines&quot;: {
+    &quot;atom&quot;: &quot;&gt;=1.0.0 &lt;2.0.0&quot;
+  },
+  &quot;dependencies&quot;: {
+  }
+}
+</code></pre>
+
+<p>これに以下の編集を加える。</p>
+
+<ul>
+<li><strong>description</strong> にパッケージの説明を書く。</li>
+<li><strong>keywords</strong> にパッケージレポジトリ内での検索のためのタグを書く。</li>
+<li>japanese-word-selectionはとりあえずコマンドを作らないので、<strong>activationCommands</strong> は消す。</li>
+<li><strong>repository</strong> にjapanese-word-selectionのソースを置く(予定の)GitHubレポジトリのアドレスを書く。</li>
+</ul>
+
+<p>これだけ。以下のようになる。</p>
+
+<pre><code class="language-json">{
+  &quot;name&quot;: &quot;japanese-word-selection&quot;,
+  &quot;main&quot;: &quot;./lib/japanese-word-selection&quot;,
+  &quot;version&quot;: &quot;0.0.0&quot;,
+  &quot;description&quot;: &quot;Japanize word boundary.&quot;,
+  &quot;keywords&quot;: [
+    &quot;japanese&quot;,
+    &quot;selection&quot;,
+    &quot;word&quot;
+  ],
+  &quot;repository&quot;: &quot;https://github.com/kaitoy/japanese-word-selection&quot;,
+  &quot;license&quot;: &quot;MIT&quot;,
+  &quot;engines&quot;: {
+    &quot;atom&quot;: &quot;&gt;=1.0.0 &lt;2.0.0&quot;
+  },
+  &quot;dependencies&quot;: {
+  }
+}
+</code></pre>
+
+<p><strong>version</strong> はパッケージリリース(パブリッシュ)時に自動でインクリメントされるので、0.0.0のままほっておく。</p>
+
+<p><strong>dependencies</strong> には依存するnpmパッケージを定義できるが、japanese-word-selectionは一人で動くので何も書かない。
+因みに、dependenciesに何か追加したら、package.jsonがあるフォルダで<code>apm install</code>というコマンドを実行すると依存がインストールされる。</p>
+
+<h4 id="6-動作確認:6530adb68200e287e879e79539d73127">6. 動作確認</h4>
+
+<p>作成したパッケージは、Package Generatorに生成された時点でインストールされている。
+ソースを変更したら、<code>Ctrl+Alt+r</code>でウィンドウをリロードして反映して動作確認できる。</p>
+
+<p>ログを見たい時など、<code>Ctrl+Atl+i</code>でディベロッパツールを開いておくと便利。</p>
+
+<h4 id="7-テスト:6530adb68200e287e879e79539d73127">7. テスト</h4>
+
+<p>上記の通り、パッケージのテストはJasmineを使って書いて、specフォルダに入れる。テストファイル名の拡張子を除いた部分は<strong>-spec</strong>というポストフィックスを付けなければいけない。</p>
+
+<p>テストの書き方については、<a href="https://atom.io/docs/latest/writing-specs">Atomのマニュアル</a>とか、<a href="https://github.com/atom/atom/tree/master/spec">Atomのテスト</a>とか、Jasmineのマニュアルとかを参照ということで、ここでは割愛する。テスト書くのは必須ではないし。</p>
+
+<p>テストは<code>Ctrl+Alt+p</code>で実行できる。</p>
+
+<h4 id="8-その他ファイルの編集:6530adb68200e287e879e79539d73127">8. その他ファイルの編集</h4>
+
+<p>README.md、LICENSE.md、CHANGELOG.mdを修正。詳細は割愛。</p>
+
+<h4 id="9-githubへ保存:6530adb68200e287e879e79539d73127">9. GitHubへ保存</h4>
+
+<p>GitHubにjapanese-word-selectionという名のレポジトリを作り、そこにソースを保存。詳細は割愛。
+Atomのドキュメントによると、今のところ、GitHubへのソース保存は次のパブリッシュのために必須な模様。</p>
+
+<h4 id="10-パブリッシュ:6530adb68200e287e879e79539d73127">10. パブリッシュ</h4>
+
+<p>作ったパッケージをリリースすることを、パブリッシュという。
+手順は<a href="https://atom.io/docs/latest/publishing-a-package">Atomのドキュメント</a>に説明されている。</p>
+
+<p>パブリッシュするには、<strong>apm</strong>という、Atomのパッケージを管理するコマンドラインツールが必要。どうもAtom本体と一緒にインストールされるっぽい。</p>
+
+<p>やることは、パブリッシュするパッケージのルートに<code>cd</code>して、<code>apm publish minor</code>を実行するだけ。
+このコマンドは以下の処理をする。</p>
+
+<ol>
+<li>(初回のみ)パッケージ名をatom.ioに登録する。</li>
+<li>package.jsonのversionをインクリメントしてコミットする。<code>apm publish</code>にminorを指定するので、0.1.0になる。代わりにmajorかpatchを指定すると、1.0.0か0.0.1になる。</li>
+<li>Gitのタグを作る。</li>
+<li>GitHubに変更とタグをpushする。</li>
+<li>atom.ioにパッケージをアップロードする。</li>
+</ol>
+
+<p>私の場合、初回だったので、コマンド実行中にatom.ioのアカウントを作ってAPIトークンを取得する手順があった。
+以下がコマンドのメッセージ。</p>
+
+<pre><code class="language-sh"># cd japanese-word-selection
+# apm publish minor
+Welcome to Atom!
+
+Before you can publish packages, you'll need an API token.
+
+Visit your account page on Atom.io https://atom.io/account,
+copy the token and paste it below when prompted.
+
+Press [Enter] to open your account page on Atom.io.
+Token&gt; hogeeeeeeeeeeeeeeeee
+Saving token to Keychain done
+Registering japanese-word-selection done
+Preparing and tagging a new version done
+Pushing v0.1.0 tag done
+Publishing japanese-word-selection@v0.1.0 done
+Congrats on publishing a new package!
+Check it out at https://atom.io/packages/japanese-word-selection
+</code></pre>
+
+<p><a href="https://atom.io/packages/japanese-word-selection">https://atom.io/packages/japanese-word-selection</a> に行ったらちゃんとjapanese-word-selectionのページができていた。
+これでパブリッシュまで完了。</p>
+
+<p>因みに、<code>apm unpublish パッケージ名@バージョン</code>でパブリッシュを取り消すことができる。</p>
+
+<h4 id="11-パッケージのアップデートの開発:6530adb68200e287e879e79539d73127">11. パッケージのアップデートの開発</h4>
+
+<p><code>apm publish</code>をすると、パブリッシュしたバージョンがインストールされた状態になる。
+具体的には、<code>%userprofile%\.atom\packages\</code>にレポジトリからダウンロードしたパッケージが入っている状態になる。</p>
+
+<p>パッケージのアップデートを開発する際は、修正している版のパッケージを優先してロードして欲しくなるが、そのためには<code>%userprofile%\.atom\dev\packages\</code>に修正版(のリンク)をいれて、Atomをdev modeで起動する必要がある。</p>
+
+<p>この手順は、</p>
+
+<ol>
+<li>パッケージのフォルダに<code>cd</code>して、<code>apm link --dev</code>を実行する。これでそのフォルダへのリンクが<code>.atom\dev\packages\</code>に作成される。</li>
+<li>Atomのメニューの <strong>View &gt; Developer &gt; Open In Dev Mode</strong> からdev modeのAtomウィンドウを開く。</li>
+</ol>
+
+<p>因みに、Package Generatorは、作成したパッケージフォルダへのリンクを<code>.atom\packages\</code>に作成する。リンクの一覧は<code>apm links</code>で参照でき、<code>apm unlink</code>で削除できる。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f08%2f21%2fjapanese-word-selection%2f&t=Atom%e3%81%ae%e3%83%af%e3%83%bc%e3%83%89%e5%a2%83%e7%95%8c%e3%82%92%e6%97%a5%e6%9c%ac%e8%aa%9e%e5%af%be%e5%bf%9c%e3%81%95%e3%81%9b%e3%82%8b%e3%83%91%e3%83%83%e3%82%b1%e3%83%bc%e3%82%b8%20-%20japanese-word-selection" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f08%2f21%2fjapanese-word-selection%2f&text=Atom%e3%81%ae%e3%83%af%e3%83%bc%e3%83%89%e5%a2%83%e7%95%8c%e3%82%92%e6%97%a5%e6%9c%ac%e8%aa%9e%e5%af%be%e5%bf%9c%e3%81%95%e3%81%9b%e3%82%8b%e3%83%91%e3%83%83%e3%82%b1%e3%83%bc%e3%82%b8%20-%20japanese-word-selection&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f08%2f21%2fjapanese-word-selection%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f08%2f21%2fjapanese-word-selection%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f08%2f21%2fjapanese-word-selection%2f&title=Atom%e3%81%ae%e3%83%af%e3%83%bc%e3%83%89%e5%a2%83%e7%95%8c%e3%82%92%e6%97%a5%e6%9c%ac%e8%aa%9e%e5%af%be%e5%bf%9c%e3%81%95%e3%81%9b%e3%82%8b%e3%83%91%e3%83%83%e3%82%b1%e3%83%bc%e3%82%b8%20-%20japanese-word-selection" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="http://tbd.kaitoy.xyz/tags/atom"><i class="fa fa-tags"></i> atom </a>
+                
+                <a href="http://tbd.kaitoy.xyz/tags/japanese-word-selection"><i class="fa fa-tags"></i> japanese-word-selection </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="http://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/">
+                  ブログ立ち上げ - GitHub PagesとJekyll
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    <h3>Profile</h3>
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        
+        <span id="profile-birth">Wed, Dec 14, 1983</span>
+        
+        <h4 id="profile-username" class="post-title"></h4>
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="http://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

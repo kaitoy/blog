@@ -6,8 +6,311 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2015</rights>
-    <updated>2015-08-15 10:48:49 -0600 MDT</updated>
+    <updated>2015-08-21 15:31:41 -0600 MDT</updated>
 
+    
+      
+        <item>
+          <title>Atomのワード境界を日本語対応させるパッケージ - japanese-word-selection</title>
+          <link>http://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/</link>
+          <pubDate>Fri, 21 Aug 2015 15:31:41 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>http://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/</guid>
+          <description>
+
+&lt;p&gt;このブログは&lt;a href=&#34;https://atom.io/&#34;&gt;Atom&lt;/a&gt;というGitHubが開発したテキストエディタを使って書いている。
+このエントリは、そのAtomのパッケージを作ってみたというお話。&lt;/p&gt;
+
+&lt;h2 id=&#34;atomとは:6530adb68200e287e879e79539d73127&#34;&gt;Atomとは&lt;/h2&gt;
+
+&lt;p&gt;Atomは、2015/6/25にバージョン1.0がリリースされたばかりの新しいテキストエディタで、そのせいもあってか日本語サポートはあまり充実していない。
+例えば、テキストを画面の端で折り返す「Soft Wrap」という機能はマルチバイト文字に対応しておらず、日本語で横に長い文を書いたりすると画面からはみ出てしまって不便。&lt;/p&gt;
+
+&lt;p&gt;しかしAtomは、パッケージなる、機能を拡張できるプラグインみたいな仕組みを持っていて、例えば上記Soft Wrapの問題は&lt;a href=&#34;https://github.com/raccy/japanese-wrap&#34;&gt;japanese-wrap&lt;/a&gt;というパッケージをインストールすることで解決できる。
+パッケージは誰でも作って配布することができる。&lt;/p&gt;
+
+&lt;h2 id=&#34;日本語のワード境界:6530adb68200e287e879e79539d73127&#34;&gt;日本語のワード境界&lt;/h2&gt;
+
+&lt;p&gt;Atomでブログを書いていて不満を感じたのは、日本語のワード境界をちゃんと判定してくれないところ。&lt;/p&gt;
+
+&lt;p&gt;以前は(今もたまに)&lt;a href=&#34;http://sakura-editor.sourceforge.net/&#34;&gt;サクラエディタ&lt;/a&gt;という和製テキストエディタを使っていて、日本語文の中の一語をダブルクリックで選択するという操作をよくやっていた。
+例えば、「Atomのパッケージは便利」という文があったら、「パッケージ」の辺りをダブルクリックすると「パッケージ」という単語を選択できる。&lt;/p&gt;
+
+&lt;p&gt;Atomでも癖でこの操作をすると、妙に広い範囲が選択されてしまう。
+上記例だと「Atomのパッケージは便利」全体が選択されてしまう。不便。&lt;/p&gt;
+
+&lt;h2 id=&#34;japanese-word-selection:6530adb68200e287e879e79539d73127&#34;&gt;japanese-word-selection&lt;/h2&gt;
+
+&lt;p&gt;この問題を解決してくれそうなパッケージを探したけど見つからなかったので、いい機会と思い自分で作ったのが&lt;a href=&#34;https://atom.io/packages/japanese-word-selection&#34;&gt;japanese-word-selection&lt;/a&gt;。ソースは&lt;a href=&#34;https://github.com/kaitoy/japanese-word-selection&#34;&gt;GitHub&lt;/a&gt;に。&lt;/p&gt;
+
+&lt;p&gt;インストールして有効にすると、日本語のワード境界を判定するようになる。実のところ、とりあえずは文字種の境目を見ているだけ。ひらがな、カタカナ、半角カタカナ、漢字に対応。
+特殊文字の全角版の処理どうするとか、あまり深く考えて作ってないけど、使ってて変な挙動を見つけたらおいおい直すということで。&lt;/p&gt;
+
+&lt;p&gt;とりあえず、&lt;strong&gt;Edit &amp;gt; Text&lt;/strong&gt; の &lt;strong&gt;Delete to Previous Word Boundary&lt;/strong&gt; と &lt;strong&gt;Delete to Next Word Boundary&lt;/strong&gt; がちゃんと動かないのは見つけた。パッケージで上書きした処理を通っていない気がする。けど、デフォルトでキーバインディングもないし、あまり使われなそうな機能なのでほっておく。&lt;/p&gt;
+
+&lt;h2 id=&#34;atomのパッケージの作り方:6530adb68200e287e879e79539d73127&#34;&gt;Atomのパッケージの作り方&lt;/h2&gt;
+
+&lt;p&gt;パッケージの作り方はAtomのオンラインドキュメントの&lt;a href=&#34;https://atom.io/docs/latest/your-first-package&#34;&gt;Create Your First Package&lt;/a&gt;とか&lt;a href=&#34;https://atom.io/docs/latest/creating-a-package&#34;&gt;Creating Packages&lt;/a&gt;に載ってる。
+また、&lt;a href=&#34;https://atom.io/docs/latest/&#34;&gt;Atom Flight Manual&lt;/a&gt;にはAtomの使い方からパッケージの作り方まで体系的に纏められている。&lt;/p&gt;
+
+&lt;p&gt;パッケージ開発にあたって、前提として知っておくべきは、Atomは&lt;a href=&#34;http://electron.atom.io/&#34;&gt;Electron&lt;/a&gt;という実行環境の上で動いているということ。
+(Atomが先で、そこからElectronがスピンオフした。)&lt;/p&gt;
+
+&lt;p&gt;Electronはざっくり&lt;a href=&#34;https://nodejs.org/&#34;&gt;Node.js&lt;/a&gt;と&lt;a href=&#34;https://www.chromium.org/Home&#34;&gt;Chromium&lt;/a&gt;(Google ChromeのOSS版)でできていて、その上で動くアプリケーションは、HTMLとCSSで書いた画面をChromiumで表示して、それをNode.jsで動かすJavaScriptで制御する、という形で実装される。AtomはJavaScriptの代わりに、より高級な&lt;a href=&#34;http://coffeescript.org/&#34;&gt;CoffeeScript&lt;/a&gt;を使っているので、パッケージを作る際は、CoffeeScriptのコードをがりがり書くことになる。&lt;/p&gt;
+
+&lt;p&gt;Atomは&lt;a href=&#34;https://ja.wikipedia.org/wiki/Model_View_ViewModel&#34;&gt;MVVM&lt;/a&gt;な感じの設計になっていて、コアのViewModelとかをパッケージからいじることでいろんな機能を実現できる。&lt;/p&gt;
+
+&lt;p&gt;以下、備忘録として、japanese-word-selectionを作った時にやったことを書いておく。Atomのバージョンは1.0.7。&lt;/p&gt;
+
+&lt;h4 id=&#34;1-プロジェクト作成:6530adb68200e287e879e79539d73127&#34;&gt;1. プロジェクト作成&lt;/h4&gt;
+
+&lt;p&gt;Atomを起動して、&lt;code&gt;Ctrl+Shift+P&lt;/code&gt;でコマンドパレットを開いて、&lt;code&gt;generate package&lt;/code&gt;と入力してEnter。
+&lt;strong&gt;Package Generator&lt;/strong&gt;が起動して、作成するパッケージの名前を聞かれるのでjapanese-word-selectionを入力。(因みに、パッケージ名に&lt;strong&gt;atom-&lt;/strong&gt;というプレフィックスを付けているのをたまに見るが、これは推奨されていない。)
+するとプロジェクトのテンプレートが作成され、それを読み込んだAtomウィンドウが開く(下図)。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;http://tbd.kaitoy.xyz/images/japanese-word-selection/project_tree.jpg&#34; alt=&#34;project tree&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;プロジェクト構成については概ね以下の感じ。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;keymaps: キーバインディングを定義する&lt;a href=&#34;https://github.com/bevry/cson&#34;&gt;cson&lt;/a&gt;ファイルをいれる。&lt;/li&gt;
+&lt;li&gt;lib: パッケージの機能を実装するCoffeeスクリプトを入れる。
+
+&lt;ul&gt;
+&lt;li&gt;デフォルトで「&lt;strong&gt;パッケージ名.coffee&lt;/strong&gt;」がメインスクリプト。&lt;/li&gt;
+&lt;li&gt;Package Generatorが作る「&lt;strong&gt;パッケージ名-view.coffee&lt;/strong&gt;」というスクリプトは、Atomの画面に新たなペインを追加したいときとかに書くコードのサンプル。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;menus: ツールバーとかコンテクストメニューに追加するメニューを定義するcsonファイルを入れる。&lt;/li&gt;
+&lt;li&gt;spec: パッケージのテストを入れる。テストは&lt;a href=&#34;jasmine.github.io/&#34;&gt;Jasmine&lt;/a&gt;を使って書く。&lt;/li&gt;
+&lt;li&gt;styles: パッケージが追加するペインとかに独自のスタイルを指定したいときとかに&lt;a href=&#34;http://less-ja.studiomohawk.com/&#34;&gt;Less&lt;/a&gt;かCSSを入れる。&lt;/li&gt;
+&lt;li&gt;package.json: パッケージの名前とか依存関係とかを定義するファイル。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;japanese-word-selectionはメニューもコマンドもペインも追加しないので、keymaps、lib/japanese-word-selection-view.coffee、menus、spec/japanese-word-selection-view-spec.coffee、stylesは消す。&lt;/p&gt;
+
+&lt;h4 id=&#34;2-メインスクリプト編集-概要:6530adb68200e287e879e79539d73127&#34;&gt;2. メインスクリプト編集 - 概要&lt;/h4&gt;
+
+&lt;p&gt;japanese-word-selection.coffeeを編集して機能を実装する。
+機能は特定のAPIをもったクラスに実装して、そのインスタンスを &lt;strong&gt;module.exports&lt;/strong&gt; に渡す。
+今回は &lt;strong&gt;JapaneseWordSelection&lt;/strong&gt; がそのクラス。「特定のAPI」というのは以下のメソッド。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;activate(state): パッケージが有効化されるときに呼ばれる。&lt;/li&gt;
+&lt;li&gt;deactivate(): パッケージが無効化されるときに呼ばれる。無くてもいい。&lt;/li&gt;
+&lt;li&gt;serialize(): Atomウィンドウを閉じるときに、パッケージの状態を保存したいときに実装するメソッド。無くてもいい。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;JapaneseWordSelectionには、activateとdeactivateを実装して、前者の中でワード境界判定処理をいじり、後者の中で元に戻すようにする。つまり、japanese-word-selection.coffeeはだいたい以下のようなコードになる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-coffeescript&#34;&gt;module.exports = JapaneseWordSelection =
+
+  activate: -&amp;gt;
+    # ワード境界判定処理を日本語対応させる。
+
+  deactivate: -&amp;gt;
+    # ワード境界判定処理を元に戻す。
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;3-メインスクリプト編集-activate:6530adb68200e287e879e79539d73127&#34;&gt;3. メインスクリプト編集 - activate&lt;/h4&gt;
+
+&lt;p&gt;実際の処理を書く際には、&lt;a href=&#34;https://atom.io/docs/api/latest&#34;&gt;Atom APIのドキュメント&lt;/a&gt;を参照する。また、&lt;a href=&#34;https://github.com/atom/atom&#34;&gt;Atomのソース&lt;/a&gt;を見てAtom APIの実装の詳細を見るべきときもある。&lt;/p&gt;
+
+&lt;p&gt;パッケージのスクリプトからは、Atomクラスのインスタンスである &lt;strong&gt;atom&lt;/strong&gt; というグローバル変数が使えて、これを入り口にAtomウィンドウ内の各要素のViewModelオブジェクトをいじることができる。&lt;/p&gt;
+
+&lt;p&gt;イベントを扱うときには、&lt;a href=&#34;https://atom.io/docs/api/v1.0.7/CompositeDisposable&#34;&gt;CompositeDisposable&lt;/a&gt;が便利。これを使うと、以下のようにして、ViewModelオブジェクトとかに登録したイベントハンドラを後で簡単に削除できる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-coffeescript&#34;&gt;@disposables = new CompositeDisposable
+editor = atom.workspace.getActiveTextEditor()
+@disposables.add editor.onDidChange -&amp;gt;  # editorにイベントハンドラを登録。
+@disposables.add editor.onDidChangePath -&amp;gt;  # editorに別のイベントハンドラを登録。
+
+(snip)
+
+@disposables.dispose()  # 全てのイベントハンドラを削除。
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;JapaneseWordSelection#activate()では、&lt;a href=&#34;https://atom.io/docs/api/v1.0.7/Workspace#instance-observeTextEditors&#34;&gt;atom.workspace.observeTextEditors(callback)&lt;/a&gt;というAPIを利用して&lt;a href=&#34;https://atom.io/docs/api/v1.0.7/TextEditor&#34;&gt;TextEditor&lt;/a&gt;オブジェクトを取得して、それが持っている&lt;a href=&#34;https://atom.io/docs/api/v1.0.7/Cursor&#34;&gt;Cursor&lt;/a&gt;オブジェクトの振る舞いを変更する。
+この、observeXXXXというAPIは他にもいろいろあって、実行すると既存の全てのXXXXのインスタンスをcallbackに渡してくれて、さらに、それ以降XXXXのインスタンスが作られるたびにcallbackを呼び出すイベントハンドラを登録してくれる。&lt;/p&gt;
+
+&lt;p&gt;このobserveXXXXとかに上記CompositeDisposableが使えて、observeXXXXの場合、その戻り値をCompositeDisposableにaddしておくと、後でCompositeDisposable#dispose()でイベントハンドラを削除できる。&lt;/p&gt;
+
+&lt;p&gt;まとめると、JapaneseWordSelection#activate()は以下のようになる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-coffeescript&#34;&gt;module.exports = JapaneseWordSelection =
+
+  disposables: null
+
+  activate: -&amp;gt;
+    @disposables = new CompositeDisposable
+    @disposables.add atom.workspace.observeTextEditors (editor) -&amp;gt;
+      JapaneseWordSelection.japanizeWordBoundary(editor, cursor) for cursor in editor.getCursors()
+
+  japanizeWordBoundary: (editor, cursor) -&amp;gt;
+    # Cursorオブジェクトの振る舞いを変更する処理
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;(今見ると、Cursorの方もobserveした方がいいか。後で直そう。)&lt;/p&gt;
+
+&lt;h4 id=&#34;4-メインスクリプト編集-deactivate:6530adb68200e287e879e79539d73127&#34;&gt;4. メインスクリプト編集 - deactivate&lt;/h4&gt;
+
+&lt;p&gt;JapaneseWordSelection#deactivate()は、追加したイベントハンドラを削除して、全てのCursorオブジェクトの振る舞いを元に戻すだけ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-coffeescript&#34;&gt;  deactivate: -&amp;gt;
+    @disposables.dispose()
+    for i, editor of atom.workspace.getTextEditors()
+      for j, cursor of editor.getCursors()
+        # Cursorオブジェクトの振る舞いを元に戻す処理
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;5-package-json編集:6530adb68200e287e879e79539d73127&#34;&gt;5.  package.json編集&lt;/h4&gt;
+
+&lt;p&gt;package.jsonは、Package Generatorが以下のようなひな形を作ってくれている。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{
+  &amp;quot;name&amp;quot;: &amp;quot;japanese-word-selection&amp;quot;,
+  &amp;quot;main&amp;quot;: &amp;quot;./lib/japanese-word-selection&amp;quot;,
+  &amp;quot;version&amp;quot;: &amp;quot;0.0.0&amp;quot;,
+  &amp;quot;description&amp;quot;: &amp;quot;A short description of your package&amp;quot;,
+  &amp;quot;keywords&amp;quot;: [
+  ],
+  &amp;quot;activationCommands&amp;quot;: {
+    &amp;quot;atom-workspace&amp;quot;: &amp;quot;japanese-word-selection:toggle&amp;quot;
+  },
+  &amp;quot;repository&amp;quot;: &amp;quot;https://github.com/atom/japanese-word-selection&amp;quot;,
+  &amp;quot;license&amp;quot;: &amp;quot;MIT&amp;quot;,
+  &amp;quot;engines&amp;quot;: {
+    &amp;quot;atom&amp;quot;: &amp;quot;&amp;gt;=1.0.0 &amp;lt;2.0.0&amp;quot;
+  },
+  &amp;quot;dependencies&amp;quot;: {
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これに以下の編集を加える。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;description&lt;/strong&gt; にパッケージの説明を書く。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;keywords&lt;/strong&gt; にパッケージレポジトリ内での検索のためのタグを書く。&lt;/li&gt;
+&lt;li&gt;japanese-word-selectionはとりあえずコマンドを作らないので、&lt;strong&gt;activationCommands&lt;/strong&gt; は消す。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;repository&lt;/strong&gt; にjapanese-word-selectionのソースを置く(予定の)GitHubレポジトリのアドレスを書く。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;これだけ。以下のようになる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{
+  &amp;quot;name&amp;quot;: &amp;quot;japanese-word-selection&amp;quot;,
+  &amp;quot;main&amp;quot;: &amp;quot;./lib/japanese-word-selection&amp;quot;,
+  &amp;quot;version&amp;quot;: &amp;quot;0.0.0&amp;quot;,
+  &amp;quot;description&amp;quot;: &amp;quot;Japanize word boundary.&amp;quot;,
+  &amp;quot;keywords&amp;quot;: [
+    &amp;quot;japanese&amp;quot;,
+    &amp;quot;selection&amp;quot;,
+    &amp;quot;word&amp;quot;
+  ],
+  &amp;quot;repository&amp;quot;: &amp;quot;https://github.com/kaitoy/japanese-word-selection&amp;quot;,
+  &amp;quot;license&amp;quot;: &amp;quot;MIT&amp;quot;,
+  &amp;quot;engines&amp;quot;: {
+    &amp;quot;atom&amp;quot;: &amp;quot;&amp;gt;=1.0.0 &amp;lt;2.0.0&amp;quot;
+  },
+  &amp;quot;dependencies&amp;quot;: {
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;version&lt;/strong&gt; はパッケージリリース(パブリッシュ)時に自動でインクリメントされるので、0.0.0のままほっておく。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;dependencies&lt;/strong&gt; には依存するnpmパッケージを定義できるが、japanese-word-selectionは一人で動くので何も書かない。
+因みに、dependenciesに何か追加したら、package.jsonがあるフォルダで&lt;code&gt;apm install&lt;/code&gt;というコマンドを実行すると依存がインストールされる。&lt;/p&gt;
+
+&lt;h4 id=&#34;6-動作確認:6530adb68200e287e879e79539d73127&#34;&gt;6. 動作確認&lt;/h4&gt;
+
+&lt;p&gt;作成したパッケージは、Package Generatorに生成された時点でインストールされている。
+ソースを変更したら、&lt;code&gt;Ctrl+Alt+r&lt;/code&gt;でウィンドウをリロードして反映して動作確認できる。&lt;/p&gt;
+
+&lt;p&gt;ログを見たい時など、&lt;code&gt;Ctrl+Atl+i&lt;/code&gt;でディベロッパツールを開いておくと便利。&lt;/p&gt;
+
+&lt;h4 id=&#34;7-テスト:6530adb68200e287e879e79539d73127&#34;&gt;7. テスト&lt;/h4&gt;
+
+&lt;p&gt;上記の通り、パッケージのテストはJasmineを使って書いて、specフォルダに入れる。テストファイル名の拡張子を除いた部分は&lt;strong&gt;-spec&lt;/strong&gt;というポストフィックスを付けなければいけない。&lt;/p&gt;
+
+&lt;p&gt;テストの書き方については、&lt;a href=&#34;https://atom.io/docs/latest/writing-specs&#34;&gt;Atomのマニュアル&lt;/a&gt;とか、&lt;a href=&#34;https://github.com/atom/atom/tree/master/spec&#34;&gt;Atomのテスト&lt;/a&gt;とか、Jasmineのマニュアルとかを参照ということで、ここでは割愛する。テスト書くのは必須ではないし。&lt;/p&gt;
+
+&lt;p&gt;テストは&lt;code&gt;Ctrl+Alt+p&lt;/code&gt;で実行できる。&lt;/p&gt;
+
+&lt;h4 id=&#34;8-その他ファイルの編集:6530adb68200e287e879e79539d73127&#34;&gt;8. その他ファイルの編集&lt;/h4&gt;
+
+&lt;p&gt;README.md、LICENSE.md、CHANGELOG.mdを修正。詳細は割愛。&lt;/p&gt;
+
+&lt;h4 id=&#34;9-githubへ保存:6530adb68200e287e879e79539d73127&#34;&gt;9. GitHubへ保存&lt;/h4&gt;
+
+&lt;p&gt;GitHubにjapanese-word-selectionという名のレポジトリを作り、そこにソースを保存。詳細は割愛。
+Atomのドキュメントによると、今のところ、GitHubへのソース保存は次のパブリッシュのために必須な模様。&lt;/p&gt;
+
+&lt;h4 id=&#34;10-パブリッシュ:6530adb68200e287e879e79539d73127&#34;&gt;10. パブリッシュ&lt;/h4&gt;
+
+&lt;p&gt;作ったパッケージをリリースすることを、パブリッシュという。
+手順は&lt;a href=&#34;https://atom.io/docs/latest/publishing-a-package&#34;&gt;Atomのドキュメント&lt;/a&gt;に説明されている。&lt;/p&gt;
+
+&lt;p&gt;パブリッシュするには、&lt;strong&gt;apm&lt;/strong&gt;という、Atomのパッケージを管理するコマンドラインツールが必要。どうもAtom本体と一緒にインストールされるっぽい。&lt;/p&gt;
+
+&lt;p&gt;やることは、パブリッシュするパッケージのルートに&lt;code&gt;cd&lt;/code&gt;して、&lt;code&gt;apm publish minor&lt;/code&gt;を実行するだけ。
+このコマンドは以下の処理をする。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;(初回のみ)パッケージ名をatom.ioに登録する。&lt;/li&gt;
+&lt;li&gt;package.jsonのversionをインクリメントしてコミットする。&lt;code&gt;apm publish&lt;/code&gt;にminorを指定するので、0.1.0になる。代わりにmajorかpatchを指定すると、1.0.0か0.0.1になる。&lt;/li&gt;
+&lt;li&gt;Gitのタグを作る。&lt;/li&gt;
+&lt;li&gt;GitHubに変更とタグをpushする。&lt;/li&gt;
+&lt;li&gt;atom.ioにパッケージをアップロードする。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;私の場合、初回だったので、コマンド実行中にatom.ioのアカウントを作ってAPIトークンを取得する手順があった。
+以下がコマンドのメッセージ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd japanese-word-selection
+# apm publish minor
+Welcome to Atom!
+
+Before you can publish packages, you&#39;ll need an API token.
+
+Visit your account page on Atom.io https://atom.io/account,
+copy the token and paste it below when prompted.
+
+Press [Enter] to open your account page on Atom.io.
+Token&amp;gt; hogeeeeeeeeeeeeeeeee
+Saving token to Keychain done
+Registering japanese-word-selection done
+Preparing and tagging a new version done
+Pushing v0.1.0 tag done
+Publishing japanese-word-selection@v0.1.0 done
+Congrats on publishing a new package!
+Check it out at https://atom.io/packages/japanese-word-selection
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://atom.io/packages/japanese-word-selection&#34;&gt;https://atom.io/packages/japanese-word-selection&lt;/a&gt; に行ったらちゃんとjapanese-word-selectionのページができていた。
+これでパブリッシュまで完了。&lt;/p&gt;
+
+&lt;p&gt;因みに、&lt;code&gt;apm unpublish パッケージ名@バージョン&lt;/code&gt;でパブリッシュを取り消すことができる。&lt;/p&gt;
+
+&lt;h4 id=&#34;11-パッケージのアップデートの開発:6530adb68200e287e879e79539d73127&#34;&gt;11. パッケージのアップデートの開発&lt;/h4&gt;
+
+&lt;p&gt;&lt;code&gt;apm publish&lt;/code&gt;をすると、パブリッシュしたバージョンがインストールされた状態になる。
+具体的には、&lt;code&gt;%userprofile%\.atom\packages\&lt;/code&gt;にレポジトリからダウンロードしたパッケージが入っている状態になる。&lt;/p&gt;
+
+&lt;p&gt;パッケージのアップデートを開発する際は、修正している版のパッケージを優先してロードして欲しくなるが、そのためには&lt;code&gt;%userprofile%\.atom\dev\packages\&lt;/code&gt;に修正版(のリンク)をいれて、Atomをdev modeで起動する必要がある。&lt;/p&gt;
+
+&lt;p&gt;この手順は、&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;パッケージのフォルダに&lt;code&gt;cd&lt;/code&gt;して、&lt;code&gt;apm link --dev&lt;/code&gt;を実行する。これでそのフォルダへのリンクが&lt;code&gt;.atom\dev\packages\&lt;/code&gt;に作成される。&lt;/li&gt;
+&lt;li&gt;Atomのメニューの &lt;strong&gt;View &amp;gt; Developer &amp;gt; Open In Dev Mode&lt;/strong&gt; からdev modeのAtomウィンドウを開く。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;因みに、Package Generatorは、作成したパッケージフォルダへのリンクを&lt;code&gt;.atom\packages\&lt;/code&gt;に作成する。リンクの一覧は&lt;code&gt;apm links&lt;/code&gt;で参照でき、&lt;code&gt;apm unlink&lt;/code&gt;で削除できる。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
