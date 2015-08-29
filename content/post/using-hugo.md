@@ -8,7 +8,7 @@ tags = [ "blog", "github", "hugo" ]
 title = "GitHub Pagesでブログ立ち上げ - Hugoを使う"
 +++
 
-[__ブログ立ち上げ - Jekyllのためのツール__](http://tbd.kaitoy.xyz/2015/08/25/tools-for-jekyll/)の続き。
+[__GitHub Pagesでブログ立ち上げ - Jekyllのためのツール__](http://tbd.kaitoy.xyz/2015/08/25/tools-for-jekyll/)の続き。
 前回は、[__GitHub Pages__](https://pages.github.com/)で公開するブログサイトを構築するのに、[__Jekyll__](http://jekyllrb.com/docs/home/)とJekyll関連ツールを使おうと四苦八苦したが、結局Jekyllに見切りをつけ、[__Hugo__](https://gohugo.io/)を使うことに決めた。
 
 ## Hugoとは

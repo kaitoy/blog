@@ -8,7 +8,7 @@ tags = [ "blog", "github", "jekyll" ]
 title = "GitHub Pagesでブログ立ち上げ - Jekyllのためのツール"
 +++
 
-[__ブログ立ち上げ - GitHub PagesとJekyll__](http://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/)の続き。
+[__GitHub Pagesでブログ立ち上げ - GitHub PagesとJekyll__](http://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/)の続き。
 前回は、[__GitHub Pages__](https://pages.github.com/)と[__Jekyll__](http://jekyllrb.com/docs/home/)でブログを始めることにして、Jekyllのセットアップに四苦八苦した。
 
 Jekyllがだいたいセットアップできたところで、どんなサイトデザインにしようか考え始めた。
