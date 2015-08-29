@@ -53,10 +53,10 @@ C:\Users\Kaito\Desktop\tool\hugo_0.14_windows_amd64\hugo_0.14_windows_amd64.exe 
 
 この時点で、blogフォルダ内には以下のものが入っている。
 
-* [__archetypes__](https://gohugo.io/content/archetypes/): 新規記事作成時に自動で挿入される[__Front Matter__](https://gohugo.io/content/front-matter/)(後述)のカスタマイズをするためのファイルを置くフォルダ。
+* [__archetypes__](https://gohugo.io/content/archetypes/): 新規記事作成時に自動で挿入される[__Front Matter__](https://gohugo.io/content/front-matter/) (後述)のカスタマイズをするためのファイルを置くフォルダ。
 * [__content__](https://gohugo.io/content/organization/): ブログのコンテンツ(記事など)を置くフォルダ。
 * [__data__](https://gohugo.io/extras/datafiles/): サイト生成時に使うデータを置くフォルダ。
-* [l__ayouts__](http://gohugo.io/templates/overview/): サイトのレイアウトを定義するファイルを置くフォルダ。
+* [__layouts__](http://gohugo.io/templates/overview/): サイトのレイアウトを定義するファイルを置くフォルダ。
 * [__static__](https://gohugo.io/themes/creation): CSSとかJavaScriptとか画像とかのファイルを置くフォルダ。
 * [__config.toml__](https://gohugo.io/overview/configuration/): 設定ファイル。これは[__TOML__](https://github.com/toml-lang/toml)だが、[__YAML__](https://ja.wikipedia.org/wiki/YAML)か[__JSON__](https://ja.wikipedia.org/wiki/JavaScript_Object_Notation)でもいい。
 
@@ -71,7 +71,7 @@ hugo new post/first_post.md
 
 __blog\content\about.md__と__blog\content\post\first_post.md__が生成された。
 これらには、Front Matterという、記事のメタ情報が自動で書き込まれる。
-デフォルトで書き込まれるのは、日付(__date__)、ドラフトフラグ(__draft__)、タイトル(__title__)だけだが、
+デフォルトで書き込まれるのは、日付 (__date__)、ドラフトフラグ (__draft__)、タイトル (__title__)だけだが、
 [__Archetypes__](https://gohugo.io/content/archetypes/)という機能でカスタマイズできる。
 が、今はやらない。
 
@@ -98,8 +98,11 @@ hugo server -t angels-ladder -D -w
 `-t`でテーマを指定している。指定するのは__blog\themes\__内のフォルダ名。`-D`はドラフト記事をビルドしたいときにつけるオプション。さっき作ったabout.mdとfirst_post.mdは、そのFront Matterのdraftがtrueになっていて、つまりドラフトなので、`-D`を付けないとビルドされない。`-w`は[__LiveReload__](https://gohugo.io/extras/livereload/)を有効にするフラグで、付けておくとソースを修正したら自動でリビルドとブラウザのリロードが実行される。(変更を監視されるのはサブフォルダ内だけ。config.tomlの変更は無視される。)
 
 サーバには__http://localhost:1313/__でアクセスできる。今回指定したテーマangels-ladderだと、トップページにfirst_post.mdの記事へのリンクがあり、その内容を確認できる。about.mdの方はリンクはなく、直接__http://localhost:1313/about/__アクセスしないと見れない。この辺りはテーマ(と設定?)によって異なるのかな。
-
 まあabout.mdは試しに作ってみただけなので消しておく。
+
+`hugo server`の`-t`に与える値を変えれば簡単にテーマを切り替えられるので、いろいろ見てみる。
+
+<br>
 
 以上で味見終わり。
 
