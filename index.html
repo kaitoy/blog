@@ -11,9 +11,9 @@
     <meta property="og:url" content="http://tbd.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="ブログ立ち上げ - GitHub PagesとJekyllの続き。 Jekyllがだいたいセットアップできたところで、どんなサイトデザインにしようか考え始めた。 調べたところ、生のJekyllを使うよりも簡単に見栄えのいいサイトを作れる方法がある模様。 Octopress もっとも有名なのはOctopress。 ホームページの説明によると、「Octopress is a framework designed for Jekyll, the static blogging engine powering Github Pages」とのこと。 フレームワークと呼ぶのはちょっと大げさな気がする。 まあ見たところ、Jekyllをサイト生成エンジンとした、ブログサイト構築、ブログエントリ作成、ブログサイトデプロイなどを簡易化するツール。 広く使われていて情報が豊富だし、テーマを選んでエントリの内容をMarkdownで書くだけでかっこいいサイトが作れる。バージョンは2系が主に使われているやつで、3系がβ状態。 血迷って3系に手を出してみる。GitHubにあるREADMEを見ながらWindows 7上にインストールして、適当なサイトを作ろうとするもjekyll buildでエラー。さすがにWindowsじゃだめかと思い、CentOS 7のVMを立ち上げてそこでやってみるもまたjekyll buildでエラー。 心折れかけながらドキュメントなど見ていたら、多くのプラグインがまだ開発中で、3系は基本的な機能しか動かなそうなことが発覚。素直に2系にすることに。 2系は成熟しているし情報が沢山あるので、順調にインストールとテストサイト作成に成功したあたりで、不審な情報を発見した。 Jekyllのドキュメントによると、GitHub Pagesではセキュリティ対策のためにJekyll をセーフモードで実行するため、カスタムプラグインが無効になるとのこと。 Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルドして公開してくれると思っていたけど、OctopressはJekyllのプラグイン機能をもりもり利用しているようなので、上手くいかないようだ。 つまりOctopressをGitHub Pages上のサイトに使うとしたら、結局ビルド成果物をアップしないといけなくなる。JekyllのソースだけをGitHubで管理するように出来たらいいと思っていたが当てが外れた。 Jekyll-Bootstrap Octopressを使うモチベーションが下がり、他のを探したところ、Jekyll-Bootstrapというのを見つけた。 Jekyll-BootstrapはJekyllのソースそのもので、面倒な部分は既にできてるので、ユーザはテンプレートを使って記事の内容を書くだけでいいよ、というもの。テーマ機能と、記事作成作業をRakeで簡易化するためのRakefile付き。 すばらしいことに、「JekyllのソースだけをGitHubで管理するように出来たらいい」という需要に応えることを目指して作られていて、Jekyll-Bootstrapをベースに作ったJekyllソースはGitHub Pages上のJekyllでビルド可能。 まさに求めていたものと心躍った。 が、プロジェクトページを見るにあまり活発に開発が進んでない模様。 廃れ行きそうなツールを使うのもなぁ… 結論 Jekyll-Bootstrapを使うのは気が進まない。Octopressを使うとビルド成果物をアップしないといけない。 どうせビルド成果物を上げるのなら、Jekyllにこだわる必要はないか、ということで、去年末くらいから盛り上がってきているHugoにすることに。Hugoについてはまた別のエントリで書く。">
+    <meta property="og:description" content="ブログ立ち上げ - Jekyllのためのツールの続き。 前回は、GitHub Pagesで公開するブログサイトを構築するのに、JekyllとJekyll関連ツールを使おうと四苦八苦したが、結局Jekyllに見切りをつけ、Hugoを使うことに決めた。 Hugoとは Hugoは、国内では2014年末くらいから盛り上がってきているブログサイト構築ツール。 そのホームページによると、ウェブサイトフレームワークで、静的サイトジェネレータとのこと。 フレームワークと名乗ってはいるが、その正体は、Markdownで書かれた記事を元にブログサイトのソースを生成するコンテントビルド機能と、記事作成(など)を支援するユーティリティ機能を持ったコマンドラインツール。 また、静的サイトジェネレータというのは、静的なサイトを生成するという意味ではなく、静的にサイトを生成するという意味。もっと言えば、WordPressとかがアクセス時にビルドが走るのに対し、Hugoを使った場合は事前にビルド済みのものをサーバにアップロードすることになる、ということ。らしい。WordPressは使ったことがないのでよく知らないが、Hugoのホームページにそう書いてある。 つまり、Hugoは静的なサイトだけを扱うツールってわけではないので、JavaScriptとかを駆使して動的でインタラクティブなページを作ってもいいはず。 Hugoのインストール インストールガイドに従ってHugoをインストールする。 HugoのGitHub ReleasesからWindows用バイナリをダウンロード。このときはバージョン0.14が最新だったので、hugo_0.14_windows_amd64.zipをダウンロードした。 このzipの中身はhugo_0.14_windows_amd64.exeというバイナリ一つとLICENSE.mdとREADME.mdだけ。 このhugo_0.14_windows_amd64.exeがHugoのすべてなので、これを適当な場所において実行できるようにしとけばよい。 今回は、hugo.batというファイルに以下の内容を書き、PATHの通ったフォルダにいれた。 @echo off C:\Users\Kaito\Desktop\tool\hugo_0.14_windows_amd64\hugo_0.14_windows_amd64.exe %* これで、どこからでもhugo [arguments]と打てばHugoコマンドが実行できる。 Hugoのシンタックスハイライト ドキュメントによると、Hugoではシンタックスハイライトを実現する方法を以下の2つから選べる。 サーバサイド: Hugoでのブログサイト生成時にハイライトしておく方法。 クライアントサイド: クライアントがブログを読み込んだ時にJavaScriptでハイライトする方法。 前者の方が当然クライアントの負荷が軽くなるが、Pygmentsのインストールが必要だったりめんどくさそうなので後者にする。(PygmentsはJekyllのときにすでに入れたけど…) Hugo味見 Hugoコマンドリファレンスを見つつ、Hugoの味見をする。 サイトのひな形を作るコマンドはhugo new site [path]。hugo new site blogを実行して、blogという名のフォルダにサイトの初期ソースを生成。blogの部分はファイルもフォルダも存在しないパスを指定する。 この時点で、blogフォルダ内には以下のものが入っている。 archetypes: 新規記事作成時に自動で挿入されるFront Matter(後述)のカスタマイズをするためのファイルを置くフォルダ。 content: ブログのコンテンツ(記事など)を置くフォルダ。 data: サイト生成時に使うデータを置くフォルダ。 layouts: サイトのレイアウトを定義するファイルを置くフォルダ。 static: CSSとかJavaScriptとか画像とかのファイルを置くフォルダ。 config.toml: 設定ファイル。これはTOMLだが、YAMLかJSONでもいい。 記事を作るコマンドはhugo new [path]。blogフォルダにcdして、二つ記事を作ってみる。 hugo new about.md hugo new post/first_post.md blog\content\about.mdとblog\content\post\first_post.mdが生成された。 これらには、Front Matterという、記事のメタ情報が自動で書き込まれる。 デフォルトで書き込まれるのは、日付(date)、ドラフトフラグ(draft)、タイトル(title)だけだが、 Archetypesという機能でカスタマイズできる。 が、今はやらない。 about.mdとfirst_post.mdには適当に記事の内容を書いておく。 次にテーマを設定する。テーマを使えば、自分でレイアウトを書く必要がない。 テーマはHugo Themesにリストされていて、ひとつひとつ選んでインストールもできるけど、今回は全部いっぺんにインストールして色々見てみる。blogフォルダ内で以下を実行すると、blog\themesに全テーマがインストールされる。 git clone --recursive https://github.com/spf13/hugoThemes.git themes これで、以下のコマンドを実行すると、サイトがビルドされ、サーバが起動し、ブラウザで確認できる。 hugo server -t angels-ladder -D -w -tでテーマを指定している。指定するのはblog\themes内のフォルダ名。-Dはドラフト記事をビルドしたいときにつけるオプション。さっき作ったabout.mdとfirst_post.mdは、そのFront Matterのdraftがtrueになっていて、つまりドラフトなので、-Dを付けないとビルドされない。-wはLiveReloadを有効にするフラグで、付けておくとソースを修正したら自動でリビルドとブラウザのリロードが実行される。(変更を監視されるのはサブフォルダ内だけ。config.tomlの変更は無視される。) サーバにはhttp://localhost:1313/でアクセスできる。今回指定したテーマangels-ladderだと、トップページにfirst_post.mdの記事へのリンクがあり、その内容を確認できる。about.mdの方はリンクはなく、直接http://localhost:1313/about/アクセスしないと見れない。この辺りはテーマ(と設定?)によって異なるのかな。 まあabout.mdは試しに作ってみただけなので消しておく。 以上で味見終わり。 テーマの選定 - Robust Hugo Themesにあるテーマはどれもあまりしっくりこなかった。 もう自分で作ろうかと思っていたところ、Robustというテーマを見つけた。 こんな感じのページができる。いい。これを使うことにする。 blogフォルダ内で、いったんthemesを消してから以下を実行してRobustをインストール。 &gt; git init .">
     
-    <meta property="og:image" content="http://tbd.kaitoy.xyz/images/octopress.png">
+    <meta property="og:image" content="http://tbd.kaitoy.xyz/images/hugo-logo.png">
     
     
     
@@ -66,6 +66,28 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="http://tbd.kaitoy.xyz/2015/08/28/using-hugo/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="http://tbd.kaitoy.xyz/images/hugo-logo.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Fri, Aug 28, 2015</span>
+              </div>
+              <h2 class="title">GitHub Pagesでブログ立ち上げ - Hugoを使う</h2>
+              <div class="summary">
+                ブログ立ち上げ - Jekyllのためのツールの続き。 前回は、GitHub Pagesで公開するブログサイトを構築するのに、JekyllとJekyll関連ツールを使おうと四苦八苦したが、結局Jekyllに見切りをつけ、Hugoを使うことに決めた。 Hugoとは Hugoは、国内では2014年末くらいから盛り上がってきているブログサイト構築ツール。 そのホームページによると、ウェブサイトフレームワークで、静的サイトジェネレータとのこと。 フレームワークと名乗ってはいるが、その正体は、Markdownで書かれた記事を元にブログサイトのソースを生成するコンテントビルド機能と、記事作成(など)を支援するユーティリティ機能を持ったコマンドラインツール。 また、静的サイトジェネレータというのは、静的なサイトを生成するという意味ではなく、静的にサイトを生成するという意味。もっと言えば、WordPressとかがアクセス時にビルドが走るのに対し、Hugoを使った場合は事前にビルド済みのものをサーバにアップロードすることになる、ということ。らしい。WordPressは使ったことがないのでよく知らないが、Hugoのホームページにそう書いてある。 つまり、Hugoは静的なサイトだけを扱うツールってわけではないので、JavaScriptとかを駆使して動的でインタラクティブなページを作ってもいいはず。 Hugoのインストール インストールガイドに従ってHugoをインストールする。 HugoのGitHub ReleasesからWindows用バイナリをダウンロード。このときはバージョン0.14が最新だったので、hugo_0.14_windows_amd64.zipをダウンロードした。 このzipの中身はhugo_0.14_windows_amd64.exeというバイナリ一つとLICENSE.mdとREADME.mdだけ。 このhugo_0.14_windows_amd64.exeがHugoのすべてなので、これを適当な場所において実行できるようにしとけばよい。 今回は、hugo.batというファイルに以下の内容を書き、PATHの通ったフォルダにいれた。 @echo off C:\Users\Kaito\Desktop\tool\hugo_0.14_windows_amd64\hugo_0.14_windows_amd64.exe %* これで、どこからでもhugo [arguments]と打てばHugoコマンドが実行できる。 Hugoのシンタックスハイライト ドキュメントによると、Hugoではシンタックスハイライトを実現する方法を以下の2つから選べる。 サーバサイド: Hugoでのブログサイト生成時にハイライトしておく方法。 クライアントサイド: クライアントがブログを読み込んだ時にJavaScriptでハイライトする方法。 前者の方が当然クライアントの負荷が軽くなるが、Pygmentsのインストールが必要だったりめんどくさそうなので後者にする。(PygmentsはJekyllのときにすでに入れたけど…) Hugo味見 Hugoコマンドリファレンスを見つつ、Hugoの味見をする。 サイトのひな形を作るコマンドはhugo new site [path]。hugo new site blogを実行して、blogという名のフォルダにサイトの初期ソースを生成。blogの部分はファイルもフォルダも存在しないパスを指定する。 この時点で、blogフォルダ内には以下のものが入っている。 archetypes: 新規記事作成時に自動で挿入されるFront Matter(後述)のカスタマイズをするためのファイルを置くフォルダ。 content: ブログのコンテンツ(記事など)を置くフォルダ。 data: サイト生成時に使うデータを置くフォルダ。 layouts: サイトのレイアウトを定義するファイルを置くフォルダ。 static: CSSとかJavaScriptとか画像とかのファイルを置くフォルダ。 config.toml: 設定ファイル。これはTOMLだが、YAMLかJSONでもいい。 記事を作るコマンドはhugo new [path]。blogフォルダにcdして、二つ記事を作ってみる。 hugo new about.md hugo new post/first_post.md blog\content\about.mdとblog\content\post\first_post.mdが生成された。 これらには、Front Matterという、記事のメタ情報が自動で書き込まれる。 デフォルトで書き込まれるのは、日付(date)、ドラフトフラグ(draft)、タイトル(title)だけだが、 Archetypesという機能でカスタマイズできる。 が、今はやらない。 about.mdとfirst_post.mdには適当に記事の内容を書いておく。 次にテーマを設定する。テーマを使えば、自分でレイアウトを書く必要がない。 テーマはHugo Themesにリストされていて、ひとつひとつ選んでインストールもできるけど、今回は全部いっぺんにインストールして色々見てみる。blogフォルダ内で以下を実行すると、blog\themesに全テーマがインストールされる。 git clone --recursive https://github.com/spf13/hugoThemes.git themes これで、以下のコマンドを実行すると、サイトがビルドされ、サーバが起動し、ブラウザで確認できる。 hugo server -t angels-ladder -D -w -tでテーマを指定している。指定するのはblog\themes内のフォルダ名。-Dはドラフト記事をビルドしたいときにつけるオプション。さっき作ったabout.mdとfirst_post.mdは、そのFront Matterのdraftがtrueになっていて、つまりドラフトなので、-Dを付けないとビルドされない。-wはLiveReloadを有効にするフラグで、付けておくとソースを修正したら自動でリビルドとブラウザのリロードが実行される。(変更を監視されるのはサブフォルダ内だけ。config.tomlの変更は無視される。) サーバにはhttp://localhost:1313/でアクセスできる。今回指定したテーマangels-ladderだと、トップページにfirst_post.mdの記事へのリンクがあり、その内容を確認できる。about.mdの方はリンクはなく、直接http://localhost:1313/about/アクセスしないと見れない。この辺りはテーマ(と設定?)によって異なるのかな。 まあabout.mdは試しに作ってみただけなので消しておく。 以上で味見終わり。 テーマの選定 - Robust Hugo Themesにあるテーマはどれもあまりしっくりこなかった。 もう自分で作ろうかと思っていたところ、Robustというテーマを見つけた。 こんな感じのページができる。いい。これを使うことにする。 blogフォルダ内で、いったんthemesを消してから以下を実行してRobustをインストール。 &gt; git init .
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="http://tbd.kaitoy.xyz/2015/08/25/tools-for-jekyll/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="http://tbd.kaitoy.xyz/images/octopress.png" alt="eyecatch">
@@ -73,9 +95,9 @@
               <div class="date text-center">
                 <span>Tue, Aug 25, 2015</span>
               </div>
-              <h2 class="title">ブログ立ち上げ - Jekyllのためのツール</h2>
+              <h2 class="title">GitHub Pagesでブログ立ち上げ - Jekyllのためのツール</h2>
               <div class="summary">
-                ブログ立ち上げ - GitHub PagesとJekyllの続き。 Jekyllがだいたいセットアップできたところで、どんなサイトデザインにしようか考え始めた。 調べたところ、生のJekyllを使うよりも簡単に見栄えのいいサイトを作れる方法がある模様。 Octopress もっとも有名なのはOctopress。 ホームページの説明によると、「Octopress is a framework designed for Jekyll, the static blogging engine powering Github Pages」とのこと。 フレームワークと呼ぶのはちょっと大げさな気がする。 まあ見たところ、Jekyllをサイト生成エンジンとした、ブログサイト構築、ブログエントリ作成、ブログサイトデプロイなどを簡易化するツール。 広く使われていて情報が豊富だし、テーマを選んでエントリの内容をMarkdownで書くだけでかっこいいサイトが作れる。バージョンは2系が主に使われているやつで、3系がβ状態。 血迷って3系に手を出してみる。GitHubにあるREADMEを見ながらWindows 7上にインストールして、適当なサイトを作ろうとするもjekyll buildでエラー。さすがにWindowsじゃだめかと思い、CentOS 7のVMを立ち上げてそこでやってみるもまたjekyll buildでエラー。 心折れかけながらドキュメントなど見ていたら、多くのプラグインがまだ開発中で、3系は基本的な機能しか動かなそうなことが発覚。素直に2系にすることに。 2系は成熟しているし情報が沢山あるので、順調にインストールとテストサイト作成に成功したあたりで、不審な情報を発見した。 Jekyllのドキュメントによると、GitHub Pagesではセキュリティ対策のためにJekyll をセーフモードで実行するため、カスタムプラグインが無効になるとのこと。 Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルドして公開してくれると思っていたけど、OctopressはJekyllのプラグイン機能をもりもり利用しているようなので、上手くいかないようだ。 つまりOctopressをGitHub Pages上のサイトに使うとしたら、結局ビルド成果物をアップしないといけなくなる。JekyllのソースだけをGitHubで管理するように出来たらいいと思っていたが当てが外れた。 Jekyll-Bootstrap Octopressを使うモチベーションが下がり、他のを探したところ、Jekyll-Bootstrapというのを見つけた。 Jekyll-BootstrapはJekyllのソースそのもので、面倒な部分は既にできてるので、ユーザはテンプレートを使って記事の内容を書くだけでいいよ、というもの。テーマ機能と、記事作成作業をRakeで簡易化するためのRakefile付き。 すばらしいことに、「JekyllのソースだけをGitHubで管理するように出来たらいい」という需要に応えることを目指して作られていて、Jekyll-Bootstrapをベースに作ったJekyllソースはGitHub Pages上のJekyllでビルド可能。 まさに求めていたものと心躍った。 が、プロジェクトページを見るにあまり活発に開発が進んでない模様。 廃れ行きそうなツールを使うのもなぁ… 結論 Jekyll-Bootstrapを使うのは気が進まない。Octopressを使うとビルド成果物をアップしないといけない。 どうせビルド成果物を上げるのなら、Jekyllにこだわる必要はないか、ということで、去年末くらいから盛り上がってきているHugoにすることに。Hugoについてはまた別のエントリで書く。
+                ブログ立ち上げ - GitHub PagesとJekyllの続き。 前回は、GitHub PagesとJekyllでブログを始めることにして、Jekyllのセットアップに四苦八苦した。 Jekyllがだいたいセットアップできたところで、どんなサイトデザインにしようか考え始めた。 調べたところ、生のJekyllを使うよりも簡単に見栄えのいいサイトを作れる方法がある模様。 Octopress もっとも有名なのはOctopress。 ホームページの説明によると、「Octopress is a framework designed for Jekyll, the static blogging engine powering Github Pages」とのこと。 フレームワークと呼ぶのはちょっと大げさな気がする。 まあ見たところ、Jekyllをサイト生成エンジンとした、ブログサイト構築、ブログエントリ作成、ブログサイトデプロイなどを簡易化するツール。 広く使われていて情報が豊富だし、テーマを選んでエントリの内容をMarkdownで書くだけでかっこいいサイトが作れる。バージョンは2系が主に使われているやつで、3系がβ状態。 血迷って3系に手を出してみる。GitHubにあるREADMEを見ながらWindows 7上にインストールして、適当なサイトを作ろうとするもjekyll buildでエラー。さすがにWindowsじゃだめかと思い、CentOS 7のVMを立ち上げてそこでやってみるもまたjekyll buildでエラー。 心折れかけながらドキュメントなど見ていたら、多くのプラグインがまだ開発中で、3系は基本的な機能しか動かなそうなことが発覚。素直に2系にすることに。 2系は成熟しているし情報が沢山あるので、順調にインストールとテストサイト作成に成功したあたりで、不審な情報を発見した。 Jekyllのドキュメントによると、GitHub Pagesではセキュリティ対策のためにJekyll をセーフモードで実行するため、カスタムプラグインが無効になるとのこと。 Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルドして公開してくれると思っていたけど、OctopressはJekyllのプラグイン機能をもりもり利用しているようなので、上手くいかないようだ。 つまりOctopressをGitHub Pages上のサイトに使うとしたら、結局ビルド成果物をアップしないといけなくなる。JekyllのソースだけをGitHubで管理するように出来たらいいと思っていたが当てが外れた。 Jekyll-Bootstrap Octopressを使うモチベーションが下がり、他のを探したところ、Jekyll-Bootstrapというのを見つけた。 Jekyll-BootstrapはJekyllのソースそのもので、面倒な部分は既にできてるので、ユーザはテンプレートを使って記事の内容を書くだけでいいよ、というもの。テーマ機能と、記事作成作業をRakeで簡易化するためのRakefile付き。 すばらしいことに、「JekyllのソースだけをGitHubで管理するように出来たらいい」という需要に応えることを目指して作られていて、Jekyll-Bootstrapをベースに作ったJekyllソースはGitHub Pages上のJekyllでビルド可能。 まさに求めていたものと心躍った。 が、プロジェクトページを見るにあまり活発に開発が進んでない模様。 廃れ行きそうなツールを使うのもなぁ… 結論 Jekyll-Bootstrapを使うのは気が進まない。Octopressを使うとビルド成果物をアップしないといけない。 どうせビルド成果物を上げるのなら、Jekyllにこだわる必要はないか、ということで、去年末くらいから盛り上がってきているHugoにすることに。Hugoについてはまた別のエントリで書く。
               </div>
             </a>
           </article>
@@ -117,31 +139,9 @@
               <div class="date text-center">
                 <span>Sat, Aug 15, 2015</span>
               </div>
-              <h2 class="title">ブログ立ち上げ - GitHub PagesとJekyll</h2>
+              <h2 class="title">GitHub Pagesでブログ立ち上げ - GitHub PagesとJekyll</h2>
               <div class="summary">
                 このブログを立ち上げたときの作業を、主に備忘録としていくつかのエントリに分けて書く。 このエントリでは主にGitHub PagesとJekyllについて書く。 今の構成 このブログは、Hugoで作って、GitHub Pagesで公開している。 Hugoについては別のエントリで書くとして、GitHub Pagesは、GitHubが提供しているウェブページのホスティングサービスで、GitHubに特定の名前のレポジトリ、または任意のレポジトリに特定の名前のブランチを作ってウェブサイトのソースを置くと、公開してくれるというサービス。PaaSにあたるのかな。 GitHub Pagesのサイトに利用方法が載っている。 以下、このブログ立ち上げに向けてやった作業について書く。 GitHub Pages味見 GitHub Pagesを利用するには、GitHubユーザ名.github.io という名前のレポジトリを作るか、任意のレポジトリにgh-pages という名前のブランチを作って、そこにサイトのソースを置けばいい。そのサイトには、前者の場合はhttp://GitHubユーザ名.github.ioで、後者の場合はhttp://GitHubユーザ名.github.io/レポジトリ名でアクセスできる。 とりあえず前者をやってみる。 kaitoy.github.io という名前のレポジトリを作って、そのルートに「Hello World」とだけ書いた index.html を置く。 ブラウザでhttp://kaitoy.github.ioにアクセスすると、「Hello World」と表示された。 これだけ。 GitHub PagesとJekyll GitHub Pagesには、普通にHTML/CSS/Javascriptのソースを置いてもいいけど、Jekyllを利用することもできる。 Jekyllは、ブログ用の静的サイトジェネレータなるもので、Markdownで書いた記事を元にブログサイトのソースを生成するツール。GitHub Pages用のレポジトリにJekyllのソースをアップロードすると、Jekyllでビルドされ、その結果が公開される。 これはうれしい。 Jekyllのソースとビルド結果を別々に管理しなくてよくて楽だし、公開されるサイトが最新のソースに基づいていることが保証される。 結論から言うと、以下のような理由で結局Jekyllは使わなかったんだけど、Jekyllとの格闘の記録を残しておく。 Windowsを正式サポートしていない。 Rubyで書かれてるため、ビルドが遅い。ブログエントリが数百とかになると辛くなってくるらしい。 Jekyllを使っても、かっこいいサイトを手軽に作ろうと思ったら、結局ビルド成果物もGitHubに上げないといけなくなる。 Jekyllセットアップ GitHub PagesでJekyll使う場合は、GitHub Pagesと同じJekyll環境を手元に作ってプレビューできるようにしておくべきとのこと。なので、これに従って自分のPC (Windows 7) にJekyllをセットアップする。 １．Rubyインストール Jekyllは Ruby で書かれてるので、まずはRubyをインストールする。 WindowsなのでRubyInstaller (ver. 2.2.2)をダウンロードしてインストール。 Bundler (RubyのパッケージであるGemの依存をアプリケーションごとに管理するツール) もあるといいらしいので、gem install bundlerを実行してインストール。 2. Jekyllインストール さっき作ったレポジトリ kaitoy.github.io (の手元のクローン)のルートに、Bundlerの定義ファイルを Gemfile という名前で作り、以下の内容を書く。 source 'https://rubygems.org' gem 'github-pages' 依存するGemは jekyll じゃなくて github-pages。これはGitHub Pages環境のJekyllということだろう。 で、kaitoy.github.io のルートでbundle installを実行する。ここでエラー発生。 エラーメッセージによると、native gemをビルドするために DevKit なるものが要るとのこと。 再びRubyInstallerのページに行ってDevKitをダウンロードして、wikiに従ってインストール。 再度bundle installしたらJekyllのインストールに成功。 github-pages: ver.
-              </div>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        
-        <div class="col-sm-6">
-          <article>
-            <a href="http://tbd.kaitoy.xyz/2015/08/11/daily-stand-up-meetings-are-a-good-tool-for-a-bad-manager/" class="post post-topix">
-              <header class="eyecatch text-center">
-                <img src="http://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Tue, Aug 11, 2015</span>
-              </div>
-              <h2 class="title">スタンドアップミーティングはダメマネージャーが好む手法</h2>
-              <div class="summary">
-                このエントリでは、Yegor Bugayenkoによる記事、Daily Stand-Up Meetings Are a Good Tool for a Bad Managerを紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 スタンドアップミーティング (または単純にスタンドアップ)は、「チームマネージャに状況報告をするためのデイリーチームミーティング」であるとWikipediaに書かれている。 こうしたミーティングは、ソフトウェア開発チームの間でとても人気な手法ではあるが、単なる悪であり、よいマネージャは決してやらない。 以下、その理由を説明する。 私は、スタンドアップのやり方が適切だったり不適切だったりする、と言いたいわけではない。それについて述べた記事は大量にある。 また、スタンドアップを上手く機能するように実施する方法についてアドバイスしようとしているわけでもない。 よいマネージャはデイリースタンドアップを決して実施すべきでないと言っているのだ。 スタンドアップは、単に「機能しない」だけでなく、非常に悪い、時に破壊的なものをマネジメントプロセスにもたらす。それがアジャイルかどうかにかかわらず。 一方、ダメなマネージャは常に、デイリースタンドアップを重要なマネジメント手法として使う。 私の意図を説明するため、マネジメントをいくつかの異なった視点から見ながら、よいマネージャとダメなマネージャが仕事をどのように進めるかを比べてみよう。 情報 ダメなマネージャは進捗を尋ねる。 オフィスを歩き回り進捗を訪ねて回るのは、ひどいマネージャの崇高な習慣だ。 彼は、プロセスと情報伝達フローを適切に構築できるほど賢明ではなく、チームが何をしているかを知らない。 しかし、彼は進捗を知る必要がある。彼もまた上司からちょくちょく尋ねられるからだ。 必要な情報を収集する唯一の方法は、チームに「今何の作業をしているの?」と尋ねることだ。 朝のスタンドアップは、メンバの作業内容を知らないことに気付かれずに、このうっとうしい質問を正式に尋ねる最高の場だ。 よいマネージャは必要なときに報告を受ける。 プロジェクトマネージメントにはコミュニケーション管理が必要だ。 情報伝達フローが適切に構成されていれば、チームメンバはいつどのようにマネージャに報告すればいいかが分かる。 何か問題が起きたとき、そういう状況をどのように報告しなければいけないかを全員が知っている。即時、直接報告するのだ。 作業が完了したとき、必要に応じてプロジェクトマネージャにどのように知らせるかを全員が理解している。 完璧なプロジェクトマネージャは決してチームに質問しない。代わりに、チームが必要なときにマネージャに報告する。 そして、報告を怠るメンバが出たときには、その壊れたコミュニケーションチャネルを修復するのがよいプロジェクトマネージャだ。 ただし、情報収集のためにデイリーミーティングは決して実施しない。 よいマネージャとして、何がゴールで何がプロジェクトマネージャ(またはスクラムマスタ)として重要かをチームに伝えるべきだ。 チームメンバは、マネージャがチームの進捗、リスク、障害、失敗について知るために何が重要であるかを知っているべきだし、チームメンバがマネージャの期待に沿えなければどんなトラブルに陥るかを理解しているべきだ。 プロジェクトやチームが取り組んでいる最も重要な課題についてをチームに伝えることは、よいマネージャとしてすべき仕事だ。 また、よいチームメンバとしては、重要な情報をつかんだら、すぐにマネージャに知らせることが重要だ。 これが完璧なマネージメントというものだ。 もしそのようなチームワークを築いたなら、開発者が今日何をしてどんな問題にあったかを、明日の朝まで待ってから尋ねる必要はなくなる。 マネージャはこういった情報をもっと早く、まさに必要なタイミングで知るようになる。 オフィスの外にいるときでさえ、プロジェクトで起こっていることを知ることができるようになる。 実際には、オフィスは全く不要にさえなるが、これはまた別の機会に議論したい。 デイリースタンドアップはプログラマ間で情報交換する最高の機会で、スクラムマスタに報告してフィードバックを受けるだけの場ではないと言う人がいるかもしれない。 もう一度、同じことを言うが、なぜ、その日の必要になった時点で情報交換をしないのか? なぜ、10人のメンバを毎朝集めて、その内たった5人だけに関係することを議論する必要がある? 答えよう。ダメなマネージャは、チームメンバ間で情報交換する場を用意する他の方法を知らず、朝のスタンドアップを適切なコミュニケーションモデルの代わりとして使う。 こういったミーティングは、マネージャが熱心に働いていて、大げさな給料を受け取るに値するかのような印象を与える。 対照的に、よいマネージャは定期的な状況報告ミーティングをいっさい実施しない。 なぜなら、効果的なコミュニケーションツールの使い方を知っているからだ。 例えば、問題追跡ツール、メール、コードレビュー、意思決定ミーティング、ペアプログラミングなど。 責任 ダメなマネージャはマイクロマネージメントをする。 ダメなマネージャはプロジェクトマネージメントのことをほとんど知らないので、大きな不安を抱えている。 彼はチームのコントロールを失うことを恐れていて、チームを信頼せず、いつも十分な情報を得ていないと感じ、上司から状況を尋ねられたときに動揺する。 このため、彼はチームメンバを抗うつ薬として使う。チームメンバが彼の言う通りのことをしているとき、彼はより安心と安定を感じる。 デイリースタンドアップミーティングは、彼がメンバに何をしているかを尋ね、代わりに何をすべきかを指示するためのすばらしい機会だ。 このマネージャは、メンバに個人の目標と計画を報告するよう強制し、必要だと感じればそれらを修正する。 次のようなやりとりをを何回聞いたことがある?「私はテストXをやるつもりです。…いや、それは来週だ。今日はYをやってくれ。」 これはマイクロマネージメントだ。デイリースタンドアップはマイクロマネージャのための完璧なツールだ。 よいマネージャは責任を委譲する。 理想的なマネージメントには4つのステップが必要だ。 複雑なタスクを小さいサブタスクに分解する。 それらを部下に委譲する。 報酬と、ペナルティと、ルールをはっきりと伝える。 報酬はちゃんと支払われること、ペナルティは免れられないこと、ルールは厳格に守られることを確実にする。 完璧なマネージャは日々何をするかをメンバに指示しないし、業務時間の使い方にも口を出さない。 彼は信頼し、コントロールする。 彼は、メンバに作業方法を指示して自尊心を削ぐようなことは決してしない。 すばらしいマネージャは次のようなことを言う。「今日はテストXをやるつもりだって?
               </div>
             </a>
           </article>
@@ -153,6 +153,25 @@
             
           </div>
         </div>
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="http://tbd.kaitoy.xyz/2015/08/11/daily-stand-up-meetings-are-a-good-tool-for-a-bad-manager/" class="post">
+              <header class="eyecatch text-center">
+                <img src="http://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Tue, Aug 11, 2015</span>
+              </div>
+              <h3 class="title">スタンドアップミーティングはダメマネージャーが好む手法</h3>
+            </a>
+          </article>
+        </div>
+        
         
         
         
@@ -345,6 +364,9 @@
       
       
       <a href="http://tbd.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/hugo">hugo</a>
       
       
       <a href="http://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>

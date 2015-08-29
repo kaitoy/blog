@@ -6,24 +6,255 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2015</rights>
-    <updated>2015-08-25 22:36:28 -0600 MDT</updated>
+    <updated>2015-08-28 23:36:21 -0600 MDT</updated>
 
     
       
         <item>
-          <title>ブログ立ち上げ - Jekyllのためのツール</title>
+          <title>GitHub Pagesでブログ立ち上げ - Hugoを使う</title>
+          <link>http://tbd.kaitoy.xyz/2015/08/28/using-hugo/</link>
+          <pubDate>Fri, 28 Aug 2015 23:36:21 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>http://tbd.kaitoy.xyz/2015/08/28/using-hugo/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/08/25/tools-for-jekyll/&#34;&gt;&lt;strong&gt;ブログ立ち上げ - Jekyllのためのツール&lt;/strong&gt;&lt;/a&gt;の続き。
+前回は、&lt;a href=&#34;https://pages.github.com/&#34;&gt;&lt;strong&gt;GitHub Pages&lt;/strong&gt;&lt;/a&gt;で公開するブログサイトを構築するのに、&lt;a href=&#34;http://jekyllrb.com/docs/home/&#34;&gt;&lt;strong&gt;Jekyll&lt;/strong&gt;&lt;/a&gt;とJekyll関連ツールを使おうと四苦八苦したが、結局Jekyllに見切りをつけ、&lt;a href=&#34;https://gohugo.io/&#34;&gt;&lt;strong&gt;Hugo&lt;/strong&gt;&lt;/a&gt;を使うことに決めた。&lt;/p&gt;
+
+&lt;h2 id=&#34;hugoとは&#34;&gt;Hugoとは&lt;/h2&gt;
+
+&lt;p&gt;Hugoは、国内では2014年末くらいから盛り上がってきているブログサイト構築ツール。
+そのホームページによると、ウェブサイトフレームワークで、静的サイトジェネレータとのこと。&lt;/p&gt;
+
+&lt;p&gt;フレームワークと名乗ってはいるが、その正体は、&lt;a href=&#34;https://ja.wikipedia.org/wiki/Markdown&#34;&gt;&lt;strong&gt;Markdown&lt;/strong&gt;&lt;/a&gt;で書かれた記事を元にブログサイトのソースを生成するコンテントビルド機能と、記事作成(など)を支援するユーティリティ機能を持ったコマンドラインツール。&lt;/p&gt;
+
+&lt;p&gt;また、静的サイトジェネレータというのは、静的なサイトを生成するという意味ではなく、静的にサイトを生成するという意味。もっと言えば、WordPressとかがアクセス時にビルドが走るのに対し、Hugoを使った場合は事前にビルド済みのものをサーバにアップロードすることになる、ということ。らしい。WordPressは使ったことがないのでよく知らないが、Hugoのホームページにそう書いてある。
+つまり、Hugoは静的なサイトだけを扱うツールってわけではないので、JavaScriptとかを駆使して動的でインタラクティブなページを作ってもいいはず。&lt;/p&gt;
+
+&lt;h2 id=&#34;hugoのインストール&#34;&gt;Hugoのインストール&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://gohugo.io/overview/installing/&#34;&gt;インストールガイド&lt;/a&gt;に従ってHugoをインストールする。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/spf13/hugo/releases&#34;&gt;HugoのGitHub Releases&lt;/a&gt;からWindows用バイナリをダウンロード。このときはバージョン0.14が最新だったので、&lt;strong&gt;hugo_0.14_windows_amd64.zip&lt;/strong&gt;をダウンロードした。&lt;/p&gt;
+
+&lt;p&gt;このzipの中身は&lt;strong&gt;hugo_0.14_windows_amd64.exe&lt;/strong&gt;というバイナリ一つとLICENSE.mdとREADME.mdだけ。
+このhugo_0.14_windows_amd64.exeがHugoのすべてなので、これを適当な場所において実行できるようにしとけばよい。
+今回は、&lt;strong&gt;hugo.bat&lt;/strong&gt;というファイルに以下の内容を書き、PATHの通ったフォルダにいれた。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bat&#34;&gt;@echo off
+C:\Users\Kaito\Desktop\tool\hugo_0.14_windows_amd64\hugo_0.14_windows_amd64.exe %*
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;これで、どこからでも&lt;code&gt;hugo [arguments]&lt;/code&gt;と打てばHugoコマンドが実行できる。&lt;/p&gt;
+
+&lt;h2 id=&#34;hugoのシンタックスハイライト&#34;&gt;Hugoのシンタックスハイライト&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://gohugo.io/extras/highlighting/&#34;&gt;ドキュメント&lt;/a&gt;によると、Hugoでは&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E3%82%B7%E3%83%B3%E3%82%BF%E3%83%83%E3%82%AF%E3%82%B9%E3%83%8F%E3%82%A4%E3%83%A9%E3%82%A4%E3%83%88&#34;&gt;シンタックスハイライト&lt;/a&gt;を実現する方法を以下の2つから選べる。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;サーバサイド: Hugoでのブログサイト生成時にハイライトしておく方法。&lt;/li&gt;
+&lt;li&gt;クライアントサイド: クライアントがブログを読み込んだ時にJavaScriptでハイライトする方法。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;前者の方が当然クライアントの負荷が軽くなるが、&lt;a href=&#34;http://pygments.org/&#34;&gt;&lt;strong&gt;Pygments&lt;/strong&gt;&lt;/a&gt;のインストールが必要だったりめんどくさそうなので後者にする。(Pygmentsは&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/&#34;&gt;Jekyllのとき&lt;/a&gt;にすでに入れたけど…)&lt;/p&gt;
+
+&lt;h2 id=&#34;hugo味見&#34;&gt;Hugo味見&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://gohugo.io/commands/&#34;&gt;Hugoコマンドリファレンス&lt;/a&gt;を見つつ、Hugoの味見をする。&lt;/p&gt;
+
+&lt;p&gt;サイトのひな形を作るコマンドは&lt;code&gt;hugo new site [path]&lt;/code&gt;。&lt;code&gt;hugo new site blog&lt;/code&gt;を実行して、&lt;strong&gt;blog&lt;/strong&gt;という名のフォルダにサイトの初期ソースを生成。blogの部分はファイルもフォルダも存在しないパスを指定する。&lt;/p&gt;
+
+&lt;p&gt;この時点で、blogフォルダ内には以下のものが入っている。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://gohugo.io/content/archetypes/&#34;&gt;&lt;strong&gt;archetypes&lt;/strong&gt;&lt;/a&gt;: 新規記事作成時に自動で挿入される&lt;a href=&#34;https://gohugo.io/content/front-matter/&#34;&gt;&lt;strong&gt;Front Matter&lt;/strong&gt;&lt;/a&gt;(後述)のカスタマイズをするためのファイルを置くフォルダ。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://gohugo.io/content/organization/&#34;&gt;&lt;strong&gt;content&lt;/strong&gt;&lt;/a&gt;: ブログのコンテンツ(記事など)を置くフォルダ。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://gohugo.io/extras/datafiles/&#34;&gt;&lt;strong&gt;data&lt;/strong&gt;&lt;/a&gt;: サイト生成時に使うデータを置くフォルダ。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://gohugo.io/templates/overview/&#34;&gt;l&lt;strong&gt;ayouts&lt;/strong&gt;&lt;/a&gt;: サイトのレイアウトを定義するファイルを置くフォルダ。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://gohugo.io/themes/creation&#34;&gt;&lt;strong&gt;static&lt;/strong&gt;&lt;/a&gt;: CSSとかJavaScriptとか画像とかのファイルを置くフォルダ。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://gohugo.io/overview/configuration/&#34;&gt;&lt;strong&gt;config.toml&lt;/strong&gt;&lt;/a&gt;: 設定ファイル。これは&lt;a href=&#34;https://github.com/toml-lang/toml&#34;&gt;&lt;strong&gt;TOML&lt;/strong&gt;&lt;/a&gt;だが、&lt;a href=&#34;https://ja.wikipedia.org/wiki/YAML&#34;&gt;&lt;strong&gt;YAML&lt;/strong&gt;&lt;/a&gt;か&lt;a href=&#34;https://ja.wikipedia.org/wiki/JavaScript_Object_Notation&#34;&gt;&lt;strong&gt;JSON&lt;/strong&gt;&lt;/a&gt;でもいい。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;記事を作るコマンドは&lt;code&gt;hugo new  [path]&lt;/code&gt;。blogフォルダに&lt;code&gt;cd&lt;/code&gt;して、二つ記事を作ってみる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;hugo new about.md
+hugo new post/first_post.md
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;blog\content\about.md&lt;/strong&gt;と&lt;strong&gt;blog\content\post\first_post.md&lt;/strong&gt;が生成された。
+これらには、Front Matterという、記事のメタ情報が自動で書き込まれる。
+デフォルトで書き込まれるのは、日付(&lt;strong&gt;date&lt;/strong&gt;)、ドラフトフラグ(&lt;strong&gt;draft&lt;/strong&gt;)、タイトル(&lt;strong&gt;title&lt;/strong&gt;)だけだが、
+&lt;a href=&#34;https://gohugo.io/content/archetypes/&#34;&gt;&lt;strong&gt;Archetypes&lt;/strong&gt;&lt;/a&gt;という機能でカスタマイズできる。
+が、今はやらない。&lt;/p&gt;
+
+&lt;p&gt;about.mdとfirst_post.mdには適当に記事の内容を書いておく。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;次に&lt;a href=&#34;https://gohugo.io/themes/overview/&#34;&gt;テーマ&lt;/a&gt;を設定する。テーマを使えば、自分でレイアウトを書く必要がない。&lt;/p&gt;
+
+&lt;p&gt;テーマは&lt;a href=&#34;https://github.com/spf13/hugoThemes&#34;&gt;&lt;strong&gt;Hugo Themes&lt;/strong&gt;&lt;/a&gt;にリストされていて、ひとつひとつ選んでインストールもできるけど、今回は全部いっぺんにインストールして色々見てみる。blogフォルダ内で以下を実行すると、&lt;strong&gt;blog\themes&lt;/strong&gt;に全テーマがインストールされる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;git clone --recursive https://github.com/spf13/hugoThemes.git themes
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;これで、以下のコマンドを実行すると、サイトがビルドされ、サーバが起動し、ブラウザで確認できる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;hugo server -t angels-ladder -D -w
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;-t&lt;/code&gt;でテーマを指定している。指定するのは&lt;strong&gt;blog\themes&lt;/strong&gt;内のフォルダ名。&lt;code&gt;-D&lt;/code&gt;はドラフト記事をビルドしたいときにつけるオプション。さっき作ったabout.mdとfirst_post.mdは、そのFront Matterのdraftがtrueになっていて、つまりドラフトなので、&lt;code&gt;-D&lt;/code&gt;を付けないとビルドされない。&lt;code&gt;-w&lt;/code&gt;は&lt;a href=&#34;https://gohugo.io/extras/livereload/&#34;&gt;&lt;strong&gt;LiveReload&lt;/strong&gt;&lt;/a&gt;を有効にするフラグで、付けておくとソースを修正したら自動でリビルドとブラウザのリロードが実行される。(変更を監視されるのはサブフォルダ内だけ。config.tomlの変更は無視される。)&lt;/p&gt;
+
+&lt;p&gt;サーバには&lt;strong&gt;&lt;a href=&#34;http://localhost:1313/&#34;&gt;http://localhost:1313/&lt;/a&gt;&lt;/strong&gt;でアクセスできる。今回指定したテーマangels-ladderだと、トップページにfirst_post.mdの記事へのリンクがあり、その内容を確認できる。about.mdの方はリンクはなく、直接&lt;strong&gt;&lt;a href=&#34;http://localhost:1313/about/&#34;&gt;http://localhost:1313/about/&lt;/a&gt;&lt;/strong&gt;アクセスしないと見れない。この辺りはテーマ(と設定?)によって異なるのかな。&lt;/p&gt;
+
+&lt;p&gt;まあabout.mdは試しに作ってみただけなので消しておく。&lt;/p&gt;
+
+&lt;p&gt;以上で味見終わり。&lt;/p&gt;
+
+&lt;h2 id=&#34;テーマの選定-robust&#34;&gt;テーマの選定 - Robust&lt;/h2&gt;
+
+&lt;p&gt;Hugo Themesにあるテーマはどれもあまりしっくりこなかった。
+もう自分で作ろうかと思っていたところ、&lt;a href=&#34;https://github.com/dim0627/hugo_theme_robust&#34;&gt;&lt;strong&gt;Robust&lt;/strong&gt;&lt;/a&gt;というテーマを見つけた。
+&lt;a href=&#34;http://yet.unresolved.xyz/&#34;&gt;こんな感じ&lt;/a&gt;のページができる。いい。これを使うことにする。&lt;/p&gt;
+
+&lt;p&gt;blogフォルダ内で、いったんthemesを消してから以下を実行してRobustをインストール。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bat&#34;&gt;&amp;gt; git init .
+&amp;gt; git submodule add https://github.com/dim0627/hugo_theme_robust.git themes/hugo_theme_robust
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ここでは、&lt;code&gt;git init&lt;/code&gt;でblogフォルダをGitレポジトリにして、&lt;code&gt;git submodule add&lt;/code&gt;で&lt;strong&gt;hugo_theme_robust&lt;/strong&gt; (RobustのGitHubプロジェクト)を&lt;a href=&#34;https://git-scm.com/book/ja/v1/Git-%E3%81%AE%E3%81%95%E3%81%BE%E3%81%96%E3%81%BE%E3%81%AA%E3%83%84%E3%83%BC%E3%83%AB-%E3%82%B5%E3%83%96%E3%83%A2%E3%82%B8%E3%83%A5%E3%83%BC%E3%83%AB&#34;&gt;サブモジュール&lt;/a&gt;として追加している。
+こうすることで、blogとhugo_theme_robustを別々のレポジトリとして管理しつつ、hugo_theme_robustをblogの一部として使うことができる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;hugo server&lt;/code&gt;するときやビルド時に毎回テーマを指定しなくてもいいように、
+config.tomlに&lt;code&gt;theme = &amp;quot;hugo_theme_robust&amp;quot;&lt;/code&gt;を追記しておく。&lt;/p&gt;
+
+&lt;h2 id=&#34;テーマのカスタマイズ&#34;&gt;テーマのカスタマイズ&lt;/h2&gt;
+
+&lt;p&gt;テーマフォルダ内の構成はblogフォルダ(プロジェクトルート)内と同じようになっていて、Hugoがサイトをビルドするとき、プロジェクトルート内のフォルダとテーマフォルダ内のフォルダをマージしたものを使ってくれる。この際、プロジェクトルート内のファイルが優先される。&lt;/p&gt;
+
+&lt;p&gt;つまり例えば以下のような構成のプロジェクトがあったとする。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;blog
+
+&lt;ul&gt;
+&lt;li&gt;layouts
+
+&lt;ul&gt;
+&lt;li&gt;hoge.html&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;themes
+
+&lt;ul&gt;
+&lt;li&gt;hugo_theme_robust
+
+&lt;ul&gt;
+&lt;li&gt;layouts
+
+&lt;ul&gt;
+&lt;li&gt;hoge.html&lt;/li&gt;
+&lt;li&gt;foo.html&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Hugoはこれをビルドするとき、layouts内には&lt;strong&gt;blog\layouts\hoge.html&lt;/strong&gt;と&lt;strong&gt;blog\thmes\hugo_theme_robust\layouts\foo.html&lt;/strong&gt;があるものとして処理してくれる。テーマをちょっとカスタマイズしたいときに、テーマのソースをいじらないでいいのが便利。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Robustはとりあえず設定ファイルをカスタマイズすれば使える。設定ファイルは、Robustはconfig.yamlだけど、ルートにconfig.toml置いたらちゃんと上書きできた。&lt;/p&gt;
+
+&lt;h2 id=&#34;記事の仕上げ&#34;&gt;記事の仕上げ&lt;/h2&gt;
+
+&lt;p&gt;first_post.mdの内容を仕上げて、以下のコマンドでdraftフラグをオフにする。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bat&#34;&gt;&amp;gt; hugo undraft content\post\first_post.md
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これをやるとdateも更新される。&lt;/p&gt;
+
+&lt;h2 id=&#34;githubへソースを保存&#34;&gt;GitHubへソースを保存&lt;/h2&gt;
+
+&lt;p&gt;blog内の変更をコミットして、GitHubにblogという名のレポジトリを作成して、以下のコマンドでソースをアップロードする。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bat&#34;&gt;&amp;gt; git remote add origin git@github.com:kaitoy/blog.git
+&amp;gt; git push -u origin master
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;また、ここで、&lt;strong&gt;gh-pages&lt;/strong&gt;というブランチを作り、中身を空にして、masterとは別途チェックアウトしておく。
+コマンドは以下。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bat&#34;&gt;&amp;gt; git checkout -b gh-pages
+&amp;gt; rm -rf *
+&amp;gt; git rm -rf .
+&amp;gt; git commit -m &amp;quot;Init GitHub Pages branch.&amp;quot;
+&amp;gt; git push origin gh-pages
+&amp;gt; git checkout master
+&amp;gt; git clone -b gh-pages git@github.com:kaitoy/blog.git pages
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これでgh-pagesブランチが&lt;strong&gt;blog\pages&lt;/strong&gt;フォルダに展開された。&lt;/p&gt;
+
+&lt;p&gt;因みにgh-pagesは、&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/#github-pages%E5%91%B3%E8%A6%8B&#34;&gt;以前のエントリ&lt;/a&gt;にも書いたが、GitHub Pagesで公開するサイトを置く特別なブランチ。&lt;/p&gt;
+
+&lt;h2 id=&#34;ビルド-デプロイ&#34;&gt;ビルド・デプロイ&lt;/h2&gt;
+
+&lt;p&gt;ビルドコマンドは単に&lt;code&gt;hugo&lt;/code&gt;。ビルド成果物はデフォルトで&lt;strong&gt;public&lt;/strong&gt;というフォルダに入る。
+ここでは、pagesフォルダに入るように以下のコマンドでビルドする。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bat&#34;&gt;&amp;gt; hugo -d pages
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ビルド完了したら、pagesフォルダに&lt;code&gt;cd&lt;/code&gt;して、全てのファイルを&lt;code&gt;git add&lt;/code&gt;して、コミットしてプッシュすればデプロイ完了。
+&lt;code&gt;https://kaitoy.github.io/blog/&lt;/code&gt;でサイトを確認できる。&lt;/p&gt;
+
+&lt;h2 id=&#34;カスタムドメイン&#34;&gt;カスタムドメイン&lt;/h2&gt;
+
+&lt;p&gt;サイトに&lt;code&gt;http://tbd.kaitoy.xyz&lt;/code&gt;でアクセスできるようにする。手順は以下。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.value-domain.com/&#34;&gt;&lt;strong&gt;VALUE-DOMAIN&lt;/strong&gt;&lt;/a&gt;でkaitoy.xyzを取得。&lt;/li&gt;
+&lt;li&gt;VALUE-DOMAINのDNS設定に&lt;code&gt;cname tbd kaitoy.github.io.&lt;/code&gt;を追加。&lt;/li&gt;
+&lt;li&gt;gh-pagesブランチのルートに&lt;strong&gt;CNAME&lt;/strong&gt;というファイルを作り、&lt;strong&gt;tbd.kaitoy.xyz&lt;/strong&gt;とだけ書いておく。&lt;/li&gt;
+&lt;li&gt;config.tomlのbaseurlを&lt;strong&gt;&lt;a href=&#34;http://tbd.kaitoy.xyz&#34;&gt;http://tbd.kaitoy.xyz&lt;/a&gt;&lt;/strong&gt;に変更。ビルドしてプッシュ。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;以上でブログサイト立ち上げ完了。あとはテーマをカスタマイズしたり、ひたすらエントリを書く。&lt;/p&gt;
+</description>
+        </item>
+      
+    
+      
+        <item>
+          <title>GitHub Pagesでブログ立ち上げ - Jekyllのためのツール</title>
           <link>http://tbd.kaitoy.xyz/2015/08/25/tools-for-jekyll/</link>
           <pubDate>Tue, 25 Aug 2015 22:36:28 MDT</pubDate>
           <author>Kaito Yamada</author>
           <guid>http://tbd.kaitoy.xyz/2015/08/25/tools-for-jekyll/</guid>
           <description>
 
-&lt;p&gt;&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/&#34;&gt;&lt;strong&gt;ブログ立ち上げ - GitHub PagesとJekyll&lt;/strong&gt;&lt;/a&gt;の続き。&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/&#34;&gt;&lt;strong&gt;ブログ立ち上げ - GitHub PagesとJekyll&lt;/strong&gt;&lt;/a&gt;の続き。
+前回は、&lt;a href=&#34;https://pages.github.com/&#34;&gt;&lt;strong&gt;GitHub Pages&lt;/strong&gt;&lt;/a&gt;と&lt;a href=&#34;http://jekyllrb.com/docs/home/&#34;&gt;&lt;strong&gt;Jekyll&lt;/strong&gt;&lt;/a&gt;でブログを始めることにして、Jekyllのセットアップに四苦八苦した。&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://jekyllrb.com/docs/home/&#34;&gt;&lt;strong&gt;Jekyll&lt;/strong&gt;&lt;/a&gt;がだいたいセットアップできたところで、どんなサイトデザインにしようか考え始めた。
+&lt;p&gt;Jekyllがだいたいセットアップできたところで、どんなサイトデザインにしようか考え始めた。
 調べたところ、生のJekyllを使うよりも簡単に見栄えのいいサイトを作れる方法がある模様。&lt;/p&gt;
 
-&lt;h2 id=&#34;octopress:dd0885b6a494930ba599b0a0de566454&#34;&gt;Octopress&lt;/h2&gt;
+&lt;h2 id=&#34;octopress&#34;&gt;Octopress&lt;/h2&gt;
 
 &lt;p&gt;もっとも有名なのは&lt;a href=&#34;http://octopress.org/&#34;&gt;&lt;strong&gt;Octopress&lt;/strong&gt;&lt;/a&gt;。
 ホームページの説明によると、「Octopress is a framework designed for Jekyll, the static blogging engine powering Github Pages」とのこと。
@@ -43,11 +274,11 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
 
 &lt;p&gt;つまりOctopressをGitHub Pages上のサイトに使うとしたら、結局ビルド成果物をアップしないといけなくなる。JekyllのソースだけをGitHubで管理するように出来たらいいと思っていたが当てが外れた。&lt;/p&gt;
 
-&lt;h2 id=&#34;jekyll-bootstrap:dd0885b6a494930ba599b0a0de566454&#34;&gt;Jekyll-Bootstrap&lt;/h2&gt;
+&lt;h2 id=&#34;jekyll-bootstrap&#34;&gt;Jekyll-Bootstrap&lt;/h2&gt;
 
 &lt;p&gt;Octopressを使うモチベーションが下がり、他のを探したところ、&lt;a href=&#34;http://jekyllbootstrap.com/&#34;&gt;&lt;strong&gt;Jekyll-Bootstrap&lt;/strong&gt;&lt;/a&gt;というのを見つけた。&lt;/p&gt;
 
-&lt;p&gt;Jekyll-BootstrapはJekyllのソースそのもので、面倒な部分は既にできてるので、ユーザはテンプレートを使って記事の内容を書くだけでいいよ、というもの。テーマ機能と、記事作成作業を&lt;a href=&#34;http://docs.seattlerb.org/rake/&#34;&gt;Rake&lt;/a&gt;で簡易化するためのRakefile付き。&lt;/p&gt;
+&lt;p&gt;Jekyll-BootstrapはJekyllのソースそのもので、面倒な部分は既にできてるので、ユーザはテンプレートを使って記事の内容を書くだけでいいよ、というもの。テーマ機能と、記事作成作業を&lt;a href=&#34;http://docs.seattlerb.org/rake/&#34;&gt;&lt;strong&gt;Rake&lt;/strong&gt;&lt;/a&gt;で簡易化するためのRakefile付き。&lt;/p&gt;
 
 &lt;p&gt;すばらしいことに、「JekyllのソースだけをGitHubで管理するように出来たらいい」という需要に応えることを目指して作られていて、Jekyll-Bootstrapをベースに作ったJekyllソースはGitHub Pages上のJekyllでビルド可能。&lt;/p&gt;
 
@@ -55,17 +286,17 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
 が、&lt;a href=&#34;https://github.com/plusjade/jekyll-bootstrap&#34;&gt;プロジェクトページ&lt;/a&gt;を見るにあまり活発に開発が進んでない模様。
 廃れ行きそうなツールを使うのもなぁ…&lt;/p&gt;
 
-&lt;h2 id=&#34;結論:dd0885b6a494930ba599b0a0de566454&#34;&gt;結論&lt;/h2&gt;
+&lt;h2 id=&#34;結論&#34;&gt;結論&lt;/h2&gt;
 
 &lt;p&gt;Jekyll-Bootstrapを使うのは気が進まない。Octopressを使うとビルド成果物をアップしないといけない。
-どうせビルド成果物を上げるのなら、Jekyllにこだわる必要はないか、ということで、去年末くらいから盛り上がってきている&lt;a href=&#34;https://gohugo.io/&#34;&gt;Hugo&lt;/a&gt;にすることに。Hugoについてはまた別のエントリで書く。&lt;/p&gt;
+どうせビルド成果物を上げるのなら、Jekyllにこだわる必要はないか、ということで、去年末くらいから盛り上がってきている&lt;a href=&#34;https://gohugo.io/&#34;&gt;&lt;strong&gt;Hugo&lt;/strong&gt;&lt;/a&gt;にすることに。Hugoについてはまた&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/08/28/using-hugo/&#34;&gt;別のエントリ&lt;/a&gt;で書く。&lt;/p&gt;
 </description>
         </item>
       
     
       
         <item>
-          <title>ブログ立ち上げ - GitHub PagesとJekyll</title>
+          <title>GitHub Pagesでブログ立ち上げ - GitHub PagesとJekyll</title>
           <link>http://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/</link>
           <pubDate>Sat, 15 Aug 2015 10:48:49 MDT</pubDate>
           <author>Kaito Yamada</author>
@@ -75,7 +306,7 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
 &lt;p&gt;このブログを立ち上げたときの作業を、主に備忘録としていくつかのエントリに分けて書く。
 このエントリでは主に&lt;a href=&#34;https://pages.github.com/&#34;&gt;&lt;strong&gt;GitHub Pages&lt;/strong&gt;&lt;/a&gt;と&lt;a href=&#34;http://jekyllrb.com/docs/home/&#34;&gt;&lt;strong&gt;Jekyll&lt;/strong&gt;&lt;/a&gt;について書く。&lt;/p&gt;
 
-&lt;h2 id=&#34;今の構成:e835a818c5b33e60f929ffcaddc44fef&#34;&gt;今の構成&lt;/h2&gt;
+&lt;h2 id=&#34;今の構成&#34;&gt;今の構成&lt;/h2&gt;
 
 &lt;p&gt;このブログは、&lt;a href=&#34;https://gohugo.io/&#34;&gt;&lt;strong&gt;Hugo&lt;/strong&gt;&lt;/a&gt;で作って、GitHub Pagesで公開している。&lt;/p&gt;
 
@@ -84,7 +315,7 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
 
 &lt;p&gt;以下、このブログ立ち上げに向けてやった作業について書く。&lt;/p&gt;
 
-&lt;h2 id=&#34;github-pages味見:e835a818c5b33e60f929ffcaddc44fef&#34;&gt;GitHub Pages味見&lt;/h2&gt;
+&lt;h2 id=&#34;github-pages味見&#34;&gt;GitHub Pages味見&lt;/h2&gt;
 
 &lt;p&gt;GitHub Pagesを利用するには、&lt;strong&gt;GitHubユーザ名.github.io&lt;/strong&gt; という名前のレポジトリを作るか、任意のレポジトリに&lt;strong&gt;gh-pages&lt;/strong&gt; という名前のブランチを作って、そこにサイトのソースを置けばいい。そのサイトには、前者の場合は&lt;code&gt;http://GitHubユーザ名.github.io&lt;/code&gt;で、後者の場合は&lt;code&gt;http://GitHubユーザ名.github.io/レポジトリ名&lt;/code&gt;でアクセスできる。&lt;/p&gt;
 
@@ -97,7 +328,7 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
 
 &lt;p&gt;これだけ。&lt;/p&gt;
 
-&lt;h2 id=&#34;github-pagesとjekyll:e835a818c5b33e60f929ffcaddc44fef&#34;&gt;GitHub PagesとJekyll&lt;/h2&gt;
+&lt;h2 id=&#34;github-pagesとjekyll&#34;&gt;GitHub PagesとJekyll&lt;/h2&gt;
 
 &lt;p&gt;GitHub Pagesには、普通にHTML/CSS/Javascriptのソースを置いてもいいけど、Jekyllを利用することもできる。&lt;/p&gt;
 
@@ -113,17 +344,17 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
 &lt;li&gt;Jekyllを使っても、かっこいいサイトを手軽に作ろうと思ったら、結局ビルド成果物もGitHubに上げないといけなくなる。&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h2 id=&#34;jekyllセットアップ:e835a818c5b33e60f929ffcaddc44fef&#34;&gt;Jekyllセットアップ&lt;/h2&gt;
+&lt;h2 id=&#34;jekyllセットアップ&#34;&gt;Jekyllセットアップ&lt;/h2&gt;
 
 &lt;p&gt;GitHub PagesでJekyll使う場合は、GitHub Pagesと同じJekyll環境を手元に作ってプレビューできるようにしておくべきとのこと。なので、&lt;a href=&#34;https://help.github.com/articles/using-jekyll-with-pages/&#34;&gt;これ&lt;/a&gt;に従って自分のPC (Windows 7) にJekyllをセットアップする。&lt;/p&gt;
 
-&lt;h4 id=&#34;１-rubyインストール:e835a818c5b33e60f929ffcaddc44fef&#34;&gt;１．Rubyインストール&lt;/h4&gt;
+&lt;h4 id=&#34;１-rubyインストール&#34;&gt;１．Rubyインストール&lt;/h4&gt;
 
 &lt;p&gt;Jekyllは &lt;strong&gt;Ruby&lt;/strong&gt; で書かれてるので、まずはRubyをインストールする。
 Windowsなので&lt;a href=&#34;http://rubyinstaller.org/&#34;&gt;&lt;strong&gt;RubyInstaller&lt;/strong&gt;&lt;/a&gt; (ver. 2.2.2)をダウンロードしてインストール。
 &lt;a href=&#34;http://bundler.io/&#34;&gt;&lt;strong&gt;Bundler&lt;/strong&gt;&lt;/a&gt; (RubyのパッケージであるGemの依存をアプリケーションごとに管理するツール) もあるといいらしいので、&lt;code&gt;gem install bundler&lt;/code&gt;を実行してインストール。&lt;/p&gt;
 
-&lt;h4 id=&#34;2-jekyllインストール:e835a818c5b33e60f929ffcaddc44fef&#34;&gt;2.  Jekyllインストール&lt;/h4&gt;
+&lt;h4 id=&#34;2-jekyllインストール&#34;&gt;2.  Jekyllインストール&lt;/h4&gt;
 
 &lt;p&gt;さっき作ったレポジトリ　&lt;strong&gt;kaitoy.github.io&lt;/strong&gt; (の手元のクローン)のルートに、Bundlerの定義ファイルを &lt;strong&gt;Gemfile&lt;/strong&gt; という名前で作り、以下の内容を書く。&lt;/p&gt;
 
@@ -149,7 +380,7 @@ gem &#39;github-pages&#39;
 
 &lt;p&gt;&lt;code&gt;bundle exec jekyll serve&lt;/code&gt;すると、カレントディレクトリのJekyllソースがビルドされ、Webサーバが起動し、&lt;code&gt;http://localhost:4000&lt;/code&gt;でそのビルド結果を見れるらしい。&lt;/p&gt;
 
-&lt;h4 id=&#34;3-jekyll味見:e835a818c5b33e60f929ffcaddc44fef&#34;&gt;3.  Jekyll味見&lt;/h4&gt;
+&lt;h4 id=&#34;3-jekyll味見&#34;&gt;3.  Jekyll味見&lt;/h4&gt;
 
 &lt;p&gt;試しに、適当な場所で&lt;code&gt;jekyll new hoge&lt;/code&gt;を実行し、新規サイトフォルダ &lt;strong&gt;hoge&lt;/strong&gt; を作り、その中で&lt;code&gt;jekyll build&lt;/code&gt;してみる。以下のエラー。&lt;/p&gt;
 
@@ -166,7 +397,7 @@ Jekyllのサイトでも紹介されている&lt;a href=&#34;http://jekyll-windo
 
 &lt;p&gt;後者は、Jekyllのインスタンスを含んでいて、将来にわたるJekyllのアップデートについていってくれるか怪しいので、前者を見てみる。&lt;/p&gt;
 
-&lt;h4 id=&#34;4-run-jekyll-on-windowsを試す:e835a818c5b33e60f929ffcaddc44fef&#34;&gt;4. Run Jekyll on Windowsを試す&lt;/h4&gt;
+&lt;h4 id=&#34;4-run-jekyll-on-windowsを試す&#34;&gt;4. Run Jekyll on Windowsを試す&lt;/h4&gt;
 
 &lt;p&gt;Run Jekyll on Windowsによると、Jekyllはデフォルトでsyntax highlighterの &lt;strong&gt;pygments.rb&lt;/strong&gt; なるものに依存していて、pygments.rbをWindowsで使うには &lt;strong&gt;Python&lt;/strong&gt; とそのモジュールである &lt;strong&gt;Pygments&lt;/strong&gt; などをインストールする必要があるのこと。&lt;/p&gt;
 
@@ -209,7 +440,7 @@ Jekyllのサイトでも紹介されている&lt;a href=&#34;http://jekyll-windo
 
 &lt;p&gt;このwarningについてはRun Jekyll on Windowsには載っていないが、pygments.rbを0.5.0にダウングレードすればいいとの情報が&lt;a href=&#34;https://github.com/jekyll/jekyll/issues/2052&#34;&gt;ここ&lt;/a&gt;とかにある。&lt;/p&gt;
 
-&lt;h2 id=&#34;5-jekyllとの決別:e835a818c5b33e60f929ffcaddc44fef&#34;&gt;5. Jekyllとの決別&lt;/h2&gt;
+&lt;h2 id=&#34;5-jekyllとの決別&#34;&gt;5. Jekyllとの決別&lt;/h2&gt;
 
 &lt;p&gt;この辺りまでJekyllをセットアップした後、JekyllのWindowsとの相性の悪さに嫌気がさしつつ、Jekyllで簡単にかっこいいサイトを作るためのツールなどを調べているうちに、Jekyllを使うのをやめた。それについては&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/08/25/tools-for-jekyll/&#34;&gt;別のエントリ&lt;/a&gt;で書く。&lt;/p&gt;
 </description>
