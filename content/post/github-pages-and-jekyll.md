@@ -5,7 +5,7 @@ draft = false
 eyecatch = "jekyll_logo.png"
 slug = "github-pages-and-jekyll"
 tags = [ "blog", "github", "jekyll" ]
-title = "ブログ立ち上げ - GitHub PagesとJekyll"
+title = "GitHub Pagesでブログ立ち上げ - GitHub PagesとJekyll"
 +++
 
 このブログを立ち上げたときの作業を、主に備忘録としていくつかのエントリに分けて書く。

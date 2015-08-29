@@ -5,12 +5,13 @@ draft = false
 eyecatch = "octopress.png"
 slug = "tools-for-jekyll"
 tags = [ "blog", "github", "jekyll" ]
-title = "ブログ立ち上げ - Jekyllのためのツール"
+title = "GitHub Pagesでブログ立ち上げ - Jekyllのためのツール"
 +++
 
 [__ブログ立ち上げ - GitHub PagesとJekyll__](http://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/)の続き。
+前回は、[__GitHub Pages__](https://pages.github.com/)と[__Jekyll__](http://jekyllrb.com/docs/home/)でブログを始めることにして、Jekyllのセットアップに四苦八苦した。
 
-[__Jekyll__](http://jekyllrb.com/docs/home/)がだいたいセットアップできたところで、どんなサイトデザインにしようか考え始めた。
+Jekyllがだいたいセットアップできたところで、どんなサイトデザインにしようか考え始めた。
 調べたところ、生のJekyllを使うよりも簡単に見栄えのいいサイトを作れる方法がある模様。
 
 ## Octopress
@@ -35,7 +36,7 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
 ## Jekyll-Bootstrap
 Octopressを使うモチベーションが下がり、他のを探したところ、[__Jekyll-Bootstrap__](http://jekyllbootstrap.com/)というのを見つけた。
 
-Jekyll-BootstrapはJekyllのソースそのもので、面倒な部分は既にできてるので、ユーザはテンプレートを使って記事の内容を書くだけでいいよ、というもの。テーマ機能と、記事作成作業を[Rake](http://docs.seattlerb.org/rake/)で簡易化するためのRakefile付き。
+Jekyll-BootstrapはJekyllのソースそのもので、面倒な部分は既にできてるので、ユーザはテンプレートを使って記事の内容を書くだけでいいよ、というもの。テーマ機能と、記事作成作業を[__Rake__](http://docs.seattlerb.org/rake/)で簡易化するためのRakefile付き。
 
 すばらしいことに、「JekyllのソースだけをGitHubで管理するように出来たらいい」という需要に応えることを目指して作られていて、Jekyll-Bootstrapをベースに作ったJekyllソースはGitHub Pages上のJekyllでビルド可能。
 
@@ -45,4 +46,4 @@ Jekyll-BootstrapはJekyllのソースそのもので、面倒な部分は既に�
 
 ## 結論
 Jekyll-Bootstrapを使うのは気が進まない。Octopressを使うとビルド成果物をアップしないといけない。
-どうせビルド成果物を上げるのなら、Jekyllにこだわる必要はないか、ということで、去年末くらいから盛り上がってきている[Hugo](https://gohugo.io/)にすることに。Hugoについてはまた別のエントリで書く。
+どうせビルド成果物を上げるのなら、Jekyllにこだわる必要はないか、ということで、去年末くらいから盛り上がってきている[__Hugo__](https://gohugo.io/)にすることに。Hugoについてはまた[別のエントリ](http://tbd.kaitoy.xyz/2015/08/28/using-hugo/)で書く。
