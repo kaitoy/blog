@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Atomウィンドウ内で画像を動かすパッケージ - disturb-me | To Be Decided">
+    <meta property="og:url" content="http://tbd.kaitoy.xyz/2015/09/06/disturb-me/">
+    <meta property="og:description" content="Atomのパッケージを見ていて、便利なパッケージが沢山あるなぁと思いつつ、真面目なパッケージばかりでもつまらないので、たまには不真面目で役に立たないパッケージがあってもいいかと思って作ったパッケージの話。 disturb-me 作ったのはdisturb-meというパッケージ。 Ctrl&#43;Altを押しながらdとmを押すとAtomウィンドウ内に画像が表示され、その画像がランダムに動き回り作業の邪魔をするというもの。 画像はパッケージの設定から指定できる。デフォルトではAtomのロゴ。 最初はpac-m●nというパッケージ名にして、ゲーム界のミッキーことパ●クマンが動き回るパッケージにしようと思ってたけど、バンダイナムコからダメだと言われてしまった。 この構想はいつかカタログIPオープン化プロジェクトを利用して実現しようと思う。 disturb-meの作り方 以前別のエントリでAtomパッケージの作り方の基本について書いたので、ここではそこで書かなかったことを書く。 1. メインスクリプト - コマンド 今回はコマンドを追加するのでCommandRegistryを使う。 CommandRegistryのインスタンスにはatom.commandsでアクセスでき、そのaddメソッドでコマンドを追加できる。 addメソッドの引数は、第一引数から順に、 target: コマンドを有効にするDOM要素か、それを示すCSSセレクタ。 commandName: コマンドパレットに表示するコマンド名。全部小文字で、単語をハイフンでつないで、パッケージ名を先頭につけるのがルール。 callback(event): コマンドを実行したときに呼ばれるメソッド。 disturb-meのコマンドはAtomウィンドウ内のどこでも有効にしたいので、第一引数にはAtomウィンドウを表すカスタムタグであるatom-workspaceを指定する。 コードは以下の感じ。 activate: (state) -&gt; @subscriptions = new CompositeDisposable @subscriptions.add atom.commands.add &#39;atom-workspace&#39;, &#39;disturb-me:toggle&#39;: =&gt; @toggle() toggle: -&gt; # 画像を挿入したり削除したりするコード。 toggleの中では画像を挿入したり削除したりするわけだけど、この処理は、その画像を表す別のクラスにまかせることにする。 のでtoggleは以下のように書く。 @disturber: null toggle: -&gt; if @disturber? @disturber.stop() @disturber = null else @disturber = new Disturber() document.body.appendChild(@disturber.getElement()) @disturber.start() Disturberが画像を表すクラス。別のファイル(lib/disturber.coffee)の中で定義して、スクリプトの先頭辺りでDisturber = require &#39;./disturber&#39;のようにインポートする。 document.body.appendChildしているところは、何かAtomのAPI(ViewRegistryとか)を使うべきなのかも。 2. Disturber Disturberは以下のように書く。 module.exports = class Disturber element: null constructor: -&gt; # &lt;img&gt;を作って@elementに入れる。 destroy: -&gt; # @elementをDOMツリーから削除する。 getElement: -&gt; # @element返す。 start: -&gt; # @elementのsrcを設定して、ランダムに動かし始める。 stop: -&gt; # @elementを止める。 あまり取り立てて書くことないな…。 因みに画像を動かすのにはVelocityを使い、DOMの操作とかにちょっとjQueryを使う。 3.">
+    
+    <meta property="og:image" content="http://tbd.kaitoy.xyz/images/atom_editor_logo.svg.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      Atomウィンドウ内で画像を動かすパッケージ - disturb-me | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="http://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="http://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/zenburn.min.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="http://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Sun, Sep 6, 2015</span>
+      <h2 class="title">Atomウィンドウ内で画像を動かすパッケージ - disturb-me</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="http://tbd.kaitoy.xyz/images/atom_editor_logo.svg.png" alt="Atomウィンドウ内で画像を動かすパッケージ - disturb-me">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p><a href="https://atom.io/"><strong>Atom</strong></a>のパッケージを見ていて、便利なパッケージが沢山あるなぁと思いつつ、真面目なパッケージばかりでもつまらないので、たまには不真面目で役に立たないパッケージがあってもいいかと思って作ったパッケージの話。</p>
+
+<h2 id="disturb-me">disturb-me</h2>
+
+<p>作ったのは<a href="https://atom.io/packages/disturb-me"><strong>disturb-me</strong></a>というパッケージ。
+<code>Ctrl+Alt</code>を押しながら<code>d</code>と<code>m</code>を押すとAtomウィンドウ内に画像が表示され、その画像がランダムに動き回り作業の邪魔をするというもの。</p>
+
+<p>画像はパッケージの設定から指定できる。デフォルトではAtomのロゴ。</p>
+
+<p>最初は<strong>pac-m●n</strong>というパッケージ名にして、ゲーム界のミッキーことパ●クマンが動き回るパッケージにしようと思ってたけど、バンダイナムコからダメだと言われてしまった。
+この構想はいつか<a href="https://open.channel.or.jp/user.php">カタログIPオープン化プロジェクト</a>を利用して実現しようと思う。</p>
+
+<h2 id="disturb-meの作り方">disturb-meの作り方</h2>
+
+<p>以前<a href="http://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/">別のエントリ</a>でAtomパッケージの作り方の基本について書いたので、ここではそこで書かなかったことを書く。</p>
+
+<h4 id="1-メインスクリプト-コマンド">1. メインスクリプト - コマンド</h4>
+
+<p>今回はコマンドを追加するので<a href="https://atom.io/docs/api/latest/CommandRegistry"><strong>CommandRegistry</strong></a>を使う。
+CommandRegistryのインスタンスには<strong>atom.commands</strong>でアクセスでき、その<strong>add</strong>メソッドでコマンドを追加できる。</p>
+
+<p>addメソッドの引数は、第一引数から順に、</p>
+
+<ol>
+<li>target: コマンドを有効にするDOM要素か、それを示すCSSセレクタ。</li>
+<li>commandName: コマンドパレットに表示するコマンド名。全部小文字で、単語をハイフンでつないで、パッケージ名を先頭につけるのがルール。</li>
+<li>callback(event): コマンドを実行したときに呼ばれるメソッド。</li>
+</ol>
+
+<p><br></p>
+
+<p>disturb-meのコマンドはAtomウィンドウ内のどこでも有効にしたいので、第一引数にはAtomウィンドウを表すカスタムタグである<strong>atom-workspace</strong>を指定する。
+コードは以下の感じ。</p>
+
+<pre><code class="language-coffeescript">  activate: (state) -&gt;
+    @subscriptions = new CompositeDisposable
+    @subscriptions.add atom.commands.add 'atom-workspace', 'disturb-me:toggle': =&gt; @toggle()
+
+  toggle: -&gt;
+    # 画像を挿入したり削除したりするコード。
+</code></pre>
+
+<p><br></p>
+
+<p><strong>toggle</strong>の中では画像を挿入したり削除したりするわけだけど、この処理は、その画像を表す別のクラスにまかせることにする。
+のでtoggleは以下のように書く。</p>
+
+<pre><code class="language-coffeescript">  @disturber: null
+
+  toggle: -&gt;
+    if @disturber?
+      @disturber.stop()
+      @disturber = null
+    else
+      @disturber = new Disturber()
+      document.body.appendChild(@disturber.getElement())
+      @disturber.start()
+</code></pre>
+
+<p><strong>Disturber</strong>が画像を表すクラス。別のファイル(<strong>lib/disturber.coffee</strong>)の中で定義して、スクリプトの先頭辺りで<code>Disturber = require './disturber'</code>のようにインポートする。</p>
+
+<p><strong>document.body.appendChild</strong>しているところは、何かAtomのAPI(<a href="https://atom.io/docs/api/latest/ViewRegistry"><strong>ViewRegistry</strong></a>とか)を使うべきなのかも。</p>
+
+<h4 id="2-disturber">2. Disturber</h4>
+
+<p>Disturberは以下のように書く。</p>
+
+<pre><code class="language-coffeescript">module.exports =
+class Disturber
+
+  element: null
+
+  constructor: -&gt;
+    # &lt;img&gt;を作って@elementに入れる。
+
+  destroy: -&gt;
+    # @elementをDOMツリーから削除する。
+
+  getElement: -&gt;
+    # @element返す。
+
+  start: -&gt;
+    # @elementのsrcを設定して、ランダムに動かし始める。
+
+  stop: -&gt;
+    # @elementを止める。
+</code></pre>
+
+<p>あまり取り立てて書くことないな…。</p>
+
+<p>因みに画像を動かすのには<a href="https://www.npmjs.com/package/velocity-animate"><strong>Velocity</strong></a>を使い、DOMの操作とかにちょっと<a href="https://www.npmjs.com/package/jquery"><strong>jQuery</strong></a>を使う。</p>
+
+<h4 id="3-パッケージ設定">3. パッケージ設定</h4>
+
+<p>動かす画像や動かす速度はユーザが設定できるようにする。
+設定はメインスクリプトで定義でき、その値には<a href="https://atom.io/docs/api/latest/Config"><strong>Config</strong></a>クラスでアクセスできる。</p>
+
+<p>メインスクリプトでの定義は以下のように書く。</p>
+
+<pre><code class="language-coffeescript">module.exports = DisturbMe =
+  disturber: null
+  subscriptions: null
+
+  config:
+    bornImage:
+      title: 'Born-Image'
+      type: 'string'
+      default: 'atom://disturb-me/assets/atom/white/atom_born.gif'
+    bornDuration:
+      title: 'Born-Duration'
+      type: 'integer'
+      default: 2000
+</code></pre>
+
+<p>するとパッケージ設定画面が以下のようになる。</p>
+
+<p><img src="/images/disturb-me/settings.jpg" alt="settings" />
+</p>
+
+<p><br></p>
+
+<p>各設定の定義に最低限必要な属性は<strong>type</strong>と<strong>default</strong>。オプショナルなものに<strong>title</strong>、<strong>description</strong>などがある。
+typeには、<strong>string</strong>、<strong>integer</strong>、<strong>number</strong>、<strong>boolean</strong>、<strong>array</strong>、<strong>object</strong>、<strong>color</strong>を指定できる。
+詳しくは<a href="https://atom.io/docs/api/latest/Config"><strong>Config</strong></a>クラスの説明に載ってる。</p>
+
+<p>Configクラスのインスタンスには<strong>atom.config</strong>でアクセスでき、上で定義した設定を以下のように操作できる。</p>
+
+<pre><code class="language-coffeescript">imagePath = atom.config.get('disturb-me.bornImage')
+atom.config.set('disturb-me.bornDuration', '1000')
+</code></pre>
+
+<h4 id="4-キーバインディング">4. キーバインディング</h4>
+
+<p>メインスクリプト内でコマンドパレットに表示するコマンドを定義したが、これにキーボードショートカット(キーバインディング)を設定する。</p>
+
+<p>キーバインディングは<strong>keymaps</strong>フォルダの中の<strong>cson</strong>ファイルで以下のように定義する。</p>
+
+<pre><code class="language-cson">'atom-workspace':
+  'ctrl-alt-d ctrl-alt-m': 'disturb-me:toggle'
+</code></pre>
+
+<p>これ見ればだいたい書き方はわかるはず。(詳細は<a href="https://atom.io/docs/latest/behind-atom-keymaps-in-depth">Atom Flight Manual</a>に。)</p>
+
+<p>特殊キーは<strong>cmd</strong>、<strong>ctrl</strong>、<strong>alt</strong>、<strong>shift</strong>、<strong>enter</strong>、<strong>escape</strong>、<strong>backspace</strong>、<strong>delete</strong>、<strong>tab</strong>、<strong>home</strong>、<strong>end</strong>、<strong>pageup</strong>、<strong>pagedown</strong>、<strong>left</strong>、<strong>right</strong>、<strong>up</strong>、<strong>down</strong>が使える。</p>
+
+<p>同時に押すキーはハイフンでつなぎ、連続して押すキーはスペースで区切るので、上記<code>ctrl-alt-d ctrl-alt-m</code>は、<code>Ctrl+Alt</code>を押しながら<code>d</code>と<code>m</code>を連続して押す、という意味。</p>
+
+<h4 id="5-package-json">5. package.json</h4>
+
+<p><a href="http://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/#5-package-json%E7%B7%A8%E9%9B%86">前回</a>と同様の編集に加えて、今回は二つのnpmパッケージに依存するので、<strong>dependencies</strong>を以下のように書く。</p>
+
+<pre><code class="language-json">  &quot;dependencies&quot;: {
+    &quot;velocity-animate&quot;: &quot;&gt;=1.2.0&quot;,
+    &quot;jquery&quot;: &quot;&gt;=2.0.0&quot;
+  }
+</code></pre>
+
+<p>これを書いて、プロジェクトルートフォルダで<code>apm install</code>すると、ルート直下の<strong>node_modules</strong>フォルダに依存モジュールがインストールされる。</p>
+
+<p>node_modulesは<strong>Package Generator</strong>が生成する<strong>.gitignore</strong>に入っているので、レポジトリには入らない。</p>
+
+<h4 id="6-リリースなど">6. リリースなど</h4>
+
+<p><a href="http://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/">前回</a>と同様にリリースする。
+めんどいのでテストは書かない。</p>
+
+<p>リリース後、ループしないgifアニメーション画像をdisturb-meに使った場合、そのアニメーションが再生されない場合があるバグに気付いた。
+これについては別のエントリで書くかもしれない。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f09%2f06%2fdisturb-me%2f&t=Atom%e3%82%a6%e3%82%a3%e3%83%b3%e3%83%89%e3%82%a6%e5%86%85%e3%81%a7%e7%94%bb%e5%83%8f%e3%82%92%e5%8b%95%e3%81%8b%e3%81%99%e3%83%91%e3%83%83%e3%82%b1%e3%83%bc%e3%82%b8%20-%20disturb-me" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f09%2f06%2fdisturb-me%2f&text=Atom%e3%82%a6%e3%82%a3%e3%83%b3%e3%83%89%e3%82%a6%e5%86%85%e3%81%a7%e7%94%bb%e5%83%8f%e3%82%92%e5%8b%95%e3%81%8b%e3%81%99%e3%83%91%e3%83%83%e3%82%b1%e3%83%bc%e3%82%b8%20-%20disturb-me&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f09%2f06%2fdisturb-me%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f09%2f06%2fdisturb-me%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f09%2f06%2fdisturb-me%2f&title=Atom%e3%82%a6%e3%82%a3%e3%83%b3%e3%83%89%e3%82%a6%e5%86%85%e3%81%a7%e7%94%bb%e5%83%8f%e3%82%92%e5%8b%95%e3%81%8b%e3%81%99%e3%83%91%e3%83%83%e3%82%b1%e3%83%bc%e3%82%b8%20-%20disturb-me" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="http://tbd.kaitoy.xyz/tags/atom"><i class="fa fa-tags"></i> atom </a>
+                
+                <a href="http://tbd.kaitoy.xyz/tags/disturb-me"><i class="fa fa-tags"></i> disturb-me </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/">Atomのワード境界を日本語対応させるパッケージ - japanese-word-selection</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="http://tbd.kaitoy.xyz/2015/08/28/using-hugo/">
+                  GitHub Pagesでブログ立ち上げ - Hugoを使う
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="http://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

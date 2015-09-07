@@ -6,8 +6,189 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2015</rights>
-    <updated>2015-08-28 23:36:21 -0600 MDT</updated>
+    <updated>2015-09-06 20:18:14 -0600 MDT</updated>
 
+    
+      
+        <item>
+          <title>Atomウィンドウ内で画像を動かすパッケージ - disturb-me</title>
+          <link>http://tbd.kaitoy.xyz/2015/09/06/disturb-me/</link>
+          <pubDate>Sun, 06 Sep 2015 20:18:14 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>http://tbd.kaitoy.xyz/2015/09/06/disturb-me/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;https://atom.io/&#34;&gt;&lt;strong&gt;Atom&lt;/strong&gt;&lt;/a&gt;のパッケージを見ていて、便利なパッケージが沢山あるなぁと思いつつ、真面目なパッケージばかりでもつまらないので、たまには不真面目で役に立たないパッケージがあってもいいかと思って作ったパッケージの話。&lt;/p&gt;
+
+&lt;h2 id=&#34;disturb-me&#34;&gt;disturb-me&lt;/h2&gt;
+
+&lt;p&gt;作ったのは&lt;a href=&#34;https://atom.io/packages/disturb-me&#34;&gt;&lt;strong&gt;disturb-me&lt;/strong&gt;&lt;/a&gt;というパッケージ。
+&lt;code&gt;Ctrl+Alt&lt;/code&gt;を押しながら&lt;code&gt;d&lt;/code&gt;と&lt;code&gt;m&lt;/code&gt;を押すとAtomウィンドウ内に画像が表示され、その画像がランダムに動き回り作業の邪魔をするというもの。&lt;/p&gt;
+
+&lt;p&gt;画像はパッケージの設定から指定できる。デフォルトではAtomのロゴ。&lt;/p&gt;
+
+&lt;p&gt;最初は&lt;strong&gt;pac-m●n&lt;/strong&gt;というパッケージ名にして、ゲーム界のミッキーことパ●クマンが動き回るパッケージにしようと思ってたけど、バンダイナムコからダメだと言われてしまった。
+この構想はいつか&lt;a href=&#34;https://open.channel.or.jp/user.php&#34;&gt;カタログIPオープン化プロジェクト&lt;/a&gt;を利用して実現しようと思う。&lt;/p&gt;
+
+&lt;h2 id=&#34;disturb-meの作り方&#34;&gt;disturb-meの作り方&lt;/h2&gt;
+
+&lt;p&gt;以前&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/&#34;&gt;別のエントリ&lt;/a&gt;でAtomパッケージの作り方の基本について書いたので、ここではそこで書かなかったことを書く。&lt;/p&gt;
+
+&lt;h4 id=&#34;1-メインスクリプト-コマンド&#34;&gt;1. メインスクリプト - コマンド&lt;/h4&gt;
+
+&lt;p&gt;今回はコマンドを追加するので&lt;a href=&#34;https://atom.io/docs/api/latest/CommandRegistry&#34;&gt;&lt;strong&gt;CommandRegistry&lt;/strong&gt;&lt;/a&gt;を使う。
+CommandRegistryのインスタンスには&lt;strong&gt;atom.commands&lt;/strong&gt;でアクセスでき、その&lt;strong&gt;add&lt;/strong&gt;メソッドでコマンドを追加できる。&lt;/p&gt;
+
+&lt;p&gt;addメソッドの引数は、第一引数から順に、&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;target: コマンドを有効にするDOM要素か、それを示すCSSセレクタ。&lt;/li&gt;
+&lt;li&gt;commandName: コマンドパレットに表示するコマンド名。全部小文字で、単語をハイフンでつないで、パッケージ名を先頭につけるのがルール。&lt;/li&gt;
+&lt;li&gt;callback(event): コマンドを実行したときに呼ばれるメソッド。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;disturb-meのコマンドはAtomウィンドウ内のどこでも有効にしたいので、第一引数にはAtomウィンドウを表すカスタムタグである&lt;strong&gt;atom-workspace&lt;/strong&gt;を指定する。
+コードは以下の感じ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-coffeescript&#34;&gt;  activate: (state) -&amp;gt;
+    @subscriptions = new CompositeDisposable
+    @subscriptions.add atom.commands.add &#39;atom-workspace&#39;, &#39;disturb-me:toggle&#39;: =&amp;gt; @toggle()
+
+  toggle: -&amp;gt;
+    # 画像を挿入したり削除したりするコード。
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;toggle&lt;/strong&gt;の中では画像を挿入したり削除したりするわけだけど、この処理は、その画像を表す別のクラスにまかせることにする。
+のでtoggleは以下のように書く。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-coffeescript&#34;&gt;  @disturber: null
+
+  toggle: -&amp;gt;
+    if @disturber?
+      @disturber.stop()
+      @disturber = null
+    else
+      @disturber = new Disturber()
+      document.body.appendChild(@disturber.getElement())
+      @disturber.start()
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;Disturber&lt;/strong&gt;が画像を表すクラス。別のファイル(&lt;strong&gt;lib/disturber.coffee&lt;/strong&gt;)の中で定義して、スクリプトの先頭辺りで&lt;code&gt;Disturber = require &#39;./disturber&#39;&lt;/code&gt;のようにインポートする。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;document.body.appendChild&lt;/strong&gt;しているところは、何かAtomのAPI(&lt;a href=&#34;https://atom.io/docs/api/latest/ViewRegistry&#34;&gt;&lt;strong&gt;ViewRegistry&lt;/strong&gt;&lt;/a&gt;とか)を使うべきなのかも。&lt;/p&gt;
+
+&lt;h4 id=&#34;2-disturber&#34;&gt;2. Disturber&lt;/h4&gt;
+
+&lt;p&gt;Disturberは以下のように書く。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-coffeescript&#34;&gt;module.exports =
+class Disturber
+
+  element: null
+
+  constructor: -&amp;gt;
+    # &amp;lt;img&amp;gt;を作って@elementに入れる。
+
+  destroy: -&amp;gt;
+    # @elementをDOMツリーから削除する。
+
+  getElement: -&amp;gt;
+    # @element返す。
+
+  start: -&amp;gt;
+    # @elementのsrcを設定して、ランダムに動かし始める。
+
+  stop: -&amp;gt;
+    # @elementを止める。
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;あまり取り立てて書くことないな…。&lt;/p&gt;
+
+&lt;p&gt;因みに画像を動かすのには&lt;a href=&#34;https://www.npmjs.com/package/velocity-animate&#34;&gt;&lt;strong&gt;Velocity&lt;/strong&gt;&lt;/a&gt;を使い、DOMの操作とかにちょっと&lt;a href=&#34;https://www.npmjs.com/package/jquery&#34;&gt;&lt;strong&gt;jQuery&lt;/strong&gt;&lt;/a&gt;を使う。&lt;/p&gt;
+
+&lt;h4 id=&#34;3-パッケージ設定&#34;&gt;3. パッケージ設定&lt;/h4&gt;
+
+&lt;p&gt;動かす画像や動かす速度はユーザが設定できるようにする。
+設定はメインスクリプトで定義でき、その値には&lt;a href=&#34;https://atom.io/docs/api/latest/Config&#34;&gt;&lt;strong&gt;Config&lt;/strong&gt;&lt;/a&gt;クラスでアクセスできる。&lt;/p&gt;
+
+&lt;p&gt;メインスクリプトでの定義は以下のように書く。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-coffeescript&#34;&gt;module.exports = DisturbMe =
+  disturber: null
+  subscriptions: null
+
+  config:
+    bornImage:
+      title: &#39;Born-Image&#39;
+      type: &#39;string&#39;
+      default: &#39;atom://disturb-me/assets/atom/white/atom_born.gif&#39;
+    bornDuration:
+      title: &#39;Born-Duration&#39;
+      type: &#39;integer&#39;
+      default: 2000
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;するとパッケージ設定画面が以下のようになる。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;http://tbd.kaitoy.xyz/images/disturb-me/settings.jpg&#34; alt=&#34;settings&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;各設定の定義に最低限必要な属性は&lt;strong&gt;type&lt;/strong&gt;と&lt;strong&gt;default&lt;/strong&gt;。オプショナルなものに&lt;strong&gt;title&lt;/strong&gt;、&lt;strong&gt;description&lt;/strong&gt;などがある。
+typeには、&lt;strong&gt;string&lt;/strong&gt;、&lt;strong&gt;integer&lt;/strong&gt;、&lt;strong&gt;number&lt;/strong&gt;、&lt;strong&gt;boolean&lt;/strong&gt;、&lt;strong&gt;array&lt;/strong&gt;、&lt;strong&gt;object&lt;/strong&gt;、&lt;strong&gt;color&lt;/strong&gt;を指定できる。
+詳しくは&lt;a href=&#34;https://atom.io/docs/api/latest/Config&#34;&gt;&lt;strong&gt;Config&lt;/strong&gt;&lt;/a&gt;クラスの説明に載ってる。&lt;/p&gt;
+
+&lt;p&gt;Configクラスのインスタンスには&lt;strong&gt;atom.config&lt;/strong&gt;でアクセスでき、上で定義した設定を以下のように操作できる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-coffeescript&#34;&gt;imagePath = atom.config.get(&#39;disturb-me.bornImage&#39;)
+atom.config.set(&#39;disturb-me.bornDuration&#39;, &#39;1000&#39;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;4-キーバインディング&#34;&gt;4. キーバインディング&lt;/h4&gt;
+
+&lt;p&gt;メインスクリプト内でコマンドパレットに表示するコマンドを定義したが、これにキーボードショートカット(キーバインディング)を設定する。&lt;/p&gt;
+
+&lt;p&gt;キーバインディングは&lt;strong&gt;keymaps&lt;/strong&gt;フォルダの中の&lt;strong&gt;cson&lt;/strong&gt;ファイルで以下のように定義する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cson&#34;&gt;&#39;atom-workspace&#39;:
+  &#39;ctrl-alt-d ctrl-alt-m&#39;: &#39;disturb-me:toggle&#39;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これ見ればだいたい書き方はわかるはず。(詳細は&lt;a href=&#34;https://atom.io/docs/latest/behind-atom-keymaps-in-depth&#34;&gt;Atom Flight Manual&lt;/a&gt;に。)&lt;/p&gt;
+
+&lt;p&gt;特殊キーは&lt;strong&gt;cmd&lt;/strong&gt;、&lt;strong&gt;ctrl&lt;/strong&gt;、&lt;strong&gt;alt&lt;/strong&gt;、&lt;strong&gt;shift&lt;/strong&gt;、&lt;strong&gt;enter&lt;/strong&gt;、&lt;strong&gt;escape&lt;/strong&gt;、&lt;strong&gt;backspace&lt;/strong&gt;、&lt;strong&gt;delete&lt;/strong&gt;、&lt;strong&gt;tab&lt;/strong&gt;、&lt;strong&gt;home&lt;/strong&gt;、&lt;strong&gt;end&lt;/strong&gt;、&lt;strong&gt;pageup&lt;/strong&gt;、&lt;strong&gt;pagedown&lt;/strong&gt;、&lt;strong&gt;left&lt;/strong&gt;、&lt;strong&gt;right&lt;/strong&gt;、&lt;strong&gt;up&lt;/strong&gt;、&lt;strong&gt;down&lt;/strong&gt;が使える。&lt;/p&gt;
+
+&lt;p&gt;同時に押すキーはハイフンでつなぎ、連続して押すキーはスペースで区切るので、上記&lt;code&gt;ctrl-alt-d ctrl-alt-m&lt;/code&gt;は、&lt;code&gt;Ctrl+Alt&lt;/code&gt;を押しながら&lt;code&gt;d&lt;/code&gt;と&lt;code&gt;m&lt;/code&gt;を連続して押す、という意味。&lt;/p&gt;
+
+&lt;h4 id=&#34;5-package-json&#34;&gt;5. package.json&lt;/h4&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/#5-package-json%E7%B7%A8%E9%9B%86&#34;&gt;前回&lt;/a&gt;と同様の編集に加えて、今回は二つのnpmパッケージに依存するので、&lt;strong&gt;dependencies&lt;/strong&gt;を以下のように書く。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;  &amp;quot;dependencies&amp;quot;: {
+    &amp;quot;velocity-animate&amp;quot;: &amp;quot;&amp;gt;=1.2.0&amp;quot;,
+    &amp;quot;jquery&amp;quot;: &amp;quot;&amp;gt;=2.0.0&amp;quot;
+  }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これを書いて、プロジェクトルートフォルダで&lt;code&gt;apm install&lt;/code&gt;すると、ルート直下の&lt;strong&gt;node_modules&lt;/strong&gt;フォルダに依存モジュールがインストールされる。&lt;/p&gt;
+
+&lt;p&gt;node_modulesは&lt;strong&gt;Package Generator&lt;/strong&gt;が生成する&lt;strong&gt;.gitignore&lt;/strong&gt;に入っているので、レポジトリには入らない。&lt;/p&gt;
+
+&lt;h4 id=&#34;6-リリースなど&#34;&gt;6. リリースなど&lt;/h4&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/&#34;&gt;前回&lt;/a&gt;と同様にリリースする。
+めんどいのでテストは書かない。&lt;/p&gt;
+
+&lt;p&gt;リリース後、ループしないgifアニメーション画像をdisturb-meに使った場合、そのアニメーションが再生されない場合があるバグに気付いた。
+これについては別のエントリで書くかもしれない。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -306,7 +487,7 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
           <guid>http://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/</guid>
           <description>
 
-&lt;p&gt;このブログは&lt;a href=&#34;https://atom.io/&#34;&gt;Atom&lt;/a&gt;というGitHubが開発したテキストエディタを使って書いている。
+&lt;p&gt;このブログは&lt;a href=&#34;https://atom.io/&#34;&gt;&lt;strong&gt;Atom&lt;/strong&gt;&lt;/a&gt;というGitHubが開発したテキストエディタを使って書いている。
 このエントリは、そのAtomのパッケージを作ってみたというお話。&lt;/p&gt;
 
 &lt;h2 id=&#34;atomとは&#34;&gt;Atomとは&lt;/h2&gt;
@@ -314,14 +495,14 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
 &lt;p&gt;Atomは、2015/6/25にバージョン1.0がリリースされたばかりの新しいテキストエディタで、そのせいもあってか日本語サポートはあまり充実していない。
 例えば、テキストを画面の端で折り返す「Soft Wrap」という機能はマルチバイト文字に対応しておらず、日本語で横に長い文を書いたりすると画面からはみ出てしまって不便。&lt;/p&gt;
 
-&lt;p&gt;しかしAtomは、パッケージなる、機能を拡張できるプラグインみたいな仕組みを持っていて、例えば上記Soft Wrapの問題は&lt;a href=&#34;https://github.com/raccy/japanese-wrap&#34;&gt;japanese-wrap&lt;/a&gt;というパッケージをインストールすることで解決できる。
+&lt;p&gt;しかしAtomは、パッケージなる、機能を拡張できるプラグインみたいな仕組みを持っていて、例えば上記Soft Wrapの問題は&lt;a href=&#34;https://github.com/raccy/japanese-wrap&#34;&gt;&lt;strong&gt;japanese-wrap&lt;/strong&gt;&lt;/a&gt;というパッケージをインストールすることで解決できる。
 パッケージは誰でも作って配布することができる。&lt;/p&gt;
 
 &lt;h2 id=&#34;日本語のワード境界&#34;&gt;日本語のワード境界&lt;/h2&gt;
 
 &lt;p&gt;Atomでブログを書いていて不満を感じたのは、日本語のワード境界をちゃんと判定してくれないところ。&lt;/p&gt;
 
-&lt;p&gt;以前は(今もたまに)&lt;a href=&#34;http://sakura-editor.sourceforge.net/&#34;&gt;サクラエディタ&lt;/a&gt;という和製テキストエディタを使っていて、日本語文の中の一語をダブルクリックで選択するという操作をよくやっていた。
+&lt;p&gt;以前は(今もたまに)&lt;a href=&#34;http://sakura-editor.sourceforge.net/&#34;&gt;&lt;strong&gt;サクラエディタ&lt;/strong&gt;&lt;/a&gt;という和製テキストエディタを使っていて、日本語文の中の一語をダブルクリックで選択するという操作をよくやっていた。
 例えば、「Atomのパッケージは便利」という文があったら、「パッケージ」の辺りをダブルクリックすると「パッケージ」という単語を選択できる。&lt;/p&gt;
 
 &lt;p&gt;Atomでも癖でこの操作をすると、妙に広い範囲が選択されてしまう。
@@ -329,7 +510,7 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
 
 &lt;h2 id=&#34;japanese-word-selection&#34;&gt;japanese-word-selection&lt;/h2&gt;
 
-&lt;p&gt;この問題を解決してくれそうなパッケージを探したけど見つからなかったので、いい機会と思い自分で作ったのが&lt;a href=&#34;https://atom.io/packages/japanese-word-selection&#34;&gt;japanese-word-selection&lt;/a&gt;。ソースは&lt;a href=&#34;https://github.com/kaitoy/japanese-word-selection&#34;&gt;GitHub&lt;/a&gt;に。&lt;/p&gt;
+&lt;p&gt;この問題を解決してくれそうなパッケージを探したけど見つからなかったので、いい機会と思い自分で作ったのが&lt;a href=&#34;https://atom.io/packages/japanese-word-selection&#34;&gt;&lt;strong&gt;japanese-word-selection&lt;/strong&gt;&lt;/a&gt;。ソースは&lt;a href=&#34;https://github.com/kaitoy/japanese-word-selection&#34;&gt;GitHub&lt;/a&gt;に。&lt;/p&gt;
 
 &lt;p&gt;インストールして有効にすると、日本語のワード境界を判定するようになる。実のところ、とりあえずは文字種の境目を見ているだけ。ひらがな、カタカナ、半角カタカナ、漢字に対応。
 特殊文字の全角版の処理どうするとか、あまり深く考えて作ってないけど、使ってて変な挙動を見つけたらおいおい直すということで。&lt;/p&gt;
@@ -338,13 +519,13 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
 
 &lt;h2 id=&#34;atomのパッケージの作り方&#34;&gt;Atomのパッケージの作り方&lt;/h2&gt;
 
-&lt;p&gt;パッケージの作り方はAtomのオンラインドキュメントの&lt;a href=&#34;https://atom.io/docs/latest/your-first-package&#34;&gt;Create Your First Package&lt;/a&gt;とか&lt;a href=&#34;https://atom.io/docs/latest/creating-a-package&#34;&gt;Creating Packages&lt;/a&gt;に載ってる。
-また、&lt;a href=&#34;https://atom.io/docs/latest/&#34;&gt;Atom Flight Manual&lt;/a&gt;にはAtomの使い方からパッケージの作り方まで体系的に纏められている。&lt;/p&gt;
+&lt;p&gt;パッケージの作り方はAtomのオンラインドキュメントの&lt;a href=&#34;https://atom.io/docs/latest/your-first-package&#34;&gt;&lt;strong&gt;Create Your First Package&lt;/strong&gt;&lt;/a&gt;とか&lt;a href=&#34;https://atom.io/docs/latest/creating-a-package&#34;&gt;&lt;strong&gt;Creating Packages&lt;/strong&gt;&lt;/a&gt;に載ってる。
+また、&lt;a href=&#34;https://atom.io/docs/latest/&#34;&gt;&lt;strong&gt;Atom Flight Manual&lt;/strong&gt;&lt;/a&gt;にはAtomの使い方からパッケージの作り方まで体系的に纏められている。&lt;/p&gt;
 
-&lt;p&gt;パッケージ開発にあたって、前提として知っておくべきは、Atomは&lt;a href=&#34;http://electron.atom.io/&#34;&gt;Electron&lt;/a&gt;という実行環境の上で動いているということ。
+&lt;p&gt;パッケージ開発にあたって、前提として知っておくべきは、Atomは&lt;a href=&#34;http://electron.atom.io/&#34;&gt;&lt;strong&gt;Electron&lt;/strong&gt;&lt;/a&gt;という実行環境の上で動いているということ。
 (Atomが先で、そこからElectronがスピンオフした。)&lt;/p&gt;
 
-&lt;p&gt;Electronはざっくり&lt;a href=&#34;https://nodejs.org/&#34;&gt;Node.js&lt;/a&gt;と&lt;a href=&#34;https://www.chromium.org/Home&#34;&gt;Chromium&lt;/a&gt;(Google ChromeのOSS版)でできていて、その上で動くアプリケーションは、HTMLとCSSで書いた画面をChromiumで表示して、それをNode.jsで動かすJavaScriptで制御する、という形で実装される。AtomはJavaScriptの代わりに、より高級な&lt;a href=&#34;http://coffeescript.org/&#34;&gt;CoffeeScript&lt;/a&gt;を使っているので、パッケージを作る際は、CoffeeScriptのコードをがりがり書くことになる。&lt;/p&gt;
+&lt;p&gt;Electronはざっくり&lt;a href=&#34;https://nodejs.org/&#34;&gt;&lt;strong&gt;Node.js&lt;/strong&gt;&lt;/a&gt;と&lt;a href=&#34;https://www.chromium.org/Home&#34;&gt;&lt;strong&gt;Chromium&lt;/strong&gt;&lt;/a&gt;(Google ChromeのOSS版)でできていて、その上で動くアプリケーションは、HTMLとCSSで書いた画面をChromiumで表示して、それをNode.jsで動かすJavaScriptで制御する、という形で実装される。AtomはJavaScriptの代わりに、より高級な&lt;a href=&#34;http://coffeescript.org/&#34;&gt;&lt;strong&gt;CoffeeScript&lt;/strong&gt;&lt;/a&gt;を使っているので、パッケージを作る際はCoffeeScriptのコードをがりがり書くことになる。&lt;/p&gt;
 
 &lt;p&gt;Atomは&lt;a href=&#34;https://ja.wikipedia.org/wiki/Model_View_ViewModel&#34;&gt;MVVM&lt;/a&gt;な感じの設計になっていて、コアのViewModelとかをパッケージからいじることでいろんな機能を実現できる。&lt;/p&gt;
 
@@ -596,6 +777,11 @@ Check it out at https://atom.io/packages/japanese-word-selection
 &lt;/ol&gt;
 
 &lt;p&gt;因みに、Package Generatorは、作成したパッケージフォルダへのリンクを&lt;code&gt;.atom\packages\&lt;/code&gt;に作成する。リンクの一覧は&lt;code&gt;apm links&lt;/code&gt;で参照でき、&lt;code&gt;apm unlink&lt;/code&gt;で削除できる。&lt;/p&gt;
+
+&lt;h2 id=&#34;関連エントリ&#34;&gt;関連エントリ&lt;/h2&gt;
+
+&lt;p&gt;後日もう一つパッケージを作り、&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/09/06/disturb-me/&#34;&gt;それに関する記事&lt;/a&gt;を書いた。
+こちらはjapanese-word-selectionでやらなかったコマンドなどの実装をやっている。&lt;/p&gt;
 </description>
         </item>
       
