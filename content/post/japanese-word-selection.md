@@ -8,27 +8,27 @@ tags = [ "atom", "japanese-word-selection" ]
 title = "Atomのワード境界を日本語対応させるパッケージ - japanese-word-selection"
 +++
 
-このブログは[Atom](https://atom.io/)というGitHubが開発したテキストエディタを使って書いている。
+このブログは[__Atom__](https://atom.io/)というGitHubが開発したテキストエディタを使って書いている。
 このエントリは、そのAtomのパッケージを作ってみたというお話。
 
 ## Atomとは
 Atomは、2015/6/25にバージョン1.0がリリースされたばかりの新しいテキストエディタで、そのせいもあってか日本語サポートはあまり充実していない。
 例えば、テキストを画面の端で折り返す「Soft Wrap」という機能はマルチバイト文字に対応しておらず、日本語で横に長い文を書いたりすると画面からはみ出てしまって不便。
 
-しかしAtomは、パッケージなる、機能を拡張できるプラグインみたいな仕組みを持っていて、例えば上記Soft Wrapの問題は[japanese-wrap](https://github.com/raccy/japanese-wrap)というパッケージをインストールすることで解決できる。
+しかしAtomは、パッケージなる、機能を拡張できるプラグインみたいな仕組みを持っていて、例えば上記Soft Wrapの問題は[__japanese-wrap__](https://github.com/raccy/japanese-wrap)というパッケージをインストールすることで解決できる。
 パッケージは誰でも作って配布することができる。
 
 ## 日本語のワード境界
 Atomでブログを書いていて不満を感じたのは、日本語のワード境界をちゃんと判定してくれないところ。
 
-以前は(今もたまに)[サクラエディタ](http://sakura-editor.sourceforge.net/)という和製テキストエディタを使っていて、日本語文の中の一語をダブルクリックで選択するという操作をよくやっていた。
+以前は(今もたまに)[__サクラエディタ__](http://sakura-editor.sourceforge.net/)という和製テキストエディタを使っていて、日本語文の中の一語をダブルクリックで選択するという操作をよくやっていた。
 例えば、「Atomのパッケージは便利」という文があったら、「パッケージ」の辺りをダブルクリックすると「パッケージ」という単語を選択できる。
 
 Atomでも癖でこの操作をすると、妙に広い範囲が選択されてしまう。
 上記例だと「Atomのパッケージは便利」全体が選択されてしまう。不便。
 
 ## japanese-word-selection
-この問題を解決してくれそうなパッケージを探したけど見つからなかったので、いい機会と思い自分で作ったのが[japanese-word-selection](https://atom.io/packages/japanese-word-selection)。ソースは[GitHub](https://github.com/kaitoy/japanese-word-selection)に。
+この問題を解決してくれそうなパッケージを探したけど見つからなかったので、いい機会と思い自分で作ったのが[__japanese-word-selection__](https://atom.io/packages/japanese-word-selection)。ソースは[GitHub](https://github.com/kaitoy/japanese-word-selection)に。
 
 インストールして有効にすると、日本語のワード境界を判定するようになる。実のところ、とりあえずは文字種の境目を見ているだけ。ひらがな、カタカナ、半角カタカナ、漢字に対応。
 特殊文字の全角版の処理どうするとか、あまり深く考えて作ってないけど、使ってて変な挙動を見つけたらおいおい直すということで。
@@ -36,13 +36,13 @@ Atomでも癖でこの操作をすると、妙に広い範囲が選択されて�
 とりあえず、__Edit > Text__ の __Delete to Previous Word Boundary__ と __Delete to Next Word Boundary__ がちゃんと動かないのは見つけた。パッケージで上書きした処理を通っていない気がする。けど、デフォルトでキーバインディングもないし、あまり使われなそうな機能なのでほっておく。
 
 ## Atomのパッケージの作り方
-パッケージの作り方はAtomのオンラインドキュメントの[Create Your First Package](https://atom.io/docs/latest/your-first-package)とか[Creating Packages](https://atom.io/docs/latest/creating-a-package)に載ってる。
-また、[Atom Flight Manual](https://atom.io/docs/latest/)にはAtomの使い方からパッケージの作り方まで体系的に纏められている。
+パッケージの作り方はAtomのオンラインドキュメントの[__Create Your First Package__](https://atom.io/docs/latest/your-first-package)とか[__Creating Packages__](https://atom.io/docs/latest/creating-a-package)に載ってる。
+また、[__Atom Flight Manual__](https://atom.io/docs/latest/)にはAtomの使い方からパッケージの作り方まで体系的に纏められている。
 
-パッケージ開発にあたって、前提として知っておくべきは、Atomは[Electron](http://electron.atom.io/)という実行環境の上で動いているということ。
+パッケージ開発にあたって、前提として知っておくべきは、Atomは[__Electron__](http://electron.atom.io/)という実行環境の上で動いているということ。
 (Atomが先で、そこからElectronがスピンオフした。)
 
-Electronはざっくり[Node.js](https://nodejs.org/)と[Chromium](https://www.chromium.org/Home)(Google ChromeのOSS版)でできていて、その上で動くアプリケーションは、HTMLとCSSで書いた画面をChromiumで表示して、それをNode.jsで動かすJavaScriptで制御する、という形で実装される。AtomはJavaScriptの代わりに、より高級な[CoffeeScript](http://coffeescript.org/)を使っているので、パッケージを作る際は、CoffeeScriptのコードをがりがり書くことになる。
+Electronはざっくり[__Node.js__](https://nodejs.org/)と[__Chromium__](https://www.chromium.org/Home)(Google ChromeのOSS版)でできていて、その上で動くアプリケーションは、HTMLとCSSで書いた画面をChromiumで表示して、それをNode.jsで動かすJavaScriptで制御する、という形で実装される。AtomはJavaScriptの代わりに、より高級な[__CoffeeScript__](http://coffeescript.org/)を使っているので、パッケージを作る際はCoffeeScriptのコードをがりがり書くことになる。
 
 Atomは[MVVM](https://ja.wikipedia.org/wiki/Model_View_ViewModel)な感じの設計になっていて、コアのViewModelとかをパッケージからいじることでいろんな機能を実現できる。
 
@@ -276,3 +276,7 @@ https://atom.io/packages/japanese-word-selection に行ったらちゃんとjapa
 2. Atomのメニューの __View > Developer > Open In Dev Mode__ からdev modeのAtomウィンドウを開く。
 
 因みに、Package Generatorは、作成したパッケージフォルダへのリンクを`.atom\packages\`に作成する。リンクの一覧は`apm links`で参照でき、`apm unlink`で削除できる。
+
+## 関連エントリ
+後日もう一つパッケージを作り、[それに関する記事](http://tbd.kaitoy.xyz/2015/09/06/disturb-me/)を書いた。
+こちらはjapanese-word-selectionでやらなかったコマンドなどの実装をやっている。
