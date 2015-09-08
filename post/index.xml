@@ -6,8 +6,65 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2015</rights>
-    <updated>2015-09-06 20:18:14 -0600 MDT</updated>
+    <updated>2015-09-07 20:10:31 -0600 MDT</updated>
 
+    
+      
+        <item>
+          <title>AtomにおけるGIF画像のキャッシュ</title>
+          <link>http://tbd.kaitoy.xyz/2015/09/07/caching-gifs-on-atom/</link>
+          <pubDate>Mon, 07 Sep 2015 20:10:31 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>http://tbd.kaitoy.xyz/2015/09/07/caching-gifs-on-atom/</guid>
+          <description>
+
+&lt;p&gt;以前、&lt;a href=&#34;https://atom.io/packages/disturb-me&#34;&gt;&lt;strong&gt;disturb-me&lt;/strong&gt;&lt;/a&gt;という&lt;a href=&#34;https://atom.io/&#34;&gt;&lt;strong&gt;Atom&lt;/strong&gt;&lt;/a&gt;パッケージを作ったという&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/09/06/disturb-me/&#34;&gt;エントリ&lt;/a&gt;を書いた。
+このエントリでは、disturb-meに見つけたバグの修正のなかで、AtomがGIF画像をキャッシュする問題に対応したという話を書く。&lt;/p&gt;
+
+&lt;h2 id=&#34;disturb-meのバグ&#34;&gt;disturb-meのバグ&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/09/06/disturb-me/#6-%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%81%AA%E3%81%A9&#34;&gt;以前のエントリの最後&lt;/a&gt;にも書いた通り、disturb-me 1.0.0には、ループしないGIFアニメーション画像を設定で指定した場合、そのアニメーションが画像の初回表示時にしか再生されないというバグがある。&lt;/p&gt;
+
+&lt;p&gt;disturb-meは、&lt;code&gt;Ctrl+Alt+d Ctrl+Alt+m&lt;/code&gt;と入力すると画像を表示し、もう一度それを入力すると画像を消す。
+デフォルトで表示する画像はAtomのロゴで、表示を始める時と消す時にGIF画像でループしないアニメーションを再生する。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://github.com/kaitoy/disturb-me/raw/master/assets/disturb-me-demo.gif&#34; alt=&#34;screenshot&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;このデフォルトの状態で、一度Atomロゴを表示して消して、再度表示して消すと、消すときのアニメーションが再生されない。(表示を始める時のアニメーションはなぜか再生される。)&lt;/p&gt;
+
+&lt;h2 id=&#34;バグの原因&#34;&gt;バグの原因&lt;/h2&gt;
+
+&lt;p&gt;disturb-meは、&lt;code&gt;img&lt;/code&gt;タグをAtomウィンドウ内に追加した後、その&lt;code&gt;src&lt;/code&gt;属性に画像へのパスをセットして画像を表示させるが、どうもAtom(のChromium)が画像をキャッシュしてくれるせいで、一度表示し終わったGIFアニメーションは二度と再生されない模様。
+なぜ表示開始時のアニメーションが再生されるかは不明。&lt;/p&gt;
+
+&lt;h2 id=&#34;バグ修正&#34;&gt;バグ修正&lt;/h2&gt;
+
+&lt;p&gt;外部リソースをロードするときにブラウザによるキャッシュを回避するには、URLにランダムな値をもつクエリストリングを付けるのが常套手段。&lt;/p&gt;
+
+&lt;p&gt;今回のバグも、&lt;code&gt;src&lt;/code&gt;にセットするGIF画像のパス(URL)にそのようなクエリストリングをつければよい。
+例えば、&lt;strong&gt;C:\images\hoge.gif&lt;/strong&gt;を表示したいなら、&lt;code&gt;&amp;lt;img src=&amp;quot;C:\images\hoge.gif?time=1441559906660&amp;quot;&amp;gt;&amp;lt;img&amp;gt;&lt;/code&gt;という風にする。
+ここでtimeの値には&lt;code&gt;Date.now()&lt;/code&gt;とかで毎回違う値を生成して使う。&lt;/p&gt;
+
+&lt;h2 id=&#34;atomプロトコルの問題&#34;&gt;Atomプロトコルの問題&lt;/h2&gt;
+
+&lt;p&gt;ここで一つ問題が。disturb-meがデフォルトで使うAtomロゴの画像はパッケージに含まれていて、そういうリソースのURLには&lt;a href=&#34;https://atom.io/docs/latest/creating-a-package#bundle-external-resources&#34;&gt;&lt;strong&gt;Atomプロトコル&lt;/strong&gt;&lt;/a&gt;を使うのが普通。
+Atomプロトコルを使うと、&lt;code&gt;atom://disturb-me/assets/atom/white/atom_born.gif&lt;/code&gt;みたいに書いて、パッケージ内の相対パスでリソースを指定できる。&lt;/p&gt;
+
+&lt;p&gt;このAtomプロトコルが、今の時点(Atom v1.0.11)でクエリストリングに対応していない。困った。&lt;/p&gt;
+
+&lt;h2 id=&#34;atomプロトコルの問題への対応&#34;&gt;Atomプロトコルの問題への対応&lt;/h2&gt;
+
+&lt;p&gt;いい機会なので、Atomのソースをfork、cloneして、Atomプロトコルを(簡易的に)クエリストリングに対応させ、ビルドして確認し、プルリクエストを送ってみた。これについてはまた別のエントリで書くかもしれない。&lt;/p&gt;
+
+&lt;p&gt;このプルリクエストが取り込まれるまでの暫定対策として、&lt;a href=&#34;https://github.com/atom/atom/blob/master/src/browser/atom-protocol-handler.coffee&#34;&gt;Atomプロトコルハンドラのソース&lt;/a&gt;を見て、AtomプロトコルのURLからリソースのファイルシステム上での絶対パスを導いている部分をdisturb-me内にパクって、&lt;code&gt;src&lt;/code&gt;にセットする値として&lt;code&gt;atom://&lt;/code&gt;を使わないようにした。&lt;/p&gt;
+
+&lt;p&gt;これでちゃんと動いた。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -185,7 +242,7 @@ atom.config.set(&#39;disturb-me.bornDuration&#39;, &#39;1000&#39;)
 めんどいのでテストは書かない。&lt;/p&gt;
 
 &lt;p&gt;リリース後、ループしないgifアニメーション画像をdisturb-meに使った場合、そのアニメーションが再生されない場合があるバグに気付いた。
-これについては別のエントリで書くかもしれない。&lt;/p&gt;
+これについては&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/09/07/caching-gifs-on-atom/&#34;&gt;別のエントリ&lt;/a&gt;で書いた。&lt;/p&gt;
 </description>
         </item>
       
