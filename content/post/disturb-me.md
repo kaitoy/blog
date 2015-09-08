@@ -170,4 +170,4 @@ node_modulesは__Package Generator__が生成する__.gitignore__に入ってい
 めんどいのでテストは書かない。
 
 リリース後、ループしないgifアニメーション画像をdisturb-meに使った場合、そのアニメーションが再生されない場合があるバグに気付いた。
-これについては別のエントリで書くかもしれない。
+これについては[別のエントリ](http://tbd.kaitoy.xyz/2015/09/07/caching-gifs-on-atom/)で書いた。
