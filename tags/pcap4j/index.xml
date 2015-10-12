@@ -6,8 +6,296 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2015</rights>
-    <updated>2015-08-09 21:53:29 -0600 MDT</updated>
+    <updated>2015-10-12 01:00:13 -0600 MDT</updated>
 
+    
+      
+        <item>
+          <title>Step by Step to Add a Protocol Support to Pcap4J (Part 2)</title>
+          <link>http://tbd.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/</link>
+          <pubDate>Mon, 12 Oct 2015 01:00:13 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>http://tbd.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/</guid>
+          <description>
+
+&lt;p&gt;This is continued from &lt;a href=&#34;http://tbd.kaitoy.xyz/2015/08/09/step-by-step-to-add-a-protocol-support-to-pcap4j-1/&#34;&gt;the part 1&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;We are adding DHCP support to &lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;Pcap4J&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;packet-piece-class&#34;&gt;Packet Piece Class&lt;/h3&gt;
+
+&lt;p&gt;A packet piece class is a Java class which represents a field of a packet.
+We should create such classes instead of using a primitive types in some cases.&lt;/p&gt;
+
+&lt;p&gt;In the case of DHCP, its &lt;strong&gt;flags&lt;/strong&gt; field includes two fields in itself as like below:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;                    1 1 1 1 1 1
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|B|             MBZ             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+B:  BROADCAST flag
+MBZ:  MUST BE ZERO (reserved for future use)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Although this flags field is 2 bytes long and can be held by a primitive short variable, it&amp;rsquo;s better to create a packet piece class to hold it for better usability.&lt;/p&gt;
+
+&lt;p&gt;I mean,&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;boolean broadcast = DhcpV4Packet.getHeader().getFlags().isBroadcast();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;is better than&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;boolean broadcast = (0x8000 &amp;amp; DhcpV4Packet.getHeader().getFlags()) != 0;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;dhcpv4flags-class&#34;&gt;DhcpV4Flags class&lt;/h3&gt;
+
+&lt;p&gt;Now, let&amp;rsquo;s write a packet piece class &lt;strong&gt;DhcpV4Flags&lt;/strong&gt; for the flags field.
+For writing packet piece classes, there is no rule except that they must implement &lt;a href=&#34;http://docs.oracle.com/javase/7/docs/api/java/io/Serializable.html&#34;&gt;Serializable interface&lt;/a&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;package org.pcap4j.packet;
+
+import java.io.Serializable;
+
+public final class DhcpV4Flags implements Serializable {
+
+  private static final long serialVersionUID = -7144264525666462708L;
+
+  private final short value;
+
+  public static DhcpV4Flags newInstance(short value) {
+    return new DhcpV4Flags(value);
+  }
+
+  private DhcpV4Flags(short value) {
+    this.value = value;
+  }
+
+  public short value() {
+    return value;
+  }
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;What we should do to implement Serializable is only adding a field &lt;code&gt;private static final long serialVersionUID&lt;/code&gt; in this case because DhcpV4Flags has only one primitive short field.&lt;/p&gt;
+
+&lt;p&gt;The short field holds entire value of the flags field.
+The constructor receives a short value and simply stores it in the short field.
+I made the constructor private and wrote a static factory method &lt;code&gt;newInstance&lt;/code&gt;, which is just my taste and not necessary.&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Here, let&amp;rsquo;s remember that the flags field has two fields in itself, which are B (BROADCAST) and MBZ (MUST BE ZERO), and add two methods to get them.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;  public boolean isBroadcast() { return (value &amp;amp; 0x8000) != 0; }
+
+  public short getMbz() { return (short)(value &amp;amp; 0x7FFF); }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;And, generally speaking, we should always override &lt;code&gt;toString&lt;/code&gt;, &lt;code&gt;equals&lt;/code&gt;, and &lt;code&gt;hashCode&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(&amp;quot;[BROADCAST: &amp;quot;)
+      .append(isBroadcast())
+      .append(&amp;quot;] [value: 0x&amp;quot;)
+      .append(ByteArrays.toHexString(value, &amp;quot;&amp;quot;))
+      .append(&amp;quot;]&amp;quot;);
+
+    return sb.toString();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) { return true; }
+    if (!this.getClass().isInstance(obj)) { return false; }
+
+    DhcpV4Flags other = (DhcpV4Flags)obj;
+    return this.value == other.value;
+  }
+
+  @Override
+  public int hashCode() { return value; }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;The last thing to write is &lt;strong&gt;Builder class&lt;/strong&gt;, which is another way to instantiate DhcpV4Flags objects.
+The static factory method I wrote above is used when dissecting a real DHCP packet (i.e. a byte array), while the Builder is used when crafting a DHCP packet object.&lt;/p&gt;
+
+&lt;p&gt;A Builder class is usually written as an inner class.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public final class DhcpV4Flags implements Serializable {
+
+  (snip)
+
+  public Builder getBuilder() {
+    return new Builder(this);
+  }
+
+  public static final class Builder {
+
+    private boolean broadcast = false;
+    private short mbz = 0;
+
+    public Builder() {}
+
+    private Builder(DhcpV4Flags flags) {
+      this.broadcast = flags.isBroadcast();
+      this.mbz = flags.getMbz();
+    }
+
+    public Builder broadcast(boolean broadcast) {
+      this.broadcast = broadcast;
+      return this;
+    }
+
+    public Builder mbz(short mbz) {
+      this.mbz = mbz;
+      return this;
+    }
+
+    public DhcpV4Flags build() {
+      return new DhcpV4Flags(this);
+    }
+
+  }
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And, DhcpV4Flags needs a constructor which uses the Builder.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;  private DhcpV4Flags(Builder builder) {
+    if (builder == null) {
+      throw new NullPointerException(&amp;quot;builder is null.&amp;quot;);
+    }
+    if (builder.mbz &amp;lt; 0) {
+      throw new IllegalArgumentException(
+              &amp;quot;mbz must be equal or greater than zero but it is: &amp;quot; + builder.mbz
+            );
+    }
+
+    this.value = builder.broadcast ? (short)(builder.mbz | 0x8000) : builder.mbz;
+  }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;That&amp;rsquo;s all. The entire code is as follows:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;package org.pcap4j.packet;
+
+import java.io.Serializable;
+import org.pcap4j.util.ByteArrays;
+
+public final class DhcpV4Flags implements Serializable {
+
+  private static final long serialVersionUID = -7144264525666462708L;
+
+  private final short value;
+
+  public static DhcpV4Flags newInstance(short value) {
+    return new DhcpV4Flags(value);
+  }
+
+  private DhcpV4Flags(short value) {
+    this.value = value;
+  }
+
+  private DhcpV4Flags(Builder builder) {
+    if (builder == null) {
+      throw new NullPointerException(&amp;quot;builder is null.&amp;quot;);
+    }
+    if (builder.mbz &amp;lt; 0) {
+      throw new IllegalArgumentException(
+              &amp;quot;mbz must be equal or greater than zero but it is: &amp;quot; + builder.mbz
+            );
+    }
+
+    this.value = builder.broadcast ? (short)(builder.mbz | 0x8000) : builder.mbz;
+  }
+
+  public short value() {
+    return value;
+  }
+
+  public boolean isBroadcast() { return (value &amp;amp; 0x8000) != 0; }
+
+  public short getMbz() { return (short)(value &amp;amp; 0x7FFF); }
+
+  public Builder getBuilder() {
+    return new Builder(this);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(&amp;quot;[BROADCAST: &amp;quot;)
+      .append(isBroadcast())
+      .append(&amp;quot;] [value: 0x&amp;quot;)
+      .append(ByteArrays.toHexString(value, &amp;quot;&amp;quot;))
+      .append(&amp;quot;]&amp;quot;);
+
+    return sb.toString();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) { return true; }
+    if (!this.getClass().isInstance(obj)) { return false; }
+
+    DhcpV4Flags other = (DhcpV4Flags)obj;
+    return this.value == other.value;
+  }
+
+  @Override
+  public int hashCode() { return value; }
+
+  public static final class Builder {
+
+    private boolean broadcast = false;
+    private short mbz = 0;
+
+    public Builder() {}
+
+    private Builder(DhcpV4Flags flags) {
+      this.broadcast = flags.isBroadcast();
+      this.mbz = flags.getMbz();
+    }
+
+    public Builder broadcast(boolean broadcast) {
+      this.broadcast = broadcast;
+      return this;
+    }
+
+    public Builder mbz(short mbz) {
+      this.mbz = mbz;
+      return this;
+    }
+
+    public DhcpV4Flags build() {
+      return new DhcpV4Flags(this);
+    }
+
+  }
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;In the next part, we&amp;rsquo;ll write the DHCP packet class.&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -18,7 +306,7 @@
           <guid>http://tbd.kaitoy.xyz/2015/08/09/step-by-step-to-add-a-protocol-support-to-pcap4j-1/</guid>
           <description>
 
-&lt;p&gt;I will show how to add a protocol support to &lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;Pcap4J&lt;/a&gt; in detail giving the example of DHCP via some posts.&lt;/p&gt;
+&lt;p&gt;I will show how to add a protocol support to &lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;Pcap4J&lt;/a&gt; in detail giving the example of DHCP (v4) via some posts.&lt;/p&gt;
 
 &lt;h3 id=&#34;named-number-class&#34;&gt;Named Number Class&lt;/h3&gt;
 
@@ -170,7 +458,7 @@ So, we will need to write only one packet class, one header class, and one build
 For example, &lt;code&gt;op&lt;/code&gt; field, which holds a message op code, &lt;code&gt;1&lt;/code&gt; or &lt;code&gt;2&lt;/code&gt; in an octet.
 Although the value &lt;code&gt;op&lt;/code&gt; field carries can be stored in a primitive &lt;code&gt;byte&lt;/code&gt; field in the header class,
 it&amp;rsquo;s recommended to create a named number class to store the value with its name (meaning) for more readability and usability.
-&lt;code&gt;new DhcpPacket.Builder().operationCode(DhcpOperationCode.BOOTREQUEST)&lt;/code&gt; looks better than &lt;code&gt;new DhcpPacket.Builder().operationCode((byte)1)&lt;/code&gt;, doesn&amp;rsquo;t it?&lt;/p&gt;
+&lt;code&gt;new DhcpV4Packet.Builder().operationCode(DhcpV4OperationCode.BOOTREQUEST)&lt;/code&gt; looks better than &lt;code&gt;new DhcpV4Packet.Builder().operationCode((byte)1)&lt;/code&gt;, doesn&amp;rsquo;t it?&lt;/p&gt;
 
 &lt;p&gt;Named number classes are in &lt;a href=&#34;https://github.com/kaitoy/pcap4j/tree/master/pcap4j-core/src/main/java/org/pcap4j/packet/namednumber&#34;&gt;&lt;code&gt;org.pcap4j.packet.namednumber package&lt;/code&gt;&lt;/a&gt; in pcap4j-core project.
 To write a named number class easily, extend &lt;a href=&#34;https://github.com/kaitoy/pcap4j/blob/master/pcap4j-core/src/main/java/org/pcap4j/packet/namednumber/NamedNumber.java&#34;&gt;&lt;code&gt;NamedNumber&lt;/code&gt;&lt;/a&gt;.
@@ -178,26 +466,16 @@ The minimum implementation of a number class looks like below:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;package org.pcap4j.packet.namednumber;
 
-/**
- * @see &amp;lt;a href=&amp;quot;http://www.ietf.org/rfc/rfc2131.txt&amp;quot;&amp;gt;RFC 2131&amp;lt;/a&amp;gt;
- */
-public final class DhcpOperationCode extends NamedNumber&amp;lt;Byte, DhcpOperationCode&amp;gt; {
+public final class DhcpV4OperationCode extends NamedNumber&amp;lt;Byte, DhcpV4OperationCode&amp;gt; {
 
-  /**
-   *
-   */
   private static final long serialVersionUID = 3155818580398801532L;
 
-  /**
-   * @param value value
-   * @param name name
-   */
-  public DhcpOperationCode(Byte value, String name) {
+  public DhcpV4OperationCode(Byte value, String name) {
     super(value, name);
   }
 
   @Override
-  public int compareTo(DhcpOperationCode o) {
+  public int compareTo(DhcpV4OperationCode o) {
     return value().compareTo(o.value());
   }
 
@@ -208,7 +486,7 @@ public final class DhcpOperationCode extends NamedNumber&amp;lt;Byte, DhcpOperat
 
 &lt;p&gt;And, because &lt;code&gt;NamedNumber&lt;/code&gt; doesn&amp;rsquo;t have the default constructor, we need to write a constructor with 2 arguments, &lt;code&gt;Byte value&lt;/code&gt; and &lt;code&gt;String name&lt;/code&gt;.&lt;/p&gt;
 
-&lt;p&gt;Sometimes we may want to override &lt;code&gt;public String valueAsString()&lt;/code&gt;. For example, in the case where the String representation of the value should be like &lt;code&gt;0x0a&lt;/code&gt; instead of &lt;code&gt;10&lt;/code&gt;. &lt;code&gt;DhcpOperationCode&lt;/code&gt; isn&amp;rsquo;t the case, though.&lt;/p&gt;
+&lt;p&gt;Sometimes we may want to override &lt;code&gt;public String valueAsString()&lt;/code&gt;. For example, in the case where the String representation of the value should be like &lt;code&gt;0x0a&lt;/code&gt; instead of &lt;code&gt;10&lt;/code&gt;. &lt;code&gt;DhcpV4OperationCode&lt;/code&gt; isn&amp;rsquo;t the case, though.&lt;/p&gt;
 
 &lt;p&gt;Then, we&amp;rsquo;d better to add pre-defined objects so that:&lt;/p&gt;
 
@@ -217,169 +495,89 @@ public final class DhcpOperationCode extends NamedNumber&amp;lt;Byte, DhcpOperat
 &lt;li&gt;we will not need to refer to the RFC when you craft DHCP packets.&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;(snip)
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;  public static final DhcpV4OperationCode BOOTREQUEST
+    = new DhcpV4OperationCode((byte)1, &amp;quot;BOOTREQUEST&amp;quot;);
 
-  /**
-   *
-   */
-  private static final long serialVersionUID = 3155818580398801532L;
-
-//// Add below
-  /**
-   * BOOTREQUEST: 1
-   */
-  public static final DhcpOperationCode BOOTREQUEST
-    = new DhcpOperationCode((byte)1, &amp;quot;BOOTREQUEST&amp;quot;);
-
-  /**
-   * BOOTREQUEST: 2
-   */
-  public static final DhcpOperationCode BOOTREPLY
-    = new DhcpOperationCode((byte)2, &amp;quot;BOOTREPLY&amp;quot;);
-//// Add above
-
-  /**
-   * @param value value
-   * @param name name
-   */
-  public DhcpOperationCode(Byte value, String name) {
-    super(value, name);
-  }
-
-(snip)
+  public static final DhcpV4OperationCode BOOTREPLY
+    = new DhcpV4OperationCode((byte)2, &amp;quot;BOOTREPLY&amp;quot;);
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;From a pre-defined object, we can get its value by &lt;code&gt;DhcpOperationCode.BOOTREQUEST.value()&lt;/code&gt;.
+&lt;p&gt;From a pre-defined object, we can get its value by &lt;code&gt;DhcpV4OperationCode.BOOTREQUEST.value()&lt;/code&gt;.
 But, how do we get a pre-defined object from a value? We need to do it when we parse a real packet (a byte array) captured and build a DHCP packet object.&lt;/p&gt;
 
 &lt;p&gt;So, let&amp;rsquo;s enhance the code as follows:&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;(snip)
-
-  /**
-   *
-   */
-  private static final long serialVersionUID = 3155818580398801532L;
-
-  /**
-   * BOOTREQUEST: 1
-   */
-  public static final DhcpOperationCode BOOTREQUEST
-    = new DhcpOperationCode((byte)1, &amp;quot;BOOTREQUEST&amp;quot;);
-
-  /**
-   * BOOTREQUEST: 2
-   */
-  public static final DhcpOperationCode BOOTREPLY
-    = new DhcpOperationCode((byte)2, &amp;quot;BOOTREPLY&amp;quot;);
-
-//// Add below
-  private static final Map&amp;lt;Byte, DhcpOperationCode&amp;gt; registry
-    = new HashMap&amp;lt;Byte, DhcpOperationCode&amp;gt;();
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;  private static final Map&amp;lt;Byte, DhcpV4OperationCode&amp;gt; registry
+    = new HashMap&amp;lt;Byte, DhcpV4OperationCode&amp;gt;();
 
   static {
     registry.put(BOOTREQUEST.value(), BOOTREQUEST);
     registry.put(BOOTREPLY.value(), BOOTREPLY);
   }
 
-  /**
-   * @param value value
-   * @return a DhcpOperationCode object.
-   */
-  public static DhcpOperationCode getInstance(Byte value) {
+  public static DhcpV4OperationCode getInstance(Byte value) {
     if (registry.containsKey(value)) {
       return registry.get(value);
     }
     else {
-      return new DhcpOperationCode(value, &amp;quot;unknown&amp;quot;);
+      return new DhcpV4OperationCode(value, &amp;quot;unknown&amp;quot;);
     }
   }
-//// Add above
-
-(snip)
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;The new field &lt;code&gt;registry&lt;/code&gt; holds the mapping between values and pre-defined objects, and the &lt;code&gt;getInstance&lt;/code&gt; method is the API to get a pre-defined objects (or new one if not registered) by a value by searching in the &lt;code&gt;registry&lt;/code&gt;.&lt;/p&gt;
 
 &lt;p&gt;We may want to add one more API which is to add an object instantiated outside of this class to the &lt;code&gt;registy&lt;/code&gt; like below:&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;  /**
-   * @param version version
-   * @return a DhcpOperationCode object.
-   */
-  public static DhcpOperationCode register(DhcpOperationCode version) {
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;  public static DhcpV4OperationCode register(DhcpV4OperationCode version) {
     return registry.put(version.value(), version);
   }
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;Finally, the code becomes like below:&lt;/p&gt;
+&lt;p&gt;Now, the entire code looks like below:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;package org.pcap4j.packet.namednumber;
 
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @see &amp;lt;a href=&amp;quot;http://www.ietf.org/rfc/rfc2131.txt&amp;quot;&amp;gt;RFC 2131&amp;lt;/a&amp;gt;
- */
-public final class DhcpOperationCode extends NamedNumber&amp;lt;Byte, DhcpOperationCode&amp;gt; {
+public final class DhcpV4OperationCode extends NamedNumber&amp;lt;Byte, DhcpV4OperationCode&amp;gt; {
 
-  /**
-   *
-   */
   private static final long serialVersionUID = 3155818580398801532L;
 
-  /**
-   * BOOTREQUEST: 1
-   */
-  public static final DhcpOperationCode BOOTREQUEST
-   = new DhcpOperationCode((byte)1, &amp;quot;BOOTREQUEST&amp;quot;);
+  public static final DhcpV4OperationCode BOOTREQUEST
+   = new DhcpV4OperationCode((byte)1, &amp;quot;BOOTREQUEST&amp;quot;);
 
-  /**
-   * BOOTREQUEST: 2
-   */
-  public static final DhcpOperationCode BOOTREPLY
-   = new DhcpOperationCode((byte)2, &amp;quot;BOOTREPLY&amp;quot;);
+  public static final DhcpV4OperationCode BOOTREPLY
+   = new DhcpV4OperationCode((byte)2, &amp;quot;BOOTREPLY&amp;quot;);
 
-  private static final Map&amp;lt;Byte, DhcpOperationCode&amp;gt; registry
-    = new HashMap&amp;lt;Byte, DhcpOperationCode&amp;gt;();
+  private static final Map&amp;lt;Byte, DhcpV4OperationCode&amp;gt; registry
+    = new HashMap&amp;lt;Byte, DhcpV4OperationCode&amp;gt;();
 
   static {
     registry.put(BOOTREQUEST.value(), BOOTREQUEST);
     registry.put(BOOTREPLY.value(), BOOTREPLY);
   }
 
-  /**
-   * @param value value
-   * @return a DhcpOperationCode object.
-   */
-  public static DhcpOperationCode getInstance(Byte value) {
+  public static DhcpV4OperationCode getInstance(Byte value) {
     if (registry.containsKey(value)) {
       return registry.get(value);
     }
     else {
-      return new DhcpOperationCode(value, &amp;quot;unknown&amp;quot;);
+      return new DhcpV4OperationCode(value, &amp;quot;unknown&amp;quot;);
     }
   }
 
-  /**
-   * @param version version
-   * @return a DhcpOperationCode object.
-   */
-  public static DhcpOperationCode register(DhcpOperationCode version) {
+  public static DhcpV4OperationCode register(DhcpV4OperationCode version) {
     return registry.put(version.value(), version);
   }
 
-  /**
-   * @param value value
-   * @param name name
-   */
-  public DhcpOperationCode(Byte value, String name) {
+  public DhcpV4OperationCode(Byte value, String name) {
     super(value, name);
   }
 
   @Override
-  public int compareTo(DhcpOperationCode o) {
+  public int compareTo(DhcpV4OperationCode o) {
     return value().compareTo(o.value());
   }
 
@@ -389,7 +587,7 @@ public final class DhcpOperationCode extends NamedNumber&amp;lt;Byte, DhcpOperat
 &lt;p&gt;Likewise, &lt;code&gt;htype&lt;/code&gt; should be represented by a named number class.
 Fortunately, we can use the existing class &lt;a href=&#34;https://github.com/kaitoy/pcap4j/blob/master/pcap4j-core/src/main/java/org/pcap4j/packet/namednumber/ArpHardwareType.java&#34;&gt;ArpHardwareType&lt;/a&gt; for it.&lt;/p&gt;
 
-&lt;p&gt;In the next part, we will write a packet piece class for the &lt;code&gt;flags&lt;/code&gt; field.&lt;/p&gt;
+&lt;p&gt;In the &lt;a href=&#34;http://tbd.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/&#34;&gt;next part&lt;/a&gt;, we will write a packet piece class for the &lt;code&gt;flags&lt;/code&gt; field.&lt;/p&gt;
 </description>
         </item>
       
