@@ -6,8 +6,583 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2015</rights>
-    <updated>2015-09-13 13:52:30 -0600 MDT</updated>
+    <updated>2015-10-28 13:38:47 -0600 MDT</updated>
 
+    
+      
+        <item>
+          <title>よいオブジェクトの七つの美徳</title>
+          <link>http://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/</link>
+          <pubDate>Wed, 28 Oct 2015 13:38:47 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>http://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/</guid>
+          <description>
+
+&lt;p&gt;このエントリでは、Yegor Bugayenkoによる記事、&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/&#34;&gt;Seven Virtues of a Good Object&lt;/a&gt;を紹介する。
+(Yegorから和訳と転載の許可は得た。)
+以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;Martin Fowler&lt;a href=&#34;http://martinfowler.com/bliki/InversionOfControl.html&#34;&gt;曰く&lt;/a&gt;、&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;ライブラリは本質的には呼び出し可能な関数の集合で、最近は普通クラス内にまとめられる。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;クラス内にまとめられた関数?
+失礼を承知で言わせてもらうが、これは間違っている。
+そして、これはオブジェクト指向プログラミングにおいて、クラスに対する非常に一般的な誤解だ。
+クラスは関数をまとめるものではないし、オブジェクトはデータ構造体ではない。&lt;/p&gt;
+
+&lt;p&gt;では、なにが適切なオブジェクトなのか?
+どれが不適切なオブジェクトなのか?
+その違いは何か?
+これは論争を呼ぶ主題ではあるが、とても重要だ。
+オブジェクトが何かを理解しなければ、オブジェクト指向ソフトウェアをどうやって書くんだ?
+まあ、JavaやRubyなどのおかげで、書けることは書ける。
+しかし、はたして良いものができるだろうか?
+不幸にも、これは厳密な科学ではなく、様々な意見がある。
+ここに、良いオブジェクトの特性を私なりにリストアップする。&lt;/p&gt;
+
+&lt;h1 id=&#34;クラス-vs-オブジェクト&#34;&gt;クラス vs オブジェクト&lt;/h1&gt;
+
+&lt;p&gt;&lt;img alt=&#34;good-object-1.png&#34; src=&#34;http://tbd.kaitoy.xyz/images/seven-virtues-of-good-object/good-object-1.png&#34; width=&#34;300&#34; style=&#34;margin: 0px auto; display: block;&#34;&gt;&lt;/p&gt;
+
+&lt;p&gt;オブジェクトについて議論を始める前に、クラスとは何かを定義しよう。
+それはオブジェクトが生まれる(インスタント化される)場所だ。
+クラスの主な責任は、要求に応じて新しいオブジェクトを構築し、使われなくなったオブジェクトを破壊することだ。
+クラスはその子供たちがどのように見えどのように振る舞うべきかを知っている。
+言い換えれば、子供たちが従うべき契約を知っている。&lt;/p&gt;
+
+&lt;p&gt;クラスが「オブジェクトのテンプレート」であると言われることもある。(例えば&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E3%82%AF%E3%83%A9%E3%82%B9_%28%E3%82%B3%E3%83%B3%E3%83%94%E3%83%A5%E3%83%BC%E3%82%BF%29&#34;&gt;Wikipediaにはそう書いてある&lt;/a&gt;。)
+この定義はクラスを受動的なポジションに置いているので正しくない。
+この定義は、だれかがテンプレートを取得してそこからオブジェクトを構築するということを想定している。
+これは、技術的には正しいかもしれないが、概念的には間違っている。
+クラスとその子供たちだけが居るのであって、他の誰も関係すべきではない。
+あるオブジェクトがクラスに他のオブジェクトを作るように頼み、そのクラスがオブジェクトを構築する。それだけだ。
+RubyはJavaやC++に比べてこの概念をかなりうまく表現している。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-ruby&#34;&gt;photo = File.new(&#39;/tmp/photo.png&#39;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;photo&lt;/code&gt;オブジェクトは&lt;code&gt;File&lt;/code&gt;クラスによって構築される。(&lt;code&gt;new&lt;/code&gt;はそのクラスへのエントリポイント。)
+オブジェクトは、いったん構築されると、自身に基づいて行動する。
+オブジェクトは、自身を誰が構築したかとか、何人兄弟姉妹がいるかとかを知っているべきではない。
+そう、&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E3%83%AA%E3%83%95%E3%83%AC%E3%82%AF%E3%82%B7%E3%83%A7%E3%83%B3_%28%E6%83%85%E5%A0%B1%E5%B7%A5%E5%AD%A6%29&#34;&gt;リフレクション&lt;/a&gt;は酷いアイデアだと言っている。
+それについては他の記事で詳しく書くとして、ここでは、オブジェクトについてと、その最高と最悪の両面について話そう。&lt;/p&gt;
+
+&lt;h1 id=&#34;1-彼は実世界に存在している&#34;&gt;1. 彼は実世界に存在している&lt;/h1&gt;
+
+&lt;p&gt;&lt;img alt=&#34;good-object-2.png&#34; src=&#34;http://tbd.kaitoy.xyz/images/seven-virtues-of-good-object/good-object-2.png&#34; width=&#34;300&#34; style=&#34;margin: 0px auto; display: block;&#34;&gt;&lt;/p&gt;
+
+&lt;p&gt;まず第一に、オブジェクトは生きた有機体だ。
+もっと言えば、オブジェクトは&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E6%93%AC%E4%BA%BA%E5%8C%96&#34;&gt;擬人化&lt;/a&gt;されるべきだ。
+つまり、人間(もしくは、君がより好むならペット)のように扱われるべきだ。
+基本的にこれは、オブジェクトはデータ構造体や関数の集合ではないということを意味している。
+代わりに、オブジェクトは独立したエンティティで、それ自身のライフサイクル、振る舞い、性質を持つ。&lt;/p&gt;
+
+&lt;p&gt;従業員、部署、HTTPリクエスト、MySQLのテーブル、ファイルの行、ファイルそのもの、これらは適切なオブジェクトだ。
+なぜならこれらは、ソフトウェアを停止した時でも実世界に存在しているから。
+より正確には、オブジェクトは実世界のモノの表現のひとつだ。
+オブジェクトは実世界のモノと他のオブジェクトとの間のプロキシだ。
+そのようなモノが存在しなければ、明らかにオブジェクトは存在しない。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-ruby&#34;&gt;photo = File.new(&#39;/tmp/photo.png&#39;)
+puts photo.width()
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;この例では、&lt;code&gt;File&lt;/code&gt;に新しいオブジェクト&lt;code&gt;photo&lt;/code&gt;を構築するよう頼んでいる。
+&lt;code&gt;photo&lt;/code&gt;はディスク上の実際のファイルの表現となる。
+ファイルもまた仮想のもので、コンピュータが起動している間だけ存在すると言う人がいるかもしれない。
+それには私も同意し、「実世界」の定義を次のように改善しよう。
+オブジェクトが住むプログラムの範囲外に存在する全てのもの。
+ディスク上のファイルはプログラムの範囲外にあり、その表現をプログラム内に作成することは完全に正しいことと言える。&lt;/p&gt;
+
+&lt;p&gt;コントローラ、パーサ、フィルタ、バリデータ、サービスロケータ、シングルトン、ファクトリー、これれは良いオブジェクトではない。(そう、ほとんどのGoFパターンはアンチパターンだ!)
+これらはソフトウェアの外側、実世界に存在していない。
+他のオブジェクト同士を結びつけるためだけに考案されたものだ。
+人工的で偽のモノだ。何も表現していない。
+真面目な話、XMLパーサ、これが表現するものはなんだ?
+何もない。&lt;/p&gt;
+
+&lt;p&gt;上記オブジェクトのいくつかは名前を変えれば良いオブジェクトになる。他のものは決して存在を許されない。
+例えば、XMLパーサは「パース可能なXML」と改名でき、プログラム外に存在するXMLドキュメントを表現するようになる。&lt;/p&gt;
+
+&lt;p&gt;常に、「このオブジェクトの背後にある実世界のエンティティは何か?」を自問しよう。
+もし回答が見つからなければ、リファクタリングを考えるときだ。&lt;/p&gt;
+
+&lt;h1 id=&#34;2-彼は契約によって働く&#34;&gt;2. 彼は契約によって働く&lt;/h1&gt;
+
+&lt;p&gt;&lt;img alt=&#34;good-object-3.png&#34; src=&#34;http://tbd.kaitoy.xyz/images/seven-virtues-of-good-object/good-object-3.png&#34; width=&#34;300&#34; style=&#34;margin: 0px auto; display: block;&#34;&gt;&lt;/p&gt;
+
+&lt;p&gt;良いオブジェクトは常に契約によって働く。
+彼は、個人的な実力ではなく、契約に従うということを理由に雇われることを期待している。
+一方、我々がオブジェクトを雇うとき、差別待遇をして、特定のクラスの特定のオブジェクトが我々のために働いてくれると期待してはいけない。
+どんなオブジェクトも契約通りのことをすると考えるべきだ。
+オブジェクトが期待通りの働きをしている限りは、彼の出生や性別や信仰に興味を持つべきではない。&lt;/p&gt;
+
+&lt;p&gt;例えば、ある写真をスクリーンに表示したいとする。その写真はPNGフォーマットのファイルから読みこまれる。
+私は&lt;code&gt;DataFile&lt;/code&gt;クラスのオブジェクトと契約を結び、その画像のバイナリコンテンツをくれるよう頼む。&lt;/p&gt;
+
+&lt;p&gt;しかし待ってほしい。私はそのデータが厳密にどこから来るかを気にするだろうか?
+ディスク上のファイル、HTTPリクエスト、Dropbox上のドキュメントかもしれないが、実際私は気にしない。
+私が気にするのは、オブジェクトがPNGデータが入ったバイト配列をくれるということだけだ。
+つまり、私が結ぶ契約は以下のようなものだ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;interface Binary {
+  byte[] read();
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;この場合、(DataFileクラスだけでなく)どんなクラスのどんなオブジェクトでも私のもとで働くことができる。
+オブジェクトが働く資格を得るためにすべきは、&lt;code&gt;Binary&lt;/code&gt;インターフェースを実装することにより、契約に従うということだけだ。&lt;/p&gt;
+
+&lt;p&gt;この際のルールは単純で、良いオブジェクトの全てのpublicメソッドは、インターフェースのものを実装すべきだということだ。
+もしオブジェクトがインターフェースから継承していないpublicメソッドを持っていたら、それはダメな設計だ。&lt;/p&gt;
+
+&lt;p&gt;これには実用的な理由が二つある。
+第一に、無契約で働いているオブジェクトは、ユニットテストで使うモックが作れない。
+第二に、無契約なオブジェクトは&lt;a href=&#34;https://ja.wikipedia.org/wiki/Decorator_%E3%83%91%E3%82%BF%E3%83%BC%E3%83%B3&#34;&gt;デコレータ&lt;/a&gt;で拡張できない。&lt;/p&gt;
+
+&lt;h1 id=&#34;3-彼はユニーク&#34;&gt;3. 彼はユニーク&lt;/h1&gt;
+
+&lt;p&gt;良いオブジェクトは常に、ユニークであるために何かを内包しているべきだ。
+何も内包していないと、そのオブジェクトとまったく同じクローンが存在し得ることになる。私はこれはダメなことだと考えている。
+以下がクローンが存在し得る悪いオブジェクトの例。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;class HTTPStatus implements Status {
+  private URL page = new URL(&amp;quot;http://www.google.com&amp;quot;);
+  @Override
+  public int read() throws IOException {
+    return HttpURLConnection.class.cast(
+      this.page.openConnection()
+    ).getResponseCode();
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;HTTPStatus&lt;/code&gt;クラスのインスタンスは複数作れ、それら全ては互いに等しい。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;first = new HTTPStatus();
+second = new HTTPStatus();
+assert first.equals(second);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;明らかにユーティリティクラスは、スタティックメソッドだけを持つので、よいオブジェクトにインスタンス化できない。
+より一般的には、ユーティリティクラスはこの記事で述べられているどのメリットも持たず、「クラス」と呼ぶことさえできない。
+ユーティリティクラスは単純にオブジェクトパラダイムの酷い乱用で、モダンなオブジェクト指向言語の作者がスタティックメソッドを有効にしたせいで存在している。&lt;/p&gt;
+
+&lt;h1 id=&#34;4-彼は不変-immutable&#34;&gt;4. 彼は不変(Immutable)&lt;/h1&gt;
+
+&lt;p&gt;良いオブジェクトは内包する状態を決して変えるべきではない。
+オブジェクトは実世界のエンティティの表現であることを思い出してほしい。このエンティティは、オブジェクトが存続する間は変化しないはずだ。
+言い換えれば、オブジェクトはそれが表すエンティティに決して背いてはいけない。
+オブジェクトがその所有者を変化させることはないよね。&lt;/p&gt;
+
+&lt;p&gt;不変であることが、全てのメソッドが常に同じ値を返すことを意味するわけではないことに注意してほしい。
+むしろ、良い不変オブジェクトはとても動的だ。
+しかし、それは内部状態を変えることはない。例えば、&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@Immutable
+final class HTTPStatus implements Status {
+  private URL page;
+  public HTTPStatus(URL url) {
+    this.page = url;
+  }
+  @Override
+  public int read() throws IOException {
+    return HttpURLConnection.class.cast(
+      this.page.openConnection()
+    ).getResponseCode();
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;read()&lt;/code&gt;メソッドは異なる値を返す可能性があるが、このオブジェクトは不変だ。
+ある一つのウェブページを指し、他のどこを指すこともない。
+内包する状態を決して変えないし、表現しているURLに背くこともない。&lt;/p&gt;
+
+&lt;p&gt;なぜこの不変性が美徳なのか?
+次の記事で詳細を説明している: &lt;a href=&#34;http://www.yegor256.com/2014/06/09/objects-should-be-immutable.html&#34;&gt;オブジェクトは不変であるべきだ&lt;/a&gt;。
+要するに、不変オブジェクトが優れている理由は、&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;不変オブジェクトは簡単に構築、テスト、使用できる。&lt;/li&gt;
+&lt;li&gt;真の不変オブジェクトは常にスレッドセーフ。&lt;/li&gt;
+&lt;li&gt;時間的結合(訳注: コードの実行順の暗黙的な制約)を回避するのに役立つ。&lt;/li&gt;
+&lt;li&gt;不変オブジェクトを使っても副作用がおきない。(防御的コピー無)&lt;/li&gt;
+&lt;li&gt;エラー発生時の原子性が保証されている。&lt;/li&gt;
+&lt;li&gt;キャッシュしやすい。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/07/26/why-null-is-bad/&#34;&gt;NULL参照&lt;/a&gt;を防ぐ。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;もちろん、良いオブジェクトは&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/07/22/getters-setters-evil/&#34;&gt;setter&lt;/a&gt;をもたない。セッターはオブジェクトの状態を変え得るし、URLに背くことを強要する。
+言い換えると、&lt;code&gt;HTTPStatus&lt;/code&gt;で&lt;code&gt;setURL()&lt;/code&gt;メソッドを実装することは酷い間違いとなる。&lt;/p&gt;
+
+&lt;p&gt;その他にも、不変オブジェクトを使うことで、設計は必然的に凝集度の高いものになり、また密で理解しやすいものになる。
+これについては&lt;a href=&#34;http://www.yegor256.com/2014/11/07/how-immutability-helps.html&#34;&gt;不変性がどう役に立つか&lt;/a&gt;という記事で説明している。&lt;/p&gt;
+
+&lt;h1 id=&#34;5-彼のクラスはスタティックなものをいっさいもたない&#34;&gt;5. 彼のクラスはスタティックなものをいっさいもたない&lt;/h1&gt;
+
+&lt;p&gt;スタティックメソッドは、オブジェクトではなくクラスの挙動を実装する。
+&lt;code&gt;File&lt;/code&gt;クラスがあり、その子供が&lt;code&gt;size()&lt;/code&gt;メソッドを持つとする。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;final class File implements Measurable {
+  @Override
+  public int size() {
+    // calculate the size of the file and return
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ここまではよい。&lt;code&gt;size()&lt;/code&gt;メソッドは&lt;code&gt;Measurable&lt;/code&gt;契約によって存在し、&lt;code&gt;File&lt;/code&gt;クラスの全てのオブジェクトはそのサイズを測ることができる。
+このクラスを、代わりにスタティックメソッドを持つように実装するのは酷い間違いだ。
+(こうした設計は&lt;a href=&#34;http://www.yegor256.com/2014/05/05/oop-alternative-to-utility-classes.html&#34;&gt;ユーティリティクラス&lt;/a&gt;と呼ばれ、JavaやRubyなどのほぼ全てのOOP言語でとても人気だ。)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// TERRIBLE DESIGN, DON&#39;T USE!
+class File {
+  public static int size(String file) {
+    // calculate the size of the file and return
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;この設計はオブジェクト指向パラダイムの真逆を行く。
+なぜかって?
+なぜならスタティックメソッドはオブジェクト指向プログラミングを「クラス指向」プログラミングに変えてしまうからだ。
+この、&lt;code&gt;size()&lt;/code&gt;メソッドは、オブジェクトではなくクラスの挙動を公開する。
+これの何が間違っているかと言われるかもしれない。
+なぜオブジェクトとクラス両方をコード中で第一級市民として使えないのか?
+なぜ両方ともがメソッドやプロパティを持てないのか?&lt;/p&gt;
+
+&lt;p&gt;この問題は、クラス指向プログラミングでは、分離ができなくなるというものだ。
+複雑な問題をブレイクダウンできなくなる。
+なぜなら、プログラム全体の中でクラスのインスタンスがたったひとつしか存在しないからだ。
+OOPの力は、オブジェクトをスコープを分離するための道具として使えることだ。
+あるオブジェクトをメソッド中でインスタンス化したとき、そのオブジェクトは特定のタスク専任となる。
+そのオブジェクトは、メソッド周辺の他のオブジェクトから完璧に分離されている。
+このオブジェクトはメソッドスコープのローカル変数だ。
+スタティックメソッドを持つクラスは、どこで使うにしろ常にグローバル変数だ。
+このため、この変数とのやりとりを分離することはできない。&lt;/p&gt;
+
+&lt;p&gt;オブジェクト指向の原理に概念的に反しているということの他にも、パブリックなスタティックメソッドは実用的な欠点も持っている。&lt;/p&gt;
+
+&lt;p&gt;第一に、モックを作れない。
+(いや、&lt;a href=&#34;https://code.google.com/p/powermock/&#34;&gt;PowerMock&lt;/a&gt;を使うことはできる。が、これはJavaプロジェクトで取り得る決断の中で最悪なものとなるだろう。。。私はそれを数年前にやってしまった。)&lt;/p&gt;
+
+&lt;p&gt;第二に、定義上スレッドセーフではない。なぜなら、常にスタティック変数とともに動くからで、スタティック変数は全てのスレッドからアクセスできるからだ。
+スタティックメソッドをスレッドセーフに作ることもできるが、この場合常に明示的な同期が必要になる。&lt;/p&gt;
+
+&lt;p&gt;パブリックなスタティックメソッドを見つけたら常に、即座に書き直すべきだ。
+スタティック(グローバル)変数がどれだけ酷いかについては説明したくもない。それは明らかだ。&lt;/p&gt;
+
+&lt;h1 id=&#34;6-彼の名前は職名ではない&#34;&gt;6. 彼の名前は職名ではない&lt;/h1&gt;
+
+&lt;p&gt;&lt;img alt=&#34;good-object-4.png&#34; src=&#34;http://tbd.kaitoy.xyz/images/seven-virtues-of-good-object/good-object-4.png&#34; width=&#34;300&#34; style=&#34;margin: 0px auto; display: block;&#34;&gt;&lt;/p&gt;
+
+&lt;p&gt;オブジェクト名はそのオブジェクトが何であるかを示すべきで、何をするかを示すべきではない。
+実世界の物に名付けるのと同様に。
+ページ集めではなく本、水入れではなくカップ、体飾りではなくTシャツ。
+もちろん、プリンタやコンピュータのような例外はあるが、これらはこの記事を読まなかった人々によってごく最近発明されたものだ。&lt;/p&gt;
+
+&lt;p&gt;例えば、次のような名前はその持ち主が何であるかを示す。
+りんご、ファイル、HTTPリクエスト群、ソケット、XMLドキュメント、ユーザリスト、正規表現、整数、PostgreSQLテーブル、Jeffrey Lebowski。
+適切な名前はいつも小さい絵として描ける。正規表現でさえ描ける。&lt;/p&gt;
+
+&lt;p&gt;逆に、次に挙げる名前の例は持ち主が何をするかを示す。
+ファイルリーダ、テキストパーサ、URLバリデータ、XMLプリンタ、サービスロケータ、シングルトン、スクリプトランナ、Javaプログラマ。
+これらの絵を描けるか?
+描けない。
+こういう名前は良いオブジェクトには適さない。
+これらは酷い設計につながる酷い名前だ。&lt;/p&gt;
+
+&lt;p&gt;一般的に、「-er」で終わる名前を避けるべきだ。そのほとんどはダメなものだ。&lt;/p&gt;
+
+&lt;p&gt;「&lt;code&gt;FileReader&lt;/code&gt;の代わりは何」と疑問に思うだろう。
+よりよい名前は何?&lt;/p&gt;
+
+&lt;p&gt;ええと、我々は既に&lt;code&gt;File&lt;/code&gt;を持っていて、それは実世界のディスク上のファイルの表現だ。
+この表現は十分に強力ではない。なぜなら、それはファイルの内容を読む方法を知らないからだ。
+その能力を持ったより強力なものを作りたい。
+何という名前にする?
+名前は、その持ち主が何をするかではなく、何であるかを示すべきであるということを思い出してほしい。
+持ち主は何か?
+データを持ったファイルだ。ただのファイルではなく。
+&lt;code&gt;File&lt;/code&gt;っぽいけど、もっと洗練されたものだ。データを持った。
+なので、&lt;code&gt;FileWithData&lt;/code&gt;、もしくは単に&lt;code&gt;DataFile&lt;/code&gt;というのはどうだろう?&lt;/p&gt;
+
+&lt;p&gt;同様のロジックを他の全ての名前にも適用すべきだ。
+常に何をするかよりも何であるかを考えよう。
+オブジェクトに職名ではなく、リアルで、意味のある名前を付けよう。&lt;/p&gt;
+
+&lt;p&gt;より詳しくは「&lt;a href=&#34;http://www.yegor256.com/2015/03/09/objects-end-with-er.html&#34;&gt;-ERで終わるオブジェクトを作るな&lt;/a&gt;」を参照。&lt;/p&gt;
+
+&lt;h1 id=&#34;7-彼のクラスはfinalかabstractのどちらか&#34;&gt;7. 彼のクラスはFinalかAbstractのどちらか&lt;/h1&gt;
+
+&lt;p&gt;&lt;img alt=&#34;good-object-5.png&#34; src=&#34;http://tbd.kaitoy.xyz/images/seven-virtues-of-good-object/good-object-5.png&#34; width=&#34;300&#34; style=&#34;margin: 0px auto; display: block;&#34;&gt;&lt;/p&gt;
+
+&lt;p&gt;良いオブジェクトはfinalまたはabstractなクラスから生成される。
+&lt;code&gt;final&lt;/code&gt;クラスは継承によって拡張できないクラスだ。
+&lt;code&gt;abstract&lt;/code&gt;クラスは子供を持てないクラスだ。
+簡単に言うと、クラスは、「君は僕を決して壊せない。僕はブラックボックスだ。」か、または「僕は壊れている。直してから使ってくれ。」のどちらかを言う。&lt;/p&gt;
+
+&lt;p&gt;その間には何もない。finalクラスはブラックボックスで、あらゆる意味で変更できない。
+オブジェクトは現状のままで働き、君はそれを使うか捨てるかしかしない。
+そのプロパティを継承する別のクラスを作ることはできない。
+これは&lt;code&gt;final&lt;/code&gt;修飾子によって禁止されている。
+そのようなfinalクラスを拡張する唯一の手段は、その子供をデコレートすることだ。
+例えば、(上記)&lt;code&gt;HTTPStatus&lt;/code&gt;クラスがあり、それを気に入らなかったとする。
+いやまあ好きではあるけど、私にとっては十分強力ではないんだ。
+HTTPステータスが400より大きい場合に例外を投げて欲しい。
+&lt;code&gt;read()&lt;/code&gt;メソッドにもう少し処理をしてもらいたい。
+古風なやり方は、そのクラスを拡張してメソッドを上書きすることだ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;class OnlyValidStatus extends HTTPStatus {
+  public OnlyValidStatus(URL url) {
+    super(url);
+  }
+  @Override
+  public int read() throws IOException {
+    int code = super.read();
+    if (code &amp;gt; 400) {
+      throw new RuntimException(&amp;quot;unsuccessful HTTP code&amp;quot;);
+    }
+    return code;
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;なぜこれではダメなのか?
+メソッドのひとつをオーバーライドすることで親クラス全体のロジックを壊す危険があるので全然ダメだ。
+&lt;code&gt;read()&lt;/code&gt;を子クラスでオーバーライドしたら、親クラスから来る全てのメソッドがその新しいやつを使うことになる、ということを忘れないで欲しい。
+これは、文字通り新しい「実装のかけら」をクラスの内部に挿入するということだ。
+哲学的に言って、これは反則だ。&lt;/p&gt;
+
+&lt;p&gt;一方、finalクラスを拡張するためには、それをブラックボックスのように扱い、他の実装でデコレートする必要がある。(&lt;a href=&#34;https://ja.wikipedia.org/wiki/Decorator_%E3%83%91%E3%82%BF%E3%83%BC%E3%83%B3&#34;&gt;デコレータパターン&lt;/a&gt;)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;final class OnlyValidStatus implements Status {
+  private final Status origin;
+  public OnlyValidStatus(Status status) {
+    this.origin = status;
+  }
+  @Override
+  public int read() throws IOException {
+    int code = this.origin.read();
+    if (code &amp;gt; 400) {
+      throw new RuntimException(&amp;quot;unsuccessful HTTP code&amp;quot;);
+    }
+    return code;
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;このクラスがもともとと同じインターフェース、&lt;code&gt;Status&lt;/code&gt;を実装していることに注目して欲しい。
+&lt;code&gt;HTTPStatus&lt;/code&gt;のインスタンスはコンストラクタを通して渡され、内包される。
+そして、全てのメソッド呼び出しは割り込まれ、必要に応じて独自に実装される。
+この設計だと、もとのオブジェクトをブラックボックスとして扱い、その内部のロジックには決して触らない。&lt;/p&gt;
+
+&lt;p&gt;もし&lt;code&gt;final&lt;/code&gt;というキーワードを使わなかったら、だれでも(君自身でも)そのクラスを拡張し、損なうことができる。(よって&lt;code&gt;final&lt;/code&gt;でないクラスは悪い設計だ。)&lt;/p&gt;
+
+&lt;p&gt;abstractクラスは真反対なケースだ。それは不完全で、そのままでは使えないことを示している。
+独自の実装ロジックを挿入する必要があるが、それは許可された部分だけに限られる。
+この部分は&lt;code&gt;abstract&lt;/code&gt;メソッドとして明示的に示されている。
+例えば、&lt;code&gt;HTTPStatus&lt;/code&gt;は以下のようになる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;abstract class ValidatedHTTPStatus implements Status {
+  @Override
+  public final int read() throws IOException {
+    int code = this.origin.read();
+    if (!this.isValid()) {
+      throw new RuntimException(&amp;quot;unsuccessful HTTP code&amp;quot;);
+    }
+    return code;
+  }
+  protected abstract boolean isValid();
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;見て分かるとおり、このクラスはHTTPコードを検証する方法を知らないので、継承して&lt;code&gt;isValid()&lt;/code&gt;をオーバーライドすることによってそのロジックを挿入することを期待している。
+この継承は親クラスを損なわない。他の全メソッドが&lt;code&gt;final&lt;/code&gt;によって守られているからだ。(メソッドの修飾子に注目してくれ。)
+つまり、このクラスは攻撃への備えがしてあって、完全に防御している。&lt;/p&gt;
+
+&lt;p&gt;まとめると、クラスは&lt;code&gt;final&lt;/code&gt;か&lt;code&gt;abstract&lt;/code&gt;のどちらかであるべきで、その中間はない。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;以上がYegorの記事。&lt;/p&gt;
+
+&lt;p&gt;この記事は、オブジェクト指向原理主義者であるYegorが彼のオブジェクト観の概論を書いたものだ。
+彼のオブジェクトに対するとんがった信念が読み取れる。&lt;/p&gt;
+
+&lt;p&gt;記事の内容をまとめると、&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;オブジェクトは何か実体と対応していないといけない。&lt;/li&gt;
+&lt;li&gt;クラスはインターフェースを実装していないといけない。&lt;/li&gt;
+&lt;li&gt;オブジェクトはユニーク性を保証するフィールドを持っていないといけない。&lt;/li&gt;
+&lt;li&gt;オブジェクトは不変でないといけない&lt;/li&gt;
+&lt;li&gt;クラスはスタティックメソッド/フィールドを持っていてはいけない。&lt;/li&gt;
+&lt;li&gt;erで終わるクラス名を使ってはいけない。&lt;/li&gt;
+&lt;li&gt;クラスにはfinalかabstractが付いていないといけない。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;#1と#6はだいたい同じことを主張していて、その内容は実用的というよりかは哲学的だ。
+敢えて実用面について言えば、同じ哲学を共有しているチームがこの主張に従えば、そのチーム内でコードの可読性や保守性が上がるというメリットがあると考えられる。
+が、オブジェクト指向原理主義よりもGoFのデザインパターンの方がはるかに広く深く浸透しているので、このメリットはあまりありがたみが無い。
+私はオブジェクト真理教に入信したわけではないので、これからもControllerとかFactoryとかServiceとかいうクラスを書くだろう。&lt;/p&gt;
+
+&lt;p&gt;#2については、言っていることは分かるしインターフェースのメリットもよく理解しているつもりだが、わんさとクラスを書かないといけないのに逐一インターフェースまで書いてられるかというのが本音だ。
+実際には、モックを書いたり多態したいとき、または将来そうなると天啓があったとき、つまりは必要に応じてインターフェースを書くのであって、なんでもかんでも書いていたら書くのも読むのもいたずらに大変になってしまう。(そういう方針をとって開発者から不満が噴出したプロジェクトが身近にあったと聞いた。)
+Yegorのプロジェクトでは全てのクラスがインターフェースを実装しているんだろうか。信じ難い。&lt;/p&gt;
+
+&lt;p&gt;#3も、ちょっと実用的な雰囲気の主張だが、よくみるとこれに従うことでどんなメリットがあるかとか、従わないことでどんな問題が発生するかとかが書いてない。
+哲学的な主張か。
+私が開発している&lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;Pcap4J&lt;/a&gt;には、ネットワークパケットを表すクラスが多数あるが、それらからインスタンス化されるオブジェクトは必ずしもユニークではない。
+例えば、Ethernetヘッダを表すクラスである&lt;a href=&#34;https://github.com/kaitoy/pcap4j/blob/master/pcap4j-core/src/main/java/org/pcap4j/packet/EthernetPacket.java&#34;&gt;EthernetHeader&lt;/a&gt;は、Ethernetパケットの送り元と送り先が同じで、且つレイヤ3のプロトコルが同じなら&lt;code&gt;equals()&lt;/code&gt;が&lt;code&gt;true&lt;/code&gt;を返す。
+つまり、実世界で異なるパケットのヘッダでも、Java世界では同一とみなされることがよくある。
+この実装で実用上困ることは無い気がするけど、オブジェクト指向原理主義に照らすとダメってことか?
+&lt;code&gt;UUID&lt;/code&gt;みたいなフィールドでも加えればいいのか?
+そんなフィールドはEthernetヘッダにはないのに?&lt;/p&gt;
+
+&lt;p&gt;#4は好き。ただ全てに適用できるかというと疑問。不変オブジェクトで、例えば&lt;a href=&#34;http://qiita.com/disc99/items/840cf9936687f97a482b#effective-java-builder&#34;&gt;Builderパターン(GoFじゃなくてEffective Javaの方)&lt;/a&gt;が対応している問題をどう解決するんだろう?
+すごく頑張ってYegorの言いつけを守りながら、この問題を解決したEthernetHeader Builderを書いてみたら以下のようになった。&lt;/p&gt;
+
+&lt;p&gt;まず、一般的なヘッダを表す&lt;code&gt;Header&lt;/code&gt;クラスがある。不変で、&lt;code&gt;id&lt;/code&gt;という適当なフィールドを持つ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;package test;
+import org.pcap4j.util.MacAddress;
+
+public final class Header {
+  private final int id;
+
+  public Header(int id) {
+    this.id = id;
+  }
+
+  public int getId() { return id; }
+
+  public DstAddrSetEthernetHeader dstAddr(MacAddress dstAddr) {
+    return new DstAddrSetEthernetHeader(this, dstAddr);
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;次に、&lt;code&gt;Header&lt;/code&gt;をデコレートして拡張し、&lt;code&gt;dstAddr&lt;/code&gt;というフィールドを追加したもちろん不変なクラス&lt;code&gt;DstAddrSetEthernetHeader&lt;/code&gt;(dstAddrだけがセットされたEthernetヘッダ)。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;package test;
+import org.pcap4j.util.MacAddress;
+
+public final class DstAddrSetEthernetHeader {
+  private final Header header;
+  private final MacAddress dstAddr;
+
+  DstAddrSetEthernetHeader(Header header, MacAddress dstAddr) {
+    this.header = header;
+    this.dstAddr = dstAddr;
+  }
+
+  public MacAddress getDstAddr() { return dstAddr; }
+
+  public int getId() { return header.getId(); }
+
+  public DstAddrAndSrcAddrSetEthernetHeader srcAddr(MacAddress srcAddr) {
+    return new DstAddrAndSrcAddrSetEthernetHeader(this, srcAddr);
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;さらに&lt;code&gt;DstAddrSetEthernetHeader&lt;/code&gt;をデコレートして拡張し、&lt;code&gt;srcAddr&lt;/code&gt;というフィールドを追加したもちろん不変なクラス&lt;code&gt;DstAddrAndSrcAddrSetEthernetHeader&lt;/code&gt;(dstAddrとsrcAddrがセットされたEthernetヘッダ)。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;package test;
+import org.pcap4j.packet.namednumber.EtherType;
+import org.pcap4j.util.MacAddress;
+
+public final class DstAddrAndSrcAddrSetEthernetHeader {
+  private final DstAddrSetEthernetHeader header;
+  private final MacAddress srcAddr;
+
+  DstAddrAndSrcAddrSetEthernetHeader(DstAddrSetEthernetHeader header, MacAddress srcAddr) {
+    this.header = header;
+    this.srcAddr = srcAddr;
+  }
+
+  public MacAddress getSrcAddr() { return srcAddr; }
+
+  public int getId() { return header.getId(); }
+
+  public MacAddress getDstAddr() { return header.getDstAddr(); }
+
+  public EthernetHeader type(EtherType type) {
+    return new EthernetHeader(this, type);
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;やっとビルド対象である&lt;code&gt;EthernetHeader&lt;/code&gt;。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;package test;
+import org.pcap4j.packet.namednumber.EtherType;
+import org.pcap4j.util.MacAddress;
+
+public final class EthernetHeader {
+  private final int id;
+  private final MacAddress dstAddr;
+  private final MacAddress srcAddr;
+  private final EtherType type;
+
+  public EthernetHeader(DstAddrAndSrcAddrSetEthernetHeader header, EtherType type) {
+    this.id = header.getId();
+    this.dstAddr = header.getDstAddr();
+    this.srcAddr = header.getSrcAddr();
+    this.type = type;
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;上記4つのクラスを使って、次のようにBuilderパターンっぽいことができる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;package test;
+import org.pcap4j.packet.namednumber.EtherType;
+import org.pcap4j.util.MacAddress;
+
+public class ImmutableBuilderSample {
+  public static void main(String[] args) {
+    EthernetHeader header
+      = new Header(1)
+          .dstAddr(MacAddress.getByName(&amp;quot;aa:bb:cc:dd:ee:ff&amp;quot;))
+          .srcAddr(MacAddress.getByName(&amp;quot;11:22:33:44:55:66&amp;quot;))
+          .type(EtherType.IPV4);
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;パラメータの設定順を自由にしたければ、さらに&lt;code&gt;SrcAddrSetEthernetHeader&lt;/code&gt;とか&lt;code&gt;TypeSetEthernetHeader&lt;/code&gt;とか&lt;code&gt;DstAddrAndTypeSetEthernetHeader&lt;/code&gt;とか作らないといけない。これは疲れる。
+沢山オブジェクトを作るのに、最後の&lt;code&gt;EthernetHeader&lt;/code&gt;以外のが使い捨てというのも辛い。
+&lt;code&gt;EthernetHeader&lt;/code&gt;は3つしかフィールドがないからまだましな方なんだが。&lt;/p&gt;
+
+&lt;p&gt;私は、不変クラスはスレッドセーフにすることを主目的として作る。
+普通アプリケーションはマルチスレッドになるんだから、基本的にクラスは不変を目指して作り、どうしても可変にしたくなったときは内部で同期してスレッドセーフに保つか、外で同期してもらうか、またはシングルスレッドで使ってもらうかを考える。
+上記のBuilderなんかは可変フィールドを使わないとまともに作れないし、その性質上マルチスレッドで使うことは普通ないし、無理に不変にする必要はなかろう。&lt;/p&gt;
+
+&lt;p&gt;#5については、Yegorが問題視していることにはだいたい納得できる。(哲学的な部分以外は。。。)
+しかし、Yegorが、スタティックメソッドが可変フィールドを参照することを前提に話しているところにひっかかる。
+私はpublic staticなフィールドをfinal無しで書くことはないし、スタティックメソッドは殆どの場合引数だけを使うように書き、たまにfinalなフィールドを参照させるくらいだ。(ちょっとあやしいけど多分。)
+世のユーティリティクラスもだいたいそんな感じで書かれているんじゃなかろうか。
+この場合、スレッドセーフじゃないという問題点は出ないし、問題の分離も、スタティックフィールドでデータを共有するわけではないのでちゃんとできる。
+モックはできないけど、ユーティリティクラスのモックを書きたいことなんてあるだろうか?&lt;/p&gt;
+
+&lt;p&gt;#7は同意。abstractじゃないメソッドをオーバーライドするのって気持ち悪いし。
+ところでデコレータパターンってすごい便利で汎用性高いと思うんだけど、いざというときに思いつかないようで、あんまり使ったことないな。&lt;/p&gt;
+
+&lt;p&gt;以上ひとつひとつの主張について考えてみたけど、反感が多いな。
+これはオブジェクト真理教に入信するメリットが見えてこないからだろう。
+もともとOOPっていうのは、手続き型言語が隆盛な時代の関数を使った処理の分離という考え方を押し進め、処理と処理対象データを一緒にして分離するという実用的で技術的な目的のもとに生まれたもので、オブジェクトは実世界のモノを表現しなきゃいけないってのは後付けの哲学だ。
+OOPはそれを共通認識として発展したわけではないので、極端な哲学に縛られていると長い歴史に揉まれた強力なノウハウの多くが使えなくなってしまう。
+GoFのデザインパターンを否定するなら、GoFが解決した問題への別解を提示してくれないとなかなか受け入れがたい。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -154,7 +729,7 @@ Javaのチュートリアルは、データベースに接続するアプリケ�
 彼らが挙げている、「ORMは遅い」とか「データベースアップグレードが難しい」といった理由は実用的で有効ではあるが、重要なポイントが欠けている。
 こういう実用的な論点に対しては、Bozhidar Bozhanovが彼のブログポストの&lt;a href=&#34;http://techblog.bozho.net/orm-haters-dont-get-it/&#34;&gt;ORM Haters Don’t Get It&lt;/a&gt;の中でとてもよい実用的な回答を示している。&lt;/p&gt;
 
-&lt;p&gt;重要なポイントとは、ORMが、データベースとのやり取りをオブジェクト内にカプセル化するのではなく、それを抜き取り、密で堅い&lt;a href=&#34;http://www.yegor256.com/2014/11/20/seven-virtues-of-good-object.html&#34;&gt;生ける有機物&lt;/a&gt;を文字通りばらばらに引き裂く、ということだ。
+&lt;p&gt;重要なポイントとは、ORMが、データベースとのやり取りをオブジェクト内にカプセル化するのではなく、それを抜き取り、密で堅い&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/&#34;&gt;生ける有機体&lt;/a&gt;を文字通りばらばらに引き裂く、ということだ。
 引き裂かれたオブジェクトの欠片はデータを保持し、ほかの欠片(ORMのエンジンであるセッションファクトリ内に実装されているもの)はそのデータの扱い方を知っていて、それをリレーショナルデータベースへ転送する。
 下の絵を見てくれ。これはORMがやっていることを図示している。&lt;/p&gt;
 
@@ -191,7 +766,7 @@ OOPにおいては、扱うふるまいは単一のエントリーポイント�
 しかしこういうテストは遅く、さらに注目すべきことには、データベースに対して何もしないオブジェクトがデータベースインスタンスに対してテストされることになる。最悪な設計だ。&lt;/p&gt;
 
 &lt;p&gt;もう一度繰り返すが、ORMの実用的な問題は結果に過ぎない。
-根本的な欠陥は、ORMがオブジェクトをバラバラにし、&lt;a href=&#34;http://www.yegor256.com/2014/11/20/seven-virtues-of-good-object.html&#34;&gt;オブジェクト&lt;/a&gt;の真の概念にひどく違反していることだ。&lt;/p&gt;
+根本的な欠陥は、ORMがオブジェクトをバラバラにし、&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/&#34;&gt;オブジェクト&lt;/a&gt;の真の概念にひどく違反していることだ。&lt;/p&gt;
 
 &lt;h1 id=&#34;sqlを話すオブジェクト&#34;&gt;SQLを話すオブジェクト&lt;/h1&gt;
 
@@ -200,7 +775,7 @@ OOPにおいては、扱うふるまいは単一のエントリーポイント�
 あの、&lt;code&gt;Post&lt;/code&gt;クラスを私のやり方で設計してみよう。
 これは二つのクラスに分ける必要がある。&lt;code&gt;Post&lt;/code&gt;と&lt;code&gt;Posts&lt;/code&gt;だ。
 単数形と複数形。
-私の&lt;a href=&#34;http://www.yegor256.com/2014/11/20/seven-virtues-of-good-object.html&#34;&gt;以前の記事&lt;/a&gt;ですでに述べたように、よいオブジェクトは常に現実世界のエンティティの抽象だ。
+私の&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/&#34;&gt;以前の記事&lt;/a&gt;ですでに述べたように、よいオブジェクトは常に現実世界のエンティティの抽象だ。
 この原則が実際にどう働くかをここに示す。
 我々は二つのエンティティを扱う。データベーステーブルとテーブルの行だ。
 これが二つのクラスを作る理由だ。&lt;code&gt;Posts&lt;/code&gt;がテーブルを表し、&lt;code&gt;Post&lt;/code&gt;が行を表す。&lt;/p&gt;
@@ -208,7 +783,7 @@ OOPにおいては、扱うふるまいは単一のエントリーポイント�
 &lt;p&gt;&lt;img src=&#34;http://tbd.kaitoy.xyz/images/orm-is-offensive-anti-pattern/sql-speaking-object.svg&#34; alt=&#34;sql-speaking-object.svg&#34; /&gt;
 &lt;/p&gt;
 
-&lt;p&gt;例の&lt;a href=&#34;http://www.yegor256.com/2014/11/20/seven-virtues-of-good-object.html&#34;&gt;記事&lt;/a&gt;で既に述べたように、全てのオブジェクトは契約によって働き、インターフェースを実装すべきだ。
+&lt;p&gt;例の&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/&#34;&gt;記事&lt;/a&gt;で既に述べたように、全てのオブジェクトは契約によって働き、インターフェースを実装すべきだ。
 我々の設計も二つのインターフェースから始めよう。
 もちろん、オブジェクトは不変だ。&lt;code&gt;Posts&lt;/code&gt;は以下のようになる。&lt;/p&gt;
 
@@ -471,7 +1046,7 @@ Hibernateを初歩的に使うと一行もSQL(やHQL)を書かずにRDBを使う
 Yegor自身が前半で書いているORMを使ったコードより、後半のOOP原理的コードの方がかなり長い。
 それってORMを使った方がやっぱりいいんじゃないのという感想を持つ人が多いのでは。(少なくとも「実用的な問題」を抜きにすれば。)&lt;/p&gt;
 
-&lt;p&gt;オブジェクト原理主義をしっかり理解し、そのメリットを知らなければYegorの説教も馬の耳にだ。というわけで、次は&lt;a href=&#34;http://www.yegor256.com/2014/11/20/seven-virtues-of-good-object.html&#34;&gt;Seven Virtues of a Good Object&lt;/a&gt;を読むか。&lt;/p&gt;
+&lt;p&gt;オブジェクト原理主義をしっかり理解し、そのメリットを知らなければYegorの説教も馬の耳にだ。というわけで、次は&lt;a href=&#34;http://www.yegor256.com/2014/11/20/seven-virtues-of-good-object.html&#34;&gt;Seven Virtues of a Good Object&lt;/a&gt;を読むか。(&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/&#34;&gt;訳した。&lt;/a&gt;)&lt;/p&gt;
 </description>
         </item>
       
@@ -823,7 +1398,7 @@ Object Thinkingは、私が今まで読んだオブジェクト指向プログ�
 &lt;h3 id=&#34;ボールと犬&#34;&gt;ボールと犬&lt;/h3&gt;
 
 &lt;p&gt;真のオブジェクト指向プログラミングでは、
-オブジェクトは&lt;a href=&#34;http://www.yegor256.com/2014/11/20/seven-virtues-of-good-object.html&#34;&gt;生きている生物&lt;/a&gt;だ。私や君と同じように。
+オブジェクトは&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/&#34;&gt;生きている生物&lt;/a&gt;だ。私や君と同じように。
 オブジェクトは生きている有機体で、それ自身の挙動や、特性や、ライフサイクルを持っている。&lt;/p&gt;
 
 &lt;p&gt;生きている有機体はsetterを持てるだろうか? 犬にボールを&amp;rdquo;set&amp;rdquo;できるだろうか? 無理だろう。

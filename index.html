@@ -11,9 +11,9 @@
     <meta property="og:url" content="http://tbd.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="This is continued from the part 1. We are adding DHCP support to Pcap4J. Packet Piece Class A packet piece class is a Java class which represents a field of a packet. We should create such classes instead of using a primitive types in some cases. In the case of DHCP, its flags field includes two fields in itself as like below: 1 1 1 1 1 1 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; |B| MBZ | &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; B: BROADCAST flag MBZ: MUST BE ZERO (reserved for future use) Although this flags field is 2 bytes long and can be held by a primitive short variable, it&rsquo;s better to create a packet piece class to hold it for better usability.">
+    <meta property="og:description" content="このエントリでは、Yegor Bugayenkoによる記事、Seven Virtues of a Good Objectを紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 Martin Fowler曰く、 ライブラリは本質的には呼び出し可能な関数の集合で、最近は普通クラス内にまとめられる。 クラス内にまとめられた関数? 失礼を承知で言わせてもらうが、これは間違っている。 そして、これはオブジェクト指向プログラミングにおいて、クラスに対する非常に一般的な誤解だ。 クラスは関数をまとめるものではないし、オブジェクトはデータ構造体ではない。 では、なにが適切なオブジェクトなのか? どれが不適切なオブジェクトなのか? その違いは何か? これは論争を呼ぶ主題ではあるが、とても重要だ。 オブジェクトが何かを理解しなければ、オブジェクト指向ソフトウェアをどうやって書くんだ? まあ、JavaやRubyなどのおかげで、書けることは書ける。 しかし、はたして良いものができるだろうか? 不幸にも、これは厳密な科学ではなく、様々な意見がある。 ここに、良いオブジェクトの特性を私なりにリストアップする。 クラス vs オブジェクト オブジェクトについて議論を始める前に、クラスとは何かを定義しよう。 それはオブジェクトが生まれる(インスタント化される)場所だ。 クラスの主な責任は、要求に応じて新しいオブジェクトを構築し、使われなくなったオブジェクトを破壊することだ。 クラスはその子供たちがどのように見えどのように振る舞うべきかを知っている。 言い換えれば、子供たちが従うべき契約を知っている。 クラスが「オブジェクトのテンプレート」であると言われることもある。(例えばWikipediaにはそう書いてある。) この定義はクラスを受動的なポジションに置いているので正しくない。 この定義は、だれかがテンプレートを取得してそこからオブジェクトを構築するということを想定している。 これは、技術的には正しいかもしれないが、概念的には間違っている。 クラスとその子供たちだけが居るのであって、他の誰も関係すべきではない。 あるオブジェクトがクラスに他のオブジェクトを作るように頼み、そのクラスがオブジェクトを構築する。それだけだ。 RubyはJavaやC&#43;&#43;に比べてこの概念をかなりうまく表現している。 photo = File.new(&#39;/tmp/photo.png&#39;) photoオブジェクトはFileクラスによって構築される。(newはそのクラスへのエントリポイント。) オブジェクトは、いったん構築されると、自身に基づいて行動する。 オブジェクトは、自身を誰が構築したかとか、何人兄弟姉妹がいるかとかを知っているべきではない。 そう、リフレクションは酷いアイデアだと言っている。 それについては他の記事で詳しく書くとして、ここでは、オブジェクトについてと、その最高と最悪の両面について話そう。 1. 彼は実世界に存在している まず第一に、オブジェクトは生きた有機体だ。 もっと言えば、オブジェクトは擬人化されるべきだ。 つまり、人間(もしくは、君がより好むならペット)のように扱われるべきだ。 基本的にこれは、オブジェクトはデータ構造体や関数の集合ではないということを意味している。 代わりに、オブジェクトは独立したエンティティで、それ自身のライフサイクル、振る舞い、性質を持つ。 従業員、部署、HTTPリクエスト、MySQLのテーブル、ファイルの行、ファイルそのもの、これらは適切なオブジェクトだ。 なぜならこれらは、ソフトウェアを停止した時でも実世界に存在しているから。 より正確には、オブジェクトは実世界のモノの表現のひとつだ。 オブジェクトは実世界のモノと他のオブジェクトとの間のプロキシだ。 そのようなモノが存在しなければ、明らかにオブジェクトは存在しない。 photo = File.new(&#39;/tmp/photo.png&#39;) puts photo.width() この例では、Fileに新しいオブジェクトphotoを構築するよう頼んでいる。 photoはディスク上の実際のファイルの表現となる。 ファイルもまた仮想のもので、コンピュータが起動している間だけ存在すると言う人がいるかもしれない。 それには私も同意し、「実世界」の定義を次のように改善しよう。 オブジェクトが住むプログラムの範囲外に存在する全てのもの。 ディスク上のファイルはプログラムの範囲外にあり、その表現をプログラム内に作成することは完全に正しいことと言える。 コントローラ、パーサ、フィルタ、バリデータ、サービスロケータ、シングルトン、ファクトリー、これれは良いオブジェクトではない。(そう、ほとんどのGoFパターンはアンチパターンだ!) これらはソフトウェアの外側、実世界に存在していない。 他のオブジェクト同士を結びつけるためだけに考案されたものだ。 人工的で偽のモノだ。何も表現していない。 真面目な話、XMLパーサ、これが表現するものはなんだ?">
     
-    <meta property="og:image" content="http://tbd.kaitoy.xyz/images/pcap4jlogo.png">
+    <meta property="og:image" content="http://tbd.kaitoy.xyz/images/teamedio_logo.svg">
     
     
     
@@ -61,6 +61,28 @@
     <div id="posts">
       
       <div class="row">
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="http://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="http://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Wed, Oct 28, 2015</span>
+              </div>
+              <h2 class="title">よいオブジェクトの七つの美徳</h2>
+              <div class="summary">
+                このエントリでは、Yegor Bugayenkoによる記事、Seven Virtues of a Good Objectを紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 Martin Fowler曰く、 ライブラリは本質的には呼び出し可能な関数の集合で、最近は普通クラス内にまとめられる。 クラス内にまとめられた関数? 失礼を承知で言わせてもらうが、これは間違っている。 そして、これはオブジェクト指向プログラミングにおいて、クラスに対する非常に一般的な誤解だ。 クラスは関数をまとめるものではないし、オブジェクトはデータ構造体ではない。 では、なにが適切なオブジェクトなのか? どれが不適切なオブジェクトなのか? その違いは何か? これは論争を呼ぶ主題ではあるが、とても重要だ。 オブジェクトが何かを理解しなければ、オブジェクト指向ソフトウェアをどうやって書くんだ? まあ、JavaやRubyなどのおかげで、書けることは書ける。 しかし、はたして良いものができるだろうか? 不幸にも、これは厳密な科学ではなく、様々な意見がある。 ここに、良いオブジェクトの特性を私なりにリストアップする。 クラス vs オブジェクト オブジェクトについて議論を始める前に、クラスとは何かを定義しよう。 それはオブジェクトが生まれる(インスタント化される)場所だ。 クラスの主な責任は、要求に応じて新しいオブジェクトを構築し、使われなくなったオブジェクトを破壊することだ。 クラスはその子供たちがどのように見えどのように振る舞うべきかを知っている。 言い換えれば、子供たちが従うべき契約を知っている。 クラスが「オブジェクトのテンプレート」であると言われることもある。(例えばWikipediaにはそう書いてある。) この定義はクラスを受動的なポジションに置いているので正しくない。 この定義は、だれかがテンプレートを取得してそこからオブジェクトを構築するということを想定している。 これは、技術的には正しいかもしれないが、概念的には間違っている。 クラスとその子供たちだけが居るのであって、他の誰も関係すべきではない。 あるオブジェクトがクラスに他のオブジェクトを作るように頼み、そのクラスがオブジェクトを構築する。それだけだ。 RubyはJavaやC++に比べてこの概念をかなりうまく表現している。 photo = File.new('/tmp/photo.png') photoオブジェクトはFileクラスによって構築される。(newはそのクラスへのエントリポイント。) オブジェクトは、いったん構築されると、自身に基づいて行動する。 オブジェクトは、自身を誰が構築したかとか、何人兄弟姉妹がいるかとかを知っているべきではない。 そう、リフレクションは酷いアイデアだと言っている。 それについては他の記事で詳しく書くとして、ここでは、オブジェクトについてと、その最高と最悪の両面について話そう。 1. 彼は実世界に存在している まず第一に、オブジェクトは生きた有機体だ。 もっと言えば、オブジェクトは擬人化されるべきだ。 つまり、人間(もしくは、君がより好むならペット)のように扱われるべきだ。 基本的にこれは、オブジェクトはデータ構造体や関数の集合ではないということを意味している。 代わりに、オブジェクトは独立したエンティティで、それ自身のライフサイクル、振る舞い、性質を持つ。 従業員、部署、HTTPリクエスト、MySQLのテーブル、ファイルの行、ファイルそのもの、これらは適切なオブジェクトだ。 なぜならこれらは、ソフトウェアを停止した時でも実世界に存在しているから。 より正確には、オブジェクトは実世界のモノの表現のひとつだ。 オブジェクトは実世界のモノと他のオブジェクトとの間のプロキシだ。 そのようなモノが存在しなければ、明らかにオブジェクトは存在しない。 photo = File.new('/tmp/photo.png') puts photo.width() この例では、Fileに新しいオブジェクトphotoを構築するよう頼んでいる。 photoはディスク上の実際のファイルの表現となる。 ファイルもまた仮想のもので、コンピュータが起動している間だけ存在すると言う人がいるかもしれない。 それには私も同意し、「実世界」の定義を次のように改善しよう。 オブジェクトが住むプログラムの範囲外に存在する全てのもの。 ディスク上のファイルはプログラムの範囲外にあり、その表現をプログラム内に作成することは完全に正しいことと言える。 コントローラ、パーサ、フィルタ、バリデータ、サービスロケータ、シングルトン、ファクトリー、これれは良いオブジェクトではない。(そう、ほとんどのGoFパターンはアンチパターンだ!) これらはソフトウェアの外側、実世界に存在していない。 他のオブジェクト同士を結びつけるためだけに考案されたものだ。 人工的で偽のモノだ。何も表現していない。 真面目な話、XMLパーサ、これが表現するものはなんだ?
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
         
         
         
@@ -126,33 +148,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="http://tbd.kaitoy.xyz/2015/09/06/disturb-me/" class="post post-topix">
+            <a href="http://tbd.kaitoy.xyz/2015/09/06/disturb-me/" class="post">
               <header class="eyecatch text-center">
                 <img src="http://tbd.kaitoy.xyz/images/atom_editor_logo.svg.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Sun, Sep 6, 2015</span>
               </div>
-              <h2 class="title">Atomウィンドウ内で画像を動かすパッケージ - disturb-me</h2>
-              <div class="summary">
-                Atomのパッケージを見ていて、便利なパッケージが沢山あるなぁと思いつつ、真面目なパッケージばかりでもつまらないので、たまには不真面目で役に立たないパッケージがあってもいいかと思って作ったパッケージの話。 disturb-me 作ったのはdisturb-meというパッケージ。 Ctrl+Altを押しながらdとmを押すとAtomウィンドウ内に画像が表示され、その画像がランダムに動き回り作業の邪魔をするというもの。 画像はパッケージの設定から指定できる。デフォルトではAtomのロゴ。 最初はpac-m●nというパッケージ名にして、ゲーム界のミッキーことパ●クマンが動き回るパッケージにしようと思ってたけど、バンダイナムコからダメだと言われてしまった。 この構想はいつかカタログIPオープン化プロジェクトを利用して実現しようと思う。 disturb-meの作り方 以前別のエントリでAtomパッケージの作り方の基本について書いたので、ここではそこで書かなかったことを書く。 1. メインスクリプト - コマンド 今回はコマンドを追加するのでCommandRegistryを使う。 CommandRegistryのインスタンスにはatom.commandsでアクセスでき、そのaddメソッドでコマンドを追加できる。 addメソッドの引数は、第一引数から順に、 target: コマンドを有効にするDOM要素か、それを示すCSSセレクタ。 commandName: コマンドパレットに表示するコマンド名。全部小文字で、単語をハイフンでつないで、パッケージ名を先頭につけるのがルール。 callback(event): コマンドを実行したときに呼ばれるメソッド。 disturb-meのコマンドはAtomウィンドウ内のどこでも有効にしたいので、第一引数にはAtomウィンドウを表すカスタムタグであるatom-workspaceを指定する。 コードは以下の感じ。 activate: (state) -&gt; @subscriptions = new CompositeDisposable @subscriptions.add atom.commands.add 'atom-workspace', 'disturb-me:toggle': =&gt; @toggle() toggle: -&gt; # 画像を挿入したり削除したりするコード。 toggleの中では画像を挿入したり削除したりするわけだけど、この処理は、その画像を表す別のクラスにまかせることにする。 のでtoggleは以下のように書く。 @disturber: null toggle: -&gt; if @disturber? @disturber.stop() @disturber = null else @disturber = new Disturber() document.body.appendChild(@disturber.getElement()) @disturber.start() Disturberが画像を表すクラス。別のファイル(lib/disturber.coffee)の中で定義して、スクリプトの先頭辺りでDisturber = require './disturber'のようにインポートする。 document.body.appendChildしているところは、何かAtomのAPI(ViewRegistryとか)を使うべきなのかも。 2. Disturber Disturberは以下のように書く。 module.exports = class Disturber element: null constructor: -&gt; # &lt;img&gt;を作って@elementに入れる。 destroy: -&gt; # @elementをDOMツリーから削除する。 getElement: -&gt; # @element返す。 start: -&gt; # @elementのsrcを設定して、ランダムに動かし始める。 stop: -&gt; # @elementを止める。 あまり取り立てて書くことないな…。 因みに画像を動かすのにはVelocityを使い、DOMの操作とかにちょっとjQueryを使う。 3.
-              </div>
+              <h3 class="title">Atomウィンドウ内で画像を動かすパッケージ - disturb-me</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         

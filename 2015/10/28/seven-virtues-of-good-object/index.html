@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="よいオブジェクトの七つの美徳 | To Be Decided">
+    <meta property="og:url" content="http://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/">
+    <meta property="og:description" content="このエントリでは、Yegor Bugayenkoによる記事、Seven Virtues of a Good Objectを紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 Martin Fowler曰く、 ライブラリは本質的には呼び出し可能な関数の集合で、最近は普通クラス内にまとめられる。 クラス内にまとめられた関数? 失礼を承知で言わせてもらうが、これは間違っている。 そして、これはオブジェクト指向プログラミングにおいて、クラスに対する非常に一般的な誤解だ。 クラスは関数をまとめるものではないし、オブジェクトはデータ構造体ではない。 では、なにが適切なオブジェクトなのか? どれが不適切なオブジェクトなのか? その違いは何か? これは論争を呼ぶ主題ではあるが、とても重要だ。 オブジェクトが何かを理解しなければ、オブジェクト指向ソフトウェアをどうやって書くんだ? まあ、JavaやRubyなどのおかげで、書けることは書ける。 しかし、はたして良いものができるだろうか? 不幸にも、これは厳密な科学ではなく、様々な意見がある。 ここに、良いオブジェクトの特性を私なりにリストアップする。 クラス vs オブジェクト オブジェクトについて議論を始める前に、クラスとは何かを定義しよう。 それはオブジェクトが生まれる(インスタント化される)場所だ。 クラスの主な責任は、要求に応じて新しいオブジェクトを構築し、使われなくなったオブジェクトを破壊することだ。 クラスはその子供たちがどのように見えどのように振る舞うべきかを知っている。 言い換えれば、子供たちが従うべき契約を知っている。 クラスが「オブジェクトのテンプレート」であると言われることもある。(例えばWikipediaにはそう書いてある。) この定義はクラスを受動的なポジションに置いているので正しくない。 この定義は、だれかがテンプレートを取得してそこからオブジェクトを構築するということを想定している。 これは、技術的には正しいかもしれないが、概念的には間違っている。 クラスとその子供たちだけが居るのであって、他の誰も関係すべきではない。 あるオブジェクトがクラスに他のオブジェクトを作るように頼み、そのクラスがオブジェクトを構築する。それだけだ。 RubyはJavaやC&#43;&#43;に比べてこの概念をかなりうまく表現している。 photo = File.new(&#39;/tmp/photo.png&#39;) photoオブジェクトはFileクラスによって構築される。(newはそのクラスへのエントリポイント。) オブジェクトは、いったん構築されると、自身に基づいて行動する。 オブジェクトは、自身を誰が構築したかとか、何人兄弟姉妹がいるかとかを知っているべきではない。 そう、リフレクションは酷いアイデアだと言っている。 それについては他の記事で詳しく書くとして、ここでは、オブジェクトについてと、その最高と最悪の両面について話そう。 1. 彼は実世界に存在している まず第一に、オブジェクトは生きた有機体だ。 もっと言えば、オブジェクトは擬人化されるべきだ。 つまり、人間(もしくは、君がより好むならペット)のように扱われるべきだ。 基本的にこれは、オブジェクトはデータ構造体や関数の集合ではないということを意味している。 代わりに、オブジェクトは独立したエンティティで、それ自身のライフサイクル、振る舞い、性質を持つ。 従業員、部署、HTTPリクエスト、MySQLのテーブル、ファイルの行、ファイルそのもの、これらは適切なオブジェクトだ。 なぜならこれらは、ソフトウェアを停止した時でも実世界に存在しているから。 より正確には、オブジェクトは実世界のモノの表現のひとつだ。 オブジェクトは実世界のモノと他のオブジェクトとの間のプロキシだ。 そのようなモノが存在しなければ、明らかにオブジェクトは存在しない。 photo = File.new(&#39;/tmp/photo.png&#39;) puts photo.width() この例では、Fileに新しいオブジェクトphotoを構築するよう頼んでいる。 photoはディスク上の実際のファイルの表現となる。 ファイルもまた仮想のもので、コンピュータが起動している間だけ存在すると言う人がいるかもしれない。 それには私も同意し、「実世界」の定義を次のように改善しよう。 オブジェクトが住むプログラムの範囲外に存在する全てのもの。 ディスク上のファイルはプログラムの範囲外にあり、その表現をプログラム内に作成することは完全に正しいことと言える。 コントローラ、パーサ、フィルタ、バリデータ、サービスロケータ、シングルトン、ファクトリー、これれは良いオブジェクトではない。(そう、ほとんどのGoFパターンはアンチパターンだ!) これらはソフトウェアの外側、実世界に存在していない。 他のオブジェクト同士を結びつけるためだけに考案されたものだ。 人工的で偽のモノだ。何も表現していない。 真面目な話、XMLパーサ、これが表現するものはなんだ?">
+    
+    <meta property="og:image" content="http://tbd.kaitoy.xyz/images/teamedio_logo.svg">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      よいオブジェクトの七つの美徳 | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="http://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="http://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/zenburn.min.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="http://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Wed, Oct 28, 2015</span>
+      <h2 class="title">よいオブジェクトの七つの美徳</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="http://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="よいオブジェクトの七つの美徳">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>このエントリでは、Yegor Bugayenkoによる記事、<a href="http://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/">Seven Virtues of a Good Object</a>を紹介する。
+(Yegorから和訳と転載の許可は得た。)
+以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。</p>
+
+<hr />
+
+<p>Martin Fowler<a href="http://martinfowler.com/bliki/InversionOfControl.html">曰く</a>、</p>
+
+<blockquote>
+<p>ライブラリは本質的には呼び出し可能な関数の集合で、最近は普通クラス内にまとめられる。</p>
+</blockquote>
+
+<p>クラス内にまとめられた関数?
+失礼を承知で言わせてもらうが、これは間違っている。
+そして、これはオブジェクト指向プログラミングにおいて、クラスに対する非常に一般的な誤解だ。
+クラスは関数をまとめるものではないし、オブジェクトはデータ構造体ではない。</p>
+
+<p>では、なにが適切なオブジェクトなのか?
+どれが不適切なオブジェクトなのか?
+その違いは何か?
+これは論争を呼ぶ主題ではあるが、とても重要だ。
+オブジェクトが何かを理解しなければ、オブジェクト指向ソフトウェアをどうやって書くんだ?
+まあ、JavaやRubyなどのおかげで、書けることは書ける。
+しかし、はたして良いものができるだろうか?
+不幸にも、これは厳密な科学ではなく、様々な意見がある。
+ここに、良いオブジェクトの特性を私なりにリストアップする。</p>
+
+<h1 id="クラス-vs-オブジェクト">クラス vs オブジェクト</h1>
+
+<p><img alt="good-object-1.png" src="/images/seven-virtues-of-good-object/good-object-1.png" width="300" style="margin: 0px auto; display: block;"></p>
+
+<p>オブジェクトについて議論を始める前に、クラスとは何かを定義しよう。
+それはオブジェクトが生まれる(インスタント化される)場所だ。
+クラスの主な責任は、要求に応じて新しいオブジェクトを構築し、使われなくなったオブジェクトを破壊することだ。
+クラスはその子供たちがどのように見えどのように振る舞うべきかを知っている。
+言い換えれば、子供たちが従うべき契約を知っている。</p>
+
+<p>クラスが「オブジェクトのテンプレート」であると言われることもある。(例えば<a href="https://ja.wikipedia.org/wiki/%E3%82%AF%E3%83%A9%E3%82%B9_%28%E3%82%B3%E3%83%B3%E3%83%94%E3%83%A5%E3%83%BC%E3%82%BF%29">Wikipediaにはそう書いてある</a>。)
+この定義はクラスを受動的なポジションに置いているので正しくない。
+この定義は、だれかがテンプレートを取得してそこからオブジェクトを構築するということを想定している。
+これは、技術的には正しいかもしれないが、概念的には間違っている。
+クラスとその子供たちだけが居るのであって、他の誰も関係すべきではない。
+あるオブジェクトがクラスに他のオブジェクトを作るように頼み、そのクラスがオブジェクトを構築する。それだけだ。
+RubyはJavaやC++に比べてこの概念をかなりうまく表現している。</p>
+
+<pre><code class="language-ruby">photo = File.new('/tmp/photo.png')
+</code></pre>
+
+<p><code>photo</code>オブジェクトは<code>File</code>クラスによって構築される。(<code>new</code>はそのクラスへのエントリポイント。)
+オブジェクトは、いったん構築されると、自身に基づいて行動する。
+オブジェクトは、自身を誰が構築したかとか、何人兄弟姉妹がいるかとかを知っているべきではない。
+そう、<a href="https://ja.wikipedia.org/wiki/%E3%83%AA%E3%83%95%E3%83%AC%E3%82%AF%E3%82%B7%E3%83%A7%E3%83%B3_%28%E6%83%85%E5%A0%B1%E5%B7%A5%E5%AD%A6%29">リフレクション</a>は酷いアイデアだと言っている。
+それについては他の記事で詳しく書くとして、ここでは、オブジェクトについてと、その最高と最悪の両面について話そう。</p>
+
+<h1 id="1-彼は実世界に存在している">1. 彼は実世界に存在している</h1>
+
+<p><img alt="good-object-2.png" src="/images/seven-virtues-of-good-object/good-object-2.png" width="300" style="margin: 0px auto; display: block;"></p>
+
+<p>まず第一に、オブジェクトは生きた有機体だ。
+もっと言えば、オブジェクトは<a href="https://ja.wikipedia.org/wiki/%E6%93%AC%E4%BA%BA%E5%8C%96">擬人化</a>されるべきだ。
+つまり、人間(もしくは、君がより好むならペット)のように扱われるべきだ。
+基本的にこれは、オブジェクトはデータ構造体や関数の集合ではないということを意味している。
+代わりに、オブジェクトは独立したエンティティで、それ自身のライフサイクル、振る舞い、性質を持つ。</p>
+
+<p>従業員、部署、HTTPリクエスト、MySQLのテーブル、ファイルの行、ファイルそのもの、これらは適切なオブジェクトだ。
+なぜならこれらは、ソフトウェアを停止した時でも実世界に存在しているから。
+より正確には、オブジェクトは実世界のモノの表現のひとつだ。
+オブジェクトは実世界のモノと他のオブジェクトとの間のプロキシだ。
+そのようなモノが存在しなければ、明らかにオブジェクトは存在しない。</p>
+
+<pre><code class="language-ruby">photo = File.new('/tmp/photo.png')
+puts photo.width()
+</code></pre>
+
+<p>この例では、<code>File</code>に新しいオブジェクト<code>photo</code>を構築するよう頼んでいる。
+<code>photo</code>はディスク上の実際のファイルの表現となる。
+ファイルもまた仮想のもので、コンピュータが起動している間だけ存在すると言う人がいるかもしれない。
+それには私も同意し、「実世界」の定義を次のように改善しよう。
+オブジェクトが住むプログラムの範囲外に存在する全てのもの。
+ディスク上のファイルはプログラムの範囲外にあり、その表現をプログラム内に作成することは完全に正しいことと言える。</p>
+
+<p>コントローラ、パーサ、フィルタ、バリデータ、サービスロケータ、シングルトン、ファクトリー、これれは良いオブジェクトではない。(そう、ほとんどのGoFパターンはアンチパターンだ!)
+これらはソフトウェアの外側、実世界に存在していない。
+他のオブジェクト同士を結びつけるためだけに考案されたものだ。
+人工的で偽のモノだ。何も表現していない。
+真面目な話、XMLパーサ、これが表現するものはなんだ?
+何もない。</p>
+
+<p>上記オブジェクトのいくつかは名前を変えれば良いオブジェクトになる。他のものは決して存在を許されない。
+例えば、XMLパーサは「パース可能なXML」と改名でき、プログラム外に存在するXMLドキュメントを表現するようになる。</p>
+
+<p>常に、「このオブジェクトの背後にある実世界のエンティティは何か?」を自問しよう。
+もし回答が見つからなければ、リファクタリングを考えるときだ。</p>
+
+<h1 id="2-彼は契約によって働く">2. 彼は契約によって働く</h1>
+
+<p><img alt="good-object-3.png" src="/images/seven-virtues-of-good-object/good-object-3.png" width="300" style="margin: 0px auto; display: block;"></p>
+
+<p>良いオブジェクトは常に契約によって働く。
+彼は、個人的な実力ではなく、契約に従うということを理由に雇われることを期待している。
+一方、我々がオブジェクトを雇うとき、差別待遇をして、特定のクラスの特定のオブジェクトが我々のために働いてくれると期待してはいけない。
+どんなオブジェクトも契約通りのことをすると考えるべきだ。
+オブジェクトが期待通りの働きをしている限りは、彼の出生や性別や信仰に興味を持つべきではない。</p>
+
+<p>例えば、ある写真をスクリーンに表示したいとする。その写真はPNGフォーマットのファイルから読みこまれる。
+私は<code>DataFile</code>クラスのオブジェクトと契約を結び、その画像のバイナリコンテンツをくれるよう頼む。</p>
+
+<p>しかし待ってほしい。私はそのデータが厳密にどこから来るかを気にするだろうか?
+ディスク上のファイル、HTTPリクエスト、Dropbox上のドキュメントかもしれないが、実際私は気にしない。
+私が気にするのは、オブジェクトがPNGデータが入ったバイト配列をくれるということだけだ。
+つまり、私が結ぶ契約は以下のようなものだ。</p>
+
+<pre><code class="language-java">interface Binary {
+  byte[] read();
+}
+</code></pre>
+
+<p>この場合、(DataFileクラスだけでなく)どんなクラスのどんなオブジェクトでも私のもとで働くことができる。
+オブジェクトが働く資格を得るためにすべきは、<code>Binary</code>インターフェースを実装することにより、契約に従うということだけだ。</p>
+
+<p>この際のルールは単純で、良いオブジェクトの全てのpublicメソッドは、インターフェースのものを実装すべきだということだ。
+もしオブジェクトがインターフェースから継承していないpublicメソッドを持っていたら、それはダメな設計だ。</p>
+
+<p>これには実用的な理由が二つある。
+第一に、無契約で働いているオブジェクトは、ユニットテストで使うモックが作れない。
+第二に、無契約なオブジェクトは<a href="https://ja.wikipedia.org/wiki/Decorator_%E3%83%91%E3%82%BF%E3%83%BC%E3%83%B3">デコレータ</a>で拡張できない。</p>
+
+<h1 id="3-彼はユニーク">3. 彼はユニーク</h1>
+
+<p>良いオブジェクトは常に、ユニークであるために何かを内包しているべきだ。
+何も内包していないと、そのオブジェクトとまったく同じクローンが存在し得ることになる。私はこれはダメなことだと考えている。
+以下がクローンが存在し得る悪いオブジェクトの例。</p>
+
+<pre><code class="language-java">class HTTPStatus implements Status {
+  private URL page = new URL(&quot;http://www.google.com&quot;);
+  @Override
+  public int read() throws IOException {
+    return HttpURLConnection.class.cast(
+      this.page.openConnection()
+    ).getResponseCode();
+  }
+}
+</code></pre>
+
+<p><code>HTTPStatus</code>クラスのインスタンスは複数作れ、それら全ては互いに等しい。</p>
+
+<pre><code class="language-java">first = new HTTPStatus();
+second = new HTTPStatus();
+assert first.equals(second);
+</code></pre>
+
+<p>明らかにユーティリティクラスは、スタティックメソッドだけを持つので、よいオブジェクトにインスタンス化できない。
+より一般的には、ユーティリティクラスはこの記事で述べられているどのメリットも持たず、「クラス」と呼ぶことさえできない。
+ユーティリティクラスは単純にオブジェクトパラダイムの酷い乱用で、モダンなオブジェクト指向言語の作者がスタティックメソッドを有効にしたせいで存在している。</p>
+
+<h1 id="4-彼は不変-immutable">4. 彼は不変(Immutable)</h1>
+
+<p>良いオブジェクトは内包する状態を決して変えるべきではない。
+オブジェクトは実世界のエンティティの表現であることを思い出してほしい。このエンティティは、オブジェクトが存続する間は変化しないはずだ。
+言い換えれば、オブジェクトはそれが表すエンティティに決して背いてはいけない。
+オブジェクトがその所有者を変化させることはないよね。</p>
+
+<p>不変であることが、全てのメソッドが常に同じ値を返すことを意味するわけではないことに注意してほしい。
+むしろ、良い不変オブジェクトはとても動的だ。
+しかし、それは内部状態を変えることはない。例えば、</p>
+
+<pre><code class="language-java">@Immutable
+final class HTTPStatus implements Status {
+  private URL page;
+  public HTTPStatus(URL url) {
+    this.page = url;
+  }
+  @Override
+  public int read() throws IOException {
+    return HttpURLConnection.class.cast(
+      this.page.openConnection()
+    ).getResponseCode();
+  }
+}
+</code></pre>
+
+<p><code>read()</code>メソッドは異なる値を返す可能性があるが、このオブジェクトは不変だ。
+ある一つのウェブページを指し、他のどこを指すこともない。
+内包する状態を決して変えないし、表現しているURLに背くこともない。</p>
+
+<p>なぜこの不変性が美徳なのか?
+次の記事で詳細を説明している: <a href="http://www.yegor256.com/2014/06/09/objects-should-be-immutable.html">オブジェクトは不変であるべきだ</a>。
+要するに、不変オブジェクトが優れている理由は、</p>
+
+<ul>
+<li>不変オブジェクトは簡単に構築、テスト、使用できる。</li>
+<li>真の不変オブジェクトは常にスレッドセーフ。</li>
+<li>時間的結合(訳注: コードの実行順の暗黙的な制約)を回避するのに役立つ。</li>
+<li>不変オブジェクトを使っても副作用がおきない。(防御的コピー無)</li>
+<li>エラー発生時の原子性が保証されている。</li>
+<li>キャッシュしやすい。</li>
+<li><a href="http://tbd.kaitoy.xyz/2015/07/26/why-null-is-bad/">NULL参照</a>を防ぐ。</li>
+</ul>
+
+<p>もちろん、良いオブジェクトは<a href="http://tbd.kaitoy.xyz/2015/07/22/getters-setters-evil/">setter</a>をもたない。セッターはオブジェクトの状態を変え得るし、URLに背くことを強要する。
+言い換えると、<code>HTTPStatus</code>で<code>setURL()</code>メソッドを実装することは酷い間違いとなる。</p>
+
+<p>その他にも、不変オブジェクトを使うことで、設計は必然的に凝集度の高いものになり、また密で理解しやすいものになる。
+これについては<a href="http://www.yegor256.com/2014/11/07/how-immutability-helps.html">不変性がどう役に立つか</a>という記事で説明している。</p>
+
+<h1 id="5-彼のクラスはスタティックなものをいっさいもたない">5. 彼のクラスはスタティックなものをいっさいもたない</h1>
+
+<p>スタティックメソッドは、オブジェクトではなくクラスの挙動を実装する。
+<code>File</code>クラスがあり、その子供が<code>size()</code>メソッドを持つとする。</p>
+
+<pre><code class="language-java">final class File implements Measurable {
+  @Override
+  public int size() {
+    // calculate the size of the file and return
+  }
+}
+</code></pre>
+
+<p>ここまではよい。<code>size()</code>メソッドは<code>Measurable</code>契約によって存在し、<code>File</code>クラスの全てのオブジェクトはそのサイズを測ることができる。
+このクラスを、代わりにスタティックメソッドを持つように実装するのは酷い間違いだ。
+(こうした設計は<a href="http://www.yegor256.com/2014/05/05/oop-alternative-to-utility-classes.html">ユーティリティクラス</a>と呼ばれ、JavaやRubyなどのほぼ全てのOOP言語でとても人気だ。)</p>
+
+<pre><code class="language-java">// TERRIBLE DESIGN, DON'T USE!
+class File {
+  public static int size(String file) {
+    // calculate the size of the file and return
+  }
+}
+</code></pre>
+
+<p>この設計はオブジェクト指向パラダイムの真逆を行く。
+なぜかって?
+なぜならスタティックメソッドはオブジェクト指向プログラミングを「クラス指向」プログラミングに変えてしまうからだ。
+この、<code>size()</code>メソッドは、オブジェクトではなくクラスの挙動を公開する。
+これの何が間違っているかと言われるかもしれない。
+なぜオブジェクトとクラス両方をコード中で第一級市民として使えないのか?
+なぜ両方ともがメソッドやプロパティを持てないのか?</p>
+
+<p>この問題は、クラス指向プログラミングでは、分離ができなくなるというものだ。
+複雑な問題をブレイクダウンできなくなる。
+なぜなら、プログラム全体の中でクラスのインスタンスがたったひとつしか存在しないからだ。
+OOPの力は、オブジェクトをスコープを分離するための道具として使えることだ。
+あるオブジェクトをメソッド中でインスタンス化したとき、そのオブジェクトは特定のタスク専任となる。
+そのオブジェクトは、メソッド周辺の他のオブジェクトから完璧に分離されている。
+このオブジェクトはメソッドスコープのローカル変数だ。
+スタティックメソッドを持つクラスは、どこで使うにしろ常にグローバル変数だ。
+このため、この変数とのやりとりを分離することはできない。</p>
+
+<p>オブジェクト指向の原理に概念的に反しているということの他にも、パブリックなスタティックメソッドは実用的な欠点も持っている。</p>
+
+<p>第一に、モックを作れない。
+(いや、<a href="https://code.google.com/p/powermock/">PowerMock</a>を使うことはできる。が、これはJavaプロジェクトで取り得る決断の中で最悪なものとなるだろう。。。私はそれを数年前にやってしまった。)</p>
+
+<p>第二に、定義上スレッドセーフではない。なぜなら、常にスタティック変数とともに動くからで、スタティック変数は全てのスレッドからアクセスできるからだ。
+スタティックメソッドをスレッドセーフに作ることもできるが、この場合常に明示的な同期が必要になる。</p>
+
+<p>パブリックなスタティックメソッドを見つけたら常に、即座に書き直すべきだ。
+スタティック(グローバル)変数がどれだけ酷いかについては説明したくもない。それは明らかだ。</p>
+
+<h1 id="6-彼の名前は職名ではない">6. 彼の名前は職名ではない</h1>
+
+<p><img alt="good-object-4.png" src="/images/seven-virtues-of-good-object/good-object-4.png" width="300" style="margin: 0px auto; display: block;"></p>
+
+<p>オブジェクト名はそのオブジェクトが何であるかを示すべきで、何をするかを示すべきではない。
+実世界の物に名付けるのと同様に。
+ページ集めではなく本、水入れではなくカップ、体飾りではなくTシャツ。
+もちろん、プリンタやコンピュータのような例外はあるが、これらはこの記事を読まなかった人々によってごく最近発明されたものだ。</p>
+
+<p>例えば、次のような名前はその持ち主が何であるかを示す。
+りんご、ファイル、HTTPリクエスト群、ソケット、XMLドキュメント、ユーザリスト、正規表現、整数、PostgreSQLテーブル、Jeffrey Lebowski。
+適切な名前はいつも小さい絵として描ける。正規表現でさえ描ける。</p>
+
+<p>逆に、次に挙げる名前の例は持ち主が何をするかを示す。
+ファイルリーダ、テキストパーサ、URLバリデータ、XMLプリンタ、サービスロケータ、シングルトン、スクリプトランナ、Javaプログラマ。
+これらの絵を描けるか?
+描けない。
+こういう名前は良いオブジェクトには適さない。
+これらは酷い設計につながる酷い名前だ。</p>
+
+<p>一般的に、「-er」で終わる名前を避けるべきだ。そのほとんどはダメなものだ。</p>
+
+<p>「<code>FileReader</code>の代わりは何」と疑問に思うだろう。
+よりよい名前は何?</p>
+
+<p>ええと、我々は既に<code>File</code>を持っていて、それは実世界のディスク上のファイルの表現だ。
+この表現は十分に強力ではない。なぜなら、それはファイルの内容を読む方法を知らないからだ。
+その能力を持ったより強力なものを作りたい。
+何という名前にする?
+名前は、その持ち主が何をするかではなく、何であるかを示すべきであるということを思い出してほしい。
+持ち主は何か?
+データを持ったファイルだ。ただのファイルではなく。
+<code>File</code>っぽいけど、もっと洗練されたものだ。データを持った。
+なので、<code>FileWithData</code>、もしくは単に<code>DataFile</code>というのはどうだろう?</p>
+
+<p>同様のロジックを他の全ての名前にも適用すべきだ。
+常に何をするかよりも何であるかを考えよう。
+オブジェクトに職名ではなく、リアルで、意味のある名前を付けよう。</p>
+
+<p>より詳しくは「<a href="http://www.yegor256.com/2015/03/09/objects-end-with-er.html">-ERで終わるオブジェクトを作るな</a>」を参照。</p>
+
+<h1 id="7-彼のクラスはfinalかabstractのどちらか">7. 彼のクラスはFinalかAbstractのどちらか</h1>
+
+<p><img alt="good-object-5.png" src="/images/seven-virtues-of-good-object/good-object-5.png" width="300" style="margin: 0px auto; display: block;"></p>
+
+<p>良いオブジェクトはfinalまたはabstractなクラスから生成される。
+<code>final</code>クラスは継承によって拡張できないクラスだ。
+<code>abstract</code>クラスは子供を持てないクラスだ。
+簡単に言うと、クラスは、「君は僕を決して壊せない。僕はブラックボックスだ。」か、または「僕は壊れている。直してから使ってくれ。」のどちらかを言う。</p>
+
+<p>その間には何もない。finalクラスはブラックボックスで、あらゆる意味で変更できない。
+オブジェクトは現状のままで働き、君はそれを使うか捨てるかしかしない。
+そのプロパティを継承する別のクラスを作ることはできない。
+これは<code>final</code>修飾子によって禁止されている。
+そのようなfinalクラスを拡張する唯一の手段は、その子供をデコレートすることだ。
+例えば、(上記)<code>HTTPStatus</code>クラスがあり、それを気に入らなかったとする。
+いやまあ好きではあるけど、私にとっては十分強力ではないんだ。
+HTTPステータスが400より大きい場合に例外を投げて欲しい。
+<code>read()</code>メソッドにもう少し処理をしてもらいたい。
+古風なやり方は、そのクラスを拡張してメソッドを上書きすることだ。</p>
+
+<pre><code class="language-java">class OnlyValidStatus extends HTTPStatus {
+  public OnlyValidStatus(URL url) {
+    super(url);
+  }
+  @Override
+  public int read() throws IOException {
+    int code = super.read();
+    if (code &gt; 400) {
+      throw new RuntimException(&quot;unsuccessful HTTP code&quot;);
+    }
+    return code;
+  }
+}
+</code></pre>
+
+<p>なぜこれではダメなのか?
+メソッドのひとつをオーバーライドすることで親クラス全体のロジックを壊す危険があるので全然ダメだ。
+<code>read()</code>を子クラスでオーバーライドしたら、親クラスから来る全てのメソッドがその新しいやつを使うことになる、ということを忘れないで欲しい。
+これは、文字通り新しい「実装のかけら」をクラスの内部に挿入するということだ。
+哲学的に言って、これは反則だ。</p>
+
+<p>一方、finalクラスを拡張するためには、それをブラックボックスのように扱い、他の実装でデコレートする必要がある。(<a href="https://ja.wikipedia.org/wiki/Decorator_%E3%83%91%E3%82%BF%E3%83%BC%E3%83%B3">デコレータパターン</a>)</p>
+
+<pre><code class="language-java">final class OnlyValidStatus implements Status {
+  private final Status origin;
+  public OnlyValidStatus(Status status) {
+    this.origin = status;
+  }
+  @Override
+  public int read() throws IOException {
+    int code = this.origin.read();
+    if (code &gt; 400) {
+      throw new RuntimException(&quot;unsuccessful HTTP code&quot;);
+    }
+    return code;
+  }
+}
+</code></pre>
+
+<p>このクラスがもともとと同じインターフェース、<code>Status</code>を実装していることに注目して欲しい。
+<code>HTTPStatus</code>のインスタンスはコンストラクタを通して渡され、内包される。
+そして、全てのメソッド呼び出しは割り込まれ、必要に応じて独自に実装される。
+この設計だと、もとのオブジェクトをブラックボックスとして扱い、その内部のロジックには決して触らない。</p>
+
+<p>もし<code>final</code>というキーワードを使わなかったら、だれでも(君自身でも)そのクラスを拡張し、損なうことができる。(よって<code>final</code>でないクラスは悪い設計だ。)</p>
+
+<p>abstractクラスは真反対なケースだ。それは不完全で、そのままでは使えないことを示している。
+独自の実装ロジックを挿入する必要があるが、それは許可された部分だけに限られる。
+この部分は<code>abstract</code>メソッドとして明示的に示されている。
+例えば、<code>HTTPStatus</code>は以下のようになる。</p>
+
+<pre><code class="language-java">abstract class ValidatedHTTPStatus implements Status {
+  @Override
+  public final int read() throws IOException {
+    int code = this.origin.read();
+    if (!this.isValid()) {
+      throw new RuntimException(&quot;unsuccessful HTTP code&quot;);
+    }
+    return code;
+  }
+  protected abstract boolean isValid();
+}
+</code></pre>
+
+<p>見て分かるとおり、このクラスはHTTPコードを検証する方法を知らないので、継承して<code>isValid()</code>をオーバーライドすることによってそのロジックを挿入することを期待している。
+この継承は親クラスを損なわない。他の全メソッドが<code>final</code>によって守られているからだ。(メソッドの修飾子に注目してくれ。)
+つまり、このクラスは攻撃への備えがしてあって、完全に防御している。</p>
+
+<p>まとめると、クラスは<code>final</code>か<code>abstract</code>のどちらかであるべきで、その中間はない。</p>
+
+<hr />
+
+<p>以上がYegorの記事。</p>
+
+<p>この記事は、オブジェクト指向原理主義者であるYegorが彼のオブジェクト観の概論を書いたものだ。
+彼のオブジェクトに対するとんがった信念が読み取れる。</p>
+
+<p>記事の内容をまとめると、</p>
+
+<ol>
+<li>オブジェクトは何か実体と対応していないといけない。</li>
+<li>クラスはインターフェースを実装していないといけない。</li>
+<li>オブジェクトはユニーク性を保証するフィールドを持っていないといけない。</li>
+<li>オブジェクトは不変でないといけない</li>
+<li>クラスはスタティックメソッド/フィールドを持っていてはいけない。</li>
+<li>erで終わるクラス名を使ってはいけない。</li>
+<li>クラスにはfinalかabstractが付いていないといけない。</li>
+</ol>
+
+<p>#1と#6はだいたい同じことを主張していて、その内容は実用的というよりかは哲学的だ。
+敢えて実用面について言えば、同じ哲学を共有しているチームがこの主張に従えば、そのチーム内でコードの可読性や保守性が上がるというメリットがあると考えられる。
+が、オブジェクト指向原理主義よりもGoFのデザインパターンの方がはるかに広く深く浸透しているので、このメリットはあまりありがたみが無い。
+私はオブジェクト真理教に入信したわけではないので、これからもControllerとかFactoryとかServiceとかいうクラスを書くだろう。</p>
+
+<p>#2については、言っていることは分かるしインターフェースのメリットもよく理解しているつもりだが、わんさとクラスを書かないといけないのに逐一インターフェースまで書いてられるかというのが本音だ。
+実際には、モックを書いたり多態したいとき、または将来そうなると天啓があったとき、つまりは必要に応じてインターフェースを書くのであって、なんでもかんでも書いていたら書くのも読むのもいたずらに大変になってしまう。(そういう方針をとって開発者から不満が噴出したプロジェクトが身近にあったと聞いた。)
+Yegorのプロジェクトでは全てのクラスがインターフェースを実装しているんだろうか。信じ難い。</p>
+
+<p>#3も、ちょっと実用的な雰囲気の主張だが、よくみるとこれに従うことでどんなメリットがあるかとか、従わないことでどんな問題が発生するかとかが書いてない。
+哲学的な主張か。
+私が開発している<a href="https://github.com/kaitoy/pcap4j">Pcap4J</a>には、ネットワークパケットを表すクラスが多数あるが、それらからインスタンス化されるオブジェクトは必ずしもユニークではない。
+例えば、Ethernetヘッダを表すクラスである<a href="https://github.com/kaitoy/pcap4j/blob/master/pcap4j-core/src/main/java/org/pcap4j/packet/EthernetPacket.java">EthernetHeader</a>は、Ethernetパケットの送り元と送り先が同じで、且つレイヤ3のプロトコルが同じなら<code>equals()</code>が<code>true</code>を返す。
+つまり、実世界で異なるパケットのヘッダでも、Java世界では同一とみなされることがよくある。
+この実装で実用上困ることは無い気がするけど、オブジェクト指向原理主義に照らすとダメってことか?
+<code>UUID</code>みたいなフィールドでも加えればいいのか?
+そんなフィールドはEthernetヘッダにはないのに?</p>
+
+<p>#4は好き。ただ全てに適用できるかというと疑問。不変オブジェクトで、例えば<a href="http://qiita.com/disc99/items/840cf9936687f97a482b#effective-java-builder">Builderパターン(GoFじゃなくてEffective Javaの方)</a>が対応している問題をどう解決するんだろう?
+すごく頑張ってYegorの言いつけを守りながら、この問題を解決したEthernetHeader Builderを書いてみたら以下のようになった。</p>
+
+<p>まず、一般的なヘッダを表す<code>Header</code>クラスがある。不変で、<code>id</code>という適当なフィールドを持つ。</p>
+
+<pre><code class="language-java">package test;
+import org.pcap4j.util.MacAddress;
+
+public final class Header {
+  private final int id;
+
+  public Header(int id) {
+    this.id = id;
+  }
+
+  public int getId() { return id; }
+
+  public DstAddrSetEthernetHeader dstAddr(MacAddress dstAddr) {
+    return new DstAddrSetEthernetHeader(this, dstAddr);
+  }
+}
+</code></pre>
+
+<p>次に、<code>Header</code>をデコレートして拡張し、<code>dstAddr</code>というフィールドを追加したもちろん不変なクラス<code>DstAddrSetEthernetHeader</code>(dstAddrだけがセットされたEthernetヘッダ)。</p>
+
+<pre><code class="language-java">package test;
+import org.pcap4j.util.MacAddress;
+
+public final class DstAddrSetEthernetHeader {
+  private final Header header;
+  private final MacAddress dstAddr;
+
+  DstAddrSetEthernetHeader(Header header, MacAddress dstAddr) {
+    this.header = header;
+    this.dstAddr = dstAddr;
+  }
+
+  public MacAddress getDstAddr() { return dstAddr; }
+
+  public int getId() { return header.getId(); }
+
+  public DstAddrAndSrcAddrSetEthernetHeader srcAddr(MacAddress srcAddr) {
+    return new DstAddrAndSrcAddrSetEthernetHeader(this, srcAddr);
+  }
+}
+</code></pre>
+
+<p>さらに<code>DstAddrSetEthernetHeader</code>をデコレートして拡張し、<code>srcAddr</code>というフィールドを追加したもちろん不変なクラス<code>DstAddrAndSrcAddrSetEthernetHeader</code>(dstAddrとsrcAddrがセットされたEthernetヘッダ)。</p>
+
+<pre><code class="language-java">package test;
+import org.pcap4j.packet.namednumber.EtherType;
+import org.pcap4j.util.MacAddress;
+
+public final class DstAddrAndSrcAddrSetEthernetHeader {
+  private final DstAddrSetEthernetHeader header;
+  private final MacAddress srcAddr;
+
+  DstAddrAndSrcAddrSetEthernetHeader(DstAddrSetEthernetHeader header, MacAddress srcAddr) {
+    this.header = header;
+    this.srcAddr = srcAddr;
+  }
+
+  public MacAddress getSrcAddr() { return srcAddr; }
+
+  public int getId() { return header.getId(); }
+
+  public MacAddress getDstAddr() { return header.getDstAddr(); }
+
+  public EthernetHeader type(EtherType type) {
+    return new EthernetHeader(this, type);
+  }
+}
+</code></pre>
+
+<p>やっとビルド対象である<code>EthernetHeader</code>。</p>
+
+<pre><code class="language-java">package test;
+import org.pcap4j.packet.namednumber.EtherType;
+import org.pcap4j.util.MacAddress;
+
+public final class EthernetHeader {
+  private final int id;
+  private final MacAddress dstAddr;
+  private final MacAddress srcAddr;
+  private final EtherType type;
+
+  public EthernetHeader(DstAddrAndSrcAddrSetEthernetHeader header, EtherType type) {
+    this.id = header.getId();
+    this.dstAddr = header.getDstAddr();
+    this.srcAddr = header.getSrcAddr();
+    this.type = type;
+  }
+}
+</code></pre>
+
+<p>上記4つのクラスを使って、次のようにBuilderパターンっぽいことができる。</p>
+
+<pre><code class="language-java">package test;
+import org.pcap4j.packet.namednumber.EtherType;
+import org.pcap4j.util.MacAddress;
+
+public class ImmutableBuilderSample {
+  public static void main(String[] args) {
+    EthernetHeader header
+      = new Header(1)
+          .dstAddr(MacAddress.getByName(&quot;aa:bb:cc:dd:ee:ff&quot;))
+          .srcAddr(MacAddress.getByName(&quot;11:22:33:44:55:66&quot;))
+          .type(EtherType.IPV4);
+  }
+}
+</code></pre>
+
+<p>パラメータの設定順を自由にしたければ、さらに<code>SrcAddrSetEthernetHeader</code>とか<code>TypeSetEthernetHeader</code>とか<code>DstAddrAndTypeSetEthernetHeader</code>とか作らないといけない。これは疲れる。
+沢山オブジェクトを作るのに、最後の<code>EthernetHeader</code>以外のが使い捨てというのも辛い。
+<code>EthernetHeader</code>は3つしかフィールドがないからまだましな方なんだが。</p>
+
+<p>私は、不変クラスはスレッドセーフにすることを主目的として作る。
+普通アプリケーションはマルチスレッドになるんだから、基本的にクラスは不変を目指して作り、どうしても可変にしたくなったときは内部で同期してスレッドセーフに保つか、外で同期してもらうか、またはシングルスレッドで使ってもらうかを考える。
+上記のBuilderなんかは可変フィールドを使わないとまともに作れないし、その性質上マルチスレッドで使うことは普通ないし、無理に不変にする必要はなかろう。</p>
+
+<p>#5については、Yegorが問題視していることにはだいたい納得できる。(哲学的な部分以外は。。。)
+しかし、Yegorが、スタティックメソッドが可変フィールドを参照することを前提に話しているところにひっかかる。
+私はpublic staticなフィールドをfinal無しで書くことはないし、スタティックメソッドは殆どの場合引数だけを使うように書き、たまにfinalなフィールドを参照させるくらいだ。(ちょっとあやしいけど多分。)
+世のユーティリティクラスもだいたいそんな感じで書かれているんじゃなかろうか。
+この場合、スレッドセーフじゃないという問題点は出ないし、問題の分離も、スタティックフィールドでデータを共有するわけではないのでちゃんとできる。
+モックはできないけど、ユーティリティクラスのモックを書きたいことなんてあるだろうか?</p>
+
+<p>#7は同意。abstractじゃないメソッドをオーバーライドするのって気持ち悪いし。
+ところでデコレータパターンってすごい便利で汎用性高いと思うんだけど、いざというときに思いつかないようで、あんまり使ったことないな。</p>
+
+<p>以上ひとつひとつの主張について考えてみたけど、反感が多いな。
+これはオブジェクト真理教に入信するメリットが見えてこないからだろう。
+もともとOOPっていうのは、手続き型言語が隆盛な時代の関数を使った処理の分離という考え方を押し進め、処理と処理対象データを一緒にして分離するという実用的で技術的な目的のもとに生まれたもので、オブジェクトは実世界のモノを表現しなきゃいけないってのは後付けの哲学だ。
+OOPはそれを共通認識として発展したわけではないので、極端な哲学に縛られていると長い歴史に揉まれた強力なノウハウの多くが使えなくなってしまう。
+GoFのデザインパターンを否定するなら、GoFが解決した問題への別解を提示してくれないとなかなか受け入れがたい。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f10%2f28%2fseven-virtues-of-good-object%2f&t=%e3%82%88%e3%81%84%e3%82%aa%e3%83%96%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e3%81%ae%e4%b8%83%e3%81%a4%e3%81%ae%e7%be%8e%e5%be%b3" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f10%2f28%2fseven-virtues-of-good-object%2f&text=%e3%82%88%e3%81%84%e3%82%aa%e3%83%96%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e3%81%ae%e4%b8%83%e3%81%a4%e3%81%ae%e7%be%8e%e5%be%b3&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f10%2f28%2fseven-virtues-of-good-object%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f10%2f28%2fseven-virtues-of-good-object%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f10%2f28%2fseven-virtues-of-good-object%2f&title=%e3%82%88%e3%81%84%e3%82%aa%e3%83%96%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e3%81%ae%e4%b8%83%e3%81%a4%e3%81%ae%e7%be%8e%e5%be%b3" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="http://tbd.kaitoy.xyz/tags/yegor256"><i class="fa fa-tags"></i> yegor256 </a>
+                
+                <a href="http://tbd.kaitoy.xyz/tags/oop"><i class="fa fa-tags"></i> oop </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/09/13/orm-is-offensive-anti-pattern/">ORMは不快なアンチパターン</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/07/26/why-null-is-bad/">なぜNullはダメか</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/07/22/getters-setters-evil/">Getter/Setterは悪だ。以上。</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/07/18/first-post/">First Post</a></li>
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="http://tbd.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/">
+                  Step by Step to Add a Protocol Support to Pcap4J (Part 2)
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="http://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+
