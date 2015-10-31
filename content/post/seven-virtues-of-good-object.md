@@ -437,9 +437,9 @@ Yegorのプロジェクトでは全てのクラスがインターフェースを
 そんなフィールドはEthernetヘッダにはないのに?
 
 #4は好き。ただ全てに適用できるかというと疑問。不変オブジェクトで、例えば[Builderパターン(GoFじゃなくてEffective Javaの方)](http://qiita.com/disc99/items/840cf9936687f97a482b#effective-java-builder)が対応している問題をどう解決するんだろう?
-すごく頑張ってYegorの言いつけを守りながら、この問題を解決したEthernetHeader Builderを書いてみたら以下のようになった。
+すごく頑張ってYegorの言いつけを守りながら、Builderパターンっぽくインスタンス化できるEthernetHeader(という名のEthernetヘッダフィールドの値を保持するクラス)を書いてみたら以下のようになった。
 
-まず、一般的なヘッダを表す`Header`クラスがある。不変で、`id`という適当なフィールドを持つ。
+まず、一般的なヘッダを表す`Header`クラスを作る。不変で、`id`という適当なフィールドを持つ。
 
 ```java
 package test;
@@ -460,7 +460,7 @@ public final class Header {
 }
 ```
 
-次に、`Header`をデコレートして拡張し、`dstAddr`というフィールドを追加したもちろん不変なクラス`DstAddrSetEthernetHeader`(dstAddrだけがセットされたEthernetヘッダ)。
+次に、`Header`をデコレートして拡張し、`dstAddr`というフィールドを追加したもちろん不変なクラス`DstAddrSetEthernetHeader`(dstAddrだけがセットされたEthernetヘッダ)を作る。
 
 ```java
 package test;
@@ -485,7 +485,7 @@ public final class DstAddrSetEthernetHeader {
 }
 ```
 
-さらに`DstAddrSetEthernetHeader`をデコレートして拡張し、`srcAddr`というフィールドを追加したもちろん不変なクラス`DstAddrAndSrcAddrSetEthernetHeader`(dstAddrとsrcAddrがセットされたEthernetヘッダ)。
+さらに`DstAddrSetEthernetHeader`をデコレートして拡張し、`srcAddr`というフィールドを追加したもちろん不変なクラス`DstAddrAndSrcAddrSetEthernetHeader`(dstAddrとsrcAddrがセットされたEthernetヘッダ)を作る。
 
 ```java
 package test;
@@ -513,7 +513,7 @@ public final class DstAddrAndSrcAddrSetEthernetHeader {
 }
 ```
 
-やっとビルド対象である`EthernetHeader`。
+やっとビルド対象である`EthernetHeader`を書く。
 
 ```java
 package test;
