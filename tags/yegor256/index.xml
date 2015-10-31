@@ -446,9 +446,9 @@ Yegorのプロジェクトでは全てのクラスがインターフェースを
 そんなフィールドはEthernetヘッダにはないのに?&lt;/p&gt;
 
 &lt;p&gt;#4は好き。ただ全てに適用できるかというと疑問。不変オブジェクトで、例えば&lt;a href=&#34;http://qiita.com/disc99/items/840cf9936687f97a482b#effective-java-builder&#34;&gt;Builderパターン(GoFじゃなくてEffective Javaの方)&lt;/a&gt;が対応している問題をどう解決するんだろう?
-すごく頑張ってYegorの言いつけを守りながら、この問題を解決したEthernetHeader Builderを書いてみたら以下のようになった。&lt;/p&gt;
+すごく頑張ってYegorの言いつけを守りながら、Builderパターンっぽくインスタンス化できるEthernetHeader(という名のEthernetヘッダフィールドの値を保持するクラス)を書いてみたら以下のようになった。&lt;/p&gt;
 
-&lt;p&gt;まず、一般的なヘッダを表す&lt;code&gt;Header&lt;/code&gt;クラスがある。不変で、&lt;code&gt;id&lt;/code&gt;という適当なフィールドを持つ。&lt;/p&gt;
+&lt;p&gt;まず、一般的なヘッダを表す&lt;code&gt;Header&lt;/code&gt;クラスを作る。不変で、&lt;code&gt;id&lt;/code&gt;という適当なフィールドを持つ。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;package test;
 import org.pcap4j.util.MacAddress;
@@ -468,7 +468,7 @@ public final class Header {
 }
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;次に、&lt;code&gt;Header&lt;/code&gt;をデコレートして拡張し、&lt;code&gt;dstAddr&lt;/code&gt;というフィールドを追加したもちろん不変なクラス&lt;code&gt;DstAddrSetEthernetHeader&lt;/code&gt;(dstAddrだけがセットされたEthernetヘッダ)。&lt;/p&gt;
+&lt;p&gt;次に、&lt;code&gt;Header&lt;/code&gt;をデコレートして拡張し、&lt;code&gt;dstAddr&lt;/code&gt;というフィールドを追加したもちろん不変なクラス&lt;code&gt;DstAddrSetEthernetHeader&lt;/code&gt;(dstAddrだけがセットされたEthernetヘッダ)を作る。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;package test;
 import org.pcap4j.util.MacAddress;
@@ -492,7 +492,7 @@ public final class DstAddrSetEthernetHeader {
 }
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;さらに&lt;code&gt;DstAddrSetEthernetHeader&lt;/code&gt;をデコレートして拡張し、&lt;code&gt;srcAddr&lt;/code&gt;というフィールドを追加したもちろん不変なクラス&lt;code&gt;DstAddrAndSrcAddrSetEthernetHeader&lt;/code&gt;(dstAddrとsrcAddrがセットされたEthernetヘッダ)。&lt;/p&gt;
+&lt;p&gt;さらに&lt;code&gt;DstAddrSetEthernetHeader&lt;/code&gt;をデコレートして拡張し、&lt;code&gt;srcAddr&lt;/code&gt;というフィールドを追加したもちろん不変なクラス&lt;code&gt;DstAddrAndSrcAddrSetEthernetHeader&lt;/code&gt;(dstAddrとsrcAddrがセットされたEthernetヘッダ)を作る。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;package test;
 import org.pcap4j.packet.namednumber.EtherType;
@@ -519,7 +519,7 @@ public final class DstAddrAndSrcAddrSetEthernetHeader {
 }
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;やっとビルド対象である&lt;code&gt;EthernetHeader&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;やっとビルド対象である&lt;code&gt;EthernetHeader&lt;/code&gt;を書く。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;package test;
 import org.pcap4j.packet.namednumber.EtherType;
