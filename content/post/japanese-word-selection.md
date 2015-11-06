@@ -42,7 +42,9 @@ Atomでも癖でこの操作をすると、妙に広い範囲が選択されて�
 パッケージ開発にあたって、前提として知っておくべきは、Atomは[__Electron__](http://electron.atom.io/)という実行環境の上で動いているということ。
 (Atomが先で、そこからElectronがスピンオフした。)
 
-Electronはざっくり[__Node.js__](https://nodejs.org/)と[__Chromium__](https://www.chromium.org/Home)(Google ChromeのOSS版)でできていて、その上で動くアプリケーションは、HTMLとCSSで書いた画面をChromiumで表示して、それをNode.jsで動かすJavaScriptで制御する、という形で実装される。AtomはJavaScriptの代わりに、より高級な[__CoffeeScript__](http://coffeescript.org/)を使っているので、パッケージを作る際はCoffeeScriptのコードをがりがり書くことになる。
+Electronはざっくり[__Node__](https://nodejs.org/)と[__Chromium__](https://www.chromium.org/Home)(Google ChromeのOSS版)でできていて、その上で動くアプリケーションは、HTMLとCSSで書いた画面をChromiumで表示して、それをNodeで動かすJavaScriptで制御する、という形で実装される。AtomはJavaScriptの代わりに、より高級な[__CoffeeScript__](http://coffeescript.org/)を使っているので、パッケージを作る際はCoffeeScriptのコードをがりがり書くことになる。
+
+パッケージはNodeのモジュールとして書く。
 
 Atomは[MVVM](https://ja.wikipedia.org/wiki/Model_View_ViewModel)な感じの設計になっていて、コアのViewModelとかをパッケージからいじることでいろんな機能を実現できる。
 
@@ -70,8 +72,10 @@ japanese-word-selectionはメニューもコマンドもペインも追加しな
 
 #### 2. メインスクリプト編集 - 概要
 japanese-word-selection.coffeeを編集して機能を実装する。
-機能は特定のAPIをもったクラスに実装して、そのインスタンスを __module.exports__ に渡す。
-今回は __JapaneseWordSelection__ がそのクラス。「特定のAPI」というのは以下のメソッド。
+Package Generatorがサンプルコードを書いてくれているので、それを書き変えて行けばよい。
+
+機能は特定のAPIをもったオブジェクトに実装して、それを __module.exports__ に代入する。
+今回は __JapaneseWordSelection__ がそのオブジェクト。「特定のAPI」というのは以下のメソッド。
 
 * activate(state): パッケージが有効化されるときに呼ばれる。
 * deactivate(): パッケージが無効化されるときに呼ばれる。無くてもいい。
