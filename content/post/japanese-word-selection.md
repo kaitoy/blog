@@ -36,28 +36,28 @@ Atomでも癖でこの操作をすると、妙に広い範囲が選択されて�
 とりあえず、__Edit > Text__ の __Delete to Previous Word Boundary__ と __Delete to Next Word Boundary__ がちゃんと動かないのは見つけた。パッケージで上書きした処理を通っていない気がする。けど、デフォルトでキーバインディングもないし、あまり使われなそうな機能なのでほっておく。
 
 ## Atomのパッケージの作り方
-パッケージの作り方はAtomのオンラインドキュメントの[__Create Your First Package__](https://atom.io/docs/latest/your-first-package)とか[__Creating Packages__](https://atom.io/docs/latest/creating-a-package)に載ってる。
-また、[__Atom Flight Manual__](https://atom.io/docs/latest/)にはAtomの使い方からパッケージの作り方まで体系的に纏められている。
+パッケージの作り方は、[__Atom Flight Manual__](https://atom.io/docs/latest/)の[このあたり](https://atom.io/docs/latest/hacking-atom-package-word-count)を参考に。
+Atom Flight ManualにはAtomの使い方からパッケージの作り方まで体系的に纏められているので一度は通して読みたい。
 
 パッケージ開発にあたって、前提として知っておくべきは、Atomは[__Electron__](http://electron.atom.io/)という実行環境の上で動いているということ。
 (Atomが先で、そこからElectronがスピンオフした。)
 
 Electronはざっくり[__Node__](https://nodejs.org/)と[__Chromium__](https://www.chromium.org/Home)(Google ChromeのOSS版)でできていて、その上で動くアプリケーションは、HTMLとCSSで書いた画面をChromiumで表示して、それをNodeで動かすJavaScriptで制御する、という形で実装される。AtomはJavaScriptの代わりに、より高級な[__CoffeeScript__](http://coffeescript.org/)を使っているので、パッケージを作る際はCoffeeScriptのコードをがりがり書くことになる。
 
-パッケージはNodeのモジュールとして書く。
+パッケージは[npm](https://www.npmjs.com/)のパッケージっぽく書く。
 
 Atomは[MVVM](https://ja.wikipedia.org/wiki/Model_View_ViewModel)な感じの設計になっていて、コアのViewModelとかをパッケージからいじることでいろんな機能を実現できる。
 
 以下、備忘録として、japanese-word-selectionを作った時にやったことを書いておく。Atomのバージョンは1.0.7。
 
-#### 1. プロジェクト作成
+#### 1. パッケージテンプレート生成
 Atomを起動して、`Ctrl+Shift+P`でコマンドパレットを開いて、`generate package`と入力してEnter。
 __Package Generator__が起動して、作成するパッケージの名前を聞かれるのでjapanese-word-selectionを入力。(因みに、パッケージ名に__atom-__というプレフィックスを付けているのをたまに見るが、これは推奨されていない。)
-するとプロジェクトのテンプレートが作成され、それを読み込んだAtomウィンドウが開く(下図)。
+するとパッケージのテンプレートが作成され、それを読み込んだAtomウィンドウが開く(下図)。
 
 ![project tree](/images/japanese-word-selection/project_tree.jpg)
 
-プロジェクト構成については概ね以下の感じ。
+パッケージ構成については概ね以下の感じ。
 
 * keymaps: キーバインディングを定義する[cson](https://github.com/bevry/cson)ファイルをいれる。
 * lib: パッケージの機能を実装するCoffeeスクリプトを入れる。
@@ -70,8 +70,10 @@ __Package Generator__が起動して、作成するパッケージの名前を�
 
 japanese-word-selectionはメニューもコマンドもペインも追加しないので、keymaps、lib/japanese-word-selection-view.coffee、menus、spec/japanese-word-selection-view-spec.coffee、stylesは消す。
 
+以下、ここで生成したパッケージフォルダを__<パッケージルート>__と書く。
+
 #### 2. メインスクリプト編集 - 概要
-japanese-word-selection.coffeeを編集して機能を実装する。
+__<パッケージルート>/lib/japanese-word-selection.coffee__を編集して機能を実装する。
 Package Generatorがサンプルコードを書いてくれているので、それを書き変えて行けばよい。
 
 機能は特定のAPIをもったオブジェクトに実装して、それを __module.exports__ に代入する。
@@ -145,7 +147,7 @@ JapaneseWordSelection#deactivate()は、追加したイベントハンドラを�
         # Cursorオブジェクトの振る舞いを元に戻す処理
 ```
 
-#### 5.  package.json編集
+#### 5. package.json編集
 package.jsonは、Package Generatorが以下のようなひな形を作ってくれている。
 
 ```json
@@ -202,18 +204,20 @@ package.jsonは、Package Generatorが以下のようなひな形を作ってく
 __version__ はパッケージリリース(パブリッシュ)時に自動でインクリメントされるので、0.0.0のままほっておく。
 
 __dependencies__ には依存するnpmパッケージを定義できるが、japanese-word-selectionは一人で動くので何も書かない。
-因みに、dependenciesに何か追加したら、package.jsonがあるフォルダで`apm install`というコマンドを実行すると依存がインストールされる。
+因みに、dependenciesに何か追加したら、package.jsonがあるフォルダで`apm install`というコマンドを実行すると、そのフォルダの下に__node_modules__というフォルダができて、そこに依存がインストールされる。
+
+このpackage.jsonは[npmのpackage.json](https://docs.npmjs.com/files/package.json)を拡張したもので、npmのpackage.jsonのプロパティは全部使える。
 
 #### 6. 動作確認
-作成したパッケージは、Package Generatorに生成された時点でインストールされている。
+作成したパッケージは、Package Generatorに生成された時点でAtomから使えるようになっている。
 ソースを変更したら、`Ctrl+Alt+r`でウィンドウをリロードして反映して動作確認できる。
 
 ログを見たい時など、`Ctrl+Atl+i`でディベロッパツールを開いておくと便利。
 
 #### 7. テスト
-上記の通り、パッケージのテストはJasmineを使って書いて、specフォルダに入れる。テストファイル名の拡張子を除いた部分は__-spec__というポストフィックスを付けなければいけない。
+上記の通り、パッケージのテストはJasmineを使って書いて、__<パッケージルート>/spec/__に入れる。テストファイル名の拡張子を除いた部分は__-spec__というポストフィックスを付けなければいけない。
 
-テストの書き方については、[Atomのマニュアル](https://atom.io/docs/latest/writing-specs)とか、[Atomのテスト](https://github.com/atom/atom/tree/master/spec)とか、Jasmineのマニュアルとかを参照ということで、ここでは割愛する。テスト書くのは必須ではないし。
+テストの書き方については、[Atomのマニュアル](https://atom.io/docs/latest/hacking-atom-writing-specs)とか、[Atomのテスト](https://github.com/atom/atom/tree/master/spec)とか、Jasmineのマニュアルとかを参照ということで、ここでは割愛する。テスト書くのは必須ではないし。
 
 テストは`Ctrl+Alt+p`で実行できる。
 
@@ -222,15 +226,15 @@ README.md、LICENSE.md、CHANGELOG.mdを修正。詳細は割愛。
 
 #### 9. GitHubへ保存
 GitHubにjapanese-word-selectionという名のレポジトリを作り、そこにソースを保存。詳細は割愛。
-Atomのドキュメントによると、今のところ、GitHubへのソース保存は次のパブリッシュのために必須な模様。
+Atomのドキュメントによると、今のところ、GitHubへのソース保存は以下のパブリッシュのために必須な模様。
 
 #### 10. パブリッシュ
 作ったパッケージをリリースすることを、パブリッシュという。
-手順は[Atomのドキュメント](https://atom.io/docs/latest/publishing-a-package)に説明されている。
+手順は[Atomのドキュメント](https://atom.io/docs/latest/hacking-atom-package-word-count#publishing)に説明されている。
 
 パブリッシュするには、__apm__という、Atomのパッケージを管理するコマンドラインツールが必要。どうもAtom本体と一緒にインストールされるっぽい。
 
-やることは、パブリッシュするパッケージのルートに`cd`して、`apm publish minor`を実行するだけ。
+やることは、<パッケージルート>に`cd`して、`apm publish minor`を実行するだけ。
 このコマンドは以下の処理をする。
 
 1. (初回のみ)パッケージ名をatom.ioに登録する。
@@ -270,13 +274,13 @@ https://atom.io/packages/japanese-word-selection に行ったらちゃんとjapa
 
 #### 11. パッケージのアップデートの開発
 `apm publish`をすると、パブリッシュしたバージョンがインストールされた状態になる。
-具体的には、`%userprofile%\.atom\packages\`にレポジトリからダウンロードしたパッケージが入っている状態になる。
+具体的には、`%userprofile%\.atom\packages\`にそのパッケージが入っている状態になる。
 
-パッケージのアップデートを開発する際は、修正している版のパッケージを優先してロードして欲しくなるが、そのためには`%userprofile%\.atom\dev\packages\`に修正版(のリンク)をいれて、Atomをdev modeで起動する必要がある。
+パッケージのアップデートを開発する際は、修正している版のパッケージ(<パッケージルート>に入っている方)を優先してロードして欲しくなるが、そのためには`%userprofile%\.atom\dev\packages\`に修正版(のリンク)をいれて、Atomをdev modeで起動する必要がある。
 
 この手順は、
 
-1. パッケージのフォルダに`cd`して、`apm link --dev`を実行する。これでそのフォルダへのリンクが`.atom\dev\packages\`に作成される。
+1. <パッケージルート>に`cd`して、`apm link --dev`を実行する。これでそのフォルダへのリンクが`.atom\dev\packages\`に作成される。
 2. Atomのメニューの __View > Developer > Open In Dev Mode__ からdev modeのAtomウィンドウを開く。
 
 因みに、Package Generatorは、作成したパッケージフォルダへのリンクを`.atom\packages\`に作成する。リンクの一覧は`apm links`で参照でき、`apm unlink`で削除できる。
