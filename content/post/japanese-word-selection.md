@@ -5,7 +5,7 @@ draft = false
 eyecatch = "atom_editor_logo.svg.png"
 slug = "japanese-word-selection"
 tags = [ "atom", "japanese-word-selection" ]
-title = "Atomのワード境界を日本語対応させるパッケージ - japanese-word-selection"
+title = "Atomパッケージを作る - ワード境界を日本語対応させるパッケージ: japanese-word-selection"
 +++
 
 このブログは[__Atom__](https://atom.io/)というGitHubが開発したテキストエディタを使って書いている。
@@ -232,7 +232,7 @@ Atomのドキュメントによると、今のところ、GitHubへのソース�
 作ったパッケージをリリースすることを、パブリッシュという。
 手順は[Atomのドキュメント](https://atom.io/docs/latest/hacking-atom-package-word-count#publishing)に説明されている。
 
-パブリッシュするには、__apm__という、Atomのパッケージを管理するコマンドラインツールが必要。どうもAtom本体と一緒にインストールされるっぽい。
+パブリッシュするには、__apm__ という、Atomのパッケージを管理するコマンドラインツールが必要。どうもAtom本体と一緒にインストールされるっぽい。
 
 やることは、<パッケージルート>に`cd`して、`apm publish minor`を実行するだけ。
 このコマンドは以下の処理をする。
@@ -241,7 +241,7 @@ Atomのドキュメントによると、今のところ、GitHubへのソース�
 2. package.jsonのversionをインクリメントしてコミットする。`apm publish`にminorを指定するので、0.1.0になる。代わりにmajorかpatchを指定すると、1.0.0か0.0.1になる。
 3. Gitのタグを作る。
 4. GitHubに変更とタグをpushする。
-5. atom.ioにパッケージをアップロードする。
+5. atom.ioにパッケージを登録する。
 
 私の場合、初回だったので、コマンド実行中にatom.ioのアカウントを作ってAPIトークンを取得する手順があった。
 以下がコマンドのメッセージ。
@@ -270,7 +270,7 @@ Check it out at https://atom.io/packages/japanese-word-selection
 https://atom.io/packages/japanese-word-selection に行ったらちゃんとjapanese-word-selectionのページができていた。
 これでパブリッシュまで完了。
 
-因みに、`apm unpublish パッケージ名@バージョン`でパブリッシュを取り消すことができる。
+因みに、`apm unpublish パッケージ名@バージョン`で[パブリッシュを取り消す](http://tbd.kaitoy.xyz/2015/12/02/unpublish-atom-package/)ことができる。
 
 #### 11. パッケージのアップデートの開発
 `apm publish`をすると、パブリッシュしたバージョンがインストールされた状態になる。
