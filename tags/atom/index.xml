@@ -6,8 +6,137 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2015</rights>
-    <updated>2015-11-16 22:38:11 -0700 MST</updated>
+    <updated>2015-12-02 11:23:02 -0700 MST</updated>
 
+    
+      
+        <item>
+          <title>Atomパッケージをアンパブリッシュする</title>
+          <link>http://tbd.kaitoy.xyz/2015/12/02/unpublish-atom-package/</link>
+          <pubDate>Wed, 02 Dec 2015 11:23:02 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>http://tbd.kaitoy.xyz/2015/12/02/unpublish-atom-package/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;https://atom.io/&#34;&gt;&lt;strong&gt;Atom&lt;/strong&gt;&lt;/a&gt;のパッケージをリリースすることをパブシッシュというが、リリースを取り消すことをアンパブリッシュという。
+この記事はそのアンパブリッシュのやり方などについて。&lt;/p&gt;
+
+&lt;p&gt;筆者の環境は以下。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Windows 7 x64&lt;/li&gt;
+&lt;li&gt;Atom 1.2.4&lt;/li&gt;
+&lt;li&gt;Git for Windows 2.6.3&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;アンパブリッシュのやり方&#34;&gt;アンパブリッシュのやり方&lt;/h2&gt;
+
+&lt;p&gt;リリースしたパッケージのプロジェクトのルートフォルダ(package.jsonがあるところ)に&lt;code&gt;cd&lt;/code&gt;して、&lt;code&gt;apm unpublish&lt;/code&gt;を実行するだけ。&lt;/p&gt;
+
+&lt;p&gt;または、任意のフォルダで&lt;code&gt;apm unpublish &amp;lt;パッケージ名&amp;gt;&lt;/code&gt;を実行する。&lt;/p&gt;
+
+&lt;p&gt;特定のバージョンだけアンパブリッシュしたい場合は、&lt;code&gt;apm unpublish &amp;lt;パッケージ名&amp;gt;@&amp;lt;バージョン&amp;gt;&lt;/code&gt;。例えば&lt;code&gt;apm unpublish disturb-me@0.1.0&lt;/code&gt;。&lt;/p&gt;
+
+&lt;h2 id=&#34;注意すべき点-1-git-bashでアンパブリッシュするとエラー&#34;&gt;注意すべき点 1: Git Bashでアンパブリッシュするとエラー&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://git-for-windows.github.io/&#34;&gt;Git for Windows&lt;/a&gt;のGit Bash上で、Windows版Atomに付属するapmで&lt;code&gt;apm unpublish&lt;/code&gt;を実行すると以下のエラーが出る。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;Error: EINVAL, invalid argument
+    at new Socket (net.js:157:18)
+    at process.stdin (node.js:693:19)
+    at Unpublish.module.exports.Unpublish.promptForConfirmation (C:\Users\Kaito\AppData\Local\atom\app-1.2.4\resources\app\apm\lib
+
+\unpublish.js:87:48)
+    at Unpublish.module.exports.Unpublish.run (C:\Users\Kaito\AppData\Local\atom\app-1.2.4\resources\app\apm\lib\unpublish.js:126:21)
+    at Object.module.exports.run (C:\Users\Kaito\AppData\Local\atom\app-1.2.4\resources\app\apm\lib\apm-cli.js:226:32)
+    at Object.&amp;lt;anonymous&amp;gt; (C:\Users\Kaito\AppData\Local\atom\app-1.2.4\resources\app\apm\lib\cli.js:6:7)
+    at Object.&amp;lt;anonymous&amp;gt; (C:\Users\Kaito\AppData\Local\atom\app-1.2.4\resources\app\apm\lib\cli.js:17:4)
+    at Module._compile (module.js:456:26)
+    at Object.Module._extensions..js (module.js:474:10)
+    at Module.load (module.js:356:32)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;コマンドプロンプトでやるべし。&lt;/p&gt;
+
+&lt;h2 id=&#34;注意すべき点-2-アンパブリッシュはパブリッシュの真逆じゃない&#34;&gt;注意すべき点 2: アンパブリッシュはパブリッシュの真逆じゃない&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/#10-%E3%83%91%E3%83%96%E3%83%AA%E3%83%83%E3%82%B7%E3%83%A5&#34;&gt;以前の記事&lt;/a&gt;で
+&lt;code&gt;apm publish&lt;/code&gt;は以下の処理をすると書いた。&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;(初回のみ)パッケージ名をatom.ioに登録する。&lt;/li&gt;
+&lt;li&gt;package.jsonのversionをインクリメントしてコミットする。&lt;code&gt;apm publish&lt;/code&gt;にminorを指定するので、0.1.0になる。代わりにmajorかpatchを指定すると、1.0.0か0.0.1になる。&lt;/li&gt;
+&lt;li&gt;Gitのタグを作る。&lt;/li&gt;
+&lt;li&gt;GitHubに変更とタグをpushする。&lt;/li&gt;
+&lt;li&gt;atom.ioにパッケージを登録する。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;この内、&lt;code&gt;apm unpublish&lt;/code&gt;が取り消してくれるのは 5 だけ。&lt;/p&gt;
+
+&lt;p&gt;3, 4 のタグ作成も取り消したいのであれば、&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;git tag -d v0.1.0
+git push origin :v0.1.0
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;のようにして、ローカルレポジトリとリモートレポジトリ両方のタグを削除する。&lt;/p&gt;
+
+&lt;p&gt;また、2 のpackage.jsonのversion変更を取り消したいのであれば、&lt;code&gt;git log&lt;/code&gt;で&lt;code&gt;Prepare 0.1.0 release&lt;/code&gt;みたいなログのコミットをさがしてそのハッシュをメモり、&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;git revert &amp;lt;ハッシュ&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;を実行して&lt;code&gt;git push&lt;/code&gt;。(上記&amp;lt;ハッシュ&amp;gt;の部分は、&lt;code&gt;apm publish&lt;/code&gt;後何もcommitしてないなら&lt;code&gt;HEAD&lt;/code&gt;でもよし。)&lt;/p&gt;
+
+&lt;h2 id=&#34;注意すべき点-3-パッケージのキャッシュ&#34;&gt;注意すべき点 3: パッケージのキャッシュ&lt;/h2&gt;
+
+&lt;p&gt;とあるパッケージ、仮に&lt;code&gt;hoge&lt;/code&gt;を開発していたとき、以下のような操作をした後に変な現象が起こった。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;バージョン&lt;code&gt;0.1.0&lt;/code&gt;をパブリッシュ。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;hoge&lt;/code&gt;をちゃんとインストールできるかを確認するために、
+
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;apm unlink hoge&lt;/code&gt;で&lt;code&gt;.atom\packages&lt;/code&gt;からリンクを削除。(&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/#11-%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AE%E3%82%A2%E3%83%83%E3%83%97%E3%83%87%E3%83%BC%E3%83%88%E3%81%AE%E9%96%8B%E7%99%BA&#34;&gt;以前&lt;/a&gt;、パブリッシュすると&lt;code&gt;.atom\packages&lt;/code&gt;にはパッケージの実ファイルが入ると書いたが、リンクのままだった。勘違い?)&lt;/li&gt;
+&lt;li&gt;AtomのSettingsから&lt;code&gt;hoge&lt;/code&gt;をインストール。&lt;/li&gt;
+&lt;/ol&gt;&lt;/li&gt;
+&lt;li&gt;ちゃんとインストールできなかったので&lt;code&gt;apm unpublish hoge&lt;/code&gt;して、バージョンも戻す。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;hoge&lt;/code&gt;を修正して、再度&lt;code&gt;0.1.0&lt;/code&gt;としてパブリッシュ。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;hoge&lt;/code&gt;をちゃんとインストールできるかを再度確認するために、
+
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;apm unlink hoge&lt;/code&gt;して、&lt;/li&gt;
+&lt;li&gt;AtomのSettingsから&lt;code&gt;hoge&lt;/code&gt;をインストール。&lt;/li&gt;
+&lt;/ol&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;これをしたら最終的になぜか修正前の&lt;code&gt;hoge&lt;/code&gt;がインストールされた。
+どうやらキャッシュがある模様ということで、&lt;a href=&#34;https://github.com/atom/apm/blob/master/src/install.coffee&#34;&gt;apmのソース&lt;/a&gt;をみたら、パッケージのインストール中に以下のようなことをしていることがわかった。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;AtomのサイトのREST API (&lt;a href=&#34;https://www.atom.io/api/packages/hoge/&#34;&gt;https://www.atom.io/api/packages/hoge/&lt;/a&gt;) からパッケージ情報を取得。&lt;/li&gt;
+&lt;li&gt;また別のREST API (&lt;a href=&#34;https://www.atom.io/api/packages/hoge/versions/0.1.0/tarball&#34;&gt;https://www.atom.io/api/packages/hoge/versions/0.1.0/tarball&lt;/a&gt;) を実行して、パッケージのアーカイブ(tar.gz)をテンポラリフォルダにダウンロード。
+どうもこれは実際にはGitHubの&lt;a href=&#34;https://help.github.com/articles/about-releases/&#34;&gt;Releases&lt;/a&gt;からダウンロードしている模様。
+因みにGitHub Releasesのアーカイブは、レポジトリにタグが追加されると自動で作られる。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;npm install&lt;/code&gt;でそのアーカイブを指定してインストール。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;この手順の 2 をやる前に、&lt;code&gt;.atom\.apm\hoge\0.1.0\package.tgz&lt;/code&gt;を探して、見つかるとダウンロードせずにこっちをインストールする。
+ソースの雰囲気から、&lt;code&gt;.atom\.apm\&lt;/code&gt;に入っているのはキャッシュのようで、いつ作られるかはよくわからないが、これが上記変な現象の原因ぽい。&lt;/p&gt;
+
+&lt;p&gt;ということで、&lt;code&gt;.atom\.apm\hoge\0.1.0\package.tgz&lt;/code&gt;を消して再度インストールしたら無事修正後の&lt;code&gt;hoge&lt;/code&gt;が入った。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;このキャッシュの件や、&lt;code&gt;apm unpublish&lt;/code&gt;がパッケージのバージョンを戻さないところをみると、同じバージョンを再度パブリッシュするのはダメな操作なのかもしれない。
+修正したかったらバージョンを上げろということなのかも。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -281,7 +410,7 @@ atom.config.set(&#39;disturb-me.bornDuration&#39;, &#39;1000&#39;)
     
       
         <item>
-          <title>Atomのワード境界を日本語対応させるパッケージ - japanese-word-selection</title>
+          <title>Atomパッケージを作る - ワード境界を日本語対応させるパッケージ: japanese-word-selection</title>
           <link>http://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/</link>
           <pubDate>Fri, 21 Aug 2015 15:31:41 MDT</pubDate>
           <author>Kaito Yamada</author>
@@ -530,7 +659,7 @@ Atomのドキュメントによると、今のところ、GitHubへのソース�
 &lt;p&gt;作ったパッケージをリリースすることを、パブリッシュという。
 手順は&lt;a href=&#34;https://atom.io/docs/latest/hacking-atom-package-word-count#publishing&#34;&gt;Atomのドキュメント&lt;/a&gt;に説明されている。&lt;/p&gt;
 
-&lt;p&gt;パブリッシュするには、&lt;strong&gt;apm&lt;/strong&gt;という、Atomのパッケージを管理するコマンドラインツールが必要。どうもAtom本体と一緒にインストールされるっぽい。&lt;/p&gt;
+&lt;p&gt;パブリッシュするには、&lt;strong&gt;apm&lt;/strong&gt; という、Atomのパッケージを管理するコマンドラインツールが必要。どうもAtom本体と一緒にインストールされるっぽい。&lt;/p&gt;
 
 &lt;p&gt;やることは、&amp;lt;パッケージルート&amp;gt;に&lt;code&gt;cd&lt;/code&gt;して、&lt;code&gt;apm publish minor&lt;/code&gt;を実行するだけ。
 このコマンドは以下の処理をする。&lt;/p&gt;
@@ -540,7 +669,7 @@ Atomのドキュメントによると、今のところ、GitHubへのソース�
 &lt;li&gt;package.jsonのversionをインクリメントしてコミットする。&lt;code&gt;apm publish&lt;/code&gt;にminorを指定するので、0.1.0になる。代わりにmajorかpatchを指定すると、1.0.0か0.0.1になる。&lt;/li&gt;
 &lt;li&gt;Gitのタグを作る。&lt;/li&gt;
 &lt;li&gt;GitHubに変更とタグをpushする。&lt;/li&gt;
-&lt;li&gt;atom.ioにパッケージをアップロードする。&lt;/li&gt;
+&lt;li&gt;atom.ioにパッケージを登録する。&lt;/li&gt;
 &lt;/ol&gt;
 
 &lt;p&gt;私の場合、初回だったので、コマンド実行中にatom.ioのアカウントを作ってAPIトークンを取得する手順があった。
@@ -569,7 +698,7 @@ Check it out at https://atom.io/packages/japanese-word-selection
 &lt;p&gt;&lt;a href=&#34;https://atom.io/packages/japanese-word-selection&#34;&gt;https://atom.io/packages/japanese-word-selection&lt;/a&gt; に行ったらちゃんとjapanese-word-selectionのページができていた。
 これでパブリッシュまで完了。&lt;/p&gt;
 
-&lt;p&gt;因みに、&lt;code&gt;apm unpublish パッケージ名@バージョン&lt;/code&gt;でパブリッシュを取り消すことができる。&lt;/p&gt;
+&lt;p&gt;因みに、&lt;code&gt;apm unpublish パッケージ名@バージョン&lt;/code&gt;で&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/12/02/unpublish-atom-package/&#34;&gt;パブリッシュを取り消す&lt;/a&gt;ことができる。&lt;/p&gt;
 
 &lt;h4 id=&#34;11-パッケージのアップデートの開発&#34;&gt;11. パッケージのアップデートの開発&lt;/h4&gt;
 
