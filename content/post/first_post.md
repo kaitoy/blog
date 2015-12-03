@@ -9,7 +9,7 @@ eyecatch = "teamedio_logo.svg"
 
 初投稿。
 
-ブログを立ち上げようと思ったきっかけは、[Teamed.io](https://www.google.co.jp/search?q=teamed.io&ie=utf-8&oe=utf-8&hl=ja)というCaliforniaのソフトウェアアウトソーシング(?)をやってる会社のCTO、
+ブログを立ち上げようと思ったきっかけは、[Teamed.io](http://www.teamed.io/)というCaliforniaのソフトウェアアウトソーシング(?)をやってる会社のCTO、
 Yegor Bugayenko (yegor256)のブログのエントリ、[How Much Do You Cost?](http://www.yegor256.com/2014/10/29/how-much-do-you-cost.html)。
 
 これは、Teamed.ioがエンジニアに払うfeeを決める際の指標についてのエントリで、その指標の一つとして *Talks and Publications* を挙げている。
