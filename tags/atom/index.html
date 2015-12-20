@@ -58,6 +58,27 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="http://tbd.kaitoy.xyz/2015/12/19/atom-impress/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="/images/atom_editor_logo.svg.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sat, Dec 19, 2015</span>
+              </div>
+              <h2 class="title">impress.jsでのプレゼン資料作成をサポートするAtomパッケージ - impress</h2>
+              <div class="summary">
+                Atomのパッケージを作った話。 ついでに、パッケージプロジェクト内で別のプロジェクトを取り込んで使いたい場合に、Gitのサブモジュールを使ってはダメという話。 impress.js impress.jsというJavaScriptライブラリがある。 HTML5とCSS3とJavaScriptでプレゼン資料を作るためのライブラリで、これを使うと、PowerPointやKeynoteといった従来のツールによるものからは一線を画す斬新な資料を作ることができる。 公式のデモを見ればその魅力を堪能できる。 デモを見ると分かるが、Preziに触発されたライブラリだ。 Preziでも非常に新鮮な資料を作れるが、ほぼ有料で、また作成した資料をPreziのサーバに置かなければいけないので、仕事で使う資料作りには使いにくい。 その点impress.jsは、MIT(とGPLv2)で公開されていて自由に無料で使えるのがよい。 ただし、Preziがスライドという概念から大きく脱却しているのに対して、実のところimpress.jsで作れる資料はあくまでスライドベースだ。 従来のものに比べてスライドの並びに制約がなく、スライド間の遷移がダイナミックというだけだ。 impress.jsでもまあ工夫すればPreziのような資料は作れるが。 独自のオーサリングツール/ビューワに依存するPreziに対し、impress.jsは標準的なHTML/CSS/JavaScriptにだけ依存しているので、jQueryなどのWeb技術を活用してスライドを作れるという副次的なメリットはある。 impress.jsは、2012年に最初のバージョンが公開されてからもう4年近く経つが、未だにそれほど広く使われている様子はない。 PowerPointが幅を利かせているせいもあるだろうが、その使い辛さから利用をためらう人が多いのではないだろうか。 impress.jsはあまりドキュメントが充実しているとは言えない。 GitHubに公開されているREADMEには、使い方はソースを見よ、それで分からないなら使うなとある。 さらにソース中には、impress.jsを使うには、HTMLとCSSのスキルに加えてデザイナーのセンスも必要とある。 かなりハードルを上げている。 このハードルをクリアしていたとしても、実際、impress.jsで資料を作るのはPowerPointに比べて10倍は大変だ。 impress.jsはスライド(impress.js用語ではステップ)間の遷移を制御してくれるだけで、各スライドのコンテンツを作るという部分に関してはなんのサポートも提供しない。 テンプレートもなければ、表やグラフを書く機能もなく、アニメーションも作れない。 そういうことをしたければ、自分で別途ライブラリを探して使うなりしないといけない。 ちょっとした図を書くにも、テキストエディタでちまちまHTMLとCSSを書いて、ブラウザで表示して確認して、思った通りになっていなければディベロッパツールでデバッグして、Web UIでも書いていたんだっけという気になってくる。 impressパッケージ そんな負担を少しでも軽くしたいと思って作ったのがimpressパッケージ。 同じ目的のツール(i.e. オーサリングツール)は実は既にいくつかあった。 なかでも、Hovercraft!というのが高機能で便利そう。 ただ、これらはPowerPointほど自在にスライドを作れるまでには至っておらず、結局は仕上げにHTML/CSSを手でいじる作業が必要になる。(と思う。) また、jQueryのプラグイン使ってかっこいいことしたいとか言う場合にも、手でコードを書かなければいけない。 つまりテキストエディタを開かなければいけない。よってAtomを起動することになる。(私は。) であれば、オーサリングツールもAtomに統合されていた方が便利なんじゃないの? というのがimpressパッケージを作った動機。 まだ機能は少なくて、新規資料プロジェクトの雛形生成、 ステップをリスト表示するビュー表示、 プレビューができるだけ。 ゆくゆくは、GUIでステップの配置や角度を編集する機能、GUIでステップ内の図を作成する機能を作りたい。 あとできればアニメーションを付ける機能とかも。 Hovercraft!みたいにHTML書かなくてもいいよ、というのを目指すつもりはなくて、あくまでもコーダーのための、コーディングを補助するツールを目指す。 パッケージのサブモジュール impressパッケージは、新規資料プロジェクトの雛形生成機能などのため、impress.jsプロジェクト(のフォーク)をサブモジュールとしてとりこんでいる。 最初はGitのサブモジュールコマンド(git submodule)を使って取り込んでいて、上手くいっているように見えたが、パブリッシュ後に次のような問題が発生した。 即ち、試しにimpressパッケージをインストールしてみたら、サブモジュールのフォルダの中身がからっぽだった。 これは、AtomのパッケージマネージャがパッケージをGitHub Releasesからダウンロードしてインストールするからだ。サブモジュールの中身はGitHub Releasesに登録されるアーカイブに含まれない。このGitHub Releasesの挙動は、サブモジュールを含むGitプロジェクトをクローンした場合、デフォルトではサブモジュールはクローンされないというGitサブモジュールの仕様に関係しているのかもしれない。 この問題をきっかけにGitサブモジュールについてちょっと調べてみた。 蝙蝠本によると、Git開発チームはあまりサブモジュールコマンドの開発に熱心ではなく真面目に作らなかったらしい。 また、あるブログによればサブモジュールコマンドは大分まえからオワコンらしい。このブログによれば、今は多くの場合git subtreeを使うのがいいとのこと。git subtreeは蝙蝠本にもPro Gitにも載ってないのだが。 git subtreeでプロジェクトを取り込んだ場合、親プロジェクトのクローン時にサブプロジェクトもデフォルトでクローンされる仕様だ。 (というか正しくは、サブモジュールと違って、子プロジェクトが親プロジェクトにマージされているから、一緒にクローンされるというだけ。) これを使ってimpressパッケージを構成しなおしてみたら件の問題が解決した。 ということで、Atomのパッケージに別のプロジェクトを取り込んで使いたい場合は、git submoduleではなく、git subtreeを使わないといけないという教訓を得た。
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="http://tbd.kaitoy.xyz/2015/12/02/unpublish-atom-package/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="/images/atom_editor_logo.svg.png" alt="eyecatch">
@@ -119,19 +140,16 @@
         
         
         
-        <div class="col-sm-6">
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="http://tbd.kaitoy.xyz/2015/09/06/disturb-me/" class="post post-topix">
+            <a href="http://tbd.kaitoy.xyz/2015/09/06/disturb-me/" class="post">
               <header class="eyecatch text-center">
                 <img src="/images/atom_editor_logo.svg.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Sun, Sep 6, 2015</span>
               </div>
-              <h2 class="title">Atomウィンドウ内で画像を動かすパッケージ - disturb-me</h2>
-              <div class="summary">
-                Atomのパッケージを見ていて、便利なパッケージが沢山あるなぁと思いつつ、真面目なパッケージばかりでもつまらないので、たまには不真面目で役に立たないパッケージがあってもいいかと思って作ったパッケージの話。 disturb-me 作ったのはdisturb-meというパッケージ。 Ctrl+Altを押しながらdとmを押すとAtomウィンドウ内に画像が表示され、その画像がランダムに動き回り作業の邪魔をするというもの。 画像はパッケージの設定から指定できる。デフォルトではAtomのロゴ。 最初はpac-m●nというパッケージ名にして、ゲーム界のミッキーことパ●クマンが動き回るパッケージにしようと思ってたけど、バンダイナムコからダメだと言われてしまった。 この構想はいつかカタログIPオープン化プロジェクトを利用して実現しようと思う。 disturb-meの作り方 以前別のエントリでAtomパッケージの作り方の基本について書いたので、ここではそこで書かなかったことを書く。 1. メインスクリプト - コマンド 今回はコマンドを追加するのでCommandRegistryを使う。 CommandRegistryのインスタンスにはatom.commandsでアクセスでき、そのaddメソッドでコマンドを追加できる。 addメソッドの引数は、第一引数から順に、 target: コマンドを有効にするDOM要素か、それを示すCSSセレクタ。 commandName: コマンドパレットに表示するコマンド名。全部小文字で、単語をハイフンでつないで、パッケージ名を先頭につけるのがルール。 callback(event): コマンドを実行したときに呼ばれるメソッド。 disturb-meのコマンドはAtomウィンドウ内のどこでも有効にしたいので、第一引数にはAtomウィンドウを表すカスタムタグであるatom-workspaceを指定する。 コードは以下の感じ。 activate: (state) -&gt; @subscriptions = new CompositeDisposable @subscriptions.add atom.commands.add 'atom-workspace', 'disturb-me:toggle': =&gt; @toggle() toggle: -&gt; # 画像を挿入したり削除したりするコード。 toggleの中では画像を挿入したり削除したりするわけだけど、この処理は、その画像を表す別のクラスにまかせることにする。 のでtoggleは以下のように書く。 @disturber: null toggle: -&gt; if @disturber? @disturber.stop() @disturber = null else @disturber = new Disturber() document.body.appendChild(@disturber.getElement()) @disturber.start() Disturberが画像を表すクラス。別のファイル(lib/disturber.coffee)の中で定義して、スクリプトの先頭辺りでDisturber = require './disturber'のようにインポートする。 document.body.appendChildしているところは、何かAtomのAPI(ViewRegistryとか)を使うべきなのかも。 2. Disturber Disturberは以下のように書く。 module.exports = class Disturber element: null constructor: -&gt; # &lt;img&gt;を作って@elementに入れる。 destroy: -&gt; # @elementをDOMツリーから削除する。 getElement: -&gt; # @element返す。 start: -&gt; # @elementのsrcを設定して、ランダムに動かし始める。 stop: -&gt; # @elementを止める。 あまり取り立てて書くことないな…。 因みに画像を動かすのにはVelocityを使い、DOMの操作とかにちょっとjQueryを使う。 3.
-              </div>
+              <h3 class="title">Atomウィンドウ内で画像を動かすパッケージ - disturb-me</h3>
             </a>
           </article>
         </div>
@@ -218,6 +236,9 @@
       
       
       <a href="http://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
       
       
       <a href="http://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
