@@ -5,13 +5,15 @@ draft = false
 eyecatch = "react.png"
 slug = "hello-react"
 tags = [ "react", "atom", "javascript" ]
-title = "ReactをAtomパッケージ開発で無理やり使ってみた"
+title = "ReactをAtomパッケージ開発に使ってみた"
 +++
 
 私は今[HPE](https://www.hpe.com/us/en/home.html)の[Fort Collins](https://ja.wikipedia.org/wiki/%E3%83%95%E3%82%A9%E3%83%BC%E3%83%88%E3%83%BB%E3%82%B3%E3%83%AA%E3%83%B3%E3%82%BA_%28%E3%82%B3%E3%83%AD%E3%83%A9%E3%83%89%E5%B7%9E%29)オフィスに居候している。
 HPEは最近、[React](https://facebook.github.io/react/)を使ったUXフレームワークである[Grommet](http://www.grommet.io/docs/)を開発していて、私が扱っている製品もそれを使う兆しが見えてきた。
-Grommetはいずれ仕事で触ることになりそうなので、まずはReactの勉強をと思い、[とあるAtomパッケージ](http://tbd.kaitoy.xyz/2015/12/19/atom-impress/)の開発に無理やり使ってみた。
-このエントリでは、その作業の中で得た知識などについて書く。
+Grommetはいずれ仕事で触ることになりそうなので、まずはReactの勉強をと思い、[とあるAtomパッケージ](http://tbd.kaitoy.xyz/2015/12/19/atom-impress/)の開発に敢えて使ってみた。
+
+このエントリには、その作業の中で得た知識などについて書いた。
+ただし、Reactを使った開発のノウハウみたいなものまでは得ていないので書いていない。
 
 (因みにGrommetは[GitHub](https://github.com/grommet/grommet)で公開されているが、ほとんど話題になっておらずスターも現時点で245しかついていない。。。)
 
