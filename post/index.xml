@@ -6,8 +6,189 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2015</rights>
-    <updated>2015-12-19 23:37:08 -0700 MST</updated>
+    <updated>2015-12-21 00:07:28 -0700 MST</updated>
 
+    
+      
+        <item>
+          <title>ReactをAtomパッケージ開発で無理やり使ってみた</title>
+          <link>http://tbd.kaitoy.xyz/2015/12/21/hello-react/</link>
+          <pubDate>Mon, 21 Dec 2015 00:07:28 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>http://tbd.kaitoy.xyz/2015/12/21/hello-react/</guid>
+          <description>
+
+&lt;p&gt;私は今&lt;a href=&#34;https://www.hpe.com/us/en/home.html&#34;&gt;HPE&lt;/a&gt;の&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E3%83%95%E3%82%A9%E3%83%BC%E3%83%88%E3%83%BB%E3%82%B3%E3%83%AA%E3%83%B3%E3%82%BA_%28%E3%82%B3%E3%83%AD%E3%83%A9%E3%83%89%E5%B7%9E%29&#34;&gt;Fort Collins&lt;/a&gt;オフィスに居候している。
+HPEは最近、&lt;a href=&#34;https://facebook.github.io/react/&#34;&gt;React&lt;/a&gt;を使ったUXフレームワークである&lt;a href=&#34;http://www.grommet.io/docs/&#34;&gt;Grommet&lt;/a&gt;を開発していて、私が扱っている製品もそれを使う兆しが見えてきた。
+Grommetはいずれ仕事で触ることになりそうなので、まずはReactの勉強をと思い、&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/12/19/atom-impress/&#34;&gt;とあるAtomパッケージ&lt;/a&gt;の開発に無理やり使ってみた。
+このエントリでは、その作業の中で得た知識などについて書く。&lt;/p&gt;
+
+&lt;p&gt;(因みにGrommetは&lt;a href=&#34;https://github.com/grommet/grommet&#34;&gt;GitHub&lt;/a&gt;で公開されているが、ほとんど話題になっておらずスターも現時点で245しかついていない。。。)&lt;/p&gt;
+
+&lt;h2 id=&#34;reactとは&#34;&gt;Reactとは&lt;/h2&gt;
+
+&lt;p&gt;ReactはFacebookが開発しているWeb UIのフレームワークで、&lt;a href=&#34;https://ja.wikipedia.org/wiki/Model_View_Controller&#34;&gt;MVC&lt;/a&gt;のVだけを実装したもの。
+2013年に最初のバージョンが公開され、世界中で流行ってきているらしい。&lt;/p&gt;
+
+&lt;p&gt;その特徴(というかほぼ全容)は仮想DOM(&lt;a href=&#34;https://facebook.github.io/react/docs/glossary.html&#34;&gt;Virtual DOM&lt;/a&gt;)。
+ReactのAPIを使うと、リアルDOMと一対一で対応する仮想DOMのツリーを作ることができ、UIを組み立てられる。
+リアルDOMの構築や更新はReactが最適化された方法でやってくれるので、性能がいいUIができるらしい。
+因みに、仮想DOM自体はReact特有の技術ではなく、別の実装もある。&lt;/p&gt;
+
+&lt;p&gt;もう一つの特徴は&lt;a href=&#34;https://facebook.github.io/jsx/&#34;&gt;JSX&lt;/a&gt;。
+これは、JavaScriptのコードの中で、XMLみたいな構文で仮想DOMを記述するための拡張構文。
+これを使うとReactコードが見やすく簡単に書けるけど、当然普通のJavaScript実行環境では動かないので、プリコンパイルなどが必要になる。&lt;/p&gt;
+
+&lt;p&gt;FacebookはReactを使った開発に&lt;a href=&#34;http://facebook.github.io/flux/docs/overview.html#content&#34;&gt;Flux&lt;/a&gt;というアーキテクチャの採用を推奨している。
+FluxはMVCアーキテクチャに置き換わるもので、従来の複雑なデータフローに反発し、一方向のシンプルなデータフローを提供する。
+Fluxは単なるアーキテクチャで、その全体の実装を支援するフレームワークは現時点では無い。
+(多分。&lt;a href=&#34;https://facebook.github.io/relay/&#34;&gt;Relay&lt;/a&gt;が一部支援してくれるっぽい。)&lt;/p&gt;
+
+&lt;h2 id=&#34;reactを触った感想&#34;&gt;Reactを触った感想&lt;/h2&gt;
+
+&lt;p&gt;Reactは本当にちょっとしか触っていないので、あまりよく分かっていないんだろうけど、なんだか使いにくかった。&lt;/p&gt;
+
+&lt;p&gt;Reactは仮想DOMを作るところしか助けてくれないので、他のことは全部自分でやらないといけない。
+FacebookはReact用のウィジェットすら提供していない。
+昔仕事で全部入りの&lt;a href=&#34;https://ja.wikipedia.org/wiki/Dojo_Toolkit&#34;&gt;Dojo&lt;/a&gt;を使っていたので、それとのギャップをすごい感じた。&lt;/p&gt;
+
+&lt;p&gt;そのうえ、他のフレームワークやライブラリと組み合わせて使おうとすると仮想DOMが壁になってくる。普通のフレームワークはリアルDOMを扱うからだ。
+例えば、JavaScriptを書いているとすぐ&lt;a href=&#34;https://jquery.com/&#34;&gt;jQuery&lt;/a&gt;を使いたくなるが、これでリアルDOMを直接いじってしまってはReactを使う意味がない気がする。&lt;/p&gt;
+
+&lt;h2 id=&#34;atomパッケージでreactを使う&#34;&gt;AtomパッケージでReactを使う&lt;/h2&gt;
+
+&lt;p&gt;Reactは&lt;a href=&#34;https://www.npmjs.com/&#34;&gt;npm&lt;/a&gt;でも提供されていて、Atomパッケージの開発に簡単に使える。
+パッケージの&lt;code&gt;package.json&lt;/code&gt;の&lt;code&gt;dependencies&lt;/code&gt;に&lt;a href=&#34;https://www.npmjs.com/package/react&#34;&gt;react&lt;/a&gt;と&lt;a href=&#34;https://www.npmjs.com/package/react-dom&#34;&gt;react-dom&lt;/a&gt;を入れておけば、パッケージコード中で以下の様に仮想DOMを作れるようになる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;var React = require(&#39;react&#39;);
+var ReactDOM = require(&#39;react-dom&#39;);
+
+class MyComponent extends React.Component {
+  render() {
+    return &amp;lt;div&amp;gt;Hello World&amp;lt;/div&amp;gt;;
+  }
+}
+
+ReactDOM.render(&amp;lt;MyComponent /&amp;gt;, node);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;babelによるjsxの手動コンパイル&#34;&gt;BabelによるJSXの手動コンパイル&lt;/h2&gt;
+
+&lt;p&gt;JSXのコンパイルには&lt;a href=&#34;https://babeljs.io/&#34;&gt;Babel&lt;/a&gt;を使うのがいい。
+手動コンパイルにはBabelのコマンドラインツールが必要で、これはnpmで提供されている。
+npmコマンドはAtomに同梱されているので別途インストールは不要。&lt;/p&gt;
+
+&lt;p&gt;以下が手順の詳細。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Babelのコマンドラインツールのインストール&lt;/p&gt;
+
+&lt;p&gt;任意の場所で、&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;npm install -g babel-cli
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;を実行すると、Babelのコマンドラインツールがグローバルにインストールされ、任意の場所で&lt;code&gt;babel&lt;/code&gt;コマンドが使えるようになる。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Babelの定義ファイル作成&lt;/p&gt;
+
+&lt;p&gt;適当なフォルダ(プロジェクトのルートなど)に&lt;code&gt;.babelrc&lt;/code&gt;というBabelの定義ファイルを作り、以下を書いておく。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{
+  &amp;quot;presets&amp;quot;: [&amp;quot;react&amp;quot;]
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Reactプラグインのインストール&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;.babelrc&lt;/code&gt;に書いた&lt;code&gt;presets&lt;/code&gt;の値は、コンパイルにReactプラグインを使うという意味。
+なので、以下のコマンドでReactプラグインを(ローカルに)インストールする必要がある。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;cd &amp;lt;.babelrcを置いたフォルダ&amp;gt;
+npm install babel-preset-react
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;コンパイル&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;babel&lt;/code&gt;コマンドでコンパイルを実行する。例えば以下を実行すると、&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;cd &amp;lt;.babelrcを置いたフォルダ&amp;gt;
+babel src -d lib
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;src/*.jsx&lt;/code&gt;がコンパイルされて、&lt;code&gt;lib/*.js&lt;/code&gt;に出力される。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&#34;language-babelパッケージによるjsxの自動コンパイル&#34;&gt;language-babelパッケージによるJSXの自動コンパイル&lt;/h2&gt;
+
+&lt;p&gt;上記Babelによるコンパイルは、Atomなら&lt;a href=&#34;https://atom.io/packages/language-babel&#34;&gt;language-babelパッケージ&lt;/a&gt;で自動化できる。&lt;/p&gt;
+
+&lt;p&gt;以下、Atomパッケージの開発でlanguage-babelを利用する手順を書く。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;language-babelのインストール&lt;/p&gt;
+
+&lt;p&gt;language-babelをAtomのSettingsなどからインストールして、language-babelのSettingsで、&lt;code&gt;Allow Local Override&lt;/code&gt;にチェックを付ける。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Babelの定義ファイル作成&lt;/p&gt;
+
+&lt;p&gt;手動のと同じ内容の&lt;code&gt;.babelrc&lt;/code&gt;をパッケージプロジェクトのルートに置く。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;package.json編集&lt;/p&gt;
+
+&lt;p&gt;パッケージプロジェクトの&lt;code&gt;package.json&lt;/code&gt;の&lt;code&gt;dependencies&lt;/code&gt;の下あたりに以下の定義を追加して、BabelとReactプラグインへの依存を張る。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;  &amp;quot;devDependencies&amp;quot;: {
+    &amp;quot;babel-core&amp;quot;: &amp;quot;^6.1.2&amp;quot;,
+    &amp;quot;babel-preset-react&amp;quot;: &amp;quot;^6.1.2&amp;quot;
+  }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;上記定義を追加したら、&lt;code&gt;apm install&lt;/code&gt;を実行して追加した依存をダウンロードする。&lt;/p&gt;
+
+&lt;p&gt;因みに、&lt;code&gt;devDependencies&lt;/code&gt;は&lt;code&gt;dependencies&lt;/code&gt;と似てるけど、開発時だけに必要なモジュールを定義するプロパティ。
+&lt;code&gt;devDependencies&lt;/code&gt;に書いたものは&lt;code&gt;apm install&lt;/code&gt;したときはダウンロードされるけど、パブリッシュされたものをインストールするときにはダウンロードされない。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;language-babelの設定ファイル作成&lt;/p&gt;
+
+&lt;p&gt;language-babelの設定は&lt;code&gt;.languagebabel&lt;/code&gt;というファイルにかく。
+これに以下の様な内容を書いてパッケージプロジェクトのルートに置く。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{
+  &amp;quot;babelMapsPath&amp;quot;:                   &amp;quot;lib&amp;quot;,
+  &amp;quot;babelMapsAddUrl&amp;quot;:                 false,
+  &amp;quot;babelSourcePath&amp;quot;:                 &amp;quot;src&amp;quot;,
+  &amp;quot;babelTranspilePath&amp;quot;:              &amp;quot;lib&amp;quot;,
+  &amp;quot;createMap&amp;quot;:                       false,
+  &amp;quot;createTargetDirectories&amp;quot;:         true,
+  &amp;quot;createTranspiledCode&amp;quot;:            true,
+  &amp;quot;disableWhenNoBabelrcFileInPath&amp;quot;:  false,
+  &amp;quot;suppressSourcePathMessages&amp;quot;:      true,
+  &amp;quot;suppressTranspileOnSaveMessages&amp;quot;: false,
+  &amp;quot;transpileOnSave&amp;quot;:                 true
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これで、&lt;code&gt;&amp;lt;パッケージプロジェクトのルート&amp;gt;/src/*.jsx&lt;/code&gt;が、Atomで編集して保存したときにコンパイルされ、&lt;code&gt;&amp;lt;パッケージプロジェクトのルート&amp;gt;/lib/*.js&lt;/code&gt;に出力されるようになった。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&#34;babelでjsxをコンパイルする場合の制限&#34;&gt;BabelでJSXをコンパイルする場合の制限&lt;/h2&gt;
+
+&lt;p&gt;手動にしろ自動にしろ、JSXのコンパイルにBabelを使う場合、BabelがCoffeeScriptに対応していないので、CoffeeScript + JSXでは書けない。
+JavaScript + JSXで書かないといけない。&lt;/p&gt;
+
+&lt;h2 id=&#34;minified-exception&#34;&gt;Minified exception&lt;/h2&gt;
+
+&lt;p&gt;React周りでバグを作りこんでエラーが発生した場合、コンソールに以下のようなエラーメッセージが出ることがある。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;Uncaught Error: Minified exception occured; use the non-minified dev environment for the full error message and additional helpful warnings.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これではエラーの詳細はわからない。詳細を見たい場合は、AtomをDev Modeで開いておく必要がある。
+(e.g. Atomのメニューバーの[View]&amp;gt;[Developer]&amp;gt;[Open In Dev Mode]から開く。)&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>

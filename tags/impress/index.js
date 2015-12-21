@@ -145,6 +145,9 @@
       <a href="http://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
       
       
+      <a href="http://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
       <a href="http://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
       
       
@@ -155,6 +158,9 @@
       
       
       <a href="http://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/react">react</a>
       
       
       <a href="http://tbd.kaitoy.xyz/tags/runc">runc</a>
