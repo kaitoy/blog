@@ -6,8 +6,169 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2015</rights>
-    <updated>2015-12-21 00:07:28 -0700 MST</updated>
+    <updated>2015-12-27 11:34:18 -0700 MST</updated>
 
+    
+      
+        <item>
+          <title>Gitのレポジトリの中身をなるべく正確に理解する</title>
+          <link>http://tbd.kaitoy.xyz/2015/12/27/git-repository/</link>
+          <pubDate>Sun, 27 Dec 2015 11:34:18 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>http://tbd.kaitoy.xyz/2015/12/27/git-repository/</guid>
+          <description>
+
+&lt;p&gt;このエントリでは、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;の基本的な使い方は理解している前提で、そのレポジトリの構造をなるべく正確に説明する。&lt;/p&gt;
+
+&lt;p&gt;レポジトリ構造の理解を深めることで、Gitにおけるブランチの概念などの理解が深まったり、&lt;code&gt;git reset&lt;/code&gt;などのGit特有で分かり辛いコマンドを自信をもって使えるようになったりするメリットがある。&lt;/p&gt;
+
+&lt;p&gt;なお、ここに書いてあることは概ね、筆者が&lt;a href=&#34;https://www.oreilly.co.jp/books/9784873114408/&#34;&gt;O&amp;rsquo;Reillyの蝙蝠本&lt;/a&gt;を読んで得た知識に基づく。&lt;/p&gt;
+
+&lt;h1 id=&#34;gitレポジトリの中身&#34;&gt;Gitレポジトリの中身&lt;/h1&gt;
+
+&lt;p&gt;Gitのレポジトリは、プロジェクトをクローンしたときとかにできる&lt;code&gt;.git&lt;/code&gt;ディレクトリ内に詰まっている。
+このディレクトリには、&lt;strong&gt;オブジェクト格納領域&lt;/strong&gt; と &lt;strong&gt;インデックス&lt;/strong&gt; というデータ構造が入っている。
+また、&lt;strong&gt;参照&lt;/strong&gt; や &lt;strong&gt;シンボリック参照&lt;/strong&gt; というものも入っている。&lt;/p&gt;
+
+&lt;p&gt;以下、それぞれについて説明する。&lt;/p&gt;
+
+&lt;h3 id=&#34;オブジェクト格納領域&#34;&gt;オブジェクト格納領域&lt;/h3&gt;
+
+&lt;p&gt;オブジェクト格納領域は、ファイルシステム上では&lt;code&gt;.git/objects/&lt;/code&gt;以下にあたる。&lt;/p&gt;
+
+&lt;p&gt;ここには、Gitが管理するファイルやコミット履歴などが保存されていて、具体的には以下の4種類のオブジェクトが置かれる。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;ブロブ&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;一つのファイルを表すオブジェクト。ファイルを圧縮したものと思っていいと思う。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;ツリー&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;一つのディレクトリを表すオブジェクト。ブロブや別のツリーを指すポインタを持ち、またそれらが表すファイル/ディレクトリの名前や属性を保持する。
+つまり、これとブロブを組み合わせると、ファイルシステム上のディレクトリツリーを表すことができる。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;コミット&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;一つのコミットを表すオブジェクト。コミット日時やログメッセージなどの情報と、親コミットを指すポインタと、一つのツリーを指すポインタを持つ。
+このツリーは、プロジェクトのルートディレクトリを指す。
+つまり、一つのコミットは、プロジェクトのある時点でのディレクトリツリー全体を表してもいる。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;タグ&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;一つの注釈付きタグ(&lt;code&gt;git tag -a&lt;/code&gt;で作るタグ)を表すオブジェクト。
+タグ名やタグにつけたコメントなどの情報と、一つのオブジェクト(普通はコミット)へのポインタを持つ。
+因みに軽量タグ(&lt;code&gt;git tag&lt;/code&gt;で作るタグ)はオブジェクトにならない。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;ファイルシステム上で、一つのオブジェクトは一つのファイルに書き込まれ、&lt;code&gt;.git/objects/&lt;/code&gt;以下に配置される。
+そのファイルへのパスは、オブジェクトのコンテンツから計算されたSHA1ハッシュの値(i.e. オブジェクトの名前)が使われる。
+例えば&lt;code&gt;.git/objects/16/cacde1ddabe1698b0e41e091e4697313e2b7e5&lt;/code&gt;というファイルがあったら、これは &lt;strong&gt;16cacde1ddabe1698b0e41e091e4697313e2b7e5&lt;/strong&gt; と名のオブジェクトの実体。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;git cat-file -p &amp;lt;SHA1ハッシュ&amp;gt;&lt;/code&gt;でオブジェクトのコンテンツを見れるので、いくつか見てみると面白い。&lt;/p&gt;
+
+&lt;h3 id=&#34;インデックス&#34;&gt;インデックス&lt;/h3&gt;
+
+&lt;p&gt;インデックスは、ファイルシステム上では&lt;code&gt;.git/index&lt;/code&gt;というバイナリファイルにあたる。&lt;/p&gt;
+
+&lt;p&gt;インデックスは、プロジェクトのある時点でのディレクトリツリー全体を表すデータをもつ。
+具体的には、プロジェクト内の各ファイルを表すブロブへのポインタと、各ファイルのファイルシステム上でのパスが保存されている。&lt;/p&gt;
+
+&lt;p&gt;インデックスは、プロジェクトのルートディレクトリを表すツリーオブジェクトとそれに連なるツリーオブジェクトをまとめてシリアライズしたものなんじゃないかと思う。&lt;/p&gt;
+
+&lt;h3 id=&#34;オブジェクト格納領域とインデックスの図解&#34;&gt;オブジェクト格納領域とインデックスの図解&lt;/h3&gt;
+
+&lt;p&gt;ワーキングツリーに変更を入れ、&lt;code&gt;git add&lt;/code&gt;、&lt;code&gt;git commit&lt;/code&gt;をする中で、オブジェクト格納領域とインデックスがどう変化するかを図にした。&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;embed slideshow&#34; style=&#34;text-align: center&#34;&gt;
+  &lt;iframe src=&#34;//www.slideshare.net/slideshow/embed_code/key/ByxdUgla7YMWqS&#34; width=&#34;595&#34; height=&#34;485&#34; frameborder=&#34;0&#34; marginwidth=&#34;0&#34; marginheight=&#34;0&#34; scrolling=&#34;no&#34; style=&#34;border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;&#34; allowfullscreen&gt;
+  &lt;/iframe&gt;
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;(タグオブジェクトについては次の節で。)&lt;/p&gt;
+
+&lt;p&gt;このスライドにより、Gitがファイルの履歴をどう記録しているかがよく分かるはず。
+特に、ブロブが常にファイルのある時点の内容全体を保持していて、Gitが(&lt;a href=&#34;https://subversion.apache.org/&#34;&gt;Subversion&lt;/a&gt;のように)差分を保存しているわけではないことは覚えておくべし。&lt;/p&gt;
+
+&lt;p&gt;スライドの最後のページのオブジェクト格納領域の図で、ツリーとブロブとそれらを指す矢印を省略すると、Gitのブランチ等の説明でよく見かける丸が矢印で連なった図になる。以降の説明でそのような図を使うが、丸がコミットを意味していることはよく認識しておくべし。&lt;/p&gt;
+
+&lt;h3 id=&#34;参照&#34;&gt;参照&lt;/h3&gt;
+
+&lt;p&gt;参照は、一つのオブジェクトを指し示すポインタのようなもので、普通はコミットオブジェクトを指す。
+参照には、&lt;strong&gt;ローカルブランチ&lt;/strong&gt;、&lt;strong&gt;リモート追跡ブランチ&lt;/strong&gt;、&lt;strong&gt;タグ&lt;/strong&gt; の三種類がある。&lt;/p&gt;
+
+&lt;p&gt;ファイルシステム上では&lt;code&gt;.git/refs/&lt;/code&gt;以下にある、SHA1ハッシュが書かれただけのテキストファイルにあたる。
+&lt;code&gt;.git/refs/heads/&lt;/code&gt;以下にローカルブランチ、&lt;code&gt;.git/refs/remotes/&lt;/code&gt;以下にリモート追跡ブランチ、&lt;code&gt;.git/refs/tags/&lt;/code&gt;以下にタグが置かれる。&lt;/p&gt;
+
+&lt;p&gt;ここで、ブランチやタグが単なる参照であるところに注意。
+Subversionのようにレポジトリのコピーを作るのとはかなり異なる。
+Gitのブランチを作るというのは単に参照を追加するだけだし、ブランチをチェックアウトするというのはブランチが指すコミットが指すツリーが表すディレクトリツリーをファイルシステムに展開するということ。
+この実装によってGitのブランチが軽量で速いものになっている。&lt;/p&gt;
+
+&lt;p&gt;ローカルブランチの仕組みを以下に図示する。図中で、各コミットには便宜上ラベルとしてアルファベットを付けている。&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;embed slideshow&#34; style=&#34;text-align: center&#34;&gt;
+  &lt;iframe src=&#34;//www.slideshare.net/slideshow/embed_code/key/ybMW31fwgO6agk&#34; width=&#34;595&#34; height=&#34;485&#34; frameborder=&#34;0&#34; marginwidth=&#34;0&#34; marginheight=&#34;0&#34; scrolling=&#34;no&#34; style=&#34;border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;&#34; allowfullscreen&gt;
+  &lt;/iframe&gt;
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;このスライドの最後のページでmasterブランチが本流でbugfixブランチが支流かのように書いているが、実際は実装上それらに差はなく全く対等である。&lt;/p&gt;
+
+&lt;p&gt;また、ブランチは単なる一方的な参照であり、コミットオブジェクトからはそれに全く関与しないことに注意。
+ブランチを削除してもそれによってコミットが消えることはない(※1)し、また例えば、スライドの最後のページでbugfixブランチを削除したらXがどのブランチで作られたコミットなのかを知るすべはなくなる。&lt;/p&gt;
+
+&lt;p&gt;(※1: ブランチを削除することにより到達不能になるコミットは、結果的にGit GCにより削除されはする。)&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;次に、タグの仕組みを以下に図示する。&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;embed slideshow&#34; style=&#34;text-align: center&#34;&gt;
+  &lt;iframe src=&#34;//www.slideshare.net/slideshow/embed_code/key/EaBZklxh9vB9yk&#34; width=&#34;595&#34; height=&#34;485&#34; frameborder=&#34;0&#34; marginwidth=&#34;0&#34; marginheight=&#34;0&#34; scrolling=&#34;no&#34; style=&#34;border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;&#34; allowfullscreen&gt;
+  &lt;/iframe&gt;
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;図中で、タグオブジェクトはオブジェクトなのでオブジェクト格納領域(i.e. &lt;code&gt;.git/objects/&lt;/code&gt;)に入り、それを指す参照のタグは&lt;code&gt;.git/refs/&lt;/code&gt;に入る。&lt;/p&gt;
+
+&lt;p&gt;このスライドを見てわかる通り、ブランチと軽量タグは実装上は全く同じもので、慣習で使い分けるだけ。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;リモート追跡ブランチについては別のエントリで書く。&lt;/p&gt;
+
+&lt;h3 id=&#34;シンボリック参照&#34;&gt;シンボリック参照&lt;/h3&gt;
+
+&lt;p&gt;シンボリック参照は参照やオブジェクトを指す参照。以下の四つがある。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;HEAD&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;カレントブランチの参照を指す。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;ORIG_HEAD&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;HEADが更新されたとき、更新前のHEADが指していたブランチが指していたコミットを指す。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;FETCH_HEAD&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;最後にフェッチされたブランチの最新コミットを指す。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;MERGE_HEAD&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;マージ操作中に作られ、HEADにマージされようとしているコミットを指す。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;ファイルシステム上では&lt;code&gt;.git/{HEAD,ORIG_HEAD,FETCH_HEAD,MERGE_HEAD}&lt;/code&gt;にあたり、全て単純なテキストファイルである。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;以上がGitレポジトリの中身のほぼ全容。あとは設定ファイルとかフックスクリプトとかがあるだけ。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
