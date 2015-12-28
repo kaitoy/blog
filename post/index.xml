@@ -6,8 +6,117 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2015</rights>
-    <updated>2015-12-27 11:34:18 -0700 MST</updated>
+    <updated>2015-12-28 01:05:29 -0700 MST</updated>
 
+    
+      
+        <item>
+          <title>Gitのマージを図解する</title>
+          <link>http://tbd.kaitoy.xyz/2015/12/28/git-merge/</link>
+          <pubDate>Mon, 28 Dec 2015 01:05:29 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>http://tbd.kaitoy.xyz/2015/12/28/git-merge/</guid>
+          <description>
+
+&lt;p&gt;このエントリでは、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;が提供するマージのための機能の内、主なもの4つについて図解する。
+ここでマージとは、とあるブランチのコミットが入れた修正を別のブランチに取り込むこととする。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を事前に呼んでおくとわかりやすいかもしれない。&lt;/p&gt;
+
+&lt;p&gt;ここで説明するマージは全てローカルレポジトリ内のブランチを操作対象とする。&lt;/p&gt;
+
+&lt;h2 id=&#34;普通のマージ&#34;&gt;普通のマージ&lt;/h2&gt;
+
+&lt;p&gt;普通のマージは、複数のブランチでそれぞれ開発が進んでいて、つまりそれぞれのコミットグラフが伸びている場合に、それらの修正を統合するときに実行する。
+マージするブランチはいくつでも指定できる。&lt;/p&gt;
+
+&lt;p&gt;基本的なコマンドは&lt;code&gt;git merge &amp;lt;ブランチ&amp;gt;...&lt;/code&gt;。&lt;/p&gt;
+
+&lt;p&gt;操作に成功すると、マージ後のプロジェクトの状態を表すコミット(マージコミット)が作られ、カレントブランチの先頭に追加される。
+マージコミットは、マージした全てのブランチが指していたコミットを親として持つ。&lt;/p&gt;
+
+&lt;p&gt;このマージはマージコミットを追加するだけであり、既存のコミットを一切変更しないことを認識しておくべし。&lt;/p&gt;
+
+&lt;p&gt;以下、普通のマージの実行例を図示する。&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;embed slideshow&#34; style=&#34;text-align: center&#34;&gt;
+  &lt;iframe src=&#34;//www.slideshare.net/slideshow/embed_code/key/iPWqZEwnNBseMz&#34; width=&#34;595&#34; height=&#34;485&#34; frameborder=&#34;0&#34; marginwidth=&#34;0&#34; marginheight=&#34;0&#34; scrolling=&#34;no&#34; style=&#34;border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;&#34; allowfullscreen&gt;
+  &lt;/iframe&gt;
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;リベース&#34;&gt;リベース&lt;/h2&gt;
+
+&lt;p&gt;リベースは、あるブランチで作った一連のコミットの起点(ベース)を移動したいときに実行する。
+この操作は一般的にはマージとは呼ばれないが、冒頭に書いたマージの定義からするとマージと見なせないこともないのでここに挙げる。&lt;/p&gt;
+
+&lt;p&gt;基本的なコマンドは&lt;code&gt;git rebase &amp;lt;ブランチ&amp;gt;&lt;/code&gt;。&lt;/p&gt;
+
+&lt;p&gt;操作に成功すると、リベースしたブランチにもともとあったコミットは消え、それと同等の修正をもたらす別のコミットが&lt;code&gt;HEAD&lt;/code&gt;を起点として作成される。&lt;/p&gt;
+
+&lt;p&gt;リベースは既存のコミットを消し、コミットグラフを変更てしまうということを認識しておくべし。&lt;/p&gt;
+
+&lt;p&gt;以下、リベースの簡単な実行例を図示する。&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;embed slideshow&#34; style=&#34;text-align: center&#34;&gt;
+  &lt;iframe src=&#34;//www.slideshare.net/slideshow/embed_code/key/154ifhpWZoAkVG&#34; width=&#34;595&#34; height=&#34;485&#34; frameborder=&#34;0&#34; marginwidth=&#34;0&#34; marginheight=&#34;0&#34; scrolling=&#34;no&#34; style=&#34;border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;&#34; allowfullscreen&gt;
+  &lt;/iframe&gt;
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;上のスライドのように単純なコミットグラフならいいが、リベースするブランチが分岐していたりするとややこしいことが起き得る。
+そういうケースには&lt;a href=&#34;https://www.oreilly.co.jp/books/9784873114408/&#34;&gt;O&amp;rsquo;Reillyの蝙蝠本&lt;/a&gt;などでよく勉強してから臨むべし。&lt;/p&gt;
+
+&lt;h2 id=&#34;ファストフォワードマージ&#34;&gt;ファストフォワードマージ&lt;/h2&gt;
+
+&lt;p&gt;ファストフォワードマージは、マージ先のコミットが全てマージ元に含まれているときに使えるマージ。
+この操作は既存のコミットグラフをいじらないしマージコミットも作らない特殊なマージ。
+(実のところマージじゃないと言ってもいい。)
+このマージを実行した後は、コミットグラフは一直線になり、ブランチを作らずにコミットを作った場合と同様になる。&lt;/p&gt;
+
+&lt;p&gt;このマージは、&lt;code&gt;git rebase &amp;lt;ブランチ&amp;gt;&lt;/code&gt;を実行したときに可能であれば実行される。
+(でなければ普通のマージが実行される。オプションで選択することもできる。)&lt;/p&gt;
+
+&lt;p&gt;以下にファストフォワードマージの例を図示する。&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;embed slideshow&#34; style=&#34;text-align: center&#34;&gt;
+  &lt;iframe src=&#34;//www.slideshare.net/slideshow/embed_code/key/FaJqVG6FS8NbRN&#34; width=&#34;595&#34; height=&#34;485&#34; frameborder=&#34;0&#34; marginwidth=&#34;0&#34; marginheight=&#34;0&#34; scrolling=&#34;no&#34; style=&#34;border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;&#34; allowfullscreen&gt;
+  &lt;/iframe&gt;
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ファストフォワードマージはよくリベースとともに実行される。
+リベースのスライドの最後のページの図は、ここのスライドの最初のページの図と同じになっている。&lt;/p&gt;
+
+&lt;p&gt;リベース + ファストフォワードは、トピックブランチで入れた修正を、そのブランチを作ったという履歴を残さずに別のブランチに取り入れたいときなどに使う手法。
+マージコミットを作る手法よりもコミットグラフをシンプルに保てる。&lt;/p&gt;
+
+&lt;h2 id=&#34;チェリーピック&#34;&gt;チェリーピック&lt;/h2&gt;
+
+&lt;p&gt;チェリーピックは、あるブランチの任意のコミットによる修正を別のブランチに取り込みたいときに実行する。
+他の3つのマージに比べて分かりやすい操作であり、また操作対象にするブランチやコミットの自由度が高いので使いやすい。
+その反面、コミットログなどに明記しないとどこのコミットをマージしたのかが分からなくなる。&lt;/p&gt;
+
+&lt;p&gt;基本的なコマンドは&lt;code&gt;git cherry-pick &amp;lt;コミット&amp;gt;&lt;/code&gt;。&lt;/p&gt;
+
+&lt;p&gt;操作に成功すると、指定したコミットと同等の修正をもたらす新しいコミットが作成され、&lt;code&gt;HEAD&lt;/code&gt;に追加される。&lt;/p&gt;
+
+&lt;p&gt;この操作はコミットを追加するだけであり、既存のコミットは変更しない。&lt;/p&gt;
+
+&lt;p&gt;以下にチェリーピックの例を図示する。&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;embed slideshow&#34; style=&#34;text-align: center&#34;&gt;
+  &lt;iframe src=&#34;//www.slideshare.net/slideshow/embed_code/key/v6SPj18J0A7WFU&#34; width=&#34;595&#34; height=&#34;485&#34; frameborder=&#34;0&#34; marginwidth=&#34;0&#34; marginheight=&#34;0&#34; scrolling=&#34;no&#34; style=&#34;border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;&#34; allowfullscreen&gt;
+  &lt;/iframe&gt;
+&lt;/div&gt;
+&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
