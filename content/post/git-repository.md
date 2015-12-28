@@ -64,7 +64,15 @@ Gitのレポジトリは、プロジェクトをクローンしたときとか�
 ### オブジェクト格納領域とインデックスの図解
 ワーキングツリーに変更を入れ、`git add`、`git commit`をする中で、オブジェクト格納領域とインデックスがどう変化するかを図にした。
 
-{{< slideshare ByxdUgla7YMWqS >}}
+<ul class="bxslider">
+  <li><img src="/images/git-repository/git_repo/1.PNG" /></li>
+  <li><img src="/images/git-repository/git_repo/2.PNG" /></li>
+  <li><img src="/images/git-repository/git_repo/3.PNG" /></li>
+  <li><img src="/images/git-repository/git_repo/4.PNG" /></li>
+  <li><img src="/images/git-repository/git_repo/5.PNG" /></li>
+  <li><img src="/images/git-repository/git_repo/6.PNG" /></li>
+  <li><img src="/images/git-repository/git_repo/7.PNG" /></li>
+</ul>
 
 (タグオブジェクトについては次の節で。)
 
@@ -88,7 +96,13 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
 
 ローカルブランチの挙動を以下に図示する。図中で、各コミットには便宜上ラベルとしてアルファベットを付けている。
 
-{{< slideshare ybMW31fwgO6agk >}}
+<ul class="bxslider">
+  <li><img src="/images/git-repository/git_branch/スライド1.PNG" /></li>
+  <li><img src="/images/git-repository/git_branch/スライド2.PNG" /></li>
+  <li><img src="/images/git-repository/git_branch/スライド3.PNG" /></li>
+  <li><img src="/images/git-repository/git_branch/スライド4.PNG" /></li>
+  <li><img src="/images/git-repository/git_branch/スライド5.PNG" /></li>
+</ul>
 
 このスライドの最後のページでmasterブランチが本流でbugfixブランチが支流かのように書いているが、実際は実装上それらに差はなく全く対等である。
 
@@ -101,7 +115,13 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
 
 次に、タグの挙動を以下に図示する。
 
-{{< slideshare EaBZklxh9vB9yk >}}
+<ul class="bxslider">
+  <li><img src="/images/git-repository/git_tag/スライド1.PNG" /></li>
+  <li><img src="/images/git-repository/git_tag/スライド2.PNG" /></li>
+  <li><img src="/images/git-repository/git_tag/スライド3.PNG" /></li>
+  <li><img src="/images/git-repository/git_tag/スライド4.PNG" /></li>
+  <li><img src="/images/git-repository/git_tag/スライド5.PNG" /></li>
+</ul>
 
 図中で、タグオブジェクトはオブジェクトなのでオブジェクト格納領域(i.e. `.git/objects/`)に入り、それを指す参照のタグは`.git/refs/`に入る。
 
