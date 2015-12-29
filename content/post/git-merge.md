@@ -8,7 +8,7 @@ tags = [ "git" ]
 title = "Gitのマージを図解する"
 +++
 
-このエントリでは、[__Git__](https://git-scm.com/)が提供するマージのための機能の内、主なもの4つについて図解する。
+このエントリでは、[__Git__](https://git-scm.com/)が提供するマージのための機能の内、主なもの4つ、__普通のマージ__、__リベース__、__ファストフォワードマージ__、__チェリーピック__ について図解する。
 ここでマージとは、とあるブランチのコミットが入れた修正を別のブランチに取り込むこととする。
 
 [この記事](http://tbd.kaitoy.xyz/2015/12/27/git-repository/)を事前に呼んでおくとわかりやすいかもしれない。
@@ -28,7 +28,12 @@ title = "Gitのマージを図解する"
 
 以下、普通のマージの実行例を図示する。
 
-{{< slideshare iPWqZEwnNBseMz >}}
+<ul class="bxslider">
+  <li><img src="/images/git-merge/git_merge/スライド1.PNG" /></li>
+  <li><img src="/images/git-merge/git_merge/スライド2.PNG" /></li>
+  <li><img src="/images/git-merge/git_merge/スライド3.PNG" /></li>
+  <li><img src="/images/git-merge/git_merge/スライド4.PNG" /></li>
+</ul>
 
 ## リベース
 リベースは、あるブランチで作った一連のコミットの起点(ベース)を移動したいときに実行する。
@@ -42,7 +47,10 @@ title = "Gitのマージを図解する"
 
 以下、リベースの簡単な実行例を図示する。
 
-{{< slideshare 154ifhpWZoAkVG >}}
+<ul class="bxslider">
+  <li><img src="/images/git-merge/git_rebase/スライド1.PNG" /></li>
+  <li><img src="/images/git-merge/git_rebase/スライド2.PNG" /></li>
+</ul>
 
 <br>
 
@@ -60,7 +68,10 @@ title = "Gitのマージを図解する"
 
 以下にファストフォワードマージの例を図示する。
 
-{{< slideshare FaJqVG6FS8NbRN >}}
+<ul class="bxslider">
+  <li><img src="/images/git-merge/git_ff/スライド1.PNG" /></li>
+  <li><img src="/images/git-merge/git_ff/スライド2.PNG" /></li>
+</ul>
 
 <br>
 
@@ -83,4 +94,7 @@ title = "Gitのマージを図解する"
 
 以下にチェリーピックの例を図示する。
 
-{{< slideshare v6SPj18J0A7WFU >}}
+<ul class="bxslider">
+  <li><img src="/images/git-merge/git_cherry-pick/スライド1.PNG" /></li>
+  <li><img src="/images/git-merge/git_cherry-pick/スライド2.PNG" /></li>
+</ul>
