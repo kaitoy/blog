@@ -6,8 +6,188 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2015</rights>
-    <updated>2015-12-28 01:05:29 -0700 MST</updated>
+    <updated>2015-12-31 01:02:59 -0700 MST</updated>
 
+    
+      
+        <item>
+          <title>Gitの分散バージョン管理の仕組み</title>
+          <link>http://tbd.kaitoy.xyz/2015/12/31/git-dvc/</link>
+          <pubDate>Thu, 31 Dec 2015 01:02:59 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>http://tbd.kaitoy.xyz/2015/12/31/git-dvc/</guid>
+          <description>
+
+&lt;p&gt;このエントリでは、&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を読んだことを前提に、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;の分散バージョン管理の仕組みについて説明する。&lt;/p&gt;
+
+&lt;h2 id=&#34;gitの分散バージョン管理&#34;&gt;Gitの分散バージョン管理&lt;/h2&gt;
+
+&lt;p&gt;分散バージョン管理とは、分散したレポジトリでのバージョン管理ということ。
+ここでレポジトリが分散しているとは、同じプロジェクトの履歴を管理する完全で独立したレポジトリが複数あるということ。
+これにより一つのプロジェクトの開発を地理的に分散して並行して進めることができる。&lt;/p&gt;
+
+&lt;p&gt;Gitは分散バージョン管理のために、レポジトリのクローン(≒コピー)を作る機能と、レポジトリ間でコミットグラフを同期する機能を提供している。&lt;/p&gt;
+
+&lt;p&gt;レポジトリのクローンを作ると言うと、オリジナルとクローンの間に格差があるような気がするが、
+実際にはGitは全てのレポジトリが対等であるという思想のもとで実装されている。
+このため、レポジトリをクローンする時には(デフォルトで)クローン元の完全なコミットグラフがクローンにコピーされるし、任意のレポジトリ間のデータのやり取りをpeer-to-peerでできる。
+クローンからクローンを作ることももちろん可能。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;git push&lt;/code&gt;でデータを送る先をアップストリームと呼ぶことはあるし、次節でローカルレポジトリとリモートレポジトリという関係が出てくるが、これはあくまでその時点でそういう設定になっているというだけ。
+アップストリームはいつでもいくつでも&lt;code&gt;git remote&lt;/code&gt;コマンドで追加したり削除したりできる。&lt;/p&gt;
+
+&lt;p&gt;このような実装により、Gitの分散バージョン管理ではレポジトリ間で柔軟なデータのやり取りができる。
+例えば以下の様な複雑なレポジトリネットワークを組むこともできる。&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;good-object-2.png&#34; src=&#34;http://tbd.kaitoy.xyz/images/git-dvc/repo_net.png&#34; style=&#34;width: 100%; max-width: 400px; margin: 0px auto; display: block;&#34;&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;ローカルレポジトリとリモートレポジトリ&#34;&gt;ローカルレポジトリとリモートレポジトリ&lt;/h2&gt;
+
+&lt;p&gt;一人の開発者から見て、手元にあるレポジトリを &lt;strong&gt;ローカルレポジトリ&lt;/strong&gt; と呼ぶのに対して、&lt;code&gt;git push&lt;/code&gt;や&lt;code&gt;git pull&lt;/code&gt;や&lt;code&gt;git fetch&lt;/code&gt;でデータをやり取りする相手のレポジトリを &lt;strong&gt;リモートレポジトリ&lt;/strong&gt; と呼ぶ。
+リモートレポジトリとのやり取りは、&lt;strong&gt;リモート追跡ブランチ&lt;/strong&gt; と &lt;strong&gt;リモート&lt;/strong&gt; というものを使って実装されている。&lt;/p&gt;
+
+&lt;h4 id=&#34;リモート追跡ブランチ&#34;&gt;リモート追跡ブランチ&lt;/h4&gt;
+
+&lt;p&gt;リモート追跡ブランチは、ローカルレポジトリの&lt;code&gt;.git/refs/remotes/&lt;/code&gt;に格納される参照で、リモートレポジトリ内のローカルブランチのコミットグラフを取得してローカルレポジトリ内に保持するために使われる。
+&lt;code&gt;git branch -r&lt;/code&gt;でその一覧が見れる。&lt;/p&gt;
+
+&lt;p&gt;「追跡」ブランチというだけあって、リモートレポジトリ内でコミットグラフが成長した場合、この変更に追随することができる。
+このためのコマンドが&lt;code&gt;git fetch&lt;/code&gt;。
+因みに&lt;code&gt;git pull&lt;/code&gt;は、&lt;code&gt;git fetch&lt;/code&gt;でリモート追跡ブランチを更新した後、&lt;code&gt;git merge&lt;/code&gt;(オプションによっては&lt;code&gt;git rebase&lt;/code&gt;)でそのリモート追跡ブランチをローカルブランチにマージするのと同じ。&lt;/p&gt;
+
+&lt;h4 id=&#34;リモート&#34;&gt;リモート&lt;/h4&gt;
+
+&lt;p&gt;リモートとは、リモートレポジトリのこと、またはリモートレポジトリに接続するための定義のこと。
+この定義は、ローカルレポジトリの&lt;code&gt;.git/config&lt;/code&gt;に&lt;code&gt;remote&lt;/code&gt;セクションとして書かれている。
+以下がその例。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;[remote &amp;quot;origin&amp;quot;]
+        fetch = +refs/heads/*:refs/remotes/origin/*
+        url = git@github.com:kaitoy/blog.git
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;セクション名のところに&lt;code&gt;&amp;quot;origin&amp;quot;&lt;/code&gt;とあるがこれは、この定義で接続するリモートレポジトリをGitコマンドなどで&lt;code&gt;origin&lt;/code&gt;と指定できるということ。
+ここで定義されているのは&lt;code&gt;url&lt;/code&gt;と&lt;code&gt;fetch&lt;/code&gt;で、それぞれ以下を意味する。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;url&lt;/p&gt;
+
+&lt;p&gt;リモートレポジトリのURL。
+つまり、リモートレポジトリがどのサーバのどのディレクトリにあって、それとのデータのやり取りをどのプロトコルでやるかという定義。
+このURLには以下の書式が使える。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;ファイルパス&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;/path/to/repo.git&lt;/code&gt;とか&lt;code&gt;C:\\Users\\Kaito\\Desktop\\pcap4j&lt;/code&gt;といった、普通のファイルパスの書式。
+&lt;a href=&#34;https://ja.wikipedia.org/wiki/Network_File_System&#34;&gt;NFS&lt;/a&gt;などでリモートレポジトリが共有されている場合などに使われる。&lt;/p&gt;
+
+&lt;p&gt;シンボリックリンクがサポートされているOS上では、クローンはリモートレポジトリをハードリンクで参照する。
+このシンボリック参照でのファイル共有がトラブルの元なため、この書式は非推奨。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;ファイルURL&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;file:///path/to/repo.git&lt;/code&gt;とか&lt;code&gt;file://C:/Users/Kaito/Desktop/pcap4j&lt;/code&gt;といった、ローカルホスト上のパスを示すファイルURLの書式。
+用途はファイルパスと同様だが、ハードリンクを作る代わりにコピーするのでより安全。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;HTTP(S)&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;https://github.com/kaitoy/pcap4j.git&lt;/code&gt;といったHTTPSやHTTPのURL。
+レポジトリへのアクセス制御にHTTPの認証機能やHTTPSのクライアント証明書などが使えるほか、HTTPSなら通信の暗号化もできる。&lt;/p&gt;
+
+&lt;p&gt;使用するポートがファイアウォールにブロックされていることが少ないのも使いやすい。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Gitプロトコル&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;git://example.com/path/to/repo.git&lt;/code&gt;といった書式で、&lt;a href=&#34;https://git-scm.com/book/ja/v1/Git-%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC-Git-%E3%83%87%E3%83%BC%E3%83%A2%E3%83%B3&#34;&gt;Gitデーモン&lt;/a&gt;によるGitネイティブプロトコルを使うURL。
+HTTPよりも高速な通信ができるが、認証機能も暗号化機能もない。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;SSH + Gitプロトコル&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;ssh://git@github.com/kaitoy/pcap4j.git&lt;/code&gt;のような&lt;a href=&#34;https://ja.wikipedia.org/wiki/Secure_Shell&#34;&gt;SSH&lt;/a&gt;のURLで、これを使うとSSHトンネルを通してGitプロトコルで通信できる。
+Gitプロトコル単体を使うのに比べ、SSHの認証機能と暗号化機能を利用できるが、やや遅くなるはず。&lt;/p&gt;
+
+&lt;p&gt;このプロトコルには、&lt;code&gt;git@github.com:kaitoy/pcap4j.git&lt;/code&gt;のような&lt;a href=&#34;https://ja.wikipedia.org/wiki/Secure_copy&#34;&gt;SCP&lt;/a&gt;書式も使える。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Git自体はGitデーモンを含めレポジトリへのアクセス制御の機能を一切持たないので、認証などが必要な場合はHTTPなどその機能を持つプロトコルのURLを使う必要がある。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;fetch&lt;/p&gt;
+
+&lt;p&gt;リモートレポジトリ内のローカルブランチとローカルレポジトリ内の追跡ブランチとがどう対応するかを定義する。&lt;/p&gt;
+
+&lt;p&gt;上の例の&lt;code&gt;fetch = +refs/heads/*:refs/remotes/origin/*&lt;/code&gt;だと、リモートレポジトリの&lt;code&gt;.git/refs/heads/&lt;/code&gt;にある全てのブランチをそれぞれ、ローカルレポジトリの&lt;code&gt;.git/refs/remotes/origin/&lt;/code&gt;にある同名のブランチで追跡する、という意味。&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;クローン時の挙動&#34;&gt;クローン時の挙動&lt;/h2&gt;
+
+&lt;p&gt;クローン時のデフォルトの挙動について説明する。&lt;/p&gt;
+
+&lt;p&gt;レポジトリのクローンを作ると、オブジェクト格納領域内のオブジェクトが全てクローンにコピーされる。
+つまり、元のレポジトリ(i.e. リモートレポジトリ)と同じコミットグラフ(とタグオブジェクト)がクローンのレポジトリに入る。&lt;/p&gt;
+
+&lt;p&gt;インデックスはレポジトリ固有の一時的なデータなので、クローンにはコピーされない。&lt;/p&gt;
+
+&lt;p&gt;参照については、リモートレポジトリ内の全てのローカルブランチとタグがクローンにコピーされる。&lt;/p&gt;
+
+&lt;p&gt;リモート追跡ブランチはコピーされず、代わりに、リモートレポジトリ内の全てのローカルブランチに対応する同名のリモート追跡ブランチがクローンのレポジトリ内に作成される。
+また、これに対応するリモートが作成され、これの&lt;code&gt;fetch&lt;/code&gt;に(前節の例と同様に)&lt;code&gt;+refs/heads/*:refs/remotes/origin/*&lt;/code&gt;が設定される。&lt;/p&gt;
+
+&lt;h2 id=&#34;リモートレポジトリとのやり取りの図解&#34;&gt;リモートレポジトリとのやり取りの図解&lt;/h2&gt;
+
+&lt;p&gt;リモートレポジトリをクローンして、変更をプルしたりプッシュしたりする様子を以下に図示する。&lt;/p&gt;
+
+&lt;ul class=&#34;bxslider&#34;&gt;
+  &lt;li&gt;&lt;img src=&#34;http://tbd.kaitoy.xyz/images/git-dvc/git_dvc_merge/スライド1.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;http://tbd.kaitoy.xyz/images/git-dvc/git_dvc_merge/スライド2.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;http://tbd.kaitoy.xyz/images/git-dvc/git_dvc_merge/スライド3.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;http://tbd.kaitoy.xyz/images/git-dvc/git_dvc_merge/スライド4.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;http://tbd.kaitoy.xyz/images/git-dvc/git_dvc_merge/スライド5.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;http://tbd.kaitoy.xyz/images/git-dvc/git_dvc_merge/スライド6.PNG&#34; /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;これはこれで完全に正しい手順だが、最終的にできるコミットグラフが無駄に分岐していて美しくない。
+普通は以下の様に、リベースを挟んで一直線の履歴に保つ方が一般にいいと思う。&lt;/p&gt;
+
+&lt;ul class=&#34;bxslider&#34;&gt;
+  &lt;li&gt;&lt;img src=&#34;http://tbd.kaitoy.xyz/images/git-dvc/git_dvc_ff/スライド1.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;http://tbd.kaitoy.xyz/images/git-dvc/git_dvc_ff/スライド2.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;http://tbd.kaitoy.xyz/images/git-dvc/git_dvc_ff/スライド3.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;http://tbd.kaitoy.xyz/images/git-dvc/git_dvc_ff/スライド4.PNG&#34; /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;このフェッチ + リベースを一度にやってくれるのが、&lt;code&gt;git pull --rebase&lt;/code&gt;。&lt;/p&gt;
+
+&lt;h2 id=&#34;gitで分散バージョン管理する際の注意点&#34;&gt;Gitで分散バージョン管理する際の注意点&lt;/h2&gt;
+
+&lt;p&gt;Gitで分散バージョン管理する際の注意点を二つ挙げる。&lt;/p&gt;
+
+&lt;h4 id=&#34;他のレポジトリにもあるコミットを変更してはいけない&#34;&gt;他のレポジトリにもあるコミットを変更してはいけない&lt;/h4&gt;
+
+&lt;p&gt;Gitには、&lt;code&gt;git commit --amend&lt;/code&gt;、&lt;code&gt;git rebase&lt;/code&gt;といったコミットを変更するコマンドや、&lt;code&gt;git reset&lt;/code&gt;というコミットの削除につながるコマンドがある。
+こういうコマンドで他のレポジトリにもあるコミットを変更してはいけない。&lt;/p&gt;
+
+&lt;p&gt;他のレポジトリにもあるコミットとは、クローン時にコピーしてきたコミット、プルしたコミット、プッシュしたコミットなどのこと。&lt;/p&gt;
+
+&lt;p&gt;もしやると、プッシュもプルも簡単にはできなくなり非常に面倒なことになる。&lt;/p&gt;
+
+&lt;h4 id=&#34;開発レポジトリには-基本的に-プッシュしてはいけない&#34;&gt;開発レポジトリには(基本的に)プッシュしてはいけない&lt;/h4&gt;
+
+&lt;p&gt;レポジトリには、&lt;strong&gt;ベアレポジトリ&lt;/strong&gt; と、&lt;strong&gt;開発レポジトリ&lt;/strong&gt; がある。
+開発レポジトリは普段使っている普通のレポジトリ。
+ベアレポジトリは、簡単に言うとワーキングツリーやカレントブランチやリモートを持たないレポジトリで、開発レポジトリのリモートレポジトリとして使われ、&lt;code&gt;git init&lt;/code&gt;や&lt;code&gt;git clone&lt;/code&gt;に&lt;code&gt;--bare&lt;/code&gt;オプションを付けて実行すると作れる。&lt;/p&gt;
+
+&lt;p&gt;ベアレポジトリにはプッシュしていい。
+むしろプッシュしないベアレポジトリに意味はない。&lt;/p&gt;
+
+&lt;p&gt;一方、開発レポジトリには(基本的に)プッシュしてはいけない。
+これは、プッシュがリモートレポジトリのオブジェクトと参照だけ更新してワーキングツリーやインデックスは更新せず、開発者がプッシュされたことに気付けないため。
+気付かないまま開発を進めてコミットを作ると、プッシュによって&lt;code&gt;HEAD&lt;/code&gt;が変わっていたりするため、コミットグラフが変な状態になってしまう。&lt;/p&gt;
+
+&lt;p&gt;お互い示し合わせたうえでプッシュをしたりプッシュするブランチを工夫したりすれば問題が起きないようにできるはできる。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -135,7 +315,7 @@
 
 &lt;p&gt;Gitのレポジトリは、プロジェクトをクローンしたときとかにできる&lt;code&gt;.git&lt;/code&gt;ディレクトリ内に詰まっている。
 このディレクトリには、&lt;strong&gt;オブジェクト格納領域&lt;/strong&gt; と &lt;strong&gt;インデックス&lt;/strong&gt; というデータ構造が入っている。
-また、&lt;strong&gt;参照&lt;/strong&gt; や &lt;strong&gt;シンボリック参照&lt;/strong&gt; というものも入っている。&lt;/p&gt;
+また、&lt;strong&gt;参照 (ref)&lt;/strong&gt; や &lt;strong&gt;シンボリック参照 (symref)&lt;/strong&gt; というものも入っている。&lt;/p&gt;
 
 &lt;p&gt;以下、それぞれについて説明する。&lt;/p&gt;
 
@@ -149,8 +329,7 @@
 &lt;li&gt;&lt;p&gt;&lt;strong&gt;ブロブ&lt;/strong&gt;&lt;/p&gt;
 
 &lt;p&gt;一つのファイルを表すオブジェクト。
-バージョン管理対象のファイルの内容を保持する。
-ファイルを圧縮したものと思っていいと思う。&lt;/p&gt;&lt;/li&gt;
+バージョン管理対象のファイルの内容(だけ)を保持する。&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;&lt;strong&gt;ツリー&lt;/strong&gt;&lt;/p&gt;
 
@@ -170,7 +349,7 @@
 因みに軽量タグ(&lt;code&gt;git tag&lt;/code&gt;で作るタグ)はオブジェクトにならない。&lt;/p&gt;&lt;/li&gt;
 &lt;/ol&gt;
 
-&lt;p&gt;ファイルシステム上で、一つのオブジェクトは一つのファイルに書き込まれ、&lt;code&gt;.git/objects/&lt;/code&gt;以下に配置される。
+&lt;p&gt;ファイルシステム上で、一つのオブジェクトは一つのファイルに書き込まれ、&lt;a href=&#34;https://ja.wikipedia.org/wiki/Zlib&#34;&gt;zlib&lt;/a&gt;で圧縮され、&lt;code&gt;.git/objects/&lt;/code&gt;以下に配置される。
 そのファイルへのパスは、オブジェクトのコンテンツから計算されたSHA1ハッシュの値(i.e. オブジェクトの名前)が使われる。
 例えば&lt;code&gt;.git/objects/16/cacde1ddabe1698b0e41e091e4697313e2b7e5&lt;/code&gt;というファイルがあったら、これは &lt;strong&gt;16cacde1ddabe1698b0e41e091e4697313e2b7e5&lt;/strong&gt; という名のオブジェクトの実体。&lt;/p&gt;
 
@@ -206,7 +385,7 @@
 
 &lt;p&gt;スライドの最後のページのオブジェクト格納領域の図で、ツリーとブロブとそれらを指す矢印を省略すると、Gitのブランチ等の説明でよく見かける丸が矢印で連なった図(コミットグラフ)になる。以降の説明でそのような図を使うが、丸がコミットを意味していて、各コミットがルートツリーを指していることはよく認識しておくべし。&lt;/p&gt;
 
-&lt;h3 id=&#34;参照&#34;&gt;参照&lt;/h3&gt;
+&lt;h3 id=&#34;参照-ref&#34;&gt;参照 (ref)&lt;/h3&gt;
 
 &lt;p&gt;参照は、一つのオブジェクトを指し示すポインタのようなもので、普通はコミットオブジェクトを指す。
 参照には、&lt;strong&gt;ローカルブランチ&lt;/strong&gt;、&lt;strong&gt;リモート追跡ブランチ&lt;/strong&gt;、&lt;strong&gt;タグ&lt;/strong&gt; の三種類がある。&lt;/p&gt;
@@ -238,7 +417,7 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
 &lt;p&gt;また、ブランチは単なる一方的な参照であり、コミットオブジェクトからはそれに全く関与しないことに注意。
 ブランチを削除してもそれによってコミットが消えることはない(※1)し、また例えば、スライドの最後のページでbugfixブランチを削除したらXがどのブランチで作られたコミットなのかを知るすべはなくなる。&lt;/p&gt;
 
-&lt;p&gt;(※1: ブランチを削除することにより到達不能になるコミットは、結果的にGit GCにより削除されはする。)&lt;/p&gt;
+&lt;p&gt;(※1: ブランチを削除することにより到達不能になるコミットは、結果的に&lt;a href=&#34;https://git-scm.com/book/ja/v2/Git%E3%81%AE%E5%86%85%E5%81%B4-%E3%83%A1%E3%82%A4%E3%83%B3%E3%83%86%E3%83%8A%E3%83%B3%E3%82%B9%E3%81%A8%E3%83%87%E3%83%BC%E3%82%BF%E3%83%AA%E3%82%AB%E3%83%90%E3%83%AA&#34;&gt;&lt;code&gt;git gc&lt;/code&gt;&lt;/a&gt;により削除されはする。)&lt;/p&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
@@ -256,9 +435,9 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
-&lt;p&gt;リモート追跡ブランチについては別のエントリで書く。&lt;/p&gt;
+&lt;p&gt;リモート追跡ブランチについては&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/12/31/git-dvc/&#34;&gt;別のエントリ&lt;/a&gt;で書く。&lt;/p&gt;
 
-&lt;h3 id=&#34;シンボリック参照&#34;&gt;シンボリック参照&lt;/h3&gt;
+&lt;h3 id=&#34;シンボリック参照-symref&#34;&gt;シンボリック参照 (symref)&lt;/h3&gt;
 
 &lt;p&gt;シンボリック参照は参照やオブジェクトを指す参照。以下の四つがある。&lt;/p&gt;
 
@@ -280,7 +459,7 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
 &lt;p&gt;マージ操作中に作られ、HEADにマージされようとしているコミットを指す。&lt;/p&gt;&lt;/li&gt;
 &lt;/ol&gt;
 
-&lt;p&gt;それぞれが、Gitコマンドにおいて、(コミット)オブジェクトを指定する方法としてのSHA1ハッシュ値の代わりに使える。&lt;/p&gt;
+&lt;p&gt;それぞれが、Gitコマンドなどにおいて、(コミット)オブジェクトを指定する方法としてのSHA1ハッシュ値の代わりに使える。&lt;/p&gt;
 
 &lt;p&gt;ファイルシステム上では&lt;code&gt;.git/{HEAD,ORIG_HEAD,FETCH_HEAD,MERGE_HEAD}&lt;/code&gt;にあたり、全て単純なテキストファイルである。&lt;/p&gt;
 

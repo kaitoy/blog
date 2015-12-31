@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Gitの分散バージョン管理の仕組み | To Be Decided">
+    <meta property="og:url" content="http://tbd.kaitoy.xyz/2015/12/31/git-dvc/">
+    <meta property="og:description" content="このエントリでは、この記事を読んだことを前提に、Gitの分散バージョン管理の仕組みについて説明する。 Gitの分散バージョン管理 分散バージョン管理とは、分散したレポジトリでのバージョン管理ということ。 ここでレポジトリが分散しているとは、同じプロジェクトの履歴を管理する完全で独立したレポジトリが複数あるということ。 これにより一つのプロジェクトの開発を地理的に分散して並行して進めることができる。 Gitは分散バージョン管理のために、レポジトリのクローン(≒コピー)を作る機能と、レポジトリ間でコミットグラフを同期する機能を提供している。 レポジトリのクローンを作ると言うと、オリジナルとクローンの間に格差があるような気がするが、 実際にはGitは全てのレポジトリが対等であるという思想のもとで実装されている。 このため、レポジトリをクローンする時には(デフォルトで)クローン元の完全なコミットグラフがクローンにコピーされるし、任意のレポジトリ間のデータのやり取りをpeer-to-peerでできる。 クローンからクローンを作ることももちろん可能。 git pushでデータを送る先をアップストリームと呼ぶことはあるし、次節でローカルレポジトリとリモートレポジトリという関係が出てくるが、これはあくまでその時点でそういう設定になっているというだけ。 アップストリームはいつでもいくつでもgit remoteコマンドで追加したり削除したりできる。 このような実装により、Gitの分散バージョン管理ではレポジトリ間で柔軟なデータのやり取りができる。 例えば以下の様な複雑なレポジトリネットワークを組むこともできる。 ローカルレポジトリとリモートレポジトリ 一人の開発者から見て、手元にあるレポジトリを ローカルレポジトリ と呼ぶのに対して、git pushやgit pullやgit fetchでデータをやり取りする相手のレポジトリを リモートレポジトリ と呼ぶ。 リモートレポジトリとのやり取りは、リモート追跡ブランチ と リモート というものを使って実装されている。 リモート追跡ブランチ リモート追跡ブランチは、ローカルレポジトリの.git/refs/remotes/に格納される参照で、リモートレポジトリ内のローカルブランチのコミットグラフを取得してローカルレポジトリ内に保持するために使われる。 git branch -rでその一覧が見れる。 「追跡」ブランチというだけあって、リモートレポジトリ内でコミットグラフが成長した場合、この変更に追随することができる。 このためのコマンドがgit fetch。 因みにgit pullは、git fetchでリモート追跡ブランチを更新した後、git merge(オプションによってはgit rebase)でそのリモート追跡ブランチをローカルブランチにマージするのと同じ。 リモート リモートとは、リモートレポジトリのこと、またはリモートレポジトリに接続するための定義のこと。 この定義は、ローカルレポジトリの.git/configにremoteセクションとして書かれている。 以下がその例。 [remote &quot;origin&quot;] fetch = &#43;refs/heads/*:refs/remotes/origin/* url = git@github.com:kaitoy/blog.git セクション名のところに&quot;origin&quot;とあるがこれは、この定義で接続するリモートレポジトリをGitコマンドなどでoriginと指定できるということ。 ここで定義されているのはurlとfetchで、それぞれ以下を意味する。 url リモートレポジトリのURL。 つまり、リモートレポジトリがどのサーバのどのディレクトリにあって、それとのデータのやり取りをどのプロトコルでやるかという定義。 このURLには以下の書式が使える。 ファイルパス /path/to/repo.gitとかC:\\Users\\Kaito\\Desktop\\pcap4jといった、普通のファイルパスの書式。 NFSなどでリモートレポジトリが共有されている場合などに使われる。 シンボリックリンクがサポートされているOS上では、クローンはリモートレポジトリをハードリンクで参照する。 このシンボリック参照でのファイル共有がトラブルの元なため、この書式は非推奨。 ファイルURL file:///path/to/repo.gitとかfile://C:/Users/Kaito/Desktop/pcap4jといった、ローカルホスト上のパスを示すファイルURLの書式。 用途はファイルパスと同様だが、ハードリンクを作る代わりにコピーするのでより安全。 HTTP(S) https://github.com/kaitoy/pcap4j.gitといったHTTPSやHTTPのURL。 レポジトリへのアクセス制御にHTTPの認証機能やHTTPSのクライアント証明書などが使えるほか、HTTPSなら通信の暗号化もできる。 使用するポートがファイアウォールにブロックされていることが少ないのも使いやすい。 Gitプロトコル git://example.com/path/to/repo.gitといった書式で、GitデーモンによるGitネイティブプロトコルを使うURL。 HTTPよりも高速な通信ができるが、認証機能も暗号化機能もない。 SSH &#43; Gitプロトコル ssh://git@github.com/kaitoy/pcap4j.gitのようなSSHのURLで、これを使うとSSHトンネルを通してGitプロトコルで通信できる。 Gitプロトコル単体を使うのに比べ、SSHの認証機能と暗号化機能を利用できるが、やや遅くなるはず。 このプロトコルには、git@github.com:kaitoy/pcap4j.gitのようなSCP書式も使える。 Git自体はGitデーモンを含めレポジトリへのアクセス制御の機能を一切持たないので、認証などが必要な場合はHTTPなどその機能を持つプロトコルのURLを使う必要がある。 fetch リモートレポジトリ内のローカルブランチとローカルレポジトリ内の追跡ブランチとがどう対応するかを定義する。 上の例のfetch = &#43;refs/heads/*:refs/remotes/origin/*だと、リモートレポジトリの.git/refs/heads/にある全てのブランチをそれぞれ、ローカルレポジトリの.git/refs/remotes/origin/にある同名のブランチで追跡する、という意味。 クローン時の挙動 クローン時のデフォルトの挙動について説明する。 レポジトリのクローンを作ると、オブジェクト格納領域内のオブジェクトが全てクローンにコピーされる。 つまり、元のレポジトリ(i.e.">
+    
+    <meta property="og:image" content="http://tbd.kaitoy.xyz/images/git.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      Gitの分散バージョン管理の仕組み | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="http://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="http://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/zenburn.min.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="http://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Thu, Dec 31, 2015</span>
+      <h2 class="title">Gitの分散バージョン管理の仕組み</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="http://tbd.kaitoy.xyz/images/git.png" alt="Gitの分散バージョン管理の仕組み">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>このエントリでは、<a href="http://tbd.kaitoy.xyz/2015/12/27/git-repository/">この記事</a>を読んだことを前提に、<a href="https://git-scm.com/"><strong>Git</strong></a>の分散バージョン管理の仕組みについて説明する。</p>
+
+<h2 id="gitの分散バージョン管理">Gitの分散バージョン管理</h2>
+
+<p>分散バージョン管理とは、分散したレポジトリでのバージョン管理ということ。
+ここでレポジトリが分散しているとは、同じプロジェクトの履歴を管理する完全で独立したレポジトリが複数あるということ。
+これにより一つのプロジェクトの開発を地理的に分散して並行して進めることができる。</p>
+
+<p>Gitは分散バージョン管理のために、レポジトリのクローン(≒コピー)を作る機能と、レポジトリ間でコミットグラフを同期する機能を提供している。</p>
+
+<p>レポジトリのクローンを作ると言うと、オリジナルとクローンの間に格差があるような気がするが、
+実際にはGitは全てのレポジトリが対等であるという思想のもとで実装されている。
+このため、レポジトリをクローンする時には(デフォルトで)クローン元の完全なコミットグラフがクローンにコピーされるし、任意のレポジトリ間のデータのやり取りをpeer-to-peerでできる。
+クローンからクローンを作ることももちろん可能。</p>
+
+<p><code>git push</code>でデータを送る先をアップストリームと呼ぶことはあるし、次節でローカルレポジトリとリモートレポジトリという関係が出てくるが、これはあくまでその時点でそういう設定になっているというだけ。
+アップストリームはいつでもいくつでも<code>git remote</code>コマンドで追加したり削除したりできる。</p>
+
+<p>このような実装により、Gitの分散バージョン管理ではレポジトリ間で柔軟なデータのやり取りができる。
+例えば以下の様な複雑なレポジトリネットワークを組むこともできる。</p>
+
+<p><img alt="good-object-2.png" src="/images/git-dvc/repo_net.png" style="width: 100%; max-width: 400px; margin: 0px auto; display: block;"></p>
+
+<h2 id="ローカルレポジトリとリモートレポジトリ">ローカルレポジトリとリモートレポジトリ</h2>
+
+<p>一人の開発者から見て、手元にあるレポジトリを <strong>ローカルレポジトリ</strong> と呼ぶのに対して、<code>git push</code>や<code>git pull</code>や<code>git fetch</code>でデータをやり取りする相手のレポジトリを <strong>リモートレポジトリ</strong> と呼ぶ。
+リモートレポジトリとのやり取りは、<strong>リモート追跡ブランチ</strong> と <strong>リモート</strong> というものを使って実装されている。</p>
+
+<h4 id="リモート追跡ブランチ">リモート追跡ブランチ</h4>
+
+<p>リモート追跡ブランチは、ローカルレポジトリの<code>.git/refs/remotes/</code>に格納される参照で、リモートレポジトリ内のローカルブランチのコミットグラフを取得してローカルレポジトリ内に保持するために使われる。
+<code>git branch -r</code>でその一覧が見れる。</p>
+
+<p>「追跡」ブランチというだけあって、リモートレポジトリ内でコミットグラフが成長した場合、この変更に追随することができる。
+このためのコマンドが<code>git fetch</code>。
+因みに<code>git pull</code>は、<code>git fetch</code>でリモート追跡ブランチを更新した後、<code>git merge</code>(オプションによっては<code>git rebase</code>)でそのリモート追跡ブランチをローカルブランチにマージするのと同じ。</p>
+
+<h4 id="リモート">リモート</h4>
+
+<p>リモートとは、リモートレポジトリのこと、またはリモートレポジトリに接続するための定義のこと。
+この定義は、ローカルレポジトリの<code>.git/config</code>に<code>remote</code>セクションとして書かれている。
+以下がその例。</p>
+
+<pre><code>[remote &quot;origin&quot;]
+        fetch = +refs/heads/*:refs/remotes/origin/*
+        url = git@github.com:kaitoy/blog.git
+</code></pre>
+
+<p>セクション名のところに<code>&quot;origin&quot;</code>とあるがこれは、この定義で接続するリモートレポジトリをGitコマンドなどで<code>origin</code>と指定できるということ。
+ここで定義されているのは<code>url</code>と<code>fetch</code>で、それぞれ以下を意味する。</p>
+
+<ul>
+<li><p>url</p>
+
+<p>リモートレポジトリのURL。
+つまり、リモートレポジトリがどのサーバのどのディレクトリにあって、それとのデータのやり取りをどのプロトコルでやるかという定義。
+このURLには以下の書式が使える。</p>
+
+<ol>
+<li><p><strong>ファイルパス</strong></p>
+
+<p><code>/path/to/repo.git</code>とか<code>C:\\Users\\Kaito\\Desktop\\pcap4j</code>といった、普通のファイルパスの書式。
+<a href="https://ja.wikipedia.org/wiki/Network_File_System">NFS</a>などでリモートレポジトリが共有されている場合などに使われる。</p>
+
+<p>シンボリックリンクがサポートされているOS上では、クローンはリモートレポジトリをハードリンクで参照する。
+このシンボリック参照でのファイル共有がトラブルの元なため、この書式は非推奨。</p></li>
+
+<li><p><strong>ファイルURL</strong></p>
+
+<p><code>file:///path/to/repo.git</code>とか<code>file://C:/Users/Kaito/Desktop/pcap4j</code>といった、ローカルホスト上のパスを示すファイルURLの書式。
+用途はファイルパスと同様だが、ハードリンクを作る代わりにコピーするのでより安全。</p></li>
+
+<li><p><strong>HTTP(S)</strong></p>
+
+<p><code>https://github.com/kaitoy/pcap4j.git</code>といったHTTPSやHTTPのURL。
+レポジトリへのアクセス制御にHTTPの認証機能やHTTPSのクライアント証明書などが使えるほか、HTTPSなら通信の暗号化もできる。</p>
+
+<p>使用するポートがファイアウォールにブロックされていることが少ないのも使いやすい。</p></li>
+
+<li><p><strong>Gitプロトコル</strong></p>
+
+<p><code>git://example.com/path/to/repo.git</code>といった書式で、<a href="https://git-scm.com/book/ja/v1/Git-%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC-Git-%E3%83%87%E3%83%BC%E3%83%A2%E3%83%B3">Gitデーモン</a>によるGitネイティブプロトコルを使うURL。
+HTTPよりも高速な通信ができるが、認証機能も暗号化機能もない。</p></li>
+
+<li><p><strong>SSH + Gitプロトコル</strong></p>
+
+<p><code>ssh://git@github.com/kaitoy/pcap4j.git</code>のような<a href="https://ja.wikipedia.org/wiki/Secure_Shell">SSH</a>のURLで、これを使うとSSHトンネルを通してGitプロトコルで通信できる。
+Gitプロトコル単体を使うのに比べ、SSHの認証機能と暗号化機能を利用できるが、やや遅くなるはず。</p>
+
+<p>このプロトコルには、<code>git@github.com:kaitoy/pcap4j.git</code>のような<a href="https://ja.wikipedia.org/wiki/Secure_copy">SCP</a>書式も使える。</p></li>
+</ol>
+
+<p>Git自体はGitデーモンを含めレポジトリへのアクセス制御の機能を一切持たないので、認証などが必要な場合はHTTPなどその機能を持つプロトコルのURLを使う必要がある。</p></li>
+
+<li><p>fetch</p>
+
+<p>リモートレポジトリ内のローカルブランチとローカルレポジトリ内の追跡ブランチとがどう対応するかを定義する。</p>
+
+<p>上の例の<code>fetch = +refs/heads/*:refs/remotes/origin/*</code>だと、リモートレポジトリの<code>.git/refs/heads/</code>にある全てのブランチをそれぞれ、ローカルレポジトリの<code>.git/refs/remotes/origin/</code>にある同名のブランチで追跡する、という意味。</p></li>
+</ul>
+
+<h2 id="クローン時の挙動">クローン時の挙動</h2>
+
+<p>クローン時のデフォルトの挙動について説明する。</p>
+
+<p>レポジトリのクローンを作ると、オブジェクト格納領域内のオブジェクトが全てクローンにコピーされる。
+つまり、元のレポジトリ(i.e. リモートレポジトリ)と同じコミットグラフ(とタグオブジェクト)がクローンのレポジトリに入る。</p>
+
+<p>インデックスはレポジトリ固有の一時的なデータなので、クローンにはコピーされない。</p>
+
+<p>参照については、リモートレポジトリ内の全てのローカルブランチとタグがクローンにコピーされる。</p>
+
+<p>リモート追跡ブランチはコピーされず、代わりに、リモートレポジトリ内の全てのローカルブランチに対応する同名のリモート追跡ブランチがクローンのレポジトリ内に作成される。
+また、これに対応するリモートが作成され、これの<code>fetch</code>に(前節の例と同様に)<code>+refs/heads/*:refs/remotes/origin/*</code>が設定される。</p>
+
+<h2 id="リモートレポジトリとのやり取りの図解">リモートレポジトリとのやり取りの図解</h2>
+
+<p>リモートレポジトリをクローンして、変更をプルしたりプッシュしたりする様子を以下に図示する。</p>
+
+<ul class="bxslider">
+  <li><img src="/images/git-dvc/git_dvc_merge/スライド1.PNG" /></li>
+  <li><img src="/images/git-dvc/git_dvc_merge/スライド2.PNG" /></li>
+  <li><img src="/images/git-dvc/git_dvc_merge/スライド3.PNG" /></li>
+  <li><img src="/images/git-dvc/git_dvc_merge/スライド4.PNG" /></li>
+  <li><img src="/images/git-dvc/git_dvc_merge/スライド5.PNG" /></li>
+  <li><img src="/images/git-dvc/git_dvc_merge/スライド6.PNG" /></li>
+</ul>
+
+<p>これはこれで完全に正しい手順だが、最終的にできるコミットグラフが無駄に分岐していて美しくない。
+普通は以下の様に、リベースを挟んで一直線の履歴に保つ方が一般にいいと思う。</p>
+
+<ul class="bxslider">
+  <li><img src="/images/git-dvc/git_dvc_ff/スライド1.PNG" /></li>
+  <li><img src="/images/git-dvc/git_dvc_ff/スライド2.PNG" /></li>
+  <li><img src="/images/git-dvc/git_dvc_ff/スライド3.PNG" /></li>
+  <li><img src="/images/git-dvc/git_dvc_ff/スライド4.PNG" /></li>
+</ul>
+
+<p>このフェッチ + リベースを一度にやってくれるのが、<code>git pull --rebase</code>。</p>
+
+<h2 id="gitで分散バージョン管理する際の注意点">Gitで分散バージョン管理する際の注意点</h2>
+
+<p>Gitで分散バージョン管理する際の注意点を二つ挙げる。</p>
+
+<h4 id="他のレポジトリにもあるコミットを変更してはいけない">他のレポジトリにもあるコミットを変更してはいけない</h4>
+
+<p>Gitには、<code>git commit --amend</code>、<code>git rebase</code>といったコミットを変更するコマンドや、<code>git reset</code>というコミットの削除につながるコマンドがある。
+こういうコマンドで他のレポジトリにもあるコミットを変更してはいけない。</p>
+
+<p>他のレポジトリにもあるコミットとは、クローン時にコピーしてきたコミット、プルしたコミット、プッシュしたコミットなどのこと。</p>
+
+<p>もしやると、プッシュもプルも簡単にはできなくなり非常に面倒なことになる。</p>
+
+<h4 id="開発レポジトリには-基本的に-プッシュしてはいけない">開発レポジトリには(基本的に)プッシュしてはいけない</h4>
+
+<p>レポジトリには、<strong>ベアレポジトリ</strong> と、<strong>開発レポジトリ</strong> がある。
+開発レポジトリは普段使っている普通のレポジトリ。
+ベアレポジトリは、簡単に言うとワーキングツリーやカレントブランチやリモートを持たないレポジトリで、開発レポジトリのリモートレポジトリとして使われ、<code>git init</code>や<code>git clone</code>に<code>--bare</code>オプションを付けて実行すると作れる。</p>
+
+<p>ベアレポジトリにはプッシュしていい。
+むしろプッシュしないベアレポジトリに意味はない。</p>
+
+<p>一方、開発レポジトリには(基本的に)プッシュしてはいけない。
+これは、プッシュがリモートレポジトリのオブジェクトと参照だけ更新してワーキングツリーやインデックスは更新せず、開発者がプッシュされたことに気付けないため。
+気付かないまま開発を進めてコミットを作ると、プッシュによって<code>HEAD</code>が変わっていたりするため、コミットグラフが変な状態になってしまう。</p>
+
+<p>お互い示し合わせたうえでプッシュをしたりプッシュするブランチを工夫したりすれば問題が起きないようにできるはできる。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f31%2fgit-dvc%2f&t=Git%e3%81%ae%e5%88%86%e6%95%a3%e3%83%90%e3%83%bc%e3%82%b8%e3%83%a7%e3%83%b3%e7%ae%a1%e7%90%86%e3%81%ae%e4%bb%95%e7%b5%84%e3%81%bf" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f31%2fgit-dvc%2f&text=Git%e3%81%ae%e5%88%86%e6%95%a3%e3%83%90%e3%83%bc%e3%82%b8%e3%83%a7%e3%83%b3%e7%ae%a1%e7%90%86%e3%81%ae%e4%bb%95%e7%b5%84%e3%81%bf&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f31%2fgit-dvc%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f31%2fgit-dvc%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f31%2fgit-dvc%2f&title=Git%e3%81%ae%e5%88%86%e6%95%a3%e3%83%90%e3%83%bc%e3%82%b8%e3%83%a7%e3%83%b3%e7%ae%a1%e7%90%86%e3%81%ae%e4%bb%95%e7%b5%84%e3%81%bf" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="http://tbd.kaitoy.xyz/tags/git"><i class="fa fa-tags"></i> git </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/12/28/git-merge/">Gitのマージを図解する</a></li>
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/12/27/git-repository/">Gitのレポジトリの中身をなるべく正確に理解する</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="http://tbd.kaitoy.xyz/2015/12/28/git-merge/">
+                  Gitのマージを図解する
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="http://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="http://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+
