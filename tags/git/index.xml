@@ -42,7 +42,7 @@
 &lt;h4 id=&#34;インデックスの再設定&#34;&gt;インデックスの再設定&lt;/h4&gt;
 
 &lt;p&gt;インデックスの再設定をするコマンドは&lt;code&gt;git reset &amp;lt;ワーキングディレクトリ内のファイルのパス(複数可)&amp;gt;&lt;/code&gt;。
-これを実行すると、指定したファイルのブロブについて、&lt;code&gt;HEAD&lt;/code&gt;が指すコミットが指すツリー内のブロブを指すようインデックスを更新する。&lt;/p&gt;
+これを実行すると、指定したファイルについて、&lt;code&gt;HEAD&lt;/code&gt;が指すコミットが指すツリー内のブロブを指すようインデックスを更新する。&lt;/p&gt;
 
 &lt;p&gt;何を言っているのかわからないので図にする。&lt;/p&gt;
 
@@ -292,10 +292,35 @@ Gitプロトコル単体を使うのに比べ、SSHの認証機能と暗号化�
 むしろプッシュしないベアリポジトリに意味はない。&lt;/p&gt;
 
 &lt;p&gt;一方、開発リポジトリには(基本的に)プッシュしてはいけない。
-これは、プッシュがリモートリポジトリのオブジェクトと参照だけ更新してワーキングディレクトリやインデックスは更新せず、開発者がプッシュされたことに気付けないため。
+これは、プッシュがリモートリポジトリのオブジェクトと参照だけ更新してワーキングディレクトリやインデックスは更新せず、開発者がプッシュされたことに気付けないため(※1)。
 気付かないまま開発を進めてコミットを作ると、プッシュによって&lt;code&gt;HEAD&lt;/code&gt;が変わっていたりするため、コミットグラフが変な状態になってしまう。&lt;/p&gt;
 
 &lt;p&gt;お互い示し合わせたうえでプッシュをしたりプッシュするブランチを工夫したりすれば問題が起きないようにできるはできる。&lt;/p&gt;
+
+&lt;p&gt;(※1: と&lt;a href=&#34;https://www.oreilly.co.jp/books/9784873114408/&#34;&gt;O&amp;rsquo;Reillyの蝙蝠本&lt;/a&gt;には書いてあったが、これは&lt;a href=&#34;https://github.com/git/git/blob/master/Documentation/RelNotes/1.7.0.txt&#34;&gt;Git 1.6.xまでの話らしい&lt;/a&gt;。
+今はチェックアウトされたブランチにはデフォルトでプッシュできないので、この節に書いた問題は基本的に起きない。
+2.6.3で試したら以下のエラーになった。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;remote: error: refusing to update checked out branch: refs/heads/master
+remote: error: By default, updating the current branch in a non-bare repository
+remote: error: is denied, because it will make the index and work tree inconsistent
+remote: error: with what you pushed, and will require &#39;git reset --hard&#39; to match
+remote: error: the work tree to HEAD.
+remote: error:
+remote: error: You can set &#39;receive.denyCurrentBranch&#39; configuration variable t
+remote: error: &#39;ignore&#39; or &#39;warn&#39; in the remote repository to allow pushing int
+remote: error: its current branch; however, this is not recommended unless you
+remote: error: arranged to update its work tree to match what you pushed in som
+remote: error: other way.
+remote: error:
+remote: error: To squelch this message and still keep the default behaviour, se
+remote: error: &#39;receive.denyCurrentBranch&#39; configuration variable to &#39;refuse&#39;.
+To file://C:/Users/Kaito/Desktop/master
+ ! [remote rejected] master -&amp;gt; master (branch is currently checked out)
+error: failed to push some refs to &#39;file://C:/Users/Kaito/Desktop/master&#39;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;)&lt;/p&gt;
 </description>
         </item>
       
