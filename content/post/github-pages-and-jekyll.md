@@ -14,17 +14,17 @@ title = "GitHub Pagesでブログ立ち上げ - GitHub PagesとJekyll"
 ## 今の構成
 このブログは、[__Hugo__](https://gohugo.io/)で作って、GitHub Pagesで公開している。
 
-Hugoについては別のエントリで書くとして、GitHub Pagesは、GitHubが提供しているウェブページのホスティングサービスで、GitHubに特定の名前のレポジトリ、または任意のレポジトリに特定の名前のブランチを作ってウェブサイトのソースを置くと、公開してくれるというサービス。[PaaS](https://ja.wikipedia.org/wiki/Platform_as_a_Service)にあたるのかな。
+Hugoについては別のエントリで書くとして、GitHub Pagesは、GitHubが提供しているウェブページのホスティングサービスで、GitHubに特定の名前のリポジトリ、または任意のリポジトリに特定の名前のブランチを作ってウェブサイトのソースを置くと、公開してくれるというサービス。[PaaS](https://ja.wikipedia.org/wiki/Platform_as_a_Service)にあたるのかな。
 [GitHub Pagesのサイト](https://pages.github.com/)に利用方法が載っている。
 
 以下、このブログ立ち上げに向けてやった作業について書く。
 
 ## GitHub Pages味見
-GitHub Pagesを利用するには、__GitHubユーザ名.github.io__ という名前のレポジトリを作るか、任意のレポジトリに__gh-pages__ という名前のブランチを作って、そこにサイトのソースを置けばいい。そのサイトには、前者の場合は`http://GitHubユーザ名.github.io`で、後者の場合は`http://GitHubユーザ名.github.io/レポジトリ名`でアクセスできる。
+GitHub Pagesを利用するには、__GitHubユーザ名.github.io__ という名前のリポジトリを作るか、任意のリポジトリに__gh-pages__ という名前のブランチを作って、そこにサイトのソースを置けばいい。そのサイトには、前者の場合は`http://GitHubユーザ名.github.io`で、後者の場合は`http://GitHubユーザ名.github.io/リポジトリ名`でアクセスできる。
 
 とりあえず前者をやってみる。
 
-1. __kaitoy.github.io__ という名前の[レポジトリ](https://github.com/kaitoy/kaitoy.github.io)を作って、そのルートに「Hello World」とだけ書いた __index.html__ を置く。
+1. __kaitoy.github.io__ という名前の[リポジトリ](https://github.com/kaitoy/kaitoy.github.io)を作って、そのルートに「Hello World」とだけ書いた __index.html__ を置く。
 2. ブラウザで`http://kaitoy.github.io`にアクセスすると、「Hello World」と表示された。
 
 これだけ。
@@ -32,7 +32,7 @@ GitHub Pagesを利用するには、__GitHubユーザ名.github.io__ という�
 ## GitHub PagesとJekyll
 GitHub Pagesには、普通にHTML/CSS/Javascriptのソースを置いてもいいけど、Jekyllを利用することもできる。
 
-Jekyllは、ブログ用の静的サイトジェネレータなるもので、[__Markdown__](https://ja.wikipedia.org/wiki/Markdown)で書いた記事を元にブログサイトのソースを生成するツール。GitHub Pages用のレポジトリにJekyllのソースをアップロードすると、Jekyllでビルドされ、その結果が公開される。
+Jekyllは、ブログ用の静的サイトジェネレータなるもので、[__Markdown__](https://ja.wikipedia.org/wiki/Markdown)で書いた記事を元にブログサイトのソースを生成するツール。GitHub Pages用のリポジトリにJekyllのソースをアップロードすると、Jekyllでビルドされ、その結果が公開される。
 
 これはうれしい。  Jekyllのソースとビルド結果を別々に管理しなくてよくて楽だし、公開されるサイトが最新のソースに基づいていることが保証される。
 
@@ -51,7 +51,7 @@ Windowsなので[__RubyInstaller__](http://rubyinstaller.org/) (ver. 2.2.2)を�
 [__Bundler__](http://bundler.io/) (RubyのパッケージであるGemの依存をアプリケーションごとに管理するツール) もあるといいらしいので、`gem install bundler`を実行してインストール。
 
 #### 2.  Jekyllインストール
-さっき作ったレポジトリ　__kaitoy.github.io__ (の手元のクローン)のルートに、Bundlerの定義ファイルを __Gemfile__ という名前で作り、以下の内容を書く。
+さっき作ったリポジトリ　__kaitoy.github.io__ (の手元のクローン)のルートに、Bundlerの定義ファイルを __Gemfile__ という名前で作り、以下の内容を書く。
 
 ```
 source 'https://rubygems.org'

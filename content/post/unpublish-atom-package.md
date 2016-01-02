@@ -66,7 +66,7 @@ git tag -d v0.1.0
 git push origin :v0.1.0
 ```
 
-のようにして、ローカルレポジトリとリモートレポジトリ両方のタグを削除する。
+のようにして、ローカルリポジトリとリモートリポジトリ両方のタグを削除する。
 
 また、2 のpackage.jsonのversion変更を取り消したいのであれば、`git log`で`Prepare 0.1.0 release`みたいなログのコミットをさがしてそのハッシュをメモり、
 
@@ -95,7 +95,7 @@ git revert <ハッシュ>
 1. AtomのサイトのREST API (https://www.atom.io/api/packages/hoge/) からパッケージ情報を取得。
 2. また別のREST API (https://www.atom.io/api/packages/hoge/versions/0.1.0/tarball) を実行して、パッケージのアーカイブ(tar.gz)をテンポラリフォルダにダウンロード。
    どうもこれは実際にはGitHubの[Releases](https://help.github.com/articles/about-releases/)からダウンロードしている模様。
-   因みにGitHub Releasesのアーカイブは、レポジトリにタグが追加されると自動で作られる。
+   因みにGitHub Releasesのアーカイブは、リポジトリにタグが追加されると自動で作られる。
 3. `npm install`でそのアーカイブを指定してインストール。
 
 この手順の 2 をやる前に、`.atom\.apm\hoge\0.1.0\package.tgz`を探して、見つかるとダウンロードせずにこっちをインストールする。

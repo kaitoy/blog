@@ -174,9 +174,9 @@ package.jsonは、Package Generatorが以下のようなひな形を作ってく
 これに以下の編集を加える。
 
 * __description__ にパッケージの説明を書く。
-* __keywords__ にパッケージレポジトリ内での検索のためのタグを書く。
+* __keywords__ にパッケージリポジトリ内での検索のためのタグを書く。
 * japanese-word-selectionはとりあえずコマンドを作らないので、__activationCommands__ は消す。
-* __repository__ にjapanese-word-selectionのソースを置く(予定の)GitHubレポジトリのアドレスを書く。
+* __repository__ にjapanese-word-selectionのソースを置く(予定の)GitHubリポジトリのアドレスを書く。
 
 これだけ。以下のようになる。
 
@@ -225,7 +225,7 @@ __dependencies__ には依存するnpmパッケージを定義できるが、jap
 README.md、LICENSE.md、CHANGELOG.mdを修正。詳細は割愛。
 
 #### 9. GitHubへ保存
-GitHubにjapanese-word-selectionという名のレポジトリを作り、そこにソースを保存。詳細は割愛。
+GitHubにjapanese-word-selectionという名のリポジトリを作り、そこにソースを保存。詳細は割愛。
 Atomのドキュメントによると、今のところ、GitHubへのソース保存は以下のパブリッシュのために必須な模様。
 
 #### 10. パブリッシュ

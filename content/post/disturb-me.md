@@ -163,7 +163,7 @@ atom.config.set('disturb-me.bornDuration', '1000')
 
 これを書いて、プロジェクトルートフォルダで`apm install`すると、ルート直下の__node_modules__フォルダに依存モジュールがインストールされる。
 
-node_modulesは__Package Generator__が生成する__.gitignore__に入っているので、レポジトリには入らない。
+node_modulesは__Package Generator__が生成する__.gitignore__に入っているので、リポジトリには入らない。
 
 #### 6. リリースなど
 [前回](http://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/)と同様にリリースする。
