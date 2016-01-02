@@ -1,7 +1,7 @@
 +++
 categories = [ "Version Control System" ]
-date = "2015-12-31T01:09:31-07:00"
-draft = true
+date = "2016-01-01T18:38:02-07:00"
+draft = false
 eyecatch = "git.png"
 slug = "git-revert-reset"
 tags = [ "git" ]
