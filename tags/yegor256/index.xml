@@ -6,8 +6,198 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2016</rights>
-    <updated>2015-12-03 12:28:24 -0700 MST</updated>
+    <updated>2016-01-03 23:36:01 -0700 MST</updated>
 
+    
+      
+        <item>
+          <title>オブジェクト指向プログラミングにおいてユーティリティクラスに代わるもの</title>
+          <link>http://tbd.kaitoy.xyz/2016/01/03/oop-alternative-to-utility-classes/</link>
+          <pubDate>Sun, 03 Jan 2016 23:36:01 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>http://tbd.kaitoy.xyz/2016/01/03/oop-alternative-to-utility-classes/</guid>
+          <description>
+
+&lt;p&gt;このエントリでは、Yegor Bugayenkoによる記事、&lt;a href=&#34;http://www.yegor256.com/2014/05/05/oop-alternative-to-utility-classes.html&#34;&gt;OOP Alternative to Utility Classes&lt;/a&gt;を紹介する。
+(Yegorから和訳と転載の許可は得た。)
+以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;ユーティリティクラス(またはヘルパークラス)は、スタティックメソッドだけを持っていて、状態を内包しない「構造体」だ。
+&lt;a href=&#34;http://commons.apache.org/&#34;&gt;Apache Commons&lt;/a&gt;の&lt;code&gt;StringUtils&lt;/code&gt;、&lt;code&gt;IOUtils&lt;/code&gt;、&lt;code&gt;FileUtils&lt;/code&gt;や、&lt;a href=&#34;https://code.google.com/p/guava-libraries/&#34;&gt;Guava&lt;/a&gt;の&lt;code&gt;Iterables&lt;/code&gt;、&lt;code&gt;Iterators&lt;/code&gt;、またJDK7の&lt;code&gt;Files&lt;/code&gt;はユーティリティクラスのいい例だ。&lt;/p&gt;
+
+&lt;p&gt;ユーティリティクラスはよく使われる共通機能を提供するので、この設計手法はJava(やC#、Rubyなど)の世界でとても人気だ。&lt;/p&gt;
+
+&lt;p&gt;要するに我々は、&lt;a href=&#34;https://ja.wikipedia.org/wiki/Don&#39;t_repeat_yourself&#34;&gt;DRY原則&lt;/a&gt;に従い、重複を避けたい。
+だから、共通コードをユーティリティクラスに入れて必要に応じて再利用する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// これはひどい設計なので再利用しないように。
+public class NumberUtils {
+  public static int max(int a, int b) {
+    return a &amp;gt; b ? a : b;
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;実際、これはとても便利なテクニックだ!?&lt;/p&gt;
+
+&lt;h2 id=&#34;ユーティリティクラスは悪だ&#34;&gt;ユーティリティクラスは悪だ&lt;/h2&gt;
+
+&lt;p&gt;しかし、オブジェクト指向の世界では、ユーティリティクラスはかなり悪い(酷いという人さえいるかもしれない)手法だ。&lt;/p&gt;
+
+&lt;p&gt;これについては多くの議論がある。
+いくつか挙げると、Nick Malikの「&lt;a href=&#34;http://blogs.msdn.com/b/nickmalik/archive/2005/09/06/461404.aspx&#34;&gt;ヘルパークラスは悪か?&lt;/a&gt;」、Simon Hartの「&lt;a href=&#34;http://smart421.wordpress.com/2011/08/31/why-helper-singletons-and-utility-classes-are-mostly-bad-2/&#34;&gt;なぜヘルパー、シングルトン、ユーティリティクラスはだいたい間違っているのか&lt;/a&gt;」、Marshal Wardの「&lt;a href=&#34;http://www.marshallward.org/avoiding-utility-classes.html&#34;&gt;ユーティリティクラスを避ける&lt;/a&gt;」、Dhaval Dalalの「&lt;a href=&#34;http://www.jroller.com/DhavalDalal/entry/kill_that_util_class&#34;&gt;ユーティルクラスを殺せ!&lt;/a&gt;」、Rob Bagbyの「&lt;a href=&#34;http://www.robbagby.com/posts/helper-classes-are-a-code-smell/&#34;&gt;ヘルパークラスは問題の兆候&lt;/a&gt;」。&lt;/p&gt;
+
+&lt;p&gt;また、StackExchangeにはユーティリティクラスについての質問がいくつかある。
+例えば、「&lt;a href=&#34;http://stackoverflow.com/questions/3339929/if-a-utilities-class-is-evil-where-do-i-put-my-generic-code&#34;&gt;ユーティリティクラスが悪なら、どこに共通コードを書けばいい?&lt;/a&gt;」とか、「&lt;a href=&#34;http://stackoverflow.com/questions/3340032/utility-classes-are-evil&#34;&gt;ユーティリティクラスは悪&lt;/a&gt;」とか。&lt;/p&gt;
+
+&lt;p&gt;これらの主張は要するに、ユーティリティクラスは適切なオブジェクトではないということだ。
+だから、オブジェクト指向の世界に適合しない。
+ユーティリティクラスは、当時の人々が機能分割パラダイムに慣れていたために、手続き型言語から受け継がれた。&lt;/p&gt;
+
+&lt;p&gt;君がこの主張に同意し、ユーティリティクラスを使うのをやめたがっていると想定し、そいつをどのように適切なオブジェクトに置き換えるかを例を挙げながら教えよう。&lt;/p&gt;
+
+&lt;h2 id=&#34;手続き型の例&#34;&gt;手続き型の例&lt;/h2&gt;
+
+&lt;p&gt;例えば、テキストファイルを読んで、行で分割し、各行をトリムして、その結果を別のファイルに保存したいとする。
+これはApache Commonsの&lt;code&gt;FileUtils&lt;/code&gt;を使えばできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;void transform(File in, File out) {
+  Collection&amp;lt;String&amp;gt; src = FileUtils.readLines(in, &amp;quot;UTF-8&amp;quot;);
+  Collection&amp;lt;String&amp;gt; dest = new ArrayList&amp;lt;&amp;gt;(src.size());
+  for (String line : src) {
+    dest.add(line.trim());
+  }
+  FileUtils.writeLines(out, dest, &amp;quot;UTF-8&amp;quot;); } ```
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;上のコードはきれいに見える。
+しかし、これは手続き型プログラミングであって、オブジェクト指向じゃない。
+コードの各行で、データ(byteとbit)を操作し、コンピューターにどこからデータを取ってどこに書き込むかを明示的に指示している。
+処理の手順を定義している。&lt;/p&gt;
+
+&lt;h2 id=&#34;オブジェクト指向な方法&#34;&gt;オブジェクト指向な方法&lt;/h2&gt;
+
+&lt;p&gt;オブジェクト指向パラダイムでは、オブジェクトをインスタンス化して合成すべきだ。
+これはオブジェクトにオブジェクト自身のやり方でデータを管理させるためだ。
+補足的なスタティックメソッドを呼ぶ代わりに、求めている挙動を提供できるオブジェクトを生成するべきだ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public class Max implements Number {
+  private final int a;
+  private final int b;
+  public Max(int x, int y) {
+    this.a = x;
+    this.b = y;
+  }
+  @Override
+  public int intValue() {
+    return this.a &amp;gt; this.b ? this.a : this.b;
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;以下の手続き型のメソッド呼び出しは、&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;int max = NumberUtils.max(10, 5);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;以下の様にオブジェクト指向的になる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;int max = new Max(10, 5).intValue();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;どっちでも同じ?
+いや、そうでもない。
+もう少し読み進めて欲しい。&lt;/p&gt;
+
+&lt;h2 id=&#34;データ構造ではなくオブジェクト&#34;&gt;データ構造ではなくオブジェクト&lt;/h2&gt;
+
+&lt;p&gt;私なら、上と同じファイル編集機能をオブジェクト指向なやり方で以下の様に設計する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;void transform(File in, File out) {
+  Collection&amp;lt;String&amp;gt; src = new Trimmed(
+    new FileLines(new UnicodeFile(in))
+  );
+  Collection&amp;lt;String&amp;gt; dest = new FileLines(
+    new UnicodeFile(out)
+  );
+  dest.addAll(src);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;FileLines&lt;/code&gt;は&lt;code&gt;Collection&amp;lt;String&amp;gt;&lt;/code&gt;を実装していて、ファイルの読み込みと書き込みの処理を内包している。
+&lt;code&gt;FileLines&lt;/code&gt;のインスタンスは文字列のコレクションと全く同じ挙動をし、全てのI/O処理を隠蔽している。
+このインスタンスを繰り返し処理するとファイルが読み込まれる。
+このインスタンスに&lt;code&gt;addAll()&lt;/code&gt;するとファイルに書き込まれる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;Trimmed&lt;/code&gt;も&lt;code&gt;Collection&amp;lt;String&amp;gt;&lt;/code&gt;を実装していて、文字列のコレクションを内包している(&lt;a href=&#34;https://ja.wikipedia.org/wiki/Decorator_%E3%83%91%E3%82%BF%E3%83%BC%E3%83%B3&#34;&gt;Decoratorパターン&lt;/a&gt;)。
+一行が取得されるたびにトリムされる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;Trimmed&lt;/code&gt;も&lt;code&gt;FileLines&lt;/code&gt;も&lt;code&gt;UnicodeFile&lt;/code&gt;も、上記スニペットに出てくる全てのクラスは小さめだ。
+それぞれが自身の単一の機能に責任を持ち、つまり&lt;a href=&#34;http://d.hatena.ne.jp/asakichy/20110808/1312754662&#34;&gt;単一責任原則&lt;/a&gt;に完璧に従っている。&lt;/p&gt;
+
+&lt;p&gt;我々側、つまりライブラリのユーザから見るとこれはそれほど重要ではないかもしれないが、ライブラリの開発者から見ると肝要だ。
+80以上のメソッドを持つ3000行のユーティリティクラスである&lt;code&gt;FileUtils&lt;/code&gt;の&lt;code&gt;readLines()&lt;/code&gt;よりも、&lt;code&gt;FileLines&lt;/code&gt;の方が開発やメンテナンスやユニットテストがしやすい。
+真面目な話、&lt;a href=&#34;http://svn.apache.org/viewvc/commons/proper/io/trunk/src/main/java/org/apache/commons/io/FileUtils.java?view=co&#34;&gt;そのソース&lt;/a&gt;を読んでみて欲しい。&lt;/p&gt;
+
+&lt;p&gt;オブジェクト指向のアプローチは遅延実行を可能にする。
+&lt;code&gt;in&lt;/code&gt;ファイルはそのデータが必要になるまで読まれない。
+I/Oエラーで開けなかったら触られすらしない。
+全ては&lt;code&gt;addAll()&lt;/code&gt;を呼んだ後に始まる。&lt;/p&gt;
+
+&lt;p&gt;二つ目のスニペットの最終行を除く全行は、小さいオブジェクトをインスタンス化して大きいオブジェクトを合成している。
+このオブジェクト合成は、データ変換を起こさないのでCPUコストはむしろ低い。&lt;/p&gt;
+
+&lt;p&gt;さらに、一つ目のスクリプトがO(n)で動くのに対し、二つ目のスクリプトは明らかにO(1)の計算量で動く。
+これが一つ目のスクリプトでデータに対して手続き型アプローチをした結果だ。&lt;/p&gt;
+
+&lt;p&gt;オブジェクト指向の世界では、データというものはない。オブジェクトとその挙動しかないのだ！&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;embed video-player&#34; style=&#34;text-align: center&#34;&gt;
+  &lt;iframe class=&#34;youtube-player&#34; type=&#34;text/html&#34; width=&#34;320&#34; height=&#34;193&#34; src=&#34;http://www.youtube.com/embed/psrp3TtaYYI&#34; allowfullscreen frameborder=&#34;0&#34;&gt;
+  &lt;/iframe&gt;
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;以上がYegorの記事。&lt;/p&gt;
+
+&lt;p&gt;私はユーティリティクラスは結構好きで、以下の点で有用だと思う。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;ライブラリ開発者視点:
+
+&lt;ul&gt;
+&lt;li&gt;少数のクラスで多くの共通処理を実装できる。&lt;/li&gt;
+&lt;li&gt;ユーティリティクラスは(普通)状態を持たないので、マルチスレッドなどを意識せずに簡単に書ける。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;ライブラリ利用者視点:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;オブジェクトを作らなくても使えるので、オーバーヘッドが少なくコードを書くのも楽。&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;ユーティリティクラスのメソッド呼び出しは大抵、「&amp;lt;問題領域&amp;gt;.&amp;lt;動詞&amp;gt;&amp;lt;目的語&amp;gt;()」という形になっていて、何をやっているのかわかりやすい。&lt;/p&gt;
+
+&lt;p&gt;上で出てきた&lt;code&gt;FileUtils.readLines()&lt;/code&gt;も、ファイルを対象に(問題領域)、行を(目的語)読みこむ(動詞)メソッドであることが一目瞭然。&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ユーティリティクラス反対派の主張が、それがオブジェクト真理教の教義に照らして適切なオブジェクトではなく、オブジェクト指向の世界に適合しないという哲学的なものである時点で、ユーティリティクラスをやめる動機に全くつながらない。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;transform()&lt;/code&gt;の実装は、Apache Commonsを使ったやつの方が自分でクラスを作らなくて済み、開発量が少なくてよい、というのが普通の感覚ではないだろうか。&lt;/p&gt;
+
+&lt;p&gt;さらに、Yegorの&lt;code&gt;transform()&lt;/code&gt;の実装だと、I/O処理を隠蔽しすぎて何をやっているのかコードからさっぱりわからない。
+&lt;code&gt;addAll()&lt;/code&gt;するとファイルへの書き込みが発生するなんて誰も想像だにしまい。
+オブジェクト真理教の神のみぞ知るといった感じの挙動だ。
+こんなコードで可読性、つまり保守性が「手続き型の例」のやつより高くなるとは到底思えない。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>

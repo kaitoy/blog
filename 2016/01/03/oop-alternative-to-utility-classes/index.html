@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="オブジェクト指向プログラミングにおいてユーティリティクラスに代わるもの | To Be Decided">
+    <meta property="og:url" content="http://tbd.kaitoy.xyz/2016/01/03/oop-alternative-to-utility-classes/">
+    <meta property="og:description" content="このエントリでは、Yegor Bugayenkoによる記事、OOP Alternative to Utility Classesを紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 ユーティリティクラス(またはヘルパークラス)は、スタティックメソッドだけを持っていて、状態を内包しない「構造体」だ。 Apache CommonsのStringUtils、IOUtils、FileUtilsや、GuavaのIterables、Iterators、またJDK7のFilesはユーティリティクラスのいい例だ。 ユーティリティクラスはよく使われる共通機能を提供するので、この設計手法はJava(やC#、Rubyなど)の世界でとても人気だ。 要するに我々は、DRY原則に従い、重複を避けたい。 だから、共通コードをユーティリティクラスに入れて必要に応じて再利用する。 // これはひどい設計なので再利用しないように。 public class NumberUtils { public static int max(int a, int b) { return a &gt; b ? a : b; } } 実際、これはとても便利なテクニックだ!? ユーティリティクラスは悪だ しかし、オブジェクト指向の世界では、ユーティリティクラスはかなり悪い(酷いという人さえいるかもしれない)手法だ。 これについては多くの議論がある。 いくつか挙げると、Nick Malikの「ヘルパークラスは悪か?」、Simon Hartの「なぜヘルパー、シングルトン、ユーティリティクラスはだいたい間違っているのか」、Marshal Wardの「ユーティリティクラスを避ける」、Dhaval Dalalの「ユーティルクラスを殺せ!」、Rob Bagbyの「ヘルパークラスは問題の兆候」。 また、StackExchangeにはユーティリティクラスについての質問がいくつかある。 例えば、「ユーティリティクラスが悪なら、どこに共通コードを書けばいい?」とか、「ユーティリティクラスは悪」とか。 これらの主張は要するに、ユーティリティクラスは適切なオブジェクトではないということだ。 だから、オブジェクト指向の世界に適合しない。 ユーティリティクラスは、当時の人々が機能分割パラダイムに慣れていたために、手続き型言語から受け継がれた。 君がこの主張に同意し、ユーティリティクラスを使うのをやめたがっていると想定し、そいつをどのように適切なオブジェクトに置き換えるかを例を挙げながら教えよう。 手続き型の例 例えば、テキストファイルを読んで、行で分割し、各行をトリムして、その結果を別のファイルに保存したいとする。 これはApache CommonsのFileUtilsを使えばできる。 void transform(File in, File out) { Collection&lt;String&gt; src = FileUtils.readLines(in, &quot;UTF-8&quot;); Collection&lt;String&gt; dest = new ArrayList&lt;&gt;(src.size()); for (String line : src) { dest.add(line.trim()); } FileUtils.writeLines(out, dest, &quot;UTF-8&quot;); } ``` 上のコードはきれいに見える。 しかし、これは手続き型プログラミングであって、オブジェクト指向じゃない。 コードの各行で、データ(byteとbit)を操作し、コンピューターにどこからデータを取ってどこに書き込むかを明示的に指示している。 処理の手順を定義している。 オブジェクト指向な方法 オブジェクト指向パラダイムでは、オブジェクトをインスタンス化して合成すべきだ。 これはオブジェクトにオブジェクト自身のやり方でデータを管理させるためだ。 補足的なスタティックメソッドを呼ぶ代わりに、求めている挙動を提供できるオブジェクトを生成するべきだ。 public class Max implements Number { private final int a; private final int b; public Max(int x, int y) { this.a = x; this.b = y; } @Override public int intValue() { return this.a &gt; this.b ?">
+    
+    <meta property="og:image" content="http://tbd.kaitoy.xyz/images/teamedio_logo.svg">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      オブジェクト指向プログラミングにおいてユーティリティクラスに代わるもの | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="http://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="http://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/zenburn.min.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="http://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Sun, Jan 3, 2016</span>
+      <h2 class="title">オブジェクト指向プログラミングにおいてユーティリティクラスに代わるもの</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="http://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="オブジェクト指向プログラミングにおいてユーティリティクラスに代わるもの">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>このエントリでは、Yegor Bugayenkoによる記事、<a href="http://www.yegor256.com/2014/05/05/oop-alternative-to-utility-classes.html">OOP Alternative to Utility Classes</a>を紹介する。
+(Yegorから和訳と転載の許可は得た。)
+以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。</p>
+
+<hr />
+
+<p>ユーティリティクラス(またはヘルパークラス)は、スタティックメソッドだけを持っていて、状態を内包しない「構造体」だ。
+<a href="http://commons.apache.org/">Apache Commons</a>の<code>StringUtils</code>、<code>IOUtils</code>、<code>FileUtils</code>や、<a href="https://code.google.com/p/guava-libraries/">Guava</a>の<code>Iterables</code>、<code>Iterators</code>、またJDK7の<code>Files</code>はユーティリティクラスのいい例だ。</p>
+
+<p>ユーティリティクラスはよく使われる共通機能を提供するので、この設計手法はJava(やC#、Rubyなど)の世界でとても人気だ。</p>
+
+<p>要するに我々は、<a href="https://ja.wikipedia.org/wiki/Don't_repeat_yourself">DRY原則</a>に従い、重複を避けたい。
+だから、共通コードをユーティリティクラスに入れて必要に応じて再利用する。</p>
+
+<pre><code class="language-java">// これはひどい設計なので再利用しないように。
+public class NumberUtils {
+  public static int max(int a, int b) {
+    return a &gt; b ? a : b;
+  }
+}
+</code></pre>
+
+<p>実際、これはとても便利なテクニックだ!?</p>
+
+<h2 id="ユーティリティクラスは悪だ">ユーティリティクラスは悪だ</h2>
+
+<p>しかし、オブジェクト指向の世界では、ユーティリティクラスはかなり悪い(酷いという人さえいるかもしれない)手法だ。</p>
+
+<p>これについては多くの議論がある。
+いくつか挙げると、Nick Malikの「<a href="http://blogs.msdn.com/b/nickmalik/archive/2005/09/06/461404.aspx">ヘルパークラスは悪か?</a>」、Simon Hartの「<a href="http://smart421.wordpress.com/2011/08/31/why-helper-singletons-and-utility-classes-are-mostly-bad-2/">なぜヘルパー、シングルトン、ユーティリティクラスはだいたい間違っているのか</a>」、Marshal Wardの「<a href="http://www.marshallward.org/avoiding-utility-classes.html">ユーティリティクラスを避ける</a>」、Dhaval Dalalの「<a href="http://www.jroller.com/DhavalDalal/entry/kill_that_util_class">ユーティルクラスを殺せ!</a>」、Rob Bagbyの「<a href="http://www.robbagby.com/posts/helper-classes-are-a-code-smell/">ヘルパークラスは問題の兆候</a>」。</p>
+
+<p>また、StackExchangeにはユーティリティクラスについての質問がいくつかある。
+例えば、「<a href="http://stackoverflow.com/questions/3339929/if-a-utilities-class-is-evil-where-do-i-put-my-generic-code">ユーティリティクラスが悪なら、どこに共通コードを書けばいい?</a>」とか、「<a href="http://stackoverflow.com/questions/3340032/utility-classes-are-evil">ユーティリティクラスは悪</a>」とか。</p>
+
+<p>これらの主張は要するに、ユーティリティクラスは適切なオブジェクトではないということだ。
+だから、オブジェクト指向の世界に適合しない。
+ユーティリティクラスは、当時の人々が機能分割パラダイムに慣れていたために、手続き型言語から受け継がれた。</p>
+
+<p>君がこの主張に同意し、ユーティリティクラスを使うのをやめたがっていると想定し、そいつをどのように適切なオブジェクトに置き換えるかを例を挙げながら教えよう。</p>
+
+<h2 id="手続き型の例">手続き型の例</h2>
+
+<p>例えば、テキストファイルを読んで、行で分割し、各行をトリムして、その結果を別のファイルに保存したいとする。
+これはApache Commonsの<code>FileUtils</code>を使えばできる。</p>
+
+<pre><code class="language-java">void transform(File in, File out) {
+  Collection&lt;String&gt; src = FileUtils.readLines(in, &quot;UTF-8&quot;);
+  Collection&lt;String&gt; dest = new ArrayList&lt;&gt;(src.size());
+  for (String line : src) {
+    dest.add(line.trim());
+  }
+  FileUtils.writeLines(out, dest, &quot;UTF-8&quot;); } ```
+</code></pre>
+
+<p>上のコードはきれいに見える。
+しかし、これは手続き型プログラミングであって、オブジェクト指向じゃない。
+コードの各行で、データ(byteとbit)を操作し、コンピューターにどこからデータを取ってどこに書き込むかを明示的に指示している。
+処理の手順を定義している。</p>
+
+<h2 id="オブジェクト指向な方法">オブジェクト指向な方法</h2>
+
+<p>オブジェクト指向パラダイムでは、オブジェクトをインスタンス化して合成すべきだ。
+これはオブジェクトにオブジェクト自身のやり方でデータを管理させるためだ。
+補足的なスタティックメソッドを呼ぶ代わりに、求めている挙動を提供できるオブジェクトを生成するべきだ。</p>
+
+<pre><code class="language-java">public class Max implements Number {
+  private final int a;
+  private final int b;
+  public Max(int x, int y) {
+    this.a = x;
+    this.b = y;
+  }
+  @Override
+  public int intValue() {
+    return this.a &gt; this.b ? this.a : this.b;
+  }
+}
+</code></pre>
+
+<p>以下の手続き型のメソッド呼び出しは、</p>
+
+<pre><code class="language-java">int max = NumberUtils.max(10, 5);
+</code></pre>
+
+<p>以下の様にオブジェクト指向的になる。</p>
+
+<pre><code class="language-java">int max = new Max(10, 5).intValue();
+</code></pre>
+
+<p>どっちでも同じ?
+いや、そうでもない。
+もう少し読み進めて欲しい。</p>
+
+<h2 id="データ構造ではなくオブジェクト">データ構造ではなくオブジェクト</h2>
+
+<p>私なら、上と同じファイル編集機能をオブジェクト指向なやり方で以下の様に設計する。</p>
+
+<pre><code class="language-java">void transform(File in, File out) {
+  Collection&lt;String&gt; src = new Trimmed(
+    new FileLines(new UnicodeFile(in))
+  );
+  Collection&lt;String&gt; dest = new FileLines(
+    new UnicodeFile(out)
+  );
+  dest.addAll(src);
+}
+</code></pre>
+
+<p><code>FileLines</code>は<code>Collection&lt;String&gt;</code>を実装していて、ファイルの読み込みと書き込みの処理を内包している。
+<code>FileLines</code>のインスタンスは文字列のコレクションと全く同じ挙動をし、全てのI/O処理を隠蔽している。
+このインスタンスを繰り返し処理するとファイルが読み込まれる。
+このインスタンスに<code>addAll()</code>するとファイルに書き込まれる。</p>
+
+<p><code>Trimmed</code>も<code>Collection&lt;String&gt;</code>を実装していて、文字列のコレクションを内包している(<a href="https://ja.wikipedia.org/wiki/Decorator_%E3%83%91%E3%82%BF%E3%83%BC%E3%83%B3">Decoratorパターン</a>)。
+一行が取得されるたびにトリムされる。</p>
+
+<p><code>Trimmed</code>も<code>FileLines</code>も<code>UnicodeFile</code>も、上記スニペットに出てくる全てのクラスは小さめだ。
+それぞれが自身の単一の機能に責任を持ち、つまり<a href="http://d.hatena.ne.jp/asakichy/20110808/1312754662">単一責任原則</a>に完璧に従っている。</p>
+
+<p>我々側、つまりライブラリのユーザから見るとこれはそれほど重要ではないかもしれないが、ライブラリの開発者から見ると肝要だ。
+80以上のメソッドを持つ3000行のユーティリティクラスである<code>FileUtils</code>の<code>readLines()</code>よりも、<code>FileLines</code>の方が開発やメンテナンスやユニットテストがしやすい。
+真面目な話、<a href="http://svn.apache.org/viewvc/commons/proper/io/trunk/src/main/java/org/apache/commons/io/FileUtils.java?view=co">そのソース</a>を読んでみて欲しい。</p>
+
+<p>オブジェクト指向のアプローチは遅延実行を可能にする。
+<code>in</code>ファイルはそのデータが必要になるまで読まれない。
+I/Oエラーで開けなかったら触られすらしない。
+全ては<code>addAll()</code>を呼んだ後に始まる。</p>
+
+<p>二つ目のスニペットの最終行を除く全行は、小さいオブジェクトをインスタンス化して大きいオブジェクトを合成している。
+このオブジェクト合成は、データ変換を起こさないのでCPUコストはむしろ低い。</p>
+
+<p>さらに、一つ目のスクリプトがO(n)で動くのに対し、二つ目のスクリプトは明らかにO(1)の計算量で動く。
+これが一つ目のスクリプトでデータに対して手続き型アプローチをした結果だ。</p>
+
+<p>オブジェクト指向の世界では、データというものはない。オブジェクトとその挙動しかないのだ！</p>
+
+<p><div class="embed video-player" style="text-align: center">
+  <iframe class="youtube-player" type="text/html" width="320" height="193" src="http://www.youtube.com/embed/psrp3TtaYYI" allowfullscreen frameborder="0">
+  </iframe>
+</div>
+</p>
+
+<hr />
+
+<p>以上がYegorの記事。</p>
+
+<p>私はユーティリティクラスは結構好きで、以下の点で有用だと思う。</p>
+
+<ul>
+<li>ライブラリ開発者視点:
+
+<ul>
+<li>少数のクラスで多くの共通処理を実装できる。</li>
+<li>ユーティリティクラスは(普通)状態を持たないので、マルチスレッドなどを意識せずに簡単に書ける。</li>
+</ul></li>
+
+<li><p>ライブラリ利用者視点:</p>
+
+<ul>
+<li>オブジェクトを作らなくても使えるので、オーバーヘッドが少なくコードを書くのも楽。</li>
+
+<li><p>ユーティリティクラスのメソッド呼び出しは大抵、「&lt;問題領域&gt;.&lt;動詞&gt;&lt;目的語&gt;()」という形になっていて、何をやっているのかわかりやすい。</p>
+
+<p>上で出てきた<code>FileUtils.readLines()</code>も、ファイルを対象に(問題領域)、行を(目的語)読みこむ(動詞)メソッドであることが一目瞭然。</p></li>
+</ul></li>
+</ul>
+
+<p><br></p>
+
+<p>ユーティリティクラス反対派の主張が、それがオブジェクト真理教の教義に照らして適切なオブジェクトではなく、オブジェクト指向の世界に適合しないという哲学的なものである時点で、ユーティリティクラスをやめる動機に全くつながらない。</p>
+
+<p><code>transform()</code>の実装は、Apache Commonsを使ったやつの方が自分でクラスを作らなくて済み、開発量が少なくてよい、というのが普通の感覚ではないだろうか。</p>
+
+<p>さらに、Yegorの<code>transform()</code>の実装だと、I/O処理を隠蔽しすぎて何をやっているのかコードからさっぱりわからない。
+<code>addAll()</code>するとファイルへの書き込みが発生するなんて誰も想像だにしまい。
+オブジェクト真理教の神のみぞ知るといった感じの挙動だ。
+こんなコードで可読性、つまり保守性が「手続き型の例」のやつより高くなるとは到底思えない。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=http%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f03%2foop-alternative-to-utility-classes%2f&t=%e3%82%aa%e3%83%96%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e6%8c%87%e5%90%91%e3%83%97%e3%83%ad%e3%82%b0%e3%83%a9%e3%83%9f%e3%83%b3%e3%82%b0%e3%81%ab%e3%81%8a%e3%81%84%e3%81%a6%e3%83%a6%e3%83%bc%e3%83%86%e3%82%a3%e3%83%aa%e3%83%86%e3%82%a3%e3%82%af%e3%83%a9%e3%82%b9%e3%81%ab%e4%bb%a3%e3%82%8f%e3%82%8b%e3%82%82%e3%81%ae" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f03%2foop-alternative-to-utility-classes%2f&text=%e3%82%aa%e3%83%96%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e6%8c%87%e5%90%91%e3%83%97%e3%83%ad%e3%82%b0%e3%83%a9%e3%83%9f%e3%83%b3%e3%82%b0%e3%81%ab%e3%81%8a%e3%81%84%e3%81%a6%e3%83%a6%e3%83%bc%e3%83%86%e3%82%a3%e3%83%aa%e3%83%86%e3%82%a3%e3%82%af%e3%83%a9%e3%82%b9%e3%81%ab%e4%bb%a3%e3%82%8f%e3%82%8b%e3%82%82%e3%81%ae&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f03%2foop-alternative-to-utility-classes%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=http%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f03%2foop-alternative-to-utility-classes%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f03%2foop-alternative-to-utility-classes%2f&title=%e3%82%aa%e3%83%96%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e6%8c%87%e5%90%91%e3%83%97%e3%83%ad%e3%82%b0%e3%83%a9%e3%83%9f%e3%83%b3%e3%82%b0%e3%81%ab%e3%81%8a%e3%81%84%e3%81%a6%e3%83%a6%e3%83%bc%e3%83%86%e3%82%a3%e3%83%aa%e3%83%86%e3%82%a3%e3%82%af%e3%83%a9%e3%82%b9%e3%81%ab%e4%bb%a3%e3%82%8f%e3%82%8b%e3%82%82%e3%81%ae" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="http://tbd.kaitoy.xyz/tags/yegor256"><i class="fa fa-tags"></i> yegor256 </a>
+                
+                <a href="http://tbd.kaitoy.xyz/tags/oop"><i class="fa fa-tags"></i> oop </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/12/03/software-quality-award-2015/">Pcap4JがSoftware Quality Award 2015で入賞</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/">よいオブジェクトの七つの美徳</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/09/13/orm-is-offensive-anti-pattern/">ORMは不快なアンチパターン</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/07/26/why-null-is-bad/">なぜNullはダメか</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/07/22/getters-setters-evil/">Getter/Setterは悪だ。以上。</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/07/18/first-post/">First Post</a></li>
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="http://tbd.kaitoy.xyz/2016/01/01/git-revert-reset/">
+                  git resetとrevertを図解する
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2016  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="http://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="http://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+
