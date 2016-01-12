@@ -6,8 +6,101 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2016</rights>
-    <updated>2016-01-11 14:41:29 -0700 MST</updated>
+    <updated>2016-01-12 08:43:30 -0700 MST</updated>
 
+    
+      
+        <item>
+          <title>Pcap4J with Four Native Libraries on Windows 10</title>
+          <link>http://tbd.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/</link>
+          <pubDate>Tue, 12 Jan 2016 08:43:30 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>http://tbd.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/</guid>
+          <description>
+
+&lt;p&gt;I did some basic tests for &lt;strong&gt;&lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;Pcap4J&lt;/a&gt;&lt;/strong&gt; 1.6.2 on Windows 10 Pro on &lt;a href=&#34;https://www.vmware.com/products/player&#34;&gt;VMware Player&lt;/a&gt; 7.1.0 using the following native packet capture libraries:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;&lt;a href=&#34;http://www.winpcap.org/&#34;&gt;Official WinPcap&lt;/a&gt;&lt;/strong&gt; 4.1.3&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;a href=&#34;http://sourceforge.net/projects/winpcap413-176/&#34;&gt;Unofficial WinPcap based on libpcap 1.7.4&lt;/a&gt;&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;a href=&#34;http://www.win10pcap.org/&#34;&gt;Win10Pcap&lt;/a&gt;&lt;/strong&gt; 10.2&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;a href=&#34;https://github.com/nmap/npcap&#34;&gt;Npcap&lt;/a&gt;&lt;/strong&gt; 0.0.5&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;This article explains each of the above libraries and tells the test results.&lt;/p&gt;
+
+&lt;h2 id=&#34;official-winpcap&#34;&gt;Official WinPcap&lt;/h2&gt;
+
+&lt;p&gt;WinPcap is the most common native packet capture library developed based on &lt;a href=&#34;http://www.tcpdump.org/&#34;&gt;&lt;strong&gt;libpcap&lt;/strong&gt;&lt;/a&gt;.
+(WinPcap 4.1.3 is based on libpcap 1.0.0.)
+It&amp;rsquo;s famous as a component of the de facto standard packet capture tool &lt;a href=&#34;https://www.wireshark.org/&#34;&gt;&lt;strong&gt;Wireshark&lt;/strong&gt;&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;WinPcap consists of &lt;strong&gt;NPF driver&lt;/strong&gt;, &lt;strong&gt;wpcap.dll&lt;/strong&gt;, and &lt;strong&gt;Packet.dll&lt;/strong&gt;.
+The structure is described in the &lt;a href=&#34;http://www.winpcap.org/docs/docs_412/html/group__NPF.html&#34;&gt;WinPcap manual&lt;/a&gt; as below:&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;NPF&#34; src=&#34;http://www.winpcap.org/docs/docs_412/html/npf-npf.gif&#34; style=&#34;margin: 0px auto; display: block;&#34;&gt;&lt;/p&gt;
+
+&lt;p&gt;wpcap.dll is Windows version of libpcap.so. It uses Packet Driver API implemented in Packet.dll.
+Packet.dll talks with the NPF driver.
+wpcap.dll and Packet.dll are installed in &lt;code&gt;C:\Windows\System32\&lt;/code&gt; (64 bit binaries) and &lt;code&gt;C:\Windows\SysWOW64\&lt;/code&gt; (32 bit binaries).&lt;/p&gt;
+
+&lt;p&gt;WinPcap worked without any problems in my tests.&lt;/p&gt;
+
+&lt;h2 id=&#34;winpcap-based-on-libpcap-1-7-4&#34;&gt;WinPcap based on libpcap 1.7.4&lt;/h2&gt;
+
+&lt;p&gt;This is an unofficial version of WinPcap which was built on libpcap 1.7.4.
+This doesn&amp;rsquo;t include NPF driver and doesn&amp;rsquo;t update Packet.dll.
+These two components need to be installed from the official WinPcap 4.1.3.&lt;/p&gt;
+
+&lt;p&gt;This worked well but &lt;a href=&#34;https://github.com/kaitoy/pcap4j/issues/52&#34;&gt;one moderate problem&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;win10pcap&#34;&gt;Win10Pcap&lt;/h2&gt;
+
+&lt;p&gt;Win10Pcap is a WinPcap-based packet capture library developed by &lt;a href=&#34;http://dnobori.cs.tsukuba.ac.jp/en/&#34;&gt;Daiyuu Nobori&lt;/a&gt;.
+This includes its own NPF driver and Packet.dll.
+The wpcap.dll Win10Pcap installs is exactly the same as one of the official WinPcap 4.1.3.&lt;/p&gt;
+
+&lt;p&gt;The difference between the original WinPcap and Win10Pcap is &lt;a href=&#34;http://www.ndis.com/&#34;&gt;&lt;strong&gt;NDIS&lt;/strong&gt;&lt;/a&gt; (Network Driver Interface Specification) version.
+Win10Pcap is based on NDIS 6.x while WinPcap is based on 5.x.&lt;/p&gt;
+
+&lt;p&gt;NDIS version history is as follows:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;NDIS 2.0: MS-DOS, Windows for Workgroups 3.1&lt;/li&gt;
+&lt;li&gt;NDIS 3.0: Windows for Workgroups 3.11, NT 3.5&lt;/li&gt;
+&lt;li&gt;NDIS 3.1: Windows 95&lt;/li&gt;
+&lt;li&gt;NDIS 4.0: Windows 95 OSR2, NT 4.0&lt;/li&gt;
+&lt;li&gt;NDIS 4.1: Windows 98, NT 4.0 SP3&lt;/li&gt;
+&lt;li&gt;NDIS 5.0: Windows 98 SE, Me, 2000&lt;/li&gt;
+&lt;li&gt;NDIS 5.1: Windows XP&lt;/li&gt;
+&lt;li&gt;NDIS 5.2: Windows Server 2003&lt;/li&gt;
+&lt;li&gt;NDIS 6.0: Windows Vista&lt;/li&gt;
+&lt;li&gt;NDIS 6.1: Windows Vista SP1, Server 2008&lt;/li&gt;
+&lt;li&gt;NDIS 6.2: Windows 7, Server 2008 R2&lt;/li&gt;
+&lt;li&gt;NDIS 6.3: Windows 8, Server 2012&lt;/li&gt;
+&lt;li&gt;NDIS 6.4: Windows 8.1, Server 2012 R2&lt;/li&gt;
+&lt;li&gt;NDIS 6.5: Windows 10, Server 2016&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Although NDIS 6.x is backward-compatible with 5.x and WinPcap can run on Vista and newer ones, it&amp;rsquo;s expected Win10Pcap is faster than WinPcap because the newer NDIS is more efficient than older versions.&lt;/p&gt;
+
+&lt;p&gt;Win10Pcap worked mostly fine in my tests, but it didn&amp;rsquo;t detect MAC addresses and IPv6 addresses on devices.&lt;/p&gt;
+
+&lt;h2 id=&#34;npcap&#34;&gt;Npcap&lt;/h2&gt;
+
+&lt;p&gt;Npcap is another NDIS 6.x based version of WinPcap developed by &lt;a href=&#34;http://www.veotax.com/&#34;&gt;Yang Luo&lt;/a&gt; for &lt;a href=&#34;https://nmap.org/&#34;&gt;Nmap&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Npcap has a special functionality that allows to capture/send loopback packets.
+It creates an adapter &lt;strong&gt;&amp;ldquo;Npcap Loopback Adapter&amp;rdquo;&lt;/strong&gt; for the functionality during its installation.
+This adapter can be used in the same way as other normal adapters.&lt;/p&gt;
+
+&lt;p&gt;Npcap provides its own NPF driver and Packet.dll but wpcap.dll is the one pulled from the official WinPcap 4.1.3.&lt;/p&gt;
+
+&lt;p&gt;I installed Npcap with &lt;strong&gt;&amp;ldquo;WinPcap Compatible Mode&amp;rdquo;&lt;/strong&gt; ON for my tests.
+It perfectly worked including MAC/IPv6 addresses detection.&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
