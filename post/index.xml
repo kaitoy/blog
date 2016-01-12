@@ -868,7 +868,7 @@ error: failed to push some refs to &#39;file://C:/Users/Kaito/Desktop/master&#39
 
 &lt;li&gt;&lt;p&gt;&lt;strong&gt;コミット&lt;/strong&gt;&lt;/p&gt;
 
-&lt;p&gt;一つのコミットを表すオブジェクト。コミット日時やログメッセージなどの情報と、親コミットを指すポインタと、一つのツリーを指すポインタを持つ。
+&lt;p&gt;一つのコミットを表すオブジェクト。コミット日時やログメッセージなどの情報と、一つ前のコミット(親コミット)を指すポインタと、一つのツリーを指すポインタを持つ。
 このツリーはプロジェクトのルートディレクトリを表す。
 つまり、一つのコミットは、プロジェクトのある時点でのディレクトリツリー全体を表してもいる。&lt;/p&gt;&lt;/li&gt;
 
@@ -922,14 +922,14 @@ error: failed to push some refs to &#39;file://C:/Users/Kaito/Desktop/master&#39
 &lt;p&gt;参照は、一つのオブジェクトを指し示すポインタのようなもので、普通はコミットオブジェクトを指す。
 参照には、&lt;strong&gt;ローカルブランチ&lt;/strong&gt;、&lt;strong&gt;リモート追跡ブランチ&lt;/strong&gt;、&lt;strong&gt;タグ&lt;/strong&gt; の三種類がある。&lt;/p&gt;
 
-&lt;p&gt;ファイルシステム上では&lt;code&gt;.git/refs/&lt;/code&gt;以下にある、SHA1ハッシュが書かれただけのテキストファイルにあたる。
+&lt;p&gt;ファイルシステム上では&lt;code&gt;.git/refs/&lt;/code&gt;以下にある、指し示すオブジェクトのSHA1ハッシュ値が書かれただけのテキストファイルにあたる。
 &lt;code&gt;.git/refs/heads/&lt;/code&gt;以下にローカルブランチ、&lt;code&gt;.git/refs/remotes/&lt;/code&gt;以下にリモート追跡ブランチ、&lt;code&gt;.git/refs/tags/&lt;/code&gt;以下にタグが置かれる。&lt;/p&gt;
 
-&lt;p&gt;参照は、Gitコマンドなどにおいて(コミット)オブジェクトを指定する方法としてのSHA1ハッシュ値の代わりに使える。
+&lt;p&gt;参照は、Gitコマンドなどにおいてコミットを指定する方法としてSHA1ハッシュ値の代わりに使える。
 この時、参照の名前は上記ファイルシステム上のパスから&lt;code&gt;.git/&lt;/code&gt;を省いたものになる。
 例えば&lt;code&gt;refs/heads/master&lt;/code&gt;。さらに、ディレクトリは省略できるので、同じ参照は&lt;code&gt;heads/master&lt;/code&gt;や単に&lt;code&gt;master&lt;/code&gt;とも書ける。&lt;/p&gt;
 
-&lt;p&gt;ここで、ブランチやタグが単なる参照であるところに注意。
+&lt;p&gt;ここで、ブランチやタグが単なる参照であるところに注目。
 Subversionのようにリポジトリのコピーを作るのとはかなり異なる。
 Gitのブランチを作るというのは単に参照を追加するだけだし、ブランチをチェックアウトするというのはブランチが指すコミットが指すツリーが表すディレクトリツリーをファイルシステムに展開するということ。
 この実装によってGitのブランチが軽量で速いものになっている。&lt;/p&gt;
@@ -963,7 +963,7 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
   &lt;li&gt;&lt;img src=&#34;http://tbd.kaitoy.xyz/images/git-repository/git_tag/スライド5.PNG&#34; /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;図中で、タグオブジェクトはオブジェクトなのでオブジェクト格納領域(i.e. &lt;code&gt;.git/objects/&lt;/code&gt;)に入り、それを指す参照のタグは&lt;code&gt;.git/refs/&lt;/code&gt;に入る。&lt;/p&gt;
+&lt;p&gt;図中で、タグオブジェクトはオブジェクトなのでオブジェクト格納領域に入り、それを指す参照のタグは&lt;code&gt;.git/refs/&lt;/code&gt;に入る。&lt;/p&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
@@ -971,12 +971,12 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
 
 &lt;h3 id=&#34;シンボリック参照-symref&#34;&gt;シンボリック参照 (symref)&lt;/h3&gt;
 
-&lt;p&gt;シンボリック参照は参照やオブジェクトを指す参照。以下の四つがある。&lt;/p&gt;
+&lt;p&gt;シンボリック参照は参照やオブジェクトを指し示すポインタのようなもので、以下の四つがある。&lt;/p&gt;
 
 &lt;ol&gt;
 &lt;li&gt;&lt;p&gt;&lt;strong&gt;HEAD&lt;/strong&gt;&lt;/p&gt;
 
-&lt;p&gt;カレントブランチの参照を指す。&lt;/p&gt;&lt;/li&gt;
+&lt;p&gt;カレントブランチ、つまりチェックアウトしているブランチ(i.e. 参照)を指す。&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;&lt;strong&gt;ORIG_HEAD&lt;/strong&gt;&lt;/p&gt;
 
@@ -991,7 +991,7 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
 &lt;p&gt;マージ操作中に作られ、HEADにマージされようとしているコミットを指す。&lt;/p&gt;&lt;/li&gt;
 &lt;/ol&gt;
 
-&lt;p&gt;それぞれが、Gitコマンドなどにおいて、(コミット)オブジェクトを指定する方法としてのSHA1ハッシュ値の代わりに使える。&lt;/p&gt;
+&lt;p&gt;それぞれが、Gitコマンドなどにおいてコミットを指定する方法としてSHA1ハッシュ値の代わりに使える。&lt;/p&gt;
 
 &lt;p&gt;ファイルシステム上では&lt;code&gt;.git/{HEAD,ORIG_HEAD,FETCH_HEAD,MERGE_HEAD}&lt;/code&gt;にあたり、全て単純なテキストファイルである。&lt;/p&gt;
 
