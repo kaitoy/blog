@@ -1,7 +1,7 @@
 +++
 categories = [ "Networking" ]
-date = "2016-01-10T10:10:36-07:00"
-draft = true
+date = "2016-01-12T08:43:30-07:00"
+draft = false
 eyecatch = "pcap4jlogo.png"
 slug = "pcap4j-with-four-native-libraries-on-windows10"
 tags = [ "pcap4j" ]
