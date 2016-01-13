@@ -58,7 +58,7 @@ Gitのリポジトリは、プロジェクトをクローンしたときとか�
 インデックスは、`git add`の説明とかに出てくる「インデックス」とか「ステージング」とか呼ばれる機能を実現するためのデータ構造で、ファイルシステム上では`.git/index`というバイナリファイルにあたる。
 
 インデックスは、プロジェクトのある時点でのディレクトリツリー全体を表すデータをもつ。
-具体的には、プロジェクト内の各ファイルを表すブロブへのポインタと、各ファイルのファイルシステム上でのパスが保存されている。
+具体的には、プロジェクトの各ファイルについて、対応するブロブへのポインタと、プロジェクトルートディレクトリからの相対パスが記録されている。
 
 `git ls-files --stage`で`.git/index`の内容を見れる。
 
@@ -66,13 +66,13 @@ Gitのリポジトリは、プロジェクトをクローンしたときとか�
 ワーキングディレクトリに変更を入れ、`git add`、`git commit`をする中で、オブジェクト格納領域とインデックスがどう変化するかを図にした。
 
 <ul class="bxslider">
-  <li><img src="/images/git-repository/git_repo/1.PNG" /></li>
-  <li><img src="/images/git-repository/git_repo/2.PNG" /></li>
-  <li><img src="/images/git-repository/git_repo/3.PNG" /></li>
-  <li><img src="/images/git-repository/git_repo/4.PNG" /></li>
-  <li><img src="/images/git-repository/git_repo/5.PNG" /></li>
-  <li><img src="/images/git-repository/git_repo/6.PNG" /></li>
-  <li><img src="/images/git-repository/git_repo/7.PNG" /></li>
+  <li><img src="/images/git-repository/git_repo/スライド1.PNG" /></li>
+  <li><img src="/images/git-repository/git_repo/スライド2.PNG" /></li>
+  <li><img src="/images/git-repository/git_repo/スライド3.PNG" /></li>
+  <li><img src="/images/git-repository/git_repo/スライド4.PNG" /></li>
+  <li><img src="/images/git-repository/git_repo/スライド5.PNG" /></li>
+  <li><img src="/images/git-repository/git_repo/スライド6.PNG" /></li>
+  <li><img src="/images/git-repository/git_repo/スライド7.PNG" /></li>
 </ul>
 
 (タグオブジェクトについては次の節で。)
