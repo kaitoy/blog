@@ -13,9 +13,9 @@
     <meta property="og:url" content="http://tbd.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="I did some basic tests for Pcap4J 1.6.2 on Windows 10 Pro on VMware Player 7.1.0 using the following native packet capture libraries: Official WinPcap 4.1.3 Unofficial WinPcap based on libpcap 1.7.4 Win10Pcap 10.2 Npcap 0.0.5 This article explains each of the above libraries and tells the test results. Official WinPcap WinPcap is the most common native packet capture library developed based on libpcap. (WinPcap 4.1.3 is based on libpcap 1.0.0.) It&rsquo;s famous as a component of the de facto standard packet capture tool Wireshark.">
+    <meta property="og:description" content="Windows Containers で Pcap4J のコンテナをビルドしてみた話。 Windows Containersとは Windows Containersは、MicrosoftがDocker, Incと提携して開発しているコンテナ技術で、Windows版Dockerとも言われる機能。 今年リリースされる Windows Server 2016 に実装される予定で、その3つめのテクニカルプレビューである Windows Server 2016 Technical Preview 3 (2015/8/19公開)から評価できるようになった。 Windows Containersには次の二種類がある。 Windows Server Containers プロセスと名前空間の分離を実現する機能で、これによるコンテナはカーネルをホストと共有する。 つまり本家Dockerに近い形の機能。 Hyper-V Containers それぞれのコンテナを軽量化されたHyper-Vの仮想マシンっぽいものの上で動かす機能。 このコンテナの実行にはHyper-Vが必要。 Windows Server Containersよりコンテナ間の分離性が高く、カーネルの共有もしないが、そもそもそれってコンテナなの? どちらも同じようなインターフェースで操作でき、このインターフェースにはPowershellのコマンドレットとDockerコマンドの二種類がある。 より詳しくは、Microsoftによる解説や@ITのこの記事がわかりやすい。 また、Qiitaのこの記事がDockerとWindows Server Containersのアーキテクチャを詳細に説明していて面白い。 Windows Containersセットアップ まず、Windows 7 x64のノートPCにVMware Player 7.1.0を入れてWindows 10 x64用のVM(CPU2つとメモリ2.5GB)を作り、そこに2015/11/19に公開された Windows Server 2016 Technical Preview 4 をインストール。 コマンドでいろいろ設定するの慣れていないのでGUI(Desktop Experience)付きで。 (リモートデスクトップ使えばよかったのかもしれないけど。) ロケールは英語以外は問題が起きそうなので英語で。 このVMに、Microsoftのセットアップガイドと@ITの記事を参照しながらWindows Containersをセットアップ。 後者の記事によると、Hyper-V ContainersをVM上にセットアップするには、Nested VirtualizationというHyper-VのVMの上でHyper-Vを動かす機能を有効にしたホスト上のHyper-V VMを使わないといけないようなので、Windows Server Containersの方を試すことに。 Windows Server Containersをセットアップする手順は以下。 VM上でコマンドプロンプトを開いて powershell start-process powershell -Verb runas を実行。 青いパワーシェルウィンドウが開くのでそこで wget -uri https://aka.ms/tp4/Install-ContainerHost -OutFile C:\Install-ContainerHost.ps1 を実行。Install-ContainerHost.ps1 というスクリプトがダウンロードされる。 青いパワーシェルウィンドウで C:\Install-ContainerHost.ps1 を実行するとWindows Server Containersのインストールが始まる。 途中再起動が一回あって、ログインしたらインストール処理が再開した。 全部で2時間以上かかった。 仮想Ethernetスイッチ接続の追加に失敗したというエラーが出たけどなんなんだろう。 ipconfig の出力によると vEthernet というDockerのvirtual Ethernet bridgeにあたるものはちゃんと作られているみたいなんだけど。 Windows Server Containers味見 コマンドプロンプトで docker images を実行すると、既に windowsservercore というコンテナイメージが入っていることがわかる。 C:\Users\Administrator&gt;docker images REPOSITORY TAG IMAGE ID CREATED VIRTUAL SIZE windowsservercore 10.0.10586.0 6801d964fda5 11 weeks ago 0 B windowsservercore latest 6801d964fda5 11 weeks ago 0 B docker run -it windowsservercore cmd を実行すると windowsservercore からコンテナを起動してその上でコマンドプロンプトを起動できる。 コンテナの起動は非常に遅い。30秒以上かかる。これは今の時点での制限らしい。 docker login --help するとわかるが、コンテナイメージのリポジトリは https://registry-win-tp3.docker.io/v1/ という仮っぽいサーバにあって、docker search * を実行するとそこに登録されたイメージのリストが見れる。 C:\Users\Administrator&gt;docker search * NAME DESCRIPTION STARS OFFICIAL AUTOMATED microsoft/aspnet ASP.NET 5 framework installed in a Windows...">
     
-    <meta property="og:image" content="http://tbd.kaitoy.xyz/images/pcap4jlogo.png">
+    <meta property="og:image" content="http://tbd.kaitoy.xyz/images/pcap4j-docker.png">
     
     
     
@@ -64,6 +64,28 @@
     <div id="posts">
       
       <div class="row">
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="http://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="http://tbd.kaitoy.xyz/images/pcap4j-docker.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Fri, Jan 22, 2016</span>
+              </div>
+              <h2 class="title">Pcap4J Meets Windows Containers</h2>
+              <div class="summary">
+                Windows Containers で Pcap4J のコンテナをビルドしてみた話。 Windows Containersとは Windows Containersは、MicrosoftがDocker, Incと提携して開発しているコンテナ技術で、Windows版Dockerとも言われる機能。 今年リリースされる Windows Server 2016 に実装される予定で、その3つめのテクニカルプレビューである Windows Server 2016 Technical Preview 3 (2015/8/19公開)から評価できるようになった。 Windows Containersには次の二種類がある。 Windows Server Containers プロセスと名前空間の分離を実現する機能で、これによるコンテナはカーネルをホストと共有する。 つまり本家Dockerに近い形の機能。 Hyper-V Containers それぞれのコンテナを軽量化されたHyper-Vの仮想マシンっぽいものの上で動かす機能。 このコンテナの実行にはHyper-Vが必要。 Windows Server Containersよりコンテナ間の分離性が高く、カーネルの共有もしないが、そもそもそれってコンテナなの? どちらも同じようなインターフェースで操作でき、このインターフェースにはPowershellのコマンドレットとDockerコマンドの二種類がある。 より詳しくは、Microsoftによる解説や@ITのこの記事がわかりやすい。 また、Qiitaのこの記事がDockerとWindows Server Containersのアーキテクチャを詳細に説明していて面白い。 Windows Containersセットアップ まず、Windows 7 x64のノートPCにVMware Player 7.1.0を入れてWindows 10 x64用のVM(CPU2つとメモリ2.5GB)を作り、そこに2015/11/19に公開された Windows Server 2016 Technical Preview 4 をインストール。 コマンドでいろいろ設定するの慣れていないのでGUI(Desktop Experience)付きで。 (リモートデスクトップ使えばよかったのかもしれないけど。) ロケールは英語以外は問題が起きそうなので英語で。 このVMに、Microsoftのセットアップガイドと@ITの記事を参照しながらWindows Containersをセットアップ。 後者の記事によると、Hyper-V ContainersをVM上にセットアップするには、Nested VirtualizationというHyper-VのVMの上でHyper-Vを動かす機能を有効にしたホスト上のHyper-V VMを使わないといけないようなので、Windows Server Containersの方を試すことに。 Windows Server Containersをセットアップする手順は以下。 VM上でコマンドプロンプトを開いて powershell start-process powershell -Verb runas を実行。 青いパワーシェルウィンドウが開くのでそこで wget -uri https://aka.ms/tp4/Install-ContainerHost -OutFile C:\Install-ContainerHost.ps1 を実行。Install-ContainerHost.ps1 というスクリプトがダウンロードされる。 青いパワーシェルウィンドウで C:\Install-ContainerHost.ps1 を実行するとWindows Server Containersのインストールが始まる。 途中再起動が一回あって、ログインしたらインストール処理が再開した。 全部で2時間以上かかった。 仮想Ethernetスイッチ接続の追加に失敗したというエラーが出たけどなんなんだろう。 ipconfig の出力によると vEthernet というDockerのvirtual Ethernet bridgeにあたるものはちゃんと作られているみたいなんだけど。 Windows Server Containers味見 コマンドプロンプトで docker images を実行すると、既に windowsservercore というコンテナイメージが入っていることがわかる。 C:\Users\Administrator&gt;docker images REPOSITORY TAG IMAGE ID CREATED VIRTUAL SIZE windowsservercore 10.0.10586.0 6801d964fda5 11 weeks ago 0 B windowsservercore latest 6801d964fda5 11 weeks ago 0 B docker run -it windowsservercore cmd を実行すると windowsservercore からコンテナを起動してその上でコマンドプロンプトを起動できる。 コンテナの起動は非常に遅い。30秒以上かかる。これは今の時点での制限らしい。 docker login --help するとわかるが、コンテナイメージのリポジトリは https://registry-win-tp3.docker.io/v1/ という仮っぽいサーバにあって、docker search * を実行するとそこに登録されたイメージのリストが見れる。 C:\Users\Administrator&gt;docker search * NAME DESCRIPTION STARS OFFICIAL AUTOMATED microsoft/aspnet ASP.NET 5 framework installed in a Windows...
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
         
         
         
@@ -129,33 +151,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="http://tbd.kaitoy.xyz/2016/01/03/oop-alternative-to-utility-classes/" class="post post-topix">
+            <a href="http://tbd.kaitoy.xyz/2016/01/03/oop-alternative-to-utility-classes/" class="post">
               <header class="eyecatch text-center">
                 <img src="http://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Sun, Jan 3, 2016</span>
               </div>
-              <h2 class="title">オブジェクト指向プログラミングにおいてユーティリティクラスに代わるもの</h2>
-              <div class="summary">
-                このエントリでは、Yegor Bugayenkoによる記事、OOP Alternative to Utility Classesを紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 ユーティリティクラス(またはヘルパークラス)は、スタティックメソッドだけを持っていて、状態を内包しない「構造体」だ。 Apache CommonsのStringUtils、IOUtils、FileUtilsや、GuavaのIterables、Iterators、またJDK7のFilesはユーティリティクラスのいい例だ。 ユーティリティクラスはよく使われる共通機能を提供するので、この設計手法はJava(やC#、Rubyなど)の世界でとても人気だ。 要するに我々は、DRY原則に従い、重複を避けたい。 だから、共通コードをユーティリティクラスに入れて必要に応じて再利用する。 // これはひどい設計なので再利用しないように。 public class NumberUtils { public static int max(int a, int b) { return a &gt; b ? a : b; } } 実際、これはとても便利なテクニックだ!? ユーティリティクラスは悪だ しかし、オブジェクト指向の世界では、ユーティリティクラスはかなり悪い(酷いという人さえいるかもしれない)手法だ。 これについては多くの議論がある。 いくつか挙げると、Nick Malikの「ヘルパークラスは悪か?」、Simon Hartの「なぜヘルパー、シングルトン、ユーティリティクラスはだいたい間違っているのか」、Marshal Wardの「ユーティリティクラスを避ける」、Dhaval Dalalの「ユーティルクラスを殺せ!」、Rob Bagbyの「ヘルパークラスは問題の兆候」。 また、StackExchangeにはユーティリティクラスについての質問がいくつかある。 例えば、「ユーティリティクラスが悪なら、どこに共通コードを書けばいい?」とか、「ユーティリティクラスは悪」とか。 これらの主張は要するに、ユーティリティクラスは適切なオブジェクトではないということだ。 だから、オブジェクト指向の世界に適合しない。 ユーティリティクラスは、当時の人々が機能分割パラダイムに慣れていたために、手続き型言語から受け継がれた。 君がこの主張に同意し、ユーティリティクラスを使うのをやめたがっていると想定し、そいつをどのように適切なオブジェクトに置き換えるかを例を挙げながら教えよう。 手続き型の例 例えば、テキストファイルを読んで、行で分割し、各行をトリムして、その結果を別のファイルに保存したいとする。 これはApache CommonsのFileUtilsを使えばできる。 void transform(File in, File out) { Collection&lt;String&gt; src = FileUtils.readLines(in, &quot;UTF-8&quot;); Collection&lt;String&gt; dest = new ArrayList&lt;&gt;(src.size()); for (String line : src) { dest.add(line.trim()); } FileUtils.writeLines(out, dest, &quot;UTF-8&quot;); } ``` 上のコードはきれいに見える。 しかし、これは手続き型プログラミングであって、オブジェクト指向じゃない。 コードの各行で、データ(byteとbit)を操作し、コンピューターにどこからデータを取ってどこに書き込むかを明示的に指示している。 処理の手順を定義している。 オブジェクト指向な方法 オブジェクト指向パラダイムでは、オブジェクトをインスタンス化して合成すべきだ。 これはオブジェクトにオブジェクト自身のやり方でデータを管理させるためだ。 補足的なスタティックメソッドを呼ぶ代わりに、求めている挙動を提供できるオブジェクトを生成するべきだ。 public class Max implements Number { private final int a; private final int b; public Max(int x, int y) { this.a = x; this.b = y; } @Override public int intValue() { return this.a &gt; this.b ?
-              </div>
+              <h3 class="title">オブジェクト指向プログラミングにおいてユーティリティクラスに代わるもの</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         

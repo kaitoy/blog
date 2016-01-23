@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Pcap4J Meets Windows Containers | To Be Decided">
+    <meta property="og:url" content="http://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">
+    <meta property="og:description" content="Windows Containers で Pcap4J のコンテナをビルドしてみた話。 Windows Containersとは Windows Containersは、MicrosoftがDocker, Incと提携して開発しているコンテナ技術で、Windows版Dockerとも言われる機能。 今年リリースされる Windows Server 2016 に実装される予定で、その3つめのテクニカルプレビューである Windows Server 2016 Technical Preview 3 (2015/8/19公開)から評価できるようになった。 Windows Containersには次の二種類がある。 Windows Server Containers プロセスと名前空間の分離を実現する機能で、これによるコンテナはカーネルをホストと共有する。 つまり本家Dockerに近い形の機能。 Hyper-V Containers それぞれのコンテナを軽量化されたHyper-Vの仮想マシンっぽいものの上で動かす機能。 このコンテナの実行にはHyper-Vが必要。 Windows Server Containersよりコンテナ間の分離性が高く、カーネルの共有もしないが、そもそもそれってコンテナなの? どちらも同じようなインターフェースで操作でき、このインターフェースにはPowershellのコマンドレットとDockerコマンドの二種類がある。 より詳しくは、Microsoftによる解説や@ITのこの記事がわかりやすい。 また、Qiitaのこの記事がDockerとWindows Server Containersのアーキテクチャを詳細に説明していて面白い。 Windows Containersセットアップ まず、Windows 7 x64のノートPCにVMware Player 7.1.0を入れてWindows 10 x64用のVM(CPU2つとメモリ2.5GB)を作り、そこに2015/11/19に公開された Windows Server 2016 Technical Preview 4 をインストール。 コマンドでいろいろ設定するの慣れていないのでGUI(Desktop Experience)付きで。 (リモートデスクトップ使えばよかったのかもしれないけど。) ロケールは英語以外は問題が起きそうなので英語で。 このVMに、Microsoftのセットアップガイドと@ITの記事を参照しながらWindows Containersをセットアップ。 後者の記事によると、Hyper-V ContainersをVM上にセットアップするには、Nested VirtualizationというHyper-VのVMの上でHyper-Vを動かす機能を有効にしたホスト上のHyper-V VMを使わないといけないようなので、Windows Server Containersの方を試すことに。 Windows Server Containersをセットアップする手順は以下。 VM上でコマンドプロンプトを開いて powershell start-process powershell -Verb runas を実行。 青いパワーシェルウィンドウが開くのでそこで wget -uri https://aka.ms/tp4/Install-ContainerHost -OutFile C:\Install-ContainerHost.ps1 を実行。Install-ContainerHost.ps1 というスクリプトがダウンロードされる。 青いパワーシェルウィンドウで C:\Install-ContainerHost.ps1 を実行するとWindows Server Containersのインストールが始まる。 途中再起動が一回あって、ログインしたらインストール処理が再開した。 全部で2時間以上かかった。 仮想Ethernetスイッチ接続の追加に失敗したというエラーが出たけどなんなんだろう。 ipconfig の出力によると vEthernet というDockerのvirtual Ethernet bridgeにあたるものはちゃんと作られているみたいなんだけど。 Windows Server Containers味見 コマンドプロンプトで docker images を実行すると、既に windowsservercore というコンテナイメージが入っていることがわかる。 C:\Users\Administrator&gt;docker images REPOSITORY TAG IMAGE ID CREATED VIRTUAL SIZE windowsservercore 10.0.10586.0 6801d964fda5 11 weeks ago 0 B windowsservercore latest 6801d964fda5 11 weeks ago 0 B docker run -it windowsservercore cmd を実行すると windowsservercore からコンテナを起動してその上でコマンドプロンプトを起動できる。 コンテナの起動は非常に遅い。30秒以上かかる。これは今の時点での制限らしい。 docker login --help するとわかるが、コンテナイメージのリポジトリは https://registry-win-tp3.docker.io/v1/ という仮っぽいサーバにあって、docker search * を実行するとそこに登録されたイメージのリストが見れる。 C:\Users\Administrator&gt;docker search * NAME DESCRIPTION STARS OFFICIAL AUTOMATED microsoft/aspnet ASP.NET 5 framework installed in a Windows...">
+    
+    <meta property="og:image" content="http://tbd.kaitoy.xyz/images/pcap4j-docker.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      Pcap4J Meets Windows Containers | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="http://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="http://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/zenburn.min.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="http://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Fri, Jan 22, 2016</span>
+      <h2 class="title">Pcap4J Meets Windows Containers</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="http://tbd.kaitoy.xyz/images/pcap4j-docker.png" alt="Pcap4J Meets Windows Containers">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p><strong><a href="https://msdn.microsoft.com/en-us/virtualization/windowscontainers/about/about_overview">Windows Containers</a></strong> で <strong><a href="https://github.com/kaitoy/pcap4j">Pcap4J</a></strong> のコンテナをビルドしてみた話。</p>
+
+<h2 id="windows-containersとは">Windows Containersとは</h2>
+
+<p>Windows Containersは、Microsoftが<a href="https://www.docker.com/company">Docker, Inc</a>と提携して開発している<a href="http://www.sophia-it.com/content/%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E6%8A%80%E8%A1%93">コンテナ技術</a>で、Windows版<a href="https://www.docker.com/">Docker</a>とも言われる機能。
+今年リリースされる <strong>Windows Server 2016</strong> に実装される予定で、その3つめのテクニカルプレビューである <strong>Windows Server 2016 Technical Preview 3</strong> (2015/8/19公開)から評価できるようになった。</p>
+
+<p>Windows Containersには次の二種類がある。</p>
+
+<ul>
+<li><p>Windows Server Containers</p>
+
+<p>プロセスと名前空間の分離を実現する機能で、これによるコンテナはカーネルをホストと共有する。
+つまり本家Dockerに近い形の機能。</p></li>
+
+<li><p>Hyper-V Containers</p>
+
+<p>それぞれのコンテナを軽量化されたHyper-Vの仮想マシンっぽいものの上で動かす機能。
+このコンテナの実行にはHyper-Vが必要。
+Windows Server Containersよりコンテナ間の分離性が高く、カーネルの共有もしないが、そもそもそれってコンテナなの?</p></li>
+</ul>
+
+<p>どちらも同じようなインターフェースで操作でき、このインターフェースには<a href="https://msdn.microsoft.com/en-us/virtualization/windowscontainers/reference/ps_docker_comparison">PowershellのコマンドレットとDockerコマンドの二種類がある</a>。</p>
+
+<p>より詳しくは、<a href="https://msdn.microsoft.com/en-us/virtualization/windowscontainers/about/about_overview">Microsoftによる解説</a>や<a href="http://www.atmarkit.co.jp/ait/articles/1512/11/news022.html">@ITのこの記事</a>がわかりやすい。
+また、<a href="http://qiita.com/Arturias/items/3e82de8328067d0e03a3">Qiitaのこの記事</a>がDockerとWindows Server Containersのアーキテクチャを詳細に説明していて面白い。</p>
+
+<h2 id="windows-containersセットアップ">Windows Containersセットアップ</h2>
+
+<p>まず、Windows 7 x64のノートPCにVMware Player 7.1.0を入れてWindows 10 x64用のVM(CPU2つとメモリ2.5GB)を作り、そこに2015/11/19に公開された <strong>Windows Server 2016 Technical Preview 4</strong> をインストール。
+コマンドでいろいろ設定するの慣れていないのでGUI(Desktop Experience)付きで。
+(リモートデスクトップ使えばよかったのかもしれないけど。)
+ロケールは英語以外は問題が起きそうなので英語で。</p>
+
+<p>このVMに、<a href="https://msdn.microsoft.com/en-us/virtualization/windowscontainers/quick_start/inplace_setup">Microsoftのセットアップガイド</a>と<a href="http://www.atmarkit.co.jp/ait/articles/1512/14/news006.html">@ITの記事</a>を参照しながらWindows Containersをセットアップ。</p>
+
+<p>後者の記事によると、Hyper-V ContainersをVM上にセットアップするには、<a href="https://msdn.microsoft.com/en-us/virtualization/hyperv_on_windows/user_guide/nesting">Nested Virtualization</a>というHyper-VのVMの上でHyper-Vを動かす機能を有効にしたホスト上のHyper-V VMを使わないといけないようなので、Windows Server Containersの方を試すことに。</p>
+
+<p>Windows Server Containersをセットアップする手順は以下。</p>
+
+<ol>
+<li>VM上でコマンドプロンプトを開いて <code>powershell start-process powershell -Verb runas</code> を実行。</li>
+<li>青いパワーシェルウィンドウが開くのでそこで <code>wget -uri https://aka.ms/tp4/Install-ContainerHost -OutFile C:\Install-ContainerHost.ps1</code> を実行。<code>Install-ContainerHost.ps1</code> というスクリプトがダウンロードされる。</li>
+<li>青いパワーシェルウィンドウで <code>C:\Install-ContainerHost.ps1</code> を実行するとWindows Server Containersのインストールが始まる。</li>
+</ol>
+
+<p><img src="/images/pcap4j-meets-windows-containers/install.png" alt="install.png" />
+</p>
+
+<p><br></p>
+
+<p>途中再起動が一回あって、ログインしたらインストール処理が再開した。
+全部で2時間以上かかった。</p>
+
+<p>仮想Ethernetスイッチ接続の追加に失敗したというエラーが出たけどなんなんだろう。
+<code>ipconfig</code> の出力によると <code>vEthernet</code> というDockerの<a href="tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/#docker-network">virtual Ethernet bridge</a>にあたるものはちゃんと作られているみたいなんだけど。</p>
+
+<h2 id="windows-server-containers味見">Windows Server Containers味見</h2>
+
+<p>コマンドプロンプトで <code>docker images</code> を実行すると、既に <code>windowsservercore</code> というコンテナイメージが入っていることがわかる。</p>
+
+<pre><code class="language-cmd">C:\Users\Administrator&gt;docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+windowsservercore   10.0.10586.0        6801d964fda5        11 weeks ago        0 B
+windowsservercore   latest              6801d964fda5        11 weeks ago        0 B
+</code></pre>
+
+<p><code>docker run -it windowsservercore cmd</code> を実行すると <code>windowsservercore</code> からコンテナを起動してその上でコマンドプロンプトを起動できる。
+コンテナの起動は非常に遅い。30秒以上かかる。これは今の時点での<a href="https://msdn.microsoft.com/virtualization/windowscontainers/about/work_in_progress#windows-containers-start-slowly">制限</a>らしい。</p>
+
+<p><code>docker login --help</code> するとわかるが、コンテナイメージのリポジトリは <code>https://registry-win-tp3.docker.io/v1/</code> という仮っぽいサーバにあって、<code>docker search *</code> を実行するとそこに登録されたイメージのリストが見れる。</p>
+
+<pre><code class="language-cmd">C:\Users\Administrator&gt;docker search *
+NAME                 DESCRIPTION                                     STARS     OFFICIAL   AUTOMATED
+microsoft/aspnet     ASP.NET 5 framework installed in a Windows...   1         [OK]       [OK]
+microsoft/django     Django installed in a Windows Server Core ...   1                    [OK]
+microsoft/dotnet35   .NET 3.5 Runtime installed in a Windows Se...   1         [OK]       [OK]
+microsoft/golang     Go Programming Language installed in a Win...   1                    [OK]
+microsoft/httpd      Apache httpd installed in a Windows Server...   1                    [OK]
+microsoft/iis        Internet Information Services (IIS) instal...   1         [OK]       [OK]
+microsoft/mongodb    MongoDB installed in a Windows Server Core...   1                    [OK]
+microsoft/mysql      MySQL installed in a Windows Server Core b...   1                    [OK]
+microsoft/nginx      Nginx installed in a Windows Server Core b...   1                    [OK]
+microsoft/node       Node installed in a Windows Server Core ba...   1                    [OK]
+microsoft/php        PHP running on Internet Information Servic...   1                    [OK]
+microsoft/python     Python installed in a Windows Server Core ...   1                    [OK]
+microsoft/rails      Ruby on Rails installed in a Windows Serve...   1                    [OK]
+microsoft/redis      Redis installed in a Windows Server Core b...   1                    [OK]
+microsoft/ruby       Ruby installed in a Windows Server Core ba...   1                    [OK]
+microsoft/sqlite     SQLite installed in a Windows Server Core ...   1                    [OK]
+</code></pre>
+
+<p>これらはちゃんと <code>docker pull</code> して使える。
+けど多分 <code>docker push</code> はできない。</p>
+
+<h2 id="pcap4j-on-windows-container">Pcap4J on Windows Container</h2>
+
+<p>結論から言うと、以下の <code>Dockerfile</code> を書いて <code>docker build</code> してPcap4Jをコンテナ上でビルドするところまではできたが、それを実行してもNIFが全く検出できず、よってパケットキャプチャも実行できなかった。</p>
+
+<pre><code class="language-text">#
+# Dockerfile for Pcap4J on Windows
+#
+
+FROM windowsservercore:latest
+MAINTAINER Kaito Yamada &lt;kaitoy@pcap4j.org&gt;
+
+# Install Chocolatey.
+RUN mkdir C:\pcap4j
+WORKDIR /pcap4j
+ADD https://chocolatey.org/install.ps1 install.ps1
+RUN powershell .\install.ps1
+
+# Install dependencies.
+RUN choco install -y nmap maven git jdk7
+
+# Build Pcap4J.
+RUN git clone git://github.com/kaitoy/pcap4j.git
+WORKDIR pcap4j
+RUN powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;mvn '-Dmaven.repo.local=C:\pcap4j\repo' -P distribution-assembly install 2&gt;&amp;1 | add-content -Path build.log -pass
+
+# Collect libraries.
+RUN mkdir bin &amp;&amp; \
+    cd pcap4j-packetfactory-static &amp;&amp; \
+    mvn -Dmaven.repo.local=C:\pcap4j\repo -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeScope=compile dependency:copy-dependencies &amp;&amp; \
+    mvn -Dmaven.repo.local=C:\pcap4j\repo -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeGroupIds=ch.qos.logback dependency:copy-dependencies &amp;&amp; \
+    cd ../pcap4j-distribution &amp;&amp; \
+    mvn -Dmaven.repo.local=C:\pcap4j\repo -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeArtifactIds=pcap4j-packetfactory-static,pcap4j-sample dependency:copy-dependencies
+
+# Generate sample script. (C:\pcap4j\pcap4j\bin\capture.bat)
+RUN echo @echo off &gt; bin\capture.bat &amp;&amp; \
+    echo &quot;%JAVA_HOME%\bin\java&quot; -cp C:\pcap4j\pcap4j\bin\pcap4j-core.jar;C:\pcap4j\pcap4j\bin\pcap4j-packetfactory-static.jar;C:\pcap4j\pcap4j\bin\pcap4j-sample.jar;C:\pcap4j\pcap4j\bin\jna.jar;C:\pcap4j\pcap4j\bin\slf4j-api.jar;C:\pcap4j\pcap4j\bin\logback-classic.jar;C:\pcap4j\pcap4j\bin\logback-core.jar org.pcap4j.sample.GetNextPacketEx &gt;&gt; bin\capture.bat
+</code></pre>
+
+<p>この <code>Dockerfile</code> でやっていることはだいたい以下。</p>
+
+<ol>
+<li><a href="https://chocolatey.org/">Chocolatey</a>をインストール。</li>
+<li><a href="https://nmap.org/">Nmap</a>と<a href="https://maven.apache.org/">Maven</a>と<a href="https://git-scm.com/">Git</a>とJDK7をChocolateyでインストール。</li>
+<li>Pcap4Jのソースを <code>git clone</code> でダウンロード。</li>
+<li>MavenでPcap4Jのビルドを実行。</li>
+<li>Pcap4Jのサンプルクラスを実行するスクリプトを生成。</li>
+</ol>
+
+<p>2でNmapは<a href="http://www.winpcap.org/">WinPcap</a>の代わりに入れている。
+GUI無しの環境でWinPcapをChocolateyで入れようとしても、エラーが発生したりしなかったりして、しかもどちらにせよ正常に入らない。
+これはWinPcapのインストーラがサイレントインストールをサポートしていないから。
+Nmapはサイレントインストールできて、インストール処理中にWinPcapを入れてくれるのでありがたい。</p>
+
+<p>ビルドしてみると、各ステップの実行(多分レイヤの作成)がすごく遅い。
+<code>RUN choco install -y nmap maven git jdk7</code> の後、次のコマンド実行まで30分くらい固まった。</p>
+
+<p>また、<code>Dockerfile</code> を書いていて以下のバグに悩まされた。</p>
+
+<ul>
+<li><p><code>WORKDIR</code> や <code>ENV</code> で環境変数が展開されない。</p>
+
+<pre><code class="language-cmd">  ENV hoge %tmp%
+  RUN echo %hoge%
+</code></pre>
+
+<p>とすると <code>%tmp%</code> と表示される。</p></li>
+
+<li><p><code>WORKDIR</code> や <code>ENV</code> や <code>COPY</code> でパスの区切りは <code>\</code> 一つだと消えちゃうので <code>\\</code> か <code>/</code> を使わないといけない。</p></li>
+
+<li><p><code>WORKDIR</code> や <code>COPY</code> のコンテナ内のパスに絶対パスを指定したい場合、<code>C:\hoge</code>、<code>C:/hoge</code>、<code>C:\\hoge</code>、いずれもダメ。
+以下の様なエラーが出る。</p>
+
+<pre><code class="language-text">  GetFileAttributesEx \\?\Volume{67df3c84-a0ef-11e5-9a63-000c2976fbc3}\C:: The filename, directory name, or volume label syntax is incorrect.
+</code></pre>
+
+<p>UNIX式に <code>/hoge</code> とするといける。C以外のドライブを指定したいときはどうするんだろう。</p></li>
+
+<li><p>コンテナ内で <code>C:\</code> 直下に <code>.</code> で始まる名前のフォルダ作ると次のステップで消えてる。
+<code>.</code> で始まる名前のファイルは <code>C:\</code> 直下じゃなくても次のステップで消えてる。
+Mavenのリポジトリがデフォルトで <code>C:\.m2\</code> 以下にできるのではまる。</p></li>
+</ul>
+
+<p>これらのバグを乗り越えて頑張って <code>Dockerfile</code> 書いたのに、NIFの検出すらできなかったという哀しい結果。
+<code>pcap_lookupdev</code> が以下のエラーを吐いて <code>NULL</code> を返してきてたので、なんとなくコンテナのNIFに長すぎる名前がついていて検出失敗しているんじゃないかと。</p>
+
+<pre><code class="language-text">PacketGetAdapterNames: The data area passed to a system call is too small. (122)
+</code></pre>
+
+<p>因みにコンテナ内から見えるNIFは一つで、以下の構成。</p>
+
+<pre><code class="language-text">Ethernet adapter vEthernet (Virtual Switch-d206475ce13256766b9a16383540a740fe31da8d20499349fe98693393a8490f-0):
+
+   Connection-specific DNS Suffix  . : localdomain
+   Link-local IPv6 Address . . . . . : fe80::4086:d11e:5e6:28fe%26
+   IPv4 Address. . . . . . . . . . . : 172.16.0.2
+   Subnet Mask . . . . . . . . . . . : 255.240.0.0
+   Default Gateway . . . . . . . . . : 172.16.0.1
+</code></pre>
+
+<p>コンテナ内から <code>www.google.com</code> とかにping届いたので、このNIFはちゃんと働いていはずなんだけどPcap4Jから見えない。</p>
+
+<p><br>
+<br></p>
+
+<p>後日上記 <code>Dockerfile</code> でビルドしてみたら、<code>RUN powershell .\install.ps1</code> で以下のエラーが出るようになった。</p>
+
+<pre><code class="language-text">The request was aborted: Could not create SSL/TLS secure channel.
+</code></pre>
+
+<p>install.ps1の中でChocolateyのインストーラをHTTPSで取ってこようとしてエラーになっている模様。
+Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/windowscontainers/about/work_in_progress#https-and-tls-are-not-supported">ドキュメント</a>や<a href="https://social.msdn.microsoft.com/Forums/en-US/c0d93dda-37b7-4a2c-9a78-55e4ba0b88f5/https-support-in-windowsservercore-image?forum=windowscontainers">フォーラム</a>にHTTPSが使えないという制限が載っているけどこのせい?
+ちょっと前にやったときは同じ <code>Dockerfile</code> でビルドできたはずなんだけど。</p>
+
+<p>試しに以下の処理を挟んでChocolateyのインストーラをHTTPで取ってくるようにしたらChocolateyのインストールまではできた。</p>
+
+<pre><code class="language-cmd">RUN powershell $(Get-Content install.ps1) -replace \&quot;https\&quot;,\&quot;http\&quot; &gt; install.mod.ps1
+</code></pre>
+
+<p>けど <code>choco install</code> がHTTPS使うので結局駄目だった。</p>
+
+<p>もう面倒なのでHTTPSの制限がとれるのをまとう。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=http%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f22%2fpcap4j-meets-windows-containers%2f&t=Pcap4J%20Meets%20Windows%20Containers" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f22%2fpcap4j-meets-windows-containers%2f&text=Pcap4J%20Meets%20Windows%20Containers&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f22%2fpcap4j-meets-windows-containers%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=http%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f22%2fpcap4j-meets-windows-containers%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f22%2fpcap4j-meets-windows-containers%2f&title=Pcap4J%20Meets%20Windows%20Containers" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="http://tbd.kaitoy.xyz/tags/pcap4j"><i class="fa fa-tags"></i> pcap4j </a>
+                
+                <a href="http://tbd.kaitoy.xyz/tags/docker"><i class="fa fa-tags"></i> docker </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/">Pcap4J with Four Native Libraries on Windows 10</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2016/01/10/pcap-ng-support-in-pcap4j/">pcap-ng support in Pcap4J</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/12/03/software-quality-award-2015/">Pcap4JがSoftware Quality Award 2015で入賞</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/">Step by Step to Add a Protocol Support to Pcap4J (Part 2)</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/08/09/step-by-step-to-add-a-protocol-support-to-pcap4j-1/">Step by Step to Add a Protocol Support to Pcap4J (Part 1)</a></li>
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></li>
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="http://tbd.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/">
+                  Pcap4J with Four Native Libraries on Windows 10
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2016  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="http://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="http://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+
