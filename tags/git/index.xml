@@ -113,6 +113,8 @@
 
 &lt;p&gt;よって、&lt;code&gt;git reset &amp;lt;コミット&amp;gt;&lt;/code&gt;は普通コミットを削除したいときに使われる。
 使われはするが、このコマンド自体がコミットを削除するわけではなくて、あくまで&lt;code&gt;HEAD&lt;/code&gt;を付け替えるコマンドであることを覚えていた方がいざというときに助かる。&lt;/p&gt;
+
+&lt;p&gt;因みに上のスライドでやった操作は、&lt;code&gt;git commit --amend&lt;/code&gt;がやることとほぼ同じ。&lt;/p&gt;
 </description>
         </item>
       
@@ -335,16 +337,16 @@ error: failed to push some refs to &#39;file://C:/Users/Kaito/Desktop/master&#39
           <guid>http://tbd.kaitoy.xyz/2015/12/28/git-merge/</guid>
           <description>
 
-&lt;p&gt;このエントリでは、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;が提供するマージのための機能の内、主なもの4つ、&lt;strong&gt;普通のマージ&lt;/strong&gt;、&lt;strong&gt;リベース&lt;/strong&gt;、&lt;strong&gt;ファストフォワードマージ&lt;/strong&gt;、&lt;strong&gt;チェリーピック&lt;/strong&gt; について図解する。
+&lt;p&gt;このエントリでは、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;が提供するマージのための機能の内、主なもの4つ、&lt;strong&gt;真のマージ&lt;/strong&gt;、&lt;strong&gt;リベース&lt;/strong&gt;、&lt;strong&gt;ファストフォワードマージ&lt;/strong&gt;、&lt;strong&gt;チェリーピック&lt;/strong&gt; について図解する。
 ここでマージとは、とあるブランチのコミットが入れた修正を別のブランチに取り込むこととする。&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://tbd.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を事前に呼んでおくとわかりやすいかもしれない。&lt;/p&gt;
 
 &lt;p&gt;ここで説明するマージは全てローカルリポジトリ内のブランチを操作対象とする。&lt;/p&gt;
 
-&lt;h2 id=&#34;普通のマージ&#34;&gt;普通のマージ&lt;/h2&gt;
+&lt;h2 id=&#34;真のマージ&#34;&gt;真のマージ&lt;/h2&gt;
 
-&lt;p&gt;普通のマージは、複数のブランチでそれぞれ開発が進んでいて、つまりそれぞれのコミットグラフが伸びている場合に、それらの修正を統合するときに実行する。
+&lt;p&gt;真のマージは、複数のブランチでそれぞれ開発が進んでいて、つまりそれぞれのコミットグラフが伸びている場合に、それらの修正を統合するときに実行する。
 マージするブランチはいくつでも指定できる。&lt;/p&gt;
 
 &lt;p&gt;基本的なコマンドは&lt;code&gt;git merge &amp;lt;ブランチ(複数可)&amp;gt;&lt;/code&gt;。&lt;/p&gt;
@@ -354,7 +356,7 @@ error: failed to push some refs to &#39;file://C:/Users/Kaito/Desktop/master&#39
 
 &lt;p&gt;このマージはマージコミットを追加するだけであり、既存のコミットを一切変更しないことを認識しておくべし。&lt;/p&gt;
 
-&lt;p&gt;以下、普通のマージの実行例を図示する。&lt;/p&gt;
+&lt;p&gt;以下、真のマージの実行例を図示する。&lt;/p&gt;
 
 &lt;ul class=&#34;bxslider&#34;&gt;
   &lt;li&gt;&lt;img src=&#34;http://tbd.kaitoy.xyz/images/git-merge/git_merge/スライド1.PNG&#34; /&gt;&lt;/li&gt;
@@ -371,9 +373,9 @@ error: failed to push some refs to &#39;file://C:/Users/Kaito/Desktop/master&#39
 &lt;p&gt;基本的なコマンドは&lt;code&gt;git rebase &amp;lt;ブランチ&amp;gt;&lt;/code&gt;。
 このコマンドは、カレントブランチの起点を指定したブランチが指すコミットに移動する。&lt;/p&gt;
 
-&lt;p&gt;この操作に成功すると、カレントブランチで作ったコミットは消え、それと同等の修正をもたらす別のコミットが移動先のコミットを起点として作成される。&lt;/p&gt;
+&lt;p&gt;この操作に成功すると、カレントブランチで作ったコミットは(実質)消え、それと同等の修正をもたらす別のコミットが移動先のコミットを起点として作成される。(※1)&lt;/p&gt;
 
-&lt;p&gt;リベースは既存のコミットを消し、コミットグラフを変更てしまうということを認識しておくべし。&lt;/p&gt;
+&lt;p&gt;リベースは既存のコミットを消し、コミットグラフを変更してしまうということを認識しておくべし。&lt;/p&gt;
 
 &lt;p&gt;以下、リベースの簡単な実行例を図示する。&lt;/p&gt;
 
@@ -387,6 +389,19 @@ error: failed to push some refs to &#39;file://C:/Users/Kaito/Desktop/master&#39
 &lt;p&gt;上のスライドのように単純なコミットグラフならいいが、リベースするブランチが分岐していたりするとややこしいことが起き得る。
 そういうケースには&lt;a href=&#34;https://www.oreilly.co.jp/books/9784873114408/&#34;&gt;O&amp;rsquo;Reillyの蝙蝠本&lt;/a&gt;などでよく勉強してから臨むべし。&lt;/p&gt;
 
+&lt;p&gt;(※1: より正確には&lt;code&gt;git rebase &amp;lt;ブランチ&amp;gt;&lt;/code&gt;は、&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;カレントブランチで作った各コミットが入れた変更をパッチにして、&lt;/li&gt;
+&lt;li&gt;それを古い順に一つずつ、指定したブランチが指すコミットに適用しながら新しいコミットを作り、&lt;/li&gt;
+&lt;li&gt;カレントブランチが指しているコミットを&lt;code&gt;ORIG_HEAD&lt;/code&gt;で指し、&lt;/li&gt;
+&lt;li&gt;カレントブランチを最新のコミットを指すよう更新する。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;2で、指定したブランチが既にチェリーピック(後述)などでカレントブランチのとあるコミットの変更を取り込んでいた場合、そのコミットのパッチの適用はスキップされ、そのパッチによるコミットも作られない。&lt;/p&gt;
+
+&lt;p&gt;また、上でカレントブランチのコミットは実質消えると書いたが、当面はオブジェクトが本当に消えるわけではないし、&lt;code&gt;ORIG_HEAD&lt;/code&gt;とかが指しているのでもどることもできる。)&lt;/p&gt;
+
 &lt;h2 id=&#34;ファストフォワードマージ&#34;&gt;ファストフォワードマージ&lt;/h2&gt;
 
 &lt;p&gt;ファストフォワードマージは、マージ先のコミットが全てマージ元に含まれているときに使えるマージ。
@@ -395,7 +410,7 @@ error: failed to push some refs to &#39;file://C:/Users/Kaito/Desktop/master&#39
 このマージを実行した後は、コミットグラフは一直線になり、ブランチを作らずにコミットを作った場合と同様になる。&lt;/p&gt;
 
 &lt;p&gt;このマージは、&lt;code&gt;git merge &amp;lt;ブランチ&amp;gt;&lt;/code&gt;を実行したときに可能であれば実行される。
-(でなければ普通のマージが実行される。オプションで選択することもできる。)&lt;/p&gt;
+(でなければ真のマージが実行される。オプションで選択することもできる。)&lt;/p&gt;
 
 &lt;p&gt;以下にファストフォワードマージの例を図示する。&lt;/p&gt;
 
