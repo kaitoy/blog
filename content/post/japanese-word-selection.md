@@ -64,7 +64,7 @@ __Package Generator__が起動して、作成するパッケージの名前を�
     * デフォルトで「__パッケージ名.coffee__」がメインスクリプト。
     * Package Generatorが作る「__パッケージ名-view.coffee__」というスクリプトは、Atomの画面に新たなペインを追加したいときとかに書くコードのサンプル。
 * menus: ツールバーとかコンテクストメニューに追加するメニューを定義するcsonファイルを入れる。
-* spec: パッケージのテストを入れる。テストは[Jasmine](jasmine.github.io/)を使って書く。
+* spec: パッケージのテストを入れる。テストは[Jasmine](http://jasmine.github.io/)を使って書く。
 * styles: パッケージが追加するペインとかに独自のスタイルを指定したいときとかに[Less](http://less-ja.studiomohawk.com/)かCSSを入れる。
 * package.json: パッケージの名前とか依存関係とかを定義するファイル。
 
