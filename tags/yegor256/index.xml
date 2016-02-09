@@ -6,8 +6,174 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2016</rights>
-    <updated>2016-01-11 14:41:29 -0700 MST</updated>
+    <updated>2016-02-09 00:34:41 -0700 MST</updated>
 
+    
+      
+        <item>
+          <title>継続的インテグレーションは死んだ</title>
+          <link>http://tbd.kaitoy.xyz/2016/02/09/continuous-integration-is-dead/</link>
+          <pubDate>Tue, 09 Feb 2016 00:34:41 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>http://tbd.kaitoy.xyz/2016/02/09/continuous-integration-is-dead/</guid>
+          <description>
+
+&lt;p&gt;このエントリでは、Yegor Bugayenkoによる記事、&lt;a href=&#34;http://www.yegor256.com/2014/10/08/continuous-integration-is-dead.html&#34;&gt;Continuous Integration is Dead&lt;/a&gt;を紹介する。
+(Yegorから和訳と転載の許可は得た。)
+以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;数日前、「&lt;a href=&#34;http://devops.com/blogs/continuous-integration-doesnt-work/&#34;&gt;なぜ継続的インテグレーションは機能しないのか&lt;/a&gt;」という私の記事が&lt;a href=&#34;http://www.devops.com/&#34;&gt;DevOps.com&lt;/a&gt;に公開された。
+それとほぼ同じ日に、Twitterで非常に否定的な批評が送られてきた。&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;継続的インテグレーションが機能しないとはどういうことだ。この人気なすばらしいアイデアが。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;その求めてもない質問への返事をここに書く。&lt;/p&gt;
+
+&lt;p&gt;私はこの分野に関して多少の経験があるが、それに基いた論拠は挙げない。
+代わりにロジックだけを頼りにする。&lt;/p&gt;
+
+&lt;p&gt;ところで、私には50以上のオープンソースや営利プロジェクトで5年間Apache Continuum、Hudson、CruiseControl、Jenkinsを利用した経験がある。
+さらに、数年前&lt;a href=&#34;http://www.fazend.com/&#34;&gt;fazend.com&lt;/a&gt;(2013年に&lt;a href=&#34;http://www.rultor.com/&#34;&gt;rultor.com&lt;/a&gt;に改名)というホスト型継続的インテグレーションサービスを開発した。
+現在&lt;a href=&#34;http://www.travis-ci.org/&#34;&gt;Travis&lt;/a&gt;と&lt;a href=&#34;http://www.appveyor.com/&#34;&gt;AppVeyor&lt;/a&gt;のアクティブユーザでもある。&lt;/p&gt;
+
+&lt;h2 id=&#34;継続的インテグレーションはどう機能すべきか&#34;&gt;継続的インテグレーションはどう機能すべきか&lt;/h2&gt;
+
+&lt;p&gt;考え方はシンプルで明確だ。
+&lt;code&gt;master&lt;/code&gt;ブランチ(Subversionなら&lt;code&gt;/trunk&lt;/code&gt;)に新しくコミットをする度に、継続的インテグレーションサーバ(またはサービス)はプロダクト全体のビルドを試みる。
+「ビルド」というのはコンパイル、ユニットテスト、統合テスト、品質解析&lt;a href=&#34;http://www.yegor256.com/2014/06/21/casperjs-with-maven.html&#34;&gt;など&lt;/a&gt;を意味する。&lt;/p&gt;
+
+&lt;p&gt;その結果は「成功」か「失敗」だ。
+もし成功だったら「ビルドがクリーン」であると言う。
+もし失敗だったら、「ビルドが壊れている」と言う。
+通常、ビルドが壊れるのは、以前通っていたユニットテストを通らなくするような新しいコードをだれかがコミットしたからだ。&lt;/p&gt;
+
+&lt;p&gt;これは問題の技術的な面だ。
+この部分はいつも上手くいく。
+まあ、依存が直書きされてるとか、ビルド環境が十分分離されていないとか、ビルドの並列性が完全じゃないとか、そういう問題はあるかもしれないが、この記事はそれらについてではない。
+アプリケーションが上手く書かれていてユニットテストが安定しているなら、継続的インテグレーションは簡単だ。
+技術的には。&lt;/p&gt;
+
+&lt;p&gt;組織的な面を見てみよう。&lt;/p&gt;
+
+&lt;p&gt;継続的インテグレーションというのは、ビルドを実行するサーバだけを指すのではなく、上手く機能すべき管理的/組織的プロセスだ。
+プロセスが上手く機能するとは、Jez Humbleが「&lt;a href=&#34;http://www.amazon.com/gp/product/0321601912/ref=as_li_tl?ie=UTF8&amp;amp;camp=1789&amp;amp;creative=390957&amp;amp;creativeASIN=0321601912&amp;amp;linkCode=as2&amp;amp;tag=yegor256com-20&amp;amp;linkId=GKWBKGZUJGJLFMHE&#34;&gt;継続的デリバリー: ビルド、テスト、デプロイの自動化による確実なソフトウェアリリース&lt;/a&gt;」の55ページで言っていることそのものを意味する。&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;もしビルドが失敗したら、開発チームは何をやっていたとしてもそれを中断して、そのビルドの問題を速やかに直す。これが重要だ。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;これが上手くいかず、上手くできないことだ。&lt;/p&gt;
+
+&lt;h2 id=&#34;誰がこれを必要としているのか&#34;&gt;誰がこれを必要としているのか&lt;/h2&gt;
+
+&lt;p&gt;既に述べた通り、継続的インテグレーションとは、開発チーム全体を止めて壊れたビルドを修正させることだ。
+繰り返すが、ビルドが壊れたら直ちに、それを修正し、ビルドを安定した状態に戻すコミットを入れることに全員が集中すべきだ。&lt;/p&gt;
+
+&lt;p&gt;ここでひとつ疑問が生じる。誰が、活動中のチーム内の誰がこれを必要としているのだろうか?&lt;/p&gt;
+
+&lt;p&gt;一刻も早く新しい機能をリリースしたいプロダクトオーナ?
+または、締め切りに責任を持つ&lt;a href=&#34;http://www.yegor256.com/2015/09/22/micromanagement.html&#34;&gt;プロジェクトマネージャ&lt;/a&gt;かもしれない。
+もしくは、他の誰かが作りこんだバグをプレッシャーを受けながら修正すること嫌うプログラマかもしれない。&lt;/p&gt;
+
+&lt;p&gt;誰がこの継続的インテグレーションを好み、誰が必要としているのか?&lt;/p&gt;
+
+&lt;p&gt;誰でもない。&lt;/p&gt;
+
+&lt;h2 id=&#34;実際に何が起こるのか&#34;&gt;実際に何が起こるのか&lt;/h2&gt;
+
+&lt;p&gt;教えよう。
+私は何度も見たことがある。
+シナリオはいつも同じだ。
+継続的インテグレーションのビルドステータスは単に無視されるようになる。
+ビルドがクリーンか壊れているかにかかわらず。
+そして以前のやり方が継続される。&lt;/p&gt;
+
+&lt;p&gt;Jez Humbleが推奨するように開発を止めて問題に対応したりしない。&lt;/p&gt;
+
+&lt;p&gt;代わりに、継続的インテグレーションサーバから来る情報を無視する。&lt;/p&gt;
+
+&lt;p&gt;しばらくして、次の日かもしれないし月曜日かもしれないが、空いた時間を探してビルドの修正に取り組む。
+これは単に、ダッシュボードの赤いボタンが嫌で緑に変えたいからだ。&lt;/p&gt;
+
+&lt;h2 id=&#34;規律についてはどうか&#34;&gt;規律についてはどうか&lt;/h2&gt;
+
+&lt;p&gt;そう、これには別の見方もある。
+チームに規律を徹底させることもできる。
+ビルドは常にクリーンで、壊した人は何らかの&lt;a href=&#34;http://www.yegor256.com/2016/01/05/how-to-punish-employees.html&#34;&gt;罰&lt;/a&gt;を受けるという厳格なルールを設けることができる。&lt;/p&gt;
+
+&lt;p&gt;これを試すとなると、恐怖駆動型開発を実施することになる。
+プログラマは、ビルドを失敗させたら少なくとも&lt;a href=&#34;http://programmers.stackexchange.com/questions/79041&#34;&gt;謝罪&lt;/a&gt;しなければならなくなるため、リポジトリへのコミットを恐れるようになる。&lt;/p&gt;
+
+&lt;p&gt;この場合の厳格な規律(私は大好きだが)は、単に状況を悪化させる。
+開発プロセス全体が遅くなり、プログラマはビルドを壊さないように自身のコードをできるだけ長い間手元に保持する。
+いざコミットするとなった時、変更は巨大になっていて、マージは非常に難しいか、時に不可能になる。&lt;/p&gt;
+
+&lt;p&gt;結果、プログラマが書いた多くのコードがコミットされること無く捨てられる。
+あの恐怖因子のせいだ。&lt;/p&gt;
+
+&lt;h2 id=&#34;ok-解決策は&#34;&gt;OK。解決策は?&lt;/h2&gt;
+
+&lt;p&gt;それについては以前書いた。
+「&lt;a href=&#34;http://www.yegor256.com/2014/07/21/read-only-master-branch.html&#34;&gt;読み取り専用マスタブランチ&lt;/a&gt;」だ。&lt;/p&gt;
+
+&lt;p&gt;これは単純で、&lt;code&gt;master&lt;/code&gt;へのマージを一切禁止し、誰でも実行できるスクリプトを作る。
+このスクリプトがマージ、テスト、コミットを実行する。
+このスクリプトには例外が全く無い。
+どんなブランチであっても、たった一つのユニットテストに失敗しただけでも、ブランチ全体が却下される。&lt;/p&gt;
+
+&lt;p&gt;言い換えると、&lt;code&gt;master&lt;/code&gt;にそのコードが入る前に赤いフラグを揚げる。&lt;/p&gt;
+
+&lt;p&gt;これで全ての問題が解決する。&lt;/p&gt;
+
+&lt;p&gt;第一に、ビルドは常にクリーンだ。
+ビルドをクリーンに保たないコードは誰もコミットできないので、単純に言ってビルドを壊すことはできない。&lt;/p&gt;
+
+&lt;p&gt;第二に、何かを壊すという恐怖が無い。
+単に技術的に壊せないのだ。
+マージスクリプトから却下されることしかできない。
+その場合、エラーを修正してスクリプトに再挑戦を命じる。
+誰もこのやりとりを見ていないので、謝罪する必要が無い。
+恐怖因子は消えた。&lt;/p&gt;
+
+&lt;p&gt;ところで、君のプロジェクトで&lt;a href=&#34;http://www.rultor.com/&#34;&gt;rultor.com&lt;/a&gt;を利用して、この「&lt;a href=&#34;http://www.yegor256.com/2014/07/21/read-only-master-branch.html&#34;&gt;読み取り専用マスタブランチ&lt;/a&gt;」原則を徹底してみてくれ。&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;embed video-player&#34; style=&#34;text-align: center&#34;&gt;
+  &lt;iframe class=&#34;youtube-player&#34; type=&#34;text/html&#34; width=&#34;320&#34; height=&#34;193&#34; src=&#34;http://www.youtube.com/embed/3IXk5yEJMIs&#34; allowfullscreen frameborder=&#34;0&#34;&gt;
+  &lt;/iframe&gt;
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;以上がYegorの記事。&lt;/p&gt;
+
+&lt;p&gt;CIは死んだというセンセーショナルなタイトルではあるが、&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E7%A5%9E%E3%81%AF%E6%AD%BB%E3%82%93%E3%81%A0&#34;&gt;ニーチェ&lt;/a&gt;とは違って神なるCIを否定しているわけではない。
+CIって意外と上手くいかないけど、こうすれば改善できるよという主旨の記事だ。&lt;/p&gt;
+
+&lt;p&gt;Yegorが指摘している、ビルドステータスが無視されるようになるという一つ目の問題は、実例を多く見たことがあるわけではないが確かになんだかよく起こりそうな話だ。
+そういえば私もPcap4JのTravisでのビルドエラーをもう数か月無視している。
+まあこれはTravis側の問題が原因で、回避策を入れるのが気が進まないだけなんだけど。&lt;/p&gt;
+
+&lt;p&gt;Yegorのやり方は、&lt;a href=&#34;https://gist.github.com/juno/3112343&#34;&gt;GitHub Flow&lt;/a&gt;が&lt;code&gt;master&lt;/code&gt;は常にデプロイ可能としているのを、より厳密に守るように仕組化する感じであろうか。&lt;/p&gt;
+
+&lt;p&gt;GitHub Flowを世に広めたScott Chaconによれば、&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;テストされていなかったり、ビルドを破壊するようなコードをmasterにpushした場合には、開発チーム間におけるソーシャルな取り決めを破ることになり、ちょっと気まずい思いをすることになる&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;とのことで、これはまさにYegorが恐怖因子と指摘した二つ目の問題である。
+慣れない内のリポジトリへのコミットの緊張感や、CIサーバからエラー通知が来た時の焦燥感は、多くの人のストレスになっているんじゃないだろうか。
+&lt;code&gt;master&lt;/code&gt;の更新をスクリプトに任せてしまえば、それでなおビルドが壊れたとしてもスクリプトのせいにできるので気が楽だろう。&lt;/p&gt;
+
+&lt;p&gt;実装が簡単そうなアイデアでもあるので、いつかCIを実装する日まで覚えておきたい。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -126,7 +292,7 @@
           <guid>http://tbd.kaitoy.xyz/2016/01/03/oop-alternative-to-utility-classes/</guid>
           <description>
 
-&lt;p&gt;このエントリでは、Yegor Bugayenkoによる記事、&lt;a href=&#34;http://www.yegor256.com/2014/05/05/oop-alternative-to-utility-classes.html&#34;&gt;OOP Alternative to Utility Classes&lt;/a&gt;を紹介する。
+&lt;p&gt;このエントリでは、Yegor Bugayenkoによる記事、&lt;a href=&#34;http://www.yegor256.com/2014/05/05/oop-alternative-to-utility-classes.html&#34;&gt;Continuous Integration is Dead&lt;/a&gt;を紹介する。
 (Yegorから和訳と転載の許可は得た。)
 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。&lt;/p&gt;
 
