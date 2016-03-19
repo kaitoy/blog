@@ -6,8 +6,155 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2016</rights>
-    <updated>2016-01-22 17:46:43 -0700 MST</updated>
+    <updated>2016-03-19 11:47:03 -0600 MDT</updated>
 
+    
+      
+        <item>
+          <title> ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた</title>
+          <link>http://tbd.kaitoy.xyz/2016/03/19/zundoko-kiyoshi-with-pcap4j/</link>
+          <pubDate>Sat, 19 Mar 2016 11:47:03 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>http://tbd.kaitoy.xyz/2016/03/19/zundoko-kiyoshi-with-pcap4j/</guid>
+          <description>
+
+&lt;p&gt;先週くらいから巷でズンドコズンドコ騒いでいると思ってはいたが、昨日ようやくその元ネタを見た。
+以下のツイートだ。&lt;/p&gt;
+
+&lt;p&gt;&lt;blockquote class=&#34;twitter-tweet&#34; data-lang=&#34;ja&#34;&gt;&lt;p lang=&#34;ja&#34; dir=&#34;ltr&#34;&gt;Javaの講義、試験が「自作関数を作り記述しなさい」って問題だったから&lt;br&gt;「ズン」「ドコ」のいずれかをランダムで出力し続けて「ズン」「ズン」「ズン」「ズン」「ドコ」の配列が出たら「キ・ヨ・シ！」って出力した後終了って関数作ったら満点で単位貰ってた&lt;/p&gt;&amp;mdash; てくも (@kumiromilk) &lt;a href=&#34;https://twitter.com/kumiromilk/status/707437861881180160&#34;&gt;2016年3月9日&lt;/a&gt;&lt;/blockquote&gt;
+&lt;script async src=&#34;//platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;面白い。
+巷ではこれを&lt;a href=&#34;http://qiita.com/shunsugai@github/items/971a15461de29563bf90&#34;&gt;いろんな言語で実装したりしているみたい&lt;/a&gt;でさらに面白い。&lt;/p&gt;
+
+&lt;p&gt;私もこのビッグウェーブに乗らないわけにいかないので、専門分野であるネットワーク周りを開拓しようと思い、ZUNDOKOプロトコルというものを考案して実装してみた。書いたソースは&lt;a href=&#34;https://github.com/kaitoy/zundoko-protocol&#34;&gt;GitHub&lt;/a&gt;においた。&lt;/p&gt;
+
+&lt;h2 id=&#34;zundokoプロトコル&#34;&gt;ZUNDOKOプロトコル&lt;/h2&gt;
+
+&lt;p&gt;クライアントはサーバに「ズン」か「ドコ」を送る。&lt;/p&gt;
+
+&lt;p&gt;サーバは「ズン」を4回受信した後に「ドコ」を受信するとクライアントに「キ・ヨ・シ！」を返す。&lt;/p&gt;
+
+&lt;p&gt;クライアント/サーバ間でやり取りするメッセージ(Zundokoパケット)のフォーマットは下図。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt; 0                            15                              31
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|             zundoko (null-terminated string)                  |
+|                                                               |
+|                                                               |
+|                                                               |
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;要はzundokoフィールドがあるだけ。
+このzundokoフィールドは20 byte固定長で、NULL (0x00)で終わるUTF-8の文字列を保持する。&lt;/p&gt;
+
+&lt;p&gt;このメッセージを運ぶ下位レイヤはEthernetで、EtherTypeは0x01FF。&lt;/p&gt;
+
+&lt;p&gt;Ethernetにした理由は実装(下記)が楽だから。
+EtherTypeは&lt;a href=&#34;http://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml#ieee-802-numbers-1&#34;&gt;IANA&lt;/a&gt;でExperimentalとされている範囲から適当に選んだ。もちろんIANAに登録などはしていない。&lt;/p&gt;
+
+&lt;p&gt;因みに、Ethernetヘッダを加えた、クライアント/サーバ間でやり取りする完全なパケットは以下の様になる。(プリアンブルとかは除く。)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt; 0                            15
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|    Dst Hardware Address       |
++                               +
+|                               |
++                               +
+|                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|    Src Hardware Address       |
++                               +
+|                               |
++                               +
+|                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|    EtherType (0x01FF)         |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|        zundoko                |
+| (null-terminated string)      |
+|                               |
+|                               |
+|                               |
+|                               |
+|                               |
+|                               |
+|                               |
+|                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|            padding            |
+|                               |
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;実装&#34;&gt;実装&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;Pcap4J&lt;/a&gt;を使ってクライアントとサーバを実装した。
+書いたのは以下の3つのクラス。(といくつかのインナークラス。)&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/kaitoy/zundoko-protocol/tree/master/src/main/java/com/github/kaitoy/zundoko/protocol/ZundokoPacket.java&#34;&gt;com.github.kaitoy.zundoko.protocol.ZundokoPacket&lt;/a&gt;: Pcap4JがZundokoパケットを解析するのに使うクラス&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/kaitoy/zundoko-protocol/tree/master/src/main/java/com/github/kaitoy/zundoko/protocol/ZundokoServer.java&#34;&gt;com.github.kaitoy.zundoko.protocol.ZundokoServer&lt;/a&gt;: Zundokoサーバ&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/kaitoy/zundoko-protocol/tree/master/src/main/java/com/github/kaitoy/zundoko/protocol/ZundokoClient.java&#34;&gt;com.github.kaitoy.zundoko.protocol.ZundokoClient&lt;/a&gt;: Zundokoクライアント&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;ビルド&#34;&gt;ビルド&lt;/h2&gt;
+
+&lt;p&gt;今だに&lt;a href=&#34;https://maven.apache.org/&#34;&gt;Maven&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;以下を実行するとビルドできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;git clone https://github.com/kaitoy/zundoko-protocol.git
+cd zundoko-protocol
+mvn install
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;サーバ-クライアントの使い方&#34;&gt;サーバ/クライアントの使い方&lt;/h2&gt;
+
+&lt;p&gt;下位レイヤがEthernetなのでネットワークセグメントを超えたZundokoパケットのやり取りはできない。
+よってまずは同一ネットワーク内にサーバマシンとクライアントマシンを用意する。
+VMware Playerのホストとゲストで可。&lt;/p&gt;
+
+&lt;p&gt;サーバマシンとクライアントマシンには&lt;a href=&#34;http://www.winpcap.org/&#34;&gt;WinPcap&lt;/a&gt;か&lt;a href=&#34;http://www.tcpdump.org/&#34;&gt;libpcap&lt;/a&gt;をインストールしておく。&lt;/p&gt;
+
+&lt;p&gt;依存ライブラリをダウンロードするため、&lt;code&gt;zundoko-protocol\bin\&lt;/code&gt;に&lt;code&gt;cd&lt;/code&gt;して以下のコマンドを実行する。(要Maven。)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;configure.bat
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;サーバを起動するには、&lt;code&gt;zundoko-protocol\bin\&lt;/code&gt;で以下のコマンドを実行する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;run-server.bat
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;起動するとZundokoパケットをやり取りするネットワークインターフェースを聞かれるので、
+クライアントとL2レベルでつながっているものを選ぶ。
+選んだインターフェースのMacアドレスはクライアントの起動に使うのでメモしておく。&lt;/p&gt;
+
+&lt;p&gt;クライアントを起動するには、&lt;code&gt;zundoko-protocol\bin\&lt;/code&gt;で以下のコマンドを実行する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;run-client.bat &amp;lt;Macアドレス&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;&amp;lt;Macアドレス&amp;gt;&lt;/code&gt;にはサーバ起動時にメモしたMacアドレスを入力する。
+起動するとZundokoパケットをやり取りするネットワークインターフェースを聞かれるので、
+サーバとL2レベルでつながっているものを選ぶ。&lt;/p&gt;
+
+&lt;p&gt;クライアントが起動すると、一秒おきに「ズン」と「ドコ」をランダムに選び、
+サーバに送りつつコンソールに表示する。
+また、サーバからZundokoパケット受信したらそのzundokoフィールドの値を表示する。&lt;/p&gt;
+
+&lt;h2 id=&#34;実行例&#34;&gt;実行例&lt;/h2&gt;
+
+&lt;p&gt;&lt;div class=&#34;embed video-player&#34; style=&#34;text-align: center&#34;&gt;
+  &lt;iframe class=&#34;youtube-player&#34; type=&#34;text/html&#34; width=&#34;320&#34; height=&#34;193&#34; src=&#34;http://www.youtube.com/embed/ad3u4Y86e_I&#34; allowfullscreen frameborder=&#34;0&#34;&gt;
+  &lt;/iframe&gt;
+&lt;/div&gt;
+&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>

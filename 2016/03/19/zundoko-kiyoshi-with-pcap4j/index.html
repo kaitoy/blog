@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content=" ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた | To Be Decided">
+    <meta property="og:url" content="http://tbd.kaitoy.xyz/2016/03/19/zundoko-kiyoshi-with-pcap4j/">
+    <meta property="og:description" content="先週くらいから巷でズンドコズンドコ騒いでいると思ってはいたが、昨日ようやくその元ネタを見た。 以下のツイートだ。 Javaの講義、試験が「自作関数を作り記述しなさい」って問題だったから 「ズン」「ドコ」のいずれかをランダムで出力し続けて「ズン」「ズン」「ズン」「ズン」「ドコ」の配列が出たら「キ・ヨ・シ！」って出力した後終了って関数作ったら満点で単位貰ってた &mdash; てくも (@kumiromilk) 2016年3月9日 面白い。 巷ではこれをいろんな言語で実装したりしているみたいでさらに面白い。 私もこのビッグウェーブに乗らないわけにいかないので、専門分野であるネットワーク周りを開拓しようと思い、ZUNDOKOプロトコルというものを考案して実装してみた。書いたソースはGitHubにおいた。 ZUNDOKOプロトコル クライアントはサーバに「ズン」か「ドコ」を送る。 サーバは「ズン」を4回受信した後に「ドコ」を受信するとクライアントに「キ・ヨ・シ！」を返す。 クライアント/サーバ間でやり取りするメッセージ(Zundokoパケット)のフォーマットは下図。 0 15 31 &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; | zundoko (null-terminated string) | | | | | | | | | &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; 要はzundokoフィールドがあるだけ。 このzundokoフィールドは20 byte固定長で、NULL (0x00)で終わるUTF-8の文字列を保持する。 このメッセージを運ぶ下位レイヤはEthernetで、EtherTypeは0x01FF。 Ethernetにした理由は実装(下記)が楽だから。 EtherTypeはIANAでExperimentalとされている範囲から適当に選んだ。もちろんIANAに登録などはしていない。 因みに、Ethernetヘッダを加えた、クライアント/サーバ間でやり取りする完全なパケットは以下の様になる。(プリアンブルとかは除く。) 0 15 &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; | Dst Hardware Address | &#43; &#43; | | &#43; &#43; | | &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; | Src Hardware Address | &#43; &#43; | | &#43; &#43; |">
+    
+    <meta property="og:image" content="http://tbd.kaitoy.xyz/images/pcap4jlogo.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+       ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="http://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="http://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/zenburn.min.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="http://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="http://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Sat, Mar 19, 2016</span>
+      <h2 class="title"> ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="http://tbd.kaitoy.xyz/images/pcap4jlogo.png" alt=" ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>先週くらいから巷でズンドコズンドコ騒いでいると思ってはいたが、昨日ようやくその元ネタを見た。
+以下のツイートだ。</p>
+
+<p><blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">Javaの講義、試験が「自作関数を作り記述しなさい」って問題だったから<br>「ズン」「ドコ」のいずれかをランダムで出力し続けて「ズン」「ズン」「ズン」「ズン」「ドコ」の配列が出たら「キ・ヨ・シ！」って出力した後終了って関数作ったら満点で単位貰ってた</p>&mdash; てくも (@kumiromilk) <a href="https://twitter.com/kumiromilk/status/707437861881180160">2016年3月9日</a></blockquote>
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script></p>
+
+<p>面白い。
+巷ではこれを<a href="http://qiita.com/shunsugai@github/items/971a15461de29563bf90">いろんな言語で実装したりしているみたい</a>でさらに面白い。</p>
+
+<p>私もこのビッグウェーブに乗らないわけにいかないので、専門分野であるネットワーク周りを開拓しようと思い、ZUNDOKOプロトコルというものを考案して実装してみた。書いたソースは<a href="https://github.com/kaitoy/zundoko-protocol">GitHub</a>においた。</p>
+
+<h2 id="zundokoプロトコル">ZUNDOKOプロトコル</h2>
+
+<p>クライアントはサーバに「ズン」か「ドコ」を送る。</p>
+
+<p>サーバは「ズン」を4回受信した後に「ドコ」を受信するとクライアントに「キ・ヨ・シ！」を返す。</p>
+
+<p>クライアント/サーバ間でやり取りするメッセージ(Zundokoパケット)のフォーマットは下図。</p>
+
+<pre><code class="language-text"> 0                            15                              31
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|             zundoko (null-terminated string)                  |
+|                                                               |
+|                                                               |
+|                                                               |
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</code></pre>
+
+<p>要はzundokoフィールドがあるだけ。
+このzundokoフィールドは20 byte固定長で、NULL (0x00)で終わるUTF-8の文字列を保持する。</p>
+
+<p>このメッセージを運ぶ下位レイヤはEthernetで、EtherTypeは0x01FF。</p>
+
+<p>Ethernetにした理由は実装(下記)が楽だから。
+EtherTypeは<a href="http://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml#ieee-802-numbers-1">IANA</a>でExperimentalとされている範囲から適当に選んだ。もちろんIANAに登録などはしていない。</p>
+
+<p>因みに、Ethernetヘッダを加えた、クライアント/サーバ間でやり取りする完全なパケットは以下の様になる。(プリアンブルとかは除く。)</p>
+
+<pre><code class="language-text"> 0                            15
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|    Dst Hardware Address       |
++                               +
+|                               |
++                               +
+|                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|    Src Hardware Address       |
++                               +
+|                               |
++                               +
+|                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|    EtherType (0x01FF)         |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|        zundoko                |
+| (null-terminated string)      |
+|                               |
+|                               |
+|                               |
+|                               |
+|                               |
+|                               |
+|                               |
+|                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|            padding            |
+|                               |
+</code></pre>
+
+<h2 id="実装">実装</h2>
+
+<p><a href="https://github.com/kaitoy/pcap4j">Pcap4J</a>を使ってクライアントとサーバを実装した。
+書いたのは以下の3つのクラス。(といくつかのインナークラス。)</p>
+
+<ul>
+<li><a href="https://github.com/kaitoy/zundoko-protocol/tree/master/src/main/java/com/github/kaitoy/zundoko/protocol/ZundokoPacket.java">com.github.kaitoy.zundoko.protocol.ZundokoPacket</a>: Pcap4JがZundokoパケットを解析するのに使うクラス</li>
+<li><a href="https://github.com/kaitoy/zundoko-protocol/tree/master/src/main/java/com/github/kaitoy/zundoko/protocol/ZundokoServer.java">com.github.kaitoy.zundoko.protocol.ZundokoServer</a>: Zundokoサーバ</li>
+<li><a href="https://github.com/kaitoy/zundoko-protocol/tree/master/src/main/java/com/github/kaitoy/zundoko/protocol/ZundokoClient.java">com.github.kaitoy.zundoko.protocol.ZundokoClient</a>: Zundokoクライアント</li>
+</ul>
+
+<h2 id="ビルド">ビルド</h2>
+
+<p>今だに<a href="https://maven.apache.org/">Maven</a>。</p>
+
+<p>以下を実行するとビルドできる。</p>
+
+<pre><code class="language-cmd">git clone https://github.com/kaitoy/zundoko-protocol.git
+cd zundoko-protocol
+mvn install
+</code></pre>
+
+<h2 id="サーバ-クライアントの使い方">サーバ/クライアントの使い方</h2>
+
+<p>下位レイヤがEthernetなのでネットワークセグメントを超えたZundokoパケットのやり取りはできない。
+よってまずは同一ネットワーク内にサーバマシンとクライアントマシンを用意する。
+VMware Playerのホストとゲストで可。</p>
+
+<p>サーバマシンとクライアントマシンには<a href="http://www.winpcap.org/">WinPcap</a>か<a href="http://www.tcpdump.org/">libpcap</a>をインストールしておく。</p>
+
+<p>依存ライブラリをダウンロードするため、<code>zundoko-protocol\bin\</code>に<code>cd</code>して以下のコマンドを実行する。(要Maven。)</p>
+
+<pre><code class="language-cmd">configure.bat
+</code></pre>
+
+<p>サーバを起動するには、<code>zundoko-protocol\bin\</code>で以下のコマンドを実行する。</p>
+
+<pre><code class="language-cmd">run-server.bat
+</code></pre>
+
+<p>起動するとZundokoパケットをやり取りするネットワークインターフェースを聞かれるので、
+クライアントとL2レベルでつながっているものを選ぶ。
+選んだインターフェースのMacアドレスはクライアントの起動に使うのでメモしておく。</p>
+
+<p>クライアントを起動するには、<code>zundoko-protocol\bin\</code>で以下のコマンドを実行する。</p>
+
+<pre><code class="language-cmd">run-client.bat &lt;Macアドレス&gt;
+</code></pre>
+
+<p><code>&lt;Macアドレス&gt;</code>にはサーバ起動時にメモしたMacアドレスを入力する。
+起動するとZundokoパケットをやり取りするネットワークインターフェースを聞かれるので、
+サーバとL2レベルでつながっているものを選ぶ。</p>
+
+<p>クライアントが起動すると、一秒おきに「ズン」と「ドコ」をランダムに選び、
+サーバに送りつつコンソールに表示する。
+また、サーバからZundokoパケット受信したらそのzundokoフィールドの値を表示する。</p>
+
+<h2 id="実行例">実行例</h2>
+
+<p><div class="embed video-player" style="text-align: center">
+  <iframe class="youtube-player" type="text/html" width="320" height="193" src="http://www.youtube.com/embed/ad3u4Y86e_I" allowfullscreen frameborder="0">
+  </iframe>
+</div>
+</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=http%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f03%2f19%2fzundoko-kiyoshi-with-pcap4j%2f&t=%20%e3%82%ba%e3%83%b3%e3%83%89%e3%82%b3%e3%82%ad%e3%83%a8%e3%82%b7%20with%20Pcap4J%20-%20ZUNDOKO%e3%83%97%e3%83%ad%e3%83%88%e3%82%b3%e3%83%ab%e3%82%92%e5%ae%9f%e8%a3%85%e3%81%97%e3%81%a6%e3%81%bf%e3%81%9f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f03%2f19%2fzundoko-kiyoshi-with-pcap4j%2f&text=%20%e3%82%ba%e3%83%b3%e3%83%89%e3%82%b3%e3%82%ad%e3%83%a8%e3%82%b7%20with%20Pcap4J%20-%20ZUNDOKO%e3%83%97%e3%83%ad%e3%83%88%e3%82%b3%e3%83%ab%e3%82%92%e5%ae%9f%e8%a3%85%e3%81%97%e3%81%a6%e3%81%bf%e3%81%9f&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f03%2f19%2fzundoko-kiyoshi-with-pcap4j%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=http%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f03%2f19%2fzundoko-kiyoshi-with-pcap4j%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=http%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f03%2f19%2fzundoko-kiyoshi-with-pcap4j%2f&title=%20%e3%82%ba%e3%83%b3%e3%83%89%e3%82%b3%e3%82%ad%e3%83%a8%e3%82%b7%20with%20Pcap4J%20-%20ZUNDOKO%e3%83%97%e3%83%ad%e3%83%88%e3%82%b3%e3%83%ab%e3%82%92%e5%ae%9f%e8%a3%85%e3%81%97%e3%81%a6%e3%81%bf%e3%81%9f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="http://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="http://tbd.kaitoy.xyz/tags/pcap4j"><i class="fa fa-tags"></i> pcap4j </a>
+                
+                <a href="http://tbd.kaitoy.xyz/tags/zundoko"><i class="fa fa-tags"></i> zundoko </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">Pcap4J Meets Windows Containers</a></li>
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/">Pcap4J with Four Native Libraries on Windows 10</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2016/01/10/pcap-ng-support-in-pcap4j/">pcap-ng support in Pcap4J</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/12/03/software-quality-award-2015/">Pcap4JがSoftware Quality Award 2015で入賞</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/">Step by Step to Add a Protocol Support to Pcap4J (Part 2)</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/08/09/step-by-step-to-add-a-protocol-support-to-pcap4j-1/">Step by Step to Add a Protocol Support to Pcap4J (Part 1)</a></li>
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="http://tbd.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></li>
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="http://tbd.kaitoy.xyz/2016/02/09/continuous-integration-is-dead/">
+                  継続的インテグレーションは死んだ
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2016  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="http://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="http://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+
