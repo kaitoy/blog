@@ -16,7 +16,7 @@
 
     <title>
       
-      hugo | To Be Decided
+      jvm-language | To Be Decided
       
     </title>
 
@@ -61,16 +61,16 @@
         
         <div class="col-sm-6">
           <article>
-            <a href="http://tbd.kaitoy.xyz/2015/08/28/using-hugo/" class="post post-topix">
+            <a href="http://tbd.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/" class="post post-topix">
               <header class="eyecatch text-center">
-                <img src="/images/hugo-logo.png" alt="eyecatch">
+                <img src="/images/pcap4j-groovy.png" alt="eyecatch">
               </header>
               <div class="date text-center">
-                <span>Fri, Aug 28, 2015</span>
+                <span>Sun, Apr 10, 2016</span>
               </div>
-              <h2 class="title">GitHub Pagesでブログ立ち上げ - Hugoを使う</h2>
+              <h2 class="title">Pcap4J in Groovy</h2>
               <div class="summary">
-                GitHub Pagesでブログ立ち上げ - Jekyllのためのツールの続き。 前回は、GitHub Pagesで公開するブログサイトを構築するのに、JekyllとJekyll関連ツールを使おうと四苦八苦したが、結局Jekyllに見切りをつけ、Hugoを使うことに決めた。 Hugoとは Hugoは、国内では2014年末くらいから盛り上がってきているブログサイト構築ツール。 そのホームページによると、ウェブサイトフレームワークで、静的サイトジェネレータとのこと。 フレームワークと名乗ってはいるが、その正体は、Markdownで書かれた記事を元にブログサイトのソースを生成するコンテントビルド機能と、記事作成(など)を支援するユーティリティ機能を持ったコマンドラインツール。 また、静的サイトジェネレータというのは、静的なサイトを生成するという意味ではなく、静的にサイトを生成するという意味。もっと言えば、WordPressとかがアクセス時にビルドが走るのに対し、Hugoを使った場合は事前にビルド済みのものをサーバにアップロードすることになる、ということ。らしい。WordPressは使ったことがないのでよく知らないが、Hugoのホームページにそう書いてある。 つまり、Hugoは静的なサイトだけを扱うツールってわけではないので、JavaScriptとかを駆使して動的でインタラクティブなページを作ってもいいはず。 Hugoのインストール インストールガイドに従ってHugoをインストールする。 HugoのGitHub ReleasesからWindows用バイナリをダウンロード。このときはバージョン0.14が最新だったので、hugo_0.14_windows_amd64.zipをダウンロードした。 このzipの中身はhugo_0.14_windows_amd64.exeというバイナリ一つとLICENSE.mdとREADME.mdだけ。 このhugo_0.14_windows_amd64.exeがHugoのすべてなので、これを適当な場所において実行できるようにしとけばよい。 今回は、hugo.batというファイルに以下の内容を書き、PATHの通ったフォルダにいれた。 @echo off C:\Users\Kaito\Desktop\tool\hugo_0.14_windows_amd64\hugo_0.14_windows_amd64.exe %* これで、どこからでもhugo [arguments]と打てばHugoコマンドが実行できる。 Hugoのシンタックスハイライト ドキュメントによると、Hugoではシンタックスハイライトを実現する方法を以下の2つから選べる。 サーバサイド: Hugoでのブログサイト生成時にハイライトしておく方法。 クライアントサイド: クライアントがブログを読み込んだ時にJavaScriptでハイライトする方法。 前者の方が当然クライアントの負荷が軽くなるが、Pygmentsのインストールが必要だったりめんどくさそうなので後者にする。(PygmentsはJekyllのときにすでに入れたけど…) Hugo味見 Hugoコマンドリファレンスを見つつ、Hugoの味見をする。 サイトのひな形を作るコマンドはhugo new site [path]。hugo new site blogを実行して、blogという名のフォルダにサイトの初期ソースを生成。blogの部分はファイルもフォルダも存在しないパスを指定する。 この時点で、blogフォルダ内には以下のものが入っている。 archetypes: 新規記事作成時に自動で挿入されるFront Matter (後述)のカスタマイズをするためのファイルを置くフォルダ。 content: ブログのコンテンツ(記事など)を置くフォルダ。 data: サイト生成時に使うデータを置くフォルダ。 layouts: サイトのレイアウトを定義するファイルを置くフォルダ。 static: CSSとかJavaScriptとか画像とかのファイルを置くフォルダ。 config.toml: 設定ファイル。これはTOMLだが、YAMLかJSONでもいい。 記事を作るコマンドはhugo new [path]。blogフォルダにcdして、二つ記事を作ってみる。 hugo new about.md hugo new post/first_post.md blog\content\about.mdとblog\content\post\first_post.mdが生成された。 これらには、Front Matterという、記事のメタ情報が自動で書き込まれる。 デフォルトで書き込まれるのは、日付 (date)、ドラフトフラグ (draft)、タイトル (title)だけだが、 Archetypesという機能でカスタマイズできる。 が、今はやらない。 about.mdとfirst_post.mdには適当に記事の内容を書いておく。 次にテーマを設定する。テーマを使えば、自分でレイアウトを書く必要がない。 テーマはHugo Themesにリストされていて、ひとつひとつ選んでインストールもできるけど、今回は全部いっぺんにインストールして色々見てみる。blogフォルダ内で以下を実行すると、blog\themesに全テーマがインストールされる。 git clone --recursive https://github.com/spf13/hugoThemes.git themes これで、以下のコマンドを実行すると、サイトがビルドされ、サーバが起動し、ブラウザで確認できる。 hugo server -t angels-ladder -D -w -tでテーマを指定している。指定するのはblog\themes内のフォルダ名。-Dはドラフト記事をビルドしたいときにつけるオプション。さっき作ったabout.mdとfirst_post.mdは、そのFront Matterのdraftがtrueになっていて、つまりドラフトなので、-Dを付けないとビルドされない。-wはLiveReloadを有効にするフラグで、付けておくとソースを修正したら自動でリビルドとブラウザのリロードが実行される。(変更を監視されるのはサブフォルダ内だけ。config.tomlの変更は無視される。) サーバにはhttp://localhost:1313/でアクセスできる。今回指定したテーマangels-ladderだと、トップページにfirst_post.mdの記事へのリンクがあり、その内容を確認できる。about.mdの方はリンクはなく、直接http://localhost:1313/about/アクセスしないと見れない。この辺りはテーマ(と設定?)によって異なるのかな。 まあabout.mdは試しに作ってみただけなので消しておく。 hugo serverの-tに与える値を変えれば簡単にテーマを切り替えられるので、いろいろ見てみる。 以上で味見終わり。 テーマの選定 - Robust Hugo Themesにあるテーマはどれもあまりしっくりこなかった。 もう自分で作ろうかと思っていたところ、Robustというテーマを見つけた。 こんな感じのページができる。いい。これを使うことにする。 blogフォルダ内で、いったんthemesを消してから以下を実行してRobustをインストール。 &gt; git init .
+                GroovyでPcap4Jを使ってパケットキャプチャしてみた。 GroovyからでもPcap4Jちゃんと動くよということを実証するのが主な目的。 Groovyとは GroovyはJVM言語、つまりJavaのバイトコードにコンパイルされてJavaの実行環境で動くプログラミング言語のひとつ。 Javaのプログラマにとってとっつきやすい文法を保ちつつ、動的型付けを実現し、またRubyなどのスクリプト言語の記法や機能を取り入れ、生産性を高めている。 現在はApacheソフトウェア財団によって管理され、OSSとして開発が進められている。 WebアプリケーションフレームワークのGrails やビルドツールのGradleで採用されている。 Gradleは最近Javaプロジェクトのビルドツールの主流になっていて、Groovyはその定義ファイルを記述する言語として知名度が高いが、Groovyで開発されているプロジェクトとなるとあまり多くないようだ。 GitHubにホストされているGroovyプロジェクトは、2016/4/9現在 0.8%弱 (25,087/3,200,229) しかない。 なぜ人気がないのかはよく分からないが、少なくとも、長くて打ちにくい名前とダサいロゴは不評のようだ。 Groovyのインストール Windows 7にGroovy 2.4.6をインストールする。 本家サイトの手順に従い、Binary Releaseのアーカイブをダウンロードして、適当なところに展開して、展開したフォルダのパスを環境変数GROOVY_HOMEにセットし、%GROOVY_HOME%\binをPATHに追加するだけ。 Java 6以降が前提なので、JAVA_HOMEにJDK 1.7.0_17のパスをセットしておいた。JREでもいいはず。 パケットキャプチャ with Pcap4J in Java Pcap4Jでパケットキャプチャするコードを普通にJavaで書くと以下の様になる。 これを実行すると、パケットキャプチャするネットワークインターフェースを選択し、5つのパケットをキャプチャしてコンソールに表示する。 パケットキャプチャ with Pcap4J in Groovy 上記処理をGroovyで書くと以下の様になる。 メインクラスを書かなくていいところが大きい。 変数の型を書かなくていいのも楽。 Pcap4J 1.6.2、Slf4J 1.7.12、JNA 4.2.1を使って、以下のコマンドで実行できることを確認した。 groovy -cp &quot;pcap4j-core.jar;jna.jar;slf4j-api.jar;pcap4j-packetfactory-static.jar&quot; Pcap4jLoop.groovy tcp 困ったところ 本家サイトのドキュメントが分かり辛い。 頭から読んでいくと急にディープな部分に引き込まれ、なかなかコードを書き始められなかった。 最近の言語やフレームワークのサイトはチュートリアルに従って動くコードを見ながら概要から詳細に理解を深められる形になっていることが多いので、仕様の詳細が羅列されている感じのGroovyサイトはなんとも読みにくかった。 クラスパスの指定が上手くできない。 groovyコマンドにオプションで複数のクラスパスを指定するのに、普通に-cp pcap4j-core.jar;jna.jarみたいにしたら最初のpcap4j-core.jarにしかクラスパスが通らなかった。 区切りを:にするとどちらにも通らない。 環境変数CLASSPATHにpcap4j-core.jar;jna.jarをセットしておくと-cpを使わなくても正しく両方に通るし、%userprofile%\.groovy\にjarを入れておくだけでもいいみたいなんだけど、-cpが中途半端にしか機能しないのが気持ち悪い。 のでちょっとソースを見たら、groovyコマンドはバッチで書かれていることに気付いた。 バッチだと、;で区切られているものは半角スペースで区切られているのと同じで別々の引数になってしまうので、上のような書き方だとjna.jarは-cpの値として処理されない。 クラスパス全体をダブルコーテーションで囲って、-cp &quot;pcap4j-core.jar;jna.jar&quot;みたいにしたらできた。なんか残念な出来。。。
               </div>
             </a>
           </article>

@@ -145,6 +145,9 @@
       <a href="http://tbd.kaitoy.xyz/tags/github">github</a>
       
       
+      <a href="http://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
       <a href="http://tbd.kaitoy.xyz/tags/hugo">hugo</a>
       
       
@@ -158,6 +161,9 @@
       
       
       <a href="http://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="http://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
       
       
       <a href="http://tbd.kaitoy.xyz/tags/management">management</a>
