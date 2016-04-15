@@ -12,6 +12,7 @@ title = "Pcap4J in Groovy"
 [__Groovy__](http://www.groovy-lang.org/index.html)で[__Pcap4J__](https://github.com/kaitoy/pcap4j)を使ってパケットキャプチャしてみた。
 
 GroovyからでもPcap4Jちゃんと動くよということを実証するのが主な目的。
+また、さすがにそろそろ[Maven](https://maven.apache.org/)を卒業してGradle(下記)使おうと思うので、予習も兼ねている。
 
 ## Groovyとは
 GroovyはJVM言語、つまりJavaのバイトコードにコンパイルされてJavaの実行環境で動くプログラミング言語のひとつ。
@@ -48,7 +49,7 @@ Pcap4Jでパケットキャプチャするコードを普通にJavaで書くと�
 
 メインクラスを書かなくていいところが大きい。
 変数の型を書かなくていいのも楽。
-クロージャや補間文字列(String interpolation)も使える。
+ラムダ式でクロージャも作れるし補間文字列(String interpolation)も使える。
 
 また、ここでは使っていないが、オープンクラスなどのメタプログラミングもサポートされている。
 
@@ -57,6 +58,8 @@ Pcap4Jでパケットキャプチャするコードを普通にJavaで書くと�
 ```cmd
 groovy -cp "pcap4j-core.jar;jna.jar;slf4j-api.jar;pcap4j-packetfactory-static.jar" Pcap4jLoop.groovy tcp
 ```
+
+これはスクリプト的な実行方法だが、`groovyc`コマンドで事前にコンパイルしてclassファイルを生成し、`java`コマンドで実行することもできる。
 
 ### 困ったところ
 
