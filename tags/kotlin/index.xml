@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>To Be Decided </title>
-    <link>http://tbd.kaitoy.xyz/tags/jvm-language/</link>
+    <link>http://tbd.kaitoy.xyz/tags/kotlin/</link>
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2016</rights>
@@ -117,94 +117,6 @@ Nullチェックをしないで&lt;code&gt;filter.length&lt;/code&gt;と書く�
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;EclipseのKotlinプラグインはこのスクリプト形式をまだサポートしていないようで残念。&lt;/p&gt;
-</description>
-        </item>
-      
-    
-      
-        <item>
-          <title>Pcap4J in Groovy</title>
-          <link>http://tbd.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/</link>
-          <pubDate>Sun, 10 Apr 2016 00:05:27 MDT</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>http://tbd.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/</guid>
-          <description>
-
-&lt;p&gt;&lt;a href=&#34;http://www.groovy-lang.org/index.html&#34;&gt;&lt;strong&gt;Groovy&lt;/strong&gt;&lt;/a&gt;で&lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;&lt;strong&gt;Pcap4J&lt;/strong&gt;&lt;/a&gt;を使ってパケットキャプチャしてみた。&lt;/p&gt;
-
-&lt;p&gt;GroovyからでもPcap4Jちゃんと動くよということを実証するのが主な目的。
-また、さすがにそろそろ&lt;a href=&#34;https://maven.apache.org/&#34;&gt;Maven&lt;/a&gt;を卒業してGradle(下記)使おうと思うので、予習も兼ねている。&lt;/p&gt;
-
-&lt;h2 id=&#34;groovyとは&#34;&gt;Groovyとは&lt;/h2&gt;
-
-&lt;p&gt;GroovyはJVM言語、つまりJavaのバイトコードにコンパイルされてJavaの実行環境で動くプログラミング言語のひとつ。
-Javaのプログラマにとってとっつきやすい文法を保ちつつ、動的型付けを実現し、また&lt;a href=&#34;https://www.ruby-lang.org/ja/&#34;&gt;Ruby&lt;/a&gt;などのスクリプト言語の記法や機能を取り入れ、生産性を高めている。&lt;/p&gt;
-
-&lt;p&gt;現在は&lt;a href=&#34;http://www.apache.org/&#34;&gt;Apacheソフトウェア財団&lt;/a&gt;によって管理され、&lt;a href=&#34;https://github.com/apache/groovy&#34;&gt;OSS&lt;/a&gt;として開発が進められている。&lt;/p&gt;
-
-&lt;p&gt;Webアプリケーションフレームワークの&lt;a href=&#34;https://grails.org/&#34;&gt;&lt;strong&gt;Grails&lt;/strong&gt;&lt;/a&gt; やビルドツールの&lt;a href=&#34;http://gradle.org/&#34;&gt;&lt;strong&gt;Gradle&lt;/strong&gt;&lt;/a&gt;で採用されている。
-Gradleは最近Javaプロジェクトのビルドツールの主流になっていて、Groovyはその定義ファイルを記述する言語として知名度が高いが、Groovyで開発されているプロジェクトとなるとあまり多くないようだ。
-GitHubにホストされているGroovyプロジェクトは、2016/4/9現在 &lt;strong&gt;0.8%弱&lt;/strong&gt; (25,087/3,200,229) しかない。&lt;/p&gt;
-
-&lt;p&gt;なぜ人気がないのかはよく分からないが、少なくとも、長くて打ちにくい名前とダサいロゴは不評のようだ。&lt;/p&gt;
-
-&lt;h2 id=&#34;groovyのインストール&#34;&gt;Groovyのインストール&lt;/h2&gt;
-
-&lt;p&gt;Windows 7にGroovy 2.4.6をインストールする。&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.groovy-lang.org/install.html&#34;&gt;本家サイトの手順&lt;/a&gt;に従い、Binary Releaseのアーカイブをダウンロードして、適当なところに展開して、展開したフォルダのパスを環境変数&lt;code&gt;GROOVY_HOME&lt;/code&gt;にセットし、&lt;code&gt;%GROOVY_HOME%\bin&lt;/code&gt;を&lt;code&gt;PATH&lt;/code&gt;に追加するだけ。&lt;/p&gt;
-
-&lt;p&gt;Java 6以降が前提なので、&lt;code&gt;JAVA_HOME&lt;/code&gt;にJDK 1.7.0_17のパスをセットしておいた。JREでもいいはず。&lt;/p&gt;
-
-&lt;h2 id=&#34;パケットキャプチャ-with-pcap4j-in-java&#34;&gt;パケットキャプチャ with Pcap4J in Java&lt;/h2&gt;
-
-&lt;p&gt;Pcap4Jでパケットキャプチャするコードを普通にJavaで書くと以下の様になる。&lt;/p&gt;
-
-&lt;p&gt;&lt;script src=&#34;https://gist.github.com/kaitoy/eebcd5bdfab179cab916d3182f3d6d11.js&#34;&gt;&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;p&gt;これを実行すると、パケットキャプチャするネットワークインターフェースを選択し、5つのパケットをキャプチャしてタイムスタンプと共にコンソールに表示する。&lt;/p&gt;
-
-&lt;h2 id=&#34;パケットキャプチャ-with-pcap4j-in-groovy&#34;&gt;パケットキャプチャ with Pcap4J in Groovy&lt;/h2&gt;
-
-&lt;p&gt;上記処理をGroovyで書くと以下の様になる。&lt;/p&gt;
-
-&lt;p&gt;&lt;script src=&#34;https://gist.github.com/kaitoy/c75837d3537303b004506d3e335eac17.js&#34;&gt;&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;p&gt;メインクラスを書かなくていいところが大きい。
-変数の型を書かなくていいのも楽。
-ラムダ式でクロージャも作れるし補間文字列(String interpolation)も使える。&lt;/p&gt;
-
-&lt;p&gt;また、ここでは使っていないが、オープンクラスなどのメタプログラミングもサポートされている。&lt;/p&gt;
-
-&lt;p&gt;上記コードは、Pcap4J 1.6.2、Slf4J 1.7.12、JNA 4.2.1を使って、以下のコマンドで実行できることを確認した。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;groovy -cp &amp;quot;pcap4j-core.jar;jna.jar;slf4j-api.jar;pcap4j-packetfactory-static.jar&amp;quot; Pcap4jLoop.groovy tcp
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;これはスクリプト的な実行方法だが、&lt;code&gt;groovyc&lt;/code&gt;コマンドで事前にコンパイルしてclassファイルを生成し、&lt;code&gt;java&lt;/code&gt;コマンドで実行することもできる。&lt;/p&gt;
-
-&lt;h3 id=&#34;困ったところ&#34;&gt;困ったところ&lt;/h3&gt;
-
-&lt;ol&gt;
-&lt;li&gt;&lt;p&gt;本家サイトのドキュメントが分かり辛い。&lt;/p&gt;
-
-&lt;p&gt;頭から読んでいくと急にディープな部分に引き込まれ、なかなかコードを書き始められなかった。&lt;/p&gt;
-
-&lt;p&gt;最近の言語やフレームワークのサイトはチュートリアルに従って動くコードを見ながら概要から詳細に理解を深められる形になっていることが多いので、仕様の詳細が羅列されている感じのGroovyサイトはなんとも読みにくかった。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;クラスパスの指定が上手くできない。&lt;/p&gt;
-
-&lt;p&gt;groovyコマンドにオプションで複数のクラスパスを指定するのに、普通に&lt;code&gt;-cp pcap4j-core.jar;jna.jar&lt;/code&gt;みたいにしたら最初の&lt;code&gt;pcap4j-core.jar&lt;/code&gt;にしかクラスパスが通らなかった。
-区切りを&lt;code&gt;:&lt;/code&gt;にするとどちらにも通らない。&lt;/p&gt;
-
-&lt;p&gt;環境変数&lt;code&gt;CLASSPATH&lt;/code&gt;に&lt;code&gt;pcap4j-core.jar;jna.jar&lt;/code&gt;をセットしておくと&lt;code&gt;-cp&lt;/code&gt;を使わなくても正しく両方に通るし、&lt;code&gt;%userprofile%\.groovy\&lt;/code&gt;にjarを入れておくだけでもいいみたいなんだけど、&lt;code&gt;-cp&lt;/code&gt;が中途半端にしか機能しないのが気持ち悪い。&lt;/p&gt;
-
-&lt;p&gt;のでちょっとソースを見たら、groovyコマンドはバッチで書かれていることに気付いた。
-バッチだと、&lt;code&gt;;&lt;/code&gt;で区切られているものは半角スペースで区切られているのと同じで別々の引数になってしまうので、上のような書き方だと&lt;code&gt;jna.jar&lt;/code&gt;は&lt;code&gt;-cp&lt;/code&gt;の値として処理されない。
-クラスパス全体をダブルコーテーションで囲って、&lt;code&gt;-cp &amp;quot;pcap4j-core.jar;jna.jar&amp;quot;&lt;/code&gt;みたいにしたらできた。なんか残念な出来。。。&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
 </description>
         </item>
       
