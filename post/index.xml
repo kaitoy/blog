@@ -1279,6 +1279,8 @@ I/Oエラーで開けなかったら触られすらしない。
   &lt;li&gt;&lt;img src=&#34;http://tbd.kaitoy.xyz/images/git-revert-reset/git_reset_path/スライド3.PNG&#34; /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
+&lt;p&gt;この図では便宜的に、&lt;code&gt;HEAD&lt;/code&gt;、つまり参照をオブジェクト格納領域内に書いているが、実際には&lt;/p&gt;
+
 &lt;p&gt;図を見ると、&lt;code&gt;git add Readme.md&lt;/code&gt;と&lt;code&gt;git reset Readme.md&lt;/code&gt;がだいたい逆のことをしていることがわかる。
 要するに、&lt;code&gt;git add &amp;lt;パス&amp;gt;&lt;/code&gt;は指定したファイルをステージし、&lt;code&gt;git reset &amp;lt;パス&amp;gt;&lt;/code&gt;は指定したファイルをアンステージする。&lt;/p&gt;
 
@@ -1685,11 +1687,13 @@ error: failed to push some refs to &#39;file://C:/Users/Kaito/Desktop/master&#39
           <guid>http://tbd.kaitoy.xyz/2015/12/27/git-repository/</guid>
           <description>
 
-&lt;p&gt;このエントリでは、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;の基本的な使い方は理解している前提で、そのリポジトリの構造をなるべく正確に説明する。&lt;/p&gt;
+&lt;p&gt;このエントリでは、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;の基本的な使い方は理解している前提で、そのリポジトリの構造をなるべく正確に説明する。
+ここに書いてあることは概ね、筆者が&lt;a href=&#34;https://www.oreilly.co.jp/books/9784873114408/&#34;&gt;O&amp;rsquo;Reillyの蝙蝠本&lt;/a&gt;を読んで得た知識に基づく。&lt;/p&gt;
 
-&lt;p&gt;リポジトリ構造の理解を深めることで、Gitにおけるブランチの概念などの理解が深まったり、&lt;a href=&#34;http://tbd.kaitoy.xyz/2016/01/01/git-revert-reset/#git-reset&#34;&gt;&lt;code&gt;git reset&lt;/code&gt;&lt;/a&gt;などのGit特有で分かり辛いコマンドを自信をもって使えるようになったり、なにより、Gitを使う上での最大のハードルである &lt;strong&gt;インデックス&lt;/strong&gt; や &lt;strong&gt;HEAD&lt;/strong&gt; の概念を完璧に理解できるというメリットがある。&lt;/p&gt;
+&lt;p&gt;リポジトリの構造というとコアで上級者向けの知識のように聞こえるが、これをまず理解しておくことで強力で複雑なGitの機能を習得するのが非常に楽になる。
+具体的には、Gitにおけるブランチの概念などの理解が深まったり、&lt;a href=&#34;http://tbd.kaitoy.xyz/2016/01/01/git-revert-reset/#git-reset&#34;&gt;&lt;code&gt;git reset&lt;/code&gt;&lt;/a&gt;などのGit特有で分かり辛いコマンドを自信をもって使えるようになったり、なにより、Gitを使う上での最大のハードルである &lt;strong&gt;インデックス&lt;/strong&gt; や &lt;strong&gt;HEAD&lt;/strong&gt; の概念を完璧に理解できるというメリットがある。&lt;/p&gt;
 
-&lt;p&gt;なお、ここに書いてあることは概ね、筆者が&lt;a href=&#34;https://www.oreilly.co.jp/books/9784873114408/&#34;&gt;O&amp;rsquo;Reillyの蝙蝠本&lt;/a&gt;を読んで得た知識に基づく。&lt;/p&gt;
+&lt;p&gt;チュートリアルを終えたくらいの初心者にこそ読んでほしいエントリである。&lt;/p&gt;
 
 &lt;h1 id=&#34;gitリポジトリの中身&#34;&gt;Gitリポジトリの中身&lt;/h1&gt;
 
@@ -1844,6 +1848,24 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
 &lt;p&gt;それぞれが、Gitコマンドなどにおいてコミットを指定する方法としてSHA1ハッシュ値の代わりに使える。&lt;/p&gt;
 
 &lt;p&gt;ファイルシステム上では&lt;code&gt;.git/{HEAD,ORIG_HEAD,FETCH_HEAD,MERGE_HEAD}&lt;/code&gt;にあたり、全て単純なテキストファイルである。&lt;/p&gt;
+
+&lt;p&gt;特によく使う&lt;code&gt;HEAD&lt;/code&gt;を図示すると以下のようになる。&lt;/p&gt;
+
+&lt;ul class=&#34;bxslider&#34;&gt;
+  &lt;li&gt;&lt;img src=&#34;http://tbd.kaitoy.xyz/images/git-repository/git_head/スライド1.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;http://tbd.kaitoy.xyz/images/git-repository/git_head/スライド2.PNG&#34; /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;上図に見られるように、&lt;code&gt;HEAD&lt;/code&gt;は通常ブランチを指す。
+実際に&lt;code&gt;.git/HEAD&lt;/code&gt;ファイルの中身を見ると以下の様になっていて、確かにブランチを指していることが見て取れる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;ref: refs/heads/master
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;gitコマンドの実行内容によっては&lt;code&gt;HEAD&lt;/code&gt;が直接コミットを指すようになることもあり、この場合は特に「detached HEAD」、つまり(ブランチから)切り離されたHEADと呼ばれる。&lt;/p&gt;
+
+&lt;p&gt;スライドの1ページ目の状態では、だいたいのgitコマンドから見てコミットEと&lt;code&gt;master&lt;/code&gt;と&lt;code&gt;HEAD&lt;/code&gt;は等価であると考えていい。
+つまり例えば、&lt;code&gt;git reset &amp;lt;コミットEのSHA1ハッシュ値&amp;gt;&lt;/code&gt;、&lt;code&gt;git reset master&lt;/code&gt;、&lt;code&gt;git reset HEAD&lt;/code&gt;は同じ結果になる。&lt;/p&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
