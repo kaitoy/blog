@@ -39,6 +39,8 @@ title = "git resetとrevertを図解する"
   <li><img src="/images/git-revert-reset/git_reset_path/スライド3.PNG" /></li>
 </ul>
 
+(この図では便宜的に`HEAD`、つまり参照をオブジェクト格納領域内に書いているが、実際には別の場所にあることに注意。)
+
 図を見ると、`git add Readme.md`と`git reset Readme.md`がだいたい逆のことをしていることがわかる。
 要するに、`git add <パス>`は指定したファイルをステージし、`git reset <パス>`は指定したファイルをアンステージする。
 
