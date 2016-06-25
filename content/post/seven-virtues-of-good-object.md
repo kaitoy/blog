@@ -8,7 +8,7 @@ tags = [ "yegor256", "oop" ]
 title = "よいオブジェクトの七つの美徳"
 +++
 
-このエントリでは、Yegor Bugayenkoによる記事、[Seven Virtues of a Good Object](http://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/)を紹介する。
+このエントリでは、Yegor Bugayenkoによる記事、[Seven Virtues of a Good Object](http://www.yegor256.com/2014/11/20/seven-virtues-of-good-object.html)を紹介する。
 (Yegorから和訳と転載の許可は得た。)
 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。
 
