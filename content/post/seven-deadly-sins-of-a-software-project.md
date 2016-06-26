@@ -1,7 +1,7 @@
 +++
 categories = [ "Software Engineering" ]
-date = "2016-06-25T12:07:37-06:00"
-draft = true
+date = "2016-06-25T18:00:29-06:00"
+draft = false
 eyecatch = "teamedio_logo.svg"
 slug = "seven-deadly-sins-of-a-software-project"
 tags = [ "yegor256" ]
