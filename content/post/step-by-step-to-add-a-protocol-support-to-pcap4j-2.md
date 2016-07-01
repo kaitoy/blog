@@ -8,7 +8,7 @@ tags = [ "pcap4j" ]
 title = "Step by Step to Add a Protocol Support to Pcap4J (Part 2)"
 +++
 
-This is continued from [the part 1](http://tbd.kaitoy.xyz/2015/08/09/step-by-step-to-add-a-protocol-support-to-pcap4j-1/).
+This is continued from [the part 1](https://tbd.kaitoy.xyz/2015/08/09/step-by-step-to-add-a-protocol-support-to-pcap4j-1/).
 
 We are adding DHCP support to [Pcap4J](https://github.com/kaitoy/pcap4j).
 

@@ -8,11 +8,11 @@ tags = [ "atom", "disturb-me" ]
 title = "AtomにおけるGIF画像のキャッシュ"
 +++
 
-以前、[__disturb-me__](https://atom.io/packages/disturb-me)という[__Atom__](https://atom.io/)パッケージを作ったという[エントリ](http://tbd.kaitoy.xyz/2015/09/06/disturb-me/)を書いた。
+以前、[__disturb-me__](https://atom.io/packages/disturb-me)という[__Atom__](https://atom.io/)パッケージを作ったという[エントリ](https://tbd.kaitoy.xyz/2015/09/06/disturb-me/)を書いた。
 このエントリでは、disturb-meに見つけたバグの修正のなかで、AtomがGIF画像をキャッシュする問題に対応したという話を書く。
 
 ## disturb-meのバグ
-[以前のエントリの最後](http://tbd.kaitoy.xyz/2015/09/06/disturb-me/#6-%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%81%AA%E3%81%A9)にも書いた通り、disturb-me 1.0.0には、ループしないGIFアニメーション画像を設定で指定した場合、そのアニメーションが画像の初回表示時にしか再生されないというバグがある。
+[以前のエントリの最後](https://tbd.kaitoy.xyz/2015/09/06/disturb-me/#6-%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%81%AA%E3%81%A9)にも書いた通り、disturb-me 1.0.0には、ループしないGIFアニメーション画像を設定で指定した場合、そのアニメーションが画像の初回表示時にしか再生されないというバグがある。
 
 disturb-meは、`Ctrl+Alt+d Ctrl+Alt+m`と入力すると画像を表示し、もう一度それを入力すると画像を消す。
 デフォルトで表示する画像はAtomのロゴで、表示を始める時と消す時にGIF画像でループしないアニメーションを再生する。

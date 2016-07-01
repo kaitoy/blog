@@ -9,7 +9,7 @@ title = "Pcap4J in Kotlin"
 
 +++
 
-[Groovy](http://tbd.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/)に続いて、[__Kotlin__](https://kotlinlang.org/)で[__Pcap4J__](https://github.com/kaitoy/pcap4j)を使ってパケットキャプチャしてみた。
+[Groovy](https://tbd.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/)に続いて、[__Kotlin__](https://kotlinlang.org/)で[__Pcap4J__](https://github.com/kaitoy/pcap4j)を使ってパケットキャプチャしてみた。
 
 KotlinからでもPcap4Jちゃんと動くよということを実証するのが主な目的。
 また、今後JavaなアプリはKotlinで書こうかと思っているので、その予習も兼ねている。
@@ -44,7 +44,7 @@ Kotlinのバージョンは1.0.1-2。
 
 ## パケットキャプチャ with Pcap4J in Java
 Pcap4Jでパケットキャプチャするコードを普通にJavaで書くと以下の様になる。
-([Groovy](http://tbd.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/)の時のと一緒。)
+([Groovy](https://tbd.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/)の時のと一緒。)
 
 {{< gist eebcd5bdfab179cab916d3182f3d6d11 >}}
 

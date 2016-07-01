@@ -207,4 +207,4 @@ public final class DhcpV4OperationCode extends NamedNumber<Byte, DhcpV4Operation
 Likewise, `htype` should be represented by a named number class.
 Fortunately, we can use the existing class [ArpHardwareType](https://github.com/kaitoy/pcap4j/blob/master/pcap4j-core/src/main/java/org/pcap4j/packet/namednumber/ArpHardwareType.java) for it.
 
-In the [next part](http://tbd.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/), we will write a packet piece class for the `flags` field.
+In the [next part](https://tbd.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/), we will write a packet piece class for the `flags` field.

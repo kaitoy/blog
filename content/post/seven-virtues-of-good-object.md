@@ -204,9 +204,9 @@ final class HTTPStatus implements Status {
 * 不変オブジェクトを使っても副作用がおきない。(防御的コピー無)
 * エラー発生時の原子性が保証されている。
 * キャッシュしやすい。
-* [NULL参照](http://tbd.kaitoy.xyz/2015/07/26/why-null-is-bad/)を防ぐ。
+* [NULL参照](https://tbd.kaitoy.xyz/2015/07/26/why-null-is-bad/)を防ぐ。
 
-もちろん、良いオブジェクトは[setter](http://tbd.kaitoy.xyz/2015/07/22/getters-setters-evil/)をもたない。セッターはオブジェクトの状態を変え得るし、URLに背くことを強要する。
+もちろん、良いオブジェクトは[setter](https://tbd.kaitoy.xyz/2015/07/22/getters-setters-evil/)をもたない。セッターはオブジェクトの状態を変え得るし、URLに背くことを強要する。
 言い換えると、`HTTPStatus`で`setURL()`メソッドを実装することは酷い間違いとなる。
 
 その他にも、不変オブジェクトを使うことで、設計は必然的に凝集度の高いものになり、また密で理解しやすいものになる。

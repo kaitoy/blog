@@ -8,7 +8,7 @@ tags = [ "blog", "github", "jekyll" ]
 title = "GitHub Pagesでブログ立ち上げ - Jekyllのためのツール"
 +++
 
-[__GitHub Pagesでブログ立ち上げ - GitHub PagesとJekyll__](http://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/)の続き。
+[__GitHub Pagesでブログ立ち上げ - GitHub PagesとJekyll__](https://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/)の続き。
 前回は、[__GitHub Pages__](https://pages.github.com/)と[__Jekyll__](http://jekyllrb.com/docs/home/)でブログを始めることにして、Jekyllのセットアップに四苦八苦した。
 
 Jekyllがだいたいセットアップできたところで、どんなサイトデザインにしようか考え始めた。
@@ -46,4 +46,4 @@ Jekyll-BootstrapはJekyllのソースそのもので、面倒な部分は既に�
 
 ## 結論
 Jekyll-Bootstrapを使うのは気が進まない。Octopressを使うとビルド成果物をアップしないといけない。
-どうせビルド成果物を上げるのなら、Jekyllにこだわる必要はないか、ということで、去年末くらいから盛り上がってきている[__Hugo__](https://gohugo.io/)にすることに。Hugoについてはまた[別のエントリ](http://tbd.kaitoy.xyz/2015/08/28/using-hugo/)で書く。
+どうせビルド成果物を上げるのなら、Jekyllにこだわる必要はないか、ということで、去年末くらいから盛り上がってきている[__Hugo__](https://gohugo.io/)にすることに。Hugoについてはまた[別のエントリ](https://tbd.kaitoy.xyz/2015/08/28/using-hugo/)で書く。

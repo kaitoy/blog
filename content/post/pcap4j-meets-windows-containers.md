@@ -56,7 +56,7 @@ Windows Server Containersをセットアップする手順は以下。
 全部で2時間以上かかった。
 
 仮想Ethernetスイッチ接続の追加に失敗したというエラーが出たけどなんなんだろう。
-`ipconfig` の出力によると `vEthernet` というDockerの[virtual Ethernet bridge](http://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/#docker-network)にあたるものはちゃんと作られているみたいなんだけど。
+`ipconfig` の出力によると `vEthernet` というDockerの[virtual Ethernet bridge](https://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/#docker-network)にあたるものはちゃんと作られているみたいなんだけど。
 
 ## Windows Server Containers味見
 コマンドプロンプトで `docker images` を実行すると、既に `windowsservercore` というコンテナイメージが入っていることがわかる。

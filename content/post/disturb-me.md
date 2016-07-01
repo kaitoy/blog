@@ -20,7 +20,7 @@ title = "Atomウィンドウ内で画像を動かすパッケージ - disturb-me
 この構想はいつか[カタログIPオープン化プロジェクト](https://open.channel.or.jp/user.php)を利用して実現しようと思う。
 
 ## disturb-meの作り方
-以前[別のエントリ](http://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/)でAtomパッケージの作り方の基本について書いたので、ここではそこで書かなかったことを書く。
+以前[別のエントリ](https://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/)でAtomパッケージの作り方の基本について書いたので、ここではそこで書かなかったことを書く。
 
 #### 1. メインスクリプト - コマンド
 今回はコマンドを追加するので[__CommandRegistry__](https://atom.io/docs/api/latest/CommandRegistry)を使う。
@@ -152,7 +152,7 @@ atom.config.set('disturb-me.bornDuration', '1000')
 
 同時に押すキーはハイフンでつなぎ、連続して押すキーはスペースで区切るので、上記`ctrl-alt-d ctrl-alt-m`は、`Ctrl+Alt`を押しながら`d`と`m`を連続して押す、という意味。
 #### 5. package.json
-[前回](http://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/#5-package-json%E7%B7%A8%E9%9B%86)と同様の編集に加えて、今回は二つのnpmパッケージに依存するので、__dependencies__を以下のように書く。
+[前回](https://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/#5-package-json%E7%B7%A8%E9%9B%86)と同様の編集に加えて、今回は二つのnpmパッケージに依存するので、__dependencies__を以下のように書く。
 
 ```json
   "dependencies": {
@@ -166,8 +166,8 @@ atom.config.set('disturb-me.bornDuration', '1000')
 node_modulesは__Package Generator__が生成する__.gitignore__に入っているので、リポジトリには入らない。
 
 #### 6. リリースなど
-[前回](http://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/)と同様にリリースする。
+[前回](https://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/)と同様にリリースする。
 めんどいのでテストは書かない。
 
 リリース後、ループしないgifアニメーション画像をdisturb-meに使った場合、そのアニメーションが再生されない場合があるバグに気付いた。
-これについては[別のエントリ](http://tbd.kaitoy.xyz/2015/09/07/caching-gifs-on-atom/)で書いた。
+これについては[別のエントリ](https://tbd.kaitoy.xyz/2015/09/07/caching-gifs-on-atom/)で書いた。

@@ -138,4 +138,4 @@ c:/Ruby22-x64/lib/ruby/gems/2.2.0/gems/posix-spawn-0.3.11/lib/posix/spawn.rb:164
 このwarningについてはRun Jekyll on Windowsには載っていないが、pygments.rbを0.5.0にダウングレードすればいいとの情報が[ここ](https://github.com/jekyll/jekyll/issues/2052)とかにある。
 
 ## 5. Jekyllとの決別
-この辺りまでJekyllをセットアップした後、JekyllのWindowsとの相性の悪さに嫌気がさしつつ、Jekyllで簡単にかっこいいサイトを作るためのツールなどを調べているうちに、Jekyllを使うのをやめた。それについては[別のエントリ](http://tbd.kaitoy.xyz/2015/08/25/tools-for-jekyll/)で書く。
+この辺りまでJekyllをセットアップした後、JekyllのWindowsとの相性の悪さに嫌気がさしつつ、Jekyllで簡単にかっこいいサイトを作るためのツールなどを調べているうちに、Jekyllを使うのをやめた。それについては[別のエントリ](https://tbd.kaitoy.xyz/2015/08/25/tools-for-jekyll/)で書く。
