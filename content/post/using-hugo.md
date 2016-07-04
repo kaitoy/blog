@@ -207,11 +207,11 @@ blog内の変更をコミットして、GitHubにblogという名のリポジト
 `https://kaitoy.github.io/blog/`でサイトを確認できる。
 
 ## カスタムドメイン
-サイトに`https://tbd.kaitoy.xyz`でアクセスできるようにする。手順は以下。
+サイトに`http://tbd.kaitoy.xyz`でアクセスできるようにする。手順は以下。
 
 1. [__VALUE-DOMAIN__](https://www.value-domain.com/)でkaitoy.xyzを取得。
 2. VALUE-DOMAINのDNS設定に`cname tbd kaitoy.github.io.`を追加。
 3. gh-pagesブランチのルートに__CNAME__というファイルを作り、__tbd.kaitoy.xyz__とだけ書いておく。
-4. config.tomlのbaseurlを__https://tbd.kaitoy.xyz__に変更。ビルドしてプッシュ。
+4. config.tomlのbaseurlを__http://tbd.kaitoy.xyz__に変更。ビルドしてプッシュ。
 
 以上でブログサイト立ち上げ完了。あとはテーマをカスタマイズしたり、ひたすらエントリを書く。
