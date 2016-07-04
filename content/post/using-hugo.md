@@ -46,6 +46,17 @@ C:\Users\Kaito\Desktop\tool\hugo_0.14_windows_amd64\hugo_0.14_windows_amd64.exe 
 
 前者の方が当然クライアントの負荷が軽くなるが、[__Pygments__](http://pygments.org/)のインストールが必要だったりめんどくさそうなので後者にする。(Pygmentsは[Jekyllのとき](https://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/)にすでに入れたけど…)
 
+クライアントサイドでやるのもいくつかやり方があるが、例えば[Highlight.js](https://highlightjs.org/)を使うなら以下をHTMLヘッダに加えるだけでいい。
+
+```html
+<link rel="stylesheet" href="https://yandex.st/highlightjs/8.0/styles/default.min.css">
+<script src="https://yandex.st/highlightjs/8.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+```
+
+この`default.min.css`の部分を変えると[色々なスタイル](https://highlightjs.org/static/demo/)が選べる。
+このブログでは`Zenburn`を使うことにした。
+
 ## Hugo味見
 [Hugoコマンドリファレンス](https://gohugo.io/commands/)を見つつ、Hugoの味見をする。
 
