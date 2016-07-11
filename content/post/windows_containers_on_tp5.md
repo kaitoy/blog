@@ -278,8 +278,11 @@ Invoke-WebRequest https://aka.ms/tp5/Update-Container-Host -OutFile update-conta
 Restart-Computer -Force
 ```
 
-#### 未実装の機能
+#### git cloneできない
+Pcap4Jのソースをダウンロードしたかったんだけど、なぜか`git clone`がHTTPSでもGITプロトコルでもエラーを返す。
+原因を調べるのが面倒で結局zipでダウンロードするようにした。
 
+#### 未実装の機能
 [Dockerfileのリファレンス](https://docs.docker.com/engine/reference/builder/)に載っていて、Windows向けのサンプルも書いてあるのに、[escapeディレクティブ](https://docs.docker.com/engine/reference/builder/#/escape)と[SHELLコマンド](https://docs.docker.com/engine/reference/builder/#/shell)
 が使えなかった。
 
