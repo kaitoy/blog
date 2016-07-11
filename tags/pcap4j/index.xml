@@ -6,8 +6,421 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2016</rights>
-    <updated>2016-04-16 11:09:53 -0600 MDT</updated>
+    <updated>2016-07-11 00:30:33 -0600 MDT</updated>
 
+    
+      
+        <item>
+          <title>Windows Server 2016 TP5でWindows Containersにリトライ</title>
+          <link>https://tbd.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/</link>
+          <pubDate>Mon, 11 Jul 2016 00:30:33 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;https://www.microsoft.com/ja-jp/evalcenter/evaluate-windows-server-technical-preview&#34;&gt;Windows Server 2016のTechnical Preview 5(TP5)が公開されていた&lt;/a&gt;ので、
+&lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/&#34;&gt;TP4でバグに阻まれて挫折した&lt;/a&gt;、Windows Containersで&lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;Pcap4J&lt;/a&gt;を使ってパケットキャプチャする試みにリトライした話。&lt;/p&gt;
+
+&lt;h2 id=&#34;osセットアップ&#34;&gt;OSセットアップ&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containersセットアップ&#34;&gt;TP4のとき&lt;/a&gt;と同じ環境。&lt;/p&gt;
+
+&lt;p&gt;以降は&lt;a href=&#34;https://msdn.microsoft.com/en-us/virtualization/windowscontainers/quick_start/quick_start_windows_server&#34;&gt;Windows Server Containersのクイックスタートガイド&lt;/a&gt;に沿ってセットアップを進める。
+&lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containersセットアップ&#34;&gt;TP4&lt;/a&gt;からは大分変わっていて、単一のPowershellスクリプトを実行する形式から、Powershellのコマンドレットを逐次手動実行する形式になっている。
+面倒だけど何やってるかわかりやすくて好き。&lt;/p&gt;
+
+&lt;h2 id=&#34;コンテナ機能のインストール&#34;&gt;コンテナ機能のインストール&lt;/h2&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;管理者権限のパワーシェルウィンドウを開く&lt;/p&gt;
+
+&lt;p&gt;コマンドプロンプトから以下のコマンドを実行。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;powershell start-process powershell -Verb runas
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;コンテナ機能のインストール&lt;/p&gt;
+
+&lt;p&gt;開いた青いパワーシェルウィンドウで以下のコマンドを実行するとコンテナ機能がインストールされる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;Install-WindowsFeature containers
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;数分で終わる。&lt;/p&gt;
+
+&lt;p&gt;インストールされたのはHyper-V ContainersじゃなくてWindows Server Containersの方。
+クイックスタートガイドをみると、前者がWindows 10向け、後者がWindows Server向けというように住み分けされているっぽい。TP4では両方ともWindows Serverで使えたんだけど。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;再起動&lt;/p&gt;
+
+&lt;p&gt;変更を有効にするために再起動が必要。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;Restart-Computer -Force
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&#34;dockerインストール&#34;&gt;Dockerインストール&lt;/h2&gt;
+
+&lt;p&gt;Dockerは、コンテナイメージの管理やコンテナの起動などもろもろの機能を提供するDockerデーモンと、その機能を利用するためのCLIを提供するDockerクライアントからなる。この節ではそれら両方をインストールする。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Dockerインストールフォルダ作成&lt;/p&gt;
+
+&lt;p&gt;管理者権限のパワーシェルウィンドウを開いて、以下のコマンドでDockerインストールフォルダを作成。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;New-Item -Type Directory -Path &#39;C:\Program Files\docker\&#39;
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Dockerデーモンインストール&lt;/p&gt;
+
+&lt;p&gt;まずはデーモンの方をインストール。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;Invoke-WebRequest https://aka.ms/tp5/b/dockerd -OutFile $env:ProgramFiles\docker\dockerd.exe -UseBasicParsing
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;数分。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Dockerクライアントインストール&lt;/p&gt;
+
+&lt;p&gt;次にクライアント。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;Invoke-WebRequest https://aka.ms/tp5/b/docker -OutFile $env:ProgramFiles\docker\docker.exe -UseBasicParsing
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;数十秒。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;パスの設定&lt;/p&gt;
+
+&lt;p&gt;さっき作ったDockerインストールフォルダにパスを通す。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;[Environment]::SetEnvironmentVariable(&amp;quot;Path&amp;quot;, $env:Path + &amp;quot;;C:\Program Files\Docker&amp;quot;, [EnvironmentVariableTarget]::Machine)
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Dockerデーモンをサービスに登録&lt;/p&gt;
+
+&lt;p&gt;パスの設定を反映するためにいったんパワーシェルウィンドウとコマンドプロンプトを閉じて、
+また管理者権限でパワーシェルウィンドウ開いて、以下のコマンドでDockerデーモンをサービスに登録する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;dockerd --register-service
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Dockerデーモン起動&lt;/p&gt;
+
+&lt;p&gt;Dockerデーモンは以下のコマンドで起動できる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;Start-Service docker
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;数秒で立ち上がる。
+デフォルトではOS再起動時にはDockerデーモンは自動起動しないので、そのつどこのコマンドを実行する必要がある。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;これでDockerインストール完了。
+この時点ではコンテナイメージは何もない。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\Administrator&amp;gt;docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;因みにインストールされたDockerのバージョンは1.12開発版。現時点での最新版だ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\Administrator&amp;gt;docker -v
+Docker version 1.12.0-dev, build 8e92415
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;コンテナイメージのインストール&#34;&gt;コンテナイメージのインストール&lt;/h2&gt;
+
+&lt;p&gt;次に、コンテナイメージをインストールする。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;コンテナイメージのパッケージプロバイダをインストール&lt;/p&gt;
+
+&lt;p&gt;いまいち何なのかはよくわからないが、
+コンテナイメージのパッケージプロバイダというのをインストールする。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;Install-PackageProvider ContainerImage -Force
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;数十秒。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Windows Server Coreのイメージをインストール&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;Install-ContainerImage -Name WindowsServerCore
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;9GB以上もあるファイルをダウンロードして処理するのでかなり時間がかかる。
+50分くらいかかった。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Dockerデーモン再起動&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;Restart-Service docker
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;無事Windows Server Coreイメージがインストールされた。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;PS C:\Users\Administrator&amp;gt; docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+windowsservercore   10.0.14300.1000     5bc36a335344        8 weeks ago         9.354 GB
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;pcap4jコンテナイメージのビルド&#34;&gt;Pcap4Jコンテナイメージのビルド&lt;/h2&gt;
+
+&lt;p&gt;以下を&lt;code&gt;C:\Users\Administrator\Desktop\pcap4j\Dockerfile&lt;/code&gt;に書いて、&lt;code&gt;cd C:\Users\Administrator\Desktop\pcap4j&lt;/code&gt;して、&lt;code&gt;docker build -t pcap4j .&lt;/code&gt;を実行。
+(Notepad使ったので、拡張子を表示する設定にして&lt;code&gt;Dockerfile&lt;/code&gt;の&lt;code&gt;.txt&lt;/code&gt;を消さないといけない罠があった。)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-dockerfile&#34;&gt;#
+# Dockerfile for Pcap4J on Windows
+#
+
+FROM windowsservercore:10.0.14300.1000
+MAINTAINER Kaito Yamada &amp;lt;kaitoy@pcap4j.org&amp;gt;
+
+# Install Chocolatey.
+RUN mkdir C:\pcap4j
+WORKDIR c:\\pcap4j
+ADD https://chocolatey.org/install.ps1 install.ps1
+RUN powershell .\install.ps1
+
+# Install dependencies.
+RUN choco install -y nmap jdk7 &amp;amp;&amp;amp; \
+    choco install -y maven -version 3.2.5
+
+# Build Pcap4J.
+RUN powershell -Command Invoke-WebRequest https://github.com/kaitoy/pcap4j/archive/v1.zip -OutFile pcap4j.zip &amp;amp;&amp;amp; \
+    powershell -Command Expand-Archive -Path pcap4j.zip -DestinationPath .
+WORKDIR pcap4j-1
+RUN powershell -Command &amp;quot;mvn -P distribution-assembly install 2&amp;gt;&amp;amp;1 | Add-Content -Path build.log -PassThru&amp;quot;
+
+# Collect libraries.
+RUN mkdir bin &amp;amp;&amp;amp; \
+    cd pcap4j-packetfactory-static &amp;amp;&amp;amp; \
+    mvn -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeScope=compile dependency:copy-dependencies &amp;amp;&amp;amp; \
+    mvn -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeGroupIds=ch.qos.logback dependency:copy-dependencies &amp;amp;&amp;amp; \
+    cd ../pcap4j-distribution &amp;amp;&amp;amp; \
+    mvn -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeArtifactIds=pcap4j-packetfactory-static,pcap4j-sample dependency:copy-dependencies
+
+# Generate sample script. (C:\pcap4j\pcap4j-1\bin\capture.bat)
+RUN echo @echo off &amp;gt; bin\capture.bat &amp;amp;&amp;amp; \
+    echo &amp;quot;%JAVA_HOME%\bin\java&amp;quot; -cp C:\pcap4j\pcap4j-1\bin\pcap4j-core.jar;C:\pcap4j\pcap4j-1\bin\pcap4j-packetfactory-static.jar;C:\pcap4j\pcap4j-1\bin\pcap4j-sample.jar;C:\pcap4j\pcap4j-1\bin\jna.jar;C:\pcap4j\pcap4j-1\bin\slf4j-api.jar;C:\pcap4j\pcap4j-1\bin\logback-classic.jar;C:\pcap4j\pcap4j-1\bin\logback-core.jar org.pcap4j.sample.GetNextPacketEx &amp;gt;&amp;gt; bin\capture.bat
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Dockerfileに書いた処理内容は&lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container&#34;&gt;TP4のとき&lt;/a&gt;とだいたい同じ。
+以下、Dockerfile書いているときに気付いたこと。&lt;/p&gt;
+
+&lt;h4 id=&#34;tp4からのアップデート&#34;&gt;TP4からのアップデート&lt;/h4&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;WORKDIR や ENV や COPY でパスの区切りは \ 一つだと消えちゃうので \ か / を使わないといけない。
+&lt;div style=&#34;font-size: 0.5em; text-align: right;&#34;&gt;&lt;cite&gt;引用元: &lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container&#34;&gt;TP4のときのエントリ&lt;/a&gt;&lt;/cite&gt;&lt;/div&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://msdn.microsoft.com/en-us/virtualization/windowscontainers/docker/manage_windows_dockerfile&#34;&gt;このページ&lt;/a&gt;の各コマンドの&lt;strong&gt;Windows Considerations&lt;/strong&gt;に、&lt;code&gt;WORKDIR&lt;/code&gt;のパスの区切りのバックスラッシュはエスケープしないといけないとか、&lt;code&gt;ADD&lt;/code&gt;のパスの区切りはスラッシュじゃないといけないとか書いてある。
+TP4のときはなかったような。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;WORKDIR や COPY のコンテナ内のパスに絶対パスを指定したい場合、C:\hoge、C:/hoge、C:\hoge、いずれもダメ。 以下の様なエラーが出る。
+&lt;div style=&#34;font-size: 0.5em; text-align: right;&#34;&gt;&lt;cite&gt;引用元: &lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container&#34;&gt;TP4のときのエントリ&lt;/a&gt;&lt;/cite&gt;&lt;/div&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;これは直った。&lt;code&gt;WORKDIR c:\\pcap4j&lt;/code&gt;で行ける。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;install.ps1の中でChocolateyのインストーラをHTTPSで取ってこようとしてエラー
+&lt;div style=&#34;font-size: 0.5em; text-align: right;&#34;&gt;&lt;cite&gt;引用元: &lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container&#34;&gt;TP4のときのエントリ&lt;/a&gt;&lt;/cite&gt;&lt;/div&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;普通に&lt;code&gt;choco install&lt;/code&gt;できたので、HTTPSが使えない制限は消えた模様。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;ビルドしてみると、各ステップの実行(多分レイヤの作成)がすごく遅い。
+&lt;div style=&#34;font-size: 0.5em; text-align: right;&#34;&gt;&lt;cite&gt;引用元: &lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container&#34;&gt;TP4のときのエントリ&lt;/a&gt;&lt;/cite&gt;&lt;/div&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;各ステップの実行は相変わらず重い。特にファイル変更が多いときはすごく重い。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;コンテナの起動は非常に遅い。30秒以上かかる。
+&lt;div style=&#34;font-size: 0.5em; text-align: right;&#34;&gt;&lt;cite&gt;引用元: &lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-server-containers味見&#34;&gt;TP4のときのエントリ&lt;/a&gt;&lt;/cite&gt;&lt;/div&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;コンテナ起動は早くなったけどまだ5秒くらいかかる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;WORKDIR や ENV で環境変数が展開されない。
+&lt;div style=&#34;font-size: 0.5em; text-align: right;&#34;&gt;&lt;cite&gt;引用元: &lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container&#34;&gt;TP4のときのエントリ&lt;/a&gt;&lt;/cite&gt;&lt;/div&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;これはまだ直っていない。&lt;code&gt;%tmp%&lt;/code&gt;、&lt;code&gt;%TMP%&lt;/code&gt;、&lt;code&gt;$TMP&lt;/code&gt;、&lt;code&gt;${TMP}&lt;/code&gt;、どれもだめ。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;コンテナ内で C:\ 直下に . で始まる名前のフォルダ作ると次のステップで消えてる。
+&lt;div style=&#34;font-size: 0.5em; text-align: right;&#34;&gt;&lt;cite&gt;引用元: &lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container&#34;&gt;TP4のときのエントリ&lt;/a&gt;&lt;/cite&gt;&lt;/div&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;これは再現しなかった。以前のも勘違いだったのかもしれない。
+なんにせよデフォルトの.m2フォルダのパスが&lt;code&gt;C:\Users\ContainerAdministrator\.m2&lt;/code&gt;になったので気にしなくてよくなった。&lt;/p&gt;
+
+&lt;h4 id=&#34;ビルドエラー-hcsshim-importlayer-failed-in-win32-the-filename-or-extension-is-too-long-0xce&#34;&gt;ビルドエラー: hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce)&lt;/h4&gt;
+
+&lt;p&gt;&lt;code&gt;choco install&lt;/code&gt;の後で以下のエラーが出た。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;re-exec error: exit status 1: output: time=&amp;quot;2016-07-09T19:57:22-07:00&amp;quot; level=error msg=&amp;quot;hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce) layerId=\\\\?\\C:\\ProgramData\\docker\\windowsfilter\\103de6bf1358c506510ad67990f09ec3e2f10f9e866e846df5a88c04f5edf7aa flavour=1 folder=C:\\Windows\\TEMP\\hcs719016711&amp;quot;
+hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce) layerId=\\?\C:\ProgramData\docker\windowsfilter\103de6bf1358c506510ad67990f09ec3e2f10f9e866e846df5a88c04f5edf7aa flavour=1 folder=C:\Windows\TEMP\hcs719016711
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;調べたら&lt;a href=&#34;https://github.com/docker/docker/issues/22449&#34;&gt;DockerのGitHub Issues&lt;/a&gt;に登録されていた。
+ここのコメントを参考に以下のコマンドでコンテナホストのアップデートをしたら発生しなくなった。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;Invoke-WebRequest https://aka.ms/tp5/Update-Container-Host -OutFile update-containerhost.ps1
+.\update-containerhost.ps1
+Restart-Computer -Force
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;未実装の機能&#34;&gt;未実装の機能&lt;/h4&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://docs.docker.com/engine/reference/builder/&#34;&gt;Dockerfileのリファレンス&lt;/a&gt;に載っていて、Windows向けのサンプルも書いてあるのに、&lt;a href=&#34;https://docs.docker.com/engine/reference/builder/#/escape&#34;&gt;escapeディレクティブ&lt;/a&gt;と&lt;a href=&#34;https://docs.docker.com/engine/reference/builder/#/shell&#34;&gt;SHELLコマンド&lt;/a&gt;
+が使えなかった。&lt;/p&gt;
+
+&lt;h2 id=&#34;コンテナ起動&#34;&gt;コンテナ起動&lt;/h2&gt;
+
+&lt;p&gt;とりあえず上記DockerfileでPcap4Jコンテナイメージのビルドはできた。&lt;/p&gt;
+
+&lt;p&gt;以下のコマンドでそのイメージからコンテナを起動。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\Administrator&amp;gt;docker run -it pcap4j cmd
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;コンテナ内で&lt;code&gt;ipconfig&lt;/code&gt;すると&lt;code&gt;vEthernet (Temp Nic Name)&lt;/code&gt;という名のネットワークインターフェースがあることがわかる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\pcap4j\pcap4j-1\bin&amp;gt;ipconfig
+
+Windows IP Configuration
+
+
+Ethernet adapter vEthernet (Temp Nic Name):
+
+   Connection-specific DNS Suffix  . : localdomain
+   Link-local IPv6 Address . . . . . : fe80::59cf:1491:6f8e:30c8%18
+   IPv4 Address. . . . . . . . . . . : 172.23.71.6
+   Subnet Mask . . . . . . . . . . . : 255.240.0.0
+   Default Gateway . . . . . . . . . : 172.16.0.1
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;けどPcap4Jからは見えなかった。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\pcap4j\pcap4j-1\bin&amp;gt;capture.bat
+org.pcap4j.sample.GetNextPacketEx.count: 5
+org.pcap4j.sample.GetNextPacketEx.readTimeout: 10
+org.pcap4j.sample.GetNextPacketEx.snaplen: 65536
+
+
+18:49:00.582 [main] INFO  org.pcap4j.core.Pcaps - No NIF was found.
+java.io.IOException: No NIF to capture.
+        at org.pcap4j.sample.GetNextPacketEx.main(GetNextPacketEx.java:45)java:44)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;コンテナには&lt;code&gt;ContainerAdministrator&lt;/code&gt;というユーザでログインしていて、これの権限が弱いせいなんじゃないかと。
+コンテナ内にも&lt;code&gt;Administrator&lt;/code&gt;というユーザがあるようだったので、こっちでコマンド実行するよう奮闘した。&lt;/p&gt;
+
+&lt;h2 id=&#34;コンテナ内でadministratorでコマンド実行したい&#34;&gt;コンテナ内でAdministratorでコマンド実行したい&lt;/h2&gt;
+
+&lt;h4 id=&#34;userコマンド&#34;&gt;USERコマンド&lt;/h4&gt;
+
+&lt;p&gt;Dockerfileのコマンドに&lt;a href=&#34;https://docs.docker.com/engine/reference/builder/#/user&#34;&gt;USER&lt;/a&gt;というのがあるので、&lt;code&gt;USER Administrator&lt;/code&gt;をDockerfileの末尾に追加してみたら以下のエラー。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;The daemon on this platform does not support the command &#39;user&#39;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;userオプション&#34;&gt;&amp;ndash;userオプション&lt;/h4&gt;
+
+&lt;p&gt;docker runコマンドに&lt;a href=&#34;https://docs.docker.com/compose/reference/run/&#34;&gt;&amp;ndash;user&lt;/a&gt;というオプションがあるので以下のように試してみたところ、オプションは無視されて&lt;code&gt;ContainerAdministrator&lt;/code&gt;でコンテナに入った。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;docker run -it --user Administrator pcap4j cmd
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;runas&#34;&gt;runas&lt;/h4&gt;
+
+&lt;p&gt;ちょっと発想の転換をして、&lt;code&gt;ContainerAdministrator&lt;/code&gt;でコンテナに入った後sudoみたいなことをすればいいかと思い、&lt;a href=&#34;https://technet.microsoft.com/en-us/library/bb490994.aspx&#34;&gt;runas&lt;/a&gt;コマンドを試したけどだめだった。
+よく分からないエラーがでるし、そもそも&lt;code&gt;Administrator&lt;/code&gt;のパスワードがわからない。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\pcap4j\pcap4j-1\bin&amp;gt;runas /user:Administrator cmd
+Enter the password for Administrator:
+Attempting to start cmd as user &amp;quot;92EC7B3B09B4\Administrator&amp;quot; ...
+RUNAS ERROR: Unable to run - cmd
+1326: The user name or password is incorrect.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\pcap4j\pcap4j-1\bin&amp;gt;runas /user:&amp;quot;User Manager\Administrator&amp;quot; capture.bat
+Enter the password for User Manager\Administrator:
+RUNAS ERROR: Unable to acquire user password
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;enter-pssession&#34;&gt;Enter-PSSession&lt;/h4&gt;
+
+&lt;p&gt;フォーラムに行ったら&lt;a href=&#34;https://social.msdn.microsoft.com/Forums/en-US/0b6bd405-a235-4608-a06b-a09b9ba08b2e/runas-administrator?forum=windowscontainers&#34;&gt;Enter-PSSession&lt;/a&gt;を使う方法が書いてあった。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://technet.microsoft.com/en-us/library/hh849707.aspx&#34;&gt;Enter-PSSession&lt;/a&gt;はリモートシステムに接続するコマンドレットで、&lt;code&gt;-ContainerName&lt;/code&gt;オプションを使えばコンテナにも接続できる。&lt;/p&gt;
+
+&lt;p&gt;試したら、コンテナが見つからないというエラーが出た。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\Administrator&amp;gt;powershell -command Enter-PSSession -ContainerName amazing_archimedes -RunAsAdministrator
+Enter-PSSession : The input ContainerName amazing_archimedes does not exist, or the corresponding container is not running.
+At line:1 char:1
++ Enter-PSSession -ContainerName amazing_archimedes -RunAsAdministrator
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [Enter-PSSession], PSInvalidOperationException
+    + FullyQualifiedErrorId : CreateRemoteRunspaceForContainerFailed,Microsoft.PowerShell.Commands.EnterPSSessionCommand
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://technet.microsoft.com/en-us/library/hh849719.aspx&#34;&gt;Invoke-Command&lt;/a&gt;もコンテナをターゲットにできるので試してみたけど、同様のエラー。&lt;/p&gt;
+
+&lt;p&gt;どうもパワーシェルで扱うコンテナやコンテナイメージが、dockerコマンドが扱うものとは別になっているせいっぽい。
+そんなことがTP4のときに見たドキュメントに書いてあったのを思い出した。(このドキュメントは消えてた。)&lt;/p&gt;
+
+&lt;p&gt;実際、&lt;code&gt;docker ps&lt;/code&gt;では見えているコンテナが、&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\Administrator&amp;gt;docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+a711497f29d8        pcap4j              &amp;quot;cmd&amp;quot;               13 minutes ago      Up 12 minutes                           amazing_archimedes
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;コマンドレットからだと見えない。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\Administrator&amp;gt;powershell -command Get-Container
+WARNING: Based on customer feedback, we are updating the Containers PowerShell module to better align with Docker. As part of that some cmdlet and parameter names may change in future releases. To learn more about these changes as well as to join in the design process or provide usage feedback please refer to http://aka.ms/windowscontainers/powershell
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;そうなると、パワーシェルのコマンドレットには&lt;code&gt;docker build&lt;/code&gt;にあたるものがないのでもうどうしようもない。&lt;/p&gt;
+
+&lt;p&gt;そもそも、TP4の頃のコマンドレットは&lt;a href=&#34;https://msdn.microsoft.com/en-us/virtualization/windowscontainers/management/docker-powershell&#34;&gt;廃止になって&lt;/a&gt;、&lt;a href=&#34;https://github.com/Microsoft/Docker-PowerShell/&#34;&gt;新しいコマンドレット&lt;/a&gt;を開発中らしい。やはりdockerコマンドとコマンドレットでコンテナの相互運用ができない仕様にユーザから相当つっこみがあったようだ。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;Enter-PSSession&lt;/code&gt;や&lt;code&gt;Invoke-Command&lt;/code&gt;の&lt;code&gt;-ContainerName&lt;/code&gt;オプションもその内修正されるであろう。
+それまで待つか。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>

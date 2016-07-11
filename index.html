@@ -13,9 +13,9 @@
     <meta property="og:url" content="https://tbd.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="最近GitHub PagesがHTTPSに正式対応したというニュースを見たことをきっかけに、このブログをCloudFlareで常時HTTPS化した話。 このブログ このブログはGitHub Pagesでホストされている。 GitHub Pages上のWebサイトはデフォルトでは&lt;GitHubユーザ名&gt;.github.ioというドメインで公開されるが、ちょっとかっこつけたかったのでカスタムドメイン(tbd.kaitoy.xyz)にした。 GitHub Pagesは2014年3月から非公式にHTTPSをサポートしていて、2016年6月8日に正式サポートを表明したが、これは&lt;GitHubユーザ名&gt;.github.ioドメインだけが対象であり、カスタムドメインはHTTPSサポートされていない。 要するにこのブログにはHTTP接続しかできない状態だった。 これをなんとかHTTPSに対応させたかった。 なぜHTTPS HTTPS化(常時SSL化)が世界的な流行りな雰囲気を感じていたのと、なにより、Googleに優遇してもらえるから。 Googleの検索結果の2,3ページ目までに出てこないなら、そのサイトはこの世に存在しないのとあまり変わらない。 昔はHTTPSにするとSSLプロトコルのオーバーヘッドや暗号化/復号化処理によりHTTPに比べて遅くなると言われていたが、最近ではサーバ/クライアントマシンの性能が上がり、このデメリットは気にするほどのものではなくなった。 逆に、常時SSL化するとSPDYやHTTP/2といった高速なプロトコルの恩恵を受けることができるようになり、HTTPより速くなることもあるらしい。 カスタムドメインなGitHub PagesサイトをHTTPS対応する方法 上記の通りこのブログはカスタムドメインでGitHub Pagesのサポートがなく直接にはHTTPS対応できない。 よって間接的に対応することになるので、リバースプロキシを使うことになる。 リバースプロキシサーバを自分で運用するのは大変なので、CDNサービスを利用する。 CDNサービスでまず思い当たったのはAWSのCloudFrontだけど、なんだか大げさで面倒そう。 あとはCloudFlareが有名なので調べたところ、手軽で無料でよさそうだったのでこれにした。 因みに、ごく最近始まったサービスのKloudsecというのも見つけたけど、まだベータが付いているし、遅いだのそもそもつながらないだの評判が悪かったのでこれは無し。 CloudFlareを利用すると、もともとだいたいこんな感じ↓だったのが、 こんな感じ↓になる。多分。 上のスライド中のリバースプロキシは実際にはいくつもあり、エニーキャストによってブラウザから一番近いものが使われる。 CloudFlare事始め CloudFlareの始め方はQiitaの記事を参考にした。 CloudFlareのアカウント作成 CloudFlareのサイトに行ってSign upのリンクからメアドとパスワードを渡してアカウントを作成。 CloudFlareにサイトを登録 アカウント作成後に開くページに従い、4つのステップをこなすとサービス利用開始できる。 まずはサイトの登録。 サブドメインを除いたkaitoy.xyzを入力してBegin Scanをクリック。 何かのスキャンが始まるので1分ほど待つ。何をしているのかはよくわからない。 CloudFlareのDNSの設定 次のステップでCloudFlareのDNSにレコードを登録する。 ブラウザからのトラフィックの誘導にはAかAAAAかCNAMEを登録できる。 トラフィックはkaitoy.github.ioに送りたいけど、IPアドレスは自分でコントロールできないのでAとAAAAは使えない。 CNAMEを登録した。 適当に入力してAdd Recordを押すとレコードを登録できるが、StatusのところがデフォルトでDNS only(灰色のクラウドのアイコン)になっているので、アイコンをクリックしてDNS and HTTP proxy (CDN)(オレンジ色のクラウドのアイコン)にしておく。 こうしないとブラウザからのトラフィックがCloudFlareを経由せず、HTTPS化できないはず。 プランの選択 サービスプランは無料のFree Websiteを選択。常時SSL化するだけならこれで十分なはず。 レジストラのネームサーバの変更 最後にレジストラのサイトに行ってネームサーバを変更するように指示される。 CloudFlareからは二つのネームサーバが割り当てられたようだ。 指示されたとおりに変更する。 CloudFlareの設定 サインアップが終わるとCloudFlareのダッシュボードが開く。 ダッシュボードのOverviewのStatusは最初はPendingになっていて、これはネームサーバの変更を反映中ということらしかった。 ネームサーバの変更は数時間くらいかかったが、変更中もhttp://tbd.kaitoy.xyz/にはアクセスできた。 ダッシュボードからやった設定は以下。 これもQiitaの記事を参考にした。 SSL ダッシュボードのCryptoのSSLの設定はデフォルトでFull (strict)になっている。 これはブラウザ-CloudFlare間とCloudFlare-GitHub Pages間両方をSSL化する設定。">
+    <meta property="og:description" content="Windows Server 2016のTechnical Preview 5(TP5)が公開されていたので、 TP4でバグに阻まれて挫折した、Windows ContainersでPcap4Jを使ってパケットキャプチャする試みにリトライした話。 OSセットアップ TP4のときと同じ環境。 以降はWindows Server Containersのクイックスタートガイドに沿ってセットアップを進める。 TP4からは大分変わっていて、単一のPowershellスクリプトを実行する形式から、Powershellのコマンドレットを逐次手動実行する形式になっている。 面倒だけど何やってるかわかりやすくて好き。 コンテナ機能のインストール 管理者権限のパワーシェルウィンドウを開く コマンドプロンプトから以下のコマンドを実行。 powershell start-process powershell -Verb runas コンテナ機能のインストール 開いた青いパワーシェルウィンドウで以下のコマンドを実行するとコンテナ機能がインストールされる。 Install-WindowsFeature containers 数分で終わる。 インストールされたのはHyper-V ContainersじゃなくてWindows Server Containersの方。 クイックスタートガイドをみると、前者がWindows 10向け、後者がWindows Server向けというように住み分けされているっぽい。TP4では両方ともWindows Serverで使えたんだけど。 再起動 変更を有効にするために再起動が必要。 Restart-Computer -Force Dockerインストール Dockerは、コンテナイメージの管理やコンテナの起動などもろもろの機能を提供するDockerデーモンと、その機能を利用するためのCLIを提供するDockerクライアントからなる。この節ではそれら両方をインストールする。 Dockerインストールフォルダ作成 管理者権限のパワーシェルウィンドウを開いて、以下のコマンドでDockerインストールフォルダを作成。 New-Item -Type Directory -Path &#39;C:\Program Files\docker\&#39; Dockerデーモンインストール まずはデーモンの方をインストール。 Invoke-WebRequest https://aka.ms/tp5/b/dockerd -OutFile $env:ProgramFiles\docker\dockerd.exe -UseBasicParsing 数分。 Dockerクライアントインストール 次にクライアント。 Invoke-WebRequest https://aka.ms/tp5/b/docker -OutFile $env:ProgramFiles\docker\docker.exe -UseBasicParsing 数十秒。 パスの設定 さっき作ったDockerインストールフォルダにパスを通す。 [Environment]::SetEnvironmentVariable(&quot;Path&quot;, $env:Path &#43; &quot;;C:\Program Files\Docker&quot;, [EnvironmentVariableTarget]::Machine) Dockerデーモンをサービスに登録 パスの設定を反映するためにいったんパワーシェルウィンドウとコマンドプロンプトを閉じて、 また管理者権限でパワーシェルウィンドウ開いて、以下のコマンドでDockerデーモンをサービスに登録する。 dockerd --register-service Dockerデーモン起動 Dockerデーモンは以下のコマンドで起動できる。 Start-Service docker 数秒で立ち上がる。 デフォルトではOS再起動時にはDockerデーモンは自動起動しないので、そのつどこのコマンドを実行する必要がある。 これでDockerインストール完了。 この時点ではコンテナイメージは何もない。 C:\Users\Administrator&gt;docker images REPOSITORY TAG IMAGE ID CREATED SIZE 因みにインストールされたDockerのバージョンは1.12開発版。現時点での最新版だ。 C:\Users\Administrator&gt;docker -v Docker version 1.12.0-dev, build 8e92415 コンテナイメージのインストール 次に、コンテナイメージをインストールする。 コンテナイメージのパッケージプロバイダをインストール いまいち何なのかはよくわからないが、 コンテナイメージのパッケージプロバイダというのをインストールする。 Install-PackageProvider ContainerImage -Force 数十秒。 Windows Server Coreのイメージをインストール Install-ContainerImage -Name WindowsServerCore 9GB以上もあるファイルをダウンロードして処理するのでかなり時間がかかる。 50分くらいかかった。 Dockerデーモン再起動 Restart-Service docker 無事Windows Server Coreイメージがインストールされた。 PS C:\Users\Administrator&gt; docker images REPOSITORY TAG IMAGE ID CREATED SIZE windowsservercore 10.0.14300.1000 5bc36a335344 8 weeks ago 9.354 GB Pcap4Jコンテナイメージのビルド 以下をC:\Users\Administrator\Desktop\pcap4j\Dockerfileに書いて、cd C:\Users\Administrator\Desktop\pcap4jして、docker build -t pcap4j .を実行。 (Notepad使ったので、拡張子を表示する設定にしてDockerfileの.txtを消さないといけない罠があった。) # # Dockerfile for Pcap4J on Windows # FROM windowsservercore:10.0.14300.1000 MAINTAINER Kaito Yamada &lt;kaitoy@pcap4j.org&gt; # Install Chocolatey.">
     
-    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/cloudflare.png">
+    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/pcap4j-docker.png">
     
     
     
@@ -37,7 +37,7 @@
     <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
     <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
-    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/zenburn.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
     <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
     <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
     <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
@@ -64,6 +64,28 @@
     <div id="posts">
       
       <div class="row">
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/pcap4j-docker.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Mon, Jul 11, 2016</span>
+              </div>
+              <h2 class="title">Windows Server 2016 TP5でWindows Containersにリトライ</h2>
+              <div class="summary">
+                Windows Server 2016のTechnical Preview 5(TP5)が公開されていたので、 TP4でバグに阻まれて挫折した、Windows ContainersでPcap4Jを使ってパケットキャプチャする試みにリトライした話。 OSセットアップ TP4のときと同じ環境。 以降はWindows Server Containersのクイックスタートガイドに沿ってセットアップを進める。 TP4からは大分変わっていて、単一のPowershellスクリプトを実行する形式から、Powershellのコマンドレットを逐次手動実行する形式になっている。 面倒だけど何やってるかわかりやすくて好き。 コンテナ機能のインストール 管理者権限のパワーシェルウィンドウを開く コマンドプロンプトから以下のコマンドを実行。 powershell start-process powershell -Verb runas コンテナ機能のインストール 開いた青いパワーシェルウィンドウで以下のコマンドを実行するとコンテナ機能がインストールされる。 Install-WindowsFeature containers 数分で終わる。 インストールされたのはHyper-V ContainersじゃなくてWindows Server Containersの方。 クイックスタートガイドをみると、前者がWindows 10向け、後者がWindows Server向けというように住み分けされているっぽい。TP4では両方ともWindows Serverで使えたんだけど。 再起動 変更を有効にするために再起動が必要。 Restart-Computer -Force Dockerインストール Dockerは、コンテナイメージの管理やコンテナの起動などもろもろの機能を提供するDockerデーモンと、その機能を利用するためのCLIを提供するDockerクライアントからなる。この節ではそれら両方をインストールする。 Dockerインストールフォルダ作成 管理者権限のパワーシェルウィンドウを開いて、以下のコマンドでDockerインストールフォルダを作成。 New-Item -Type Directory -Path 'C:\Program Files\docker\' Dockerデーモンインストール まずはデーモンの方をインストール。 Invoke-WebRequest https://aka.ms/tp5/b/dockerd -OutFile $env:ProgramFiles\docker\dockerd.exe -UseBasicParsing 数分。 Dockerクライアントインストール 次にクライアント。 Invoke-WebRequest https://aka.ms/tp5/b/docker -OutFile $env:ProgramFiles\docker\docker.exe -UseBasicParsing 数十秒。 パスの設定 さっき作ったDockerインストールフォルダにパスを通す。 [Environment]::SetEnvironmentVariable(&quot;Path&quot;, $env:Path + &quot;;C:\Program Files\Docker&quot;, [EnvironmentVariableTarget]::Machine) Dockerデーモンをサービスに登録 パスの設定を反映するためにいったんパワーシェルウィンドウとコマンドプロンプトを閉じて、 また管理者権限でパワーシェルウィンドウ開いて、以下のコマンドでDockerデーモンをサービスに登録する。 dockerd --register-service Dockerデーモン起動 Dockerデーモンは以下のコマンドで起動できる。 Start-Service docker 数秒で立ち上がる。 デフォルトではOS再起動時にはDockerデーモンは自動起動しないので、そのつどこのコマンドを実行する必要がある。 これでDockerインストール完了。 この時点ではコンテナイメージは何もない。 C:\Users\Administrator&gt;docker images REPOSITORY TAG IMAGE ID CREATED SIZE 因みにインストールされたDockerのバージョンは1.12開発版。現時点での最新版だ。 C:\Users\Administrator&gt;docker -v Docker version 1.12.0-dev, build 8e92415 コンテナイメージのインストール 次に、コンテナイメージをインストールする。 コンテナイメージのパッケージプロバイダをインストール いまいち何なのかはよくわからないが、 コンテナイメージのパッケージプロバイダというのをインストールする。 Install-PackageProvider ContainerImage -Force 数十秒。 Windows Server Coreのイメージをインストール Install-ContainerImage -Name WindowsServerCore 9GB以上もあるファイルをダウンロードして処理するのでかなり時間がかかる。 50分くらいかかった。 Dockerデーモン再起動 Restart-Service docker 無事Windows Server Coreイメージがインストールされた。 PS C:\Users\Administrator&gt; docker images REPOSITORY TAG IMAGE ID CREATED SIZE windowsservercore 10.0.14300.1000 5bc36a335344 8 weeks ago 9.354 GB Pcap4Jコンテナイメージのビルド 以下をC:\Users\Administrator\Desktop\pcap4j\Dockerfileに書いて、cd C:\Users\Administrator\Desktop\pcap4jして、docker build -t pcap4j .を実行。 (Notepad使ったので、拡張子を表示する設定にしてDockerfileの.txtを消さないといけない罠があった。) # # Dockerfile for Pcap4J on Windows # FROM windowsservercore:10.0.14300.1000 MAINTAINER Kaito Yamada &lt;kaitoy@pcap4j.org&gt; # Install Chocolatey.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
         
         
         
@@ -129,33 +151,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://tbd.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/" class="post post-topix">
+            <a href="https://tbd.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://tbd.kaitoy.xyz/images/pcap4j-groovy.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Sun, Apr 10, 2016</span>
               </div>
-              <h2 class="title">Pcap4J in Groovy</h2>
-              <div class="summary">
-                GroovyでPcap4Jを使ってパケットキャプチャしてみた。 GroovyからでもPcap4Jちゃんと動くよということを実証するのが主な目的。 また、さすがにそろそろMavenを卒業してGradle(下記)使おうと思うので、予習も兼ねている。 Groovyとは GroovyはJVM言語、つまりJavaのバイトコードにコンパイルされてJavaの実行環境で動くプログラミング言語のひとつ。 Javaのプログラマにとってとっつきやすい文法を保ちつつ、動的型付けを実現し、またRubyなどのスクリプト言語の記法や機能を取り入れ、生産性を高めている。 現在はApacheソフトウェア財団によって管理され、OSSとして開発が進められている。 WebアプリケーションフレームワークのGrails やビルドツールのGradleで採用されている。 Gradleは最近Javaプロジェクトのビルドツールの主流になっていて、Groovyはその定義ファイルを記述する言語として知名度が高いが、Groovyで開発されているプロジェクトとなるとあまり多くないようだ。 GitHubにホストされているGroovyプロジェクトは、2016/4/9現在 0.8%弱 (25,087/3,200,229) しかない。 なぜ人気がないのかはよく分からないが、少なくとも、長くて打ちにくい名前とダサいロゴは不評のようだ。 Groovyのインストール Windows 7にGroovy 2.4.6をインストールする。 本家サイトの手順に従い、Binary Releaseのアーカイブをダウンロードして、適当なところに展開して、展開したフォルダのパスを環境変数GROOVY_HOMEにセットし、%GROOVY_HOME%\binをPATHに追加するだけ。 Java 6以降が前提なので、JAVA_HOMEにJDK 1.7.0_17のパスをセットしておいた。JREでもいいはず。 パケットキャプチャ with Pcap4J in Java Pcap4Jでパケットキャプチャするコードを普通にJavaで書くと以下の様になる。 これを実行すると、パケットキャプチャするネットワークインターフェースを選択し、5つのパケットをキャプチャしてタイムスタンプと共にコンソールに表示する。 パケットキャプチャ with Pcap4J in Groovy 上記処理をGroovyで書くと以下の様になる。 メインクラスを書かなくていいところが大きい。 変数の型を書かなくていいのも楽。 ラムダ式でクロージャも作れるし補間文字列(String interpolation)も使える。 また、ここでは使っていないが、オープンクラスなどのメタプログラミングもサポートされている。 上記コードは、Pcap4J 1.6.2、Slf4J 1.7.12、JNA 4.2.1を使って、以下のコマンドで実行できることを確認した。 groovy -cp &quot;pcap4j-core.jar;jna.jar;slf4j-api.jar;pcap4j-packetfactory-static.jar&quot; Pcap4jLoop.groovy tcp これはスクリプト的な実行方法だが、groovycコマンドで事前にコンパイルしてclassファイルを生成し、javaコマンドで実行することもできる。 困ったところ 本家サイトのドキュメントが分かり辛い。 頭から読んでいくと急にディープな部分に引き込まれ、なかなかコードを書き始められなかった。 最近の言語やフレームワークのサイトはチュートリアルに従って動くコードを見ながら概要から詳細に理解を深められる形になっていることが多いので、仕様の詳細が羅列されている感じのGroovyサイトはなんとも読みにくかった。 クラスパスの指定が上手くできない。 groovyコマンドにオプションで複数のクラスパスを指定するのに、普通に-cp pcap4j-core.jar;jna.jarみたいにしたら最初のpcap4j-core.jarにしかクラスパスが通らなかった。 区切りを:にするとどちらにも通らない。 環境変数CLASSPATHにpcap4j-core.jar;jna.jarをセットしておくと-cpを使わなくても正しく両方に通るし、%userprofile%\.groovy\にjarを入れておくだけでもいいみたいなんだけど、-cpが中途半端にしか機能しないのが気持ち悪い。 のでちょっとソースを見たら、groovyコマンドはバッチで書かれていることに気付いた。 バッチだと、;で区切られているものは半角スペースで区切られているのと同じで別々の引数になってしまうので、上のような書き方だとjna.jarは-cpの値として処理されない。 クラスパス全体をダブルコーテーションで囲って、-cp &quot;pcap4j-core.jar;jna.jar&quot;みたいにしたらできた。なんか残念な出来。。。
-              </div>
+              <h3 class="title">Pcap4J in Groovy</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         

@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Windows Server 2016 TP5でWindows Containersにリトライ | To Be Decided">
+    <meta property="og:url" content="https://tbd.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/">
+    <meta property="og:description" content="Windows Server 2016のTechnical Preview 5(TP5)が公開されていたので、 TP4でバグに阻まれて挫折した、Windows ContainersでPcap4Jを使ってパケットキャプチャする試みにリトライした話。 OSセットアップ TP4のときと同じ環境。 以降はWindows Server Containersのクイックスタートガイドに沿ってセットアップを進める。 TP4からは大分変わっていて、単一のPowershellスクリプトを実行する形式から、Powershellのコマンドレットを逐次手動実行する形式になっている。 面倒だけど何やってるかわかりやすくて好き。 コンテナ機能のインストール 管理者権限のパワーシェルウィンドウを開く コマンドプロンプトから以下のコマンドを実行。 powershell start-process powershell -Verb runas コンテナ機能のインストール 開いた青いパワーシェルウィンドウで以下のコマンドを実行するとコンテナ機能がインストールされる。 Install-WindowsFeature containers 数分で終わる。 インストールされたのはHyper-V ContainersじゃなくてWindows Server Containersの方。 クイックスタートガイドをみると、前者がWindows 10向け、後者がWindows Server向けというように住み分けされているっぽい。TP4では両方ともWindows Serverで使えたんだけど。 再起動 変更を有効にするために再起動が必要。 Restart-Computer -Force Dockerインストール Dockerは、コンテナイメージの管理やコンテナの起動などもろもろの機能を提供するDockerデーモンと、その機能を利用するためのCLIを提供するDockerクライアントからなる。この節ではそれら両方をインストールする。 Dockerインストールフォルダ作成 管理者権限のパワーシェルウィンドウを開いて、以下のコマンドでDockerインストールフォルダを作成。 New-Item -Type Directory -Path &#39;C:\Program Files\docker\&#39; Dockerデーモンインストール まずはデーモンの方をインストール。 Invoke-WebRequest https://aka.ms/tp5/b/dockerd -OutFile $env:ProgramFiles\docker\dockerd.exe -UseBasicParsing 数分。 Dockerクライアントインストール 次にクライアント。 Invoke-WebRequest https://aka.ms/tp5/b/docker -OutFile $env:ProgramFiles\docker\docker.exe -UseBasicParsing 数十秒。 パスの設定 さっき作ったDockerインストールフォルダにパスを通す。 [Environment]::SetEnvironmentVariable(&quot;Path&quot;, $env:Path &#43; &quot;;C:\Program Files\Docker&quot;, [EnvironmentVariableTarget]::Machine) Dockerデーモンをサービスに登録 パスの設定を反映するためにいったんパワーシェルウィンドウとコマンドプロンプトを閉じて、 また管理者権限でパワーシェルウィンドウ開いて、以下のコマンドでDockerデーモンをサービスに登録する。 dockerd --register-service Dockerデーモン起動 Dockerデーモンは以下のコマンドで起動できる。 Start-Service docker 数秒で立ち上がる。 デフォルトではOS再起動時にはDockerデーモンは自動起動しないので、そのつどこのコマンドを実行する必要がある。 これでDockerインストール完了。 この時点ではコンテナイメージは何もない。 C:\Users\Administrator&gt;docker images REPOSITORY TAG IMAGE ID CREATED SIZE 因みにインストールされたDockerのバージョンは1.12開発版。現時点での最新版だ。 C:\Users\Administrator&gt;docker -v Docker version 1.12.0-dev, build 8e92415 コンテナイメージのインストール 次に、コンテナイメージをインストールする。 コンテナイメージのパッケージプロバイダをインストール いまいち何なのかはよくわからないが、 コンテナイメージのパッケージプロバイダというのをインストールする。 Install-PackageProvider ContainerImage -Force 数十秒。 Windows Server Coreのイメージをインストール Install-ContainerImage -Name WindowsServerCore 9GB以上もあるファイルをダウンロードして処理するのでかなり時間がかかる。 50分くらいかかった。 Dockerデーモン再起動 Restart-Service docker 無事Windows Server Coreイメージがインストールされた。 PS C:\Users\Administrator&gt; docker images REPOSITORY TAG IMAGE ID CREATED SIZE windowsservercore 10.0.14300.1000 5bc36a335344 8 weeks ago 9.354 GB Pcap4Jコンテナイメージのビルド 以下をC:\Users\Administrator\Desktop\pcap4j\Dockerfileに書いて、cd C:\Users\Administrator\Desktop\pcap4jして、docker build -t pcap4j .を実行。 (Notepad使ったので、拡張子を表示する設定にしてDockerfileの.txtを消さないといけない罠があった。) # # Dockerfile for Pcap4J on Windows # FROM windowsservercore:10.0.14300.1000 MAINTAINER Kaito Yamada &lt;kaitoy@pcap4j.org&gt; # Install Chocolatey.">
+    
+    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/pcap4j-docker.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      Windows Server 2016 TP5でWindows Containersにリトライ | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Mon, Jul 11, 2016</span>
+      <h2 class="title">Windows Server 2016 TP5でWindows Containersにリトライ</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://tbd.kaitoy.xyz/images/pcap4j-docker.png" alt="Windows Server 2016 TP5でWindows Containersにリトライ">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p><a href="https://www.microsoft.com/ja-jp/evalcenter/evaluate-windows-server-technical-preview">Windows Server 2016のTechnical Preview 5(TP5)が公開されていた</a>ので、
+<a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">TP4でバグに阻まれて挫折した</a>、Windows Containersで<a href="https://github.com/kaitoy/pcap4j">Pcap4J</a>を使ってパケットキャプチャする試みにリトライした話。</p>
+
+<h2 id="osセットアップ">OSセットアップ</h2>
+
+<p><a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containersセットアップ">TP4のとき</a>と同じ環境。</p>
+
+<p>以降は<a href="https://msdn.microsoft.com/en-us/virtualization/windowscontainers/quick_start/quick_start_windows_server">Windows Server Containersのクイックスタートガイド</a>に沿ってセットアップを進める。
+<a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containersセットアップ">TP4</a>からは大分変わっていて、単一のPowershellスクリプトを実行する形式から、Powershellのコマンドレットを逐次手動実行する形式になっている。
+面倒だけど何やってるかわかりやすくて好き。</p>
+
+<h2 id="コンテナ機能のインストール">コンテナ機能のインストール</h2>
+
+<ol>
+<li><p>管理者権限のパワーシェルウィンドウを開く</p>
+
+<p>コマンドプロンプトから以下のコマンドを実行。</p>
+
+<pre><code class="language-cmd">powershell start-process powershell -Verb runas
+</code></pre></li>
+
+<li><p>コンテナ機能のインストール</p>
+
+<p>開いた青いパワーシェルウィンドウで以下のコマンドを実行するとコンテナ機能がインストールされる。</p>
+
+<pre><code class="language-powershell">Install-WindowsFeature containers
+</code></pre>
+
+<p>数分で終わる。</p>
+
+<p>インストールされたのはHyper-V ContainersじゃなくてWindows Server Containersの方。
+クイックスタートガイドをみると、前者がWindows 10向け、後者がWindows Server向けというように住み分けされているっぽい。TP4では両方ともWindows Serverで使えたんだけど。</p></li>
+
+<li><p>再起動</p>
+
+<p>変更を有効にするために再起動が必要。</p>
+
+<pre><code class="language-powershell">Restart-Computer -Force
+</code></pre></li>
+</ol>
+
+<h2 id="dockerインストール">Dockerインストール</h2>
+
+<p>Dockerは、コンテナイメージの管理やコンテナの起動などもろもろの機能を提供するDockerデーモンと、その機能を利用するためのCLIを提供するDockerクライアントからなる。この節ではそれら両方をインストールする。</p>
+
+<ol>
+<li><p>Dockerインストールフォルダ作成</p>
+
+<p>管理者権限のパワーシェルウィンドウを開いて、以下のコマンドでDockerインストールフォルダを作成。</p>
+
+<pre><code class="language-powershell">New-Item -Type Directory -Path 'C:\Program Files\docker\'
+</code></pre></li>
+
+<li><p>Dockerデーモンインストール</p>
+
+<p>まずはデーモンの方をインストール。</p>
+
+<pre><code class="language-powershell">Invoke-WebRequest https://aka.ms/tp5/b/dockerd -OutFile $env:ProgramFiles\docker\dockerd.exe -UseBasicParsing
+</code></pre>
+
+<p>数分。</p></li>
+
+<li><p>Dockerクライアントインストール</p>
+
+<p>次にクライアント。</p>
+
+<pre><code class="language-powershell">Invoke-WebRequest https://aka.ms/tp5/b/docker -OutFile $env:ProgramFiles\docker\docker.exe -UseBasicParsing
+</code></pre>
+
+<p>数十秒。</p></li>
+
+<li><p>パスの設定</p>
+
+<p>さっき作ったDockerインストールフォルダにパスを通す。</p>
+
+<pre><code class="language-powershell">[Environment]::SetEnvironmentVariable(&quot;Path&quot;, $env:Path + &quot;;C:\Program Files\Docker&quot;, [EnvironmentVariableTarget]::Machine)
+</code></pre></li>
+
+<li><p>Dockerデーモンをサービスに登録</p>
+
+<p>パスの設定を反映するためにいったんパワーシェルウィンドウとコマンドプロンプトを閉じて、
+また管理者権限でパワーシェルウィンドウ開いて、以下のコマンドでDockerデーモンをサービスに登録する。</p>
+
+<pre><code class="language-powershell">dockerd --register-service
+</code></pre></li>
+
+<li><p>Dockerデーモン起動</p>
+
+<p>Dockerデーモンは以下のコマンドで起動できる。</p>
+
+<pre><code class="language-powershell">Start-Service docker
+</code></pre>
+
+<p>数秒で立ち上がる。
+デフォルトではOS再起動時にはDockerデーモンは自動起動しないので、そのつどこのコマンドを実行する必要がある。</p></li>
+</ol>
+
+<p><br></p>
+
+<p>これでDockerインストール完了。
+この時点ではコンテナイメージは何もない。</p>
+
+<pre><code class="language-cmd">C:\Users\Administrator&gt;docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+
+</code></pre>
+
+<p>因みにインストールされたDockerのバージョンは1.12開発版。現時点での最新版だ。</p>
+
+<pre><code class="language-cmd">C:\Users\Administrator&gt;docker -v
+Docker version 1.12.0-dev, build 8e92415
+</code></pre>
+
+<h2 id="コンテナイメージのインストール">コンテナイメージのインストール</h2>
+
+<p>次に、コンテナイメージをインストールする。</p>
+
+<ol>
+<li><p>コンテナイメージのパッケージプロバイダをインストール</p>
+
+<p>いまいち何なのかはよくわからないが、
+コンテナイメージのパッケージプロバイダというのをインストールする。</p>
+
+<pre><code class="language-powershell">Install-PackageProvider ContainerImage -Force
+</code></pre>
+
+<p>数十秒。</p></li>
+
+<li><p>Windows Server Coreのイメージをインストール</p>
+
+<pre><code class="language-powershell">Install-ContainerImage -Name WindowsServerCore
+</code></pre>
+
+<p>9GB以上もあるファイルをダウンロードして処理するのでかなり時間がかかる。
+50分くらいかかった。</p></li>
+
+<li><p>Dockerデーモン再起動</p>
+
+<pre><code class="language-powershell">Restart-Service docker
+</code></pre></li>
+</ol>
+
+<p><br></p>
+
+<p>無事Windows Server Coreイメージがインストールされた。</p>
+
+<pre><code class="language-powershell">PS C:\Users\Administrator&gt; docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+windowsservercore   10.0.14300.1000     5bc36a335344        8 weeks ago         9.354 GB
+</code></pre>
+
+<h2 id="pcap4jコンテナイメージのビルド">Pcap4Jコンテナイメージのビルド</h2>
+
+<p>以下を<code>C:\Users\Administrator\Desktop\pcap4j\Dockerfile</code>に書いて、<code>cd C:\Users\Administrator\Desktop\pcap4j</code>して、<code>docker build -t pcap4j .</code>を実行。
+(Notepad使ったので、拡張子を表示する設定にして<code>Dockerfile</code>の<code>.txt</code>を消さないといけない罠があった。)</p>
+
+<pre><code class="language-dockerfile">#
+# Dockerfile for Pcap4J on Windows
+#
+
+FROM windowsservercore:10.0.14300.1000
+MAINTAINER Kaito Yamada &lt;kaitoy@pcap4j.org&gt;
+
+# Install Chocolatey.
+RUN mkdir C:\pcap4j
+WORKDIR c:\\pcap4j
+ADD https://chocolatey.org/install.ps1 install.ps1
+RUN powershell .\install.ps1
+
+# Install dependencies.
+RUN choco install -y nmap jdk7 &amp;&amp; \
+    choco install -y maven -version 3.2.5
+
+# Build Pcap4J.
+RUN powershell -Command Invoke-WebRequest https://github.com/kaitoy/pcap4j/archive/v1.zip -OutFile pcap4j.zip &amp;&amp; \
+    powershell -Command Expand-Archive -Path pcap4j.zip -DestinationPath .
+WORKDIR pcap4j-1
+RUN powershell -Command &quot;mvn -P distribution-assembly install 2&gt;&amp;1 | Add-Content -Path build.log -PassThru&quot;
+
+# Collect libraries.
+RUN mkdir bin &amp;&amp; \
+    cd pcap4j-packetfactory-static &amp;&amp; \
+    mvn -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeScope=compile dependency:copy-dependencies &amp;&amp; \
+    mvn -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeGroupIds=ch.qos.logback dependency:copy-dependencies &amp;&amp; \
+    cd ../pcap4j-distribution &amp;&amp; \
+    mvn -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeArtifactIds=pcap4j-packetfactory-static,pcap4j-sample dependency:copy-dependencies
+
+# Generate sample script. (C:\pcap4j\pcap4j-1\bin\capture.bat)
+RUN echo @echo off &gt; bin\capture.bat &amp;&amp; \
+    echo &quot;%JAVA_HOME%\bin\java&quot; -cp C:\pcap4j\pcap4j-1\bin\pcap4j-core.jar;C:\pcap4j\pcap4j-1\bin\pcap4j-packetfactory-static.jar;C:\pcap4j\pcap4j-1\bin\pcap4j-sample.jar;C:\pcap4j\pcap4j-1\bin\jna.jar;C:\pcap4j\pcap4j-1\bin\slf4j-api.jar;C:\pcap4j\pcap4j-1\bin\logback-classic.jar;C:\pcap4j\pcap4j-1\bin\logback-core.jar org.pcap4j.sample.GetNextPacketEx &gt;&gt; bin\capture.bat
+</code></pre>
+
+<p><br></p>
+
+<p>Dockerfileに書いた処理内容は<a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のとき</a>とだいたい同じ。
+以下、Dockerfile書いているときに気付いたこと。</p>
+
+<h4 id="tp4からのアップデート">TP4からのアップデート</h4>
+
+<blockquote>
+<p>WORKDIR や ENV や COPY でパスの区切りは \ 一つだと消えちゃうので \ か / を使わないといけない。
+<div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のときのエントリ</a></cite></div></p>
+</blockquote>
+
+<p><a href="https://msdn.microsoft.com/en-us/virtualization/windowscontainers/docker/manage_windows_dockerfile">このページ</a>の各コマンドの<strong>Windows Considerations</strong>に、<code>WORKDIR</code>のパスの区切りのバックスラッシュはエスケープしないといけないとか、<code>ADD</code>のパスの区切りはスラッシュじゃないといけないとか書いてある。
+TP4のときはなかったような。</p>
+
+<p><br></p>
+
+<blockquote>
+<p>WORKDIR や COPY のコンテナ内のパスに絶対パスを指定したい場合、C:\hoge、C:/hoge、C:\hoge、いずれもダメ。 以下の様なエラーが出る。
+<div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のときのエントリ</a></cite></div></p>
+</blockquote>
+
+<p>これは直った。<code>WORKDIR c:\\pcap4j</code>で行ける。</p>
+
+<p><br></p>
+
+<blockquote>
+<p>install.ps1の中でChocolateyのインストーラをHTTPSで取ってこようとしてエラー
+<div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のときのエントリ</a></cite></div></p>
+</blockquote>
+
+<p>普通に<code>choco install</code>できたので、HTTPSが使えない制限は消えた模様。</p>
+
+<p><br></p>
+
+<blockquote>
+<p>ビルドしてみると、各ステップの実行(多分レイヤの作成)がすごく遅い。
+<div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のときのエントリ</a></cite></div></p>
+</blockquote>
+
+<p>各ステップの実行は相変わらず重い。特にファイル変更が多いときはすごく重い。</p>
+
+<p><br></p>
+
+<blockquote>
+<p>コンテナの起動は非常に遅い。30秒以上かかる。
+<div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-server-containers味見">TP4のときのエントリ</a></cite></div></p>
+</blockquote>
+
+<p>コンテナ起動は早くなったけどまだ5秒くらいかかる。</p>
+
+<p><br></p>
+
+<blockquote>
+<p>WORKDIR や ENV で環境変数が展開されない。
+<div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のときのエントリ</a></cite></div></p>
+</blockquote>
+
+<p>これはまだ直っていない。<code>%tmp%</code>、<code>%TMP%</code>、<code>$TMP</code>、<code>${TMP}</code>、どれもだめ。</p>
+
+<p><br></p>
+
+<blockquote>
+<p>コンテナ内で C:\ 直下に . で始まる名前のフォルダ作ると次のステップで消えてる。
+<div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のときのエントリ</a></cite></div></p>
+</blockquote>
+
+<p>これは再現しなかった。以前のも勘違いだったのかもしれない。
+なんにせよデフォルトの.m2フォルダのパスが<code>C:\Users\ContainerAdministrator\.m2</code>になったので気にしなくてよくなった。</p>
+
+<h4 id="ビルドエラー-hcsshim-importlayer-failed-in-win32-the-filename-or-extension-is-too-long-0xce">ビルドエラー: hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce)</h4>
+
+<p><code>choco install</code>の後で以下のエラーが出た。</p>
+
+<pre><code class="language-cmd">re-exec error: exit status 1: output: time=&quot;2016-07-09T19:57:22-07:00&quot; level=error msg=&quot;hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce) layerId=\\\\?\\C:\\ProgramData\\docker\\windowsfilter\\103de6bf1358c506510ad67990f09ec3e2f10f9e866e846df5a88c04f5edf7aa flavour=1 folder=C:\\Windows\\TEMP\\hcs719016711&quot;
+hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce) layerId=\\?\C:\ProgramData\docker\windowsfilter\103de6bf1358c506510ad67990f09ec3e2f10f9e866e846df5a88c04f5edf7aa flavour=1 folder=C:\Windows\TEMP\hcs719016711
+</code></pre>
+
+<p>調べたら<a href="https://github.com/docker/docker/issues/22449">DockerのGitHub Issues</a>に登録されていた。
+ここのコメントを参考に以下のコマンドでコンテナホストのアップデートをしたら発生しなくなった。</p>
+
+<pre><code class="language-powershell">Invoke-WebRequest https://aka.ms/tp5/Update-Container-Host -OutFile update-containerhost.ps1
+.\update-containerhost.ps1
+Restart-Computer -Force
+</code></pre>
+
+<h4 id="未実装の機能">未実装の機能</h4>
+
+<p><a href="https://docs.docker.com/engine/reference/builder/">Dockerfileのリファレンス</a>に載っていて、Windows向けのサンプルも書いてあるのに、<a href="https://docs.docker.com/engine/reference/builder/#/escape">escapeディレクティブ</a>と<a href="https://docs.docker.com/engine/reference/builder/#/shell">SHELLコマンド</a>
+が使えなかった。</p>
+
+<h2 id="コンテナ起動">コンテナ起動</h2>
+
+<p>とりあえず上記DockerfileでPcap4Jコンテナイメージのビルドはできた。</p>
+
+<p>以下のコマンドでそのイメージからコンテナを起動。</p>
+
+<pre><code class="language-cmd">C:\Users\Administrator&gt;docker run -it pcap4j cmd
+</code></pre>
+
+<p>コンテナ内で<code>ipconfig</code>すると<code>vEthernet (Temp Nic Name)</code>という名のネットワークインターフェースがあることがわかる。</p>
+
+<pre><code class="language-cmd">C:\pcap4j\pcap4j-1\bin&gt;ipconfig
+
+Windows IP Configuration
+
+
+Ethernet adapter vEthernet (Temp Nic Name):
+
+   Connection-specific DNS Suffix  . : localdomain
+   Link-local IPv6 Address . . . . . : fe80::59cf:1491:6f8e:30c8%18
+   IPv4 Address. . . . . . . . . . . : 172.23.71.6
+   Subnet Mask . . . . . . . . . . . : 255.240.0.0
+   Default Gateway . . . . . . . . . : 172.16.0.1
+</code></pre>
+
+<p>けどPcap4Jからは見えなかった。</p>
+
+<pre><code class="language-cmd">C:\pcap4j\pcap4j-1\bin&gt;capture.bat
+org.pcap4j.sample.GetNextPacketEx.count: 5
+org.pcap4j.sample.GetNextPacketEx.readTimeout: 10
+org.pcap4j.sample.GetNextPacketEx.snaplen: 65536
+
+
+18:49:00.582 [main] INFO  org.pcap4j.core.Pcaps - No NIF was found.
+java.io.IOException: No NIF to capture.
+        at org.pcap4j.sample.GetNextPacketEx.main(GetNextPacketEx.java:45)java:44)
+</code></pre>
+
+<p><br></p>
+
+<p>コンテナには<code>ContainerAdministrator</code>というユーザでログインしていて、これの権限が弱いせいなんじゃないかと。
+コンテナ内にも<code>Administrator</code>というユーザがあるようだったので、こっちでコマンド実行するよう奮闘した。</p>
+
+<h2 id="コンテナ内でadministratorでコマンド実行したい">コンテナ内でAdministratorでコマンド実行したい</h2>
+
+<h4 id="userコマンド">USERコマンド</h4>
+
+<p>Dockerfileのコマンドに<a href="https://docs.docker.com/engine/reference/builder/#/user">USER</a>というのがあるので、<code>USER Administrator</code>をDockerfileの末尾に追加してみたら以下のエラー。</p>
+
+<pre><code class="language-cmd">The daemon on this platform does not support the command 'user'
+</code></pre>
+
+<h4 id="userオプション">&ndash;userオプション</h4>
+
+<p>docker runコマンドに<a href="https://docs.docker.com/compose/reference/run/">&ndash;user</a>というオプションがあるので以下のように試してみたところ、オプションは無視されて<code>ContainerAdministrator</code>でコンテナに入った。</p>
+
+<pre><code class="language-cmd">docker run -it --user Administrator pcap4j cmd
+</code></pre>
+
+<h4 id="runas">runas</h4>
+
+<p>ちょっと発想の転換をして、<code>ContainerAdministrator</code>でコンテナに入った後sudoみたいなことをすればいいかと思い、<a href="https://technet.microsoft.com/en-us/library/bb490994.aspx">runas</a>コマンドを試したけどだめだった。
+よく分からないエラーがでるし、そもそも<code>Administrator</code>のパスワードがわからない。</p>
+
+<pre><code class="language-cmd">C:\pcap4j\pcap4j-1\bin&gt;runas /user:Administrator cmd
+Enter the password for Administrator:
+Attempting to start cmd as user &quot;92EC7B3B09B4\Administrator&quot; ...
+RUNAS ERROR: Unable to run - cmd
+1326: The user name or password is incorrect.
+</code></pre>
+
+<pre><code class="language-cmd">C:\pcap4j\pcap4j-1\bin&gt;runas /user:&quot;User Manager\Administrator&quot; capture.bat
+Enter the password for User Manager\Administrator:
+RUNAS ERROR: Unable to acquire user password
+</code></pre>
+
+<h4 id="enter-pssession">Enter-PSSession</h4>
+
+<p>フォーラムに行ったら<a href="https://social.msdn.microsoft.com/Forums/en-US/0b6bd405-a235-4608-a06b-a09b9ba08b2e/runas-administrator?forum=windowscontainers">Enter-PSSession</a>を使う方法が書いてあった。</p>
+
+<p><a href="https://technet.microsoft.com/en-us/library/hh849707.aspx">Enter-PSSession</a>はリモートシステムに接続するコマンドレットで、<code>-ContainerName</code>オプションを使えばコンテナにも接続できる。</p>
+
+<p>試したら、コンテナが見つからないというエラーが出た。</p>
+
+<pre><code class="language-cmd">C:\Users\Administrator&gt;powershell -command Enter-PSSession -ContainerName amazing_archimedes -RunAsAdministrator
+Enter-PSSession : The input ContainerName amazing_archimedes does not exist, or the corresponding container is not running.
+At line:1 char:1
++ Enter-PSSession -ContainerName amazing_archimedes -RunAsAdministrator
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [Enter-PSSession], PSInvalidOperationException
+    + FullyQualifiedErrorId : CreateRemoteRunspaceForContainerFailed,Microsoft.PowerShell.Commands.EnterPSSessionCommand
+</code></pre>
+
+<p><a href="https://technet.microsoft.com/en-us/library/hh849719.aspx">Invoke-Command</a>もコンテナをターゲットにできるので試してみたけど、同様のエラー。</p>
+
+<p>どうもパワーシェルで扱うコンテナやコンテナイメージが、dockerコマンドが扱うものとは別になっているせいっぽい。
+そんなことがTP4のときに見たドキュメントに書いてあったのを思い出した。(このドキュメントは消えてた。)</p>
+
+<p>実際、<code>docker ps</code>では見えているコンテナが、</p>
+
+<pre><code class="language-cmd">C:\Users\Administrator&gt;docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+a711497f29d8        pcap4j              &quot;cmd&quot;               13 minutes ago      Up 12 minutes                           amazing_archimedes
+</code></pre>
+
+<p>コマンドレットからだと見えない。</p>
+
+<pre><code class="language-cmd">C:\Users\Administrator&gt;powershell -command Get-Container
+WARNING: Based on customer feedback, we are updating the Containers PowerShell module to better align with Docker. As part of that some cmdlet and parameter names may change in future releases. To learn more about these changes as well as to join in the design process or provide usage feedback please refer to http://aka.ms/windowscontainers/powershell
+</code></pre>
+
+<p>そうなると、パワーシェルのコマンドレットには<code>docker build</code>にあたるものがないのでもうどうしようもない。</p>
+
+<p>そもそも、TP4の頃のコマンドレットは<a href="https://msdn.microsoft.com/en-us/virtualization/windowscontainers/management/docker-powershell">廃止になって</a>、<a href="https://github.com/Microsoft/Docker-PowerShell/">新しいコマンドレット</a>を開発中らしい。やはりdockerコマンドとコマンドレットでコンテナの相互運用ができない仕様にユーザから相当つっこみがあったようだ。</p>
+
+<p><code>Enter-PSSession</code>や<code>Invoke-Command</code>の<code>-ContainerName</code>オプションもその内修正されるであろう。
+それまで待つか。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f07%2f11%2fwindows_containers_on_tp5%2f&t=Windows%20Server%202016%20TP5%e3%81%a7Windows%20Containers%e3%81%ab%e3%83%aa%e3%83%88%e3%83%a9%e3%82%a4" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f07%2f11%2fwindows_containers_on_tp5%2f&text=Windows%20Server%202016%20TP5%e3%81%a7Windows%20Containers%e3%81%ab%e3%83%aa%e3%83%88%e3%83%a9%e3%82%a4&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f07%2f11%2fwindows_containers_on_tp5%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f07%2f11%2fwindows_containers_on_tp5%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f07%2f11%2fwindows_containers_on_tp5%2f&title=Windows%20Server%202016%20TP5%e3%81%a7Windows%20Containers%e3%81%ab%e3%83%aa%e3%83%88%e3%83%a9%e3%82%a4" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://tbd.kaitoy.xyz/tags/pcap4j"><i class="fa fa-tags"></i> pcap4j </a>
+                
+                <a href="https://tbd.kaitoy.xyz/tags/docker"><i class="fa fa-tags"></i> docker </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/04/16/pcap4j-in-kotlin/">Pcap4J in Kotlin</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/">Pcap4J in Groovy</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/03/19/zundoko-kiyoshi-with-pcap4j/"> ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">Pcap4J Meets Windows Containers</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/">Pcap4J with Four Native Libraries on Windows 10</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/01/10/pcap-ng-support-in-pcap4j/">pcap-ng support in Pcap4J</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/12/03/software-quality-award-2015/">Pcap4JがSoftware Quality Award 2015で入賞</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/">Step by Step to Add a Protocol Support to Pcap4J (Part 2)</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/08/09/step-by-step-to-add-a-protocol-support-to-pcap4j-1/">Step by Step to Add a Protocol Support to Pcap4J (Part 1)</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></li>
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://tbd.kaitoy.xyz/2016/07/01/https-support-by-cloudflare/">
+                  CloudFlareでブログをHTTPS化
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2016  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

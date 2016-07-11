@@ -30,7 +30,7 @@
     <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
     <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
-    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/zenburn.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
     <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
     <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
     <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
@@ -56,6 +56,27 @@
   <div class="col-md-9">
     <div id="posts">
       <div class="row">
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="/images/pcap4j-docker.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Mon, Jul 11, 2016</span>
+              </div>
+              <h2 class="title">Windows Server 2016 TP5でWindows Containersにリトライ</h2>
+              <div class="summary">
+                Windows Server 2016のTechnical Preview 5(TP5)が公開されていたので、 TP4でバグに阻まれて挫折した、Windows ContainersでPcap4Jを使ってパケットキャプチャする試みにリトライした話。 OSセットアップ TP4のときと同じ環境。 以降はWindows Server Containersのクイックスタートガイドに沿ってセットアップを進める。 TP4からは大分変わっていて、単一のPowershellスクリプトを実行する形式から、Powershellのコマンドレットを逐次手動実行する形式になっている。 面倒だけど何やってるかわかりやすくて好き。 コンテナ機能のインストール 管理者権限のパワーシェルウィンドウを開く コマンドプロンプトから以下のコマンドを実行。 powershell start-process powershell -Verb runas コンテナ機能のインストール 開いた青いパワーシェルウィンドウで以下のコマンドを実行するとコンテナ機能がインストールされる。 Install-WindowsFeature containers 数分で終わる。 インストールされたのはHyper-V ContainersじゃなくてWindows Server Containersの方。 クイックスタートガイドをみると、前者がWindows 10向け、後者がWindows Server向けというように住み分けされているっぽい。TP4では両方ともWindows Serverで使えたんだけど。 再起動 変更を有効にするために再起動が必要。 Restart-Computer -Force Dockerインストール Dockerは、コンテナイメージの管理やコンテナの起動などもろもろの機能を提供するDockerデーモンと、その機能を利用するためのCLIを提供するDockerクライアントからなる。この節ではそれら両方をインストールする。 Dockerインストールフォルダ作成 管理者権限のパワーシェルウィンドウを開いて、以下のコマンドでDockerインストールフォルダを作成。 New-Item -Type Directory -Path 'C:\Program Files\docker\' Dockerデーモンインストール まずはデーモンの方をインストール。 Invoke-WebRequest https://aka.ms/tp5/b/dockerd -OutFile $env:ProgramFiles\docker\dockerd.exe -UseBasicParsing 数分。 Dockerクライアントインストール 次にクライアント。 Invoke-WebRequest https://aka.ms/tp5/b/docker -OutFile $env:ProgramFiles\docker\docker.exe -UseBasicParsing 数十秒。 パスの設定 さっき作ったDockerインストールフォルダにパスを通す。 [Environment]::SetEnvironmentVariable(&quot;Path&quot;, $env:Path + &quot;;C:\Program Files\Docker&quot;, [EnvironmentVariableTarget]::Machine) Dockerデーモンをサービスに登録 パスの設定を反映するためにいったんパワーシェルウィンドウとコマンドプロンプトを閉じて、 また管理者権限でパワーシェルウィンドウ開いて、以下のコマンドでDockerデーモンをサービスに登録する。 dockerd --register-service Dockerデーモン起動 Dockerデーモンは以下のコマンドで起動できる。 Start-Service docker 数秒で立ち上がる。 デフォルトではOS再起動時にはDockerデーモンは自動起動しないので、そのつどこのコマンドを実行する必要がある。 これでDockerインストール完了。 この時点ではコンテナイメージは何もない。 C:\Users\Administrator&gt;docker images REPOSITORY TAG IMAGE ID CREATED SIZE 因みにインストールされたDockerのバージョンは1.12開発版。現時点での最新版だ。 C:\Users\Administrator&gt;docker -v Docker version 1.12.0-dev, build 8e92415 コンテナイメージのインストール 次に、コンテナイメージをインストールする。 コンテナイメージのパッケージプロバイダをインストール いまいち何なのかはよくわからないが、 コンテナイメージのパッケージプロバイダというのをインストールする。 Install-PackageProvider ContainerImage -Force 数十秒。 Windows Server Coreのイメージをインストール Install-ContainerImage -Name WindowsServerCore 9GB以上もあるファイルをダウンロードして処理するのでかなり時間がかかる。 50分くらいかかった。 Dockerデーモン再起動 Restart-Service docker 無事Windows Server Coreイメージがインストールされた。 PS C:\Users\Administrator&gt; docker images REPOSITORY TAG IMAGE ID CREATED SIZE windowsservercore 10.0.14300.1000 5bc36a335344 8 weeks ago 9.354 GB Pcap4Jコンテナイメージのビルド 以下をC:\Users\Administrator\Desktop\pcap4j\Dockerfileに書いて、cd C:\Users\Administrator\Desktop\pcap4jして、docker build -t pcap4j .を実行。 (Notepad使ったので、拡張子を表示する設定にしてDockerfileの.txtを消さないといけない罠があった。) # # Dockerfile for Pcap4J on Windows # FROM windowsservercore:10.0.14300.1000 MAINTAINER Kaito Yamada &lt;kaitoy@pcap4j.org&gt; # Install Chocolatey.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
         
         
         
@@ -122,19 +143,16 @@
         
         
         
-        <div class="col-sm-6">
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/" class="post post-topix">
+            <a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/" class="post">
               <header class="eyecatch text-center">
                 <img src="/images/pcap4j-docker.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Fri, Jan 22, 2016</span>
               </div>
-              <h2 class="title">Pcap4J Meets Windows Containers</h2>
-              <div class="summary">
-                Windows Containers で Pcap4J のコンテナをビルドしてみた話。 Windows Containersとは Windows Containersは、MicrosoftがDocker, Incと提携して開発しているコンテナ技術で、Windows版Dockerとも言われる機能。 今年リリースされる Windows Server 2016 に実装される予定で、その3つめのテクニカルプレビューである Windows Server 2016 Technical Preview 3 (2015/8/19公開)から評価できるようになった。 Windows Containersには次の二種類がある。 Windows Server Containers プロセスと名前空間の分離を実現する機能で、これによるコンテナはカーネルをホストと共有する。 つまり本家Dockerに近い形の機能。 Hyper-V Containers それぞれのコンテナを軽量化されたHyper-Vの仮想マシンっぽいものの上で動かす機能。 このコンテナの実行にはHyper-Vが必要。 Windows Server Containersよりコンテナ間の分離性が高く、カーネルの共有もしないが、そもそもそれってコンテナなの? どちらも同じようなインターフェースで操作でき、このインターフェースにはPowershellのコマンドレットとDockerコマンドの二種類がある。 より詳しくは、Microsoftによる解説や@ITのこの記事がわかりやすい。 また、Qiitaのこの記事がDockerとWindows Server Containersのアーキテクチャを詳細に説明していて面白い。 Windows Containersセットアップ まず、Windows 7 x64のノートPCにVMware Player 7.1.0を入れてWindows 10 x64用のVM(CPU2つとメモリ2.5GB)を作り、そこに2015/11/19に公開された Windows Server 2016 Technical Preview 4 をインストール。 コマンドでいろいろ設定するの慣れていないのでGUI(Desktop Experience)付きで。 (リモートデスクトップ使えばよかったのかもしれないけど。) ロケールは英語以外は問題が起きそうなので英語で。 このVMに、Microsoftのセットアップガイドと@ITの記事を参照しながらWindows Containersをセットアップ。 後者の記事によると、Hyper-V ContainersをVM上にセットアップするには、Nested VirtualizationというHyper-VのVMの上でHyper-Vを動かす機能を有効にしたホスト上のHyper-V VMを使わないといけないようなので、Windows Server Containersの方を試すことに。 Windows Server Containersをセットアップする手順は以下。 VM上でコマンドプロンプトを開いて powershell start-process powershell -Verb runas を実行。 青いパワーシェルウィンドウが開くのでそこで wget -uri https://aka.ms/tp4/Install-ContainerHost -OutFile C:\Install-ContainerHost.ps1 を実行。Install-ContainerHost.ps1 というスクリプトがダウンロードされる。 青いパワーシェルウィンドウで C:\Install-ContainerHost.ps1 を実行するとWindows Server Containersのインストールが始まる。 途中再起動が一回あって、ログインしたらインストール処理が再開した。 全部で2時間以上かかった。 仮想Ethernetスイッチ接続の追加に失敗したというエラーが出たけどなんなんだろう。 ipconfig の出力によると vEthernet というDockerのvirtual Ethernet bridgeにあたるものはちゃんと作られているみたいなんだけど。 Windows Server Containers味見 コマンドプロンプトで docker images を実行すると、既に windowsservercore というコンテナイメージが入っていることがわかる。 C:\Users\Administrator&gt;docker images REPOSITORY TAG IMAGE ID CREATED VIRTUAL SIZE windowsservercore 10.0.10586.0 6801d964fda5 11 weeks ago 0 B windowsservercore latest 6801d964fda5 11 weeks ago 0 B docker run -it windowsservercore cmd を実行すると windowsservercore からコンテナを起動してその上でコマンドプロンプトを起動できる。 コンテナの起動は非常に遅い。30秒以上かかる。これは今の時点での制限らしい。 docker login --help するとわかるが、コンテナイメージのリポジトリは https://registry-win-tp3.docker.io/v1/ という仮っぽいサーバにあって、docker search * を実行するとそこに登録されたイメージのリストが見れる。 C:\Users\Administrator&gt;docker search * NAME DESCRIPTION STARS OFFICIAL AUTOMATED microsoft/aspnet ASP.NET 5 framework installed in a Windows...
-              </div>
+              <h3 class="title">Pcap4J Meets Windows Containers</h3>
             </a>
           </article>
         </div>
