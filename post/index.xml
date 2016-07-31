@@ -6,8 +6,190 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2016</rights>
-    <updated>2016-07-11 00:30:33 -0600 MDT</updated>
+    <updated>2016-07-31 14:34:16 -0600 MDT</updated>
 
+    
+      
+        <item>
+          <title>Docker for Windowsがコレジャナかった</title>
+          <link>https://tbd.kaitoy.xyz/2016/07/31/docker-for-windows/</link>
+          <pubDate>Sun, 31 Jul 2016 14:34:16 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2016/07/31/docker-for-windows/</guid>
+          <description>
+
+&lt;p&gt;7/28にDocker for Winodws(とDocker for Mac)の正式版リリースの&lt;a href=&#34;https://blog.docker.com/2016/07/docker-for-mac-and-windows-production-ready/&#34;&gt;アナウンス&lt;/a&gt;があったので試してみたけど、期待していたものと違ったしなんだか上手く動かなかった話。&lt;/p&gt;
+
+&lt;h2 id=&#34;docker-for-windowsとは&#34;&gt;Docker for Windowsとは&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://docs.docker.com/docker-for-windows/&#34;&gt;Docker for Windows&lt;/a&gt;は&lt;a href=&#34;https://www.docker.com/products/docker-toolbox&#34;&gt;Docker Toolbox&lt;/a&gt;の後継製品。(多分。)&lt;/p&gt;
+
+&lt;p&gt;Docker ToolboxはWindowsやMacでDockerを使うための製品で、以下のコンポーネントからなる。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://www.docker.com/products/docker-engine&#34;&gt;Docker Engine&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;コンテナランタイム。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://docs.docker.com/compose/&#34;&gt;Docker Compose&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;複数のコンテナを組み合わせたアプリケーション/サービスの構築/管理ツール。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://docs.docker.com/machine/&#34;&gt;Docker Machine&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Docker仮想ホストのプロビジョニング/管理ツール。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kitematic.com/&#34;&gt;Kitematic&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Dockerコンテナを管理するGUIを提供する製品。
+Docker Machineと連携してローカルマシンへのDocker仮想ホストのプロビジョニングもしてくれる。&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Docker Toolboxを使うと、&lt;a href=&#34;https://ja.wikipedia.org/wiki/VirtualBox&#34;&gt;VirtualBox&lt;/a&gt;のLinux VMをWindows/Mac上にプロビジョニングして、そのVMにDockerをインストールして、Windows/Macから利用できる。&lt;/p&gt;
+
+&lt;p&gt;Docker for Windowsもだいたい同じで、Docker EngineとDocker ComposeとDocker MachineをWinodwsで利用するための製品。
+&lt;a href=&#34;http://electron.atom.io/&#34;&gt;Electron&lt;/a&gt;ベースでOracleのVirtualBox依存なKitematicの代わりに、ネイティブなインストーラがWindows内臓の&lt;a href=&#34;https://ja.wikipedia.org/wiki/Hyper-V&#34;&gt;Hyper-V&lt;/a&gt;を使ってDockerをセットアップしてくれる。
+Hyper-Vを使うため、VirtualBoxより速くて高信頼らしい。
+KitematicはDocker for Windowsには付属しないが、別途ダウンロードすればコンテナ管理に使える。Docker for WindowsとDocker Toolboxとは共存はできない。&lt;/p&gt;
+
+&lt;p&gt;私は勝手にDocker for Windowsは&lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containersとは&#34;&gt;Hyper-V Containers&lt;/a&gt;のデスクトップOS版のようなものかと勘違いしていて、Windowsのコンテナが使えるようになったのかと期待したが違った。
+Docker for Windowsは単にDocker ToolboxのVirtualBoxがHyper-Vになっただけのもので、結局Linux VMの中でDockerを使うだけのものだということにセットアップ中に気付いた。&lt;/p&gt;
+
+&lt;p&gt;コレジャナイ感がすごかった。&lt;/p&gt;
+
+&lt;p&gt;ともあれ、やった作業を以下に記す。&lt;/p&gt;
+
+&lt;h2 id=&#34;docker-for-windows-on-vmware-player&#34;&gt;Docker for Windows on VMware Player&lt;/h2&gt;
+
+&lt;p&gt;現時点ではDocker for WindowsはホストとしてWindows 10 x64 Pro/Enterprise/Education (Version 1511 Build 10586 以降)しかサポートしていない。
+自前のPCが5年前に買った&lt;a href=&#34;https://dynabook.com/&#34;&gt;dynabook&lt;/a&gt;でWindows 10をサポートしていないので、VMware PlayerのVM上のWindows 10にDocker for Windowsをインストールしてみる。&lt;/p&gt;
+
+&lt;h4 id=&#34;vmware-playerのvmでhyper-vを使うための設定&#34;&gt;VMware PlayerのVMでHyper-Vを使うための設定&lt;/h4&gt;
+
+&lt;p&gt;VMware PlayerのVMでは通常Hyper-Vは使えないので、&lt;a href=&#34;http://social.technet.microsoft.com/wiki/contents/articles/22283.how-to-install-hyper-v-on-vmware-workstation-10.aspx&#34;&gt;How to Install Hyper-V on vmware Workstation 10 ?&lt;/a&gt;を参考にしてVMの設定をいじる。
+この記事はVMware Workstationについてのものだが、VMware Playerでも全く同じ方法でいける。&lt;/p&gt;
+
+&lt;p&gt;いじるのは、dynabookのWindows 7に入れたVMware Workstation 11.1.0 build-2496824に付属の
+VMware Player 7.1.0 build-2496824で作ったWindows 10 Pro x64 (Version 1511 Build 10586.494)のVM。
+VMのバージョンは11.0。2CPUでメモリは2GB。ネットワークインターフェースはNAT。&lt;/p&gt;
+
+&lt;p&gt;このVMの.vmxファイルをテキストエディタで開いて以下を追記。意味は不明。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;hypervisor.cpuid.v0 = &amp;quot;FALSE&amp;quot;
+mce.enable = &amp;quot;TRUE&amp;quot;
+vhu.enable = &amp;quot;TRUE&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;次いで、VMware PlayerのGUIからVMのCPU設定を開き、&lt;code&gt;Intel VT-x/EPTまたはAMD-V/RVIを仮想化&lt;/code&gt;と&lt;code&gt;CPUパフォーマンスカウンタを仮想化&lt;/code&gt;にチェックを付ける。意味はなんとなくしかわからない。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/docker-for-windows/vm.jpg&#34; alt=&#34;vm.jpg&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;これだけ。&lt;/p&gt;
+
+&lt;p&gt;Hyper-VはDocker for Windowsのインストーラが有効化してくれるのでここでは何もしなくていい。&lt;/p&gt;
+
+&lt;h4 id=&#34;docker-for-windowsインストール&#34;&gt;Docker for Windowsインストール&lt;/h4&gt;
+
+&lt;p&gt;VMを起動して、&lt;a href=&#34;https://docs.docker.com/docker-for-windows/&#34;&gt;Getting Started with Docker for Windows&lt;/a&gt;に従ってDocker for Windowsをインストールする。&lt;/p&gt;
+
+&lt;p&gt;まず、&lt;a href=&#34;https://download.docker.com/win/stable/InstallDocker.msi&#34;&gt;上記サイト内のリンク&lt;/a&gt;からインストーラをダウンロード。stableの方。&lt;/p&gt;
+
+&lt;p&gt;ダウンロードした&lt;code&gt;InstallDocker.msi&lt;/code&gt;をVM上で実行してウィザードに従えばインストール完了。
+ウィザードの最後で&lt;code&gt;Launch Docker&lt;/code&gt;にチェックが付いた状態で&lt;code&gt;Finish&lt;/code&gt;するとDockerを起動してくれる。
+この起動中にHyper-Vを有効化してくれる。(OS再起動有り。)&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/docker-for-windows/hyper-v.jpg&#34; alt=&#34;hyper-v.jpg&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;OS再起動後、「Failed to create Switch &amp;ldquo;DockerNAT&amp;rdquo;: Hyper-V was unable to find a virtual switch with name &amp;ldquo;DockerNAT&amp;rdquo;」というエラー出た。&lt;code&gt;DockerNAT&lt;/code&gt;が見つからない?&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/docker-for-windows/error.jpg&#34; alt=&#34;error.jpg&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;DockerNAT&lt;/code&gt;はDocker for Windowsがインストール中に作る仮想イーサネットアダプタ。
+Dockerが動くHyper-V VMが外部ネットワークと通信するためのネットワークインターフェース。(多分。)&lt;/p&gt;
+
+&lt;p&gt;以前に&lt;code&gt;hosts&lt;/code&gt;に変なエントリを書いてしまっていたのでそれを一応消して、VMware PlayerのVMのアダプタの設定もちょっといじってしまっていたので一応もとにもどして、再度Docker for Windowsをクリーンインストールしたら上記エラーは出なくなった。
+なんだったんだろう。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Dockerの起動中に今度はメモリ系のエラー: 「Failed to create VM &amp;ldquo;MobyLinuxVM&amp;rdquo;: Failed to modify device &amp;lsquo;Memory&amp;rsquo;」。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/docker-for-windows/error2.jpg&#34; alt=&#34;error2.jpg&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;MobyLinuxVM&lt;/code&gt;はDockerを動かすHyper-V VMの名前。このVMに割り当てるメモリはホストOSのメモリ量から決められるようで、これが少なすぎるとダメな模様。&lt;/p&gt;
+
+&lt;p&gt;VMware PlayerのVMのメモリを2Gから3.3Gに増やしたらこのエラーもなくなったけど、今度はIPアドレスのエラー: 「Failed to start VM &amp;ldquo;MobyLinuxVM&amp;rdquo;: The VM couldn&amp;rsquo;t get an IP address after 60 tries」。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/docker-for-windows/error3.jpg&#34; alt=&#34;error3.jpg&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;フォーラムを見たら
+&lt;a href=&#34;https://forums.docker.com/t/vm-mobylinuxvm-the-vm-couldnt-get-an-ip-address-after-60-tries/8505/11&#34;&gt;このエラーが載っていた&lt;/a&gt;。そこには以下の様な解決方法が挙がっていた。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Docker for Windowsをクリーンインストールしなおす。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;vEthernet (DockerNAT)&lt;/code&gt;のアダプタのオプションでIPv6を無効にする。&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;タスクトレイの鯨アイコンから開けるDockerのSettingsで&lt;code&gt;Reset to factory defaults...&lt;/code&gt;を実行。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/docker-for-windows/docker_settings.jpg&#34; alt=&#34;docker_settings.jpg&#34; /&gt;
+&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;どれもだめだった。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;MobyLinuxVM&lt;/code&gt;がちゃんと起動しなくて、Dockerデーモンに接続できない。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Windows\System32&amp;gt;docker version
+Client:
+ Version:      1.12.0
+ API version:  1.24
+ Go version:   go1.6.3
+ Git commit:   8eab29e
+ Built:        Thu Jul 28 21:15:28 2016
+ OS/Arch:      windows/amd64
+An error occurred trying to connect: Get http://%2F%2F.%2Fpipe%2Fdocker_engine/v1.24/version: open //./pipe/docker_engine: The system cannot find the file specified.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;因みにちゃんと起動すると以下の感じになるらしい。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;PS C:\Users\samstevens&amp;gt; docker version
+Client:
+Version:      1.12.0-rc2
+API version:  1.24
+Go version:   go1.6.2
+Git commit:   906eacd
+Built:        Fri Jun 17 20:35:33 2016
+OS/Arch:      windows/amd64
+Experimental: true
+
+Server:
+Version:      1.12.0-rc2
+API version:  1.24
+Go version:   go1.6.2
+Git commit:   a7119de
+Built:        Fri Jun 17 22:09:20 2016
+OS/Arch:      linux/amd64
+Experimental: true
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;もうあきらめる。
+どうせWindowsコンテナが使えないならあまり面白くないし。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
