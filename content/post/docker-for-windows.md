@@ -94,8 +94,7 @@ OS再起動後、「Failed to create Switch "DockerNAT": Hyper-V was unable to f
 
 ![error.jpg](/images/docker-for-windows/error.jpg)
 
-`DockerNAT`はDocker for Windowsがインストール中に作る仮想イーサネットアダプタ。
-Dockerが動くHyper-V VMが外部ネットワークと通信するためのネットワークインターフェース。(多分。)
+`DockerNAT`はDocker for Windowsがインストール中に作るHyper-Vの仮想スイッチ。
 
 以前に`hosts`に変なエントリを書いてしまっていたのでそれを一応消して、VMware PlayerのVMのアダプタの設定もちょっといじってしまっていたので一応もとにもどして、再度Docker for Windowsをクリーンインストールしたら上記エラーは出なくなった。
 なんだったんだろう。
