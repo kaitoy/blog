@@ -36,7 +36,7 @@ Docker ToolboxはWindowsやMacでDockerを使うための製品で、以下の�
 Docker Toolboxを使うと、[VirtualBox](https://ja.wikipedia.org/wiki/VirtualBox)のLinux VMをWindows/Mac上にプロビジョニングして、そのVMにDockerをインストールして、Windows/Macから利用できる。
 
 Docker for Windowsもだいたい同じで、Docker EngineとDocker ComposeとDocker MachineをWinodwsで利用するための製品。
-[Electron](http://electron.atom.io/)ベースでOracleのVirtualBox依存なKitematicの代わりに、ネイティブなインストーラがWindows内臓の[Hyper-V](https://ja.wikipedia.org/wiki/Hyper-V)を使ってDockerをセットアップしてくれる。
+[Electron](http://electron.atom.io/)ベースでOracleのVirtualBox依存なKitematicの代わりに、ネイティブなインストーラがWindows内蔵の[Hyper-V](https://ja.wikipedia.org/wiki/Hyper-V)を使ってDockerをセットアップしてくれる。
 Hyper-Vを使うため、VirtualBoxより速くて高信頼らしい。
 KitematicはDocker for Windowsには付属しないが、別途ダウンロードすればコンテナ管理に使える。Docker for WindowsとDocker Toolboxとは共存はできない。
 
