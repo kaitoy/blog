@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Getter/Setterは悪だ。以上。 | To Be Decided">
+    <meta property="og:url" content="https://tbd.kaitoy.xyz/2015/07/22/getters-setters-evil/">
+    <meta property="og:description" content="このエントリでは、Yegor Bugayenkoによる記事、Getters/Setters. Evil. Period.を紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 2003年にAllen Holubが書いたWhy getter and setter methods are evilという有名な記事に端を発する古い議論がある。それは、getter/setterはアンチパターンで避けるべきものなのか、 もしくはオブジェクト指向プログラミングに必須なものなのかというもの。 この議論に少しだけ私の意見を加えたいと思う。 上記記事の要旨はこうだ。 getterやsetterはひどい慣習で、これらを使うやつらはゆるせん。誤解の無いようもう一度言うが、 私はget/setを可能な限り避けるべきだと言っているのではない。それらは君のコードに決して現れてはいけないのだ。 横柄で目につく物言いだろう? 君は15年来get/setパターンを使い続けている尊敬を集めるJavaアーキテクトなんだろう? どこぞの馬の骨にこんなデタラメを言われたくはないだろう? ああ、その気持ちはわかる。私がDavid WestのObject Thinkingという本に出会ったとき、 私もほとんど同じことを感じた。 Object Thinkingは、私が今まで読んだオブジェクト指向プログラミングについての本の中で最高のものだ。 だからお願いだ。ひとまず落ち着いて。私に説明させてほしい。 既存の論拠 オブジェクト指向の世界で、アクセッサ(getterやsetterの別名)に反対する論拠はいくつかあるが、 私にはそれら全てが十分に有力であるとは思えない。ひとつひとつ簡単に見ていこう。 頼め、尋ねるな Allen Holub曰く、「ある処理をする際、その処理のために君が欲しい情報をオブジェクトに尋ねてはいけない。 その情報を持ったオブジェクトにその処理をするよう頼みなさい。」 カプセル化原則違反 setterを通してどんな新たなデータも入力できるので、 一つのオブジェクトをその他の様々なオブジェクトが様々に扱うことができてしまう。 また、だれでもオブジェクトを変更できるので、 オブジェクトが単純に自身の状態を安全にカプセル化できない。 実装の詳細の暴露 あるオブジェクトから他のオブジェクトを取得できる場合、前者のオブジェクトの実装の詳細に過度に依存してしまう。 もし明日その実装、例えば返すオブジェクトの型が変わったら、周辺のコードも書き換えないといけない。 これらの全ての論拠は正当だが、重要なポイントが抜けている。 根本的な誤解 ほとんどのプログラマはオブジェクトはメソッドを持ったデータ構造だと考えている。 ここでBozhidar Bozhanovによる記事、Getters and Setters Are Not Evilから引用する。 しかし、人々がgetterやsetterをつけるオブジェクトのほとんどが、単純なデータホルダだ。 この思い違いが巨大な誤解の結果だ! オブジェクトは単純なデータホルダではない。オブジェクトはメソッド付きのデータ構造ではない。 このデータホルダというコンセプトは、CやCOBOLといった手続き型言語からオブジェクト指向プログラミングに持ち込まれたものだ。 もう一度言う。オブジェクトはデータとそれを操作する関数をセットにしたものではない。 オブジェクトはデータエンティティではない。では何か? ボールと犬 真のオブジェクト指向プログラミングでは、 オブジェクトは生きている生物だ。私や君と同じように。 オブジェクトは生きている有機体で、それ自身の挙動や、特性や、ライフサイクルを持っている。 生きている有機体はsetterを持てるだろうか? 犬にボールを&rdquo;set&rdquo;できるだろうか? 無理だろう。 だが、以下のコードはまさにそれをしている。 Dog dog = new Dog(); dog.setBall(new Ball()); これをどう感じる?">
+    
+    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/teamedio_logo.svg">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      Getter/Setterは悪だ。以上。 | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Wed, Jul 22, 2015</span>
+      <h2 class="title">Getter/Setterは悪だ。以上。</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="Getter/Setterは悪だ。以上。">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>このエントリでは、Yegor Bugayenkoによる記事、<a href="http://www.yegor256.com/2014/09/16/getters-and-setters-are-evil.html">Getters/Setters. Evil. Period.</a>を紹介する。
+(Yegorから和訳と転載の許可は得た。)
+以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。</p>
+
+<hr />
+
+<p>2003年にAllen Holubが書いた<a href="http://www.javaworld.com/article/2073723/core-java/why-getter-and-setter-methods-are-evil.html">Why getter and setter methods are evil</a>という有名な記事に端を発する古い議論がある。それは、getter/setterはアンチパターンで避けるべきものなのか、
+もしくはオブジェクト指向プログラミングに必須なものなのかというもの。
+この議論に少しだけ私の意見を加えたいと思う。</p>
+
+<p>上記記事の要旨はこうだ。
+getterやsetterはひどい慣習で、これらを使うやつらはゆるせん。誤解の無いようもう一度言うが、
+私はget/setを可能な限り避けるべきだと言っているのではない。それらは君のコードに決して現れてはいけないのだ。</p>
+
+<p>横柄で目につく物言いだろう?
+君は15年来get/setパターンを使い続けている尊敬を集めるJavaアーキテクトなんだろう?
+どこぞの馬の骨にこんなデタラメを言われたくはないだろう?
+ああ、その気持ちはわかる。私がDavid Westの<a href="http://www.amazon.com/gp/product/0735619654/ref=as_li_tl?ie=UTF8&amp;camp=1789&amp;creative=9325&amp;creativeASIN=0735619654&amp;linkCode=as2&amp;tag=yegor256com-20&amp;linkId=NQQHJZPHOKM6BTCT">Object Thinking</a>という本に出会ったとき、
+私もほとんど同じことを感じた。
+Object Thinkingは、私が今まで読んだオブジェクト指向プログラミングについての本の中で最高のものだ。
+だからお願いだ。ひとまず落ち着いて。私に説明させてほしい。</p>
+
+<h3 id="既存の論拠">既存の論拠</h3>
+
+<p>オブジェクト指向の世界で、アクセッサ(getterやsetterの別名)に反対する論拠はいくつかあるが、
+私にはそれら全てが十分に有力であるとは思えない。ひとつひとつ簡単に見ていこう。</p>
+
+<p><br></p>
+
+<ul>
+<li><p>頼め、尋ねるな</p>
+
+<p>Allen Holub曰く、「ある処理をする際、その処理のために君が欲しい情報をオブジェクトに尋ねてはいけない。
+その情報を持ったオブジェクトにその処理をするよう頼みなさい。」</p></li>
+</ul>
+
+<p><br></p>
+
+<ul>
+<li><p>カプセル化原則違反</p>
+
+<p>setterを通してどんな新たなデータも入力できるので、
+一つのオブジェクトをその他の様々なオブジェクトが様々に扱うことができてしまう。
+また、だれでもオブジェクトを変更できるので、
+オブジェクトが単純に自身の状態を安全にカプセル化できない。</p></li>
+</ul>
+
+<p><br></p>
+
+<ul>
+<li><p>実装の詳細の暴露</p>
+
+<p>あるオブジェクトから他のオブジェクトを取得できる場合、前者のオブジェクトの実装の詳細に過度に依存してしまう。
+もし明日その実装、例えば返すオブジェクトの型が変わったら、周辺のコードも書き換えないといけない。</p></li>
+</ul>
+
+<p><br></p>
+
+<p>これらの全ての論拠は正当だが、重要なポイントが抜けている。</p>
+
+<h3 id="根本的な誤解">根本的な誤解</h3>
+
+<p>ほとんどのプログラマはオブジェクトはメソッドを持ったデータ構造だと考えている。
+ここでBozhidar Bozhanovによる記事、<a href="https://dzone.com/articles/getters-and-setters-are-not">Getters and Setters Are Not Evil</a>から引用する。</p>
+
+<blockquote>
+<p>しかし、人々がgetterやsetterをつけるオブジェクトのほとんどが、単純なデータホルダだ。</p>
+</blockquote>
+
+<p>この思い違いが巨大な誤解の結果だ!
+オブジェクトは単純なデータホルダではない。オブジェクトはメソッド付きのデータ構造ではない。
+このデータホルダというコンセプトは、CやCOBOLといった手続き型言語からオブジェクト指向プログラミングに持ち込まれたものだ。
+もう一度言う。オブジェクトはデータとそれを操作する関数をセットにしたものではない。
+オブジェクトはデータエンティティではない。では何か?</p>
+
+<h3 id="ボールと犬">ボールと犬</h3>
+
+<p>真のオブジェクト指向プログラミングでは、
+オブジェクトは<a href="https://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/">生きている生物</a>だ。私や君と同じように。
+オブジェクトは生きている有機体で、それ自身の挙動や、特性や、ライフサイクルを持っている。</p>
+
+<p>生きている有機体はsetterを持てるだろうか? 犬にボールを&rdquo;set&rdquo;できるだろうか? 無理だろう。
+だが、以下のコードはまさにそれをしている。</p>
+
+<pre><code class="language-java">Dog dog = new Dog();
+dog.setBall(new Ball());
+</code></pre>
+
+<p>これをどう感じる?</p>
+
+<p>また、ボールを犬から取得できるだろうか?
+まあ、できるかもしれない、もしその犬がボールを食べて、君が手術をするのであれば。
+この場合、確かに、犬からボールを&rdquo;get&rdquo;できる。以下のコードが今話したようなことをやっている。</p>
+
+<pre><code class="language-java">Dog dog = new Dog();
+Ball ball = dog.getBall();
+</code></pre>
+
+<p>またさらにばかげた例がこれだ。</p>
+
+<pre><code class="language-java">Dog dog = new Dog();
+dog.setWeight(&quot;23kg&quot;);
+</code></pre>
+
+<p>現実世界でこの処理がどんなか想像できるかな?</p>
+
+<p>君が毎日書いているコードはこれに似ているかい?
+もしそうなら、君は手続き型プログラマだ。認めなさい。
+David Westが彼の本の30ページでそれについて以下のように言っている。</p>
+
+<blockquote>
+<p>成功した手続き型開発者が成功するオブジェクト開発者に移行するための最初のステップは、ロボトミーだ。</p>
+</blockquote>
+
+<p>君はロボトミーが必要か？
+因みに、WestのObject Thinkingを読んでいた時、私には明らかに必要だったので受けた。</p>
+
+<h3 id="オブジェクト思考">オブジェクト思考</h3>
+
+<p>オブジェクト思考を開始すると、君は即座にメソッド名を変更し、多分以下のコードに辿り着く。</p>
+
+<pre><code class="language-java">Dog dog = new Dog();
+dog.take(new Ball());
+Ball ball = dog.give();
+</code></pre>
+
+<p>今、私たちは犬を実際の動物として扱っている。この犬は、ボールを私たちから受け取り、頼めば返してくれる。
+ここで特筆すべきは、この犬は <code>NULL</code> を返すことはできない。犬は <code>NULL</code> が何なのかなんて知らないからね。オブジェクト思考は即座に<a href="http://www.yegor256.com/2014/05/13/why-null-is-bad.html">NULL参照</a>をコードから排除する。</p>
+
+<p>さらに、オブジェクト思考はオブジェクト不変性につながる。
+犬の体重の例を、君は以下のように書き換えるだろう。</p>
+
+<pre><code class="language-java">Dog dog = new Dog(&quot;23kg&quot;);
+int weight = dog.weight();
+</code></pre>
+
+<p>この犬は不変な生きた有機体であり、だれも外からその体重やサイズや名前などを変更することはできない。
+この犬は要求に応じて体重や名前を教えてくれる。
+オブジェクトの中身を要求するパブリックメソッドには何の問題もないが、
+こういったメソッドは&rdquo;getter&rdquo;ではなく、&rdquo;get&rdquo;というプレフィックスは決して付かない。
+私たちは犬から何かを取ろうというのではない。犬から名前を取るのではなく、犬に名前を教えてくれるよう頼むのだ。
+この違いが分かるかな?</p>
+
+<p>語義論の話をしているというわけでもない。
+手続き型プログラミング思考とオブジェクト指向プログラミング思考とを区別しようというのだ。
+手続き型プログラミングでは、私たちはデータを扱い、必要に応じてそれを操作したり取得したりセットしたり消したりする。
+私たちはデータの責任者で、そのデータは単なる受動的なコンポーネントだ。
+犬は私たちとは何の関係もなく、ただのデータホルダだ。それは生命を持っていない。
+私たちはそれから必要なものを何でも自由に取得できるし、どんなデータでもセットすることができる。
+これがCやCOBOLやPascalなどの手続き型言語のやりかただ。</p>
+
+<p>それに対して、真のオブジェクト指向の世界では、オブジェクトを生きた有機体のように扱い、
+オブジェクトには生まれた日と死ぬ瞬間がある。また、君が望むなら、アイデンティティや性質を持たせてもいい。
+犬にはデータの一部(例えば体重)をくれるよう頼むことができるし、犬はその情報を返してもよい。
+ただ、この犬は能動的なコンポーネントであることを忘れてはいけない。
+こちらの要求に対し、何をするかは犬が決めるのだ。</p>
+
+<p>以上が、getやsetで始まるメソッドをオブジェクトに持たせることが概念的に間違っている理由だ。
+それは、多くの人々が主張するように、カプセル化を崩すということではない。
+それは、君がオブジェクト的な思考をしているか、もしくは今だCOBOLをJavaのシンタックスで書いているかということだ。</p>
+
+<p>追伸: そうだ、君はこう尋ねるかもしれない。JavaBeans、JPA、JAXBなどのget/set表記に頼るJava APIはどうなんだ?
+Rubyに付属するアクセッサ生成を簡易化する機能は?
+ああ、それらは全て私たちにとっての不幸だ。
+手続き型COBOLの原始的な世界に留まることは、真のオブジェクトからなる美しい世界を正しく理解し感謝するのに比べてはるかに簡単だ。</p>
+
+<p>追追伸: 言い忘れたが、setterを使った依存性注入もひどいアンチパターンだ。
+それについてはいずれ書く。</p>
+
+<p><div class="embed video-player" style="text-align: center">
+  <iframe class="youtube-player" type="text/html" width="320" height="193" src="https://www.youtube.com/embed/WSgP85kr6eU" allowfullscreen frameborder="0">
+  </iframe>
+</div>
+</p>
+
+<hr />
+
+<p>以上がYegorの記事。</p>
+
+<p>Javaを始めた当初から今まで、Getter/Setterは絶対正義だと信じ、クラスを作れば無心でIDEの言いなりにそれを生成していたので、
+この記事はなかなかに刺激的だった。(まあfinalなフィールドが好きなのでsetterの方はあまり作らなかったが。)</p>
+
+<p>ただ、記事の本質としては、Getter/Setterパターン、つまり、
+オブジェクトのフィールドをprivateにし、メソッドを介してアクセスさせるようにすることで、実装の詳細を隠蔽し、
+APIと分離させることを図るデザインパターンの技術的役割や目的を否定しているわけではなく、
+オブジェクト指向の哲学的な部分にも則り、Getter/Setterパターンを真のオブジェクト界に向けて昇華させましょうと言っているように読める。</p>
+
+<p>犬とボールのやり取りをするコードのビフォーアフターはsetBall/getBallがtake/giveになっただけで、
+これだけ見れば処理が変わるわけでもないし、コンパイラに言わせればどっちでもいいだろとなる。
+ただ、プログラマにボールを無下につっこまれるビフォーの犬よりも、
+自ら能動的にボールを受け取り返してくれるアフターの犬の方が幸せそうで愛らしいのは確かだ。
+真のオブジェクト界を垣間見た気がする。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f07%2f22%2fgetters-setters-evil%2f&t=Getter%2fSetter%e3%81%af%e6%82%aa%e3%81%a0%e3%80%82%e4%bb%a5%e4%b8%8a%e3%80%82" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f07%2f22%2fgetters-setters-evil%2f&text=Getter%2fSetter%e3%81%af%e6%82%aa%e3%81%a0%e3%80%82%e4%bb%a5%e4%b8%8a%e3%80%82&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f07%2f22%2fgetters-setters-evil%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f07%2f22%2fgetters-setters-evil%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f07%2f22%2fgetters-setters-evil%2f&title=Getter%2fSetter%e3%81%af%e6%82%aa%e3%81%a0%e3%80%82%e4%bb%a5%e4%b8%8a%e3%80%82" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://tbd.kaitoy.xyz/tags/yegor256"><i class="fa fa-tags"></i> yegor256 </a>
+                
+                <a href="https://tbd.kaitoy.xyz/tags/oop"><i class="fa fa-tags"></i> oop </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/06/25/seven-deadly-sins-of-a-software-project/">ソフトウェアプロジェクトの7つの大罪</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/02/09/continuous-integration-is-dead/">継続的インテグレーションは死んだ</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/01/11/who-is-software-architect/">ソフトウェアアーキテクトは何をするのか?</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/01/03/oop-alternative-to-utility-classes/">オブジェクト指向プログラミングにおいてユーティリティクラスに代わるもの</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/12/03/software-quality-award-2015/">Pcap4JがSoftware Quality Award 2015で入賞</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/">よいオブジェクトの七つの美徳</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/09/13/orm-is-offensive-anti-pattern/">ORMは不快なアンチパターン</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/07/26/why-null-is-bad/">なぜNullはダメか</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/07/18/first-post/">First Post</a></li>
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+                <a href="https://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">
+                  <i class="fa fa-chevron-left"></i>
+                  How to capture packets on a local network with Pcap4J container
+                </a>
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://tbd.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">
+                  Pcap4J container with runC
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2016  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

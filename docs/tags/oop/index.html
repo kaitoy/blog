@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:title" content="To Be Decided">
+    <meta property="og:url" content="https://tbd.kaitoy.xyz">
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      oop | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+
+<div class="row">
+  <div class="col-md-9">
+    <div id="posts">
+      <div class="row">
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/01/03/oop-alternative-to-utility-classes/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="/images/teamedio_logo.svg" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sun, Jan 3, 2016</span>
+              </div>
+              <h2 class="title">オブジェクト指向プログラミングにおいてユーティリティクラスに代わるもの</h2>
+              <div class="summary">
+                このエントリでは、Yegor Bugayenkoによる記事、OOP Alternative to Utility Classesを紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 ユーティリティクラス(またはヘルパークラス)は、スタティックメソッドだけを持っていて、状態を内包しない「構造体」だ。 Apache CommonsのStringUtils、IOUtils、FileUtilsや、GuavaのIterables、Iterators、またJDK7のFilesはユーティリティクラスのいい例だ。 ユーティリティクラスはよく使われる共通機能を提供するので、この設計手法はJava(やC#、Rubyなど)の世界でとても人気だ。 要するに我々は、DRY原則に従い、重複を避けたい。 だから、共通コードをユーティリティクラスに入れて必要に応じて再利用する。 // これはひどい設計なので再利用しないように。 public class NumberUtils { public static int max(int a, int b) { return a &gt; b ? a : b; } } 実際、これはとても便利なテクニックだ!? ユーティリティクラスは悪だ しかし、オブジェクト指向の世界では、ユーティリティクラスはかなり悪い(酷いという人さえいるかもしれない)手法だ。 これについては多くの議論がある。 いくつか挙げると、Nick Malikの「ヘルパークラスは悪か?」、Simon Hartの「なぜヘルパー、シングルトン、ユーティリティクラスはだいたい間違っているのか」、Marshal Wardの「ユーティリティクラスを避ける」、Dhaval Dalalの「ユーティルクラスを殺せ!」、Rob Bagbyの「ヘルパークラスは問題の兆候」。 また、StackExchangeにはユーティリティクラスについての質問がいくつかある。 例えば、「ユーティリティクラスが悪なら、どこに共通コードを書けばいい?」とか、「ユーティリティクラスは悪」とか。 これらの主張は要するに、ユーティリティクラスは適切なオブジェクトではないということだ。 だから、オブジェクト指向の世界に適合しない。 ユーティリティクラスは、当時の人々が機能分割パラダイムに慣れていたために、手続き型言語から受け継がれた。 君がこの主張に同意し、ユーティリティクラスを使うのをやめたがっていると想定し、そいつをどのように適切なオブジェクトに置き換えるかを例を挙げながら教えよう。 手続き型の例 例えば、テキストファイルを読んで、行で分割し、各行をトリムして、その結果を別のファイルに保存したいとする。 これはApache CommonsのFileUtilsを使えばできる。 void transform(File in, File out) { Collection&lt;String&gt; src = FileUtils.readLines(in, &quot;UTF-8&quot;); Collection&lt;String&gt; dest = new ArrayList&lt;&gt;(src.size()); for (String line : src) { dest.add(line.trim()); } FileUtils.writeLines(out, dest, &quot;UTF-8&quot;); } 上のコードはきれいに見える。 しかし、これは手続き型プログラミングであって、オブジェクト指向じゃない。 コードの各行で、データ(byteとbit)を操作し、コンピューターにどこからデータを取ってどこに書き込むかを明示的に指示している。 処理の手順を定義している。 オブジェクト指向な方法 オブジェクト指向パラダイムでは、オブジェクトをインスタンス化して合成すべきだ。 これはオブジェクトにオブジェクト自身のやり方でデータを管理させるためだ。 補足的なスタティックメソッドを呼ぶ代わりに、求めている挙動を提供できるオブジェクトを生成するべきだ。 public class Max implements Number { private final int a; private final int b; public Max(int x, int y) { this.a = x; this.b = y; } @Override public int intValue() { return this.a &gt; this.b ?
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="/images/teamedio_logo.svg" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Wed, Oct 28, 2015</span>
+              </div>
+              <h2 class="title">よいオブジェクトの七つの美徳</h2>
+              <div class="summary">
+                このエントリでは、Yegor Bugayenkoによる記事、Seven Virtues of a Good Objectを紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 Martin Fowler曰く、 ライブラリは本質的には呼び出し可能な関数の集合で、最近は普通クラス内にまとめられる。 クラス内にまとめられた関数? 失礼を承知で言わせてもらうが、これは間違っている。 そして、これはオブジェクト指向プログラミングにおいて、クラスに対する非常に一般的な誤解だ。 クラスは関数をまとめるものではないし、オブジェクトはデータ構造体ではない。 では、なにが適切なオブジェクトなのか? どれが不適切なオブジェクトなのか? その違いは何か? これは論争を呼ぶ主題ではあるが、とても重要だ。 オブジェクトが何かを理解しなければ、オブジェクト指向ソフトウェアをどうやって書くんだ? まあ、JavaやRubyなどのおかげで、書けることは書ける。 しかし、はたして良いものができるだろうか? 不幸にも、これは厳密な科学ではなく、様々な意見がある。 ここに、良いオブジェクトの特性を私なりにリストアップする。 クラス vs オブジェクト オブジェクトについて議論を始める前に、クラスとは何かを定義しよう。 それはオブジェクトが生まれる(インスタント化される)場所だ。 クラスの主な責任は、要求に応じて新しいオブジェクトを構築し、使われなくなったオブジェクトを破壊することだ。 クラスはその子供たちがどのように見えどのように振る舞うべきかを知っている。 言い換えれば、子供たちが従うべき契約を知っている。 クラスが「オブジェクトのテンプレート」であると言われることもある。(例えばWikipediaにはそう書いてある。) この定義はクラスを受動的なポジションに置いているので正しくない。 この定義は、だれかがテンプレートを取得してそこからオブジェクトを構築するということを想定している。 これは、技術的には正しいかもしれないが、概念的には間違っている。 クラスとその子供たちだけが居るのであって、他の誰も関係すべきではない。 あるオブジェクトがクラスに他のオブジェクトを作るように頼み、そのクラスがオブジェクトを構築する。それだけだ。 RubyはJavaやC++に比べてこの概念をかなりうまく表現している。 photo = File.new('/tmp/photo.png') photoオブジェクトはFileクラスによって構築される。(newはそのクラスへのエントリポイント。) オブジェクトは、いったん構築されると、自身に基づいて行動する。 オブジェクトは、自身を誰が構築したかとか、何人兄弟姉妹がいるかとかを知っているべきではない。 そう、リフレクションは酷いアイデアだと言っている。 それについては他の記事で詳しく書くとして、ここでは、オブジェクトについてと、その最高と最悪の両面について話そう。 1. 彼は実世界に存在している まず第一に、オブジェクトは生きた有機体だ。 もっと言えば、オブジェクトは擬人化されるべきだ。 つまり、人間(もしくは、君がより好むならペット)のように扱われるべきだ。 基本的にこれは、オブジェクトはデータ構造体や関数の集合ではないということを意味している。 代わりに、オブジェクトは独立したエンティティで、それ自身のライフサイクル、振る舞い、性質を持つ。 従業員、部署、HTTPリクエスト、MySQLのテーブル、ファイルの行、ファイルそのもの、これらは適切なオブジェクトだ。 なぜならこれらは、ソフトウェアを停止した時でも実世界に存在しているから。 より正確には、オブジェクトは実世界のモノの表現のひとつだ。 オブジェクトは実世界のモノと他のオブジェクトとの間のプロキシだ。 そのようなモノが存在しなければ、明らかにオブジェクトは存在しない。 photo = File.new('/tmp/photo.png') puts photo.width() この例では、Fileに新しいオブジェクトphotoを構築するよう頼んでいる。 photoはディスク上の実際のファイルの表現となる。 ファイルもまた仮想のもので、コンピュータが起動している間だけ存在すると言う人がいるかもしれない。 それには私も同意し、「実世界」の定義を次のように改善しよう。 オブジェクトが住むプログラムの範囲外に存在する全てのもの。 ディスク上のファイルはプログラムの範囲外にあり、その表現をプログラム内に作成することは完全に正しいことと言える。 コントローラ、パーサ、フィルタ、バリデータ、サービスロケータ、シングルトン、ファクトリー、これれは良いオブジェクトではない。(そう、ほとんどのGoFパターンはアンチパターンだ!) これらはソフトウェアの外側、実世界に存在していない。 他のオブジェクト同士を結びつけるためだけに考案されたものだ。 人工的で偽のモノだ。何も表現していない。 真面目な話、XMLパーサ、これが表現するものはなんだ?
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/09/13/orm-is-offensive-anti-pattern/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="/images/teamedio_logo.svg" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sun, Sep 13, 2015</span>
+              </div>
+              <h2 class="title">ORMは不快なアンチパターン</h2>
+              <div class="summary">
+                このエントリでは、Yegor Bugayenkoによる記事、ORM Is an Offensive Anti-Patternを紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 結論から言えば、ORMはオブジェクト指向プログラミングの原則の全てに違反するひどいアンチパターンだ。オブジェクトをバラバラに引き裂き、もの言わぬ受身なデータ入れに変えてしまう。 小さいWebアプリケーションから、数千のテーブルをCRUD操作するエンタープライズシステムまで、どんなアプリケーションにもORMが存在することはゆるせない。 代わりになるものは? SQLを話すオブジェクトだ。 ORMの仕組み オブジェクト関係マッピング (Object-relatinal mapping、ORM)は、オブジェクト指向言語(例えばJava)からリレーショナルデータベースにアクセスする技術(またはデザインパターン)だ。 ほとんどの言語で複数のORM実装がある。 例えば、JavaのHibernate、Ruby on RalsのActiveRecord、PHPのDoctrine、PythonのSQLAlchemy。 Javaでは、ORMデザインはJPAとして標準化されてさえいる。 最初に、ORMがどう動くかを見てみよう。JavaとPostgreSQLとHibernateを使い、データベースにpost (訳注: ブログポスト、ブログの記事)という単一のテーブルがあるとする。 +-----+------------+--------------------------+ | id | date | title | +-----+------------+--------------------------+ | 9 | 10/24/2014 | How to cook a sandwich | | 13 | 11/03/2014 | My favorite movies | | 27 | 11/17/2014 | How much I love my job | +-----+------------+--------------------------+ で、このテーブルをJavaアプリケーションからCRUD操作したい。(CRUDはcreate、read、update、deleteの略。) まず、Postクラスを書く。(長くてごめん。けどなるべく短くしたんだ。) @Entity @Table(name = &quot;post&quot;) public class Post { private int id; private Date date; private String title; @Id @GeneratedValue public int getId() { return this.id; } @Temporal(TemporalType.TIMESTAMP) public Date getDate() { return this.date; } public Title getTitle() { return this.title; } public void setDate(Date when) { this.date = when; } public void setTitle(String txt) { this.title = txt; } } Hibernateでの処理をする前に、セッションファクトリを作らないといけない。 SessionFactory factory = new AnnotationConfiguration() .configure() .addAnnotatedClass(Post.class) .buildSessionFactory(); このファクトリはPostオブジェクトを操作したいときに「セッション」を作ってくれる。 セッションを使う全ての操作は以下のようなコードブロックで囲わないといけない。 Session session = factory.openSession(); try { Transaction txn = session.beginTransaction(); // your manipulations with the ORM, see below txn.commit(); } catch (HibernateException ex) { txn.rollback(); } finally { session.close(); } セッションが準備できたら、以下のようにしてデータベーステーブルから全てのpostのリストを取得する。 List posts = session.createQuery(&quot;FROM Post&quot;).list(); for (Post post : (List&lt;Post&gt;) posts){ System.out.println(&quot;Title: &quot; + post.getTitle()); } ここで何が起こっているかは明確だと思う。 Hibernateという巨大で強力なエンジンが、データベースへの接続、SQLのSELECTリクエスト発行、及びデータの取得をする。 そして、Postクラスのインスタンスを作り、データをつめる。 そのオブジェクトが我々に渡されるとき、それにはデータが詰まっていて、getterでデータを取り出すことができる。上記getTitle()でやっているように。 逆の処理をしてオブジェクトをデータベースに送りたい場合は、同じことを逆の手順でやればいい。 Postのインスタンスを作り、データを入れ、Hibernateに保存するよう頼む。 Post post = new Post(); post.setDate(new Date()); post.setTitle(&quot;How to cook an omelette&quot;); session.save(post); これがほぼ全てのORMの仕組みだ。 基本的な原則はいつも同じで、ORMオブジェクトは無気力なデータの包みだ。 我々はORMフレームワークと話して、ORMフレームワークはデータベースと話す。 オブジェクトは我々のリクエストをORMフレームワークに送り、そのレスポンスを読むのを助けてくれるだけだ。 こうしたオブジェクトは、getterやsetterのほかに何のメソッドも持たない。どのデータベースから来たのかすら知らない。 これがオブジェクト関係マッピングの仕組みだ。 これの何が間違ってるかって?
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/07/26/why-null-is-bad/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="/images/teamedio_logo.svg" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sun, Jul 26, 2015</span>
+              </div>
+              <h2 class="title">なぜNullはダメか</h2>
+              <div class="summary">
+                このエントリでは、Yegor Bugayenkoによる記事、Why NULL is Bad?を紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 JavaでNULLを使う単純な例を以下に示す。 public Employee getByName(String name) { int id = database.find(name); if (id == 0) { return null; } return new Employee(id); } このメソッドの何が間違っているのか? オブジェクトの代わりにNULLを返す可能性がある、というのが間違っているところだ。 NULLはオブジェクト指向パラダイムにおけるひどい慣習で、全力で避けるべきものだ。 これについては多くの意見が既に発表されている。 たとえば、Tony HoareによるプレゼンNull References, The Billion Dollar Mistakeや、David Westの著書Object Thinkingの全体に渡って述べられている。 ここで、その論拠のすべてをまとめ、NULLの使用を回避して適切なオブジェクト指向構造に置き換える方法の例を紹介したいと思う。 基本的に、NULLの代わりになり得るものはふたつある。 ひとつはNullオブジェクトデザインパターンだ。(それをひとつの不変オブジェクトにするのが最善。) public Employee getByName(String name) { int id = database.find(name); if (id == 0) { return Employee.NOBODY; } return Employee(id); } もうひとつは、オブジェクトを返せないときに例外を投げてフェイルファストすることだ。 public Employee getByName(String name) { int id = database.find(name); if (id == 0) { throw new EmployeeNotFoundException(name); } return Employee(id); } さて、NULLに反対する論拠を見てみよう。 因みに、上記Tony HoareのプレゼンやDavid Westの著書に加えて、私はこの記事を書く前に以下の本や記事を読んだ。 Robert MartinのClean Code Steve McConnellのCode Complete John SonmezのSay &ldquo;No&rdquo; to &ldquo;Null&rdquo; StackOverflowのIs returning null bad design?
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/07/22/getters-setters-evil/" class="post">
+              <header class="eyecatch text-center">
+                <img src="/images/teamedio_logo.svg" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Wed, Jul 22, 2015</span>
+              </div>
+              <h3 class="title">Getter/Setterは悪だ。以上。</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2016  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

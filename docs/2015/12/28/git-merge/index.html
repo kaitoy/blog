@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Gitのマージを図解する | To Be Decided">
+    <meta property="og:url" content="https://tbd.kaitoy.xyz/2015/12/28/git-merge/">
+    <meta property="og:description" content="このエントリでは、Gitが提供するマージのための機能の内、主なもの4つ、真のマージ、リベース、ファストフォワードマージ、チェリーピック について図解する。 ここでマージとは、とあるブランチのコミットが入れた修正を別のブランチに取り込むこととする。 この記事を事前に呼んでおくとわかりやすいかもしれない。 ここで説明するマージは全てローカルリポジトリ内のブランチを操作対象とする。 真のマージ 真のマージは、複数のブランチでそれぞれ開発が進んでいて、つまりそれぞれのコミットグラフが伸びている場合に、それらの修正を統合するときに実行する。 マージするブランチはいくつでも指定できる。 基本的なコマンドはgit merge &lt;ブランチ(複数可)&gt;。 操作に成功すると、マージ後のプロジェクトの状態を表すコミット(マージコミット)が作られ、カレントブランチの先頭に追加される。 マージコミットは、マージした全てのブランチが指していたコミットを親として持つ。 このマージはマージコミットを追加するだけであり、既存のコミットを一切変更しないことを認識しておくべし。 以下、真のマージの実行例を図示する。 リベース リベースは、あるブランチで作った一連のコミットの起点(ベース)を移動したいときに実行する。 この操作は一般的にはマージとは呼ばれないが、冒頭に書いたマージの定義からするとマージと見なせないこともないのでここに挙げる。 基本的なコマンドはgit rebase &lt;ブランチ&gt;。 このコマンドは、カレントブランチの起点を指定したブランチが指すコミットに移動する。 この操作に成功すると、カレントブランチで作ったコミットは(実質)消え、それと同等の修正をもたらす別のコミットが移動先のコミットを起点として作成される。(※1) リベースは既存のコミットを消し、コミットグラフを変更してしまうということを認識しておくべし。 以下、リベースの簡単な実行例を図示する。 上のスライドのように単純なコミットグラフならいいが、リベースするブランチが分岐していたりするとややこしいことが起き得る。 そういうケースにはO&rsquo;Reillyの蝙蝠本などでよく勉強してから臨むべし。 (※1: より正確にはgit rebase &lt;ブランチ&gt;は、 カレントブランチで作った各コミットが入れた変更をパッチにして、 それを古い順に一つずつ、指定したブランチが指すコミットに適用しながら新しいコミットを作り、 カレントブランチが指しているコミットをORIG_HEADで指し、 カレントブランチを最新のコミットを指すよう更新する。 2で、指定したブランチが既にチェリーピック(後述)などでカレントブランチのとあるコミットの変更を取り込んでいた場合、そのコミットのパッチの適用はスキップされ、そのパッチによるコミットも作られない。 また、上でカレントブランチのコミットは実質消えると書いたが、当面はオブジェクトが本当に消えるわけではないし、ORIG_HEADとかが指しているのでもどることもできる。) ファストフォワードマージ ファストフォワードマージは、マージ先のコミットが全てマージ元に含まれているときに使えるマージ。 この操作は既存のコミットグラフをいじらないしマージコミットも作らない特殊なマージ。 (実のところマージじゃないと言ってもいい。) このマージを実行した後は、コミットグラフは一直線になり、ブランチを作らずにコミットを作った場合と同様になる。 このマージは、git merge &lt;ブランチ&gt;を実行したときに可能であれば実行される。 (でなければ真のマージが実行される。オプションで選択することもできる。) 以下にファストフォワードマージの例を図示する。 ファストフォワードマージはよくリベースとともに実行される。 リベースのスライドの最後のページの図は、ここのスライドの最初のページの図と同じになっている。 リベース &#43; ファストフォワードは、トピックブランチで入れた修正を、そのブランチを作ったという履歴を残さずに別のブランチに取り入れたいときなどに使う手法。 マージコミットを作る手法よりもコミットグラフをシンプルに保てる。 チェリーピック チェリーピックは、あるブランチの任意のコミットによる修正を別のブランチに取り込みたいときに実行する。 他の3つのマージに比べて分かりやすい操作であり、また操作対象にするブランチやコミットの自由度が高いので使いやすい。 その反面、コミットログなどに明記しないとどこのコミットをマージしたのかが分からなくなる。 基本的なコマンドはgit cherry-pick &lt;コミット&gt;。 操作に成功すると、指定したコミットと同等の修正をもたらす新しいコミットが作成され、HEADに追加される。 この操作はコミットを追加するだけであり、既存のコミットは変更しない。 以下にチェリーピックの例を図示する。">
+    
+    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/git.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      Gitのマージを図解する | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Mon, Dec 28, 2015</span>
+      <h2 class="title">Gitのマージを図解する</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://tbd.kaitoy.xyz/images/git.png" alt="Gitのマージを図解する">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>このエントリでは、<a href="https://git-scm.com/"><strong>Git</strong></a>が提供するマージのための機能の内、主なもの4つ、<strong>真のマージ</strong>、<strong>リベース</strong>、<strong>ファストフォワードマージ</strong>、<strong>チェリーピック</strong> について図解する。
+ここでマージとは、とあるブランチのコミットが入れた修正を別のブランチに取り込むこととする。</p>
+
+<p><a href="https://tbd.kaitoy.xyz/2015/12/27/git-repository/">この記事</a>を事前に呼んでおくとわかりやすいかもしれない。</p>
+
+<p>ここで説明するマージは全てローカルリポジトリ内のブランチを操作対象とする。</p>
+
+<h2 id="真のマージ">真のマージ</h2>
+
+<p>真のマージは、複数のブランチでそれぞれ開発が進んでいて、つまりそれぞれのコミットグラフが伸びている場合に、それらの修正を統合するときに実行する。
+マージするブランチはいくつでも指定できる。</p>
+
+<p>基本的なコマンドは<code>git merge &lt;ブランチ(複数可)&gt;</code>。</p>
+
+<p>操作に成功すると、マージ後のプロジェクトの状態を表すコミット(マージコミット)が作られ、カレントブランチの先頭に追加される。
+マージコミットは、マージした全てのブランチが指していたコミットを親として持つ。</p>
+
+<p>このマージはマージコミットを追加するだけであり、既存のコミットを一切変更しないことを認識しておくべし。</p>
+
+<p>以下、真のマージの実行例を図示する。</p>
+
+<ul class="bxslider">
+  <li><img src="/images/git-merge/git_merge/スライド1.PNG" /></li>
+  <li><img src="/images/git-merge/git_merge/スライド2.PNG" /></li>
+  <li><img src="/images/git-merge/git_merge/スライド3.PNG" /></li>
+  <li><img src="/images/git-merge/git_merge/スライド4.PNG" /></li>
+</ul>
+
+<h2 id="リベース">リベース</h2>
+
+<p>リベースは、あるブランチで作った一連のコミットの起点(ベース)を移動したいときに実行する。
+この操作は一般的にはマージとは呼ばれないが、冒頭に書いたマージの定義からするとマージと見なせないこともないのでここに挙げる。</p>
+
+<p>基本的なコマンドは<code>git rebase &lt;ブランチ&gt;</code>。
+このコマンドは、カレントブランチの起点を指定したブランチが指すコミットに移動する。</p>
+
+<p>この操作に成功すると、カレントブランチで作ったコミットは(実質)消え、それと同等の修正をもたらす別のコミットが移動先のコミットを起点として作成される。(※1)</p>
+
+<p>リベースは既存のコミットを消し、コミットグラフを変更してしまうということを認識しておくべし。</p>
+
+<p>以下、リベースの簡単な実行例を図示する。</p>
+
+<ul class="bxslider">
+  <li><img src="/images/git-merge/git_rebase/スライド1.PNG" /></li>
+  <li><img src="/images/git-merge/git_rebase/スライド2.PNG" /></li>
+</ul>
+
+<p><br></p>
+
+<p>上のスライドのように単純なコミットグラフならいいが、リベースするブランチが分岐していたりするとややこしいことが起き得る。
+そういうケースには<a href="https://www.oreilly.co.jp/books/9784873114408/">O&rsquo;Reillyの蝙蝠本</a>などでよく勉強してから臨むべし。</p>
+
+<p>(※1: より正確には<code>git rebase &lt;ブランチ&gt;</code>は、</p>
+
+<ol>
+<li>カレントブランチで作った各コミットが入れた変更をパッチにして、</li>
+<li>それを古い順に一つずつ、指定したブランチが指すコミットに適用しながら新しいコミットを作り、</li>
+<li>カレントブランチが指しているコミットを<code>ORIG_HEAD</code>で指し、</li>
+<li>カレントブランチを最新のコミットを指すよう更新する。</li>
+</ol>
+
+<p>2で、指定したブランチが既にチェリーピック(後述)などでカレントブランチのとあるコミットの変更を取り込んでいた場合、そのコミットのパッチの適用はスキップされ、そのパッチによるコミットも作られない。</p>
+
+<p>また、上でカレントブランチのコミットは実質消えると書いたが、当面はオブジェクトが本当に消えるわけではないし、<code>ORIG_HEAD</code>とかが指しているのでもどることもできる。)</p>
+
+<h2 id="ファストフォワードマージ">ファストフォワードマージ</h2>
+
+<p>ファストフォワードマージは、マージ先のコミットが全てマージ元に含まれているときに使えるマージ。
+この操作は既存のコミットグラフをいじらないしマージコミットも作らない特殊なマージ。
+(実のところマージじゃないと言ってもいい。)
+このマージを実行した後は、コミットグラフは一直線になり、ブランチを作らずにコミットを作った場合と同様になる。</p>
+
+<p>このマージは、<code>git merge &lt;ブランチ&gt;</code>を実行したときに可能であれば実行される。
+(でなければ真のマージが実行される。オプションで選択することもできる。)</p>
+
+<p>以下にファストフォワードマージの例を図示する。</p>
+
+<ul class="bxslider">
+  <li><img src="/images/git-merge/git_ff/スライド1.PNG" /></li>
+  <li><img src="/images/git-merge/git_ff/スライド2.PNG" /></li>
+</ul>
+
+<p><br></p>
+
+<p>ファストフォワードマージはよくリベースとともに実行される。
+リベースのスライドの最後のページの図は、ここのスライドの最初のページの図と同じになっている。</p>
+
+<p>リベース + ファストフォワードは、トピックブランチで入れた修正を、そのブランチを作ったという履歴を残さずに別のブランチに取り入れたいときなどに使う手法。
+マージコミットを作る手法よりもコミットグラフをシンプルに保てる。</p>
+
+<h2 id="チェリーピック">チェリーピック</h2>
+
+<p>チェリーピックは、あるブランチの任意のコミットによる修正を別のブランチに取り込みたいときに実行する。
+他の3つのマージに比べて分かりやすい操作であり、また操作対象にするブランチやコミットの自由度が高いので使いやすい。
+その反面、コミットログなどに明記しないとどこのコミットをマージしたのかが分からなくなる。</p>
+
+<p>基本的なコマンドは<code>git cherry-pick &lt;コミット&gt;</code>。</p>
+
+<p>操作に成功すると、指定したコミットと同等の修正をもたらす新しいコミットが作成され、<code>HEAD</code>に追加される。</p>
+
+<p>この操作はコミットを追加するだけであり、既存のコミットは変更しない。</p>
+
+<p>以下にチェリーピックの例を図示する。</p>
+
+<ul class="bxslider">
+  <li><img src="/images/git-merge/git_cherry-pick/スライド1.PNG" /></li>
+  <li><img src="/images/git-merge/git_cherry-pick/スライド2.PNG" /></li>
+</ul>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f28%2fgit-merge%2f&t=Git%e3%81%ae%e3%83%9e%e3%83%bc%e3%82%b8%e3%82%92%e5%9b%b3%e8%a7%a3%e3%81%99%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f28%2fgit-merge%2f&text=Git%e3%81%ae%e3%83%9e%e3%83%bc%e3%82%b8%e3%82%92%e5%9b%b3%e8%a7%a3%e3%81%99%e3%82%8b&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f28%2fgit-merge%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f28%2fgit-merge%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f28%2fgit-merge%2f&title=Git%e3%81%ae%e3%83%9e%e3%83%bc%e3%82%b8%e3%82%92%e5%9b%b3%e8%a7%a3%e3%81%99%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://tbd.kaitoy.xyz/tags/git"><i class="fa fa-tags"></i> git </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/01/01/git-revert-reset/">git resetとrevertを図解する</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/12/31/git-dvc/">Gitの分散バージョン管理の仕組み</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/12/27/git-repository/">Gitのリポジトリの中身をなるべく正確に理解する</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+                <a href="https://tbd.kaitoy.xyz/2015/12/31/git-dvc/">
+                  <i class="fa fa-chevron-left"></i>
+                  Gitの分散バージョン管理の仕組み
+                </a>
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://tbd.kaitoy.xyz/2015/12/27/git-repository/">
+                  Gitのリポジトリの中身をなるべく正確に理解する
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2016  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

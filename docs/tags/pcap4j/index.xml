@@ -1,0 +1,2177 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>To Be Decided </title>
+    <link>https://tbd.kaitoy.xyz/tags/pcap4j/</link>
+    <language>en-us</language>
+    <author>Kaito Yamada</author>
+    <rights>(C) 2016</rights>
+    <updated>2016-07-11 00:30:33 -0600 MDT</updated>
+
+    
+      
+        <item>
+          <title>Windows Server 2016 TP5でWindows Containersにリトライ</title>
+          <link>https://tbd.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/</link>
+          <pubDate>Mon, 11 Jul 2016 00:30:33 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;https://www.microsoft.com/ja-jp/evalcenter/evaluate-windows-server-technical-preview&#34;&gt;Windows Server 2016のTechnical Preview 5(TP5)が公開されていた&lt;/a&gt;ので、
+&lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/&#34;&gt;TP4でバグに阻まれて挫折した&lt;/a&gt;、Windows Containersで&lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;Pcap4J&lt;/a&gt;を使ってパケットキャプチャする試みにリトライした話。&lt;/p&gt;
+
+&lt;h2 id=&#34;osセットアップ&#34;&gt;OSセットアップ&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containersセットアップ&#34;&gt;TP4のとき&lt;/a&gt;と同じ環境。&lt;/p&gt;
+
+&lt;p&gt;以降は&lt;a href=&#34;https://msdn.microsoft.com/en-us/virtualization/windowscontainers/quick_start/quick_start_windows_server&#34;&gt;Windows Server Containersのクイックスタートガイド&lt;/a&gt;に沿ってセットアップを進める。
+&lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containersセットアップ&#34;&gt;TP4&lt;/a&gt;からは大分変わっていて、単一のPowershellスクリプトを実行する形式から、Powershellのコマンドレットを逐次手動実行する形式になっている。
+面倒だけど何やってるかわかりやすくて好き。&lt;/p&gt;
+
+&lt;h2 id=&#34;コンテナ機能のインストール&#34;&gt;コンテナ機能のインストール&lt;/h2&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;管理者権限のパワーシェルウィンドウを開く&lt;/p&gt;
+
+&lt;p&gt;コマンドプロンプトから以下のコマンドを実行。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;powershell start-process powershell -Verb runas
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;コンテナ機能のインストール&lt;/p&gt;
+
+&lt;p&gt;開いた青いパワーシェルウィンドウで以下のコマンドを実行するとコンテナ機能がインストールされる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;Install-WindowsFeature containers
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;数分で終わる。&lt;/p&gt;
+
+&lt;p&gt;インストールされたのはHyper-V ContainersじゃなくてWindows Server Containersの方。
+クイックスタートガイドをみると、前者がWindows 10向け、後者がWindows Server向けというように住み分けされているっぽい。TP4では両方ともWindows Serverで使えたんだけど。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;再起動&lt;/p&gt;
+
+&lt;p&gt;変更を有効にするために再起動が必要。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;Restart-Computer -Force
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&#34;dockerインストール&#34;&gt;Dockerインストール&lt;/h2&gt;
+
+&lt;p&gt;Dockerは、コンテナイメージの管理やコンテナの起動などもろもろの機能を提供するDockerデーモンと、その機能を利用するためのCLIを提供するDockerクライアントからなる。この節ではそれら両方をインストールする。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Dockerインストールフォルダ作成&lt;/p&gt;
+
+&lt;p&gt;管理者権限のパワーシェルウィンドウを開いて、以下のコマンドでDockerインストールフォルダを作成。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;New-Item -Type Directory -Path &#39;C:\Program Files\docker\&#39;
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Dockerデーモンインストール&lt;/p&gt;
+
+&lt;p&gt;まずはデーモンの方をインストール。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;Invoke-WebRequest https://aka.ms/tp5/b/dockerd -OutFile $env:ProgramFiles\docker\dockerd.exe -UseBasicParsing
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;数分。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Dockerクライアントインストール&lt;/p&gt;
+
+&lt;p&gt;次にクライアント。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;Invoke-WebRequest https://aka.ms/tp5/b/docker -OutFile $env:ProgramFiles\docker\docker.exe -UseBasicParsing
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;数十秒。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;パスの設定&lt;/p&gt;
+
+&lt;p&gt;さっき作ったDockerインストールフォルダにパスを通す。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;[Environment]::SetEnvironmentVariable(&amp;quot;Path&amp;quot;, $env:Path + &amp;quot;;C:\Program Files\Docker&amp;quot;, [EnvironmentVariableTarget]::Machine)
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Dockerデーモンをサービスに登録&lt;/p&gt;
+
+&lt;p&gt;パスの設定を反映するためにいったんパワーシェルウィンドウとコマンドプロンプトを閉じて、
+また管理者権限でパワーシェルウィンドウ開いて、以下のコマンドでDockerデーモンをサービスに登録する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;dockerd --register-service
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Dockerデーモン起動&lt;/p&gt;
+
+&lt;p&gt;Dockerデーモンは以下のコマンドで起動できる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;Start-Service docker
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;数秒で立ち上がる。
+デフォルトではOS再起動時にはDockerデーモンは自動起動しないので、そのつどこのコマンドを実行する必要がある。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;これでDockerインストール完了。
+この時点ではコンテナイメージは何もない。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\Administrator&amp;gt;docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;因みにインストールされたDockerのバージョンは1.12開発版。現時点での最新版だ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\Administrator&amp;gt;docker -v
+Docker version 1.12.0-dev, build 8e92415
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;コンテナイメージのインストール&#34;&gt;コンテナイメージのインストール&lt;/h2&gt;
+
+&lt;p&gt;次に、コンテナイメージをインストールする。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;コンテナイメージのパッケージプロバイダをインストール&lt;/p&gt;
+
+&lt;p&gt;いまいち何なのかはよくわからないが、
+コンテナイメージのパッケージプロバイダというのをインストールする。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;Install-PackageProvider ContainerImage -Force
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;数十秒。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Windows Server Coreのイメージをインストール&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;Install-ContainerImage -Name WindowsServerCore
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;9GB以上もあるファイルをダウンロードして処理するのでかなり時間がかかる。
+50分くらいかかった。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Dockerデーモン再起動&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;Restart-Service docker
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;無事Windows Server Coreイメージがインストールされた。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;PS C:\Users\Administrator&amp;gt; docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+windowsservercore   10.0.14300.1000     5bc36a335344        8 weeks ago         9.354 GB
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;pcap4jコンテナイメージのビルド&#34;&gt;Pcap4Jコンテナイメージのビルド&lt;/h2&gt;
+
+&lt;p&gt;以下を&lt;code&gt;C:\Users\Administrator\Desktop\pcap4j\Dockerfile&lt;/code&gt;に書いて、&lt;code&gt;cd C:\Users\Administrator\Desktop\pcap4j&lt;/code&gt;して、&lt;code&gt;docker build -t pcap4j .&lt;/code&gt;を実行。
+(Notepad使ったので、拡張子を表示する設定にして&lt;code&gt;Dockerfile&lt;/code&gt;の&lt;code&gt;.txt&lt;/code&gt;を消さないといけない罠があった。)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-dockerfile&#34;&gt;#
+# Dockerfile for Pcap4J on Windows
+#
+
+FROM windowsservercore:10.0.14300.1000
+MAINTAINER Kaito Yamada &amp;lt;kaitoy@pcap4j.org&amp;gt;
+
+# Install Chocolatey.
+RUN mkdir C:\pcap4j
+WORKDIR c:\\pcap4j
+ADD https://chocolatey.org/install.ps1 install.ps1
+RUN powershell .\install.ps1
+
+# Install dependencies.
+RUN choco install -y nmap jdk7 &amp;amp;&amp;amp; \
+    choco install -y maven -version 3.2.5
+
+# Build Pcap4J.
+RUN powershell -Command Invoke-WebRequest https://github.com/kaitoy/pcap4j/archive/v1.zip -OutFile pcap4j.zip &amp;amp;&amp;amp; \
+    powershell -Command Expand-Archive -Path pcap4j.zip -DestinationPath .
+WORKDIR pcap4j-1
+RUN powershell -Command &amp;quot;mvn -P distribution-assembly install 2&amp;gt;&amp;amp;1 | Add-Content -Path build.log -PassThru&amp;quot;
+
+# Collect libraries.
+RUN mkdir bin &amp;amp;&amp;amp; \
+    cd pcap4j-packetfactory-static &amp;amp;&amp;amp; \
+    mvn -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeScope=compile dependency:copy-dependencies &amp;amp;&amp;amp; \
+    mvn -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeGroupIds=ch.qos.logback dependency:copy-dependencies &amp;amp;&amp;amp; \
+    cd ../pcap4j-distribution &amp;amp;&amp;amp; \
+    mvn -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeArtifactIds=pcap4j-packetfactory-static,pcap4j-sample dependency:copy-dependencies
+
+# Generate sample script. (C:\pcap4j\pcap4j-1\bin\capture.bat)
+RUN echo @echo off &amp;gt; bin\capture.bat &amp;amp;&amp;amp; \
+    echo &amp;quot;%JAVA_HOME%\bin\java&amp;quot; -cp C:\pcap4j\pcap4j-1\bin\pcap4j-core.jar;C:\pcap4j\pcap4j-1\bin\pcap4j-packetfactory-static.jar;C:\pcap4j\pcap4j-1\bin\pcap4j-sample.jar;C:\pcap4j\pcap4j-1\bin\jna.jar;C:\pcap4j\pcap4j-1\bin\slf4j-api.jar;C:\pcap4j\pcap4j-1\bin\logback-classic.jar;C:\pcap4j\pcap4j-1\bin\logback-core.jar org.pcap4j.sample.GetNextPacketEx &amp;gt;&amp;gt; bin\capture.bat
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Dockerfileに書いた処理内容は&lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container&#34;&gt;TP4のとき&lt;/a&gt;とだいたい同じ。
+以下、Dockerfile書いているときに気付いたこと。&lt;/p&gt;
+
+&lt;h4 id=&#34;tp4からのアップデート&#34;&gt;TP4からのアップデート&lt;/h4&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;WORKDIR や ENV や COPY でパスの区切りは \ 一つだと消えちゃうので \ か / を使わないといけない。
+&lt;div style=&#34;font-size: 0.5em; text-align: right;&#34;&gt;&lt;cite&gt;引用元: &lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container&#34;&gt;TP4のときのエントリ&lt;/a&gt;&lt;/cite&gt;&lt;/div&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://msdn.microsoft.com/en-us/virtualization/windowscontainers/docker/manage_windows_dockerfile&#34;&gt;このページ&lt;/a&gt;の各コマンドの&lt;strong&gt;Windows Considerations&lt;/strong&gt;に、&lt;code&gt;WORKDIR&lt;/code&gt;のパスの区切りのバックスラッシュはエスケープしないといけないとか、&lt;code&gt;ADD&lt;/code&gt;のパスの区切りはスラッシュじゃないといけないとか書いてある。
+TP4のときはなかったような。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;WORKDIR や COPY のコンテナ内のパスに絶対パスを指定したい場合、C:\hoge、C:/hoge、C:\hoge、いずれもダメ。 以下の様なエラーが出る。
+&lt;div style=&#34;font-size: 0.5em; text-align: right;&#34;&gt;&lt;cite&gt;引用元: &lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container&#34;&gt;TP4のときのエントリ&lt;/a&gt;&lt;/cite&gt;&lt;/div&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;これは直った。&lt;code&gt;WORKDIR c:\\pcap4j&lt;/code&gt;で行ける。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;install.ps1の中でChocolateyのインストーラをHTTPSで取ってこようとしてエラー
+&lt;div style=&#34;font-size: 0.5em; text-align: right;&#34;&gt;&lt;cite&gt;引用元: &lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container&#34;&gt;TP4のときのエントリ&lt;/a&gt;&lt;/cite&gt;&lt;/div&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;普通に&lt;code&gt;choco install&lt;/code&gt;できたので、HTTPSが使えない制限は消えた模様。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;ビルドしてみると、各ステップの実行(多分レイヤの作成)がすごく遅い。
+&lt;div style=&#34;font-size: 0.5em; text-align: right;&#34;&gt;&lt;cite&gt;引用元: &lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container&#34;&gt;TP4のときのエントリ&lt;/a&gt;&lt;/cite&gt;&lt;/div&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;各ステップの実行は相変わらず重い。特にファイル変更が多いときはすごく重い。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;コンテナの起動は非常に遅い。30秒以上かかる。
+&lt;div style=&#34;font-size: 0.5em; text-align: right;&#34;&gt;&lt;cite&gt;引用元: &lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-server-containers味見&#34;&gt;TP4のときのエントリ&lt;/a&gt;&lt;/cite&gt;&lt;/div&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;コンテナ起動は早くなったけどまだ5秒くらいかかる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;WORKDIR や ENV で環境変数が展開されない。
+&lt;div style=&#34;font-size: 0.5em; text-align: right;&#34;&gt;&lt;cite&gt;引用元: &lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container&#34;&gt;TP4のときのエントリ&lt;/a&gt;&lt;/cite&gt;&lt;/div&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;これはまだ直っていない。&lt;code&gt;%tmp%&lt;/code&gt;、&lt;code&gt;%TMP%&lt;/code&gt;、&lt;code&gt;$TMP&lt;/code&gt;、&lt;code&gt;${TMP}&lt;/code&gt;、どれもだめ。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;コンテナ内で C:\ 直下に . で始まる名前のフォルダ作ると次のステップで消えてる。
+&lt;div style=&#34;font-size: 0.5em; text-align: right;&#34;&gt;&lt;cite&gt;引用元: &lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container&#34;&gt;TP4のときのエントリ&lt;/a&gt;&lt;/cite&gt;&lt;/div&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;これは再現しなかった。以前のも勘違いだったのかもしれない。
+なんにせよデフォルトの.m2フォルダのパスが&lt;code&gt;C:\Users\ContainerAdministrator\.m2&lt;/code&gt;になったので気にしなくてよくなった。&lt;/p&gt;
+
+&lt;h4 id=&#34;ビルドエラー-hcsshim-importlayer-failed-in-win32-the-filename-or-extension-is-too-long-0xce&#34;&gt;ビルドエラー: hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce)&lt;/h4&gt;
+
+&lt;p&gt;&lt;code&gt;choco install&lt;/code&gt;の後で以下のエラーが出た。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;re-exec error: exit status 1: output: time=&amp;quot;2016-07-09T19:57:22-07:00&amp;quot; level=error msg=&amp;quot;hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce) layerId=\\\\?\\C:\\ProgramData\\docker\\windowsfilter\\103de6bf1358c506510ad67990f09ec3e2f10f9e866e846df5a88c04f5edf7aa flavour=1 folder=C:\\Windows\\TEMP\\hcs719016711&amp;quot;
+hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce) layerId=\\?\C:\ProgramData\docker\windowsfilter\103de6bf1358c506510ad67990f09ec3e2f10f9e866e846df5a88c04f5edf7aa flavour=1 folder=C:\Windows\TEMP\hcs719016711
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;調べたら&lt;a href=&#34;https://github.com/docker/docker/issues/22449&#34;&gt;DockerのGitHub Issues&lt;/a&gt;に登録されていた。
+ここのコメントを参考に以下のコマンドでコンテナホストのアップデートをしたら発生しなくなった。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;Invoke-WebRequest https://aka.ms/tp5/Update-Container-Host -OutFile update-containerhost.ps1
+.\update-containerhost.ps1
+Restart-Computer -Force
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;git-cloneできない&#34;&gt;git cloneできない&lt;/h4&gt;
+
+&lt;p&gt;Pcap4Jのソースをダウンロードしたかったんだけど、なぜか&lt;code&gt;git clone&lt;/code&gt;がHTTPSでもGITプロトコルでもエラーを返す。
+原因を調べるのが面倒で結局zipでダウンロードするようにした。&lt;/p&gt;
+
+&lt;h4 id=&#34;未実装の機能&#34;&gt;未実装の機能&lt;/h4&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://docs.docker.com/engine/reference/builder/&#34;&gt;Dockerfileのリファレンス&lt;/a&gt;に載っていて、Windows向けのサンプルも書いてあるのに、&lt;a href=&#34;https://docs.docker.com/engine/reference/builder/#/escape&#34;&gt;escapeディレクティブ&lt;/a&gt;と&lt;a href=&#34;https://docs.docker.com/engine/reference/builder/#/shell&#34;&gt;SHELLコマンド&lt;/a&gt;
+が使えなかった。&lt;/p&gt;
+
+&lt;h2 id=&#34;コンテナ起動&#34;&gt;コンテナ起動&lt;/h2&gt;
+
+&lt;p&gt;とりあえず上記DockerfileでPcap4Jコンテナイメージのビルドはできた。&lt;/p&gt;
+
+&lt;p&gt;以下のコマンドでそのイメージからコンテナを起動。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\Administrator&amp;gt;docker run -it pcap4j cmd
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;コンテナ内で&lt;code&gt;ipconfig&lt;/code&gt;すると&lt;code&gt;vEthernet (Temp Nic Name)&lt;/code&gt;という名のネットワークインターフェースがあることがわかる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\pcap4j\pcap4j-1\bin&amp;gt;ipconfig
+
+Windows IP Configuration
+
+
+Ethernet adapter vEthernet (Temp Nic Name):
+
+   Connection-specific DNS Suffix  . : localdomain
+   Link-local IPv6 Address . . . . . : fe80::59cf:1491:6f8e:30c8%18
+   IPv4 Address. . . . . . . . . . . : 172.23.71.6
+   Subnet Mask . . . . . . . . . . . : 255.240.0.0
+   Default Gateway . . . . . . . . . : 172.16.0.1
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;けどPcap4Jからは見えなかった。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\pcap4j\pcap4j-1\bin&amp;gt;capture.bat
+org.pcap4j.sample.GetNextPacketEx.count: 5
+org.pcap4j.sample.GetNextPacketEx.readTimeout: 10
+org.pcap4j.sample.GetNextPacketEx.snaplen: 65536
+
+
+18:49:00.582 [main] INFO  org.pcap4j.core.Pcaps - No NIF was found.
+java.io.IOException: No NIF to capture.
+        at org.pcap4j.sample.GetNextPacketEx.main(GetNextPacketEx.java:45)java:44)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;コンテナには&lt;code&gt;ContainerAdministrator&lt;/code&gt;というユーザでログインしていて、これの権限が弱いせいなんじゃないかと。
+コンテナ内にも&lt;code&gt;Administrator&lt;/code&gt;というユーザがあるようだったので、こっちでコマンド実行するよう奮闘した。&lt;/p&gt;
+
+&lt;h2 id=&#34;コンテナ内でadministratorでコマンド実行したい&#34;&gt;コンテナ内でAdministratorでコマンド実行したい&lt;/h2&gt;
+
+&lt;h4 id=&#34;userコマンド&#34;&gt;USERコマンド&lt;/h4&gt;
+
+&lt;p&gt;Dockerfileのコマンドに&lt;a href=&#34;https://docs.docker.com/engine/reference/builder/#/user&#34;&gt;USER&lt;/a&gt;というのがあるので、&lt;code&gt;USER Administrator&lt;/code&gt;をDockerfileの末尾に追加してみたら以下のエラー。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;The daemon on this platform does not support the command &#39;user&#39;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;userオプション&#34;&gt;&amp;ndash;userオプション&lt;/h4&gt;
+
+&lt;p&gt;docker runコマンドに&lt;a href=&#34;https://docs.docker.com/compose/reference/run/&#34;&gt;&amp;ndash;user&lt;/a&gt;というオプションがあるので以下のように試してみたところ、オプションは無視されて&lt;code&gt;ContainerAdministrator&lt;/code&gt;でコンテナに入った。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;docker run -it --user Administrator pcap4j cmd
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;runas&#34;&gt;runas&lt;/h4&gt;
+
+&lt;p&gt;ちょっと発想の転換をして、&lt;code&gt;ContainerAdministrator&lt;/code&gt;でコンテナに入った後sudoみたいなことをすればいいかと思い、&lt;a href=&#34;https://technet.microsoft.com/en-us/library/bb490994.aspx&#34;&gt;runas&lt;/a&gt;コマンドを試したけどだめだった。
+よく分からないエラーがでるし、そもそも&lt;code&gt;Administrator&lt;/code&gt;のパスワードがわからない。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\pcap4j\pcap4j-1\bin&amp;gt;runas /user:Administrator cmd
+Enter the password for Administrator:
+Attempting to start cmd as user &amp;quot;92EC7B3B09B4\Administrator&amp;quot; ...
+RUNAS ERROR: Unable to run - cmd
+1326: The user name or password is incorrect.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\pcap4j\pcap4j-1\bin&amp;gt;runas /user:&amp;quot;User Manager\Administrator&amp;quot; capture.bat
+Enter the password for User Manager\Administrator:
+RUNAS ERROR: Unable to acquire user password
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;enter-pssession&#34;&gt;Enter-PSSession&lt;/h4&gt;
+
+&lt;p&gt;フォーラムに行ったら&lt;a href=&#34;https://social.msdn.microsoft.com/Forums/en-US/0b6bd405-a235-4608-a06b-a09b9ba08b2e/runas-administrator?forum=windowscontainers&#34;&gt;Enter-PSSession&lt;/a&gt;を使う方法が書いてあった。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://technet.microsoft.com/en-us/library/hh849707.aspx&#34;&gt;Enter-PSSession&lt;/a&gt;はリモートシステムに接続するコマンドレットで、&lt;code&gt;-ContainerName&lt;/code&gt;オプションを使えばコンテナにも接続できる。&lt;/p&gt;
+
+&lt;p&gt;試したら、コンテナが見つからないというエラーが出た。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\Administrator&amp;gt;powershell -command Enter-PSSession -ContainerName amazing_archimedes -RunAsAdministrator
+Enter-PSSession : The input ContainerName amazing_archimedes does not exist, or the corresponding container is not running.
+At line:1 char:1
++ Enter-PSSession -ContainerName amazing_archimedes -RunAsAdministrator
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [Enter-PSSession], PSInvalidOperationException
+    + FullyQualifiedErrorId : CreateRemoteRunspaceForContainerFailed,Microsoft.PowerShell.Commands.EnterPSSessionCommand
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://technet.microsoft.com/en-us/library/hh849719.aspx&#34;&gt;Invoke-Command&lt;/a&gt;もコンテナをターゲットにできるので試してみたけど、同様のエラー。&lt;/p&gt;
+
+&lt;p&gt;どうもパワーシェルで扱うコンテナやコンテナイメージが、dockerコマンドが扱うものとは別になっているせいっぽい。
+そんなことがTP4のときに見たドキュメントに書いてあったのを思い出した。(このドキュメントは消えてた。)&lt;/p&gt;
+
+&lt;p&gt;実際、&lt;code&gt;docker ps&lt;/code&gt;では見えているコンテナが、&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\Administrator&amp;gt;docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+a711497f29d8        pcap4j              &amp;quot;cmd&amp;quot;               13 minutes ago      Up 12 minutes                           amazing_archimedes
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;コマンドレットからだと見えない。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\Administrator&amp;gt;powershell -command Get-Container
+WARNING: Based on customer feedback, we are updating the Containers PowerShell module to better align with Docker. As part of that some cmdlet and parameter names may change in future releases. To learn more about these changes as well as to join in the design process or provide usage feedback please refer to http://aka.ms/windowscontainers/powershell
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;そうなると、パワーシェルのコマンドレットには&lt;code&gt;docker build&lt;/code&gt;にあたるものがないのでもうどうしようもない。&lt;/p&gt;
+
+&lt;p&gt;そもそも、TP4の頃のコマンドレットは&lt;a href=&#34;https://msdn.microsoft.com/en-us/virtualization/windowscontainers/management/docker-powershell&#34;&gt;廃止になって&lt;/a&gt;、&lt;a href=&#34;https://github.com/Microsoft/Docker-PowerShell/&#34;&gt;新しいコマンドレット&lt;/a&gt;を開発中らしい。やはりdockerコマンドとコマンドレットでコンテナの相互運用ができない仕様にユーザから相当つっこみがあったようだ。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;Enter-PSSession&lt;/code&gt;や&lt;code&gt;Invoke-Command&lt;/code&gt;の&lt;code&gt;-ContainerName&lt;/code&gt;オプションもその内修正されるであろう。
+それまで待つか。&lt;/p&gt;
+</description>
+        </item>
+      
+    
+      
+        <item>
+          <title>Pcap4J in Kotlin</title>
+          <link>https://tbd.kaitoy.xyz/2016/04/16/pcap4j-in-kotlin/</link>
+          <pubDate>Sat, 16 Apr 2016 11:09:53 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2016/04/16/pcap4j-in-kotlin/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;https://tbd.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/&#34;&gt;Groovy&lt;/a&gt;に続いて、&lt;a href=&#34;https://kotlinlang.org/&#34;&gt;&lt;strong&gt;Kotlin&lt;/strong&gt;&lt;/a&gt;で&lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;&lt;strong&gt;Pcap4J&lt;/strong&gt;&lt;/a&gt;を使ってパケットキャプチャしてみた。&lt;/p&gt;
+
+&lt;p&gt;KotlinからでもPcap4Jちゃんと動くよということを実証するのが主な目的。
+また、今後JavaなアプリはKotlinで書こうかと思っているので、その予習も兼ねている。&lt;/p&gt;
+
+&lt;h2 id=&#34;kotlinとは&#34;&gt;Kotlinとは&lt;/h2&gt;
+
+&lt;p&gt;KotlinはJVM言語、つまりJavaのバイトコードにコンパイルされてJavaの実行環境で動くプログラミング言語のひとつ。
+&lt;a href=&#34;https://www.jetbrains.com/idea/&#34;&gt;IntelliJ IDEA&lt;/a&gt;で有名な&lt;a href=&#34;https://www.jetbrains.com/&#34;&gt;JetBrains社&lt;/a&gt;によって&lt;a href=&#34;https://github.com/JetBrains/kotlin&#34;&gt;OSS&lt;/a&gt;として開発されている。&lt;/p&gt;
+
+&lt;p&gt;2011年に生まれた新しめな言語で、2016/2/17に&lt;a href=&#34;http://blog.jetbrains.com/jp/2016/02/17/578&#34;&gt;v1がリリースされ&lt;/a&gt;、主にAndroidアプリの開発用として注目されている。&lt;/p&gt;
+
+&lt;p&gt;「実用的」であることを売りにしていて、つまり少ない学習コストで導入でき、既存のJavaコードやMavenなどのツールとの相互運用性を持つとされている。
+IntelliJ IDEA、&lt;a href=&#34;http://developer.android.com/sdk/index.html&#34;&gt;Android Studio&lt;/a&gt;、&lt;a href=&#34;https://eclipse.org/&#34;&gt;Eclipse&lt;/a&gt;といった主要なIDEのサポートもあり、開発環境は整っている。
+v1以降の後方互換性の維持も表明されていて、長期サポートが必要な製品開発にも堪える。&lt;/p&gt;
+
+&lt;p&gt;さらに、厳格な静的型付けやNullable/Non-Null型などにより安全性を確保しつつ、型推論やラムダ式などで生産性を高めている。&lt;/p&gt;
+
+&lt;p&gt;Javaのバイトコードだけでなく、JavaScriptを生成するバックエンドを持っているのも大きな特徴。
+ユースケースがよく分からないが。&lt;/p&gt;
+
+&lt;p&gt;GitHubにホストされているKotlinプロジェクトは、2016/4/15現在、全体の &lt;strong&gt;0.1%&lt;/strong&gt; (&lt;sup&gt;3493&lt;/sup&gt;&amp;frasl;&lt;sub&gt;3215549&lt;/sub&gt;) しかない。
+v1のリリースは結構注目を集めたので、この割合は今後増えていくと期待される。&lt;/p&gt;
+
+&lt;h2 id=&#34;kotlinのインストール&#34;&gt;Kotlinのインストール&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://kotlinlang.org/docs/tutorials/&#34;&gt;チュートリアル&lt;/a&gt;に従えば、IDEやテキストエディタ+コマンドラインの環境を整えてHello Worldを書いて実行するところまで簡単にできる。
+筆者はEclipse(Mars)とコマンドラインの環境をWindows 7上で作った。
+Kotlinのバージョンは1.0.1-2。&lt;/p&gt;
+
+&lt;p&gt;コマンドラインについては、&lt;a href=&#34;https://github.com/JetBrains/kotlin/releases/latest&#34;&gt;GitHub Releases&lt;/a&gt;からアーカイブをダウンロードして、適当なところに展開して&lt;code&gt;bin&lt;/code&gt;フォルダにパスを通すだけ。
+前提となるJavaについては、環境変数&lt;code&gt;JAVA_HOME&lt;/code&gt;を設定するか、&lt;code&gt;java&lt;/code&gt;コマンドにパスを通せばいい模様。&lt;/p&gt;
+
+&lt;p&gt;因みにKotlinの書き方は、&lt;a href=&#34;https://kotlinlang.org/docs/tutorials/koans.html&#34;&gt;Kotlin Koans&lt;/a&gt;という例題集を&lt;a href=&#34;http://try.kotlinlang.org/koans&#34;&gt;オンラインのIDE&lt;/a&gt;で解きながらを学ぶことができる。&lt;/p&gt;
+
+&lt;h2 id=&#34;パケットキャプチャ-with-pcap4j-in-java&#34;&gt;パケットキャプチャ with Pcap4J in Java&lt;/h2&gt;
+
+&lt;p&gt;Pcap4Jでパケットキャプチャするコードを普通にJavaで書くと以下の様になる。
+(&lt;a href=&#34;https://tbd.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/&#34;&gt;Groovy&lt;/a&gt;の時のと一緒。)&lt;/p&gt;
+
+&lt;p&gt;&lt;script src=&#34;https://gist.github.com/kaitoy/eebcd5bdfab179cab916d3182f3d6d11.js&#34;&gt;&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;p&gt;これを実行すると、パケットキャプチャするネットワークインターフェースを選択し、5つのパケットをキャプチャしてタイムスタンプと共にコンソールに表示する。&lt;/p&gt;
+
+&lt;h2 id=&#34;パケットキャプチャ-with-pcap4j-in-kotlin&#34;&gt;パケットキャプチャ with Pcap4J in Kotlin&lt;/h2&gt;
+
+&lt;p&gt;上記処理をKotlinで書くと以下の様になる。&lt;/p&gt;
+
+&lt;p&gt;&lt;script src=&#34;https://gist.github.com/kaitoy/074769880c7bf4c0628c1c25a724c1a7.js&#34;&gt;&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;p&gt;メインクラスはGroovy同様書かなくていいが、&lt;code&gt;main&lt;/code&gt;関数は必要。&lt;/p&gt;
+
+&lt;p&gt;型推論があってとても楽。
+ラムダ式、補間文字列(String interpolation)、名前付き引数といったモダンめな機能は普通に使える。
+(名前付き引数はJavaで書いたメソッドをKotlinから呼ぶときは使えない。)&lt;/p&gt;
+
+&lt;p&gt;オープンクラスを実現する機能である&lt;a href=&#34;https://kotlinlang.org/docs/reference/extensions.html&#34;&gt;Extensions&lt;/a&gt;を&lt;code&gt;PcapHandle&lt;/code&gt;に使ってみた。
+なんだか便利そう。&lt;/p&gt;
+
+&lt;p&gt;Nullable/Non-Null型がすごい。言語仕様で&lt;code&gt;NullPointerException&lt;/code&gt;が発生しないように守ってくれる。
+例えば&lt;code&gt;filter&lt;/code&gt;は宣言の時点では初期化文で&lt;code&gt;null&lt;/code&gt;が入る可能性があるので&lt;code&gt;Nullable&lt;/code&gt;な&lt;code&gt;String&lt;/code&gt;という型に推論されるが、&lt;code&gt;filter?.let&lt;/code&gt;というNullチェックをするメソッドに渡したブロック内では自動で&lt;code&gt;Non-Null&lt;/code&gt;な&lt;code&gt;String&lt;/code&gt;にキャストされ、&lt;code&gt;filter.length&lt;/code&gt;を安全に評価できるようになっている。
+Nullチェックをしないで&lt;code&gt;filter.length&lt;/code&gt;と書くとコンパイルエラーになる。すごい。&lt;/p&gt;
+
+&lt;p&gt;けどJavaのコードから返ってくるオブジェクトは普通、プラットフォーム型というものになり、このNullセーフな仕組みが働かない。
+これに対しては&lt;a href=&#34;https://kotlinlang.org/docs/reference/java-interop.html#nullability-annotations&#34;&gt;Null可能性アノテーション&lt;/a&gt;を使えば幸せになれるらしい。&lt;/p&gt;
+
+&lt;p&gt;さらに、上記コードには表れていないが、キャストも安全になっている模様。(cf. &lt;a href=&#34;http://kotlinlang.org/docs/reference/typecasts.html#smart-casts&#34;&gt;スマートキャスト&lt;/a&gt;、&lt;a href=&#34;http://kotlinlang.org/docs/reference/typecasts.html#safe-nullable-cast-operator&#34;&gt;セーフキャスト&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;Kotlinは基本コンパイラ言語なので、上記コードを実行するには以下ようなコマンドで一旦コンパイルする必要がある。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;kotlinc -cp pcap4j-core.jar Pcap4jLoop.kt -include-runtime -d Pcap4jLoop.jar
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;このコマンドだとKotlinのランタイム入りjarファイルができる。
+このjarを、Pcap4J 1.6.2、Slf4J 1.7.12、JNA 4.2.1を使って、以下のコマンドで実行できることを確認した。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;java -cp pcap4j-core.jar;pcap4j-packetfactory-static.jar;jna.jar;slf4j-api.jar;Pcap4jLoop.jar Pcap4jLoopKt tcp
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;このコマンドで指定しているメインクラス&lt;code&gt;Pcap4jLoopKt&lt;/code&gt;は、上記コードでクラスの記述を省いた為にKotlinがソースファイル名(Pcap4jLoop.kt)を基に自動生成したもの。&lt;/p&gt;
+
+&lt;p&gt;コンパイル/実行方法は&lt;a href=&#34;https://kotlinlang.org/docs/tutorials/command-line.html#creating-and-running-a-first-application&#34;&gt;他にもある&lt;/a&gt;。&lt;/p&gt;
+
+&lt;h2 id=&#34;スクリプトなkotlin&#34;&gt;スクリプトなKotlin&lt;/h2&gt;
+
+&lt;p&gt;Kotlinプログラムはスクリプトとしても書けて、コンパイル無しで実行することができる。
+この場合、&lt;code&gt;main&lt;/code&gt;関数は消してその中身をトップレベルに書き、ファイルの拡張子を&lt;code&gt;.kts&lt;/code&gt;にする。&lt;/p&gt;
+
+&lt;p&gt;&lt;script src=&#34;https://gist.github.com/kaitoy/b6ee844ad2353585a30984ef0bedf844.js&#34;&gt;&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;p&gt;上記スクリプトは以下のコマンドで実行できた。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;kotlinc -cp pcap4j-core.jar;jna.jar;pcap4j-packetfactory-static.jar;slf4j-api.jar -script Pcap4jLoop.kts tcp
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;EclipseのKotlinプラグインはこのスクリプト形式をまだサポートしていないようで残念。&lt;/p&gt;
+</description>
+        </item>
+      
+    
+      
+        <item>
+          <title>Pcap4J in Groovy</title>
+          <link>https://tbd.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/</link>
+          <pubDate>Sun, 10 Apr 2016 00:05:27 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;http://www.groovy-lang.org/index.html&#34;&gt;&lt;strong&gt;Groovy&lt;/strong&gt;&lt;/a&gt;で&lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;&lt;strong&gt;Pcap4J&lt;/strong&gt;&lt;/a&gt;を使ってパケットキャプチャしてみた。&lt;/p&gt;
+
+&lt;p&gt;GroovyからでもPcap4Jちゃんと動くよということを実証するのが主な目的。
+また、さすがにそろそろ&lt;a href=&#34;https://maven.apache.org/&#34;&gt;Maven&lt;/a&gt;を卒業してGradle(下記)使おうと思うので、予習も兼ねている。&lt;/p&gt;
+
+&lt;h2 id=&#34;groovyとは&#34;&gt;Groovyとは&lt;/h2&gt;
+
+&lt;p&gt;GroovyはJVM言語、つまりJavaのバイトコードにコンパイルされてJavaの実行環境で動くプログラミング言語のひとつ。
+Javaのプログラマにとってとっつきやすい文法を保ちつつ、動的型付けを実現し、また&lt;a href=&#34;https://www.ruby-lang.org/ja/&#34;&gt;Ruby&lt;/a&gt;などのスクリプト言語の記法や機能を取り入れ、生産性を高めている。&lt;/p&gt;
+
+&lt;p&gt;現在は&lt;a href=&#34;http://www.apache.org/&#34;&gt;Apacheソフトウェア財団&lt;/a&gt;によって管理され、&lt;a href=&#34;https://github.com/apache/groovy&#34;&gt;OSS&lt;/a&gt;として開発が進められている。&lt;/p&gt;
+
+&lt;p&gt;Webアプリケーションフレームワークの&lt;a href=&#34;https://grails.org/&#34;&gt;&lt;strong&gt;Grails&lt;/strong&gt;&lt;/a&gt; やビルドツールの&lt;a href=&#34;http://gradle.org/&#34;&gt;&lt;strong&gt;Gradle&lt;/strong&gt;&lt;/a&gt;で採用されている。
+Gradleは最近Javaプロジェクトのビルドツールの主流になっていて、Groovyはその定義ファイルを記述する言語として知名度が高いが、Groovyで開発されているプロジェクトとなるとあまり多くないようだ。
+GitHubにホストされているGroovyプロジェクトは、2016/4/9現在 &lt;strong&gt;0.8%弱&lt;/strong&gt; (25,087/3,200,229) しかない。&lt;/p&gt;
+
+&lt;p&gt;なぜ人気がないのかはよく分からないが、少なくとも、長くて打ちにくい名前とダサいロゴは不評のようだ。&lt;/p&gt;
+
+&lt;h2 id=&#34;groovyのインストール&#34;&gt;Groovyのインストール&lt;/h2&gt;
+
+&lt;p&gt;Windows 7にGroovy 2.4.6をインストールする。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.groovy-lang.org/install.html&#34;&gt;本家サイトの手順&lt;/a&gt;に従い、Binary Releaseのアーカイブをダウンロードして、適当なところに展開して、展開したフォルダのパスを環境変数&lt;code&gt;GROOVY_HOME&lt;/code&gt;にセットし、&lt;code&gt;%GROOVY_HOME%\bin&lt;/code&gt;を&lt;code&gt;PATH&lt;/code&gt;に追加するだけ。&lt;/p&gt;
+
+&lt;p&gt;Java 6以降が前提なので、&lt;code&gt;JAVA_HOME&lt;/code&gt;にJDK 1.7.0_17のパスをセットしておいた。JREでもいいはず。&lt;/p&gt;
+
+&lt;h2 id=&#34;パケットキャプチャ-with-pcap4j-in-java&#34;&gt;パケットキャプチャ with Pcap4J in Java&lt;/h2&gt;
+
+&lt;p&gt;Pcap4Jでパケットキャプチャするコードを普通にJavaで書くと以下の様になる。&lt;/p&gt;
+
+&lt;p&gt;&lt;script src=&#34;https://gist.github.com/kaitoy/eebcd5bdfab179cab916d3182f3d6d11.js&#34;&gt;&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;p&gt;これを実行すると、パケットキャプチャするネットワークインターフェースを選択し、5つのパケットをキャプチャしてタイムスタンプと共にコンソールに表示する。&lt;/p&gt;
+
+&lt;h2 id=&#34;パケットキャプチャ-with-pcap4j-in-groovy&#34;&gt;パケットキャプチャ with Pcap4J in Groovy&lt;/h2&gt;
+
+&lt;p&gt;上記処理をGroovyで書くと以下の様になる。&lt;/p&gt;
+
+&lt;p&gt;&lt;script src=&#34;https://gist.github.com/kaitoy/c75837d3537303b004506d3e335eac17.js&#34;&gt;&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;p&gt;メインクラスを書かなくていいところが大きい。
+変数の型を書かなくていいのも楽。
+ラムダ式でクロージャも作れるし補間文字列(String interpolation)も使える。&lt;/p&gt;
+
+&lt;p&gt;また、ここでは使っていないが、オープンクラスなどのメタプログラミングもサポートされている。&lt;/p&gt;
+
+&lt;p&gt;上記コードは、Pcap4J 1.6.2、Slf4J 1.7.12、JNA 4.2.1を使って、以下のコマンドで実行できることを確認した。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;groovy -cp &amp;quot;pcap4j-core.jar;jna.jar;slf4j-api.jar;pcap4j-packetfactory-static.jar&amp;quot; Pcap4jLoop.groovy tcp
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これはスクリプト的な実行方法だが、&lt;code&gt;groovyc&lt;/code&gt;コマンドで事前にコンパイルしてclassファイルを生成し、&lt;code&gt;java&lt;/code&gt;コマンドで実行することもできる。&lt;/p&gt;
+
+&lt;h3 id=&#34;困ったところ&#34;&gt;困ったところ&lt;/h3&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;本家サイトのドキュメントが分かり辛い。&lt;/p&gt;
+
+&lt;p&gt;頭から読んでいくと急にディープな部分に引き込まれ、なかなかコードを書き始められなかった。&lt;/p&gt;
+
+&lt;p&gt;最近の言語やフレームワークのサイトはチュートリアルに従って動くコードを見ながら概要から詳細に理解を深められる形になっていることが多いので、仕様の詳細が羅列されている感じのGroovyサイトはなんとも読みにくかった。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;クラスパスの指定が上手くできない。&lt;/p&gt;
+
+&lt;p&gt;groovyコマンドにオプションで複数のクラスパスを指定するのに、普通に&lt;code&gt;-cp pcap4j-core.jar;jna.jar&lt;/code&gt;みたいにしたら最初の&lt;code&gt;pcap4j-core.jar&lt;/code&gt;にしかクラスパスが通らなかった。
+区切りを&lt;code&gt;:&lt;/code&gt;にするとどちらにも通らない。&lt;/p&gt;
+
+&lt;p&gt;環境変数&lt;code&gt;CLASSPATH&lt;/code&gt;に&lt;code&gt;pcap4j-core.jar;jna.jar&lt;/code&gt;をセットしておくと&lt;code&gt;-cp&lt;/code&gt;を使わなくても正しく両方に通るし、&lt;code&gt;%userprofile%\.groovy\&lt;/code&gt;にjarを入れておくだけでもいいみたいなんだけど、&lt;code&gt;-cp&lt;/code&gt;が中途半端にしか機能しないのが気持ち悪い。&lt;/p&gt;
+
+&lt;p&gt;のでちょっとソースを見たら、groovyコマンドはバッチで書かれていることに気付いた。
+バッチだと、&lt;code&gt;;&lt;/code&gt;で区切られているものは半角スペースで区切られているのと同じで別々の引数になってしまうので、上のような書き方だと&lt;code&gt;jna.jar&lt;/code&gt;は&lt;code&gt;-cp&lt;/code&gt;の値として処理されない。
+クラスパス全体をダブルコーテーションで囲って、&lt;code&gt;-cp &amp;quot;pcap4j-core.jar;jna.jar&amp;quot;&lt;/code&gt;みたいにしたらできた。なんか残念な出来。。。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+        </item>
+      
+    
+      
+        <item>
+          <title> ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた</title>
+          <link>https://tbd.kaitoy.xyz/2016/03/19/zundoko-kiyoshi-with-pcap4j/</link>
+          <pubDate>Sat, 19 Mar 2016 11:47:03 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2016/03/19/zundoko-kiyoshi-with-pcap4j/</guid>
+          <description>
+
+&lt;p&gt;先週くらいから巷でズンドコズンドコ騒いでいると思ってはいたが、昨日ようやくその元ネタを見た。
+以下のツイートだ。&lt;/p&gt;
+
+&lt;p&gt;&lt;blockquote class=&#34;twitter-tweet&#34; data-lang=&#34;ja&#34;&gt;&lt;p lang=&#34;ja&#34; dir=&#34;ltr&#34;&gt;Javaの講義、試験が「自作関数を作り記述しなさい」って問題だったから&lt;br&gt;「ズン」「ドコ」のいずれかをランダムで出力し続けて「ズン」「ズン」「ズン」「ズン」「ドコ」の配列が出たら「キ・ヨ・シ！」って出力した後終了って関数作ったら満点で単位貰ってた&lt;/p&gt;&amp;mdash; てくも (@kumiromilk) &lt;a href=&#34;https://twitter.com/kumiromilk/status/707437861881180160&#34;&gt;2016年3月9日&lt;/a&gt;&lt;/blockquote&gt;
+&lt;script async src=&#34;//platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;面白い。
+巷ではこれを&lt;a href=&#34;http://qiita.com/shunsugai@github/items/971a15461de29563bf90&#34;&gt;いろんな言語で実装したりしているみたい&lt;/a&gt;でさらに面白い。&lt;/p&gt;
+
+&lt;p&gt;私もこのビッグウェーブに乗らないわけにいかないので、専門分野であるネットワーク周りを開拓しようと思い、ZUNDOKOプロトコルというものを考案して実装してみた。書いたソースは&lt;a href=&#34;https://github.com/kaitoy/zundoko-protocol&#34;&gt;GitHub&lt;/a&gt;においた。&lt;/p&gt;
+
+&lt;h2 id=&#34;zundokoプロトコル&#34;&gt;ZUNDOKOプロトコル&lt;/h2&gt;
+
+&lt;p&gt;クライアントはサーバに「ズン」か「ドコ」を送る。&lt;/p&gt;
+
+&lt;p&gt;サーバは「ズン」を4回受信した後に「ドコ」を受信するとクライアントに「キ・ヨ・シ！」を返す。&lt;/p&gt;
+
+&lt;p&gt;クライアント/サーバ間でやり取りするメッセージ(Zundokoパケット)のフォーマットは下図。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt; 0                            15                              31
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|             zundoko (null-terminated string)                  |
+|                                                               |
+|                                                               |
+|                                                               |
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;要はzundokoフィールドがあるだけ。
+このzundokoフィールドは20 byte固定長で、NULL (0x00)で終わるUTF-8の文字列を保持する。&lt;/p&gt;
+
+&lt;p&gt;このメッセージを運ぶ下位レイヤはEthernetで、EtherTypeは0x01FF。&lt;/p&gt;
+
+&lt;p&gt;Ethernetにした理由は実装(下記)が楽だから。
+EtherTypeは&lt;a href=&#34;http://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml#ieee-802-numbers-1&#34;&gt;IANA&lt;/a&gt;でExperimentalとされている範囲から適当に選んだ。もちろんIANAに登録などはしていない。&lt;/p&gt;
+
+&lt;p&gt;因みに、Ethernetヘッダを加えた、クライアント/サーバ間でやり取りする完全なパケットは以下の様になる。(プリアンブルとかは除く。)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt; 0                            15
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|    Dst Hardware Address       |
++                               +
+|                               |
++                               +
+|                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|    Src Hardware Address       |
++                               +
+|                               |
++                               +
+|                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|    EtherType (0x01FF)         |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|        zundoko                |
+| (null-terminated string)      |
+|                               |
+|                               |
+|                               |
+|                               |
+|                               |
+|                               |
+|                               |
+|                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|            padding            |
+|                               |
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;実装&#34;&gt;実装&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;Pcap4J&lt;/a&gt;を使ってクライアントとサーバを実装した。
+書いたのは以下の3つのクラス。(といくつかのインナークラス。)&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/kaitoy/zundoko-protocol/tree/master/src/main/java/com/github/kaitoy/zundoko/protocol/ZundokoPacket.java&#34;&gt;com.github.kaitoy.zundoko.protocol.ZundokoPacket&lt;/a&gt;: Pcap4JがZundokoパケットを解析するのに使うクラス&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/kaitoy/zundoko-protocol/tree/master/src/main/java/com/github/kaitoy/zundoko/protocol/ZundokoServer.java&#34;&gt;com.github.kaitoy.zundoko.protocol.ZundokoServer&lt;/a&gt;: Zundokoサーバ&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/kaitoy/zundoko-protocol/tree/master/src/main/java/com/github/kaitoy/zundoko/protocol/ZundokoClient.java&#34;&gt;com.github.kaitoy.zundoko.protocol.ZundokoClient&lt;/a&gt;: Zundokoクライアント&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;ビルド&#34;&gt;ビルド&lt;/h2&gt;
+
+&lt;p&gt;今だに&lt;a href=&#34;https://maven.apache.org/&#34;&gt;Maven&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;以下を実行するとビルドできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;git clone https://github.com/kaitoy/zundoko-protocol.git
+cd zundoko-protocol
+mvn install
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;サーバ-クライアントの使い方&#34;&gt;サーバ/クライアントの使い方&lt;/h2&gt;
+
+&lt;p&gt;下位レイヤがEthernetなのでネットワークセグメントを超えたZundokoパケットのやり取りはできない。
+よってまずは同一ネットワーク内にサーバマシンとクライアントマシンを用意する。
+VMware Playerのホストとゲストで可。&lt;/p&gt;
+
+&lt;p&gt;サーバマシンとクライアントマシンには&lt;a href=&#34;http://www.winpcap.org/&#34;&gt;WinPcap&lt;/a&gt;か&lt;a href=&#34;http://www.tcpdump.org/&#34;&gt;libpcap&lt;/a&gt;をインストールしておく。&lt;/p&gt;
+
+&lt;p&gt;依存ライブラリをダウンロードするため、&lt;code&gt;zundoko-protocol\bin\&lt;/code&gt;に&lt;code&gt;cd&lt;/code&gt;して以下のコマンドを実行する。(要Maven。)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;configure.bat
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;サーバを起動するには、&lt;code&gt;zundoko-protocol\bin\&lt;/code&gt;で以下のコマンドを実行する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;run-server.bat
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;起動するとZundokoパケットをやり取りするネットワークインターフェースを聞かれるので、
+クライアントとL2レベルでつながっているものを選ぶ。
+選んだインターフェースのMacアドレスはクライアントの起動に使うのでメモしておく。&lt;/p&gt;
+
+&lt;p&gt;クライアントを起動するには、&lt;code&gt;zundoko-protocol\bin\&lt;/code&gt;で以下のコマンドを実行する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;run-client.bat &amp;lt;Macアドレス&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;&amp;lt;Macアドレス&amp;gt;&lt;/code&gt;にはサーバ起動時にメモしたMacアドレスを入力する。
+起動するとZundokoパケットをやり取りするネットワークインターフェースを聞かれるので、
+サーバとL2レベルでつながっているものを選ぶ。&lt;/p&gt;
+
+&lt;p&gt;クライアントが起動すると、一秒おきに「ズン」と「ドコ」をランダムに選び、
+サーバに送りつつコンソールに表示する。
+また、サーバからZundokoパケット受信したらそのzundokoフィールドの値を表示する。&lt;/p&gt;
+
+&lt;h2 id=&#34;実行例&#34;&gt;実行例&lt;/h2&gt;
+
+&lt;p&gt;&lt;div class=&#34;embed video-player&#34; style=&#34;text-align: center&#34;&gt;
+  &lt;iframe class=&#34;youtube-player&#34; type=&#34;text/html&#34; width=&#34;320&#34; height=&#34;193&#34; src=&#34;https://www.youtube.com/embed/ad3u4Y86e_I&#34; allowfullscreen frameborder=&#34;0&#34;&gt;
+  &lt;/iframe&gt;
+&lt;/div&gt;
+&lt;/p&gt;
+</description>
+        </item>
+      
+    
+      
+        <item>
+          <title>Pcap4J Meets Windows Containers</title>
+          <link>https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/</link>
+          <pubDate>Fri, 22 Jan 2016 17:46:43 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/</guid>
+          <description>
+
+&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;https://msdn.microsoft.com/en-us/virtualization/windowscontainers/about/about_overview&#34;&gt;Windows Containers&lt;/a&gt;&lt;/strong&gt; で &lt;strong&gt;&lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;Pcap4J&lt;/a&gt;&lt;/strong&gt; のコンテナをビルドしてみた話。&lt;/p&gt;
+
+&lt;h2 id=&#34;windows-containersとは&#34;&gt;Windows Containersとは&lt;/h2&gt;
+
+&lt;p&gt;Windows Containersは、Microsoftが&lt;a href=&#34;https://www.docker.com/company&#34;&gt;Docker, Inc&lt;/a&gt;と提携して開発している&lt;a href=&#34;http://www.sophia-it.com/content/%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E6%8A%80%E8%A1%93&#34;&gt;コンテナ技術&lt;/a&gt;で、Windows版&lt;a href=&#34;https://www.docker.com/&#34;&gt;Docker&lt;/a&gt;とも言われる機能。
+今年リリースされる &lt;strong&gt;Windows Server 2016&lt;/strong&gt; に実装される予定で、その3つめのテクニカルプレビューである &lt;strong&gt;Windows Server 2016 Technical Preview 3&lt;/strong&gt; (2015/8/19公開)から評価できるようになった。&lt;/p&gt;
+
+&lt;p&gt;Windows Containersには次の二種類がある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Windows Server Containers&lt;/p&gt;
+
+&lt;p&gt;プロセスと名前空間の分離を実現する機能で、これによるコンテナはカーネルをホストと共有する。
+つまり本家Dockerに近い形の機能。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Hyper-V Containers&lt;/p&gt;
+
+&lt;p&gt;それぞれのコンテナを軽量化されたHyper-Vの仮想マシンっぽいものの上で動かす機能。
+このコンテナの実行にはHyper-Vが必要。
+Windows Server Containersよりコンテナ間の分離性が高く、カーネルの共有もしないが、そもそもそれってコンテナなの?&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;どちらも同じようなインターフェースで操作でき、このインターフェースには&lt;a href=&#34;https://msdn.microsoft.com/en-us/virtualization/windowscontainers/reference/ps_docker_comparison&#34;&gt;PowershellのコマンドレットとDockerコマンドの二種類がある&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;より詳しくは、&lt;a href=&#34;https://msdn.microsoft.com/en-us/virtualization/windowscontainers/about/about_overview&#34;&gt;Microsoftによる解説&lt;/a&gt;や&lt;a href=&#34;http://www.atmarkit.co.jp/ait/articles/1512/11/news022.html&#34;&gt;@ITのこの記事&lt;/a&gt;がわかりやすい。
+また、&lt;a href=&#34;http://qiita.com/Arturias/items/3e82de8328067d0e03a3&#34;&gt;Qiitaのこの記事&lt;/a&gt;がDockerとWindows Server Containersのアーキテクチャを詳細に説明していて面白い。&lt;/p&gt;
+
+&lt;h2 id=&#34;windows-containersセットアップ&#34;&gt;Windows Containersセットアップ&lt;/h2&gt;
+
+&lt;p&gt;まず、Windows 7 x64のノートPCにVMware Player 7.1.0を入れてWindows 10 x64用のVM(CPU2つとメモリ2.5GB)を作り、そこに2015/11/19に公開された &lt;strong&gt;Windows Server 2016 Technical Preview 4&lt;/strong&gt; をインストール。
+コマンドでいろいろ設定するの慣れていないのでGUI(Desktop Experience)付きで。
+(リモートデスクトップ使えばよかったのかもしれないけど。)
+ロケールは英語以外は問題が起きそうなので英語で。&lt;/p&gt;
+
+&lt;p&gt;このVMに、&lt;a href=&#34;https://msdn.microsoft.com/en-us/virtualization/windowscontainers/quick_start/inplace_setup&#34;&gt;Microsoftのセットアップガイド&lt;/a&gt;と&lt;a href=&#34;http://www.atmarkit.co.jp/ait/articles/1512/14/news006.html&#34;&gt;@ITの記事&lt;/a&gt;を参照しながらWindows Containersをセットアップ。&lt;/p&gt;
+
+&lt;p&gt;後者の記事によると、Hyper-V ContainersをVM上にセットアップするには、&lt;a href=&#34;https://msdn.microsoft.com/en-us/virtualization/hyperv_on_windows/user_guide/nesting&#34;&gt;Nested Virtualization&lt;/a&gt;というHyper-VのVMの上でHyper-Vを動かす機能を有効にしたホスト上のHyper-V VMを使わないといけないようなので、Windows Server Containersの方を試すことに。&lt;/p&gt;
+
+&lt;p&gt;Windows Server Containersをセットアップする手順は以下。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;VM上でコマンドプロンプトを開いて &lt;code&gt;powershell start-process powershell -Verb runas&lt;/code&gt; を実行。&lt;/li&gt;
+&lt;li&gt;青いパワーシェルウィンドウが開くのでそこで &lt;code&gt;wget -uri https://aka.ms/tp4/Install-ContainerHost -OutFile C:\Install-ContainerHost.ps1&lt;/code&gt; を実行。&lt;code&gt;Install-ContainerHost.ps1&lt;/code&gt; というスクリプトがダウンロードされる。&lt;/li&gt;
+&lt;li&gt;青いパワーシェルウィンドウで &lt;code&gt;C:\Install-ContainerHost.ps1&lt;/code&gt; を実行するとWindows Server Containersのインストールが始まる。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/pcap4j-meets-windows-containers/install.png&#34; alt=&#34;install.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;途中再起動が一回あって、ログインしたらインストール処理が再開した。
+全部で2時間以上かかった。&lt;/p&gt;
+
+&lt;p&gt;仮想Ethernetスイッチ接続の追加に失敗したというエラーが出たけどなんなんだろう。
+&lt;code&gt;ipconfig&lt;/code&gt; の出力によると &lt;code&gt;vEthernet&lt;/code&gt; というDockerの&lt;a href=&#34;https://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/#docker-network&#34;&gt;virtual Ethernet bridge&lt;/a&gt;にあたるものはちゃんと作られているみたいなんだけど。&lt;/p&gt;
+
+&lt;h2 id=&#34;windows-server-containers味見&#34;&gt;Windows Server Containers味見&lt;/h2&gt;
+
+&lt;p&gt;コマンドプロンプトで &lt;code&gt;docker images&lt;/code&gt; を実行すると、既に &lt;code&gt;windowsservercore&lt;/code&gt; というコンテナイメージが入っていることがわかる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\Administrator&amp;gt;docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+windowsservercore   10.0.10586.0        6801d964fda5        11 weeks ago        0 B
+windowsservercore   latest              6801d964fda5        11 weeks ago        0 B
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;docker run -it windowsservercore cmd&lt;/code&gt; を実行すると &lt;code&gt;windowsservercore&lt;/code&gt; からコンテナを起動してその上でコマンドプロンプトを起動できる。
+コンテナの起動は非常に遅い。30秒以上かかる。これは今の時点での&lt;a href=&#34;https://msdn.microsoft.com/virtualization/windowscontainers/about/work_in_progress#windows-containers-start-slowly&#34;&gt;制限&lt;/a&gt;らしい。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;docker login --help&lt;/code&gt; するとわかるが、コンテナイメージのリポジトリは &lt;code&gt;https://registry-win-tp3.docker.io/v1/&lt;/code&gt; という仮っぽいサーバにあって、&lt;code&gt;docker search *&lt;/code&gt; を実行するとそこに登録されたイメージのリストが見れる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\Administrator&amp;gt;docker search *
+NAME                 DESCRIPTION                                     STARS     OFFICIAL   AUTOMATED
+microsoft/aspnet     ASP.NET 5 framework installed in a Windows...   1         [OK]       [OK]
+microsoft/django     Django installed in a Windows Server Core ...   1                    [OK]
+microsoft/dotnet35   .NET 3.5 Runtime installed in a Windows Se...   1         [OK]       [OK]
+microsoft/golang     Go Programming Language installed in a Win...   1                    [OK]
+microsoft/httpd      Apache httpd installed in a Windows Server...   1                    [OK]
+microsoft/iis        Internet Information Services (IIS) instal...   1         [OK]       [OK]
+microsoft/mongodb    MongoDB installed in a Windows Server Core...   1                    [OK]
+microsoft/mysql      MySQL installed in a Windows Server Core b...   1                    [OK]
+microsoft/nginx      Nginx installed in a Windows Server Core b...   1                    [OK]
+microsoft/node       Node installed in a Windows Server Core ba...   1                    [OK]
+microsoft/php        PHP running on Internet Information Servic...   1                    [OK]
+microsoft/python     Python installed in a Windows Server Core ...   1                    [OK]
+microsoft/rails      Ruby on Rails installed in a Windows Serve...   1                    [OK]
+microsoft/redis      Redis installed in a Windows Server Core b...   1                    [OK]
+microsoft/ruby       Ruby installed in a Windows Server Core ba...   1                    [OK]
+microsoft/sqlite     SQLite installed in a Windows Server Core ...   1                    [OK]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これらはちゃんと &lt;code&gt;docker pull&lt;/code&gt; して使える。
+けど多分 &lt;code&gt;docker push&lt;/code&gt; はできない。&lt;/p&gt;
+
+&lt;h2 id=&#34;pcap4j-on-windows-container&#34;&gt;Pcap4J on Windows Container&lt;/h2&gt;
+
+&lt;p&gt;結論から言うと、以下の &lt;code&gt;Dockerfile&lt;/code&gt; を書いて &lt;code&gt;docker build&lt;/code&gt; してPcap4Jをコンテナ上でビルドするところまではできたが、それを実行してもNIFが全く検出できず、よってパケットキャプチャも実行できなかった。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;#
+# Dockerfile for Pcap4J on Windows
+#
+
+FROM windowsservercore:latest
+MAINTAINER Kaito Yamada &amp;lt;kaitoy@pcap4j.org&amp;gt;
+
+# Install Chocolatey.
+RUN mkdir C:\pcap4j
+WORKDIR /pcap4j
+ADD https://chocolatey.org/install.ps1 install.ps1
+RUN powershell .\install.ps1
+
+# Install dependencies.
+RUN choco install -y nmap maven git jdk7
+
+# Build Pcap4J.
+RUN git clone git://github.com/kaitoy/pcap4j.git
+WORKDIR pcap4j
+RUN powershell -NoProfile -ExecutionPolicy Bypass -Command &amp;quot;mvn &#39;-Dmaven.repo.local=C:\pcap4j\repo&#39; -P distribution-assembly install 2&amp;gt;&amp;amp;1 | add-content -Path build.log -pass
+
+# Collect libraries.
+RUN mkdir bin &amp;amp;&amp;amp; \
+    cd pcap4j-packetfactory-static &amp;amp;&amp;amp; \
+    mvn -Dmaven.repo.local=C:\pcap4j\repo -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeScope=compile dependency:copy-dependencies &amp;amp;&amp;amp; \
+    mvn -Dmaven.repo.local=C:\pcap4j\repo -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeGroupIds=ch.qos.logback dependency:copy-dependencies &amp;amp;&amp;amp; \
+    cd ../pcap4j-distribution &amp;amp;&amp;amp; \
+    mvn -Dmaven.repo.local=C:\pcap4j\repo -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeArtifactIds=pcap4j-packetfactory-static,pcap4j-sample dependency:copy-dependencies
+
+# Generate sample script. (C:\pcap4j\pcap4j\bin\capture.bat)
+RUN echo @echo off &amp;gt; bin\capture.bat &amp;amp;&amp;amp; \
+    echo &amp;quot;%JAVA_HOME%\bin\java&amp;quot; -cp C:\pcap4j\pcap4j\bin\pcap4j-core.jar;C:\pcap4j\pcap4j\bin\pcap4j-packetfactory-static.jar;C:\pcap4j\pcap4j\bin\pcap4j-sample.jar;C:\pcap4j\pcap4j\bin\jna.jar;C:\pcap4j\pcap4j\bin\slf4j-api.jar;C:\pcap4j\pcap4j\bin\logback-classic.jar;C:\pcap4j\pcap4j\bin\logback-core.jar org.pcap4j.sample.GetNextPacketEx &amp;gt;&amp;gt; bin\capture.bat
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;この &lt;code&gt;Dockerfile&lt;/code&gt; でやっていることはだいたい以下。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;a href=&#34;https://chocolatey.org/&#34;&gt;Chocolatey&lt;/a&gt;をインストール。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://nmap.org/&#34;&gt;Nmap&lt;/a&gt;と&lt;a href=&#34;https://maven.apache.org/&#34;&gt;Maven&lt;/a&gt;と&lt;a href=&#34;https://git-scm.com/&#34;&gt;Git&lt;/a&gt;とJDK7をChocolateyでインストール。&lt;/li&gt;
+&lt;li&gt;Pcap4Jのソースを &lt;code&gt;git clone&lt;/code&gt; でダウンロード。&lt;/li&gt;
+&lt;li&gt;MavenでPcap4Jのビルドを実行。&lt;/li&gt;
+&lt;li&gt;Pcap4Jのサンプルクラスを実行するスクリプトを生成。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;2でNmapは&lt;a href=&#34;http://www.winpcap.org/&#34;&gt;WinPcap&lt;/a&gt;の代わりに入れている。
+GUI無しの環境でWinPcapをChocolateyで入れようとしても、エラーが発生したりしなかったりして、しかもどちらにせよ正常に入らない。
+これはWinPcapのインストーラがサイレントインストールをサポートしていないから。
+Nmapはサイレントインストールできて、インストール処理中にWinPcapを入れてくれるのでありがたい。&lt;/p&gt;
+
+&lt;p&gt;ビルドしてみると、各ステップの実行(多分レイヤの作成)がすごく遅い。
+&lt;code&gt;RUN choco install -y nmap maven git jdk7&lt;/code&gt; の後、次のコマンド実行まで30分くらい固まった。&lt;/p&gt;
+
+&lt;p&gt;また、&lt;code&gt;Dockerfile&lt;/code&gt; を書いていて以下のバグに悩まされた。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;code&gt;WORKDIR&lt;/code&gt; や &lt;code&gt;ENV&lt;/code&gt; で環境変数が展開されない。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;  ENV hoge %tmp%
+  RUN echo %hoge%
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;とすると &lt;code&gt;%tmp%&lt;/code&gt; と表示される。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;code&gt;WORKDIR&lt;/code&gt; や &lt;code&gt;ENV&lt;/code&gt; や &lt;code&gt;COPY&lt;/code&gt; でパスの区切りは &lt;code&gt;\&lt;/code&gt; 一つだと消えちゃうので &lt;code&gt;\\&lt;/code&gt; か &lt;code&gt;/&lt;/code&gt; を使わないといけない。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;code&gt;WORKDIR&lt;/code&gt; や &lt;code&gt;COPY&lt;/code&gt; のコンテナ内のパスに絶対パスを指定したい場合、&lt;code&gt;C:\hoge&lt;/code&gt;、&lt;code&gt;C:/hoge&lt;/code&gt;、&lt;code&gt;C:\\hoge&lt;/code&gt;、いずれもダメ。
+以下の様なエラーが出る。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;  GetFileAttributesEx \\?\Volume{67df3c84-a0ef-11e5-9a63-000c2976fbc3}\C:: The filename, directory name, or volume label syntax is incorrect.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;UNIX式に &lt;code&gt;/hoge&lt;/code&gt; とするといける。C以外のドライブを指定したいときはどうするんだろう。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;コンテナ内で &lt;code&gt;C:\&lt;/code&gt; 直下に &lt;code&gt;.&lt;/code&gt; で始まる名前のフォルダ作ると次のステップで消えてる。
+&lt;code&gt;.&lt;/code&gt; で始まる名前のファイルは &lt;code&gt;C:\&lt;/code&gt; 直下じゃなくても次のステップで消えてる。
+Mavenのリポジトリがデフォルトで &lt;code&gt;C:\.m2\&lt;/code&gt; 以下にできるのではまる。&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;これらのバグを乗り越えて頑張って &lt;code&gt;Dockerfile&lt;/code&gt; 書いたのに、NIFの検出すらできなかったという哀しい結果。
+&lt;code&gt;pcap_lookupdev&lt;/code&gt; が以下のエラーを吐いて &lt;code&gt;NULL&lt;/code&gt; を返してきてたので、なんとなくコンテナのNIFに長すぎる名前がついていて検出失敗しているんじゃないかと。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;PacketGetAdapterNames: The data area passed to a system call is too small. (122)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;因みにコンテナ内から見えるNIFは一つで、以下の構成。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;Ethernet adapter vEthernet (Virtual Switch-d206475ce13256766b9a16383540a740fe31da8d20499349fe98693393a8490f-0):
+
+   Connection-specific DNS Suffix  . : localdomain
+   Link-local IPv6 Address . . . . . : fe80::4086:d11e:5e6:28fe%26
+   IPv4 Address. . . . . . . . . . . : 172.16.0.2
+   Subnet Mask . . . . . . . . . . . : 255.240.0.0
+   Default Gateway . . . . . . . . . : 172.16.0.1
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;コンテナ内から &lt;code&gt;www.google.com&lt;/code&gt; とかにping届いたので、このNIFはちゃんと働いていはずなんだけどPcap4Jから見えない。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;
+&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;後日上記 &lt;code&gt;Dockerfile&lt;/code&gt; でビルドしてみたら、&lt;code&gt;RUN powershell .\install.ps1&lt;/code&gt; で以下のエラーが出るようになった。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;The request was aborted: Could not create SSL/TLS secure channel.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;install.ps1の中でChocolateyのインストーラをHTTPSで取ってこようとしてエラーになっている模様。
+Windows Containersの&lt;a href=&#34;https://msdn.microsoft.com/en-us/virtualization/windowscontainers/about/work_in_progress#https-and-tls-are-not-supported&#34;&gt;ドキュメント&lt;/a&gt;や&lt;a href=&#34;https://social.msdn.microsoft.com/Forums/en-US/c0d93dda-37b7-4a2c-9a78-55e4ba0b88f5/https-support-in-windowsservercore-image?forum=windowscontainers&#34;&gt;フォーラム&lt;/a&gt;にHTTPSが使えないという制限が載っているけどこのせい?
+ちょっと前にやったときは同じ &lt;code&gt;Dockerfile&lt;/code&gt; でビルドできたはずなんだけど。&lt;/p&gt;
+
+&lt;p&gt;試しに以下の処理を挟んでChocolateyのインストーラをHTTPで取ってくるようにしたらChocolateyのインストールまではできた。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;RUN powershell $(Get-Content install.ps1) -replace \&amp;quot;https\&amp;quot;,\&amp;quot;http\&amp;quot; &amp;gt; install.mod.ps1
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;けど &lt;code&gt;choco install&lt;/code&gt; がHTTPS使うので結局駄目だった。&lt;/p&gt;
+
+&lt;p&gt;もう面倒なのでHTTPSの制限がとれるのをまとう。&lt;/p&gt;
+</description>
+        </item>
+      
+    
+      
+        <item>
+          <title>Pcap4J with Four Native Libraries on Windows 10</title>
+          <link>https://tbd.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/</link>
+          <pubDate>Tue, 12 Jan 2016 08:43:30 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/</guid>
+          <description>
+
+&lt;p&gt;I did some basic tests for &lt;strong&gt;&lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;Pcap4J&lt;/a&gt;&lt;/strong&gt; 1.6.2 on Windows 10 Pro on &lt;a href=&#34;https://www.vmware.com/products/player&#34;&gt;VMware Player&lt;/a&gt; 7.1.0 using the following native packet capture libraries:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;&lt;a href=&#34;http://www.winpcap.org/&#34;&gt;Official WinPcap&lt;/a&gt;&lt;/strong&gt; 4.1.3&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;a href=&#34;http://sourceforge.net/projects/winpcap413-176/&#34;&gt;Unofficial WinPcap based on libpcap 1.7.4&lt;/a&gt;&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;a href=&#34;http://www.win10pcap.org/&#34;&gt;Win10Pcap&lt;/a&gt;&lt;/strong&gt; 10.2&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;a href=&#34;https://github.com/nmap/npcap&#34;&gt;Npcap&lt;/a&gt;&lt;/strong&gt; 0.0.5&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;This article explains each of the above libraries and tells the test results.&lt;/p&gt;
+
+&lt;h2 id=&#34;official-winpcap&#34;&gt;Official WinPcap&lt;/h2&gt;
+
+&lt;p&gt;WinPcap is the most common native packet capture library developed based on &lt;a href=&#34;http://www.tcpdump.org/&#34;&gt;&lt;strong&gt;libpcap&lt;/strong&gt;&lt;/a&gt;.
+(WinPcap 4.1.3 is based on libpcap 1.0.0.)
+It&amp;rsquo;s famous as a component of the de facto standard packet capture tool &lt;a href=&#34;https://www.wireshark.org/&#34;&gt;&lt;strong&gt;Wireshark&lt;/strong&gt;&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;WinPcap consists of &lt;strong&gt;NPF driver&lt;/strong&gt;, &lt;strong&gt;wpcap.dll&lt;/strong&gt;, and &lt;strong&gt;Packet.dll&lt;/strong&gt;.
+The structure is described in the &lt;a href=&#34;http://www.winpcap.org/docs/docs_412/html/group__NPF.html&#34;&gt;WinPcap manual&lt;/a&gt; as below:&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;NPF&#34; src=&#34;http://www.winpcap.org/docs/docs_412/html/npf-npf.gif&#34; style=&#34;margin: 0px auto; display: block;&#34;&gt;&lt;/p&gt;
+
+&lt;p&gt;wpcap.dll is Windows version of libpcap.so. It uses Packet Driver API implemented in Packet.dll.
+Packet.dll talks with the NPF driver.
+wpcap.dll and Packet.dll are installed in &lt;code&gt;C:\Windows\System32\&lt;/code&gt; (64 bit binaries) and &lt;code&gt;C:\Windows\SysWOW64\&lt;/code&gt; (32 bit binaries).&lt;/p&gt;
+
+&lt;p&gt;WinPcap worked without any problems in my tests.&lt;/p&gt;
+
+&lt;h2 id=&#34;winpcap-based-on-libpcap-1-7-4&#34;&gt;WinPcap based on libpcap 1.7.4&lt;/h2&gt;
+
+&lt;p&gt;This is an unofficial version of WinPcap which was built on libpcap 1.7.4.
+This doesn&amp;rsquo;t include NPF driver and doesn&amp;rsquo;t update Packet.dll.
+These two components need to be installed from the official WinPcap 4.1.3.&lt;/p&gt;
+
+&lt;p&gt;This worked well but &lt;a href=&#34;https://github.com/kaitoy/pcap4j/issues/52&#34;&gt;one moderate problem&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;win10pcap&#34;&gt;Win10Pcap&lt;/h2&gt;
+
+&lt;p&gt;Win10Pcap is a WinPcap-based packet capture library developed by &lt;a href=&#34;http://dnobori.cs.tsukuba.ac.jp/en/&#34;&gt;Daiyuu Nobori&lt;/a&gt;.
+This includes its own NPF driver and Packet.dll.
+The wpcap.dll Win10Pcap installs is exactly the same as one of the official WinPcap 4.1.3.&lt;/p&gt;
+
+&lt;p&gt;The difference between the original WinPcap and Win10Pcap is &lt;a href=&#34;http://www.ndis.com/&#34;&gt;&lt;strong&gt;NDIS&lt;/strong&gt;&lt;/a&gt; (Network Driver Interface Specification) version.
+Win10Pcap is based on NDIS 6.x while WinPcap is based on 5.x.&lt;/p&gt;
+
+&lt;p&gt;NDIS version history is as follows:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;NDIS 2.0: MS-DOS, Windows for Workgroups 3.1&lt;/li&gt;
+&lt;li&gt;NDIS 3.0: Windows for Workgroups 3.11, NT 3.5&lt;/li&gt;
+&lt;li&gt;NDIS 3.1: Windows 95&lt;/li&gt;
+&lt;li&gt;NDIS 4.0: Windows 95 OSR2, NT 4.0&lt;/li&gt;
+&lt;li&gt;NDIS 4.1: Windows 98, NT 4.0 SP3&lt;/li&gt;
+&lt;li&gt;NDIS 5.0: Windows 98 SE, Me, 2000&lt;/li&gt;
+&lt;li&gt;NDIS 5.1: Windows XP&lt;/li&gt;
+&lt;li&gt;NDIS 5.2: Windows Server 2003&lt;/li&gt;
+&lt;li&gt;NDIS 6.0: Windows Vista&lt;/li&gt;
+&lt;li&gt;NDIS 6.1: Windows Vista SP1, Server 2008&lt;/li&gt;
+&lt;li&gt;NDIS 6.2: Windows 7, Server 2008 R2&lt;/li&gt;
+&lt;li&gt;NDIS 6.3: Windows 8, Server 2012&lt;/li&gt;
+&lt;li&gt;NDIS 6.4: Windows 8.1, Server 2012 R2&lt;/li&gt;
+&lt;li&gt;NDIS 6.5: Windows 10, Server 2016&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Although NDIS 6.x is backward-compatible with 5.x and WinPcap can run on Vista and newer ones, it&amp;rsquo;s expected Win10Pcap is faster than WinPcap because the newer NDIS is more efficient than older versions.&lt;/p&gt;
+
+&lt;p&gt;Win10Pcap worked mostly fine in my tests, but it didn&amp;rsquo;t detect MAC addresses and IPv6 addresses on devices.&lt;/p&gt;
+
+&lt;h2 id=&#34;npcap&#34;&gt;Npcap&lt;/h2&gt;
+
+&lt;p&gt;Npcap is another NDIS 6.x based version of WinPcap developed by &lt;a href=&#34;http://www.veotax.com/&#34;&gt;Yang Luo&lt;/a&gt; for &lt;a href=&#34;https://nmap.org/&#34;&gt;Nmap&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Npcap has a special functionality that allows to capture/send loopback packets.
+It creates an adapter &lt;strong&gt;&amp;ldquo;Npcap Loopback Adapter&amp;rdquo;&lt;/strong&gt; for the functionality during its installation.
+This adapter can be used in the same way as other normal adapters.&lt;/p&gt;
+
+&lt;p&gt;Npcap provides its own NPF driver and Packet.dll but wpcap.dll is the one pulled from the official WinPcap 4.1.3.&lt;/p&gt;
+
+&lt;p&gt;I installed Npcap with &lt;strong&gt;&amp;ldquo;WinPcap Compatible Mode&amp;rdquo;&lt;/strong&gt; ON for my tests.
+It perfectly worked including MAC/IPv6 addresses detection.&lt;/p&gt;
+</description>
+        </item>
+      
+    
+      
+        <item>
+          <title>pcap-ng support in Pcap4J</title>
+          <link>https://tbd.kaitoy.xyz/2016/01/10/pcap-ng-support-in-pcap4j/</link>
+          <pubDate>Sun, 10 Jan 2016 09:52:06 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2016/01/10/pcap-ng-support-in-pcap4j/</guid>
+          <description>
+
+&lt;p&gt;Sometimes I receive inquiries about support for &lt;strong&gt;pcap-ng&lt;/strong&gt; files in &lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;&lt;strong&gt;Pcap4J&lt;/strong&gt;&lt;/a&gt;.
+I wrote the result of my investigation on it in this article.&lt;/p&gt;
+
+&lt;h2 id=&#34;what-s-a-pcap-ng-file&#34;&gt;What&amp;rsquo;s a pcap-ng file&lt;/h2&gt;
+
+&lt;p&gt;A pcap-ng file (i.e. a file with &lt;code&gt;.pcapng&lt;/code&gt; extension ) is a packet dump file in &lt;a href=&#34;https://github.com/pcapng/pcapng&#34;&gt;&lt;strong&gt;The pcap Next Generation Capture File Format&lt;/strong&gt;&lt;/a&gt; (or pcap-ng format for short).
+This format was created to overcome the limitations of the traditional &lt;a href=&#34;https://wiki.wireshark.org/Development/LibpcapFileFormat&#34;&gt;&lt;strong&gt;Libpcap File Format&lt;/strong&gt;&lt;/a&gt; (or pcap format for short) which is used in pcap files.&lt;/p&gt;
+
+&lt;p&gt;Although the pcap format has been widely used for a long time, recent &lt;a href=&#34;https://www.wireshark.org/&#34;&gt;&lt;strong&gt;Wireshark&lt;/strong&gt;&lt;/a&gt;, the de facto standard packet capture tool, uses the pcap-ng format by default to save captured packets.
+So, it&amp;rsquo;s expected that the pcap-ng format would be more common and pcap format would be a legacy in the future.&lt;/p&gt;
+
+&lt;h2 id=&#34;pcap-ng-support-in-pcap4j&#34;&gt;pcap-ng support in Pcap4J&lt;/h2&gt;
+
+&lt;p&gt;Of course Pcap4J supports traditional pcap format.
+But how about the pcap-ng format?&lt;/p&gt;
+
+&lt;p&gt;Whether Pcap4J can handle pcap-ng files is up to its underlying native library.
+Remember Pcap4J is a wrapper library for &lt;a href=&#34;http://www.tcpdump.org/&#34;&gt;&lt;strong&gt;libpcap&lt;/strong&gt;&lt;/a&gt; and &lt;a href=&#34;http://www.winpcap.org/&#34;&gt;&lt;strong&gt;WinPcap&lt;/strong&gt;&lt;/a&gt;.
+If the libpcap/WinPcap supports the pcap-ng format Pcap4J does, and vice versa.&lt;/p&gt;
+
+&lt;h2 id=&#34;pcap-ng-support-in-libpcap&#34;&gt;pcap-ng support in libpcap&lt;/h2&gt;
+
+&lt;p&gt;The libpcap got limited support for reading pcap-ng files in &lt;a href=&#34;https://github.com/the-tcpdump-group/libpcap/blob/libpcap-1.1/CHANGES&#34;&gt;1.1.0&lt;/a&gt;, and then the following three bugs around the feature were fixed:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;filtering issue (fixed in 1.2.1)&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/the-tcpdump-group/libpcap/issues/139&#34;&gt;pcap_datalink() returns wrong value&lt;/a&gt; (fixed in 1.1.2)&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/the-tcpdump-group/libpcap/issues/349&#34;&gt;Wrong timestamps on big-endian machines&lt;/a&gt; (fixed in 1.7.2)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;No enhancement for pcap-ng support since 1.1.0 as of now (1.7.5).&lt;/p&gt;
+
+&lt;p&gt;I don&amp;rsquo;t know what &amp;ldquo;limited&amp;rdquo; means, but anyway it looked like Pcap4J 1.6.2 could read pcap-ng files without any problems as far as I tested it with libpcap 1.7.4.&lt;/p&gt;
+
+&lt;p&gt;As for writing pcap-ng files, the libpcap doesn&amp;rsquo;t provide any support for it yet.&lt;/p&gt;
+
+&lt;h2 id=&#34;pcap-ng-support-in-winpcap&#34;&gt;pcap-ng support in WinPcap&lt;/h2&gt;
+
+&lt;p&gt;WinPcap is the Windows version of libpcap and each version of it is based on a certain version of libpcap.
+The newest version of WinPcap, WinPcap 4.1.3, was developed with libpcap 1.0.0.
+It means WinPcap doesn&amp;rsquo;t support pcap-ng format yet at all.&lt;/p&gt;
+
+&lt;p&gt;But, there is an &lt;a href=&#34;http://sourceforge.net/projects/winpcap413-176/&#34;&gt;unofficial build of WinPcap based on libpcap 1.7.4&lt;/a&gt;.
+As far as I tested this WinPcap through Pcap4J 1.6.2, it worked well on reading pcap-ng files as well as on basic functionalities such as finding network devices and live capture except &lt;a href=&#34;https://github.com/kaitoy/pcap4j/issues/52&#34;&gt;getting capture statistics&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;how-to-read-a-pcap-ng-file&#34;&gt;How to read a pcap-ng file&lt;/h2&gt;
+
+&lt;p&gt;How to read a pcap-ng file is exactly the same as how to read a pcap file.&lt;/p&gt;
+
+&lt;p&gt;Use &lt;a href=&#34;http://kaitoy.github.io/pcap4j/javadoc/latest/en/org/pcap4j/core/Pcaps.html#openOffline%28java.lang.String%29&#34;&gt;&lt;code&gt;Pcaps.openOffline()&lt;/code&gt;&lt;/a&gt; to open a pcap-ng file and call read methods such as &lt;a href=&#34;http://kaitoy.github.io/pcap4j/javadoc/latest/en/org/pcap4j/core/PcapHandle.html#getNextPacketEx%28%29&#34;&gt;&lt;code&gt;getNextPacketEx()&lt;/code&gt;&lt;/a&gt; and &lt;a href=&#34;http://kaitoy.github.io/pcap4j/javadoc/latest/en/org/pcap4j/core/PcapHandle.html#loop%28int,%20org.pcap4j.core.PacketListener%29&#34;&gt;&lt;code&gt;loop()&lt;/code&gt;&lt;/a&gt; on the returned &lt;a href=&#34;http://kaitoy.github.io/pcap4j/javadoc/latest/en/org/pcap4j/core/PcapHandle.html&#34;&gt;&lt;code&gt;PcapHandle&lt;/code&gt;&lt;/a&gt; object to get packets in the file.&lt;/p&gt;
+
+&lt;p&gt;For example:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public static void main(String args[]) throws PcapNativeException, NotOpenException {
+  PcapHandle ph = Pcaps.openOffline(&amp;quot;/path/to/test.pcapng&amp;quot;);
+  ph.setFilter(&amp;quot;tcp&amp;quot;, BpfProgram.BpfCompileMode.OPTIMIZE);
+  while (true) {
+    try {
+      Packet p = ph.getNextPacketEx();
+      if (p != null) {
+        System.out.println(p);
+      }
+    } catch (EOFException e) {
+      System.out.println(&amp;quot;End of file&amp;quot;);
+      break;
+    } catch (TimeoutException e) {
+      System.out.println(&amp;quot;Timed out&amp;quot;);
+      break;
+    }
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;If you try to read a pcap-ng file using Pcap4J with a native library which doesn&amp;rsquo;t support pcap-ng format, Pcap4J throws &lt;a href=&#34;http://kaitoy.github.io/pcap4j/javadoc/latest/en/org/pcap4j/core/PcapNativeException.html&#34;&gt;&lt;code&gt;PcapNativeException&lt;/code&gt;&lt;/a&gt; as follows:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;Exception in thread &amp;quot;main&amp;quot; org.pcap4j.core.PcapNativeException: bad dump file format
+        at org.pcap4j.core.Pcaps.openOffline(Pcaps.java:203)
+        at Test.main(Test.java:16)
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+        </item>
+      
+    
+      
+        <item>
+          <title>Pcap4JがSoftware Quality Award 2015で入賞</title>
+          <link>https://tbd.kaitoy.xyz/2015/12/03/software-quality-award-2015/</link>
+          <pubDate>Thu, 03 Dec 2015 12:28:24 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2015/12/03/software-quality-award-2015/</guid>
+          <description>&lt;p&gt;&lt;a href=&#34;http://www.teamed.io/&#34;&gt;Teamed.io&lt;/a&gt;が主催の、ソフトウェアの品質とその開発プロジェクトの品質への取り組みを競うコンテスト、&lt;a href=&#34;http://www.yegor256.com/2015/04/16/award.html&#34;&gt;Software Quality Award&lt;/a&gt;の第一回が2015年4月～11月にかけて開催された。
+Teamed.ioのCTOであるYegorとは、彼のブログを和訳してここに載せている関係でたまにメールしているが、そのやりとりの中で誘われたので私も&lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;Pcap4J&lt;/a&gt;をひっさげてそれに参加した。&lt;/p&gt;
+
+&lt;p&gt;優勝すると$4,096もらえるということではあったが、150以上のプロジェクトがエントリーしていて、&lt;a href=&#34;http://gulpjs.com/&#34;&gt;Gulp&lt;/a&gt;とか有名なものも入っていたので、どうせ全然ダメだろと思ってエントリー以来なにも対策しなかったが、なんと &lt;strong&gt;8位&lt;/strong&gt; 入賞を果たしてしまった。
+まあ講評をみるとずいぶんこき下ろされてはいるが…&lt;/p&gt;
+
+&lt;p&gt;因みに講評は以下の感じ。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;utilパッケージがあってそこにユーティリティクラスがある。クソだ。&lt;/li&gt;
+&lt;li&gt;NULLが可変オブジェクトで使われている。例えば&lt;a href=&#34;https://github.com/kaitoy/pcap4j/blob/master/pcap4j-core/src/main/java/org/pcap4j/core/AbstractPcapAddress.java&#34;&gt;AbstractPcapAddress&lt;/a&gt;。クソだ。&lt;/li&gt;
+&lt;li&gt;スタティックメソッドとスタティック変数が多すぎる。文字通りどこにでもある。pcap4j-packetfactory-staticという名のスタティックメソッドだらけのモジュールまである。&lt;/li&gt;
+&lt;li&gt;JavaDocに一貫性がなく、未完なものもある。&lt;a href=&#34;https://github.com/kaitoy/pcap4j/blob/master/pcap4j-core/src/main/java/org/pcap4j/core/NotOpenException.java#L21-L23&#34;&gt;これ&lt;/a&gt;とか。&lt;/li&gt;
+&lt;li&gt;ほんのちょっとのissuesとたった6つのプルリクエストしかない。コミットがissuesにリンクされてない。変更のトレーサビリティはほとんどゼロだ。&lt;/li&gt;
+&lt;li&gt;リリース手順が自動化されていない。&lt;a href=&#34;https://github.com/kaitoy/pcap4j/releases&#34;&gt;リリース&lt;/a&gt;がドキュメントに書かれていない。&lt;/li&gt;
+&lt;li&gt;静的解析してなくて、そのせいか乱雑なコードがたまにある。&lt;/li&gt;
+&lt;li&gt;スコア: 3&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;静的解析くらいは導入しようかな…&lt;/p&gt;
+
+&lt;p&gt;ユーティリティクラスとかNULLとかスタティックメソッドは使うのやめるつもりはないけど。&lt;/p&gt;
+
+&lt;p&gt;そういえば、入賞者にはスポンサーである&lt;a href=&#34;https://www.jetbrains.com/products.html&#34;&gt;JetBrainsの製品&lt;/a&gt;の一年ライセンスがもらえることになっていたはずだが特に連絡がないな。&lt;/p&gt;
+</description>
+        </item>
+      
+    
+      
+        <item>
+          <title>Step by Step to Add a Protocol Support to Pcap4J (Part 2)</title>
+          <link>https://tbd.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/</link>
+          <pubDate>Mon, 12 Oct 2015 01:00:13 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/</guid>
+          <description>
+
+&lt;p&gt;This is continued from &lt;a href=&#34;https://tbd.kaitoy.xyz/2015/08/09/step-by-step-to-add-a-protocol-support-to-pcap4j-1/&#34;&gt;the part 1&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;We are adding DHCP support to &lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;Pcap4J&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;packet-piece-class&#34;&gt;Packet Piece Class&lt;/h3&gt;
+
+&lt;p&gt;A packet piece class is a Java class which represents a field of a packet.
+We should create such classes instead of using a primitive types in some cases.&lt;/p&gt;
+
+&lt;p&gt;In the case of DHCP, its &lt;strong&gt;flags&lt;/strong&gt; field includes two fields in itself as like below:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;                    1 1 1 1 1 1
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|B|             MBZ             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+B:  BROADCAST flag
+MBZ:  MUST BE ZERO (reserved for future use)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Although this flags field is 2 bytes long and can be held by a primitive short variable, it&amp;rsquo;s better to create a packet piece class to hold it for better usability.&lt;/p&gt;
+
+&lt;p&gt;I mean,&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;boolean broadcast = DhcpV4Packet.getHeader().getFlags().isBroadcast();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;is better than&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;boolean broadcast = (0x8000 &amp;amp; DhcpV4Packet.getHeader().getFlags()) != 0;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;dhcpv4flags-class&#34;&gt;DhcpV4Flags class&lt;/h3&gt;
+
+&lt;p&gt;Now, let&amp;rsquo;s write a packet piece class &lt;strong&gt;DhcpV4Flags&lt;/strong&gt; for the flags field.
+For writing packet piece classes, there is no rule except that they must implement &lt;a href=&#34;http://docs.oracle.com/javase/7/docs/api/java/io/Serializable.html&#34;&gt;Serializable interface&lt;/a&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;package org.pcap4j.packet;
+
+import java.io.Serializable;
+
+public final class DhcpV4Flags implements Serializable {
+
+  private static final long serialVersionUID = -7144264525666462708L;
+
+  private final short value;
+
+  public static DhcpV4Flags newInstance(short value) {
+    return new DhcpV4Flags(value);
+  }
+
+  private DhcpV4Flags(short value) {
+    this.value = value;
+  }
+
+  public short value() {
+    return value;
+  }
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;What we should do to implement Serializable is only adding a field &lt;code&gt;private static final long serialVersionUID&lt;/code&gt; in this case because DhcpV4Flags has only one primitive short field.&lt;/p&gt;
+
+&lt;p&gt;The short field holds entire value of the flags field.
+The constructor receives a short value and simply stores it in the short field.
+I made the constructor private and wrote a static factory method &lt;code&gt;newInstance&lt;/code&gt;, which is just my taste and not necessary.&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Here, let&amp;rsquo;s remember that the flags field has two fields in itself, which are B (BROADCAST) and MBZ (MUST BE ZERO), and add two methods to get them.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;  public boolean isBroadcast() { return (value &amp;amp; 0x8000) != 0; }
+
+  public short getMbz() { return (short)(value &amp;amp; 0x7FFF); }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;And, generally speaking, we should always override &lt;code&gt;toString&lt;/code&gt;, &lt;code&gt;equals&lt;/code&gt;, and &lt;code&gt;hashCode&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(&amp;quot;[BROADCAST: &amp;quot;)
+      .append(isBroadcast())
+      .append(&amp;quot;] [value: 0x&amp;quot;)
+      .append(ByteArrays.toHexString(value, &amp;quot;&amp;quot;))
+      .append(&amp;quot;]&amp;quot;);
+
+    return sb.toString();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) { return true; }
+    if (!this.getClass().isInstance(obj)) { return false; }
+
+    DhcpV4Flags other = (DhcpV4Flags)obj;
+    return this.value == other.value;
+  }
+
+  @Override
+  public int hashCode() { return value; }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;The last thing to write is &lt;strong&gt;Builder class&lt;/strong&gt;, which is another way to instantiate DhcpV4Flags objects.
+The static factory method I wrote above is used when dissecting a real DHCP packet (i.e. a byte array), while the Builder is used when crafting a DHCP packet object.&lt;/p&gt;
+
+&lt;p&gt;A Builder class is usually written as an inner class.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public final class DhcpV4Flags implements Serializable {
+
+  (snip)
+
+  public Builder getBuilder() {
+    return new Builder(this);
+  }
+
+  public static final class Builder {
+
+    private boolean broadcast = false;
+    private short mbz = 0;
+
+    public Builder() {}
+
+    private Builder(DhcpV4Flags flags) {
+      this.broadcast = flags.isBroadcast();
+      this.mbz = flags.getMbz();
+    }
+
+    public Builder broadcast(boolean broadcast) {
+      this.broadcast = broadcast;
+      return this;
+    }
+
+    public Builder mbz(short mbz) {
+      this.mbz = mbz;
+      return this;
+    }
+
+    public DhcpV4Flags build() {
+      return new DhcpV4Flags(this);
+    }
+
+  }
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And, DhcpV4Flags needs a constructor which uses the Builder.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;  private DhcpV4Flags(Builder builder) {
+    if (builder == null) {
+      throw new NullPointerException(&amp;quot;builder is null.&amp;quot;);
+    }
+    if (builder.mbz &amp;lt; 0) {
+      throw new IllegalArgumentException(
+              &amp;quot;mbz must be equal or greater than zero but it is: &amp;quot; + builder.mbz
+            );
+    }
+
+    this.value = builder.broadcast ? (short)(builder.mbz | 0x8000) : builder.mbz;
+  }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;That&amp;rsquo;s all. The entire code is as follows:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;package org.pcap4j.packet;
+
+import java.io.Serializable;
+import org.pcap4j.util.ByteArrays;
+
+public final class DhcpV4Flags implements Serializable {
+
+  private static final long serialVersionUID = -7144264525666462708L;
+
+  private final short value;
+
+  public static DhcpV4Flags newInstance(short value) {
+    return new DhcpV4Flags(value);
+  }
+
+  private DhcpV4Flags(short value) {
+    this.value = value;
+  }
+
+  private DhcpV4Flags(Builder builder) {
+    if (builder == null) {
+      throw new NullPointerException(&amp;quot;builder is null.&amp;quot;);
+    }
+    if (builder.mbz &amp;lt; 0) {
+      throw new IllegalArgumentException(
+              &amp;quot;mbz must be equal or greater than zero but it is: &amp;quot; + builder.mbz
+            );
+    }
+
+    this.value = builder.broadcast ? (short)(builder.mbz | 0x8000) : builder.mbz;
+  }
+
+  public short value() {
+    return value;
+  }
+
+  public boolean isBroadcast() { return (value &amp;amp; 0x8000) != 0; }
+
+  public short getMbz() { return (short)(value &amp;amp; 0x7FFF); }
+
+  public Builder getBuilder() {
+    return new Builder(this);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(&amp;quot;[BROADCAST: &amp;quot;)
+      .append(isBroadcast())
+      .append(&amp;quot;] [value: 0x&amp;quot;)
+      .append(ByteArrays.toHexString(value, &amp;quot;&amp;quot;))
+      .append(&amp;quot;]&amp;quot;);
+
+    return sb.toString();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) { return true; }
+    if (!this.getClass().isInstance(obj)) { return false; }
+
+    DhcpV4Flags other = (DhcpV4Flags)obj;
+    return this.value == other.value;
+  }
+
+  @Override
+  public int hashCode() { return value; }
+
+  public static final class Builder {
+
+    private boolean broadcast = false;
+    private short mbz = 0;
+
+    public Builder() {}
+
+    private Builder(DhcpV4Flags flags) {
+      this.broadcast = flags.isBroadcast();
+      this.mbz = flags.getMbz();
+    }
+
+    public Builder broadcast(boolean broadcast) {
+      this.broadcast = broadcast;
+      return this;
+    }
+
+    public Builder mbz(short mbz) {
+      this.mbz = mbz;
+      return this;
+    }
+
+    public DhcpV4Flags build() {
+      return new DhcpV4Flags(this);
+    }
+
+  }
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;In the next part, we&amp;rsquo;ll write the DHCP packet class.&lt;/p&gt;
+</description>
+        </item>
+      
+    
+      
+        <item>
+          <title>Step by Step to Add a Protocol Support to Pcap4J (Part 1)</title>
+          <link>https://tbd.kaitoy.xyz/2015/08/09/step-by-step-to-add-a-protocol-support-to-pcap4j-1/</link>
+          <pubDate>Sun, 09 Aug 2015 21:53:29 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2015/08/09/step-by-step-to-add-a-protocol-support-to-pcap4j-1/</guid>
+          <description>
+
+&lt;p&gt;I will show how to add a protocol support to &lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;Pcap4J&lt;/a&gt; in detail giving the example of DHCP (v4) via some posts.&lt;/p&gt;
+
+&lt;h3 id=&#34;named-number-class&#34;&gt;Named Number Class&lt;/h3&gt;
+
+&lt;p&gt;First of all, we need to know the packet format. It&amp;rsquo;s explained in &lt;a href=&#34;http://www.ietf.org/rfc/rfc2131.txt&#34;&gt;RFC 2131&lt;/a&gt; as below:&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|     op (1)    |   htype (1)   |   hlen (1)    |   hops (1)    |
++---------------+---------------+---------------+---------------+
+|                            xid (4)                            |
++-------------------------------+-------------------------------+
+|           secs (2)            |           flags (2)           |
++-------------------------------+-------------------------------+
+|                          ciaddr  (4)                          |
++---------------------------------------------------------------+
+|                          yiaddr  (4)                          |
++---------------------------------------------------------------+
+|                          siaddr  (4)                          |
++---------------------------------------------------------------+
+|                          giaddr  (4)                          |
++---------------------------------------------------------------+
+|                                                               |
+|                          chaddr  (16)                         |
+|                                                               |
+|                                                               |
++---------------------------------------------------------------+
+|                                                               |
+|                          sname   (64)                         |
++---------------------------------------------------------------+
+|                                                               |
+|                          file    (128)                        |
++---------------------------------------------------------------+
+|                                                               |
+|                          options (variable)                   |
++---------------------------------------------------------------+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;FIELD&lt;/th&gt;
+&lt;th&gt;OCTETS&lt;/th&gt;
+&lt;th&gt;DESCRIPTION&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;op&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;Message op code / message type.&lt;br&gt;1 = BOOTREQUEST, 2 = BOOTREPLY&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;htype&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;Hardware address type, see ARP section in &amp;ldquo;Assigned&lt;br&gt;Numbers&amp;rdquo; RFC; e.g., &amp;lsquo;1&amp;rsquo; = 10mb ethernet.&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;hlen&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;Hardware address length (e.g.  &amp;lsquo;6&amp;rsquo; for 10mb ethernet).&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;hops&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;Client sets to zero, optionally used by relay agents when booting via a relay agent.&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;xid&lt;/td&gt;
+&lt;td&gt;4&lt;/td&gt;
+&lt;td&gt;Transaction ID, a random number chosen by the client, used by the client and server to associate messages and responses between a client and a server.&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;secs&lt;/td&gt;
+&lt;td&gt;2&lt;/td&gt;
+&lt;td&gt;Filled in by client, seconds elapsed since client began address acquisition or renewal process.&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;flags&lt;/td&gt;
+&lt;td&gt;2&lt;/td&gt;
+&lt;td&gt;Flags (see figure 2).&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;ciaddr&lt;/td&gt;
+&lt;td&gt;4&lt;/td&gt;
+&lt;td&gt;Client IP address; only filled in if client is in BOUND, RENEW or REBINDING state and can respond to ARP requests.&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;yiaddr&lt;/td&gt;
+&lt;td&gt;4&lt;/td&gt;
+&lt;td&gt;&amp;lsquo;your&amp;rsquo; (client) IP address.&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;siaddr&lt;/td&gt;
+&lt;td&gt;4&lt;/td&gt;
+&lt;td&gt;IP address of next server to use in bootstrap; returned in DHCPOFFER, DHCPACK by server.&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;giaddr&lt;/td&gt;
+&lt;td&gt;4&lt;/td&gt;
+&lt;td&gt;Relay agent IP address, used in booting via a relay agent.&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;chaddr&lt;/td&gt;
+&lt;td&gt;16&lt;/td&gt;
+&lt;td&gt;Client hardware address.&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;sname&lt;/td&gt;
+&lt;td&gt;64&lt;/td&gt;
+&lt;td&gt;Optional server host name, null terminated string.&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;file&lt;/td&gt;
+&lt;td&gt;128&lt;/td&gt;
+&lt;td&gt;Boot file name, null terminated string; &amp;ldquo;generic&amp;rdquo; name or null in DHCPDISCOVER, fully qualified directory-path name in DHCPOFFER.&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;options&lt;/td&gt;
+&lt;td&gt;var&lt;/td&gt;
+&lt;td&gt;Optional parameters field.  See the options documents for a list of defined options.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;It looks DHCP has only one packet format, and the packet doesn&amp;rsquo;t have a payload.
+So, we will need to write only one packet class, one header class, and one builder class for DHCP. Easy!&lt;/p&gt;
+
+&lt;p&gt;The header class will have java fields which represent the packet fields listed above (e.g. op, htype, etc.).&lt;/p&gt;
+
+&lt;p&gt;Let&amp;rsquo;s start with writing named number classes, which we will use for types of some of the java fields of the header class.
+For example, &lt;code&gt;op&lt;/code&gt; field, which holds a message op code, &lt;code&gt;1&lt;/code&gt; or &lt;code&gt;2&lt;/code&gt; in an octet.
+Although the value &lt;code&gt;op&lt;/code&gt; field carries can be stored in a primitive &lt;code&gt;byte&lt;/code&gt; field in the header class,
+it&amp;rsquo;s recommended to create a named number class to store the value with its name (meaning) for more readability and usability.
+&lt;code&gt;new DhcpV4Packet.Builder().operationCode(DhcpV4OperationCode.BOOTREQUEST)&lt;/code&gt; looks better than &lt;code&gt;new DhcpV4Packet.Builder().operationCode((byte)1)&lt;/code&gt;, doesn&amp;rsquo;t it?&lt;/p&gt;
+
+&lt;p&gt;Named number classes are in &lt;a href=&#34;https://github.com/kaitoy/pcap4j/tree/master/pcap4j-core/src/main/java/org/pcap4j/packet/namednumber&#34;&gt;&lt;code&gt;org.pcap4j.packet.namednumber package&lt;/code&gt;&lt;/a&gt; in pcap4j-core project.
+To write a named number class easily, extend &lt;a href=&#34;https://github.com/kaitoy/pcap4j/blob/master/pcap4j-core/src/main/java/org/pcap4j/packet/namednumber/NamedNumber.java&#34;&gt;&lt;code&gt;NamedNumber&lt;/code&gt;&lt;/a&gt;.
+The minimum implementation of a number class looks like below:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;package org.pcap4j.packet.namednumber;
+
+public final class DhcpV4OperationCode extends NamedNumber&amp;lt;Byte, DhcpV4OperationCode&amp;gt; {
+
+  private static final long serialVersionUID = 3155818580398801532L;
+
+  public DhcpV4OperationCode(Byte value, String name) {
+    super(value, name);
+  }
+
+  @Override
+  public int compareTo(DhcpV4OperationCode o) {
+    return value().compareTo(o.value());
+  }
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Only one method we must implement is &lt;code&gt;compareTo&lt;/code&gt;. The code in the method is always the same: &lt;code&gt;return value().compareTo(o.value());&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;And, because &lt;code&gt;NamedNumber&lt;/code&gt; doesn&amp;rsquo;t have the default constructor, we need to write a constructor with 2 arguments, &lt;code&gt;Byte value&lt;/code&gt; and &lt;code&gt;String name&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Sometimes we may want to override &lt;code&gt;public String valueAsString()&lt;/code&gt;. For example, in the case where the String representation of the value should be like &lt;code&gt;0x0a&lt;/code&gt; instead of &lt;code&gt;10&lt;/code&gt;. &lt;code&gt;DhcpV4OperationCode&lt;/code&gt; isn&amp;rsquo;t the case, though.&lt;/p&gt;
+
+&lt;p&gt;Then, we&amp;rsquo;d better to add pre-defined objects so that:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;we will not need to repeatedly instantiate them for the same value, and&lt;/li&gt;
+&lt;li&gt;we will not need to refer to the RFC when you craft DHCP packets.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;  public static final DhcpV4OperationCode BOOTREQUEST
+    = new DhcpV4OperationCode((byte)1, &amp;quot;BOOTREQUEST&amp;quot;);
+
+  public static final DhcpV4OperationCode BOOTREPLY
+    = new DhcpV4OperationCode((byte)2, &amp;quot;BOOTREPLY&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;From a pre-defined object, we can get its value by &lt;code&gt;DhcpV4OperationCode.BOOTREQUEST.value()&lt;/code&gt;.
+But, how do we get a pre-defined object from a value? We need to do it when we parse a real packet (a byte array) captured and build a DHCP packet object.&lt;/p&gt;
+
+&lt;p&gt;So, let&amp;rsquo;s enhance the code as follows:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;  private static final Map&amp;lt;Byte, DhcpV4OperationCode&amp;gt; registry
+    = new HashMap&amp;lt;Byte, DhcpV4OperationCode&amp;gt;();
+
+  static {
+    registry.put(BOOTREQUEST.value(), BOOTREQUEST);
+    registry.put(BOOTREPLY.value(), BOOTREPLY);
+  }
+
+  public static DhcpV4OperationCode getInstance(Byte value) {
+    if (registry.containsKey(value)) {
+      return registry.get(value);
+    }
+    else {
+      return new DhcpV4OperationCode(value, &amp;quot;unknown&amp;quot;);
+    }
+  }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The new field &lt;code&gt;registry&lt;/code&gt; holds the mapping between values and pre-defined objects, and the &lt;code&gt;getInstance&lt;/code&gt; method is the API to get a pre-defined objects (or new one if not registered) by a value by searching in the &lt;code&gt;registry&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;We may want to add one more API which is to add an object instantiated outside of this class to the &lt;code&gt;registy&lt;/code&gt; like below:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;  public static DhcpV4OperationCode register(DhcpV4OperationCode version) {
+    return registry.put(version.value(), version);
+  }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now, the entire code looks like below:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;package org.pcap4j.packet.namednumber;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public final class DhcpV4OperationCode extends NamedNumber&amp;lt;Byte, DhcpV4OperationCode&amp;gt; {
+
+  private static final long serialVersionUID = 3155818580398801532L;
+
+  public static final DhcpV4OperationCode BOOTREQUEST
+   = new DhcpV4OperationCode((byte)1, &amp;quot;BOOTREQUEST&amp;quot;);
+
+  public static final DhcpV4OperationCode BOOTREPLY
+   = new DhcpV4OperationCode((byte)2, &amp;quot;BOOTREPLY&amp;quot;);
+
+  private static final Map&amp;lt;Byte, DhcpV4OperationCode&amp;gt; registry
+    = new HashMap&amp;lt;Byte, DhcpV4OperationCode&amp;gt;();
+
+  static {
+    registry.put(BOOTREQUEST.value(), BOOTREQUEST);
+    registry.put(BOOTREPLY.value(), BOOTREPLY);
+  }
+
+  public static DhcpV4OperationCode getInstance(Byte value) {
+    if (registry.containsKey(value)) {
+      return registry.get(value);
+    }
+    else {
+      return new DhcpV4OperationCode(value, &amp;quot;unknown&amp;quot;);
+    }
+  }
+
+  public static DhcpV4OperationCode register(DhcpV4OperationCode version) {
+    return registry.put(version.value(), version);
+  }
+
+  public DhcpV4OperationCode(Byte value, String name) {
+    super(value, name);
+  }
+
+  @Override
+  public int compareTo(DhcpV4OperationCode o) {
+    return value().compareTo(o.value());
+  }
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Likewise, &lt;code&gt;htype&lt;/code&gt; should be represented by a named number class.
+Fortunately, we can use the existing class &lt;a href=&#34;https://github.com/kaitoy/pcap4j/blob/master/pcap4j-core/src/main/java/org/pcap4j/packet/namednumber/ArpHardwareType.java&#34;&gt;ArpHardwareType&lt;/a&gt; for it.&lt;/p&gt;
+
+&lt;p&gt;In the &lt;a href=&#34;https://tbd.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/&#34;&gt;next part&lt;/a&gt;, we will write a packet piece class for the &lt;code&gt;flags&lt;/code&gt; field.&lt;/p&gt;
+</description>
+        </item>
+      
+    
+      
+        <item>
+          <title>Another way to capture LAN packets with pcap4j container</title>
+          <link>https://tbd.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/</link>
+          <pubDate>Mon, 27 Jul 2015 23:41:49 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/</guid>
+          <description>
+
+&lt;p&gt;2 days ago, I posted an article &lt;a href=&#34;https://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/&#34;&gt;How to capture packets on a local network with Pcap4J container&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Today, I was reading &lt;a href=&#34;https://docs.docker.com/reference/run/#network-settings&#34;&gt;Docker Docs&lt;/a&gt; and found another way to do it.
+I&amp;rsquo;m writing about it here.&lt;/p&gt;
+
+&lt;h3 id=&#34;net-option-for-docker-run&#34;&gt;&amp;ndash;net option for docker run&lt;/h3&gt;
+
+&lt;p&gt;When we start a docker container we use &lt;code&gt;docker run&lt;/code&gt; command. It accepts some options.
+&lt;code&gt;--net&lt;/code&gt; is one of them, which is to set a network mode for a container.
+Network modes &lt;code&gt;--net&lt;/code&gt; takes are &lt;code&gt;bridge&lt;/code&gt;, &lt;code&gt;none&lt;/code&gt;, &lt;code&gt;container:&amp;lt;name|id&amp;gt;&lt;/code&gt;, and &lt;code&gt;host&lt;/code&gt;.
+The &lt;code&gt;bridge&lt;/code&gt; is the default mode where containers connect to the virtual Ethernet bridge &lt;code&gt;docker0&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;What I use in this article is &lt;code&gt;host&lt;/code&gt; mode. If it&amp;rsquo;s specified containers use the host network stack,
+which means Pcap4J on a container with the &lt;code&gt;host&lt;/code&gt; mode can see network interfaces on its host and sniff network traffic via them directly.&lt;/p&gt;
+
+&lt;p&gt;This sounds easy. And more, according to the Docker Docs, the &lt;code&gt;host&lt;/code&gt; mode gives significantly better networking performance than the &lt;code&gt;bridge&lt;/code&gt; mode. But instead, &lt;code&gt;host&lt;/code&gt; is insecure. (See &lt;a href=&#34;https://docs.docker.com/reference/run/#mode-host&#34;&gt;Docker Docs - Mode: host&lt;/a&gt; for the details.)&lt;/p&gt;
+
+&lt;h3 id=&#34;what-i-did&#34;&gt;What I did&lt;/h3&gt;
+
+&lt;p&gt;In the same environment with &lt;a href=&#34;https://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/#what-i-did:a3622224f79a64f15ba6f2b66e1010d9&#34;&gt;2 days ago&lt;/a&gt;, I did the followings:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Start a Pcap4J container with the network mode set to host&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;  [root@localhost ~]# docker run --name pcap4j-hostnet --net=host kaitoy/pcap4j:latest
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;That&amp;rsquo;s it.&lt;/p&gt;
+
+&lt;p&gt;The above command create a container named &lt;code&gt;pcap4j-hostnet&lt;/code&gt; from the image &lt;code&gt;kaitoy/pcap4j:latest&lt;/code&gt; and execute &lt;code&gt;/bin/sh /usr/local/src/pcap4j/bin/capture.sh eth0 false&lt;/code&gt; in the container.
+  The &lt;code&gt;capture.sh&lt;/code&gt; starts packet capturing on &lt;code&gt;eth0&lt;/code&gt; using Pcap4J.
+  This &lt;code&gt;eth0&lt;/code&gt; is the interface of the docker host mashine because the network mode is set to &lt;code&gt;host&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;What a easy way.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+        </item>
+      
+    
+      
+        <item>
+          <title>How to capture packets on a local network with Pcap4J container</title>
+          <link>https://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/</link>
+          <pubDate>Sat, 25 Jul 2015 19:05:06 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/</guid>
+          <description>
+
+&lt;p&gt;I&amp;rsquo;ll show how to capture packets on a local network with Pcap4J container.&lt;/p&gt;
+
+&lt;h3 id=&#34;docker-network&#34;&gt;Docker network&lt;/h3&gt;
+
+&lt;p&gt;By default, Docker containers are not connected to a local network.
+They are connected only to a virtual network Docker creates as like below:&lt;/p&gt;
+
+&lt;p&gt;
+&lt;figure &gt;
+    
+        &lt;img src=&#34;https://tbd.kaitoy.xyz/images/docker_network.jpg&#34; alt=&#34;Docker network&#34; width=&#34;500&#34; /&gt;
+    
+    
+&lt;/figure&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Refer to &lt;a href=&#34;https://docs.docker.com/articles/networking/&#34;&gt;the Docker doc&lt;/a&gt; for more details.&lt;/p&gt;
+
+&lt;h3 id=&#34;what-s-a-challenge&#34;&gt;What&amp;rsquo;s a challenge&lt;/h3&gt;
+
+&lt;p&gt;In order to let a Pcap4J container capture packets in a local (real) network,
+we need to directly connect the container to the local network,
+because docker0 forwards only packets the destinations of which are in the virtual network.&lt;/p&gt;
+
+&lt;p&gt;How to do it is explained in some articles.
+I referred to one of them, &lt;a href=&#34;http://blog.oddbit.com/2014/08/11/four-ways-to-connect-a-docker/&#34;&gt;Four ways to connect a docker container to a local network in Odd Bits blog&lt;/a&gt;, and succeeded in local network capturing using the 4th way.&lt;/p&gt;
+
+&lt;p&gt;What I actually did is as follows.&lt;/p&gt;
+
+&lt;h3 id=&#34;what-i-did&#34;&gt;What I did&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Environment&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;OS: CentOS 7.0 (on VMware Player 7.1.0 on Windows 7)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# uname -a
+Linux localhost.localdomain 3.10.0-229.el7.x86_64 #1 SMP Fri Mar 6 11:36:42 UTC 2015 x86_64 x86_64 x86_64 GNU/Linux
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;user: root&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Pcap4J version: 1.5.1-SNAPSHOT&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Docker version: 1.6.2&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Network interfaces:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;  [root@localhost ~]# ip addr show
+  1: lo: &amp;lt;LOOPBACK,UP,LOWER_UP&amp;gt; mtu 65536 qdisc noqueue state UNKNOWN
+      link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+      inet 127.0.0.1/8 scope host lo
+         valid_lft forever preferred_lft forever
+      inet6 ::1/128 scope host
+         valid_lft forever preferred_lft forever
+  2: eth0: &amp;lt;BROADCAST,MULTICAST,UP,LOWER_UP&amp;gt; mtu 1500 qdisc pfifo_fast state UP qlen 1000
+      link/ether 00:0c:29:8e:95:27 brd ff:ff:ff:ff:ff:ff
+      inet 192.168.1.123/24 brd 192.168.1.255 scope global dynamic eth0
+         valid_lft 85975sec preferred_lft 85975sec
+      inet6 2601:282:8102:2623:20c:29ff:fe8e:9527/64 scope global dynamic
+         valid_lft 221469sec preferred_lft 221469sec
+      inet6 fe80::20c:29ff:fe8e:9527/64 scope link
+         valid_lft forever preferred_lft forever
+  3: docker0: &amp;lt;NO-CARRIER,BROADCAST,MULTICAST,UP&amp;gt; mtu 1500 qdisc noqueue state DOWN
+      link/ether 56:84:7a:fe:97:99 brd ff:ff:ff:ff:ff:ff
+      inet 172.17.42.1/16 scope global docker0
+         valid_lft forever preferred_lft forever
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Prerequisites:
+
+&lt;ul&gt;
+&lt;li&gt;Docker is installed and Docker service is started&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://man7.org/linux/man-pages/man1/nsenter.1.html&#34;&gt;nsenter&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Step by step&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Preparing&lt;/p&gt;
+
+&lt;p&gt;Create a utility script &lt;code&gt;docker-pid&lt;/code&gt; with the following content and place it somewhere in the &lt;code&gt;PATH&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;  #!/bin/sh
+  exec docker inspect --format &#39;{{ .State.Pid }}&#39; &amp;quot;$@&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This script show the PID of a docker container by name or ID.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Pull the latest Pcap4J image&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# docker pull kaitoy/pcap4j
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Start a Pcap4J container with wait mode&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# docker run --name pcap4j-br kaitoy/pcap4j:latest eth1 true
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This container (&lt;code&gt;pcap4j-br&lt;/code&gt;) waits for a ping to &lt;code&gt;eth0&lt;/code&gt; on the container before staring capturing packets with &lt;code&gt;eth1&lt;/code&gt; on the container.
+After the container starts, you will see messages like below:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;17:49:21.196 [main] INFO  org.pcap4j.core.Pcaps - 3 NIF(s) found.
+eth0 (null)
+IP address: /172.17.0.3
+IP address: /fe80:0:0:0:42:acff:fe11:3
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The messages say IP address of &lt;code&gt;eth0&lt;/code&gt; is &lt;code&gt;172.17.0.3&lt;/code&gt;. We will use it later.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Configure a bridge interface&lt;/p&gt;
+
+&lt;p&gt;Open another terminal and do the following:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# ip link add eth1 link eth0 type macvlan mode bridge
+[root@localhost ~]# ip link set netns $(docker-pid pcap4j-br) eth1
+[root@localhost ~]# nsenter -t $(docker-pid pcap4j-br) -n ip link set eth1 up
+[root@localhost ~]# nsenter -t $(docker-pid pcap4j-br) -n ip route del default
+[root@localhost ~]# nsenter -t $(docker-pid pcap4j-br) -n ip addr add 192.168.1.200/24 dev eth1
+[root@localhost ~]# nsenter -t $(docker-pid pcap4j-br) -n ip route add default via 192.168.1.1 dev eth1
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The above commands
+1) add an interface &lt;code&gt;eth1&lt;/code&gt; bridged to &lt;code&gt;eth0&lt;/code&gt; to the Docker host machine,
+2) move the &lt;code&gt;eth1&lt;/code&gt; to the name space of &lt;code&gt;pcap4j-br&lt;/code&gt;,
+3) start &lt;code&gt;eth1&lt;/code&gt;,
+4) delete the default route in &lt;code&gt;pcap4j-br&lt;/code&gt;,
+5) add an IP address &lt;code&gt;192.168.1.200/24&lt;/code&gt; to &lt;code&gt;eth1&lt;/code&gt;,
+6) and set the default route in &lt;code&gt;pcap4j-br&lt;/code&gt; to &lt;code&gt;192.168.1.1&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Too much hassle? I agree. Let&amp;rsquo;s use an awesome tool, &lt;a href=&#34;https://github.com/jpetazzo/pipework&#34;&gt;pipework&lt;/a&gt;.
+This tool accomplishes the above 6 steps in easier way as shown below:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# git clone https://github.com/jpetazzo/pipework.git
+[root@localhost ~]# cd pipework
+[root@localhost pipework]# ./pipework eth0 pcap4j-br 192.168.1.200/24@192.168.1.1
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;pipework uses &lt;code&gt;ip netns exec&lt;/code&gt; command instead of &lt;code&gt;nsenter&lt;/code&gt; to manipulate a container.
+Incidentally, &lt;code&gt;docker exec&lt;/code&gt; didn&amp;rsquo;t work for the step 3 due to an error &amp;ldquo;&lt;code&gt;RTNETLINK answers: Operation not permitted&lt;/code&gt;&amp;rdquo;.&lt;/p&gt;
+
+&lt;p&gt;In addition, in my case, because I was doing it on a VMware VM, I needed to enable the promiscuous mode of &lt;code&gt;eth0&lt;/code&gt; (on the docker host machine) as follows:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# ip link set dev eth0 promisc on
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Try to poke the container&lt;/p&gt;
+
+&lt;p&gt;You can now communicate with &lt;code&gt;pcap4j-br&lt;/code&gt; using &lt;code&gt;eth1&lt;/code&gt; &lt;strong&gt;from another host&lt;/strong&gt;.
+I tried some pings from the VM&amp;rsquo;s host to &lt;code&gt;pcap4j-br&lt;/code&gt; and saw replies.&lt;/p&gt;
+
+&lt;p&gt;Note that you can &lt;strong&gt;NOT&lt;/strong&gt; communicate with &lt;code&gt;pcap4j-br&lt;/code&gt; via &lt;code&gt;eth1&lt;/code&gt; from the docker host.
+See the &lt;a href=&#34;http://blog.oddbit.com/2014/08/11/four-ways-to-connect-a-docker/&#34;&gt;Odd Bits blog&lt;/a&gt; for the details.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Start packet capturing&lt;/p&gt;
+
+&lt;p&gt;Ping to &lt;code&gt;eth0&lt;/code&gt; of &lt;code&gt;pcap4j-br&lt;/code&gt; form the docker host to start packet capturing.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# ping -c 1 172.17.0.3
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ol&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+      
+    
+      
+        <item>
+          <title>Pcap4J container with runC</title>
+          <link>https://tbd.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/</link>
+          <pubDate>Sun, 19 Jul 2015 16:25:03 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/</guid>
+          <description>
+
+&lt;p&gt;I tried to run a &lt;a href=&#34;https://registry.hub.docker.com/u/kaitoy/pcap4j/&#34;&gt;Pcap4J container&lt;/a&gt; with &lt;a href=&#34;https://runc.io/&#34;&gt;runC&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;what-is-pcap4j&#34;&gt;What is Pcap4J?&lt;/h2&gt;
+
+&lt;p&gt;Pcap4J is a Java library for capturing, crafting, and sending packets.
+It&amp;rsquo;s actually a Java wrapper for libpcap/WinPcap plus packet analyzer.
+We can see the details in its &lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;README&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;what-is-runc&#34;&gt;What is runC?&lt;/h2&gt;
+
+&lt;p&gt;runC is a container runtime developed by Docker and released on June 22, 2015.
+With runC, we can start a container from a docker image without the docker service or the docker command.&lt;/p&gt;
+
+&lt;p&gt;That said, as of now, runC cannot directory use docker images.
+We need to create a container form a docker image and export its filesystem before executing runC.&lt;/p&gt;
+
+&lt;p&gt;It seems currently it supports only Linux but Windows support is in the roadmap.&lt;/p&gt;
+
+&lt;h2 id=&#34;what-i-did&#34;&gt;What I did&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Environment
+
+&lt;ul&gt;
+&lt;li&gt;OS: CentOS 7 (on VMware Player 7.1.0 on Windows 7)&lt;/li&gt;
+&lt;li&gt;user: root&lt;/li&gt;
+&lt;li&gt;runC version: 0.2&lt;/li&gt;
+&lt;li&gt;Pcap4J version: 1.5.1-SNAPSHOT&lt;/li&gt;
+&lt;li&gt;Docker version: 1.6.2&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Prerequisites:
+
+&lt;ul&gt;
+&lt;li&gt;Docker is installed and Docker service is started&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://golang.org/&#34;&gt;Go&lt;/a&gt; is installed&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Step by step&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Install runC&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# mkdir -p $GOPATH/src/github.com/opencontainers
+[root@localhost ~]# cd $GOPATH/src/github.com/opencontainers
+[root@localhost opencontainers]# git clone https://github.com/opencontainers/runc
+[root@localhost opencontainers]# cd runc
+[root@localhost runc]# make &amp;amp;&amp;amp; make install
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Pull the Pcap4J docker image.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# docker pull kaitoy/pcap4j
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Create a container from the image.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# docker run -d --name pcap4j-tmp kaitoy/pcap4j:latest /bin/bash
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Export the container&amp;rsquo;s file system.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# mkdir /tmp/pcap4j-test
+[root@localhost pcap4j-test]# cd /tmp/pcap4j-test
+[root@localhost pcap4j-test]# docker export pcap4j-tmp &amp;gt; pcap4j.tar
+[root@localhost pcap4j-test]# tar xf pcap4j.tar
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We are now free from Docker. We don&amp;rsquo;t need Docker service, Docker command, Docker images, nor Docker containers anymore.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Generate a container config file.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost pcap4j-test]# runc spec | sed -e &#39;s/rootfs/\/root\/Desktop\/pcap4j-container/&#39; -e &#39;s/&amp;quot;readonly&amp;quot;: true/&amp;quot;readonly&amp;quot;: false/&#39; -e &#39;s/&amp;quot;NET_BIND_SERVICE&amp;quot;/&amp;quot;NET_BIND_SERVICE&amp;quot;,&amp;quot;NET_ADMIN&amp;quot;,&amp;quot;NET_RAW&amp;quot;/&#39; &amp;gt; config.json
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In the above command, &lt;code&gt;runc spec&lt;/code&gt; generates a standard container config file and &lt;code&gt;sed&lt;/code&gt; modifies it for Pcap4J.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Run a container.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost pcap4j-test]# runc
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;In the container, enable lo.&lt;/p&gt;
+
+&lt;p&gt;As far as I saw, lo is the only interface we can use in a container.
+So, I used it to capture packets.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;sh-4.1# ifconfig lo up
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Generate a script to ping localhost and run it background.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;sh-4.1# cd /usr/local/src/pcap4j/bin
+sh-4.1# echo ping 127.0.0.1 \&amp;gt; /dev/null &amp;gt; pinger.sh
+sh-4.1# chmod +x pinger.sh
+sh-4.1# ./pinger.sh &amp;amp;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In the next step, ICMP packets from this pinger.sh will be captured.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Generate a script to start capturing packets with Pcap4J and run it.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;sh-4.1# cat runGetNextPacket.sh | sed -e &#39;s/eth0/lo/&#39; &amp;gt; foo.sh
+sh-4.1# chmod +x foo.sh
+sh-4.1# ./foo.sh
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We will see the ICMP packets are dumped on the terminal. That&amp;rsquo;s it!&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+      
+    
+
+  </channel>
+</rss>

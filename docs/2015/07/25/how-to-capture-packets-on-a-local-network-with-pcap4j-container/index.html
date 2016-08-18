@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="How to capture packets on a local network with Pcap4J container | To Be Decided">
+    <meta property="og:url" content="https://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">
+    <meta property="og:description" content="I&rsquo;ll show how to capture packets on a local network with Pcap4J container. Docker network By default, Docker containers are not connected to a local network. They are connected only to a virtual network Docker creates as like below: Refer to the Docker doc for more details. What&rsquo;s a challenge In order to let a Pcap4J container capture packets in a local (real) network, we need to directly connect the container to the local network, because docker0 forwards only packets the destinations of which are in the virtual network.">
+    
+    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/pcap4jlogo.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      How to capture packets on a local network with Pcap4J container | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Sat, Jul 25, 2015</span>
+      <h2 class="title">How to capture packets on a local network with Pcap4J container</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://tbd.kaitoy.xyz/images/pcap4jlogo.png" alt="How to capture packets on a local network with Pcap4J container">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>I&rsquo;ll show how to capture packets on a local network with Pcap4J container.</p>
+
+<h3 id="docker-network">Docker network</h3>
+
+<p>By default, Docker containers are not connected to a local network.
+They are connected only to a virtual network Docker creates as like below:</p>
+
+<p>
+<figure >
+    
+        <img src="/images/docker_network.jpg" alt="Docker network" width="500" />
+    
+    
+</figure>
+</p>
+
+<p>Refer to <a href="https://docs.docker.com/articles/networking/">the Docker doc</a> for more details.</p>
+
+<h3 id="what-s-a-challenge">What&rsquo;s a challenge</h3>
+
+<p>In order to let a Pcap4J container capture packets in a local (real) network,
+we need to directly connect the container to the local network,
+because docker0 forwards only packets the destinations of which are in the virtual network.</p>
+
+<p>How to do it is explained in some articles.
+I referred to one of them, <a href="http://blog.oddbit.com/2014/08/11/four-ways-to-connect-a-docker/">Four ways to connect a docker container to a local network in Odd Bits blog</a>, and succeeded in local network capturing using the 4th way.</p>
+
+<p>What I actually did is as follows.</p>
+
+<h3 id="what-i-did">What I did</h3>
+
+<ul>
+<li><p>Environment</p>
+
+<ul>
+<li><p>OS: CentOS 7.0 (on VMware Player 7.1.0 on Windows 7)</p>
+
+<pre><code class="language-sh">[root@localhost ~]# uname -a
+Linux localhost.localdomain 3.10.0-229.el7.x86_64 #1 SMP Fri Mar 6 11:36:42 UTC 2015 x86_64 x86_64 x86_64 GNU/Linux
+</code></pre></li>
+
+<li><p>user: root</p></li>
+
+<li><p>Pcap4J version: 1.5.1-SNAPSHOT</p></li>
+
+<li><p>Docker version: 1.6.2</p></li>
+
+<li><p>Network interfaces:</p>
+
+<pre><code class="language-sh">  [root@localhost ~]# ip addr show
+  1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN
+      link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+      inet 127.0.0.1/8 scope host lo
+         valid_lft forever preferred_lft forever
+      inet6 ::1/128 scope host
+         valid_lft forever preferred_lft forever
+  2: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP qlen 1000
+      link/ether 00:0c:29:8e:95:27 brd ff:ff:ff:ff:ff:ff
+      inet 192.168.1.123/24 brd 192.168.1.255 scope global dynamic eth0
+         valid_lft 85975sec preferred_lft 85975sec
+      inet6 2601:282:8102:2623:20c:29ff:fe8e:9527/64 scope global dynamic
+         valid_lft 221469sec preferred_lft 221469sec
+      inet6 fe80::20c:29ff:fe8e:9527/64 scope link
+         valid_lft forever preferred_lft forever
+  3: docker0: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc noqueue state DOWN
+      link/ether 56:84:7a:fe:97:99 brd ff:ff:ff:ff:ff:ff
+      inet 172.17.42.1/16 scope global docker0
+         valid_lft forever preferred_lft forever
+</code></pre></li>
+</ul></li>
+</ul>
+
+<p><br></p>
+
+<ul>
+<li>Prerequisites:
+
+<ul>
+<li>Docker is installed and Docker service is started</li>
+<li><a href="http://man7.org/linux/man-pages/man1/nsenter.1.html">nsenter</a></li>
+</ul></li>
+</ul>
+
+<p><br></p>
+
+<ul>
+<li><p>Step by step</p>
+
+<ol>
+<li><p>Preparing</p>
+
+<p>Create a utility script <code>docker-pid</code> with the following content and place it somewhere in the <code>PATH</code>.</p>
+
+<pre><code class="language-sh">  #!/bin/sh
+  exec docker inspect --format '{{ .State.Pid }}' &quot;$@&quot;
+</code></pre>
+
+<p>This script show the PID of a docker container by name or ID.</p></li>
+
+<li><p>Pull the latest Pcap4J image</p>
+
+<pre><code class="language-sh">[root@localhost ~]# docker pull kaitoy/pcap4j
+</code></pre></li>
+
+<li><p>Start a Pcap4J container with wait mode</p>
+
+<pre><code class="language-sh">[root@localhost ~]# docker run --name pcap4j-br kaitoy/pcap4j:latest eth1 true
+</code></pre>
+
+<p>This container (<code>pcap4j-br</code>) waits for a ping to <code>eth0</code> on the container before staring capturing packets with <code>eth1</code> on the container.
+After the container starts, you will see messages like below:</p>
+
+<pre><code class="language-sh">17:49:21.196 [main] INFO  org.pcap4j.core.Pcaps - 3 NIF(s) found.
+eth0 (null)
+IP address: /172.17.0.3
+IP address: /fe80:0:0:0:42:acff:fe11:3
+</code></pre>
+
+<p>The messages say IP address of <code>eth0</code> is <code>172.17.0.3</code>. We will use it later.</p></li>
+
+<li><p>Configure a bridge interface</p>
+
+<p>Open another terminal and do the following:</p>
+
+<pre><code class="language-sh">[root@localhost ~]# ip link add eth1 link eth0 type macvlan mode bridge
+[root@localhost ~]# ip link set netns $(docker-pid pcap4j-br) eth1
+[root@localhost ~]# nsenter -t $(docker-pid pcap4j-br) -n ip link set eth1 up
+[root@localhost ~]# nsenter -t $(docker-pid pcap4j-br) -n ip route del default
+[root@localhost ~]# nsenter -t $(docker-pid pcap4j-br) -n ip addr add 192.168.1.200/24 dev eth1
+[root@localhost ~]# nsenter -t $(docker-pid pcap4j-br) -n ip route add default via 192.168.1.1 dev eth1
+</code></pre>
+
+<p>The above commands
+1) add an interface <code>eth1</code> bridged to <code>eth0</code> to the Docker host machine,
+2) move the <code>eth1</code> to the name space of <code>pcap4j-br</code>,
+3) start <code>eth1</code>,
+4) delete the default route in <code>pcap4j-br</code>,
+5) add an IP address <code>192.168.1.200/24</code> to <code>eth1</code>,
+6) and set the default route in <code>pcap4j-br</code> to <code>192.168.1.1</code>.</p>
+
+<p>Too much hassle? I agree. Let&rsquo;s use an awesome tool, <a href="https://github.com/jpetazzo/pipework">pipework</a>.
+This tool accomplishes the above 6 steps in easier way as shown below:</p>
+
+<pre><code class="language-sh">[root@localhost ~]# git clone https://github.com/jpetazzo/pipework.git
+[root@localhost ~]# cd pipework
+[root@localhost pipework]# ./pipework eth0 pcap4j-br 192.168.1.200/24@192.168.1.1
+</code></pre>
+
+<p>pipework uses <code>ip netns exec</code> command instead of <code>nsenter</code> to manipulate a container.
+Incidentally, <code>docker exec</code> didn&rsquo;t work for the step 3 due to an error &ldquo;<code>RTNETLINK answers: Operation not permitted</code>&rdquo;.</p>
+
+<p>In addition, in my case, because I was doing it on a VMware VM, I needed to enable the promiscuous mode of <code>eth0</code> (on the docker host machine) as follows:</p>
+
+<pre><code class="language-sh">[root@localhost ~]# ip link set dev eth0 promisc on
+</code></pre></li>
+
+<li><p>Try to poke the container</p>
+
+<p>You can now communicate with <code>pcap4j-br</code> using <code>eth1</code> <strong>from another host</strong>.
+I tried some pings from the VM&rsquo;s host to <code>pcap4j-br</code> and saw replies.</p>
+
+<p>Note that you can <strong>NOT</strong> communicate with <code>pcap4j-br</code> via <code>eth1</code> from the docker host.
+See the <a href="http://blog.oddbit.com/2014/08/11/four-ways-to-connect-a-docker/">Odd Bits blog</a> for the details.</p></li>
+
+<li><p>Start packet capturing</p>
+
+<p>Ping to <code>eth0</code> of <code>pcap4j-br</code> form the docker host to start packet capturing.</p>
+
+<pre><code class="language-sh">[root@localhost ~]# ping -c 1 172.17.0.3
+</code></pre></li>
+</ol></li>
+</ul>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f07%2f25%2fhow-to-capture-packets-on-a-local-network-with-pcap4j-container%2f&t=How%20to%20capture%20packets%20on%20a%20local%20network%20with%20Pcap4J%20container" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f07%2f25%2fhow-to-capture-packets-on-a-local-network-with-pcap4j-container%2f&text=How%20to%20capture%20packets%20on%20a%20local%20network%20with%20Pcap4J%20container&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f07%2f25%2fhow-to-capture-packets-on-a-local-network-with-pcap4j-container%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f07%2f25%2fhow-to-capture-packets-on-a-local-network-with-pcap4j-container%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f07%2f25%2fhow-to-capture-packets-on-a-local-network-with-pcap4j-container%2f&title=How%20to%20capture%20packets%20on%20a%20local%20network%20with%20Pcap4J%20container" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://tbd.kaitoy.xyz/tags/docker"><i class="fa fa-tags"></i> docker </a>
+                
+                <a href="https://tbd.kaitoy.xyz/tags/pcap4j"><i class="fa fa-tags"></i> pcap4j </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/07/31/docker-for-windows/">Docker for Windowsがコレジャナかった</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/">Windows Server 2016 TP5でWindows Containersにリトライ</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/04/16/pcap4j-in-kotlin/">Pcap4J in Kotlin</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/">Pcap4J in Groovy</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/03/19/zundoko-kiyoshi-with-pcap4j/"> ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">Pcap4J Meets Windows Containers</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/">Pcap4J with Four Native Libraries on Windows 10</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/01/10/pcap-ng-support-in-pcap4j/">pcap-ng support in Pcap4J</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/12/03/software-quality-award-2015/">Pcap4JがSoftware Quality Award 2015で入賞</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/">Step by Step to Add a Protocol Support to Pcap4J (Part 2)</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/08/09/step-by-step-to-add-a-protocol-support-to-pcap4j-1/">Step by Step to Add a Protocol Support to Pcap4J (Part 1)</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></li>
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+                <a href="https://tbd.kaitoy.xyz/2015/07/26/why-null-is-bad/">
+                  <i class="fa fa-chevron-left"></i>
+                  なぜNullはダメか
+                </a>
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://tbd.kaitoy.xyz/2015/07/22/getters-setters-evil/">
+                  Getter/Setterは悪だ。以上。
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2016  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

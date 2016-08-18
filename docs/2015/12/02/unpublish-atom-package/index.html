@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Atomパッケージをアンパブリッシュする | To Be Decided">
+    <meta property="og:url" content="https://tbd.kaitoy.xyz/2015/12/02/unpublish-atom-package/">
+    <meta property="og:description" content="Atomのパッケージをリリースすることをパブシッシュというが、リリースを取り消すことをアンパブリッシュという。 この記事はそのアンパブリッシュのやり方などについて。 筆者の環境は以下。 Windows 7 x64 Atom 1.2.4 Git for Windows 2.6.3 アンパブリッシュのやり方 リリースしたパッケージのプロジェクトのルートフォルダ(package.jsonがあるところ)にcdして、apm unpublishを実行するだけ。 または、任意のフォルダでapm unpublish &lt;パッケージ名&gt;を実行する。 特定のバージョンだけアンパブリッシュしたい場合は、apm unpublish &lt;パッケージ名&gt;@&lt;バージョン&gt;。例えばapm unpublish disturb-me@0.1.0。 注意すべき点 1: Git Bashでアンパブリッシュするとエラー Git for WindowsのGit Bash上で、Windows版Atomに付属するapmでapm unpublishを実行すると以下のエラーが出る。 Error: EINVAL, invalid argument at new Socket (net.js:157:18) at process.stdin (node.js:693:19) at Unpublish.module.exports.Unpublish.promptForConfirmation (C:\Users\Kaito\AppData\Local\atom\app-1.2.4\resources\app\apm\lib \unpublish.js:87:48) at Unpublish.module.exports.Unpublish.run (C:\Users\Kaito\AppData\Local\atom\app-1.2.4\resources\app\apm\lib\unpublish.js:126:21) at Object.module.exports.run (C:\Users\Kaito\AppData\Local\atom\app-1.2.4\resources\app\apm\lib\apm-cli.js:226:32) at Object.&lt;anonymous&gt; (C:\Users\Kaito\AppData\Local\atom\app-1.2.4\resources\app\apm\lib\cli.js:6:7) at Object.&lt;anonymous&gt; (C:\Users\Kaito\AppData\Local\atom\app-1.2.4\resources\app\apm\lib\cli.js:17:4) at Module._compile (module.js:456:26) at Object.Module._extensions..js (module.js:474:10) at Module.load (module.js:356:32) コマンドプロンプトでやるべし。 注意すべき点">
+    
+    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/atom_editor_logo.svg.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      Atomパッケージをアンパブリッシュする | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Wed, Dec 2, 2015</span>
+      <h2 class="title">Atomパッケージをアンパブリッシュする</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://tbd.kaitoy.xyz/images/atom_editor_logo.svg.png" alt="Atomパッケージをアンパブリッシュする">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p><a href="https://atom.io/"><strong>Atom</strong></a>のパッケージをリリースすることをパブシッシュというが、リリースを取り消すことをアンパブリッシュという。
+この記事はそのアンパブリッシュのやり方などについて。</p>
+
+<p>筆者の環境は以下。</p>
+
+<ul>
+<li>Windows 7 x64</li>
+<li>Atom 1.2.4</li>
+<li>Git for Windows 2.6.3</li>
+</ul>
+
+<h2 id="アンパブリッシュのやり方">アンパブリッシュのやり方</h2>
+
+<p>リリースしたパッケージのプロジェクトのルートフォルダ(package.jsonがあるところ)に<code>cd</code>して、<code>apm unpublish</code>を実行するだけ。</p>
+
+<p>または、任意のフォルダで<code>apm unpublish &lt;パッケージ名&gt;</code>を実行する。</p>
+
+<p>特定のバージョンだけアンパブリッシュしたい場合は、<code>apm unpublish &lt;パッケージ名&gt;@&lt;バージョン&gt;</code>。例えば<code>apm unpublish disturb-me@0.1.0</code>。</p>
+
+<h2 id="注意すべき点-1-git-bashでアンパブリッシュするとエラー">注意すべき点 1: Git Bashでアンパブリッシュするとエラー</h2>
+
+<p><a href="https://git-for-windows.github.io/">Git for Windows</a>のGit Bash上で、Windows版Atomに付属するapmで<code>apm unpublish</code>を実行すると以下のエラーが出る。</p>
+
+<pre><code class="language-text">Error: EINVAL, invalid argument
+    at new Socket (net.js:157:18)
+    at process.stdin (node.js:693:19)
+    at Unpublish.module.exports.Unpublish.promptForConfirmation (C:\Users\Kaito\AppData\Local\atom\app-1.2.4\resources\app\apm\lib
+
+\unpublish.js:87:48)
+    at Unpublish.module.exports.Unpublish.run (C:\Users\Kaito\AppData\Local\atom\app-1.2.4\resources\app\apm\lib\unpublish.js:126:21)
+    at Object.module.exports.run (C:\Users\Kaito\AppData\Local\atom\app-1.2.4\resources\app\apm\lib\apm-cli.js:226:32)
+    at Object.&lt;anonymous&gt; (C:\Users\Kaito\AppData\Local\atom\app-1.2.4\resources\app\apm\lib\cli.js:6:7)
+    at Object.&lt;anonymous&gt; (C:\Users\Kaito\AppData\Local\atom\app-1.2.4\resources\app\apm\lib\cli.js:17:4)
+    at Module._compile (module.js:456:26)
+    at Object.Module._extensions..js (module.js:474:10)
+    at Module.load (module.js:356:32)
+</code></pre>
+
+<p><br></p>
+
+<p>コマンドプロンプトでやるべし。</p>
+
+<h2 id="注意すべき点-2-アンパブリッシュはパブリッシュの真逆じゃない">注意すべき点 2: アンパブリッシュはパブリッシュの真逆じゃない</h2>
+
+<p><a href="https://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/#10-%E3%83%91%E3%83%96%E3%83%AA%E3%83%83%E3%82%B7%E3%83%A5">以前の記事</a>で
+<code>apm publish</code>は以下の処理をすると書いた。</p>
+
+<blockquote>
+<ol>
+<li>(初回のみ)パッケージ名をatom.ioに登録する。</li>
+<li>package.jsonのversionをインクリメントしてコミットする。<code>apm publish</code>にminorを指定するので、0.1.0になる。代わりにmajorかpatchを指定すると、1.0.0か0.0.1になる。</li>
+<li>Gitのタグを作る。</li>
+<li>GitHubに変更とタグをpushする。</li>
+<li>atom.ioにパッケージを登録する。</li>
+</ol>
+</blockquote>
+
+<p>この内、<code>apm unpublish</code>が取り消してくれるのは 5 だけ。</p>
+
+<p>3, 4 のタグ作成も取り消したいのであれば、</p>
+
+<pre><code class="language-sh">git tag -d v0.1.0
+git push origin :v0.1.0
+</code></pre>
+
+<p>のようにして、ローカルリポジトリとリモートリポジトリ両方のタグを削除する。</p>
+
+<p>また、2 のpackage.jsonのversion変更を取り消したいのであれば、<code>git log</code>で<code>Prepare 0.1.0 release</code>みたいなログのコミットをさがしてそのハッシュをメモり、</p>
+
+<pre><code class="language-sh">git revert &lt;ハッシュ&gt;
+</code></pre>
+
+<p>を実行して<code>git push</code>。(上記&lt;ハッシュ&gt;の部分は、<code>apm publish</code>後何もcommitしてないなら<code>HEAD</code>でもよし。)</p>
+
+<h2 id="注意すべき点-3-パッケージのキャッシュ">注意すべき点 3: パッケージのキャッシュ</h2>
+
+<p>とあるパッケージ、仮に<code>hoge</code>を開発していたとき、以下のような操作をした後に変な現象が起こった。</p>
+
+<ol>
+<li>バージョン<code>0.1.0</code>をパブリッシュ。</li>
+<li><code>hoge</code>をちゃんとインストールできるかを確認するために、
+
+<ol>
+<li><code>apm unlink hoge</code>で<code>.atom\packages</code>からリンクを削除。(<a href="https://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/#11-%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AE%E3%82%A2%E3%83%83%E3%83%97%E3%83%87%E3%83%BC%E3%83%88%E3%81%AE%E9%96%8B%E7%99%BA">以前</a>、パブリッシュすると<code>.atom\packages</code>にはパッケージの実ファイルが入ると書いたが、リンクのままだった。勘違い?)</li>
+<li>AtomのSettingsから<code>hoge</code>をインストール。</li>
+</ol></li>
+<li>ちゃんとインストールできなかったので<code>apm unpublish hoge</code>して、バージョンも戻す。</li>
+<li><code>hoge</code>を修正して、再度<code>0.1.0</code>としてパブリッシュ。</li>
+<li><code>hoge</code>をちゃんとインストールできるかを再度確認するために、
+
+<ol>
+<li><code>apm unlink hoge</code>して、</li>
+<li>AtomのSettingsから<code>hoge</code>をインストール。</li>
+</ol></li>
+</ol>
+
+<p>これをしたら最終的になぜか修正前の<code>hoge</code>がインストールされた。
+どうやらキャッシュがある模様ということで、<a href="https://github.com/atom/apm/blob/master/src/install.coffee">apmのソース</a>をみたら、パッケージのインストール中に以下のようなことをしていることがわかった。</p>
+
+<ol>
+<li>AtomのサイトのREST API (<a href="https://www.atom.io/api/packages/hoge/">https://www.atom.io/api/packages/hoge/</a>) からパッケージ情報を取得。</li>
+<li>また別のREST API (<a href="https://www.atom.io/api/packages/hoge/versions/0.1.0/tarball">https://www.atom.io/api/packages/hoge/versions/0.1.0/tarball</a>) を実行して、パッケージのアーカイブ(tar.gz)をテンポラリフォルダにダウンロード。
+どうもこれは実際にはGitHubの<a href="https://help.github.com/articles/about-releases/">Releases</a>からダウンロードしている模様。
+因みにGitHub Releasesのアーカイブは、リポジトリにタグが追加されると自動で作られる。</li>
+<li><code>npm install</code>でそのアーカイブを指定してインストール。</li>
+</ol>
+
+<p>この手順の 2 をやる前に、<code>.atom\.apm\hoge\0.1.0\package.tgz</code>を探して、見つかるとダウンロードせずにこっちをインストールする。
+ソースの雰囲気から、<code>.atom\.apm\</code>に入っているのはキャッシュのようで、いつ作られるかはよくわからないが、これが上記変な現象の原因ぽい。</p>
+
+<p>ということで、<code>.atom\.apm\hoge\0.1.0\package.tgz</code>を消して再度インストールしたら無事修正後の<code>hoge</code>が入った。</p>
+
+<p><br></p>
+
+<p>このキャッシュの件や、<code>apm unpublish</code>がパッケージのバージョンを戻さないところをみると、同じバージョンを再度パブリッシュするのはダメな操作なのかもしれない。
+修正したかったらバージョンを上げろということなのかも。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f02%2funpublish-atom-package%2f&t=Atom%e3%83%91%e3%83%83%e3%82%b1%e3%83%bc%e3%82%b8%e3%82%92%e3%82%a2%e3%83%b3%e3%83%91%e3%83%96%e3%83%aa%e3%83%83%e3%82%b7%e3%83%a5%e3%81%99%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f02%2funpublish-atom-package%2f&text=Atom%e3%83%91%e3%83%83%e3%82%b1%e3%83%bc%e3%82%b8%e3%82%92%e3%82%a2%e3%83%b3%e3%83%91%e3%83%96%e3%83%aa%e3%83%83%e3%82%b7%e3%83%a5%e3%81%99%e3%82%8b&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f02%2funpublish-atom-package%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f02%2funpublish-atom-package%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f02%2funpublish-atom-package%2f&title=Atom%e3%83%91%e3%83%83%e3%82%b1%e3%83%bc%e3%82%b8%e3%82%92%e3%82%a2%e3%83%b3%e3%83%91%e3%83%96%e3%83%aa%e3%83%83%e3%82%b7%e3%83%a5%e3%81%99%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://tbd.kaitoy.xyz/tags/atom"><i class="fa fa-tags"></i> atom </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/12/21/hello-react/">ReactをAtomパッケージ開発に使ってみた</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/12/19/atom-impress/">impress.jsでのプレゼン資料作成をサポートするAtomパッケージ - impress</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/11/16/thanks-bye-bye-japanese-wrap/">ありがとうさようならjapanese-wrap</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/09/07/caching-gifs-on-atom/">AtomにおけるGIF画像のキャッシュ</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/09/06/disturb-me/">Atomウィンドウ内で画像を動かすパッケージ - disturb-me</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/">Atomパッケージを作る - ワード境界を日本語対応させるパッケージ: japanese-word-selection</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+                <a href="https://tbd.kaitoy.xyz/2015/12/03/software-quality-award-2015/">
+                  <i class="fa fa-chevron-left"></i>
+                  Pcap4JがSoftware Quality Award 2015で入賞
+                </a>
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://tbd.kaitoy.xyz/2015/11/16/thanks-bye-bye-japanese-wrap/">
+                  ありがとうさようならjapanese-wrap
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2016  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

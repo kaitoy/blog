@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="ソフトウェアプロジェクトの7つの大罪 | To Be Decided">
+    <meta property="og:url" content="https://tbd.kaitoy.xyz/2016/06/25/seven-deadly-sins-of-a-software-project/">
+    <meta property="og:description" content="このエントリでは、Yegor Bugayenkoによる記事、Seven Deadly Sins of a Software Projectを紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 保守性は近代ソフトウェア開発において最も重要な美徳だ。 保守性は基本的に、新規開発者が本格的な修正を始める前に必要な学習時間で測ることができる。 学習時間が長いほど保守性は低い。 必要な学習時間が無限に近いプロジェクトもあるが、これは文字通り保守不能だ。 私はソフトウェアを保守不能にする7つの基本的で致命的な罪があると考えている。 それらについてここに書く。 アンチパターン 不幸にも、我々が使っているプログラミング言語は柔軟すぎる。 可能なことが多過ぎ、禁止されていることは少なすぎる。 例えばJavaは、数千のメソッドを持った単一の「クラス」でアプリケーション全体を記述することに何の反抗もしない。 このアプリケーションは技術的にはコンパイルして実行できる。 しかしこれはゴッドオブジェクトと呼ばれるよく知られたアンチパターンだ。 つまり、アンチパターンは技術的には設計に取り入れることができるが、一般的には取り入れるべきではないとされている。 言語ごとに多くのアンチパターンがある。 プロダクトに使われているアンチパターンは、生きている有機体の中の腫瘍のようなものだ。 いったん成長し始めると止めるのは非常に難しい。 やがて体全体が死に至る。 やがてソフトウェア全体が保守不能になり、書き直さなければならなくなる。 ひとたびアンチパターンを使ってしまうと、その量は次第に増え、「腫瘍」は育つばかりだ。 これは特にオブジェクト指向言語(Java、C&#43;&#43;、Ruby、Python)に当てはまる。 これらが手続き型言語(C、Fortran、COBOL)から多くを引き継いでしまっているからだ。 また、OOP開発者が手続き型で命令的な思考をする傾向にあるからだ。残念なことに。 ところで、既存の有名なアンチパターンのほかに、私は以下のものもダメなコーディング法だと考えている。 NULL参照 ユーティリティクラス 可変オブジェクト GetterとSetter オブジェクト関係マッピング(ORM) シングルトン Controllers、Managers、Validators Public Static メソッド キャスト 私ができる実践的な提案は、読んで学ぶということだけだ。 ここに挙げた本か私の著書「&ldquo;Elegant Objects」が多分助けになるだろう。 常にソフトウェアの品質を疑い、「動く」ということだけで満足してはいけない。 ちょうど癌のように、診断が早ければ早いほど生き残る可能性が大きい。 追跡不能な変更 コミット履歴を見るとき、全ての個々の変更に対して、何を、誰が、なぜ変更したのかがわからないといけない。 さらに、これら3つの情報を得るのにかかる時間は秒単位で計測しないといけない。 殆どのプロジェクトがこのようにできていない。 以下に実践的な提案を示す。 常にチケットを使う プロジェクトやチームがどんなに小さくても、例え一人だけでも、修正しようとしている全ての問題に対してチケット(GitHub issues)を作れ。 チケットに問題の簡単な説明とそれに対する考えを記述しろ。 このチケットをその問題に関する全ての情報の一時的なストレージとして使え。 将来、他の誰かがその「不可解なコミット」が何であるかを理解するために参照する可能性のある全ての情報をそこに書け。 コミットからチケットを参照する 言うまでもないが、全てのコミットにはメッセージが付いていないといけない。 メッセージのないコミットはまったくひどい悪習だ。議論の余地はない。 しかしメッセージだけでは不十分だ。 全てのメッセージはチケット番号で始まらないといけない。 GitHub(君ももちろん使っていると思うが)は自動でコミットとチケットをリンクし、変更の追跡可能性を高めてくれる。 何も消さない Gitは「強制」push、つまりサーバに既にあるブランチ全体を上書きするpushを許している。 これは開発履歴を破壊する方法の例のひとつだ。 また、GitHubのチケットを「きれい」にするためにコメントを削除するのをよく見るが、これはまったくの間違いだ。 何であれ決して消すな。 履歴がどんなに汚く(または乱雑に)見えても、そのまま残しておくことだ。 アドホックリリース 全てのソフトウェアはエンドユーザに届けられる前にパッケージングされなければいけない。 Javaのライブラリであれば.jarファイルにパッケージングされリポジトリにリリースされないといけない。 ウェブアプリケーションであればプラットフォームにデプロイされないといけない。 プロダクトの大きさにかかわらず、テスト、パッケージング、デプロイする正規の手順は常にあるべきだ。 理想的な解決策はこの手順を自動化し、コマンドラインから単一のコマンドで実行できるようにすることだ。 $ ./release.sh ...">
+    
+    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/teamedio_logo.svg">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      ソフトウェアプロジェクトの7つの大罪 | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Sat, Jun 25, 2016</span>
+      <h2 class="title">ソフトウェアプロジェクトの7つの大罪</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="ソフトウェアプロジェクトの7つの大罪">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>このエントリでは、Yegor Bugayenkoによる記事、<a href="http://www.yegor256.com/2015/06/08/deadly-sins-software-project.html">Seven Deadly Sins of a Software Project</a>を紹介する。
+(Yegorから和訳と転載の許可は得た。)
+以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。</p>
+
+<hr />
+
+<p>保守性は近代ソフトウェア開発において<a href="http://www.yegor256.com/2014/10/26/hacker-vs-programmer-mentality.html">最も重要な美徳だ</a>。
+<a href="https://ja.wikipedia.org/wiki/%E4%BF%9D%E5%AE%88%E6%80%A7">保守性</a>は基本的に、新規開発者が本格的な修正を始める前に必要な学習時間で測ることができる。
+学習時間が長いほど保守性は低い。
+必要な学習時間が無限に近いプロジェクトもあるが、これは文字通り保守不能だ。
+私はソフトウェアを保守不能にする7つの基本的で致命的な罪があると考えている。
+それらについてここに書く。</p>
+
+<h2 id="アンチパターン">アンチパターン</h2>
+
+<p><img alt="ap.gif" src="/images/seven-deadly-sins-of-a-software-project/ap.gif" width="300" style="margin: 0px auto; display: block;"></p>
+
+<p>不幸にも、我々が使っているプログラミング言語は柔軟すぎる。
+可能なことが多過ぎ、禁止されていることは少なすぎる。
+例えばJavaは、数千のメソッドを持った単一の「クラス」でアプリケーション全体を記述することに何の反抗もしない。
+このアプリケーションは技術的にはコンパイルして実行できる。
+しかしこれは<a href="https://maku77.github.io/program/god-class.html">ゴッドオブジェクト</a>と呼ばれるよく知られたアンチパターンだ。</p>
+
+<p>つまり、<a href="https://ja.wikipedia.org/wiki/%E3%82%A2%E3%83%B3%E3%83%81%E3%83%91%E3%82%BF%E3%83%BC%E3%83%B3">アンチパターン</a>は技術的には設計に取り入れることができるが、一般的には取り入れるべきではないとされている。
+言語ごとに多くのアンチパターンがある。
+プロダクトに使われているアンチパターンは、生きている有機体の中の腫瘍のようなものだ。
+いったん成長し始めると止めるのは非常に難しい。
+やがて体全体が死に至る。
+やがてソフトウェア全体が保守不能になり、書き直さなければならなくなる。</p>
+
+<p>ひとたびアンチパターンを使ってしまうと、その量は次第に増え、「腫瘍」は育つばかりだ。</p>
+
+<p>これは特にオブジェクト指向言語(Java、C++、Ruby、Python)に当てはまる。
+これらが手続き型言語(C、Fortran、COBOL)から多くを引き継いでしまっているからだ。
+また、OOP開発者が手続き型で命令的な思考をする傾向にあるからだ。残念なことに。</p>
+
+<p>ところで、<a href="https://ja.wikipedia.org/wiki/%E3%82%A2%E3%83%B3%E3%83%81%E3%83%91%E3%82%BF%E3%83%BC%E3%83%B3">既存の有名なアンチパターン</a>のほかに、私は以下のものもダメなコーディング法だと考えている。</p>
+
+<ul>
+<li><a href="https://tbd.kaitoy.xyz/2015/07/26/why-null-is-bad/">NULL参照</a></li>
+<li><a href="https://tbd.kaitoy.xyz/2016/01/03/oop-alternative-to-utility-classes/">ユーティリティクラス</a></li>
+<li><a href="http://www.yegor256.com/2014/06/09/objects-should-be-immutable.html">可変オブジェクト</a></li>
+<li><a href="https://tbd.kaitoy.xyz/2015/07/22/getters-setters-evil/">GetterとSetter</a></li>
+<li><a href="https://tbd.kaitoy.xyz/2015/09/13/orm-is-offensive-anti-pattern/">オブジェクト関係マッピング(ORM)</a></li>
+<li>シングルトン</li>
+<li><a href="http://www.yegor256.com/2015/03/09/objects-end-with-er.html">Controllers、Managers、Validators</a></li>
+<li><a href="http://www.yegor256.com/2015/02/20/utility-classes-vs-functional-programming.html">Public Static メソッド</a></li>
+<li><a href="http://www.yegor256.com/2015/04/02/class-casting-is-anti-pattern.html">キャスト</a></li>
+</ul>
+
+<p>私ができる実践的な提案は、読んで学ぶということだけだ。
+<a href="http://www.yegor256.com/2015/04/22/favorite-software-books.html">ここ</a>に挙げた本か私の著書「<a href="http://www.yegor256.com/elegant-objects.html">&ldquo;Elegant Objects</a>」が多分助けになるだろう。
+常にソフトウェアの品質を疑い、「動く」ということだけで満足してはいけない。
+ちょうど癌のように、診断が早ければ早いほど生き残る可能性が大きい。</p>
+
+<h2 id="追跡不能な変更">追跡不能な変更</h2>
+
+<p><img alt="uc.gif" src="/images/seven-deadly-sins-of-a-software-project/uc.gif" width="300" style="margin: 0px auto; display: block;"></p>
+
+<p>コミット履歴を見るとき、全ての個々の変更に対して、何を、誰が、なぜ変更したのかがわからないといけない。
+さらに、これら3つの情報を得るのにかかる時間は秒単位で計測しないといけない。
+殆どのプロジェクトがこのようにできていない。
+以下に実践的な提案を示す。</p>
+
+<h4 id="常にチケットを使う">常にチケットを使う</h4>
+
+<p>プロジェクトやチームがどんなに小さくても、例え一人だけでも、修正しようとしている全ての問題に対してチケット(GitHub issues)を作れ。
+チケットに問題の簡単な説明とそれに対する考えを記述しろ。
+このチケットをその問題に関する全ての情報の一時的なストレージとして使え。
+将来、他の誰かがその「不可解なコミット」が何であるかを理解するために参照する可能性のある全ての情報をそこに書け。</p>
+
+<h4 id="コミットからチケットを参照する">コミットからチケットを参照する</h4>
+
+<p>言うまでもないが、全てのコミットにはメッセージが付いていないといけない。
+メッセージのないコミットはまったくひどい悪習だ。議論の余地はない。
+しかしメッセージだけでは不十分だ。
+全てのメッセージはチケット番号で始まらないといけない。
+GitHub(君ももちろん使っていると思うが)は自動でコミットとチケットをリンクし、変更の追跡可能性を高めてくれる。</p>
+
+<h4 id="何も消さない">何も消さない</h4>
+
+<p>Gitは「強制」push、つまりサーバに既にあるブランチ全体を上書きするpushを許している。
+これは開発履歴を破壊する方法の例のひとつだ。
+また、GitHubのチケットを「きれい」にするためにコメントを削除するのをよく見るが、これはまったくの間違いだ。
+何であれ決して消すな。
+履歴がどんなに汚く(または乱雑に)見えても、そのまま残しておくことだ。</p>
+
+<h2 id="アドホックリリース">アドホックリリース</h2>
+
+<p><img alt="ahr.gif" src="/images/seven-deadly-sins-of-a-software-project/ahr.gif" width="300" style="margin: 0px auto; display: block;"></p>
+
+<p>全てのソフトウェアはエンドユーザに届けられる前にパッケージングされなければいけない。
+Javaのライブラリであれば<code>.jar</code>ファイルにパッケージングされリポジトリにリリースされないといけない。
+ウェブアプリケーションであればプラットフォームにデプロイされないといけない。
+プロダクトの大きさにかかわらず、テスト、パッケージング、デプロイする正規の手順は常にあるべきだ。</p>
+
+<p>理想的な解決策はこの手順を自動化し、コマンドラインから単一のコマンドで実行できるようにすることだ。</p>
+
+<pre><code class="language-cmd">$ ./release.sh
+...
+DONE (took 98.7s)
+</code></pre>
+
+<p>ほとんどのプロジェクトはこれに程遠い。
+そのリリースプロセスにはマジックが含まれていて、担当者(DevOpともいう)はあちらこちらのボタンをクリックしないといけない。
+どこかにログインして、いくつかの指標をチェックして、など。
+このようなアドホックリリース手順は、ソフトウェアエンジニアリング業界全体でいまだに典型的な罪である。</p>
+
+<p>ここで私ができる実践的なアドバイスはひとつだけだ。自動化しろ。
+私は自動化に<a href="http://www.yegor256.com/2014/09/11/deployment-script-vs-rultor.html">rultor.com</a>を使っているが、好きなのを使えばよい。
+重要なのは、手順全体が完全自動化されていてコマンドラインから実行できることだ。</p>
+
+<h2 id="自発的静的解析">自発的静的解析</h2>
+
+<p><img alt="vsa.gif" src="/images/seven-deadly-sins-of-a-software-project/vsa.gif" width="300" style="margin: 0px auto; display: block;"></p>
+
+<p><a href="https://ja.wikipedia.org/wiki/%E9%9D%99%E7%9A%84%E3%82%B3%E3%83%BC%E3%83%89%E8%A7%A3%E6%9E%90">静的解析</a>はコードの見た目を良くしてくれる。
+見た目がよくなると、必然的に上手く動くようになる。
+しかしこれは、チームの全員が静的解析ツールに指示されたルールに従うことを強制(!)されているときだけ有効だ。
+私はこれについて<a href="http://www.yegor256.com/2014/08/13/strict-code-quality-control.html">Strict Control of Java Code Quality</a>に書いた。
+私はJavaプロジェクトでは<a href="http://www.qulice.com/">qulice.com</a>を使い、Rubyでは<a href="https://github.com/bbatsov/rubocop">rubocop</a>を使うが、他にも似たようなツールがほとんど全ての言語にある。</p>
+
+<p>どんなツールを使ってもいいが、強制しなければいけない!
+静的解析ツールを使っているほとんどのプロジェクトで、開発者は単に見栄えのいいレポートを生成するだけで、コードの書き方を直そうとはしない。
+そのような「自発的な」アプローチはプロジェクトにとって何のメリットもない。そればかりか、品質への錯覚を生む。</p>
+
+<p>私が言いたいのは、静的解析は開発パイプラインの中の必須ステップでなければいけないということだ。
+もし静的解析ルールがひとつでも破られたら、ビルドを成功にしてはいけない。</p>
+
+<h2 id="未知のテストカバレージ">未知のテストカバレージ</h2>
+
+<p><img alt="utc.gif" src="/images/seven-deadly-sins-of-a-software-project/utc.gif" width="300" style="margin: 0px auto; display: block;"></p>
+
+<p>簡単に言うと、<a href="https://ja.wikipedia.org/wiki/%E3%82%B3%E3%83%BC%E3%83%89%E7%B6%B2%E7%BE%85%E7%8E%87">テストカバレージ</a>はソフトウェアがユニットテストや統合テストでテストされた度合いだ。
+カバレージが高いほど、テスト中に実行されたコードの量が多い。
+カバレージ高いのは明らかに良いことだ。</p>
+
+<p>しかし、多くのプロジェクトで開発者は単にカバレージを知らない。
+この指標を計測しないのだ。
+テストは書いているかもしれないが、それがソフトウェアのどの程度深くまで行き渡っているか、どの部分がテストされていないのか、誰も全く知らない。
+このような状態よりは、カバレージが低くても、計測されて皆にレポートされている状態の方がかなり良い。、</p>
+
+<p>高いカバレージは高い品質を保証するものではない。
+これは明らかだ。
+しかし、テストカバレージが未知であることは保守性に問題があるという明確な印だ。
+プロジェクトに入った新規開発者は、修正がどの程度カバレージに影響を与えるかを確認できなければいけない。
+理想的には、テストカバレージは静的解析でチェックされ、事前に決められた閾値(普通80%位)を下回ったらビルドが失敗するようになっているべきだ。</p>
+
+<h2 id="ノンストップ開発">ノンストップ開発</h2>
+
+<p><img alt="nd.gif" src="/images/seven-deadly-sins-of-a-software-project/nd.gif" width="300" style="margin: 0px auto; display: block;"></p>
+
+<p>ここでノンストップが意味するのは、マイルストーンもリリースも無いということだ。
+書いているソフトウェアの種類によらず、頻繁に<a href="http://semver.org/lang/ja/">バージョニング</a>とリリースをしないといけない。
+明確なリリース履歴が無いプロジェクトは保守不能なガラクタだ。</p>
+
+<p>これは概ね、保守性とは私が君のコードを読んで君を理解できるかということだからだ。</p>
+
+<p>私がソースとそのコミットとリリース履歴を見るとき、開発者の意図が何で、プロジェクトが一年前に何をしていて、今どこに向かっているのか、ロードマップは何か、といったことを説明できなければいけない。
+こうした情報の全ては、ソースコード中とGit履歴(こちらがより重要)に入っていなければいけない。</p>
+
+<p><a href="https://git-scm.com/book/en/v2/Git-Basics-Tagging">Gitタグ</a>と<a href="https://github.com/blog/1547-release-your-software">GitHubリリース</a>はそうした情報を残すための強力な道具だ。
+これらをめいっぱい使え。
+また、それぞれのバージョンのバイナリは直接ダウンロードできるようにしておくことを忘れるな。
+プロジェクトが今バージョン3.4を開発していたとしても、即座にバージョン0.1.3をダウンロードしてテストできなければいけない。</p>
+
+<h2 id="ドキュメントに載っていないインターフェース">ドキュメントに載っていないインターフェース</h2>
+
+<p><img alt="ui.gif" src="/images/seven-deadly-sins-of-a-software-project/ui.gif" width="300" style="margin: 0px auto; display: block;"></p>
+
+<p>全てのソフトウェアは、その機能を使うためのインターフェースを持っている。
+RubyのGemであれば、エンドユーザが利用できるクラスとメソッドがある。
+Webアプリケーションであれば、エンドユーザが参照して操作できるWebページがある。
+全てのソフトウェアプロジェクトはインターフェースを持ち、そのインターフェースは入念にドキュメント化されていないといけない。</p>
+
+<p>これまでに挙げた全ての項目のように、これも保守性に関することだ。
+プロジェクトの新規プログラマは、ソフトウェアをインターフェースから学び始める。
+そのソフトウェアが何をするものなのかを理解して自分で使ってみる、ということができなければいけない。</p>
+
+<p>私はここでユーザに対するドキュメンテーションの話をしている。開発者に対するものではない。
+一般的に、ソフトウェア内部のドキュメンテーションには反対だ。
+私は<a href="http://agilemanifesto.org/iso/ja/">アジャイルソフトウェア開発宣言</a>に完全に同意している。
+動くソフトウェアは包括的なドキュメントよりもはるかに重要だ。
+しかしそれは、(開発者ではなく)ユーザが読むための「外部」ドキュメントのことを指しているわけではない。</p>
+
+<p>要は、エンドユーザとソフトウェアとの間の相互作用はドキュメントに明記されていなければいけない。</p>
+
+<p>ライブラリであれば、エンドユーザはそれを使うソフトウェア開発者だ。
+コントリビュータではなく、それを「ブラックボックス」として単に使うだけの開発者だ。</p>
+
+<p><div class="embed video-player" style="text-align: center">
+  <iframe class="youtube-player" type="text/html" width="320" height="193" src="https://www.youtube.com/embed/ZtWmlKi3ivc" allowfullscreen frameborder="0">
+  </iframe>
+</div>
+</p>
+
+<hr />
+
+<p>以上がYegorの記事。</p>
+
+<p>一般的に認知されているベストプラクティスやアジャイル感に沿った、Yegorにしては丸い内容だ。
+むしろ、現在は既にアジャイルは完全に浸透して、その次のステップとしてDevOpsをめざす時代になっているので、開発サイドだけに言及したこの内容だと少々保守的で古臭く感じさえする。</p>
+
+<p>ただ、改めてだけど、「<a href="http://localhost:1313/2016/06/25/seven-deadly-sins-of-a-software-project/#%E8%BF%BD%E8%B7%A1%E4%B8%8D%E8%83%BD%E3%81%AA%E5%A4%89%E6%9B%B4">追跡不能な変更</a>」に書いてあることはいいプラクティスだと思う。
+GitHubで開発するときは、全てのコミットがIssuesかPull Requestsに紐付いていて、相互に導出可能であると便利そう。
+面倒だからやったことないけど。</p>
+
+<p><br></p>
+
+<p>「<a href="http://localhost:1313/2016/06/25/seven-deadly-sins-of-a-software-project/#%E3%83%89%E3%82%AD%E3%83%A5%E3%83%A1%E3%83%B3%E3%83%88%E3%81%AB%E8%BC%89%E3%81%A3%E3%81%A6%E3%81%84%E3%81%AA%E3%81%84%E3%82%A4%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%95%E3%82%A7%E3%83%BC%E3%82%B9">ドキュメントに載っていないインターフェース</a>」に書いてあることはちょっと引っかかる。
+アメリカ人ってのは、分厚い細かいドキュメントなんか書いても誰も読まねーよ、ってのが基本のスタンスだと思っていた。
+Steve Jobsだったら、ドキュメントが必要なくなるまでUIを洗練させろとか言いそうだ。
+もしくはユースケースベースのざっくりとしたマニュアルをメインにしたり。</p>
+
+<p>全てのインターフェースを入念にドキュメントしろっていうのはなんだかとても日本的だ。
+そうしてくれた方が使う方は助かるんだけど、作る側はドキュメントの保守が大変だ。かなり頑張って気を使っても、ドキュメントと実装のずれってのは本当に簡単に頻繁に起こる。特に大きい会社の大きいプロジェクトで、開発チームとは別にマニュアルチームがあるような場合、このずれはほとんど全く避けられない。</p>
+
+<p>自然言語でのプログラミングへの希望が大昔からあるようだけど、そんなものより、プログラミング言語で書いたものから自然言語のマニュアルを生成してくれるもののほうがよっぽど価値があると思う。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f06%2f25%2fseven-deadly-sins-of-a-software-project%2f&t=%e3%82%bd%e3%83%95%e3%83%88%e3%82%a6%e3%82%a7%e3%82%a2%e3%83%97%e3%83%ad%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e3%81%ae7%e3%81%a4%e3%81%ae%e5%a4%a7%e7%bd%aa" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f06%2f25%2fseven-deadly-sins-of-a-software-project%2f&text=%e3%82%bd%e3%83%95%e3%83%88%e3%82%a6%e3%82%a7%e3%82%a2%e3%83%97%e3%83%ad%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e3%81%ae7%e3%81%a4%e3%81%ae%e5%a4%a7%e7%bd%aa&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f06%2f25%2fseven-deadly-sins-of-a-software-project%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f06%2f25%2fseven-deadly-sins-of-a-software-project%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f06%2f25%2fseven-deadly-sins-of-a-software-project%2f&title=%e3%82%bd%e3%83%95%e3%83%88%e3%82%a6%e3%82%a7%e3%82%a2%e3%83%97%e3%83%ad%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e3%81%ae7%e3%81%a4%e3%81%ae%e5%a4%a7%e7%bd%aa" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://tbd.kaitoy.xyz/tags/yegor256"><i class="fa fa-tags"></i> yegor256 </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/02/09/continuous-integration-is-dead/">継続的インテグレーションは死んだ</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/01/11/who-is-software-architect/">ソフトウェアアーキテクトは何をするのか?</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/01/03/oop-alternative-to-utility-classes/">オブジェクト指向プログラミングにおいてユーティリティクラスに代わるもの</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/12/03/software-quality-award-2015/">Pcap4JがSoftware Quality Award 2015で入賞</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/">よいオブジェクトの七つの美徳</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/09/13/orm-is-offensive-anti-pattern/">ORMは不快なアンチパターン</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/07/26/why-null-is-bad/">なぜNullはダメか</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/07/22/getters-setters-evil/">Getter/Setterは悪だ。以上。</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/07/18/first-post/">First Post</a></li>
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+                <a href="https://tbd.kaitoy.xyz/2016/07/01/https-support-by-cloudflare/">
+                  <i class="fa fa-chevron-left"></i>
+                  CloudFlareでブログをHTTPS化
+                </a>
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://tbd.kaitoy.xyz/2016/04/16/pcap4j-in-kotlin/">
+                  Pcap4J in Kotlin
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2016  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

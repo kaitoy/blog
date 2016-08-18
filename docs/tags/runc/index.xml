@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>To Be Decided </title>
+    <link>https://tbd.kaitoy.xyz/tags/runc/</link>
+    <language>en-us</language>
+    <author>Kaito Yamada</author>
+    <rights>(C) 2016</rights>
+    <updated>2015-07-19 16:25:03 -0600 MDT</updated>
+
+    
+      
+        <item>
+          <title>Pcap4J container with runC</title>
+          <link>https://tbd.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/</link>
+          <pubDate>Sun, 19 Jul 2015 16:25:03 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/</guid>
+          <description>
+
+&lt;p&gt;I tried to run a &lt;a href=&#34;https://registry.hub.docker.com/u/kaitoy/pcap4j/&#34;&gt;Pcap4J container&lt;/a&gt; with &lt;a href=&#34;https://runc.io/&#34;&gt;runC&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;what-is-pcap4j&#34;&gt;What is Pcap4J?&lt;/h2&gt;
+
+&lt;p&gt;Pcap4J is a Java library for capturing, crafting, and sending packets.
+It&amp;rsquo;s actually a Java wrapper for libpcap/WinPcap plus packet analyzer.
+We can see the details in its &lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;README&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;what-is-runc&#34;&gt;What is runC?&lt;/h2&gt;
+
+&lt;p&gt;runC is a container runtime developed by Docker and released on June 22, 2015.
+With runC, we can start a container from a docker image without the docker service or the docker command.&lt;/p&gt;
+
+&lt;p&gt;That said, as of now, runC cannot directory use docker images.
+We need to create a container form a docker image and export its filesystem before executing runC.&lt;/p&gt;
+
+&lt;p&gt;It seems currently it supports only Linux but Windows support is in the roadmap.&lt;/p&gt;
+
+&lt;h2 id=&#34;what-i-did&#34;&gt;What I did&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Environment
+
+&lt;ul&gt;
+&lt;li&gt;OS: CentOS 7 (on VMware Player 7.1.0 on Windows 7)&lt;/li&gt;
+&lt;li&gt;user: root&lt;/li&gt;
+&lt;li&gt;runC version: 0.2&lt;/li&gt;
+&lt;li&gt;Pcap4J version: 1.5.1-SNAPSHOT&lt;/li&gt;
+&lt;li&gt;Docker version: 1.6.2&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Prerequisites:
+
+&lt;ul&gt;
+&lt;li&gt;Docker is installed and Docker service is started&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://golang.org/&#34;&gt;Go&lt;/a&gt; is installed&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Step by step&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Install runC&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# mkdir -p $GOPATH/src/github.com/opencontainers
+[root@localhost ~]# cd $GOPATH/src/github.com/opencontainers
+[root@localhost opencontainers]# git clone https://github.com/opencontainers/runc
+[root@localhost opencontainers]# cd runc
+[root@localhost runc]# make &amp;amp;&amp;amp; make install
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Pull the Pcap4J docker image.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# docker pull kaitoy/pcap4j
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Create a container from the image.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# docker run -d --name pcap4j-tmp kaitoy/pcap4j:latest /bin/bash
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Export the container&amp;rsquo;s file system.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# mkdir /tmp/pcap4j-test
+[root@localhost pcap4j-test]# cd /tmp/pcap4j-test
+[root@localhost pcap4j-test]# docker export pcap4j-tmp &amp;gt; pcap4j.tar
+[root@localhost pcap4j-test]# tar xf pcap4j.tar
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We are now free from Docker. We don&amp;rsquo;t need Docker service, Docker command, Docker images, nor Docker containers anymore.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Generate a container config file.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost pcap4j-test]# runc spec | sed -e &#39;s/rootfs/\/root\/Desktop\/pcap4j-container/&#39; -e &#39;s/&amp;quot;readonly&amp;quot;: true/&amp;quot;readonly&amp;quot;: false/&#39; -e &#39;s/&amp;quot;NET_BIND_SERVICE&amp;quot;/&amp;quot;NET_BIND_SERVICE&amp;quot;,&amp;quot;NET_ADMIN&amp;quot;,&amp;quot;NET_RAW&amp;quot;/&#39; &amp;gt; config.json
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In the above command, &lt;code&gt;runc spec&lt;/code&gt; generates a standard container config file and &lt;code&gt;sed&lt;/code&gt; modifies it for Pcap4J.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Run a container.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost pcap4j-test]# runc
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;In the container, enable lo.&lt;/p&gt;
+
+&lt;p&gt;As far as I saw, lo is the only interface we can use in a container.
+So, I used it to capture packets.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;sh-4.1# ifconfig lo up
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Generate a script to ping localhost and run it background.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;sh-4.1# cd /usr/local/src/pcap4j/bin
+sh-4.1# echo ping 127.0.0.1 \&amp;gt; /dev/null &amp;gt; pinger.sh
+sh-4.1# chmod +x pinger.sh
+sh-4.1# ./pinger.sh &amp;amp;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In the next step, ICMP packets from this pinger.sh will be captured.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Generate a script to start capturing packets with Pcap4J and run it.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;sh-4.1# cat runGetNextPacket.sh | sed -e &#39;s/eth0/lo/&#39; &amp;gt; foo.sh
+sh-4.1# chmod +x foo.sh
+sh-4.1# ./foo.sh
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We will see the ICMP packets are dumped on the terminal. That&amp;rsquo;s it!&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+      
+    
+
+  </channel>
+</rss>

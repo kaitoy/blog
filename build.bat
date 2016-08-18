@@ -1,3 +1,3 @@
 @echo off
 
-hugo -d pages
+hugo -d docs

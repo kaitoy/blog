@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="ORMは不快なアンチパターン | To Be Decided">
+    <meta property="og:url" content="https://tbd.kaitoy.xyz/2015/09/13/orm-is-offensive-anti-pattern/">
+    <meta property="og:description" content="このエントリでは、Yegor Bugayenkoによる記事、ORM Is an Offensive Anti-Patternを紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 結論から言えば、ORMはオブジェクト指向プログラミングの原則の全てに違反するひどいアンチパターンだ。オブジェクトをバラバラに引き裂き、もの言わぬ受身なデータ入れに変えてしまう。 小さいWebアプリケーションから、数千のテーブルをCRUD操作するエンタープライズシステムまで、どんなアプリケーションにもORMが存在することはゆるせない。 代わりになるものは? SQLを話すオブジェクトだ。 ORMの仕組み オブジェクト関係マッピング (Object-relatinal mapping、ORM)は、オブジェクト指向言語(例えばJava)からリレーショナルデータベースにアクセスする技術(またはデザインパターン)だ。 ほとんどの言語で複数のORM実装がある。 例えば、JavaのHibernate、Ruby on RalsのActiveRecord、PHPのDoctrine、PythonのSQLAlchemy。 Javaでは、ORMデザインはJPAとして標準化されてさえいる。 最初に、ORMがどう動くかを見てみよう。JavaとPostgreSQLとHibernateを使い、データベースにpost (訳注: ブログポスト、ブログの記事)という単一のテーブルがあるとする。 &#43;-----&#43;------------&#43;--------------------------&#43; | id | date | title | &#43;-----&#43;------------&#43;--------------------------&#43; | 9 | 10/24/2014 | How to cook a sandwich | | 13 | 11/03/2014 | My favorite movies | | 27 | 11/17/2014 | How much I love my job | &#43;-----&#43;------------&#43;--------------------------&#43; で、このテーブルをJavaアプリケーションからCRUD操作したい。(CRUDはcreate、read、update、deleteの略。) まず、Postクラスを書く。(長くてごめん。けどなるべく短くしたんだ。) @Entity @Table(name = &quot;post&quot;) public class Post { private int id; private Date date; private String title; @Id @GeneratedValue public int getId() { return this.id; } @Temporal(TemporalType.TIMESTAMP) public Date getDate() { return this.date; } public Title getTitle() { return this.title; } public void setDate(Date when) { this.date = when; } public void setTitle(String txt) { this.title = txt; } } Hibernateでの処理をする前に、セッションファクトリを作らないといけない。 SessionFactory factory = new AnnotationConfiguration() .configure() .addAnnotatedClass(Post.class) .buildSessionFactory(); このファクトリはPostオブジェクトを操作したいときに「セッション」を作ってくれる。 セッションを使う全ての操作は以下のようなコードブロックで囲わないといけない。 Session session = factory.openSession(); try { Transaction txn = session.beginTransaction(); // your manipulations with the ORM, see below txn.commit(); } catch (HibernateException ex) { txn.rollback(); } finally { session.close(); } セッションが準備できたら、以下のようにしてデータベーステーブルから全てのpostのリストを取得する。 List posts = session.createQuery(&quot;FROM Post&quot;).list(); for (Post post : (List&lt;Post&gt;) posts){ System.out.println(&quot;Title: &quot; &#43; post.getTitle()); } ここで何が起こっているかは明確だと思う。 Hibernateという巨大で強力なエンジンが、データベースへの接続、SQLのSELECTリクエスト発行、及びデータの取得をする。 そして、Postクラスのインスタンスを作り、データをつめる。 そのオブジェクトが我々に渡されるとき、それにはデータが詰まっていて、getterでデータを取り出すことができる。上記getTitle()でやっているように。 逆の処理をしてオブジェクトをデータベースに送りたい場合は、同じことを逆の手順でやればいい。 Postのインスタンスを作り、データを入れ、Hibernateに保存するよう頼む。 Post post = new Post(); post.setDate(new Date()); post.setTitle(&quot;How to cook an omelette&quot;); session.save(post); これがほぼ全てのORMの仕組みだ。 基本的な原則はいつも同じで、ORMオブジェクトは無気力なデータの包みだ。 我々はORMフレームワークと話して、ORMフレームワークはデータベースと話す。 オブジェクトは我々のリクエストをORMフレームワークに送り、そのレスポンスを読むのを助けてくれるだけだ。 こうしたオブジェクトは、getterやsetterのほかに何のメソッドも持たない。どのデータベースから来たのかすら知らない。 これがオブジェクト関係マッピングの仕組みだ。 これの何が間違ってるかって?">
+    
+    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/teamedio_logo.svg">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      ORMは不快なアンチパターン | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Sun, Sep 13, 2015</span>
+      <h2 class="title">ORMは不快なアンチパターン</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="ORMは不快なアンチパターン">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>このエントリでは、Yegor Bugayenkoによる記事、<a href="http://www.yegor256.com/2014/12/01/orm-offensive-anti-pattern.html">ORM Is an Offensive Anti-Pattern</a>を紹介する。
+(Yegorから和訳と転載の許可は得た。)
+以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。</p>
+
+<hr />
+
+<p>結論から言えば、ORMはオブジェクト指向プログラミングの原則の全てに違反するひどいアンチパターンだ。オブジェクトをバラバラに引き裂き、もの言わぬ受身なデータ入れに変えてしまう。
+小さいWebアプリケーションから、数千のテーブルをCRUD操作するエンタープライズシステムまで、どんなアプリケーションにもORMが存在することはゆるせない。
+代わりになるものは?
+SQLを話すオブジェクトだ。</p>
+
+<h1 id="ormの仕組み">ORMの仕組み</h1>
+
+<p><a href="https://ja.wikipedia.org/wiki/%E3%82%AA%E3%83%96%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88%E9%96%A2%E4%BF%82%E3%83%9E%E3%83%83%E3%83%94%E3%83%B3%E3%82%B0">オブジェクト関係マッピング</a> (Object-relatinal mapping、ORM)は、オブジェクト指向言語(例えばJava)からリレーショナルデータベースにアクセスする技術(またはデザインパターン)だ。
+ほとんどの言語で複数のORM実装がある。
+例えば、Javaの<a href="http://hibernate.org/orm/">Hibernate</a>、Ruby on Ralsの<a href="http://guides.rubyonrails.org/active_record_basics.html">ActiveRecord</a>、PHPの<a href="http://www.doctrine-project.org/">Doctrine</a>、Pythonの<a href="http://www.sqlalchemy.org/">SQLAlchemy</a>。
+Javaでは、ORMデザインは<a href="https://ja.wikipedia.org/wiki/Java_Persistence_API">JPA</a>として標準化されてさえいる。</p>
+
+<p>最初に、ORMがどう動くかを見てみよう。JavaとPostgreSQLとHibernateを使い、データベースに<code>post</code> (訳注: ブログポスト、ブログの記事)という単一のテーブルがあるとする。</p>
+
+<pre><code class="language-text">+-----+------------+--------------------------+
+| id  | date       | title                    |
++-----+------------+--------------------------+
+|   9 | 10/24/2014 | How to cook a sandwich   |
+|  13 | 11/03/2014 | My favorite movies       |
+|  27 | 11/17/2014 | How much I love my job   |
++-----+------------+--------------------------+
+</code></pre>
+
+<p>で、このテーブルをJavaアプリケーションからCRUD操作したい。(CRUDはcreate、read、update、deleteの略。)
+まず、<code>Post</code>クラスを書く。(長くてごめん。けどなるべく短くしたんだ。)</p>
+
+<pre><code class="language-java">@Entity
+@Table(name = &quot;post&quot;)
+public class Post {
+  private int id;
+  private Date date;
+  private String title;
+
+  @Id
+  @GeneratedValue
+  public int getId() {
+    return this.id;
+  }
+
+  @Temporal(TemporalType.TIMESTAMP)
+  public Date getDate() {
+    return this.date;
+  }
+
+  public Title getTitle() {
+    return this.title;
+  }
+
+  public void setDate(Date when) {
+    this.date = when;
+  }
+
+  public void setTitle(String txt) {
+    this.title = txt;
+  }
+}
+</code></pre>
+
+<p>Hibernateでの処理をする前に、セッションファクトリを作らないといけない。</p>
+
+<pre><code class="language-java">SessionFactory factory = new AnnotationConfiguration()
+  .configure()
+  .addAnnotatedClass(Post.class)
+  .buildSessionFactory();
+</code></pre>
+
+<p>このファクトリは<code>Post</code>オブジェクトを操作したいときに「セッション」を作ってくれる。
+セッションを使う全ての操作は以下のようなコードブロックで囲わないといけない。</p>
+
+<pre><code class="language-java">Session session = factory.openSession(); try {
+  Transaction txn = session.beginTransaction();
+  // your manipulations with the ORM, see below
+  txn.commit();
+} catch (HibernateException ex) {
+  txn.rollback();
+} finally {
+  session.close();
+}
+</code></pre>
+
+<p>セッションが準備できたら、以下のようにしてデータベーステーブルから全てのpostのリストを取得する。</p>
+
+<pre><code class="language-java">List posts = session.createQuery(&quot;FROM Post&quot;).list();
+for (Post post : (List&lt;Post&gt;) posts){
+  System.out.println(&quot;Title: &quot; + post.getTitle());
+}
+</code></pre>
+
+<p>ここで何が起こっているかは明確だと思う。
+Hibernateという巨大で強力なエンジンが、データベースへの接続、SQLの<code>SELECT</code>リクエスト発行、及びデータの取得をする。
+そして、<code>Post</code>クラスのインスタンスを作り、データをつめる。
+そのオブジェクトが我々に渡されるとき、それにはデータが詰まっていて、getterでデータを取り出すことができる。上記<code>getTitle()</code>でやっているように。</p>
+
+<p>逆の処理をしてオブジェクトをデータベースに送りたい場合は、同じことを逆の手順でやればいい。
+<code>Post</code>のインスタンスを作り、データを入れ、Hibernateに保存するよう頼む。</p>
+
+<pre><code class="language-java">Post post = new Post();
+post.setDate(new Date());
+post.setTitle(&quot;How to cook an omelette&quot;); session.save(post);
+</code></pre>
+
+<p>これがほぼ全てのORMの仕組みだ。
+基本的な原則はいつも同じで、ORMオブジェクトは無気力なデータの包みだ。
+我々はORMフレームワークと話して、ORMフレームワークはデータベースと話す。
+オブジェクトは我々のリクエストをORMフレームワークに送り、そのレスポンスを読むのを助けてくれるだけだ。
+こうしたオブジェクトは、getterやsetterのほかに何のメソッドも持たない。どのデータベースから来たのかすら知らない。</p>
+
+<p>これがオブジェクト関係マッピングの仕組みだ。</p>
+
+<p>これの何が間違ってるかって? 全てだ!</p>
+
+<h1 id="ormの何が悪いのか">ORMの何が悪いのか</h1>
+
+<p>真面目な話、何が悪い?
+Hibernateは既に10年以上にわたって最も人気のあるJavaライブラリの一つだ。
+この世のほぼ全てのSQL集約的なアプリケーションが使っている。
+Javaのチュートリアルは、データベースに接続するアプリケーションのためのものとしてHibernate(またはTopLinkやOpenJPAのような<a href="https://en.wikipedia.org/wiki/List_of_object-relational_mapping_software">ほかのORM</a>)を挙げる。
+それはデファクトスタンダードであって、なお間違っていると言っているのか?
+そうだ。</p>
+
+<p>私はORMの根底にあるアイデア全体が間違っていると訴えている。
+この発明は多分、OOPにおいて最大の失敗である<a href="https://tbd.kaitoy.xyz/2015/07/26/why-null-is-bad/">NULL</a>に次ぐ失敗だ。</p>
+
+<p>実際、私だけがこんなことを言っているわけではないし、最初に言ったわけでもないことは明白だ。
+この問題に関しては、既に多くの記述が尊敬すべき著者によって公開されている。例えば、Martin Fowlerによる<a href="http://martinfowler.com/bliki/OrmHate.html">OrmHate</a>、Jeff Atwoodによる<a href="http://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/">Object-Relational Mapping Is the Vietnam of Computer Science</a>、Ted Newardによる<a href="http://blogs.tedneward.com/2006/06/26/The+Vietnam+Of+Computer+Science.aspx">The Vietnam of Computer Science</a>、Laurie Vossによる<a href="http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern">ORM Is an Anti-Pattern</a>などで、他にも沢山ある。</p>
+
+<p>しかし、私の論点はこれらの著者とは違っている。
+彼らが挙げている、「ORMは遅い」とか「データベースアップグレードが難しい」といった理由は実用的で有効ではあるが、重要なポイントが欠けている。
+こういう実用的な論点に対しては、Bozhidar Bozhanovが彼のブログポストの<a href="http://techblog.bozho.net/orm-haters-dont-get-it/">ORM Haters Don’t Get It</a>の中でとてもよい実用的な回答を示している。</p>
+
+<p>重要なポイントとは、ORMが、データベースとのやり取りをオブジェクト内にカプセル化するのではなく、それを抜き取り、密で堅い<a href="https://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/">生ける有機体</a>を文字通りばらばらに引き裂く、ということだ。
+引き裂かれたオブジェクトの欠片はデータを保持し、ほかの欠片(ORMのエンジンであるセッションファクトリ内に実装されているもの)はそのデータの扱い方を知っていて、それをリレーショナルデータベースへ転送する。
+下の絵を見てくれ。これはORMがやっていることを図示している。</p>
+
+<p><img src="/images/orm-is-offensive-anti-pattern/orm-anti-pattern.svg" alt="orm-anti-pattern.svg" />
+</p>
+
+<p>ブログポストの記事を読むとき、二つのコンポーネントを扱わないといけない。一つはORMで、もう一つは手足を奪われたオブジェクト。
+OOPにおいては、扱うふるまいは単一のエントリーポイント、つまり一つのオブジェクトから提供されることになっている。
+しかしORMの場合、ふるまいは二つのエントリーポイント、つまりORMと「もの」から提供される。
+これはもはやオブジェクトとは呼べない。</p>
+
+<p>この不快でひどいオブジェクト指向パラダイム違反のせいで、上記記事で述べられているような多くの実用的な問題を抱える。
+私はこれにもう少しだけ付け加える。</p>
+
+<h2 id="sqlが隠蔽されない">SQLが隠蔽されない</h2>
+
+<p>ORMユーザはSQL(もしくは<a href="https://docs.jboss.org/hibernate/orm/3.3/reference/en/html/queryhql.html">HQL</a>のような方言)を書くはずだ。
+前記の例を見てほしい。全てのブログポストを取得するために<code>session.createQuery(&quot;FROM Post&quot;)</code>を実行している。
+これはSQLではないけど、よく似たものだ。
+つまり、リレーショナルモデルはオブジェクト内にカプセル化されていない。
+代わりに、それはアプリケーション全体に公開されている。
+オブジェクトに触る誰しもが、何かを取得したり保存したりするためにリレーショナルモデルを扱わないといけない。
+つまり、ORMはSQLを隠蔽したりラップしたりしておらず、アプリケーション全体に撒き散らしている。</p>
+
+<h2 id="テストが困難">テストが困難</h2>
+
+<p>ブログポストのリストを操作するオブジェクトがある場合、それは<code>SessionFactory</code>のインスタンスを扱わないといけない。
+この依存をどうする?
+モックを作らないといけない?
+これはどのくらい複雑な作業だろうか?
+上記コードを見てほしい。ユニットテストがどれだけ冗長でやっかいなものになるかわかるはずだ。
+代わりに、統合テストを書いてアプリケーション全体をテスト用PostgreSQLに接続することもできる。
+この場合、<code>SessionFactory</code>のモックは不要だ。
+しかしこういうテストは遅く、さらに注目すべきことには、データベースに対して何もしないオブジェクトがデータベースインスタンスに対してテストされることになる。最悪な設計だ。</p>
+
+<p>もう一度繰り返すが、ORMの実用的な問題は結果に過ぎない。
+根本的な欠陥は、ORMがオブジェクトをバラバラにし、<a href="https://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/">オブジェクト</a>の真の概念にひどく違反していることだ。</p>
+
+<h1 id="sqlを話すオブジェクト">SQLを話すオブジェクト</h1>
+
+<p>他の選択肢は?
+例を挙げて教えよう。
+あの、<code>Post</code>クラスを私のやり方で設計してみよう。
+これは二つのクラスに分ける必要がある。<code>Post</code>と<code>Posts</code>だ。
+単数形と複数形。
+私の<a href="https://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/">以前の記事</a>ですでに述べたように、よいオブジェクトは常に現実世界のエンティティの抽象だ。
+この原則が実際にどう働くかをここに示す。
+我々は二つのエンティティを扱う。データベーステーブルとテーブルの行だ。
+これが二つのクラスを作る理由だ。<code>Posts</code>がテーブルを表し、<code>Post</code>が行を表す。</p>
+
+<p><img src="/images/orm-is-offensive-anti-pattern/sql-speaking-object.svg" alt="sql-speaking-object.svg" />
+</p>
+
+<p>例の<a href="https://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/">記事</a>で既に述べたように、全てのオブジェクトは契約によって働き、インターフェースを実装すべきだ。
+我々の設計も二つのインターフェースから始めよう。
+もちろん、オブジェクトは不変だ。<code>Posts</code>は以下のようになる。</p>
+
+<pre><code class="language-java">@Immutable
+interface Posts {
+  Iterable&lt;Post&gt; iterate();
+  Post add(Date date, String title);
+}
+</code></pre>
+
+<p><code>Post</code>は以下だ。</p>
+
+<pre><code class="language-java">@Immutable
+interface Post {
+  int id();
+  Date date();
+  String title();
+}
+</code></pre>
+
+<p>データベーステーブル内の全てのpostを表示するには以下のようにする。</p>
+
+<pre><code class="language-java">Posts posts = // we'll discuss this right now
+for (Post post : posts.iterate()){
+  System.out.println(&quot;Title: &quot; + post.title());
+}
+</code></pre>
+
+<p>新しいpostを作る場合は以下のようにする。</p>
+
+<pre><code class="language-java">Posts posts = // we'll discuss this right now
+posts.add(new Date(), &quot;How to cook an omelette&quot;);
+</code></pre>
+
+<p>このようにすると真のオブジェクトになる。
+これらのオブジェクトは全ての処理を受け持ち、実装の詳細を完璧に隠蔽する。
+トランザクションもセッションもファクトリもない。
+これらのオブジェクトが実際にPostgreSQLと話しているのかテキストファイルからデータを持ってきているのかすらわからない。
+<code>Posts</code>に求められるのは、全てのブログポストを取得する機能と新しいブログポストを作る機能だけだ。
+実装の詳細は完璧に内部に隠蔽されている。
+これから、どのようにこれら二つのクラスを実装できるかを見ていきたい。</p>
+
+<p>ここではJDBCラッパに<a href="http://jdbc.jcabi.com/">jcabi-jdbc</a>を使うが、好みに応じてほかのものやJDBCを直接使ってもよい。
+それは全く重要ではない。重要なのは、データベースとのやり取りをオブジェクト内に隠蔽することだ。
+<code>Posts</code>から始めよう。<code>PgPosts</code>クラス(「pg」はPostgreSQLのこと)に実装する。</p>
+
+<pre><code class="language-java">@Immutable
+final class PgPosts implements Posts {
+  private final Source dbase;
+  public PgPosts(DataSource data) {
+    this.dbase = data;
+  }
+  public Iterable&lt;Post&gt; iterate() {
+    return new JdbcSession(this.dbase)
+      .sql(&quot;SELECT id FROM post&quot;)
+      .select(
+        new ListOutcome&lt;Post&gt;(
+          new ListOutcome.Mapping&lt;Post&gt;() {
+            @Override
+            public Post map(final ResultSet rset) {
+              return new PgPost(rset.getInteger(1));
+            }
+          }
+        )
+      );
+  }
+  public Post add(Date date, String title) {
+    return new PgPost(
+      this.dbase,
+      new JdbcSession(this.dbase)
+        .sql(&quot;INSERT INTO post (date, title) VALUES (?, ?)&quot;)
+        .set(new Utc(date))
+        .set(title)
+        .insert(new SingleOutcome&lt;Integer&gt;(Integer.class))
+    );
+  }
+}
+</code></pre>
+
+<p>次に<code>Post</code>を<code>PgPost</code>クラスに実装する。</p>
+
+<pre><code class="language-java">@Immutable
+final class PgPost implements Post {
+  private final Source dbase;
+  private final int number;
+  public PgPost(DataSource data, int id) {
+    this.dbase = data;
+    this.number = id;
+  }
+  public int id() {
+    return this.number;
+  }
+  public Date date() {
+    return new JdbcSession(this.dbase)
+      .sql(&quot;SELECT date FROM post WHERE id = ?&quot;)
+      .set(this.number)
+      .select(new SingleOutcome&lt;Utc&gt;(Utc.class));
+  }
+  public String title() {
+    return new JdbcSession(this.dbase)
+      .sql(&quot;SELECT title FROM post WHERE id = ?&quot;)
+      .set(this.number)
+      .select(new SingleOutcome&lt;String&gt;(String.class));
+  }
+}
+</code></pre>
+
+<p>今作ったクラスを使ってデータベースとやり取りする完全なシナリオは以下のようになる。</p>
+
+<pre><code class="language-java">Posts posts = new PgPosts(dbase);
+for (Post post : posts.iterate()){
+  System.out.println(&quot;Title: &quot; + post.title());
+}
+Post post = posts.add(new Date(), &quot;How to cook an omelette&quot;);
+System.out.println(&quot;Just added post #&quot; + post.id());
+</code></pre>
+
+<p><a href="https://github.com/aintshy/hub/tree/0.7.2/src/main/java/com/aintshy/pgsql">ここ</a>で完全な実用的な例を見られる。
+これはオープンソースのWebアプリで、上で説明したのと全く同じアプローチ、つまりSQLを話すオブジェクトを使ってPostgreSQLにアクセスする。</p>
+
+<h1 id="性能は">性能は?</h1>
+
+<p>「性能は?」と君が叫んでいるのが聞こえる。
+数行上のスクリプトにはデータベースとの冗長なやりとりを書いた。
+まず、<code>SELECT id</code>でブログポストのIDを取得し、さらに、タイトルを取得するために<code>SELECT title</code>をそれぞれのブログポストに対して実行する。
+これは非効率だ。単に遅すぎると言ってもいい。</p>
+
+<p>心配はいらない。これはオブジェクト指向プログラミングであり、柔軟なんだ!
+<code>PgPost</code>のデコレータを作り、全てのデータをそのコンストラクタで受け取って内部で永遠にキャッシュしよう。</p>
+
+<pre><code class="language-java">@Immutable
+final class ConstPost implements Post {
+  private final Post origin;
+  private final Date dte;
+  private final String ttl;
+  public ConstPost(Post post, Date date, String title) {
+    this.origin = post;
+    this.dte = date;
+    this.ttl = title;
+  }
+  public int id() {
+    return this.origin.id();
+  }
+  public Date date() {
+    return this.dte;
+  }
+  public String title() {
+    return this.ttl;
+  }
+}
+</code></pre>
+
+<p>このデコレータはPostgreSQLやJDBCについて何も関与しないことに注目してほしい。
+単に<code>Post</code>オブジェクトをデコレートして日付(date)とタイトル(title)をキャッシュするだけだ。
+例によってこのデコレータは不変だ。</p>
+
+<p>さて、<code>Posts</code>の別の実装を作って、「定数」オブジェクトを返すようにしてみよう。</p>
+
+<pre><code class="language-java">@Immutable
+final class ConstPgPosts implements Posts {
+  // ...
+  public Iterable&lt;Post&gt; iterate() {
+    return new JdbcSession(this.dbase)
+      .sql(&quot;SELECT * FROM post&quot;)
+      .select(
+        new ListOutcome&lt;Post&gt;(
+          new ListOutcome.Mapping&lt;Post&gt;() {
+            @Override
+            public Post map(final ResultSet rset) {
+              return new ConstPost(
+                new PgPost(rset.getInteger(1)),
+                Utc.getTimestamp(rset, 2),
+                rset.getString(3)
+              );
+            }
+          }
+        )
+      );
+  }
+}
+</code></pre>
+
+<p>今、この新しいクラスの<code>iterate()</code>が返す全てのブログポストには、データベースとの一往復で取得された日付とタイトルが入っている。
+デコレータやインターフェースの複数の実装を使うことで、どんな機能も望みどおりに構成することができる。
+最も重要なことは、機能は拡張されたが設計は複雑になっていないことだ。クラスのサイズが大きくなっていないからね。
+代わりに、小さく、それ故強度と凝集度が高い新しいクラスを導入した。</p>
+
+<h1 id="トランザクションは">トランザクションは?</h1>
+
+<p>全てのオブジェクトはそれ自身のトランザクションを扱い、それを<code>SELECT</code>や<code>INSERT</code>と同様にカプセル化すべきだ。
+これはトランザクションのネストにつながる。
+トランザクションのネストは、データベースサーバがサポートしていれば全く素晴らしいものだ。
+サポートされていなければ、セッション全体に渡るトランザクションを表すオブジェクトを作り、「callable」クラスを受け取ればいい。
+以下がその例。</p>
+
+<pre><code class="language-java">final class Txn {
+  private final DataSource dbase;
+  public &lt;T&gt; T call(Callable&lt;T&gt; callable) {
+    JdbcSession session = new JdbcSession(this.dbase);
+    try {
+      session.sql(&quot;START TRANSACTION&quot;).exec();
+      T result = callable.call();
+      session.sql(&quot;COMMIT&quot;).exec();
+      return result;
+    } catch (Exception ex) {
+      session.sql(&quot;ROLLBACK&quot;).exec();
+      throw ex;
+    }
+  }
+}
+</code></pre>
+
+<p>そして、ひとつのトランザクションに複数のオブジェクト操作をラップしたい場合はこのようにする。</p>
+
+<pre><code class="language-java">new Txn(dbase).call(
+  new Callable&lt;Integer&gt;() {
+    @Override
+    public Integer call() {
+      Posts posts = new PgPosts(dbase);
+      Post post = posts.add(new Date(), &quot;How to cook an omelette&quot;);
+      posts.comments().post(&quot;This is my first comment!&quot;);
+      return post.id();
+    }
+  }
+);
+</code></pre>
+
+<p>このコードは新しいブログポストを作ってコメントを加える。
+もし処理に失敗したら、トランザクション全体がロールバックされる。</p>
+
+<p>私にはこのアプローチがオブジェクト指向に見える。
+私はこれを「SQLを話すオブジェクト」と呼んでいる。
+なぜなら、このオブジェクトはデータベースサーバとSQLを話す方法を知っているからだ。
+それはオブジェクトのスキルで、完璧に内部にカプセル化されている。</p>
+
+<p><div class="embed video-player" style="text-align: center">
+  <iframe class="youtube-player" type="text/html" width="320" height="193" src="https://www.youtube.com/embed/DEqcn4-freM" allowfullscreen frameborder="0">
+  </iframe>
+</div>
+</p>
+
+<hr />
+
+<p>以上がYegorの記事。</p>
+
+<p>ORMはHibernateをちょっと使ったことがあるくらい。
+IPAのデータベーススペシャリストの試験を申し込んだものの参考書が理解できなくてあきらめた過去もあり、この分野には苦手意識があって、あまり大きい声は出せない。</p>
+
+<p>Hibernateについてちょっと言えば、使い始めはすばらしいものに見えて興奮するが、だんだんとその融通の利かなさにうんざりしてきて、結局DAOとかにSQLを書きまくったり、自分でデータをキャッシュする仕組みを書いたりする羽目になる、というイメージ。
+Hibernateを初歩的に使うと一行もSQL(やHQL)を書かずにRDBを使うアプリケーションを書けるので、ORMはSQLを学ぶコストをカットするためのツールであると勘違いしてしまうが、実際にはインピーダンスミスマッチの解決が主目的であって、実用に際してはRDBとSQLへの深い知識が必要になる。</p>
+
+<p>もちろんこれはORMの「実用的な問題」であって、Yegorが書いていることとは違う。</p>
+
+<p>日本では、Yegorも挙げているLaurie Vossの<a href="http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern">2011年半ばのブログポスト</a>がきっかけでORMの問題が話題になったようだ。
+これは<a href="https://ja.wikipedia.org/wiki/NoSQL">NoSQL</a>が日本で大きく取り上げられ始めた時期ともかぶっている気がする。
+もっと前から本当に性能にシビアなWebサービス界ではNoSQLを使うのが主流になっていたみたいだけど。
+これはGoogle、Amazon、FacebookといったWebサービス企業のカリスマがNoSQLを押したのもあるか。
+ホリエモンもエンジニアだったころ自社のサービスを作った時に使ったとか。これは15年以上前の話だから、かなり先見性があったんだな。</p>
+
+<p>今RDBをもっとも使っている分野であろうエンタープライズ向けのシステムやパッケージソフトも、サービス化が大きなトレンドであり、それに加えてマルチテナント化が進めば扱うデータ量が増え、性能に対してどんどんシビアになり、NoSQLを取り入れる動きが増えるんだろう。
+<a href="http://japan.zdnet.com/article/35061140/">2015年はNoSQL元年</a>なんて記事もある。この記事によれば、NoSQLは大量の非構造化データを扱うIoTやM2Mの分野に有効だそうな。</p>
+
+<p>まあこれもYegorが書いていることとは関係ないけど。</p>
+
+<p>Yegorが言っていること、ORMは本来オブジェクトの仕事であるものを取り上げてしまうのでだめだという理屈は、オブジェクト原理主義者から見ればそうなのかもしれないが、一般の開発者から見ればそれがいいんじゃないかという話になって、議論はかみ合わない。
+Yegor自身が前半で書いているORMを使ったコードより、後半のOOP原理的コードの方がかなり長い。
+それってORMを使った方がやっぱりいいんじゃないのという感想を持つ人が多いのでは。(少なくとも「実用的な問題」を抜きにすれば。)</p>
+
+<p>オブジェクト原理主義をしっかり理解し、そのメリットを知らなければYegorの説教も馬の耳にだ。というわけで、次は<a href="http://www.yegor256.com/2014/11/20/seven-virtues-of-good-object.html">Seven Virtues of a Good Object</a>を読むか。(<a href="https://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/">訳した。</a>)</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f09%2f13%2form-is-offensive-anti-pattern%2f&t=ORM%e3%81%af%e4%b8%8d%e5%bf%ab%e3%81%aa%e3%82%a2%e3%83%b3%e3%83%81%e3%83%91%e3%82%bf%e3%83%bc%e3%83%b3" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f09%2f13%2form-is-offensive-anti-pattern%2f&text=ORM%e3%81%af%e4%b8%8d%e5%bf%ab%e3%81%aa%e3%82%a2%e3%83%b3%e3%83%81%e3%83%91%e3%82%bf%e3%83%bc%e3%83%b3&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f09%2f13%2form-is-offensive-anti-pattern%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f09%2f13%2form-is-offensive-anti-pattern%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f09%2f13%2form-is-offensive-anti-pattern%2f&title=ORM%e3%81%af%e4%b8%8d%e5%bf%ab%e3%81%aa%e3%82%a2%e3%83%b3%e3%83%81%e3%83%91%e3%82%bf%e3%83%bc%e3%83%b3" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://tbd.kaitoy.xyz/tags/yegor256"><i class="fa fa-tags"></i> yegor256 </a>
+                
+                <a href="https://tbd.kaitoy.xyz/tags/oop"><i class="fa fa-tags"></i> oop </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/06/25/seven-deadly-sins-of-a-software-project/">ソフトウェアプロジェクトの7つの大罪</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/02/09/continuous-integration-is-dead/">継続的インテグレーションは死んだ</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/01/11/who-is-software-architect/">ソフトウェアアーキテクトは何をするのか?</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/01/03/oop-alternative-to-utility-classes/">オブジェクト指向プログラミングにおいてユーティリティクラスに代わるもの</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/12/03/software-quality-award-2015/">Pcap4JがSoftware Quality Award 2015で入賞</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/">よいオブジェクトの七つの美徳</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/07/26/why-null-is-bad/">なぜNullはダメか</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/07/22/getters-setters-evil/">Getter/Setterは悪だ。以上。</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/07/18/first-post/">First Post</a></li>
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+                <a href="https://tbd.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/">
+                  <i class="fa fa-chevron-left"></i>
+                  Step by Step to Add a Protocol Support to Pcap4J (Part 2)
+                </a>
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://tbd.kaitoy.xyz/2015/09/07/caching-gifs-on-atom/">
+                  AtomにおけるGIF画像のキャッシュ
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2016  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="GitHub Pagesでブログ立ち上げ - Hugoを使う | To Be Decided">
+    <meta property="og:url" content="https://tbd.kaitoy.xyz/2015/08/28/using-hugo/">
+    <meta property="og:description" content="GitHub Pagesでブログ立ち上げ - Jekyllのためのツールの続き。 前回は、GitHub Pagesで公開するブログサイトを構築するのに、JekyllとJekyll関連ツールを使おうと四苦八苦したが、結局Jekyllに見切りをつけ、Hugoを使うことに決めた。 Hugoとは Hugoは、国内では2014年末くらいから盛り上がってきているブログサイト構築ツール。 そのホームページによると、ウェブサイトフレームワークで、静的サイトジェネレータとのこと。 フレームワークと名乗ってはいるが、その正体は、Markdownで書かれた記事を元にブログサイトのソースを生成するコンテントビルド機能と、記事作成(など)を支援するユーティリティ機能を持ったコマンドラインツール。 また、静的サイトジェネレータというのは、静的なサイトを生成するという意味ではなく、静的にサイトを生成するという意味。もっと言えば、WordPressとかがアクセス時にビルドが走るのに対し、Hugoを使った場合は事前にビルド済みのものをサーバにアップロードすることになる、ということ。らしい。WordPressは使ったことがないのでよく知らないが、Hugoのホームページにそう書いてある。 つまり、Hugoは静的なサイトだけを扱うツールってわけではないので、JavaScriptとかを駆使して動的でインタラクティブなページを作ってもいいはず。 Hugoのインストール インストールガイドに従ってHugoをインストールする。 HugoのGitHub ReleasesからWindows用バイナリをダウンロード。このときはバージョン0.14が最新だったので、hugo_0.14_windows_amd64.zipをダウンロードした。 このzipの中身はhugo_0.14_windows_amd64.exeというバイナリ一つとLICENSE.mdとREADME.mdだけ。 このhugo_0.14_windows_amd64.exeがHugoのすべてなので、これを適当な場所において実行できるようにしとけばよい。 今回は、hugo.batというファイルに以下の内容を書き、PATHの通ったフォルダにいれた。 @echo off C:\Users\Kaito\Desktop\tool\hugo_0.14_windows_amd64\hugo_0.14_windows_amd64.exe %* これで、どこからでもhugo [arguments]と打てばHugoコマンドが実行できる。 Hugoのシンタックスハイライト ドキュメントによると、Hugoではシンタックスハイライトを実現する方法を以下の2つから選べる。 サーバサイド: Hugoでのブログサイト生成時にハイライトしておく方法。 クライアントサイド: クライアントがブログを読み込んだ時にJavaScriptでハイライトする方法。 前者の方が当然クライアントの負荷が軽くなるが、Pygmentsのインストールが必要だったりめんどくさそうなので後者にする。(PygmentsはJekyllのときにすでに入れたけど…) クライアントサイドでやるのもいくつかやり方があるが、例えばHighlight.jsを使うなら以下をHTMLヘッダに加えるだけでいい。 &lt;link rel=&quot;stylesheet&quot; href=&quot;https://yandex.st/highlightjs/8.0/styles/default.min.css&quot;&gt; &lt;script src=&quot;https://yandex.st/highlightjs/8.0/highlight.min.js&quot;&gt;&lt;/script&gt; &lt;script&gt;hljs.initHighlightingOnLoad();&lt;/script&gt; このdefault.min.cssの部分を変えると色々なスタイルが選べる。 このブログではZenburnを使うことにした。 Hugo味見 Hugoコマンドリファレンスを見つつ、Hugoの味見をする。 サイトのひな形を作るコマンドはhugo new site [path]。hugo new site blogを実行して、blogという名のフォルダにサイトの初期ソースを生成。blogの部分はファイルもフォルダも存在しないパスを指定する。 この時点で、blogフォルダ内には以下のものが入っている。 archetypes: 新規記事作成時に自動で挿入されるFront Matter (後述)のカスタマイズをするためのファイルを置くフォルダ。 content: ブログのコンテンツ(記事など)を置くフォルダ。 data: サイト生成時に使うデータを置くフォルダ。 layouts: サイトのレイアウトを定義するファイルを置くフォルダ。 static: CSSとかJavaScriptとか画像とかのファイルを置くフォルダ。 config.toml: 設定ファイル。これはTOMLだが、YAMLかJSONでもいい。 記事を作るコマンドはhugo new [path]。blogフォルダにcdして、二つ記事を作ってみる。 hugo new about.md hugo new post/first_post.md blog\content\about.mdとblog\content\post\first_post.mdが生成された。 これらには、Front Matterという、記事のメタ情報が自動で書き込まれる。 デフォルトで書き込まれるのは、日付 (date)、ドラフトフラグ (draft)、タイトル (title)だけだが、 Archetypesという機能でカスタマイズできる。 が、今はやらない。 about.mdとfirst_post.mdには適当に記事の内容を書いておく。 次にテーマを設定する。テーマを使えば、自分でレイアウトを書く必要がない。 テーマはHugo Themesにリストされていて、ひとつひとつ選んでインストールもできるけど、今回は全部いっぺんにインストールして色々見てみる。blogフォルダ内で以下を実行すると、blog\themesに全テーマがインストールされる。 git clone --recursive https://github.com/spf13/hugoThemes.git themes これで、以下のコマンドを実行すると、サイトがビルドされ、サーバが起動し、ブラウザで確認できる。 hugo server -t angels-ladder -D -w -tでテーマを指定している。指定するのはblog\themes内のフォルダ名。-Dはドラフト記事をビルドしたいときにつけるオプション。さっき作ったabout.mdとfirst_post.mdは、そのFront Matterのdraftがtrueになっていて、つまりドラフトなので、-Dを付けないとビルドされない。-wはLiveReloadを有効にするフラグで、付けておくとソースを修正したら自動でリビルドとブラウザのリロードが実行される。(変更を監視されるのはサブフォルダ内だけ。config.tomlの変更は無視される。) サーバにはhttp://localhost:1313/でアクセスできる。今回指定したテーマangels-ladderだと、トップページにfirst_post.mdの記事へのリンクがあり、その内容を確認できる。about.mdの方はリンクはなく、直接http://localhost:1313/about/アクセスしないと見れない。この辺りはテーマ(と設定?)によって異なるのかな。 まあabout.mdは試しに作ってみただけなので消しておく。 hugo serverの-tに与える値を変えれば簡単にテーマを切り替えられるので、いろいろ見てみる。 以上で味見終わり。 テーマの選定 - Robust Hugo Themesにあるテーマはどれもあまりしっくりこなかった。 もう自分で作ろうかと思っていたところ、Robustというテーマを見つけた。 こんな感じのページができる。いい。これを使うことにする。 blogフォルダ内で、いったんthemesを消してから以下を実行してRobustをインストール。 &gt; git init .">
+    
+    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/hugo-logo.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      GitHub Pagesでブログ立ち上げ - Hugoを使う | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Fri, Aug 28, 2015</span>
+      <h2 class="title">GitHub Pagesでブログ立ち上げ - Hugoを使う</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://tbd.kaitoy.xyz/images/hugo-logo.png" alt="GitHub Pagesでブログ立ち上げ - Hugoを使う">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p><a href="https://tbd.kaitoy.xyz/2015/08/25/tools-for-jekyll/"><strong>GitHub Pagesでブログ立ち上げ - Jekyllのためのツール</strong></a>の続き。
+前回は、<a href="https://pages.github.com/"><strong>GitHub Pages</strong></a>で公開するブログサイトを構築するのに、<a href="http://jekyllrb.com/docs/home/"><strong>Jekyll</strong></a>とJekyll関連ツールを使おうと四苦八苦したが、結局Jekyllに見切りをつけ、<a href="https://gohugo.io/"><strong>Hugo</strong></a>を使うことに決めた。</p>
+
+<h2 id="hugoとは">Hugoとは</h2>
+
+<p>Hugoは、国内では2014年末くらいから盛り上がってきているブログサイト構築ツール。
+そのホームページによると、ウェブサイトフレームワークで、静的サイトジェネレータとのこと。</p>
+
+<p>フレームワークと名乗ってはいるが、その正体は、<a href="https://ja.wikipedia.org/wiki/Markdown"><strong>Markdown</strong></a>で書かれた記事を元にブログサイトのソースを生成するコンテントビルド機能と、記事作成(など)を支援するユーティリティ機能を持ったコマンドラインツール。</p>
+
+<p>また、静的サイトジェネレータというのは、静的なサイトを生成するという意味ではなく、静的にサイトを生成するという意味。もっと言えば、WordPressとかがアクセス時にビルドが走るのに対し、Hugoを使った場合は事前にビルド済みのものをサーバにアップロードすることになる、ということ。らしい。WordPressは使ったことがないのでよく知らないが、Hugoのホームページにそう書いてある。
+つまり、Hugoは静的なサイトだけを扱うツールってわけではないので、JavaScriptとかを駆使して動的でインタラクティブなページを作ってもいいはず。</p>
+
+<h2 id="hugoのインストール">Hugoのインストール</h2>
+
+<p><a href="http://gohugo.io/overview/installing/">インストールガイド</a>に従ってHugoをインストールする。</p>
+
+<p><a href="https://github.com/spf13/hugo/releases">HugoのGitHub Releases</a>からWindows用バイナリをダウンロード。このときはバージョン0.14が最新だったので、<strong>hugo_0.14_windows_amd64.zip</strong>をダウンロードした。</p>
+
+<p>このzipの中身は<strong>hugo_0.14_windows_amd64.exe</strong>というバイナリ一つとLICENSE.mdとREADME.mdだけ。
+このhugo_0.14_windows_amd64.exeがHugoのすべてなので、これを適当な場所において実行できるようにしとけばよい。
+今回は、<strong>hugo.bat</strong>というファイルに以下の内容を書き、PATHの通ったフォルダにいれた。</p>
+
+<pre><code class="language-bat">@echo off
+C:\Users\Kaito\Desktop\tool\hugo_0.14_windows_amd64\hugo_0.14_windows_amd64.exe %*
+</code></pre>
+
+<p><br></p>
+
+<p>これで、どこからでも<code>hugo [arguments]</code>と打てばHugoコマンドが実行できる。</p>
+
+<h2 id="hugoのシンタックスハイライト">Hugoのシンタックスハイライト</h2>
+
+<p><a href="http://gohugo.io/extras/highlighting/">ドキュメント</a>によると、Hugoでは<a href="https://ja.wikipedia.org/wiki/%E3%82%B7%E3%83%B3%E3%82%BF%E3%83%83%E3%82%AF%E3%82%B9%E3%83%8F%E3%82%A4%E3%83%A9%E3%82%A4%E3%83%88">シンタックスハイライト</a>を実現する方法を以下の2つから選べる。</p>
+
+<ul>
+<li>サーバサイド: Hugoでのブログサイト生成時にハイライトしておく方法。</li>
+<li>クライアントサイド: クライアントがブログを読み込んだ時にJavaScriptでハイライトする方法。</li>
+</ul>
+
+<p>前者の方が当然クライアントの負荷が軽くなるが、<a href="http://pygments.org/"><strong>Pygments</strong></a>のインストールが必要だったりめんどくさそうなので後者にする。(Pygmentsは<a href="https://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/">Jekyllのとき</a>にすでに入れたけど…)</p>
+
+<p>クライアントサイドでやるのもいくつかやり方があるが、例えば<a href="https://highlightjs.org/">Highlight.js</a>を使うなら以下をHTMLヘッダに加えるだけでいい。</p>
+
+<pre><code class="language-html">&lt;link rel=&quot;stylesheet&quot; href=&quot;https://yandex.st/highlightjs/8.0/styles/default.min.css&quot;&gt;
+&lt;script src=&quot;https://yandex.st/highlightjs/8.0/highlight.min.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;hljs.initHighlightingOnLoad();&lt;/script&gt;
+</code></pre>
+
+<p>この<code>default.min.css</code>の部分を変えると<a href="https://highlightjs.org/static/demo/">色々なスタイル</a>が選べる。
+このブログでは<code>Zenburn</code>を使うことにした。</p>
+
+<h2 id="hugo味見">Hugo味見</h2>
+
+<p><a href="https://gohugo.io/commands/">Hugoコマンドリファレンス</a>を見つつ、Hugoの味見をする。</p>
+
+<p>サイトのひな形を作るコマンドは<code>hugo new site [path]</code>。<code>hugo new site blog</code>を実行して、<strong>blog</strong>という名のフォルダにサイトの初期ソースを生成。blogの部分はファイルもフォルダも存在しないパスを指定する。</p>
+
+<p>この時点で、blogフォルダ内には以下のものが入っている。</p>
+
+<ul>
+<li><a href="https://gohugo.io/content/archetypes/"><strong>archetypes</strong></a>: 新規記事作成時に自動で挿入される<a href="https://gohugo.io/content/front-matter/"><strong>Front Matter</strong></a> (後述)のカスタマイズをするためのファイルを置くフォルダ。</li>
+<li><a href="https://gohugo.io/content/organization/"><strong>content</strong></a>: ブログのコンテンツ(記事など)を置くフォルダ。</li>
+<li><a href="https://gohugo.io/extras/datafiles/"><strong>data</strong></a>: サイト生成時に使うデータを置くフォルダ。</li>
+<li><a href="http://gohugo.io/templates/overview/"><strong>layouts</strong></a>: サイトのレイアウトを定義するファイルを置くフォルダ。</li>
+<li><a href="https://gohugo.io/themes/creation"><strong>static</strong></a>: CSSとかJavaScriptとか画像とかのファイルを置くフォルダ。</li>
+<li><a href="https://gohugo.io/overview/configuration/"><strong>config.toml</strong></a>: 設定ファイル。これは<a href="https://github.com/toml-lang/toml"><strong>TOML</strong></a>だが、<a href="https://ja.wikipedia.org/wiki/YAML"><strong>YAML</strong></a>か<a href="https://ja.wikipedia.org/wiki/JavaScript_Object_Notation"><strong>JSON</strong></a>でもいい。</li>
+</ul>
+
+<p><br></p>
+
+<p>記事を作るコマンドは<code>hugo new  [path]</code>。blogフォルダに<code>cd</code>して、二つ記事を作ってみる。</p>
+
+<pre><code class="language-cmd">hugo new about.md
+hugo new post/first_post.md
+</code></pre>
+
+<p><strong>blog\content\about.md</strong>と<strong>blog\content\post\first_post.md</strong>が生成された。
+これらには、Front Matterという、記事のメタ情報が自動で書き込まれる。
+デフォルトで書き込まれるのは、日付 (<strong>date</strong>)、ドラフトフラグ (<strong>draft</strong>)、タイトル (<strong>title</strong>)だけだが、
+<a href="https://gohugo.io/content/archetypes/"><strong>Archetypes</strong></a>という機能でカスタマイズできる。
+が、今はやらない。</p>
+
+<p>about.mdとfirst_post.mdには適当に記事の内容を書いておく。</p>
+
+<p><br></p>
+
+<p>次に<a href="https://gohugo.io/themes/overview/">テーマ</a>を設定する。テーマを使えば、自分でレイアウトを書く必要がない。</p>
+
+<p>テーマは<a href="https://github.com/spf13/hugoThemes"><strong>Hugo Themes</strong></a>にリストされていて、ひとつひとつ選んでインストールもできるけど、今回は全部いっぺんにインストールして色々見てみる。blogフォルダ内で以下を実行すると、<strong>blog\themes</strong>に全テーマがインストールされる。</p>
+
+<pre><code class="language-cmd">git clone --recursive https://github.com/spf13/hugoThemes.git themes
+</code></pre>
+
+<p><br></p>
+
+<p>これで、以下のコマンドを実行すると、サイトがビルドされ、サーバが起動し、ブラウザで確認できる。</p>
+
+<pre><code class="language-cmd">hugo server -t angels-ladder -D -w
+</code></pre>
+
+<p><code>-t</code>でテーマを指定している。指定するのは<strong>blog\themes</strong>内のフォルダ名。<code>-D</code>はドラフト記事をビルドしたいときにつけるオプション。さっき作ったabout.mdとfirst_post.mdは、そのFront Matterのdraftがtrueになっていて、つまりドラフトなので、<code>-D</code>を付けないとビルドされない。<code>-w</code>は<a href="https://gohugo.io/extras/livereload/"><strong>LiveReload</strong></a>を有効にするフラグで、付けておくとソースを修正したら自動でリビルドとブラウザのリロードが実行される。(変更を監視されるのはサブフォルダ内だけ。config.tomlの変更は無視される。)</p>
+
+<p>サーバには<strong><a href="http://localhost:1313/">http://localhost:1313/</a></strong>でアクセスできる。今回指定したテーマangels-ladderだと、トップページにfirst_post.mdの記事へのリンクがあり、その内容を確認できる。about.mdの方はリンクはなく、直接<strong><a href="http://localhost:1313/about/">http://localhost:1313/about/</a></strong>アクセスしないと見れない。この辺りはテーマ(と設定?)によって異なるのかな。
+まあabout.mdは試しに作ってみただけなので消しておく。</p>
+
+<p><code>hugo server</code>の<code>-t</code>に与える値を変えれば簡単にテーマを切り替えられるので、いろいろ見てみる。</p>
+
+<p><br></p>
+
+<p>以上で味見終わり。</p>
+
+<h2 id="テーマの選定-robust">テーマの選定 - Robust</h2>
+
+<p>Hugo Themesにあるテーマはどれもあまりしっくりこなかった。
+もう自分で作ろうかと思っていたところ、<a href="https://github.com/dim0627/hugo_theme_robust"><strong>Robust</strong></a>というテーマを見つけた。
+<a href="http://yet.unresolved.xyz/">こんな感じ</a>のページができる。いい。これを使うことにする。</p>
+
+<p>blogフォルダ内で、いったんthemesを消してから以下を実行してRobustをインストール。</p>
+
+<pre><code class="language-bat">&gt; git init .
+&gt; git submodule add https://github.com/dim0627/hugo_theme_robust.git themes/hugo_theme_robust
+</code></pre>
+
+<p>ここでは、<code>git init</code>でblogフォルダをGitリポジトリにして、<code>git submodule add</code>で<strong>hugo_theme_robust</strong> (RobustのGitHubプロジェクト)を<a href="https://git-scm.com/book/ja/v1/Git-%E3%81%AE%E3%81%95%E3%81%BE%E3%81%96%E3%81%BE%E3%81%AA%E3%83%84%E3%83%BC%E3%83%AB-%E3%82%B5%E3%83%96%E3%83%A2%E3%82%B8%E3%83%A5%E3%83%BC%E3%83%AB">サブモジュール</a>として追加している。
+こうすることで、blogとhugo_theme_robustを別々のリポジトリとして管理しつつ、hugo_theme_robustをblogの一部として使うことができる。</p>
+
+<p><br></p>
+
+<p><code>hugo server</code>するときやビルド時に毎回テーマを指定しなくてもいいように、
+config.tomlに<code>theme = &quot;hugo_theme_robust&quot;</code>を追記しておく。</p>
+
+<h2 id="テーマのカスタマイズ">テーマのカスタマイズ</h2>
+
+<p>テーマフォルダ内の構成はblogフォルダ(プロジェクトルート)内と同じようになっていて、Hugoがサイトをビルドするとき、プロジェクトルート内のフォルダとテーマフォルダ内のフォルダをマージしたものを使ってくれる。この際、プロジェクトルート内のファイルが優先される。</p>
+
+<p>つまり例えば以下のような構成のプロジェクトがあったとする。</p>
+
+<ul>
+<li>blog
+
+<ul>
+<li>layouts
+
+<ul>
+<li>hoge.html</li>
+</ul></li>
+<li>themes
+
+<ul>
+<li>hugo_theme_robust
+
+<ul>
+<li>layouts
+
+<ul>
+<li>hoge.html</li>
+<li>foo.html</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+
+<p>Hugoはこれをビルドするとき、layouts内には<strong>blog\layouts\hoge.html</strong>と<strong>blog\thmes\hugo_theme_robust\layouts\foo.html</strong>があるものとして処理してくれる。テーマをちょっとカスタマイズしたいときに、テーマのソースをいじらないでいいのが便利。</p>
+
+<p><br></p>
+
+<p>Robustはとりあえず設定ファイルをカスタマイズすれば使える。設定ファイルは、Robustはconfig.yamlだけど、ルートにconfig.toml置いたらちゃんと上書きできた。</p>
+
+<h2 id="記事の仕上げ">記事の仕上げ</h2>
+
+<p>first_post.mdの内容を仕上げて、以下のコマンドでdraftフラグをオフにする。</p>
+
+<pre><code class="language-bat">&gt; hugo undraft content\post\first_post.md
+</code></pre>
+
+<p>これをやるとdateも更新される。</p>
+
+<h2 id="githubへソースを保存">GitHubへソースを保存</h2>
+
+<p>blog内の変更をコミットして、GitHubにblogという名のリポジトリを作成して、以下のコマンドでソースをアップロードする。</p>
+
+<pre><code class="language-bat">&gt; git remote add origin git@github.com:kaitoy/blog.git
+&gt; git push -u origin master
+</code></pre>
+
+<p><br></p>
+
+<p>また、ここで、<strong>gh-pages</strong>というブランチを作り、中身を空にして、masterとは別途チェックアウトしておく。
+コマンドは以下。</p>
+
+<pre><code class="language-bat">&gt; git checkout -b gh-pages
+&gt; rm -rf *
+&gt; git rm -rf .
+&gt; git commit -m &quot;Init GitHub Pages branch.&quot;
+&gt; git push origin gh-pages
+&gt; git checkout master
+&gt; git clone -b gh-pages git@github.com:kaitoy/blog.git pages
+</code></pre>
+
+<p>これでgh-pagesブランチが<strong>blog\pages</strong>フォルダに展開された。</p>
+
+<p>因みにgh-pagesは、<a href="https://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/#github-pages%E5%91%B3%E8%A6%8B">以前のエントリ</a>にも書いたが、GitHub Pagesで公開するサイトを置く特別なブランチ。</p>
+
+<h2 id="ビルド-デプロイ">ビルド・デプロイ</h2>
+
+<p>ビルドコマンドは単に<code>hugo</code>。ビルド成果物はデフォルトで<strong>public</strong>というフォルダに入る。
+ここでは、pagesフォルダに入るように以下のコマンドでビルドする。</p>
+
+<pre><code class="language-bat">&gt; hugo -d pages
+</code></pre>
+
+<p><br></p>
+
+<p>ビルド完了したら、pagesフォルダに<code>cd</code>して、全てのファイルを<code>git add</code>して、コミットしてプッシュすればデプロイ完了。
+<code>https://kaitoy.github.io/blog/</code>でサイトを確認できる。</p>
+
+<h2 id="カスタムドメイン">カスタムドメイン</h2>
+
+<p>サイトに<code>http://tbd.kaitoy.xyz</code>でアクセスできるようにする。手順は以下。</p>
+
+<ol>
+<li><a href="https://www.value-domain.com/"><strong>VALUE-DOMAIN</strong></a>でkaitoy.xyzを取得。</li>
+<li>VALUE-DOMAINのDNS設定に<code>cname tbd kaitoy.github.io.</code>を追加。</li>
+<li>gh-pagesブランチのルートに<strong>CNAME</strong>というファイルを作り、<strong>tbd.kaitoy.xyz</strong>とだけ書いておく。</li>
+<li>config.tomlのbaseurlを<strong><a href="http://tbd.kaitoy.xyz">http://tbd.kaitoy.xyz</a></strong>に変更。ビルドしてプッシュ。</li>
+</ol>
+
+<p>以上でブログサイト立ち上げ完了。あとはテーマをカスタマイズしたり、ひたすらエントリを書く。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f08%2f28%2fusing-hugo%2f&t=GitHub%20Pages%e3%81%a7%e3%83%96%e3%83%ad%e3%82%b0%e7%ab%8b%e3%81%a1%e4%b8%8a%e3%81%92%20-%20Hugo%e3%82%92%e4%bd%bf%e3%81%86" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f08%2f28%2fusing-hugo%2f&text=GitHub%20Pages%e3%81%a7%e3%83%96%e3%83%ad%e3%82%b0%e7%ab%8b%e3%81%a1%e4%b8%8a%e3%81%92%20-%20Hugo%e3%82%92%e4%bd%bf%e3%81%86&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f08%2f28%2fusing-hugo%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f08%2f28%2fusing-hugo%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f08%2f28%2fusing-hugo%2f&title=GitHub%20Pages%e3%81%a7%e3%83%96%e3%83%ad%e3%82%b0%e7%ab%8b%e3%81%a1%e4%b8%8a%e3%81%92%20-%20Hugo%e3%82%92%e4%bd%bf%e3%81%86" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://tbd.kaitoy.xyz/tags/blog"><i class="fa fa-tags"></i> blog </a>
+                
+                <a href="https://tbd.kaitoy.xyz/tags/github"><i class="fa fa-tags"></i> github </a>
+                
+                <a href="https://tbd.kaitoy.xyz/tags/hugo"><i class="fa fa-tags"></i> hugo </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/07/01/https-support-by-cloudflare/">CloudFlareでブログをHTTPS化</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/08/25/tools-for-jekyll/">GitHub Pagesでブログ立ち上げ - Jekyllのためのツール</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/">GitHub Pagesでブログ立ち上げ - GitHub PagesとJekyll</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/07/18/first-post/">First Post</a></li>
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+                <a href="https://tbd.kaitoy.xyz/2015/09/06/disturb-me/">
+                  <i class="fa fa-chevron-left"></i>
+                  Atomウィンドウ内で画像を動かすパッケージ - disturb-me
+                </a>
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://tbd.kaitoy.xyz/2015/08/25/tools-for-jekyll/">
+                  GitHub Pagesでブログ立ち上げ - Jekyllのためのツール
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2016  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

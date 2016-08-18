@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://tbd.kaitoy.xyz">
+    <meta property="og:title" content="To Be Decided">
+    
+    <meta property="og:description" content="7/28にDocker for Winodws(とDocker for Mac)の正式版リリースのアナウンスがあったので試してみたけど、期待していたものと違ったしなんだか上手く動かなかった話。 Docker for Windowsとは Docker for WindowsはDocker Toolboxの後継製品。(多分。) Docker ToolboxはWindowsやMacでDockerを使うための製品で、以下のコンポーネントからなる。 Docker Engine コンテナランタイム。 Docker Compose 複数のコンテナを組み合わせたアプリケーション/サービスの構築/管理ツール。 Docker Machine Docker仮想ホストのプロビジョニング/管理ツール。 Kitematic Dockerコンテナを管理するGUIを提供する製品。 Docker Machineと連携してローカルマシンへのDocker仮想ホストのプロビジョニングもしてくれる。 Docker Toolboxを使うと、VirtualBoxのLinux VMをWindows/Mac上にプロビジョニングして、そのVMにDockerをインストールして、Windows/Macから利用できる。 Docker for Windowsもだいたい同じで、Docker EngineとDocker ComposeとDocker MachineをWinodwsで利用するための製品。 ElectronベースでOracleのVirtualBox依存なKitematicの代わりに、ネイティブなインストーラがWindows内蔵のHyper-Vを使ってDockerをセットアップしてくれる。 Hyper-Vを使うため、VirtualBoxより速くて高信頼らしい。 KitematicはDocker for Windowsには付属しないが、別途ダウンロードすればコンテナ管理に使える。Docker for WindowsとDocker Toolboxとは共存はできない。 私は勝手にDocker for WindowsはHyper-V ContainersのデスクトップOS版のようなものかと勘違いしていて、Windowsのコンテナが使えるようになったのかと期待したが違った。 Docker for Windowsは単にDocker ToolboxのVirtualBoxがHyper-Vになっただけのもので、結局Linux VMの中でDockerを使うだけのものだということにセットアップ中に気付いた。 コレジャナイ感がすごかった。 ともあれ、やった作業を以下に記す。 Docker for Windows on VMware Player 現時点ではDocker for WindowsはホストとしてWindows 10 x64 Pro/Enterprise/Education (Version 1511 Build 10586 以降)しかサポートしていない。 自前のPCが5年前に買ったdynabookでWindows 10をサポートしていないので、VMware PlayerのVM上のWindows 10にDocker for Windowsをインストールしてみる。 VMware PlayerのVMでHyper-Vを使うための設定 VMware PlayerのVMでは通常Hyper-Vは使えないので、How to Install Hyper-V on vmware Workstation 10 ?を参考にしてVMの設定をいじる。 この記事はVMware Workstationについてのものだが、VMware Playerでも全く同じ方法でいける。 いじるのは、dynabookのWindows 7に入れたVMware Workstation 11.1.0 build-2496824に付属の VMware Player 7.1.0 build-2496824で作ったWindows 10 Pro x64 (Version 1511 Build 10586.494)のVM。 VMのバージョンは11.0。2CPUでメモリは2GB。ネットワークインターフェースはNAT。 このVMの.vmxファイルをテキストエディタで開いて以下を追記。意味は不明。 hypervisor.cpuid.v0 = &quot;FALSE&quot; mce.enable = &quot;TRUE&quot; vhu.enable = &quot;TRUE&quot; 次いで、VMware PlayerのGUIからVMのCPU設定を開き、Intel VT-x/EPTまたはAMD-V/RVIを仮想化とCPUパフォーマンスカウンタを仮想化にチェックを付ける。意味はなんとなくしかわからない。 これだけ。 Hyper-VはDocker for Windowsのインストーラが有効化してくれるのでここでは何もしなくていい。 Docker for Windowsインストール VMを起動して、Getting Started with Docker for Windowsに従ってDocker for Windowsをインストールする。 まず、上記サイト内のリンクからインストーラをダウンロード。stableの方。 ダウンロードしたInstallDocker.msiをVM上で実行してウィザードに従えばインストール完了。 ウィザードの最後でLaunch Dockerにチェックが付いた状態でFinishするとDockerを起動してくれる。 この起動中にHyper-Vを有効化してくれる。(OS再起動有り。) OS再起動後、「Failed to create Switch &ldquo;DockerNAT&rdquo;: Hyper-V was unable to find a virtual switch with name &ldquo;DockerNAT&rdquo;」というエラー出た。DockerNATが見つからない?">
+    
+    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/docker.png">
+    
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+
+<div class="row">
+  <div class="col-md-9">
+    <div id="posts">
+      
+      <div class="row">
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/07/31/docker-for-windows/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/docker.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sun, Jul 31, 2016</span>
+              </div>
+              <h2 class="title">Docker for Windowsがコレジャナかった</h2>
+              <div class="summary">
+                7/28にDocker for Winodws(とDocker for Mac)の正式版リリースのアナウンスがあったので試してみたけど、期待していたものと違ったしなんだか上手く動かなかった話。 Docker for Windowsとは Docker for WindowsはDocker Toolboxの後継製品。(多分。) Docker ToolboxはWindowsやMacでDockerを使うための製品で、以下のコンポーネントからなる。 Docker Engine コンテナランタイム。 Docker Compose 複数のコンテナを組み合わせたアプリケーション/サービスの構築/管理ツール。 Docker Machine Docker仮想ホストのプロビジョニング/管理ツール。 Kitematic Dockerコンテナを管理するGUIを提供する製品。 Docker Machineと連携してローカルマシンへのDocker仮想ホストのプロビジョニングもしてくれる。 Docker Toolboxを使うと、VirtualBoxのLinux VMをWindows/Mac上にプロビジョニングして、そのVMにDockerをインストールして、Windows/Macから利用できる。 Docker for Windowsもだいたい同じで、Docker EngineとDocker ComposeとDocker MachineをWinodwsで利用するための製品。 ElectronベースでOracleのVirtualBox依存なKitematicの代わりに、ネイティブなインストーラがWindows内蔵のHyper-Vを使ってDockerをセットアップしてくれる。 Hyper-Vを使うため、VirtualBoxより速くて高信頼らしい。 KitematicはDocker for Windowsには付属しないが、別途ダウンロードすればコンテナ管理に使える。Docker for WindowsとDocker Toolboxとは共存はできない。 私は勝手にDocker for WindowsはHyper-V ContainersのデスクトップOS版のようなものかと勘違いしていて、Windowsのコンテナが使えるようになったのかと期待したが違った。 Docker for Windowsは単にDocker ToolboxのVirtualBoxがHyper-Vになっただけのもので、結局Linux VMの中でDockerを使うだけのものだということにセットアップ中に気付いた。 コレジャナイ感がすごかった。 ともあれ、やった作業を以下に記す。 Docker for Windows on VMware Player 現時点ではDocker for WindowsはホストとしてWindows 10 x64 Pro/Enterprise/Education (Version 1511 Build 10586 以降)しかサポートしていない。 自前のPCが5年前に買ったdynabookでWindows 10をサポートしていないので、VMware PlayerのVM上のWindows 10にDocker for Windowsをインストールしてみる。 VMware PlayerのVMでHyper-Vを使うための設定 VMware PlayerのVMでは通常Hyper-Vは使えないので、How to Install Hyper-V on vmware Workstation 10 ?を参考にしてVMの設定をいじる。 この記事はVMware Workstationについてのものだが、VMware Playerでも全く同じ方法でいける。 いじるのは、dynabookのWindows 7に入れたVMware Workstation 11.1.0 build-2496824に付属の VMware Player 7.1.0 build-2496824で作ったWindows 10 Pro x64 (Version 1511 Build 10586.494)のVM。 VMのバージョンは11.0。2CPUでメモリは2GB。ネットワークインターフェースはNAT。 このVMの.vmxファイルをテキストエディタで開いて以下を追記。意味は不明。 hypervisor.cpuid.v0 = &quot;FALSE&quot; mce.enable = &quot;TRUE&quot; vhu.enable = &quot;TRUE&quot; 次いで、VMware PlayerのGUIからVMのCPU設定を開き、Intel VT-x/EPTまたはAMD-V/RVIを仮想化とCPUパフォーマンスカウンタを仮想化にチェックを付ける。意味はなんとなくしかわからない。 これだけ。 Hyper-VはDocker for Windowsのインストーラが有効化してくれるのでここでは何もしなくていい。 Docker for Windowsインストール VMを起動して、Getting Started with Docker for Windowsに従ってDocker for Windowsをインストールする。 まず、上記サイト内のリンクからインストーラをダウンロード。stableの方。 ダウンロードしたInstallDocker.msiをVM上で実行してウィザードに従えばインストール完了。 ウィザードの最後でLaunch Dockerにチェックが付いた状態でFinishするとDockerを起動してくれる。 この起動中にHyper-Vを有効化してくれる。(OS再起動有り。) OS再起動後、「Failed to create Switch &ldquo;DockerNAT&rdquo;: Hyper-V was unable to find a virtual switch with name &ldquo;DockerNAT&rdquo;」というエラー出た。DockerNATが見つからない?
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/pcap4j-docker.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Mon, Jul 11, 2016</span>
+              </div>
+              <h2 class="title">Windows Server 2016 TP5でWindows Containersにリトライ</h2>
+              <div class="summary">
+                Windows Server 2016のTechnical Preview 5(TP5)が公開されていたので、 TP4でバグに阻まれて挫折した、Windows ContainersでPcap4Jを使ってパケットキャプチャする試みにリトライした話。 OSセットアップ TP4のときと同じ環境。 以降はWindows Server Containersのクイックスタートガイドに沿ってセットアップを進める。 TP4からは大分変わっていて、単一のPowershellスクリプトを実行する形式から、Powershellのコマンドレットを逐次手動実行する形式になっている。 面倒だけど何やってるかわかりやすくて好き。 コンテナ機能のインストール 管理者権限のパワーシェルウィンドウを開く コマンドプロンプトから以下のコマンドを実行。 powershell start-process powershell -Verb runas コンテナ機能のインストール 開いた青いパワーシェルウィンドウで以下のコマンドを実行するとコンテナ機能がインストールされる。 Install-WindowsFeature containers 数分で終わる。 インストールされたのはHyper-V ContainersじゃなくてWindows Server Containersの方。 クイックスタートガイドをみると、前者がWindows 10向け、後者がWindows Server向けというように住み分けされているっぽい。TP4では両方ともWindows Serverで使えたんだけど。 再起動 変更を有効にするために再起動が必要。 Restart-Computer -Force Dockerインストール Dockerは、コンテナイメージの管理やコンテナの起動などもろもろの機能を提供するDockerデーモンと、その機能を利用するためのCLIを提供するDockerクライアントからなる。この節ではそれら両方をインストールする。 Dockerインストールフォルダ作成 管理者権限のパワーシェルウィンドウを開いて、以下のコマンドでDockerインストールフォルダを作成。 New-Item -Type Directory -Path 'C:\Program Files\docker\' Dockerデーモンインストール まずはデーモンの方をインストール。 Invoke-WebRequest https://aka.ms/tp5/b/dockerd -OutFile $env:ProgramFiles\docker\dockerd.exe -UseBasicParsing 数分。 Dockerクライアントインストール 次にクライアント。 Invoke-WebRequest https://aka.ms/tp5/b/docker -OutFile $env:ProgramFiles\docker\docker.exe -UseBasicParsing 数十秒。 パスの設定 さっき作ったDockerインストールフォルダにパスを通す。 [Environment]::SetEnvironmentVariable(&quot;Path&quot;, $env:Path + &quot;;C:\Program Files\Docker&quot;, [EnvironmentVariableTarget]::Machine) Dockerデーモンをサービスに登録 パスの設定を反映するためにいったんパワーシェルウィンドウとコマンドプロンプトを閉じて、 また管理者権限でパワーシェルウィンドウ開いて、以下のコマンドでDockerデーモンをサービスに登録する。 dockerd --register-service Dockerデーモン起動 Dockerデーモンは以下のコマンドで起動できる。 Start-Service docker 数秒で立ち上がる。 デフォルトではOS再起動時にはDockerデーモンは自動起動しないので、そのつどこのコマンドを実行する必要がある。 これでDockerインストール完了。 この時点ではコンテナイメージは何もない。 C:\Users\Administrator&gt;docker images REPOSITORY TAG IMAGE ID CREATED SIZE 因みにインストールされたDockerのバージョンは1.12開発版。現時点での最新版だ。 C:\Users\Administrator&gt;docker -v Docker version 1.12.0-dev, build 8e92415 コンテナイメージのインストール 次に、コンテナイメージをインストールする。 コンテナイメージのパッケージプロバイダをインストール いまいち何なのかはよくわからないが、 コンテナイメージのパッケージプロバイダというのをインストールする。 Install-PackageProvider ContainerImage -Force 数十秒。 Windows Server Coreのイメージをインストール Install-ContainerImage -Name WindowsServerCore 9GB以上もあるファイルをダウンロードして処理するのでかなり時間がかかる。 50分くらいかかった。 Dockerデーモン再起動 Restart-Service docker 無事Windows Server Coreイメージがインストールされた。 PS C:\Users\Administrator&gt; docker images REPOSITORY TAG IMAGE ID CREATED SIZE windowsservercore 10.0.14300.1000 5bc36a335344 8 weeks ago 9.354 GB Pcap4Jコンテナイメージのビルド 以下をC:\Users\Administrator\Desktop\pcap4j\Dockerfileに書いて、cd C:\Users\Administrator\Desktop\pcap4jして、docker build -t pcap4j .を実行。 (Notepad使ったので、拡張子を表示する設定にしてDockerfileの.txtを消さないといけない罠があった。) # # Dockerfile for Pcap4J on Windows # FROM windowsservercore:10.0.14300.1000 MAINTAINER Kaito Yamada &lt;kaitoy@pcap4j.org&gt; # Install Chocolatey.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/07/01/https-support-by-cloudflare/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/cloudflare.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Fri, Jul 1, 2016</span>
+              </div>
+              <h2 class="title">CloudFlareでブログをHTTPS化</h2>
+              <div class="summary">
+                最近GitHub PagesがHTTPSに正式対応したというニュースを見たことをきっかけに、このブログをCloudFlareで常時HTTPS化した話。 このブログ このブログはGitHub Pagesでホストされている。 GitHub Pages上のWebサイトはデフォルトでは&lt;GitHubユーザ名&gt;.github.ioというドメインで公開されるが、ちょっとかっこつけたかったのでカスタムドメイン(tbd.kaitoy.xyz)にした。 GitHub Pagesは2014年3月から非公式にHTTPSをサポートしていて、2016年6月8日に正式サポートを表明したが、これは&lt;GitHubユーザ名&gt;.github.ioドメインだけが対象であり、カスタムドメインはHTTPSサポートされていない。 要するにこのブログにはHTTP接続しかできない状態だった。 これをなんとかHTTPSに対応させたかった。 なぜHTTPS HTTPS化(常時SSL化)が世界的な流行りな雰囲気を感じていたのと、なにより、Googleに優遇してもらえるから。 Googleの検索結果の2,3ページ目までに出てこないなら、そのサイトはこの世に存在しないのとあまり変わらない。 昔はHTTPSにするとSSLプロトコルのオーバーヘッドや暗号化/復号化処理によりHTTPに比べて遅くなると言われていたが、最近ではサーバ/クライアントマシンの性能が上がり、このデメリットは気にするほどのものではなくなった。 逆に、常時SSL化するとSPDYやHTTP/2といった高速なプロトコルの恩恵を受けることができるようになり、HTTPより速くなることもあるらしい。 カスタムドメインなGitHub PagesサイトをHTTPS対応する方法 上記の通りこのブログはカスタムドメインでGitHub Pagesのサポートがなく直接にはHTTPS対応できない。 よって間接的に対応することになるので、リバースプロキシを使うことになる。 リバースプロキシサーバを自分で運用するのは大変なので、CDNサービスを利用する。 CDNサービスでまず思い当たったのはAWSのCloudFrontだけど、なんだか大げさで面倒そう。 あとはCloudFlareが有名なので調べたところ、手軽で無料でよさそうだったのでこれにした。 因みに、ごく最近始まったサービスのKloudsecというのも見つけたけど、まだベータが付いているし、遅いだのそもそもつながらないだの評判が悪かったのでこれは無し。 CloudFlareを利用すると、もともとだいたいこんな感じ↓だったのが、 こんな感じ↓になる。多分。 上のスライド中のリバースプロキシは実際にはいくつもあり、エニーキャストによってブラウザから一番近いものが使われる。 CloudFlare事始め CloudFlareの始め方はQiitaの記事を参考にした。 CloudFlareのアカウント作成 CloudFlareのサイトに行ってSign upのリンクからメアドとパスワードを渡してアカウントを作成。 CloudFlareにサイトを登録 アカウント作成後に開くページに従い、4つのステップをこなすとサービス利用開始できる。 まずはサイトの登録。 サブドメインを除いたkaitoy.xyzを入力してBegin Scanをクリック。 何かのスキャンが始まるので1分ほど待つ。何をしているのかはよくわからない。 CloudFlareのDNSの設定 次のステップでCloudFlareのDNSにレコードを登録する。 ブラウザからのトラフィックの誘導にはAかAAAAかCNAMEを登録できる。 トラフィックはkaitoy.github.ioに送りたいけど、IPアドレスは自分でコントロールできないのでAとAAAAは使えない。 CNAMEを登録した。 適当に入力してAdd Recordを押すとレコードを登録できるが、StatusのところがデフォルトでDNS only(灰色のクラウドのアイコン)になっているので、アイコンをクリックしてDNS and HTTP proxy (CDN)(オレンジ色のクラウドのアイコン)にしておく。 こうしないとブラウザからのトラフィックがCloudFlareを経由せず、HTTPS化できないはず。 プランの選択 サービスプランは無料のFree Websiteを選択。常時SSL化するだけならこれで十分なはず。 レジストラのネームサーバの変更 最後にレジストラのサイトに行ってネームサーバを変更するように指示される。 CloudFlareからは二つのネームサーバが割り当てられたようだ。 指示されたとおりに変更する。 CloudFlareの設定 サインアップが終わるとCloudFlareのダッシュボードが開く。 ダッシュボードのOverviewのStatusは最初はPendingになっていて、これはネームサーバの変更を反映中ということらしかった。 ネームサーバの変更は数時間くらいかかったが、変更中もhttp://tbd.kaitoy.xyz/にはアクセスできた。 ダッシュボードからやった設定は以下。 これもQiitaの記事を参考にした。 SSL ダッシュボードのCryptoのSSLの設定はデフォルトでFull (strict)になっている。 これはブラウザ-CloudFlare間とCloudFlare-GitHub Pages間両方をSSL化する設定。
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/06/25/seven-deadly-sins-of-a-software-project/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sat, Jun 25, 2016</span>
+              </div>
+              <h2 class="title">ソフトウェアプロジェクトの7つの大罪</h2>
+              <div class="summary">
+                このエントリでは、Yegor Bugayenkoによる記事、Seven Deadly Sins of a Software Projectを紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 保守性は近代ソフトウェア開発において最も重要な美徳だ。 保守性は基本的に、新規開発者が本格的な修正を始める前に必要な学習時間で測ることができる。 学習時間が長いほど保守性は低い。 必要な学習時間が無限に近いプロジェクトもあるが、これは文字通り保守不能だ。 私はソフトウェアを保守不能にする7つの基本的で致命的な罪があると考えている。 それらについてここに書く。 アンチパターン 不幸にも、我々が使っているプログラミング言語は柔軟すぎる。 可能なことが多過ぎ、禁止されていることは少なすぎる。 例えばJavaは、数千のメソッドを持った単一の「クラス」でアプリケーション全体を記述することに何の反抗もしない。 このアプリケーションは技術的にはコンパイルして実行できる。 しかしこれはゴッドオブジェクトと呼ばれるよく知られたアンチパターンだ。 つまり、アンチパターンは技術的には設計に取り入れることができるが、一般的には取り入れるべきではないとされている。 言語ごとに多くのアンチパターンがある。 プロダクトに使われているアンチパターンは、生きている有機体の中の腫瘍のようなものだ。 いったん成長し始めると止めるのは非常に難しい。 やがて体全体が死に至る。 やがてソフトウェア全体が保守不能になり、書き直さなければならなくなる。 ひとたびアンチパターンを使ってしまうと、その量は次第に増え、「腫瘍」は育つばかりだ。 これは特にオブジェクト指向言語(Java、C++、Ruby、Python)に当てはまる。 これらが手続き型言語(C、Fortran、COBOL)から多くを引き継いでしまっているからだ。 また、OOP開発者が手続き型で命令的な思考をする傾向にあるからだ。残念なことに。 ところで、既存の有名なアンチパターンのほかに、私は以下のものもダメなコーディング法だと考えている。 NULL参照 ユーティリティクラス 可変オブジェクト GetterとSetter オブジェクト関係マッピング(ORM) シングルトン Controllers、Managers、Validators Public Static メソッド キャスト 私ができる実践的な提案は、読んで学ぶということだけだ。 ここに挙げた本か私の著書「&ldquo;Elegant Objects」が多分助けになるだろう。 常にソフトウェアの品質を疑い、「動く」ということだけで満足してはいけない。 ちょうど癌のように、診断が早ければ早いほど生き残る可能性が大きい。 追跡不能な変更 コミット履歴を見るとき、全ての個々の変更に対して、何を、誰が、なぜ変更したのかがわからないといけない。 さらに、これら3つの情報を得るのにかかる時間は秒単位で計測しないといけない。 殆どのプロジェクトがこのようにできていない。 以下に実践的な提案を示す。 常にチケットを使う プロジェクトやチームがどんなに小さくても、例え一人だけでも、修正しようとしている全ての問題に対してチケット(GitHub issues)を作れ。 チケットに問題の簡単な説明とそれに対する考えを記述しろ。 このチケットをその問題に関する全ての情報の一時的なストレージとして使え。 将来、他の誰かがその「不可解なコミット」が何であるかを理解するために参照する可能性のある全ての情報をそこに書け。 コミットからチケットを参照する 言うまでもないが、全てのコミットにはメッセージが付いていないといけない。 メッセージのないコミットはまったくひどい悪習だ。議論の余地はない。 しかしメッセージだけでは不十分だ。 全てのメッセージはチケット番号で始まらないといけない。 GitHub(君ももちろん使っていると思うが)は自動でコミットとチケットをリンクし、変更の追跡可能性を高めてくれる。 何も消さない Gitは「強制」push、つまりサーバに既にあるブランチ全体を上書きするpushを許している。 これは開発履歴を破壊する方法の例のひとつだ。 また、GitHubのチケットを「きれい」にするためにコメントを削除するのをよく見るが、これはまったくの間違いだ。 何であれ決して消すな。 履歴がどんなに汚く(または乱雑に)見えても、そのまま残しておくことだ。 アドホックリリース 全てのソフトウェアはエンドユーザに届けられる前にパッケージングされなければいけない。 Javaのライブラリであれば.jarファイルにパッケージングされリポジトリにリリースされないといけない。 ウェブアプリケーションであればプラットフォームにデプロイされないといけない。 プロダクトの大きさにかかわらず、テスト、パッケージング、デプロイする正規の手順は常にあるべきだ。 理想的な解決策はこの手順を自動化し、コマンドラインから単一のコマンドで実行できるようにすることだ。 $ ./release.sh ...
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/04/16/pcap4j-in-kotlin/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/pcap4j-kotlin.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sat, Apr 16, 2016</span>
+              </div>
+              <h3 class="title">Pcap4J in Kotlin</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/pcap4j-groovy.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sun, Apr 10, 2016</span>
+              </div>
+              <h3 class="title">Pcap4J in Groovy</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/03/19/zundoko-kiyoshi-with-pcap4j/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/pcap4jlogo.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sat, Mar 19, 2016</span>
+              </div>
+              <h3 class="title"> ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/02/09/continuous-integration-is-dead/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Tue, Feb 9, 2016</span>
+              </div>
+              <h3 class="title">継続的インテグレーションは死んだ</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/pcap4j-docker.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Fri, Jan 22, 2016</span>
+              </div>
+              <h3 class="title">Pcap4J Meets Windows Containers</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/pcap4jlogo.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Tue, Jan 12, 2016</span>
+              </div>
+              <h3 class="title">Pcap4J with Four Native Libraries on Windows 10</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/01/11/who-is-software-architect/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Mon, Jan 11, 2016</span>
+              </div>
+              <h3 class="title">ソフトウェアアーキテクトは何をするのか?</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/01/10/pcap-ng-support-in-pcap4j/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/pcap4jlogo.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sun, Jan 10, 2016</span>
+              </div>
+              <h3 class="title">pcap-ng support in Pcap4J</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/01/03/oop-alternative-to-utility-classes/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sun, Jan 3, 2016</span>
+              </div>
+              <h3 class="title">オブジェクト指向プログラミングにおいてユーティリティクラスに代わるもの</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/01/01/git-revert-reset/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/git.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Fri, Jan 1, 2016</span>
+              </div>
+              <h3 class="title">git resetとrevertを図解する</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/12/31/git-dvc/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/git.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Thu, Dec 31, 2015</span>
+              </div>
+              <h3 class="title">Gitの分散バージョン管理の仕組み</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/12/28/git-merge/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/git.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Mon, Dec 28, 2015</span>
+              </div>
+              <h3 class="title">Gitのマージを図解する</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/12/27/git-repository/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/git.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sun, Dec 27, 2015</span>
+              </div>
+              <h3 class="title">Gitのリポジトリの中身をなるべく正確に理解する</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/12/21/hello-react/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/react.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Mon, Dec 21, 2015</span>
+              </div>
+              <h3 class="title">ReactをAtomパッケージ開発に使ってみた</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/12/19/atom-impress/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/atom_editor_logo.svg.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sat, Dec 19, 2015</span>
+              </div>
+              <h3 class="title">impress.jsでのプレゼン資料作成をサポートするAtomパッケージ - impress</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/12/03/software-quality-award-2015/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/pcap4jlogo.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Thu, Dec 3, 2015</span>
+              </div>
+              <h3 class="title">Pcap4JがSoftware Quality Award 2015で入賞</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/12/02/unpublish-atom-package/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/atom_editor_logo.svg.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Wed, Dec 2, 2015</span>
+              </div>
+              <h3 class="title">Atomパッケージをアンパブリッシュする</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/11/16/thanks-bye-bye-japanese-wrap/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/atom_editor_logo.svg.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Mon, Nov 16, 2015</span>
+              </div>
+              <h3 class="title">ありがとうさようならjapanese-wrap</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Wed, Oct 28, 2015</span>
+              </div>
+              <h3 class="title">よいオブジェクトの七つの美徳</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/pcap4jlogo.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Mon, Oct 12, 2015</span>
+              </div>
+              <h3 class="title">Step by Step to Add a Protocol Support to Pcap4J (Part 2)</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/09/13/orm-is-offensive-anti-pattern/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sun, Sep 13, 2015</span>
+              </div>
+              <h3 class="title">ORMは不快なアンチパターン</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/09/07/caching-gifs-on-atom/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/atom_editor_logo.svg.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Mon, Sep 7, 2015</span>
+              </div>
+              <h3 class="title">AtomにおけるGIF画像のキャッシュ</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/09/06/disturb-me/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/atom_editor_logo.svg.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sun, Sep 6, 2015</span>
+              </div>
+              <h3 class="title">Atomウィンドウ内で画像を動かすパッケージ - disturb-me</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/08/28/using-hugo/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/hugo-logo.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Fri, Aug 28, 2015</span>
+              </div>
+              <h3 class="title">GitHub Pagesでブログ立ち上げ - Hugoを使う</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/08/25/tools-for-jekyll/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/octopress.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Tue, Aug 25, 2015</span>
+              </div>
+              <h3 class="title">GitHub Pagesでブログ立ち上げ - Jekyllのためのツール</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/atom_editor_logo.svg.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Fri, Aug 21, 2015</span>
+              </div>
+              <h3 class="title">Atomパッケージを作る - ワード境界を日本語対応させるパッケージ: japanese-word-selection</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/jekyll_logo.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sat, Aug 15, 2015</span>
+              </div>
+              <h3 class="title">GitHub Pagesでブログ立ち上げ - GitHub PagesとJekyll</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/08/11/daily-stand-up-meetings-are-a-good-tool-for-a-bad-manager/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Tue, Aug 11, 2015</span>
+              </div>
+              <h3 class="title">スタンドアップミーティングはダメマネージャーが好む手法</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/08/09/step-by-step-to-add-a-protocol-support-to-pcap4j-1/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/pcap4jlogo.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sun, Aug 9, 2015</span>
+              </div>
+              <h3 class="title">Step by Step to Add a Protocol Support to Pcap4J (Part 1)</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/pcap4jlogo.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Mon, Jul 27, 2015</span>
+              </div>
+              <h3 class="title">Another way to capture LAN packets with pcap4j container</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/07/26/why-null-is-bad/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sun, Jul 26, 2015</span>
+              </div>
+              <h3 class="title">なぜNullはダメか</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/pcap4jlogo.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sat, Jul 25, 2015</span>
+              </div>
+              <h3 class="title">How to capture packets on a local network with Pcap4J container</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/07/22/getters-setters-evil/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Wed, Jul 22, 2015</span>
+              </div>
+              <h3 class="title">Getter/Setterは悪だ。以上。</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/runc.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sun, Jul 19, 2015</span>
+              </div>
+              <h3 class="title">Pcap4J container with runC</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2015/07/18/first-post/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sat, Jul 18, 2015</span>
+              </div>
+              <h3 class="title">First Post</h3>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2016  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+
