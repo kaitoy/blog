@@ -13,9 +13,9 @@
     <meta property="og:url" content="https://tbd.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="7/28にDocker for Winodws(とDocker for Mac)の正式版リリースのアナウンスがあったので試してみたけど、期待していたものと違ったしなんだか上手く動かなかった話。 Docker for Windowsとは Docker for WindowsはDocker Toolboxの後継製品。(多分。) Docker ToolboxはWindowsやMacでDockerを使うための製品で、以下のコンポーネントからなる。 Docker Engine コンテナランタイム。 Docker Compose 複数のコンテナを組み合わせたアプリケーション/サービスの構築/管理ツール。 Docker Machine Docker仮想ホストのプロビジョニング/管理ツール。 Kitematic Dockerコンテナを管理するGUIを提供する製品。 Docker Machineと連携してローカルマシンへのDocker仮想ホストのプロビジョニングもしてくれる。 Docker Toolboxを使うと、VirtualBoxのLinux VMをWindows/Mac上にプロビジョニングして、そのVMにDockerをインストールして、Windows/Macから利用できる。 Docker for Windowsもだいたい同じで、Docker EngineとDocker ComposeとDocker MachineをWinodwsで利用するための製品。 ElectronベースでOracleのVirtualBox依存なKitematicの代わりに、ネイティブなインストーラがWindows内蔵のHyper-Vを使ってDockerをセットアップしてくれる。 Hyper-Vを使うため、VirtualBoxより速くて高信頼らしい。 KitematicはDocker for Windowsには付属しないが、別途ダウンロードすればコンテナ管理に使える。Docker for WindowsとDocker Toolboxとは共存はできない。 私は勝手にDocker for WindowsはHyper-V ContainersのデスクトップOS版のようなものかと勘違いしていて、Windowsのコンテナが使えるようになったのかと期待したが違った。 Docker for Windowsは単にDocker ToolboxのVirtualBoxがHyper-Vになっただけのもので、結局Linux VMの中でDockerを使うだけのものだということにセットアップ中に気付いた。 コレジャナイ感がすごかった。 ともあれ、やった作業を以下に記す。 Docker for Windows on VMware Player 現時点ではDocker for WindowsはホストとしてWindows 10 x64 Pro/Enterprise/Education (Version 1511 Build 10586 以降)しかサポートしていない。 自前のPCが5年前に買ったdynabookでWindows 10をサポートしていないので、VMware PlayerのVM上のWindows 10にDocker for Windowsをインストールしてみる。 VMware PlayerのVMでHyper-Vを使うための設定 VMware PlayerのVMでは通常Hyper-Vは使えないので、How to Install Hyper-V on vmware Workstation 10 ?を参考にしてVMの設定をいじる。 この記事はVMware Workstationについてのものだが、VMware Playerでも全く同じ方法でいける。 いじるのは、dynabookのWindows 7に入れたVMware Workstation 11.1.0 build-2496824に付属の VMware Player 7.1.0 build-2496824で作ったWindows 10 Pro x64 (Version 1511 Build 10586.494)のVM。 VMのバージョンは11.0。2CPUでメモリは2GB。ネットワークインターフェースはNAT。 このVMの.vmxファイルをテキストエディタで開いて以下を追記。意味は不明。 hypervisor.cpuid.v0 = &quot;FALSE&quot; mce.enable = &quot;TRUE&quot; vhu.enable = &quot;TRUE&quot; 次いで、VMware PlayerのGUIからVMのCPU設定を開き、Intel VT-x/EPTまたはAMD-V/RVIを仮想化とCPUパフォーマンスカウンタを仮想化にチェックを付ける。意味はなんとなくしかわからない。 これだけ。 Hyper-VはDocker for Windowsのインストーラが有効化してくれるのでここでは何もしなくていい。 Docker for Windowsインストール VMを起動して、Getting Started with Docker for Windowsに従ってDocker for Windowsをインストールする。 まず、上記サイト内のリンクからインストーラをダウンロード。stableの方。 ダウンロードしたInstallDocker.msiをVM上で実行してウィザードに従えばインストール完了。 ウィザードの最後でLaunch Dockerにチェックが付いた状態でFinishするとDockerを起動してくれる。 この起動中にHyper-Vを有効化してくれる。(OS再起動有り。) OS再起動後、「Failed to create Switch &ldquo;DockerNAT&rdquo;: Hyper-V was unable to find a virtual switch with name &ldquo;DockerNAT&rdquo;」というエラー出た。DockerNATが見つからない?">
+    <meta property="og:description" content="今日、よりシンプルにGitHub Pagesを使えるようになったというアナウンスがあったので、さっそく試してみた話。 GitHub Pagesの改善点 GitHub PagesにはUser Pages、Organization Pages、Project Pagesの三種類があるが、変わったのはProject Pages、つまりGitHubリポジトリごとに使えてusername.github.io/projectnameのようなURLのやつだけ。 改善点はソース設定が加わったこと。 今まではProject Pagesで公開するサイトのソースはgh-pagesという名のブランチに置く必要があったが、ソース設定によりmasterブランチのルートに置いたりmasterブランチの/docsフォルダに置いたりもできるようになった。 ソース設定の使い道 Pcap4Jのホームページのソースをmasterブランチの/docsフォルダに置く設定にしたら捗った。 Pcap4JのホームページはHugoで作っていて、Hugoのソースをpcap4j-hpリポジトリのmasterブランチに置き、gh-pagesブランチを作ってそこにHugoのビルドアウトプット(=ホームページのソース)を入れていた。 ローカルPCでは、masterをcloneして、そこからgit worktreeでgh-pagesを別のフォルダにチェックアウトしておいてあり、Hugoのビルドオプションでgh-pagesのフォルダに出力するようにしていた。 これだと、ホームページを修正したい場合、masterでHugoソースを修正してgit add/commit/push、ビルドしてgh-pagesフォルダに移動してgit add/commit/push、というように二回git add/commit/pushする必要があり面倒だった。 Hugoのビルドアウトプットをmasterブランチの/docsフォルダに置けるようにできれば、add/commit/pushはビルド後にmasterに対して一回だけやれば済むようになる。 gh-pagesからmasterブランチの/docsフォルダへの移行 GitHubのヘルプを参考にしつつ、 ローカルPCで、masterの作業ディレクトリのルートにdocsというフォルダを作り、gh-pagesのフォルダの中身を全てそこに移動。 masterのdocsをgit add/commit/push。 GitHubのpcap4j-hpリポジトリのページに行き、SettingsタブのGitHub PagesセクションのSourceをgh-pages branchからmaster branch /docs folderに変えてSaveボタンをクリック。 実にこれだけ。 カスタムドメインにしていてもこれだけ。簡単。 あとはローカルPCのgh-pagesの作業ディレクトリを削除したり、gh-pagesブランチを削除したり。">
     
-    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/docker.png">
+    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/github.png">
     
     
     
@@ -64,6 +64,28 @@
     <div id="posts">
       
       <div class="row">
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/08/18/simpler-github-pages-publishing/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/github.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Thu, Aug 18, 2016</span>
+              </div>
+              <h2 class="title">simpler github pages publishing</h2>
+              <div class="summary">
+                今日、よりシンプルにGitHub Pagesを使えるようになったというアナウンスがあったので、さっそく試してみた話。 GitHub Pagesの改善点 GitHub PagesにはUser Pages、Organization Pages、Project Pagesの三種類があるが、変わったのはProject Pages、つまりGitHubリポジトリごとに使えてusername.github.io/projectnameのようなURLのやつだけ。 改善点はソース設定が加わったこと。 今まではProject Pagesで公開するサイトのソースはgh-pagesという名のブランチに置く必要があったが、ソース設定によりmasterブランチのルートに置いたりmasterブランチの/docsフォルダに置いたりもできるようになった。 ソース設定の使い道 Pcap4Jのホームページのソースをmasterブランチの/docsフォルダに置く設定にしたら捗った。 Pcap4JのホームページはHugoで作っていて、Hugoのソースをpcap4j-hpリポジトリのmasterブランチに置き、gh-pagesブランチを作ってそこにHugoのビルドアウトプット(=ホームページのソース)を入れていた。 ローカルPCでは、masterをcloneして、そこからgit worktreeでgh-pagesを別のフォルダにチェックアウトしておいてあり、Hugoのビルドオプションでgh-pagesのフォルダに出力するようにしていた。 これだと、ホームページを修正したい場合、masterでHugoソースを修正してgit add/commit/push、ビルドしてgh-pagesフォルダに移動してgit add/commit/push、というように二回git add/commit/pushする必要があり面倒だった。 Hugoのビルドアウトプットをmasterブランチの/docsフォルダに置けるようにできれば、add/commit/pushはビルド後にmasterに対して一回だけやれば済むようになる。 gh-pagesからmasterブランチの/docsフォルダへの移行 GitHubのヘルプを参考にしつつ、 ローカルPCで、masterの作業ディレクトリのルートにdocsというフォルダを作り、gh-pagesのフォルダの中身を全てそこに移動。 masterのdocsをgit add/commit/push。 GitHubのpcap4j-hpリポジトリのページに行き、SettingsタブのGitHub PagesセクションのSourceをgh-pages branchからmaster branch /docs folderに変えてSaveボタンをクリック。 実にこれだけ。 カスタムドメインにしていてもこれだけ。簡単。 あとはローカルPCのgh-pagesの作業ディレクトリを削除したり、gh-pagesブランチを削除したり。
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
         
         
         
@@ -129,33 +151,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://tbd.kaitoy.xyz/2016/06/25/seven-deadly-sins-of-a-software-project/" class="post post-topix">
+            <a href="https://tbd.kaitoy.xyz/2016/06/25/seven-deadly-sins-of-a-software-project/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://tbd.kaitoy.xyz/images/teamedio_logo.svg" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Sat, Jun 25, 2016</span>
               </div>
-              <h2 class="title">ソフトウェアプロジェクトの7つの大罪</h2>
-              <div class="summary">
-                このエントリでは、Yegor Bugayenkoによる記事、Seven Deadly Sins of a Software Projectを紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 保守性は近代ソフトウェア開発において最も重要な美徳だ。 保守性は基本的に、新規開発者が本格的な修正を始める前に必要な学習時間で測ることができる。 学習時間が長いほど保守性は低い。 必要な学習時間が無限に近いプロジェクトもあるが、これは文字通り保守不能だ。 私はソフトウェアを保守不能にする7つの基本的で致命的な罪があると考えている。 それらについてここに書く。 アンチパターン 不幸にも、我々が使っているプログラミング言語は柔軟すぎる。 可能なことが多過ぎ、禁止されていることは少なすぎる。 例えばJavaは、数千のメソッドを持った単一の「クラス」でアプリケーション全体を記述することに何の反抗もしない。 このアプリケーションは技術的にはコンパイルして実行できる。 しかしこれはゴッドオブジェクトと呼ばれるよく知られたアンチパターンだ。 つまり、アンチパターンは技術的には設計に取り入れることができるが、一般的には取り入れるべきではないとされている。 言語ごとに多くのアンチパターンがある。 プロダクトに使われているアンチパターンは、生きている有機体の中の腫瘍のようなものだ。 いったん成長し始めると止めるのは非常に難しい。 やがて体全体が死に至る。 やがてソフトウェア全体が保守不能になり、書き直さなければならなくなる。 ひとたびアンチパターンを使ってしまうと、その量は次第に増え、「腫瘍」は育つばかりだ。 これは特にオブジェクト指向言語(Java、C++、Ruby、Python)に当てはまる。 これらが手続き型言語(C、Fortran、COBOL)から多くを引き継いでしまっているからだ。 また、OOP開発者が手続き型で命令的な思考をする傾向にあるからだ。残念なことに。 ところで、既存の有名なアンチパターンのほかに、私は以下のものもダメなコーディング法だと考えている。 NULL参照 ユーティリティクラス 可変オブジェクト GetterとSetter オブジェクト関係マッピング(ORM) シングルトン Controllers、Managers、Validators Public Static メソッド キャスト 私ができる実践的な提案は、読んで学ぶということだけだ。 ここに挙げた本か私の著書「&ldquo;Elegant Objects」が多分助けになるだろう。 常にソフトウェアの品質を疑い、「動く」ということだけで満足してはいけない。 ちょうど癌のように、診断が早ければ早いほど生き残る可能性が大きい。 追跡不能な変更 コミット履歴を見るとき、全ての個々の変更に対して、何を、誰が、なぜ変更したのかがわからないといけない。 さらに、これら3つの情報を得るのにかかる時間は秒単位で計測しないといけない。 殆どのプロジェクトがこのようにできていない。 以下に実践的な提案を示す。 常にチケットを使う プロジェクトやチームがどんなに小さくても、例え一人だけでも、修正しようとしている全ての問題に対してチケット(GitHub issues)を作れ。 チケットに問題の簡単な説明とそれに対する考えを記述しろ。 このチケットをその問題に関する全ての情報の一時的なストレージとして使え。 将来、他の誰かがその「不可解なコミット」が何であるかを理解するために参照する可能性のある全ての情報をそこに書け。 コミットからチケットを参照する 言うまでもないが、全てのコミットにはメッセージが付いていないといけない。 メッセージのないコミットはまったくひどい悪習だ。議論の余地はない。 しかしメッセージだけでは不十分だ。 全てのメッセージはチケット番号で始まらないといけない。 GitHub(君ももちろん使っていると思うが)は自動でコミットとチケットをリンクし、変更の追跡可能性を高めてくれる。 何も消さない Gitは「強制」push、つまりサーバに既にあるブランチ全体を上書きするpushを許している。 これは開発履歴を破壊する方法の例のひとつだ。 また、GitHubのチケットを「きれい」にするためにコメントを削除するのをよく見るが、これはまったくの間違いだ。 何であれ決して消すな。 履歴がどんなに汚く(または乱雑に)見えても、そのまま残しておくことだ。 アドホックリリース 全てのソフトウェアはエンドユーザに届けられる前にパッケージングされなければいけない。 Javaのライブラリであれば.jarファイルにパッケージングされリポジトリにリリースされないといけない。 ウェブアプリケーションであればプラットフォームにデプロイされないといけない。 プロダクトの大きさにかかわらず、テスト、パッケージング、デプロイする正規の手順は常にあるべきだ。 理想的な解決策はこの手順を自動化し、コマンドラインから単一のコマンドで実行できるようにすることだ。 $ ./release.sh ...
-              </div>
+              <h3 class="title">ソフトウェアプロジェクトの7つの大罪</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         
