@@ -5,7 +5,7 @@ draft = false
 eyecatch = "github.png"
 slug = "simpler-github-pages-publishing"
 tags = [ "github" ]
-title = "simpler github pages publishing"
+title = "GitHub Pagesのソース設定が地味にいい"
 
 +++
 
