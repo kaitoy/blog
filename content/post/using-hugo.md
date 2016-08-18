@@ -193,6 +193,8 @@ blog内の変更をコミットして、GitHubにblogという名のリポジト
 
 因みにgh-pagesは、[以前のエントリ](https://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/#github-pages%E5%91%B3%E8%A6%8B)にも書いたが、GitHub Pagesで公開するサイトを置く特別なブランチ。
 
+(2016/8/18追記: [今はgh-pagesブランチは不要。](https://tbd.kaitoy.xyz/2016/08/18/simpler-github-pages-publishing/))
+
 ## ビルド・デプロイ
 ビルドコマンドは単に`hugo`。ビルド成果物はデフォルトで__public__というフォルダに入る。
 ここでは、pagesフォルダに入るように以下のコマンドでビルドする。

@@ -21,6 +21,7 @@ Hugoについては別のエントリで書くとして、GitHub Pagesは、GitH
 
 ## GitHub Pages味見
 GitHub Pagesを利用するには、__GitHubユーザ名.github.io__ という名前のリポジトリを作るか、任意のリポジトリに__gh-pages__ という名前のブランチを作って、そこにサイトのソースを置けばいい。そのサイトには、前者の場合は`http://GitHubユーザ名.github.io`で、後者の場合は`http://GitHubユーザ名.github.io/リポジトリ名`でアクセスできる。
+(2016/8/18追記: [今はgh-pagesブランチは不要。](https://tbd.kaitoy.xyz/2016/08/18/simpler-github-pages-publishing/))
 
 とりあえず前者をやってみる。
 
