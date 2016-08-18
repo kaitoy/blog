@@ -58,7 +58,8 @@ void transform(File in, File out) {
   for (String line : src) {
     dest.add(line.trim());
   }
-  FileUtils.writeLines(out, dest, "UTF-8"); } ```
+  FileUtils.writeLines(out, dest, "UTF-8");
+}
 ```
 
 上のコードはきれいに見える。
@@ -117,6 +118,20 @@ void transform(File in, File out) {
 }
 ```
 
+(訳注: 上のコードは以下のコードの誤記だと思われる。
+```java
+void transform(File in, File out) {
+  Trimmed src = new Trimmed(
+    new FileLines(new UnicodeFile(in))
+  );
+  FileLines dest = new FileLines(
+    new UnicodeFile(out)
+  );
+  dest.addAll(src);
+}
+```
+)
+
 `FileLines`は`Collection<String>`を実装していて、ファイルの読み込みと書き込みの処理を内包している。
 `FileLines`のインスタンスは文字列のコレクションと全く同じ挙動をし、全てのI/O処理を隠蔽している。
 このインスタンスを繰り返し処理するとファイルが読み込まれる。
@@ -140,7 +155,7 @@ I/Oエラーで開けなかったら触られすらしない。
 二つ目のスニペットの最終行を除く全行は、小さいオブジェクトをインスタンス化して大きいオブジェクトを合成している。
 このオブジェクト合成は、データ変換を起こさないのでCPUコストはむしろ低い。
 
-さらに、一つ目のスクリプトがO(n)で動くのに対し、二つ目のスクリプトは明らかにO(1)の計算量で動く。
+さらに、二つ目のスクリプトがO(1)の空間計算量で動くのに対し、一つ目のスクリプトはO(n)で動くのは明らかだ。
 これが一つ目のスクリプトでデータに対して手続き型アプローチをした結果だ。
 
 オブジェクト指向の世界では、データというものはない。オブジェクトとその挙動しかないのだ！
