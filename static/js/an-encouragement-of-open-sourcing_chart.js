@@ -1,5 +1,11 @@
 $(function() {
-  window.an_encouragement_of_open_sourcing_chart_1 = new Chart(document.getElementById("an-encouragement-of-open-sourcing-chart-1"), {
+  var small = $(window).width() < 400;
+
+  var ctx = document.getElementById("an-encouragement-of-open-sourcing-chart-1").getContext("2d");
+  if (small) {
+    ctx.canvas.height = 200;
+  }
+  window.an_encouragement_of_open_sourcing_chart_1 = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels: ["Javascript", "Java", "Ruby", "Python", "PHP", "HTML", "CSS", "C++", "その他"],
@@ -19,11 +25,15 @@ $(function() {
       }],
     },
     options: {
-      responsive: true,
+      responsive: !small,
     }
   });
 
-  window.an_encouragement_of_open_sourcing_chart_2 = new Chart(document.getElementById("an-encouragement-of-open-sourcing-chart-2"), {
+  ctx = document.getElementById("an-encouragement-of-open-sourcing-chart-2").getContext("2d");
+  if (small) {
+    ctx.canvas.height = 250;
+  }
+  window.an_encouragement_of_open_sourcing_chart_2 = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels: ["★1000以上", "★900～1000", "★800～900", "★700～800", "★600～700", "★500～600", "★400～500", "★300～400", "★200～300", "★100～200", "★100未満"],
@@ -46,19 +56,15 @@ $(function() {
       }],
     },
     options: {
-      responsive: true,
-      // scales: {
-      //   yAxes: [{
-      //     ticks: {
-      //       min: 0,
-      //       max: 100000,
-      //     },
-      //   }],
-      // },
+      responsive: !small,
     }
   });
 
-  window.an_encouragement_of_open_sourcing_chart_3 = new Chart(document.getElementById("an-encouragement-of-open-sourcing-chart-3"), {
+  ctx = document.getElementById("an-encouragement-of-open-sourcing-chart-3").getContext("2d");
+  if (small) {
+    ctx.canvas.height = 250;
+  }
+  window.an_encouragement_of_open_sourcing_chart_3 = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels: ["★1000以上", "★900～1000", "★800～900", "★700～800", "★600～700", "★500～600", "★400～500", "★300～400", "★200～300", "★100～200", "★100未満"],
@@ -81,15 +87,7 @@ $(function() {
       }],
     },
     options: {
-      responsive: true,
-      // scales: {
-      //   yAxes: [{
-      //     ticks: {
-      //       min: 0,
-      //       max: 100000,
-      //     },
-      //   }],
-      // },
+      responsive: !small,
     }
   });
 });
