@@ -185,13 +185,13 @@ Pcap4JはJavaなので __[Mavenリポジトリ](https://mvnrepository.com/)__。
 プロジェクト名を[おしゃれなフリーフォント](http://photoshopvip.net/77655)で書いて、ちょっと[カーニング](https://ja.wikipedia.org/wiki/%E3%82%AB%E3%83%BC%E3%83%8B%E3%83%B3%E3%82%B0)しただけの[ロゴタイプ](https://ja.wikipedia.org/wiki/%E3%83%AD%E3%82%B4%E3%82%BF%E3%82%A4%E3%83%97)でもいい。
 自分で作ったものがださくてかっこ悪いんじゃないかと不安になったら、[runC](https://runc.io/)のロゴマークを見ると心が休まるかもしれない。
 
-<img alt="runc.png" src="/images/runc.png" style="margin: 0px auto; display: block; max-width: 300px;">
+<img alt="runc.png" src="/images/runc.png" style="margin: 0px auto; display: block; width: 50%; min-width: 200px;">
 
 <br>
 
 [Pcap4Jのロゴ](https://github.com/kaitoy/pcap4j/blob/v1/www/logos.md)は、PのついたキャップをJavaカラーでというアイデアをもとに嫁に描いてもらった。端っこがちょっとジャギジャギしてるのと、ファビコンにするとつぶれてしまうところをいつか何とかしたい。
 
-<img alt="pcap4jlogo.png" src="/images/pcap4jlogo.png" style="margin: 0px auto; display: block; max-width: 300px;">
+<img alt="pcap4jlogo.png" src="/images/pcap4jlogo.png" style="margin: 0px auto; display: block; width: 50%; min-width: 200px;">
 
 #### ホームページを作る
 プロジェクトのホームページを作るのはいいアイデアだ。
@@ -237,7 +237,7 @@ Stack Overflowに投稿される質問をチェックし、自分のライブラ
 __[Issue Stats](http://issuestats.com/)__ という、IssuesやPull requestsへの対応速度などを解析してくれるサービスがある。
 対応速度に自信があるならここのバッジを貼るのもいいかもしれない。
 
-<img alt="stats.png" src="/images/an-encouragement-of-open-sourcing/stats.png" style="margin: 0px auto; display: block; max-width: 400px;">
+<img alt="stats.png" src="/images/an-encouragement-of-open-sourcing/stats.png" style="margin: 0px auto; display: block; width: 50%; min-width: 200px;">
 
 <br>
 
@@ -253,7 +253,7 @@ Pcap4Jのこの数字は怖くて見れない。
 CIを実装したらREADME.mdにバッジを貼るのを忘れずに。
 とてもオフィシャル感が出る。
 
-<img alt="badges.png" src="/images/an-encouragement-of-open-sourcing/badges.png" style="margin: 0px auto; display: block; max-width: 400px;">
+<img alt="badges.png" src="/images/an-encouragement-of-open-sourcing/badges.png" style="margin: 0px auto; display: block; width: 50%; min-width: 200px;">
 
 <br>
 
@@ -282,7 +282,7 @@ Pcap4Jにスターを付けてくれた人は5大陸31ヶ国にわたり、世�
 </div> -->
 
 <div style="margin: 0 auto; text-align: center;">
-<a href="http://statpedia.com/embed/HJUP7kHq"><img src="/images/an-encouragement-of-open-sourcing/map.png" alt="map.png" style="max-width: 500px;"></a>
+<a href="http://statpedia.com/embed/HJUP7kHq"><img src="/images/an-encouragement-of-open-sourcing/map.png" alt="map.png" style="width: 80%; min-width: 200px;"></a>
 <br>
 (所在不明者のスターはグリーンランドに置いた。)
 </div>
