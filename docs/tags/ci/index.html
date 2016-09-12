@@ -175,6 +175,9 @@
       <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
       
       
+      <a href="https://tbd.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
       <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
       
       
@@ -185,6 +188,9 @@
       
       
       <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/windows">windows</a>
       
       
       <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>

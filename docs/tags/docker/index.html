@@ -61,6 +61,27 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://tbd.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="/images/nanoserver.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Mon, Sep 12, 2016</span>
+              </div>
+              <h2 class="title">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</h2>
+              <div class="summary">
+                Nano Serverでunzipしたかっただけだったのに、妙に苦労した話。 Nano Serverとは Nano Serverは、Windows Server 2016で追加されるWindows Serverの新たなインストール形式で、Server Coreよりさらに機能を絞り、リモートで管理するクラウドホストやWebサーバ向けにに特化したもの。 Server Coreが数GBくらいなのに対し、Nano Serverは数百MBととても軽量で、それゆえ起動が速くセキュア。 unzipとは unzipとは、zipファイルを解凍する、ただそれだけのこと。 ただそれだけのことで、基本的な機能だと思うのだが、Windowsはこれをコマンドラインで実行する方法をつい最近まで正式に提供していなかった。 Nano Serverでunzip Windows 10のHyper-V Containersの上でPcap4JのビルドとテストをするDockerイメージをビルドしたくて、そのための依存ライブラリなどをインストールする処理をDockerfileに書いていて、ADDでzipをダウンロードしたところまではいいんだけど、このzipどうやって解凍してやろうかとなった。 (Dockerホストに置いたものをコンテナにADDするのはなんか格好悪いから無しで。Dockerfile裸一貫で実現したい。) Windows 10のHyper-V Containersは、現時点でNano Serverしかサポートしていないのが厳しい点。Server Coreだったら楽だったのに。 以下、いろいろ試したことを書く。 正攻法: Expand-Archive PowerShellの v5 で実装されたExpand-Archiveというコマンドレットでzipを解凍できる。 Nano ServerのPowerShellのバージョンを確認したら 5.1 だったのでこれでいけるかと思った。 C:\&gt;powershell -command &quot;$PSVersionTable.PSVersion&quot; Major Minor Build Revision ----- ----- ----- -------- 5 1 14284 1000 したらこのエラー。 Add-Type : Cannot find path 'C:\System.IO.Compression.FileSystem.dll' because it does not exist. At C:\windows\system32\windowspowershell\v1.0\Modules\Microsoft.PowerShell.Archive\Microsoft.PowerShell.Archive.psm1:914 char:5 + Add-Type -AssemblyName System.IO.Compression.FileSystem + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ + CategoryInfo : ObjectNotFound: (C:\System.IO.Compression.FileSystem.dll:String) [Add-Type], ItemNotFoun dException + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.AddTypeCommand どうもPowerShellの 5.1 以降には、.NET FrameworkベースのDesktop Editionと、そこから機能を絞った.NET CoreベースのCore Editionがあり、Nano ServerのはCore Editionなんだそうな。 Expand-ArchiveはSystem.IO.Compression.FileSystem.dllの中のZipFileクラスに依存しているんだけど、.NET CoreにはSystem.IO.Compression.FileSystem.dllが含まれていないっぽい。 ShellオブジェクトのCopyHere PowerShellでのunzip方法を調べたらStack Overflowにいくつか載っていた。 Expand-Archiveと、System.IO.Compression.ZipFileを直接使う方法と、Shellオブジェクト(COMオブジェクト)のCopyHereメソッドを使う方法。 最初の2つはCore Editionでは使えないことが分かっているので、3つめにトライ。 こんなの↓ $shell = New-Object -ComObject shell.application $zip = $shell.NameSpace(&quot;C:\a.zip&quot;) MkDir(&quot;C:\a&quot;) foreach ($item in $zip.items()) { $shell.Namespace(&quot;C:\a&quot;).CopyHere($item) } 調べたらこの方法はMicrosoftから非推奨にされていることが分かったんだけど、一応やってみる。 したら以下のエラー。 new-object : Retrieving the COM class factory for component with CLSID {00000000-0000-0000-0000-000000000000} failed due to the following error: 80040154 Class not registered (Exception from HRESULT: 0x80040154 (REGDB_E_CLASSNOTREG)).
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://tbd.kaitoy.xyz/2016/07/31/docker-for-windows/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="/images/docker.png" alt="eyecatch">
@@ -122,19 +143,16 @@
         
         
         
-        <div class="col-sm-6">
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://tbd.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/" class="post post-topix">
+            <a href="https://tbd.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/" class="post">
               <header class="eyecatch text-center">
                 <img src="/images/pcap4jlogo.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Mon, Jul 27, 2015</span>
               </div>
-              <h2 class="title">Another way to capture LAN packets with pcap4j container</h2>
-              <div class="summary">
-                2 days ago, I posted an article How to capture packets on a local network with Pcap4J container. Today, I was reading Docker Docs and found another way to do it. I&rsquo;m writing about it here. &ndash;net option for docker run When we start a docker container we use docker run command. It accepts some options. --net is one of them, which is to set a network mode for a container.
-              </div>
+              <h3 class="title">Another way to capture LAN packets with pcap4j container</h3>
             </a>
           </article>
         </div>
@@ -274,6 +292,9 @@
       <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
       
       
+      <a href="https://tbd.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
       <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
       
       
@@ -284,6 +305,9 @@
       
       
       <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/windows">windows</a>
       
       
       <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>

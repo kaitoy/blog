@@ -6,8 +6,133 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2016</rights>
-    <updated>2016-08-21 20:54:12 -0600 MDT</updated>
+    <updated>2016-09-12 16:46:54 -0600 MDT</updated>
 
+    
+      
+        <item>
+          <title>Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</title>
+          <link>https://tbd.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/</link>
+          <pubDate>Mon, 12 Sep 2016 16:46:54 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/</guid>
+          <description>
+
+&lt;p&gt;Nano Serverでunzipしたかっただけだったのに、妙に苦労した話。&lt;/p&gt;
+
+&lt;h2 id=&#34;nano-serverとは&#34;&gt;Nano Serverとは&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://technet.microsoft.com/en-us/windows-server-docs/compute/nano-server/getting-started-with-nano-server&#34;&gt;Nano Server&lt;/a&gt;は、Windows Server 2016で追加されるWindows Serverの新たなインストール形式で、&lt;a href=&#34;https://en.wikipedia.org/wiki/Server_Core&#34;&gt;Server Core&lt;/a&gt;よりさらに機能を絞り、リモートで管理するクラウドホストやWebサーバ向けにに特化したもの。&lt;/p&gt;
+
+&lt;p&gt;Server Coreが数GBくらいなのに対し、Nano Serverは数百MBととても軽量で、それゆえ起動が速くセキュア。&lt;/p&gt;
+
+&lt;h2 id=&#34;unzipとは&#34;&gt;unzipとは&lt;/h2&gt;
+
+&lt;p&gt;unzipとは、&lt;a href=&#34;https://ja.wikipedia.org/wiki/ZIP_(%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%83%95%E3%82%A9%E3%83%BC%E3%83%9E%E3%83%83%E3%83%88&#34;&gt;zip&lt;/a&gt;ファイルを解凍する、ただそれだけのこと。&lt;/p&gt;
+
+&lt;p&gt;ただそれだけのことで、基本的な機能だと思うのだが、Windowsはこれを&lt;a href=&#34;https://technet.microsoft.com/en-us/library/dn841359.aspx&#34;&gt;コマンドラインで実行する方法&lt;/a&gt;をつい最近まで正式に提供していなかった。&lt;/p&gt;
+
+&lt;h2 id=&#34;nano-serverでunzip&#34;&gt;Nano Serverでunzip&lt;/h2&gt;
+
+&lt;p&gt;Windows 10の&lt;a href=&#34;https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containers%E3%81%A8%E3%81%AF&#34;&gt;Hyper-V Containers&lt;/a&gt;の上で&lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;Pcap4J&lt;/a&gt;のビルドとテストをするDockerイメージをビルドしたくて、そのための依存ライブラリなどをインストールする処理をDockerfileに書いていて、&lt;code&gt;ADD&lt;/code&gt;でzipをダウンロードしたところまではいいんだけど、このzipどうやって解凍してやろうかとなった。
+(Dockerホストに置いたものをコンテナに&lt;code&gt;ADD&lt;/code&gt;するのはなんか格好悪いから無しで。Dockerfile裸一貫で実現したい。)&lt;/p&gt;
+
+&lt;p&gt;Windows 10のHyper-V Containersは、&lt;a href=&#34;https://social.msdn.microsoft.com/Forums/en-US/9eea93ac-18de-4953-bc7c-efd76a155526/are-microsoftwindowsservercore-containers-working-on-windows-10?forum=windowscontainers&#34;&gt;現時点でNano Serverしかサポートしていない&lt;/a&gt;のが厳しい点。Server Coreだったら楽だったのに。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;以下、いろいろ試したことを書く。&lt;/p&gt;
+
+&lt;h4 id=&#34;正攻法-expand-archive&#34;&gt;正攻法: Expand-Archive&lt;/h4&gt;
+
+&lt;p&gt;PowerShellの v5 で実装されたExpand-Archiveというコマンドレットでzipを解凍できる。
+Nano ServerのPowerShellのバージョンを確認したら 5.1 だったのでこれでいけるかと思った。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\&amp;gt;powershell -command &amp;quot;$PSVersionTable.PSVersion&amp;quot;
+
+Major  Minor  Build  Revision
+-----  -----  -----  --------
+5      1      14284  1000
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;したらこのエラー。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;Add-Type : Cannot find path &#39;C:\System.IO.Compression.FileSystem.dll&#39; because it does not exist.
+At
+C:\windows\system32\windowspowershell\v1.0\Modules\Microsoft.PowerShell.Archive\Microsoft.PowerShell.Archive.psm1:914
+char:5
++     Add-Type -AssemblyName System.IO.Compression.FileSystem
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (C:\System.IO.Compression.FileSystem.dll:String) [Add-Type], ItemNotFoun
+   dException
+    + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.AddTypeCommand
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;どうもPowerShellの 5.1 以降には、.NET FrameworkベースのDesktop Editionと、そこから機能を絞った.NET CoreベースのCore Editionがあり、&lt;a href=&#34;https://technet.microsoft.com/en-us/windows-server-docs/compute/nano-server/powershell-on-nano-server&#34;&gt;Nano ServerのはCore Editionなんだそうな&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;Expand-ArchiveはSystem.IO.Compression.FileSystem.dllの中のZipFileクラスに依存しているんだけど、.NET CoreにはSystem.IO.Compression.FileSystem.dllが含まれていないっぽい。&lt;/p&gt;
+
+&lt;h4 id=&#34;shellオブジェクトのcopyhere&#34;&gt;ShellオブジェクトのCopyHere&lt;/h4&gt;
+
+&lt;p&gt;PowerShellでのunzip方法を調べたらStack Overflowに&lt;a href=&#34;http://stackoverflow.com/questions/27768303/how-to-unzip-a-file-in-powershell&#34;&gt;いくつか載っていた&lt;/a&gt;。
+Expand-Archiveと、System.IO.Compression.ZipFileを直接使う方法と、Shellオブジェクト(COMオブジェクト)のCopyHereメソッドを使う方法。&lt;/p&gt;
+
+&lt;p&gt;最初の2つはCore Editionでは使えないことが分かっているので、3つめにトライ。
+こんなの↓&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;$shell = New-Object -ComObject shell.application
+$zip = $shell.NameSpace(&amp;quot;C:\a.zip&amp;quot;)
+MkDir(&amp;quot;C:\a&amp;quot;)
+foreach ($item in $zip.items()) {
+  $shell.Namespace(&amp;quot;C:\a&amp;quot;).CopyHere($item)
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;調べたらこの方法は&lt;a href=&#34;https://support.microsoft.com/ja-jp/kb/2679832&#34;&gt;Microsoftから非推奨にされている&lt;/a&gt;ことが分かったんだけど、一応やってみる。&lt;/p&gt;
+
+&lt;p&gt;したら以下のエラー。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;new-object : Retrieving the COM class factory for component with CLSID {00000000-0000-0000-0000-000000000000} failed
+due to the following error: 80040154 Class not registered (Exception from HRESULT: 0x80040154 (REGDB_E_CLASSNOTREG)).
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;この方法で利用しようとしているのは&lt;a href=&#34;https://en.wikipedia.org/wiki/Windows_shell&#34;&gt;Windows shell&lt;/a&gt;、つまり&lt;a href=&#34;https://ja.wikipedia.org/wiki/Windows_Explorer&#34;&gt;Windows Explorer&lt;/a&gt;の機能らしく、そうであればまあGUIがないNano Serverで動かないのも当然か。&lt;/p&gt;
+
+&lt;h4 id=&#34;サードパーティツールに頼る&#34;&gt;サードパーティツールに頼る&lt;/h4&gt;
+
+&lt;p&gt;Stack Overflowの&lt;a href=&#34;http://stackoverflow.com/questions/1021557/how-to-unzip-a-file-using-the-command-line&#34;&gt;別の質問&lt;/a&gt;にサードパーティツールに頼る方法がいくつか紹介されていた。&lt;/p&gt;
+
+&lt;p&gt;ここで挙げられていたもののうち、&lt;a href=&#34;http://www.7-zip.org/download.html&#34;&gt;7-Zip&lt;/a&gt;、&lt;a href=&#34;http://www.freebyte.com/fbzip/&#34;&gt;Freebyte Zip&lt;/a&gt;、&lt;a href=&#34;http://infozip.sourceforge.net/&#34;&gt;Info-ZIP&lt;/a&gt;は、配布形式がダメ。&lt;/p&gt;
+
+&lt;p&gt;7-Zipのインストーラをコンテナで実行してみたら、「The subsystem needed to support the image type is not present.」というエラー。7-Zipにはzipで配布されているものもあるんだけど、皮肉としか思えない。&lt;/p&gt;
+
+&lt;p&gt;Freebyte ZipやInfo-ZIPの自己解凍ファイルもコンテナ内では動いてくれない。&lt;/p&gt;
+
+&lt;p&gt;一方、&lt;a href=&#34;http://membrane.com/synapse/library/pkunzip.html&#34;&gt;pkunzip&lt;/a&gt;はコマンドが裸で配布されているので行けるかと思ったが、実行したら「The system cannot execute the specified program.」なるエラー。
+よく見たらこれ16bitアプリケーション。Nano Serverは32bitアプリすら実行できないというのに。&lt;/p&gt;
+
+&lt;h4 id=&#34;jarに託された最後の希望&#34;&gt;jarに託された最後の希望&lt;/h4&gt;
+
+&lt;p&gt;上に貼ったStack Overflowの質問には&lt;a href=&#34;https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jar.html&#34;&gt;jarコマンド&lt;/a&gt;を使う方法も挙げられていたが、JDKなんてどうせインストールできないとあきらめていた。&lt;/p&gt;
+
+&lt;p&gt;が、ふと思い立って&lt;a href=&#34;https://hub.docker.com/&#34;&gt;Docker Hub&lt;/a&gt;を検索してみたら、&lt;a href=&#34;https://hub.docker.com/r/michaeltlombardi/nanoserveropenjdk/&#34;&gt;OpenJDK入りのNano Server&lt;/a&gt;をアップしてくれている人がいた。&lt;/p&gt;
+
+&lt;p&gt;pullしてrunしてみたら確かにJDKがインストールされていた。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\&amp;gt;java -version
+openjdk version &amp;quot;1.8.0_102-1-ojdkbuild&amp;quot;
+OpenJDK Runtime Environment (build 1.8.0_102-1-ojdkbuild-b14)
+OpenJDK 64-Bit Server VM (build 25.102-b14, mixed mode)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;で、無事&lt;code&gt;&amp;quot;C:\Program Files\Java\bin\jar.exe&amp;quot; xf hoge.zip&lt;/code&gt;のようにしてunzipできた。&lt;/p&gt;
+
+&lt;p&gt;ここまで1日かかった。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
