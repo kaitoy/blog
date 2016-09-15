@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ | To Be Decided">
+    <meta property="og:url" content="https://tbd.kaitoy.xyz/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">
+    <meta property="og:description" content="Pcap4Jが動くHyper-VコンテナをWindows 10上でビルドしようとしたけど3合目あたりで息絶えた話。 Hyper-V Containersとは Hyper-V Containersは、MicrosoftによるWindowsネイティブなコンテナ技術であるWindows Containersの一種で、これによるコンテナは、同じくWindows Containersの一種であるWindows Server Containersのものに比べて、より厳密に隔離されている分、起動コストが高い。 実体はDockerそのもので、コンテナイメージはDocker Hubからpullできるし、コンテナの操作や管理はdockerコマンドでやる。(昔はコンテナ操作用PowerShellコマンドレットもあったが、不評だったので廃止したようだ。) ソースもLinuxとWindowsで一本化されている。 Windows 10のAnniversary Updateで正式にリリースされたが、なんだかあまり注目されていない気がする。 Docker for Windowsとは全く別物なので注意。 Hyper-V Containersのインストール (on VMware Player) 自前のPCが5年前に買ったdynabookでWindows 10をサポートしていないので、VMware PlayerのVM上のWindows 10にHyper-V Containersをインストールしてみる。 VMは、Windows 7に入れたVMware Workstation 11.1.0 build-2496824に付属の VMware Player 7.1.0 build-2496824で作ったもの。 VMのバージョンは11.0。 2CPUでメモリは2.5GB。 ネットワークインターフェースはNAT。 このVMを、Hyper-Vが使えるように設定しておく。 この記事にしたがい、Windows 10の評価版をダウンロード。 今公開されている評価版はAnniversary Update適用済みのバージョン1607で、Hyper-V Containersをサポートしている。 これをさっき作ったVMにインストール。 Windows 10を起動し、以下、Windows Containers on Windows 10に従って進める。 containers機能有効化 PowerShellプロンプトを管理者権限でひらき、以下のコマンドでcontainers機能を有効化。 PS C:\Windows\system32&gt;Enable-WindowsOptionalFeature -Online -FeatureName containers -All 1分程度経つと再起動を促されるので再起動。 Hyper-V機能有効化 再度PowerShellプロンプトを管理者権限で開いて、以下のコマンドでHyper-Vを有効化。 PS C:\Windows\system32&gt;Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All 1分程度経つと再起動を促されるので再起動。 OpLocks無効化 現在のHyper-Vコンテナは、安定性を上げるためにOpLocksという機能を無効にすべきらしい。 再度PowerShellプロンプトを管理者権限で開いて、以下のコマンドを実行する。 PS C:\Windows\system32&gt;Set-ItemProperty -Path &#39;HKLM:SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\Containers&#39; -Name VSmbDisableOplocks -Type DWord -Value 1 -Force Dockerインストール 同じPowerShellプロンプトで以下のコマンドを実行してDocker(EngineとClient)のアーカイブをダウンロード。 PS C:\Windows\system32&gt;Invoke-WebRequest &quot;https://master.dockerproject.org/windows/amd64/docker-1.13.0-dev.zip&quot; -OutFile &quot;$env:TEMP\docker-1.13.0-dev.zip&quot; -UseBasicParsing ダウンロードしたアーカイブを解凍。 PS C:\Windows\system32&gt;Expand-Archive -Path &quot;$env:TEMP\docker-1.13.0-dev.zip&quot; -DestinationPath $env:ProgramFiles ここまででDockerがC:\Program Files\docker\に入るので、このパスを環境変数PATHに追加。 PATHの変更を反映させるために再度PowerShellプロンプトを管理者権限で開いて、以下のコマンドでDockerデーモンをサービスに登録。 PS C:\Windows\system32&gt;dockerd --register-service Dockerサービスを起動。 PS C:\Windows\system32&gt;Start-Service Docker (Dockerサービスは自動起動に設定されているので、OS再起動時は上記Start-Serviceは不要。) これでDockerが使えるようになった。 PS C:\Windows\system32&gt;docker version Client: Version: 1.13.0-dev API version: 1.25 Go version: go1.7.1 Git commit: 130db0a Built: Sat Sep 10 13:25:48 2016 OS/Arch: windows/amd64 Server: Version: 1.13.0-dev API version: 1.25 Go version: go1.7.1 Git commit: 130db0a Built: Sat Sep 10 13:25:48 2016 OS/Arch: windows/amd64 コンテナイメージダウンロード どうもDockerコマンドの実行には管理者権限が必要なようなので、このまま管理者権限のPowerShellプロンプトで続ける。 docker pullでNano Serverのコンテナイメージをダウンロード。 PS C:\Windows\system32&gt;docker pull microsoft/nanoserver docker imagesで確認。 PS C:\Windows\system32&gt;docker images REPOSITORY TAG IMAGE ID CREATED SIZE microsoft/nanoserver latest 3a703c6e97a2 12 weeks ago 970 MB 試しにコンテナ起動。 PS C:\Windows\system32&gt;docker run -it microsoft/nanoserver cmd 起動はかなり遅い。1分近くかかった。ともあれちゃんと起動した。 Pcap4Jコンテナのビルド Pcap4Jコンテナを、docker buildでビルドしてみる。 Dockerfileはとりあえず以前のものをちょっと書き変えただけのものを試す。 # escape=` # # Dockerfile for Pcap4J on Windows Nano Server # FROM microsoft/nanoserver MAINTAINER Kaito Yamada &lt;kaitoy@pcap4j.org&gt; # Install Chocolatey.">
+    
+    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/nanoserver.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://tbd.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://tbd.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Thu, Sep 15, 2016</span>
+      <h2 class="title">Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://tbd.kaitoy.xyz/images/nanoserver.png" alt="Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p><a href="https://github.com/kaitoy/pcap4j">Pcap4J</a>が動くHyper-VコンテナをWindows 10上でビルドしようとしたけど3合目あたりで息絶えた話。</p>
+
+<h2 id="hyper-v-containersとは">Hyper-V Containersとは</h2>
+
+<p>Hyper-V Containersは、MicrosoftによるWindowsネイティブなコンテナ技術である<a href="https://msdn.microsoft.com/en-us/virtualization/windowscontainers/about/about_overview">Windows Containers</a>の一種で、これによるコンテナは、同じくWindows Containersの一種であるWindows Server Containersのものに比べて、より厳密に隔離されている分、起動コストが高い。</p>
+
+<p>実体は<a href="https://www.docker.com/">Docker</a>そのもので、コンテナイメージは<a href="https://hub.docker.com/">Docker Hub</a>からpullできるし、コンテナの操作や管理はdockerコマンドでやる。(昔はコンテナ操作用PowerShellコマンドレットもあったが、不評だったので廃止したようだ。)
+<a href="https://github.com/docker/docker">ソース</a>もLinuxとWindowsで一本化されている。</p>
+
+<p>Windows 10の<a href="https://blogs.windows.com/japan/2016/08/03/how-to-get-the-windows-10-anniversary-update/#eFCYhK68sDp1V0F7.97">Anniversary Update</a>で正式にリリースされたが、なんだかあまり注目されていない気がする。</p>
+
+<p><a href="https://tbd.kaitoy.xyz/2016/07/31/docker-for-windows/#docker-for-windows%E3%81%A8%E3%81%AF">Docker for Windows</a>とは全く別物なので注意。</p>
+
+<h2 id="hyper-v-containersのインストール-on-vmware-player">Hyper-V Containersのインストール (on VMware Player)</h2>
+
+<p>自前のPCが5年前に買った<a href="https://dynabook.com/">dynabook</a>でWindows 10をサポートしていないので、VMware PlayerのVM上のWindows 10にHyper-V Containersをインストールしてみる。</p>
+
+<p>VMは、Windows 7に入れたVMware Workstation 11.1.0 build-2496824に付属の VMware Player 7.1.0 build-2496824で作ったもの。
+VMのバージョンは11.0。
+2CPUでメモリは2.5GB。
+ネットワークインターフェースはNAT。
+このVMを、<a href="https://tbd.kaitoy.xyz/2016/07/31/docker-for-windows/#vmware-player%E3%81%AEvm%E3%81%A7hyper-v%E3%82%92%E4%BD%BF%E3%81%86%E3%81%9F%E3%82%81%E3%81%AE%E8%A8%AD%E5%AE%9A">Hyper-Vが使えるように設定しておく</a>。</p>
+
+<p><a href="http://ascii.jp/elem/000/001/216/1216220/">この記事</a>にしたがい、Windows 10の評価版をダウンロード。
+今公開されている評価版はAnniversary Update適用済みのバージョン1607で、Hyper-V Containersをサポートしている。</p>
+
+<p>これをさっき作ったVMにインストール。</p>
+
+<p>Windows 10を起動し、以下、<a href="https://msdn.microsoft.com/en-us/virtualization/windowscontainers/quick_start/quick_start_windows_10">Windows Containers on Windows 10</a>に従って進める。</p>
+
+<ol>
+<li><p>containers機能有効化</p>
+
+<p><a href="http://www.thewindowsclub.com/how-to-open-an-elevated-powershell-prompt-in-windows-10">PowerShellプロンプトを管理者権限でひらき</a>、以下のコマンドで<code>containers</code>機能を有効化。</p>
+
+<pre><code class="language-powershell">PS C:\Windows\system32&gt;Enable-WindowsOptionalFeature -Online -FeatureName containers -All
+</code></pre>
+
+<p>1分程度経つと再起動を促されるので再起動。</p></li>
+
+<li><p>Hyper-V機能有効化</p>
+
+<p>再度PowerShellプロンプトを管理者権限で開いて、以下のコマンドでHyper-Vを有効化。</p>
+
+<pre><code class="language-powershell">PS C:\Windows\system32&gt;Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
+</code></pre>
+
+<p>1分程度経つと再起動を促されるので再起動。</p></li>
+
+<li><p>OpLocks無効化</p>
+
+<p>現在のHyper-Vコンテナは、安定性を上げるためにOpLocksという機能を無効にすべきらしい。
+再度PowerShellプロンプトを管理者権限で開いて、以下のコマンドを実行する。</p>
+
+<pre><code class="language-powershell">PS C:\Windows\system32&gt;Set-ItemProperty -Path 'HKLM:SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\Containers' -Name VSmbDisableOplocks -Type DWord -Value 1 -Force
+</code></pre></li>
+
+<li><p>Dockerインストール</p>
+
+<p>同じPowerShellプロンプトで以下のコマンドを実行してDocker(EngineとClient)のアーカイブをダウンロード。</p>
+
+<pre><code class="language-powershell">PS C:\Windows\system32&gt;Invoke-WebRequest &quot;https://master.dockerproject.org/windows/amd64/docker-1.13.0-dev.zip&quot; -OutFile &quot;$env:TEMP\docker-1.13.0-dev.zip&quot; -UseBasicParsing
+</code></pre>
+
+<p>ダウンロードしたアーカイブを解凍。</p>
+
+<pre><code class="language-powershell">PS C:\Windows\system32&gt;Expand-Archive -Path &quot;$env:TEMP\docker-1.13.0-dev.zip&quot; -DestinationPath $env:ProgramFiles
+</code></pre>
+
+<p>ここまででDockerが<code>C:\Program Files\docker\</code>に入るので、このパスを環境変数<code>PATH</code>に追加。</p>
+
+<p><code>PATH</code>の変更を反映させるために再度PowerShellプロンプトを管理者権限で開いて、以下のコマンドでDockerデーモンをサービスに登録。</p>
+
+<pre><code class="language-powershell">PS C:\Windows\system32&gt;dockerd --register-service
+</code></pre>
+
+<p>Dockerサービスを起動。</p>
+
+<pre><code class="language-powershell">PS C:\Windows\system32&gt;Start-Service Docker
+</code></pre>
+
+<p>(Dockerサービスは自動起動に設定されているので、OS再起動時は上記<code>Start-Service</code>は不要。)</p>
+
+<p>これでDockerが使えるようになった。</p>
+
+<pre><code class="language-powershell">PS C:\Windows\system32&gt;docker version
+Client:
+ Version:      1.13.0-dev
+ API version:  1.25
+ Go version:   go1.7.1
+ Git commit:   130db0a
+ Built:        Sat Sep 10 13:25:48 2016
+ OS/Arch:      windows/amd64
+
+
+Server:
+ Version:      1.13.0-dev
+ API version:  1.25
+ Go version:   go1.7.1
+ Git commit:   130db0a
+ Built:        Sat Sep 10 13:25:48 2016
+ OS/Arch:      windows/amd64
+</code></pre></li>
+
+<li><p>コンテナイメージダウンロード</p>
+
+<p>どうもDockerコマンドの実行には管理者権限が必要なようなので、このまま管理者権限のPowerShellプロンプトで続ける。</p>
+
+<p><code>docker pull</code>でNano Serverのコンテナイメージをダウンロード。</p>
+
+<pre><code class="language-powershell">PS C:\Windows\system32&gt;docker pull microsoft/nanoserver
+</code></pre>
+
+<p><code>docker images</code>で確認。</p>
+
+<pre><code class="language-powershell">PS C:\Windows\system32&gt;docker images
+REPOSITORY             TAG                 IMAGE ID            CREATED             SIZE
+microsoft/nanoserver   latest              3a703c6e97a2        12 weeks ago        970 MB
+</code></pre>
+
+<p>試しにコンテナ起動。</p>
+
+<p><code>PS C:\Windows\system32&gt;docker run -it microsoft/nanoserver cmd</code></p>
+
+<p>起動はかなり遅い。1分近くかかった。ともあれちゃんと起動した。</p>
+
+<p><img src="/images/pcap4j-on-hyper-v-container-on-win10/test_container.png" alt="test_container.png" />
+</p></li>
+</ol>
+
+<h2 id="pcap4jコンテナのビルド">Pcap4Jコンテナのビルド</h2>
+
+<p>Pcap4Jコンテナを、<code>docker build</code>でビルドしてみる。
+Dockerfileはとりあえず<a href="https://tbd.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/#pcap4j%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%81%AE%E3%83%93%E3%83%AB%E3%83%89">以前のもの</a>をちょっと書き変えただけのものを試す。</p>
+
+<pre><code class="language-dockerfile"># escape=`
+
+#
+# Dockerfile for Pcap4J on Windows Nano Server
+#
+
+FROM microsoft/nanoserver
+MAINTAINER Kaito Yamada &lt;kaitoy@pcap4j.org&gt;
+
+# Install Chocolatey.
+RUN mkdir C:\pcap4j
+WORKDIR C:\\pcap4j
+ADD https://chocolatey.org/install.ps1 install.ps1
+RUN powershell .\install.ps1
+
+# Install dependencies.
+RUN choco install -y nmap jdk7 &amp;&amp; `
+    choco install -y maven -version 3.2.5
+
+# Build Pcap4J.
+RUN powershell -Command Invoke-WebRequest https://github.com/kaitoy/pcap4j/archive/v1.zip -OutFile pcap4j.zip &amp;&amp; `
+    powershell -Command Expand-Archive -Path pcap4j.zip -DestinationPath .
+WORKDIR pcap4j-1
+RUN powershell -Command &quot;mvn -P distribution-assembly install 2&gt;&amp;1 | Add-Content -Path build.log -PassThru&quot;
+
+# Collect libraries.
+RUN mkdir bin &amp;&amp; `
+    cd pcap4j-packetfactory-static &amp;&amp; `
+    mvn -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeScope=compile dependency:copy-dependencies &amp;&amp; `
+    mvn -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeGroupIds=ch.qos.logback dependency:copy-dependencies &amp;&amp; `
+    cd ../pcap4j-distribution &amp;&amp; `
+    mvn -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeArtifactIds=pcap4j-packetfactory-static,pcap4j-sample dependency:copy-dependencies
+
+# Generate sample script. (C:\pcap4j\pcap4j-1\bin\capture.bat)
+RUN echo @echo off &gt; bin\capture.bat &amp;&amp; `
+    echo &quot;%JAVA_HOME%\bin\java&quot; -cp C:\pcap4j\pcap4j-1\bin\pcap4j-core.jar;C:\pcap4j\pcap4j-1\bin\pcap4j-packetfactory-static.jar;C:\pcap4j\pcap4j-1\bin\pcap4j-sample.jar;C:\pcap4j\pcap4j-1\bin\jna.jar;C:\pcap4j\pcap4j-1\bin\slf4j-api.jar;C:\pcap4j\pcap4j-1\bin\logback-classic.jar;C:\pcap4j\pcap4j-1\bin\logback-core.jar org.pcap4j.sample.GetNextPacketEx &gt;&gt; bin\capture.bat
+</code></pre>
+
+<p><a href="https://docs.docker.com/engine/reference/builder/#/escape">escapeディレクティブ</a>が使えるようになっていたので使うようにしている。
+(というか以前Windows Server 2016 TP5で試した時はescapeディレクティブをDockerfileの先頭に書かなかったのがだめだったってだけかもしれない。)
+<code>WORKDIR</code>のパスの区切りにはescapeディレクティブは利かない変な仕様。</p>
+
+<h4 id="nano-serverでsystem-net-webclient使えない問題">Nano ServerでSystem.Net.WebClient使えない問題</h4>
+
+<p>このDockerfileでビルドしたら、<a href="https://chocolatey.org/">Chocolatey</a>のダウンロード・インストールスクリプトを実行する<code>RUN powershell .\install.ps1</code>のステップで<code>System.Net.WebClient</code>が見つからないというエラー。</p>
+
+<pre><code class="language-powershell">new-object : Cannot find type [System.Net.WebClient]: verify that the assembly
+containing this type is loaded.
+At C:\pcap4j\install.ps1:84 char:17
++   $downloader = new-object System.Net.WebClient
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidType: (:) [New-Object], PSArgumentExcepti
+   on
+    + FullyQualifiedErrorId : TypeNotFound,Microsoft.PowerShell.Commands.NewOb
+   jectCommand
+</code></pre>
+
+<p>Nano Serverに入っているPowerShellは<a href="https://technet.microsoft.com/en-us/windows-server-docs/compute/nano-server/powershell-on-nano-server">Core Editionなる機能限定版</a>で、System.Net.WebClientだけでなく、<a href="http://serverfault.com/questions/788949/download-a-file-with-powershell-on-nano-server">WebアクセスのためのAPIがいろいろ欠けているもよう</a>。</p>
+
+<h4 id="hyper-v-containersでserver-core使えない問題">Hyper-V ContainersでServer Core使えない問題</h4>
+
+<p>Nano Serverめんどくさそうなので、Server Coreをpullする。</p>
+
+<pre><code>PS C:\Windows\system32&gt;docker pull microsoft/windowsservercore
+</code></pre>
+
+<p>Dockerfileの<code>FROM</code>を<code>microsoft/windowsservercore</code>に書き変えてビルドしたら、最初の<code>RUN</code>で以下のエラー。</p>
+
+<pre><code>container 4bc8d8d38993426fa7a3c76e4aabbe6a229cbd025754723ff396aec04ffbfa1d encountered an error during Start failed in Win32: The operating system of the container does not match the operating system of the host. (0xc0370101)
+</code></pre>
+
+<p>調べたら、Hyper-V Containersはまだ<a href="https://social.msdn.microsoft.com/Forums/en-US/9eea93ac-18de-4953-bc7c-efd76a155526/are-microsoftwindowsservercore-containers-working-on-windows-10?forum=windowscontainers">Nano Serverしかサポートしていない</a>ようだ。</p>
+
+<h4 id="unzip難しい問題">unzip難しい問題</h4>
+
+<p>Chocolateyのダウンロード・インストールスクリプトを実行するのはあきらめて、<a href="https://chocolatey.org/install#download-powershell-method">アーカイブを自分でダウンロードする方法</a>を試す。</p>
+
+<p>これは<code>https://chocolatey.org/api/v2/package/chocolatey/</code>というWeb APIをたたいてアーカイブをダウンロードする方法だけど、このURLを<code>ADD</code>に渡してもうまくいかなかったので、このWeb APIが最終的に呼ぶ<code>https://packages.chocolatey.org/chocolatey.0.10.0.nupkg</code>を<code>ADD</code>するようにした。
+これでダウンロードできる<code>chocolatey.0.10.0.nupkg</code>はzipファイルで、unzipするとインストールスクリプトが出てくる。</p>
+
+<p>しかしこのunzipが曲者で、<a href="https://tbd.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/">妙に苦労した話</a>を最近書いた。</p>
+
+<p>で、苦労して取り出したインストールスクリプトを実行したら、エラーがわんさと出ただけだった。
+そんなこったろうと思ってはいたが。</p>
+
+<p>どうせChocolateyをインストールできても、パッケージのインストールスクリプトがまた動かないんだろうから、もうChocolateyはあきらめる。</p>
+
+<h4 id="wow64サポートしてない問題">WoW64サポートしてない問題</h4>
+
+<p>Chocolateyを使わないようにDockerfileの前半を以下の様に書き変えた。</p>
+
+<pre><code class="language-dockerfile">(snip)
+
+FROM michaeltlombardi/nanoserveropenjdk
+MAINTAINER Kaito Yamada &lt;kaitoy@pcap4j.org&gt;
+
+RUN mkdir C:\pcap4j
+WORKDIR C:\\pcap4j
+
+# Install Maven
+ADD http://archive.apache.org/dist/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.zip maven.zip
+RUN jar xf maven.zip
+RUN powershell -command $env:path += ';C:\pcap4j\apache-maven-3.3.9\bin'; setx PATH $env:path /M
+
+# Install Npcap
+ADD https://github.com/nmap/npcap/releases/download/v0.08-r7/npcap-0.08-r7.exe npcap.exe
+RUN npcap.exe /S
+
+# Build Pcap4J.
+
+(snip)
+</code></pre>
+
+<p>(因みにこの時点で、<code>PATH</code>を設定するのに<code>GetEnvironmentVariable</code>と<code>SetEnvironmentVariable</code>がうまく使えない問題を乗り越えている。<code>Cannot find an overload for &quot;GetEnvironmentVariable&quot; and the argument count: &quot;2&quot;.</code>というエラーが出て、PowerShell Desktop Editionのものと仕様がちょっと違うようだったので、<code>GetEnvironmentVariable</code>も<code>SetEnvironmentVariable</code>も使わないようにした。)</p>
+
+<p>このDockerfileでビルドしたら、<code>RUN npcap.exe /S</code>で以下のエラー。</p>
+
+<pre><code>The subsystem needed to support the image type is not present.
+</code></pre>
+
+<p>このsubsystemというのはどうも<a href="https://ja.wikipedia.org/wiki/WOW64">WoW64</a>を指しているようで、<a href="https://blogs.technet.microsoft.com/windowsserver/2016/02/10/exploring-nano-server-for-windows-server-2016/">Nano ServerがWoW64をサポートしていない</a>のにnpcap.exeが32bitバイナリであることが問題のようであった。</p>
+
+<p>ついでに<a href="https://ja.wikipedia.org/wiki/Microsoft_Windows_Installer">MSI</a>もサポートされていないことがわかった。大丈夫かこれ。</p>
+
+<h4 id="nano-serverパッケージプロバイダバグってる問題">Nano Serverパッケージプロバイダバグってる問題</h4>
+
+<p><a href="https://technet.microsoft.com/en-us/windows-server-docs/compute/nano-server/getting-started-with-nano-server#a-namebkmkonlineainstalling-roles-and-features-online">Nano Serverにもロールや機能の追加ができる</a>らしいので、ひょっとしてこれで何か改善できないかと思って試した。</p>
+
+<p>Nano Serverへのロール・機能の追加は、Windowsのパッケージマネジメントシステムである<a href="https://github.com/OneGet/oneget">PackageManagement (a.k.a. OneGet)</a>を使ってやる。PowerShellで<code>Install-PackageProvider NanoServerPackage</code>と<code>Import-PackageProvider NanoServerPackage</code>を実行するとNano Serverのパッケージプロバイダが使えるようになり、<code>Find-NanoServerPackage</code>で利用できるパッケージの一覧が見れる。</p>
+
+<p>はずなんだけど、<code>Find-NanoServerPackage</code>でエラー。</p>
+
+<pre><code class="language-powershell">C:\pcap4j&gt;powershell -command Find-NanoServerPackage
+DownloadFile : Save-HTTPItem: Bits Transfer failed. Job State:  ExitCode = 255
+At C:\Program Files\WindowsPowerShell\Modules\NanoServerPackage\0.1.1.0\NanoServerPackage.psm1:1294 char:9
++         DownloadFile -downloadURL $fullUrl `
++         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (https://nanoser...ServerIndex.txt:String) [DownloadFile], RuntimeException
+    + FullyQualifiedErrorId : FailedToDownload,DownloadFile
+
+Get-Content : Cannot find drive. A drive with the name 'CleanUp' does not exist.
+At C:\Program Files\WindowsPowerShell\Modules\NanoServerPackage\0.1.1.0\NanoServerPackage.psm1:674 char:26
++     $searchFileContent = Get-Content $searchFile
++                          ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (CleanUp:String) [Get-Content], DriveNotFoundException
+    + FullyQualifiedErrorId : DriveNotFound,Microsoft.PowerShell.Commands.GetContentCommand
+
+Get-Content : Cannot find path
+'C:\Users\ContainerAdministrator\AppData\Local\NanoServerPackageProvider\searchNanoPackageIndex.txt' because it does not exist.
+At C:\Program Files\WindowsPowerShell\Modules\NanoServerPackage\0.1.1.0\NanoServerPackage.psm1:674 char:26
++     $searchFileContent = Get-Content $searchFile
++                          ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (C:\Users\Contai...ackageIndex.txt:String) [Get-Content], ItemNotFoundException
+    + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.GetContentCommand
+</code></pre>
+
+<p><a href="https://github.com/OneGet/NanoServerPackage/issues/4">NanoServerPackageのIssues</a>にこのエラーが登録されていた。1か月放置されてる。</p>
+
+<p><br></p>
+
+<p>パトラッシュ、僕はもう疲れたよ。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f09%2f15%2fpcap4j-on-hyper-v-container-on-win10%2f&t=Pcap4J%20on%20Nano%20Server%20on%20Hyper-V%20Containers%20on%20Windows%2010%20on%20VMware%20Player%e3%81%ab%e3%83%88%e3%83%a9%e3%82%a4" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f09%2f15%2fpcap4j-on-hyper-v-container-on-win10%2f&text=Pcap4J%20on%20Nano%20Server%20on%20Hyper-V%20Containers%20on%20Windows%2010%20on%20VMware%20Player%e3%81%ab%e3%83%88%e3%83%a9%e3%82%a4&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f09%2f15%2fpcap4j-on-hyper-v-container-on-win10%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f09%2f15%2fpcap4j-on-hyper-v-container-on-win10%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f09%2f15%2fpcap4j-on-hyper-v-container-on-win10%2f&title=Pcap4J%20on%20Nano%20Server%20on%20Hyper-V%20Containers%20on%20Windows%2010%20on%20VMware%20Player%e3%81%ab%e3%83%88%e3%83%a9%e3%82%a4" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://tbd.kaitoy.xyz/tags/windows"><i class="fa fa-tags"></i> windows </a>
+                
+                <a href="https://tbd.kaitoy.xyz/tags/nanoserver"><i class="fa fa-tags"></i> nanoserver </a>
+                
+                <a href="https://tbd.kaitoy.xyz/tags/pcap4j"><i class="fa fa-tags"></i> pcap4j </a>
+                
+                <a href="https://tbd.kaitoy.xyz/tags/docker"><i class="fa fa-tags"></i> docker </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/08/21/an-encouragement-of-open-sourcing/">オープンソースプロジェクトのすゝめ</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/07/31/docker-for-windows/">Docker for Windowsがコレジャナかった</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/">Windows Server 2016 TP5でWindows Containersにリトライ</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/04/16/pcap4j-in-kotlin/">Pcap4J in Kotlin</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/">Pcap4J in Groovy</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/03/19/zundoko-kiyoshi-with-pcap4j/"> ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">Pcap4J Meets Windows Containers</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/">Pcap4J with Four Native Libraries on Windows 10</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2016/01/10/pcap-ng-support-in-pcap4j/">pcap-ng support in Pcap4J</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/12/03/software-quality-award-2015/">Pcap4JがSoftware Quality Award 2015で入賞</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/">Step by Step to Add a Protocol Support to Pcap4J (Part 2)</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/08/09/step-by-step-to-add-a-protocol-support-to-pcap4j-1/">Step by Step to Add a Protocol Support to Pcap4J (Part 1)</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://tbd.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></li>
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://tbd.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/">
+                  Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/windows">windows</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2016  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+
