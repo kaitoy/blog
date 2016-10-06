@@ -4,7 +4,7 @@ date = "2015-12-28T01:05:29-07:00"
 draft = false
 eyecatch = "git.png"
 slug = "git-merge"
-tags = [ "git" ]
+tags = [ "git", "vcs" ]
 title = "Gitのマージを図解する"
 +++
 

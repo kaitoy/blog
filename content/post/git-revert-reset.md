@@ -4,7 +4,7 @@ date = "2016-01-01T18:38:02-07:00"
 draft = false
 eyecatch = "git.png"
 slug = "git-revert-reset"
-tags = [ "git" ]
+tags = [ "git", "vcs" ]
 title = "git resetとrevertを図解する"
 +++
 

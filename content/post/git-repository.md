@@ -4,7 +4,7 @@ date = "2015-12-27T11:34:18-07:00"
 draft = false
 eyecatch = "git.png"
 slug = "git-repository"
-tags = [ "git" ]
+tags = [ "git", "vcs" ]
 title = "Gitのリポジトリの中身をなるべく正確に理解する"
 +++
 

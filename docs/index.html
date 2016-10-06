@@ -13,9 +13,9 @@
     <meta property="og:url" content="https://tbd.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="Pcap4Jが動くHyper-VコンテナをWindows 10上でビルドしようとしたけど3合目あたりで息絶えた話。 Hyper-V Containersとは Hyper-V Containersは、MicrosoftによるWindowsネイティブなコンテナ技術であるWindows Containersの一種で、これによるコンテナは、同じくWindows Containersの一種であるWindows Server Containersのものに比べて、より厳密に隔離されている分、起動コストが高い。 実体はDockerそのもので、コンテナイメージはDocker Hubからpullできるし、コンテナの操作や管理はdockerコマンドでやる。(昔はコンテナ操作用PowerShellコマンドレットもあったが、不評だったので廃止したようだ。) ソースもLinuxとWindowsで一本化されている。 Windows 10のAnniversary Updateで正式にリリースされたが、なんだかあまり注目されていない気がする。 Docker for Windowsとは全く別物なので注意。 Hyper-V Containersのインストール (on VMware Player) 自前のPCが5年前に買ったdynabookでWindows 10をサポートしていないので、VMware PlayerのVM上のWindows 10にHyper-V Containersをインストールしてみる。 VMは、Windows 7に入れたVMware Workstation 11.1.0 build-2496824に付属の VMware Player 7.1.0 build-2496824で作ったもの。 VMのバージョンは11.0。 2CPUでメモリは2.5GB。 ネットワークインターフェースはNAT。 このVMを、Hyper-Vが使えるように設定しておく。 この記事にしたがい、Windows 10の評価版をダウンロード。 今公開されている評価版はAnniversary Update適用済みのバージョン1607で、Hyper-V Containersをサポートしている。 これをさっき作ったVMにインストール。 Windows 10を起動し、以下、Windows Containers on Windows 10に従って進める。 containers機能有効化 PowerShellプロンプトを管理者権限でひらき、以下のコマンドでcontainers機能を有効化。 PS C:\Windows\system32&gt;Enable-WindowsOptionalFeature -Online -FeatureName containers -All 1分程度経つと再起動を促されるので再起動。 Hyper-V機能有効化 再度PowerShellプロンプトを管理者権限で開いて、以下のコマンドでHyper-Vを有効化。 PS C:\Windows\system32&gt;Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All 1分程度経つと再起動を促されるので再起動。 OpLocks無効化 現在のHyper-Vコンテナは、安定性を上げるためにOpLocksという機能を無効にすべきらしい。 再度PowerShellプロンプトを管理者権限で開いて、以下のコマンドを実行する。 PS C:\Windows\system32&gt;Set-ItemProperty -Path &#39;HKLM:SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\Containers&#39; -Name VSmbDisableOplocks -Type DWord -Value 1 -Force Dockerインストール 同じPowerShellプロンプトで以下のコマンドを実行してDocker(EngineとClient)のアーカイブをダウンロード。 PS C:\Windows\system32&gt;Invoke-WebRequest &quot;https://master.dockerproject.org/windows/amd64/docker-1.13.0-dev.zip&quot; -OutFile &quot;$env:TEMP\docker-1.13.0-dev.zip&quot; -UseBasicParsing ダウンロードしたアーカイブを解凍。 PS C:\Windows\system32&gt;Expand-Archive -Path &quot;$env:TEMP\docker-1.13.0-dev.zip&quot; -DestinationPath $env:ProgramFiles ここまででDockerがC:\Program Files\docker\に入るので、このパスを環境変数PATHに追加。 PATHの変更を反映させるために再度PowerShellプロンプトを管理者権限で開いて、以下のコマンドでDockerデーモンをサービスに登録。 PS C:\Windows\system32&gt;dockerd --register-service Dockerサービスを起動。 PS C:\Windows\system32&gt;Start-Service Docker (Dockerサービスは自動起動に設定されているので、OS再起動時は上記Start-Serviceは不要。) これでDockerが使えるようになった。 PS C:\Windows\system32&gt;docker version Client: Version: 1.13.0-dev API version: 1.25 Go version: go1.7.1 Git commit: 130db0a Built: Sat Sep 10 13:25:48 2016 OS/Arch: windows/amd64 Server: Version: 1.13.0-dev API version: 1.25 Go version: go1.7.1 Git commit: 130db0a Built: Sat Sep 10 13:25:48 2016 OS/Arch: windows/amd64 コンテナイメージダウンロード どうもDockerコマンドの実行には管理者権限が必要なようなので、このまま管理者権限のPowerShellプロンプトで続ける。 docker pullでNano Serverのコンテナイメージをダウンロード。 PS C:\Windows\system32&gt;docker pull microsoft/nanoserver docker imagesで確認。 PS C:\Windows\system32&gt;docker images REPOSITORY TAG IMAGE ID CREATED SIZE microsoft/nanoserver latest 3a703c6e97a2 12 weeks ago 970 MB 試しにコンテナ起動。 PS C:\Windows\system32&gt;docker run -it microsoft/nanoserver cmd 起動はかなり遅い。1分近くかかった。ともあれちゃんと起動した。 Pcap4Jコンテナのビルド Pcap4Jコンテナを、docker buildでビルドしてみる。 Dockerfileはとりあえず以前のものをちょっと書き変えただけのものを試す。 # escape=` # # Dockerfile for Pcap4J on Windows Nano Server # FROM microsoft/nanoserver MAINTAINER Kaito Yamada &lt;kaitoy@pcap4j.org&gt; # Install Chocolatey.">
+    <meta property="og:description" content="Gitの良さが分からないという人がいるようなので、Git派の一人としてSubversion(以下SVN)と比較してのGitのよさ(など)について語りたい。 本題に入る前に、冒頭にリンクを貼った記事についてひとつだけつっこんでおく。(つっこみどころは他にも沢山あるけど。) ※話の前提としてgitとSVNを採用している現場に下記のような割と違いがあるとする。 git イシューごとにブランチを切り、ローカルでコミットして、リモートブランチにpushして、GitHub・GitLab・Bitbucket経由でマージリクエスト。コードレビューの後にマージ。 SVN リモートのtrunkに個々人が直接コミット。コードレビューはあまりない。ブランチを切ることもない。 このような違いが出る背景には次のものがある。 gitを採用する現場は、猫も杓子もgit-flowというプラクティスに従う傾向がある gitを採用する現場は、コードの品質もある程度管理する傾向がある SVNは集中型でありブランチ機能などが非常に使いにくい SVNを採用する現場はコードの品質よりも「リリースに含めるならさっさとコミット」と考える傾向がある この前提には無理がある。 Gitのところに書いてあるのが、Gitというツールの枠を大きくはみだしたGitHub Flowというブランチ戦略&#43;開発プロセスに当たるものであり、 それでGitを批判するのはお門違いであろうという点については、Gitの流行がGitHubの人気によるところが大きく、GitHubを使えることがGitの大きなメリットであるので、目をつむることにする。(マージリクエストを使う羽目になるデメリットなんて言いがかりでしかないとだけ言っておく。) 看過できないのは、SVNを使った開発がコードレビューもブランチもないという点。 どこの世界の話をしているんだろうか。 Gitが世に出る前は世間にコードレビューもブランチもあまりなかったかのような前提だが、もちろんそんなことは全くない。 60万個以上のOSSプロジェクト情報を統括するOpen HUBによれば、OSSプロジェクトの46%がSVNを使っている。この中にはGitの誕生以降にSVNを使い始めたプロジェクトも多くある。270000余りのプロジェクトの大部分がブランチすら使っていないとでも? GitHub Flowと対比するために無理やりこじつけたんだろうけど、その無理のせいで議論のスタート地点からめちゃくちゃだ。 まともな開発にはコードレビューもブランチも必要だ。 品質管理もリリース管理もしないなら要らないのかもしれないが、そんないい加減な開発現場を前提にSVNかGitかなんて議論しても意味がない。 高品質なソフトウェアを効率よく開発するために則りたい素晴らしい開発フローがあるとして、そのフローをSVNやGitやその他のツールないしひょっとしたらアナクロな日付フォルダの内どれがもっとも上手く実現してくれるか、というのがあるべき議論だ。 この「素晴らしい開発フロー」には一般的に品質管理と並行開発が含まれていて、それらにはコードレビューとブランチの利用が含まれている。 Git(&#43;GitHub)がこんなにも急速にSVNに取って代わって流行ったのは、分散リポジトリの仕組みとブランチの軽量な実装によって効率的な並行開発が実現でき、またプルリクエストなどの機能によりコードレビューを含む快適なソーシャルコーディングが実現できるからだ。 逆に言えば、Gitが流行ったことが、人々が効率的な並行開発やコードレビューを開発フローに取り入れたかった証拠と言えるかもしれない。 Gitの利点 前置きが長くなったが、少なくともブランチとコードレビューを活用した高品質で高効率なソフトウェア開発をしたいという前提で、SVNに対するGitの利点を挙げてみたい。 1. リポジトリ構造がシンプル Gitリポジトリはすごくシンプルに作られているそうな。 確かに、その構造を見ると、add、commit、log、resetくらいは自前ですぐに実装できそうだ。 このシンプルな構造のおかげで、Gitリポジトリは壊れにくい。ここで壊れにくいとは、リポジトリ内部で不整合が起こりにくいということで、コマンドミスでコミット履歴が一部消えたりとかいうトラブルは壊れるに入らない。 実のところSVNリポジトリの構造を知らないので経験的なことしか言えないが、SVNリポジトリ(というより作業ディレクトリの管理情報?)はちょくちょく変な状態になり、クリーンアップしたり、酷い時には.svn内のファイルを手動でいじったりしなければならなかった。 因みに、シンプルというのはリポジトリサイズがすごく小さいということにはならず、同等の履歴を含むGitリポジトリとSVNリポジトリはだいたい同サイズなんだそうな。 2. ブランチが軽い Gitのブランチは単一のコミットを指す参照で、リポジトリ内ではSHA-1ハッシュ値が書かれただけのたった一つのファイルに過ぎない。 その為ブランチは一瞬で作成できるし、ディスクも圧迫しないので、じゃんじゃん作ってじゃんじゃん消せる。 さらに、ローカルリポジトリに過去の全ファイルの全バージョンが入っているという分散リポジトリの特長のおかげで、ブランチの切り替えも軽快にできる。 ローカルから必要なファイルを作業ディレクトリに展開するだけなので。 一方SVNはそもそもブランチをサポートする直接的な機能がないため、ブランチはリビジョンのコピーという形で実装されている。 コピーと言ってもハードリンクみたいなものでディスク上に物理的なコピーが作られるわけではなく、軽量という点ではGitと大差ないが、集中リポジトリなせいでブランチの切り替えには差が出る。 svn switchにしろsvn checkoutにしろネットワークの向こうのサーバとの通信が必要なので、それなりの時間がかかるし、通信が途切れると切り替えられなくなる。 冒頭に貼った記事にはGitはブランチを切り替える際にstashとかしないといけなくて面倒とあったが、そんなのSVNだって同じだし、stashすればいいだけだし、stashという機能があるだけSVNよりまし。Gitならコミットはあとから書き変えられるので、stashの代わりに一時的にコミットしちゃってもいい。 それも嫌ならworktree使えばよろしい。 3. バージョン間の差分取得が速い Gitは全てのファイルについて全てのバージョンのコンテンツをまるまるリポジトリに持っている。 一方SVNのリポジトリにはバージョン間の変更が記録されている。 このため、あるファイルについて任意のバージョン間の差分を取るのに、Gitはシンプルにそれぞれのバージョンのファイルを取り出して比較するだけでよいが、SVNは隣り合ったバージョンでなければバージョン間の変更を足し合わせて差分を計算しなければいけない。 さらに、Gitは比較するファイルをローカルリポジトリから取り出すだけでよいが、SVNはサーバへのアクセスが必要なので、差分取得はGitの方が大分速い。 4. ログ取得が速い Gitのコミットは常にプロジェクトの全ファイルに対するものだ。 これは変更したファイルの一部だけを対象とするコミット操作ができないという意味ではない。 Gitがひとつのコミット操作をコミットオブジェクトと呼ばれる単一のファイルに記録し、そのファイルが常にプロジェクトの全ファイルの特定のバージョンを参照しているという意味だ。(正確に言うとこのファイル自身に全ての参照が記録されているわけではないが。) このためGitのコミット履歴は実にシンプルで、ログ一覧を取得するには単にコミットをたどりながらコミットオブジェクトに書かれたログを集めればいい。 一方SVNはファイル毎にバージョンを管理するので、もう少しややこしい。 さらに、Gitはコミットオブジェクトをローカルリポジトリから持ってこれるがSVNは(以下略)。 5. オフラインでだいたいなんでもできる と、ここまで書いて、Gitのいいところはオフライン作業が捗るところではないかと思い立った。 実際Gitは、clone、fetch、pull、pushといったあからさまな操作以外はオフラインでできる。 多くの操作にネットワーク通信コストを払わなくていい上、リモートリポジトリサーバが落ちたりネットワークが落ちたり山に籠ったりしていても作業が続けられる。 ノマドに最適。 一方SVNがネットワーク通信なしでできることは、…ベースバージョンとのdiffくらい?">
     
-    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/nanoserver.png">
+    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/git-subversion.png">
     
     
     
@@ -64,6 +64,28 @@
     <div id="posts">
       
       <div class="row">
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/10/06/git-vs-subversion/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/git-subversion.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Thu, Oct 6, 2016</span>
+              </div>
+              <h2 class="title">Gitの良さが分からない？ ちょっとそこに座れ</h2>
+              <div class="summary">
+                Gitの良さが分からないという人がいるようなので、Git派の一人としてSubversion(以下SVN)と比較してのGitのよさ(など)について語りたい。 本題に入る前に、冒頭にリンクを貼った記事についてひとつだけつっこんでおく。(つっこみどころは他にも沢山あるけど。) ※話の前提としてgitとSVNを採用している現場に下記のような割と違いがあるとする。 git イシューごとにブランチを切り、ローカルでコミットして、リモートブランチにpushして、GitHub・GitLab・Bitbucket経由でマージリクエスト。コードレビューの後にマージ。 SVN リモートのtrunkに個々人が直接コミット。コードレビューはあまりない。ブランチを切ることもない。 このような違いが出る背景には次のものがある。 gitを採用する現場は、猫も杓子もgit-flowというプラクティスに従う傾向がある gitを採用する現場は、コードの品質もある程度管理する傾向がある SVNは集中型でありブランチ機能などが非常に使いにくい SVNを採用する現場はコードの品質よりも「リリースに含めるならさっさとコミット」と考える傾向がある この前提には無理がある。 Gitのところに書いてあるのが、Gitというツールの枠を大きくはみだしたGitHub Flowというブランチ戦略+開発プロセスに当たるものであり、 それでGitを批判するのはお門違いであろうという点については、Gitの流行がGitHubの人気によるところが大きく、GitHubを使えることがGitの大きなメリットであるので、目をつむることにする。(マージリクエストを使う羽目になるデメリットなんて言いがかりでしかないとだけ言っておく。) 看過できないのは、SVNを使った開発がコードレビューもブランチもないという点。 どこの世界の話をしているんだろうか。 Gitが世に出る前は世間にコードレビューもブランチもあまりなかったかのような前提だが、もちろんそんなことは全くない。 60万個以上のOSSプロジェクト情報を統括するOpen HUBによれば、OSSプロジェクトの46%がSVNを使っている。この中にはGitの誕生以降にSVNを使い始めたプロジェクトも多くある。270000余りのプロジェクトの大部分がブランチすら使っていないとでも? GitHub Flowと対比するために無理やりこじつけたんだろうけど、その無理のせいで議論のスタート地点からめちゃくちゃだ。 まともな開発にはコードレビューもブランチも必要だ。 品質管理もリリース管理もしないなら要らないのかもしれないが、そんないい加減な開発現場を前提にSVNかGitかなんて議論しても意味がない。 高品質なソフトウェアを効率よく開発するために則りたい素晴らしい開発フローがあるとして、そのフローをSVNやGitやその他のツールないしひょっとしたらアナクロな日付フォルダの内どれがもっとも上手く実現してくれるか、というのがあるべき議論だ。 この「素晴らしい開発フロー」には一般的に品質管理と並行開発が含まれていて、それらにはコードレビューとブランチの利用が含まれている。 Git(+GitHub)がこんなにも急速にSVNに取って代わって流行ったのは、分散リポジトリの仕組みとブランチの軽量な実装によって効率的な並行開発が実現でき、またプルリクエストなどの機能によりコードレビューを含む快適なソーシャルコーディングが実現できるからだ。 逆に言えば、Gitが流行ったことが、人々が効率的な並行開発やコードレビューを開発フローに取り入れたかった証拠と言えるかもしれない。 Gitの利点 前置きが長くなったが、少なくともブランチとコードレビューを活用した高品質で高効率なソフトウェア開発をしたいという前提で、SVNに対するGitの利点を挙げてみたい。 1. リポジトリ構造がシンプル Gitリポジトリはすごくシンプルに作られているそうな。 確かに、その構造を見ると、add、commit、log、resetくらいは自前ですぐに実装できそうだ。 このシンプルな構造のおかげで、Gitリポジトリは壊れにくい。ここで壊れにくいとは、リポジトリ内部で不整合が起こりにくいということで、コマンドミスでコミット履歴が一部消えたりとかいうトラブルは壊れるに入らない。 実のところSVNリポジトリの構造を知らないので経験的なことしか言えないが、SVNリポジトリ(というより作業ディレクトリの管理情報?)はちょくちょく変な状態になり、クリーンアップしたり、酷い時には.svn内のファイルを手動でいじったりしなければならなかった。 因みに、シンプルというのはリポジトリサイズがすごく小さいということにはならず、同等の履歴を含むGitリポジトリとSVNリポジトリはだいたい同サイズなんだそうな。 2. ブランチが軽い Gitのブランチは単一のコミットを指す参照で、リポジトリ内ではSHA-1ハッシュ値が書かれただけのたった一つのファイルに過ぎない。 その為ブランチは一瞬で作成できるし、ディスクも圧迫しないので、じゃんじゃん作ってじゃんじゃん消せる。 さらに、ローカルリポジトリに過去の全ファイルの全バージョンが入っているという分散リポジトリの特長のおかげで、ブランチの切り替えも軽快にできる。 ローカルから必要なファイルを作業ディレクトリに展開するだけなので。 一方SVNはそもそもブランチをサポートする直接的な機能がないため、ブランチはリビジョンのコピーという形で実装されている。 コピーと言ってもハードリンクみたいなものでディスク上に物理的なコピーが作られるわけではなく、軽量という点ではGitと大差ないが、集中リポジトリなせいでブランチの切り替えには差が出る。 svn switchにしろsvn checkoutにしろネットワークの向こうのサーバとの通信が必要なので、それなりの時間がかかるし、通信が途切れると切り替えられなくなる。 冒頭に貼った記事にはGitはブランチを切り替える際にstashとかしないといけなくて面倒とあったが、そんなのSVNだって同じだし、stashすればいいだけだし、stashという機能があるだけSVNよりまし。Gitならコミットはあとから書き変えられるので、stashの代わりに一時的にコミットしちゃってもいい。 それも嫌ならworktree使えばよろしい。 3. バージョン間の差分取得が速い Gitは全てのファイルについて全てのバージョンのコンテンツをまるまるリポジトリに持っている。 一方SVNのリポジトリにはバージョン間の変更が記録されている。 このため、あるファイルについて任意のバージョン間の差分を取るのに、Gitはシンプルにそれぞれのバージョンのファイルを取り出して比較するだけでよいが、SVNは隣り合ったバージョンでなければバージョン間の変更を足し合わせて差分を計算しなければいけない。 さらに、Gitは比較するファイルをローカルリポジトリから取り出すだけでよいが、SVNはサーバへのアクセスが必要なので、差分取得はGitの方が大分速い。 4. ログ取得が速い Gitのコミットは常にプロジェクトの全ファイルに対するものだ。 これは変更したファイルの一部だけを対象とするコミット操作ができないという意味ではない。 Gitがひとつのコミット操作をコミットオブジェクトと呼ばれる単一のファイルに記録し、そのファイルが常にプロジェクトの全ファイルの特定のバージョンを参照しているという意味だ。(正確に言うとこのファイル自身に全ての参照が記録されているわけではないが。) このためGitのコミット履歴は実にシンプルで、ログ一覧を取得するには単にコミットをたどりながらコミットオブジェクトに書かれたログを集めればいい。 一方SVNはファイル毎にバージョンを管理するので、もう少しややこしい。 さらに、Gitはコミットオブジェクトをローカルリポジトリから持ってこれるがSVNは(以下略)。 5. オフラインでだいたいなんでもできる と、ここまで書いて、Gitのいいところはオフライン作業が捗るところではないかと思い立った。 実際Gitは、clone、fetch、pull、pushといったあからさまな操作以外はオフラインでできる。 多くの操作にネットワーク通信コストを払わなくていい上、リモートリポジトリサーバが落ちたりネットワークが落ちたり山に籠ったりしていても作業が続けられる。 ノマドに最適。 一方SVNがネットワーク通信なしでできることは、…ベースバージョンとのdiffくらい?
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
         
         
         
@@ -129,33 +151,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://tbd.kaitoy.xyz/2016/08/18/simpler-github-pages-publishing/" class="post post-topix">
+            <a href="https://tbd.kaitoy.xyz/2016/08/18/simpler-github-pages-publishing/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://tbd.kaitoy.xyz/images/github.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Thu, Aug 18, 2016</span>
               </div>
-              <h2 class="title">GitHub Pagesの新機能、ソース設定が地味にいい</h2>
-              <div class="summary">
-                今日、よりシンプルにGitHub Pagesを使えるようになったというアナウンスがあり、ソース設定という新機能が追加されていたので、さっそく試してみた話。 GitHub Pagesの新機能: ソース設定 GitHub PagesにはUser Pages、Organization Pages、Project Pagesの三種類があるが、ソース設定が使えるのはProject Pages、つまりGitHubリポジトリごとに使えてusername.github.io/projectnameのようなURLのやつだけ。 今まではProject Pagesで公開するサイトのソースはgh-pagesという名のブランチに置く必要があったが、ソース設定によりmasterブランチのルートに置いたりmasterブランチの/docsフォルダに置いたりもできるようになった。 ソース設定の使い道 Pcap4Jのホームページのソースをmasterブランチの/docsフォルダに置く設定にしたら捗った。 Pcap4JのホームページはHugoで作っていて、以前は、Hugoのソースをpcap4j-hpリポジトリのmasterブランチに置き、gh-pagesブランチを作ってそこにHugoのビルド成果物(=ホームページのソース)を入れていた。 ローカルPCでは、masterをcloneして、そこからgit worktreeでgh-pagesを別のフォルダにチェックアウトしておいてあり、Hugoのビルドオプションでgh-pagesのフォルダにビルド成果物を出力するようにしていた。 これだと、ホームページを修正したい場合、まずmasterでHugoソースを修正してgit add/commit/push、次いでビルドしてgh-pagesフォルダに移動してgit add/commit/push、というように、二度手間で面倒だった。 Hugoのビルド成果物をmasterブランチの/docsフォルダに置けるようにできれば、git add/commit/pushはビルド後にmasterに対して一回だけやれば済むようになる。 gh-pagesからmasterブランチの/docsフォルダへの移行 GitHubのヘルプを参考にしつつ、 ローカルPCで、masterの作業ディレクトリのルートにdocsというフォルダを作り、gh-pagesのフォルダの中身を全てそこに移動。 masterのdocsをgit add/commit/push。 GitHubのpcap4j-hpリポジトリのページに行き、SettingsタブのGitHub PagesセクションのSourceをgh-pages branchからmaster branch /docs folderに変えてSaveボタンをクリック。 実にこれだけ。 カスタムドメインにしていてもこれだけ。簡単。ダウンタイムもなし。 あとはローカルPCのgh-pagesの作業ディレクトリを削除したり、gh-pagesブランチを削除したり。
-              </div>
+              <h3 class="title">GitHub Pagesの新機能、ソース設定が地味にいい</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         
@@ -1010,6 +1029,12 @@
       
       
       <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/subversion">subversion</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/vcs">vcs</a>
       
       
       <a href="https://tbd.kaitoy.xyz/tags/windows">windows</a>

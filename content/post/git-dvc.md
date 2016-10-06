@@ -4,7 +4,7 @@ date = "2015-12-31T01:02:59-07:00"
 draft = false
 eyecatch = "git.png"
 slug = "git-dvc"
-tags = [ "git" ]
+tags = [ "git", "vcs" ]
 title = "Gitの分散バージョン管理の仕組み"
 +++
 
