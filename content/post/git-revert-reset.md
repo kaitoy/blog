@@ -8,7 +8,7 @@ tags = [ "git", "vcs" ]
 title = "git resetとrevertを図解する"
 +++
 
-[この記事](https://tbd.kaitoy.xyz/2015/12/27/git-repository/)を読んだことを前提に、[__Git__](https://git-scm.com/)の `git revert` と `git reset`というコマンドについて説明する。
+[この記事](https://tbd.kaitoy.xyz/2015/12/27/git-repository/)を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、[__Git__](https://git-scm.com/)の `git revert` と `git reset`というコマンドについて説明する。
 この二つはしばしばコミットを取り消すコマンドとして同じ文脈で説明されることが多いのでこのエントリでも一緒に説明するが、実際は全く異なるコマンドだし、そもそもどちらもコミットを取り消すコマンドではない。
 
 ## git revert

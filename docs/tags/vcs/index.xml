@@ -6,8 +6,113 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2016</rights>
-    <updated>2016-10-06 00:18:05 -0600 MDT</updated>
+    <updated>2016-10-08 16:39:46 -0600 MDT</updated>
 
+    
+      
+        <item>
+          <title>git checkoutを図解する</title>
+          <link>https://tbd.kaitoy.xyz/2016/10/08/git-checkout/</link>
+          <pubDate>Sat, 08 Oct 2016 16:39:46 MDT</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2016/10/08/git-checkout/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;https://tbd.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;の &lt;code&gt;git checkout&lt;/code&gt; というコマンドについて説明する。&lt;/p&gt;
+
+&lt;p&gt;このコマンドは普通ブランチを切り替えるものと説明されるが、主たる機能は &lt;strong&gt;オブジェクト格納領域から指定されたファイルを取り出し、ワーキングディレクトリに配置する&lt;/strong&gt; ものである。&lt;/p&gt;
+
+&lt;p&gt;与える引数によっては &lt;code&gt;HEAD&lt;/code&gt; の付け替え、つまりはブランチの切り替えもする。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;git checkout&lt;/code&gt; の動作を &lt;code&gt;HEAD&lt;/code&gt; の付け替えの有無によって分けて考えると分かりやすく覚えやすいので、以下そのように説明する。&lt;/p&gt;
+
+&lt;h1 id=&#34;headを付け替えないgit-checkout&#34;&gt;HEADを付け替えないgit checkout&lt;/h1&gt;
+
+&lt;p&gt;&lt;code&gt;HEAD&lt;/code&gt; を付け替えない &lt;code&gt;git checkout&lt;/code&gt; は、引数にワーキングディレクトリ内の &lt;strong&gt;ファイルまたはディレクトリへのパスを与えた場合&lt;/strong&gt; のもの。
+ディレクトリを指定した場合はそれ以下の全ファイルが操作対象となる。
+パスは絶対パスかカレントディレクトリからの相対パスで、複数指定できる。&lt;/p&gt;
+
+&lt;p&gt;つまりは以下の様なコマンド形式になる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;git checkout &amp;lt;パス(複数可)&amp;gt;&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;これを実行すると、指定したファイルについて、&lt;strong&gt;インデックスが指しているブロブ&lt;/strong&gt; をオブジェクト格納領域から取り出し、ワーキングディレクトリのファイルを置き変える。&lt;/p&gt;
+
+&lt;ul class=&#34;bxslider&#34;&gt;
+  &lt;li&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド1.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド2.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド3.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド4.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド5.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド6.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド7.PNG&#34; /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;上のスライドではインデックスが指しているブロブを取り出したが、任意のブロブを取り出すこともできる。
+この場合、以下の様なコマンド形式を使う。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;git checkout &amp;lt;コミット&amp;gt; &amp;lt;パス(複数可)&amp;gt;&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;このコマンド形式だと、&lt;strong&gt;指定したコミットが指すツリー以下のブロブ&lt;/strong&gt; が取り出される。
+&lt;code&gt;&amp;lt;コミット&amp;gt;&lt;/code&gt;の部分には、コミットオブジェクトのSHA1ハッシュ値、参照(i.e. ブランチかタグ)、シンボリック参照(e.g. &lt;code&gt;HEAD&lt;/code&gt;)を指定できる。(実際にはこれらが全てではないが、実用的にはこの3種。)&lt;/p&gt;
+
+&lt;p&gt;この形式だと、ワーキングディレクトリだけでなく、取り出すブロブを指すよう &lt;strong&gt;インデックスも更新される&lt;/strong&gt; ことに注意。&lt;/p&gt;
+
+&lt;ul class=&#34;bxslider&#34;&gt;
+  &lt;li&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/git-checkout/git_checkout_paths_commit/スライド1.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/git-checkout/git_checkout_paths_commit/スライド2.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/git-checkout/git_checkout_paths_commit/スライド3.PNG&#34; /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;headを付け替えるgit-checkout&#34;&gt;HEADを付け替えるgit checkout&lt;/h1&gt;
+
+&lt;p&gt;&lt;code&gt;HEAD&lt;/code&gt; を付け替える &lt;code&gt;git checkout&lt;/code&gt; は、引数に &lt;strong&gt;パスを与えない場合&lt;/strong&gt; のもの。
+代わりにコミットを与える。&lt;/p&gt;
+
+&lt;p&gt;つまりは以下の様なコマンド形式になる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;git checkout &amp;lt;コミット&amp;gt;&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;&amp;lt;コミット&amp;gt;&lt;/code&gt;の部分には、コミットオブジェクトのSHA1ハッシュ値、参照(i.e. ブランチかタグ)、シンボリック参照(e.g. &lt;code&gt;HEAD&lt;/code&gt;)を指定できる。(実際にはこれらが全てではないが、実用的にはこの3種。)&lt;/p&gt;
+
+&lt;p&gt;これを実行すると、&lt;strong&gt;指定したコミットが指すツリー以下の全てのブロブ&lt;/strong&gt; を指すようインデックスを更新し、それらのブロブをオブジェクト格納領域から取り出してワーキングディレクトリに配置する。&lt;/p&gt;
+
+&lt;p&gt;この上更に&lt;code&gt;HEAD&lt;/code&gt;を付け替えるわけだが、付け替え先は&lt;code&gt;&amp;lt;コミット&amp;gt;&lt;/code&gt;の種類によって以下の三通りある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;&amp;lt;コミット&amp;gt;&lt;/code&gt;がブランチ: &lt;code&gt;HEAD&lt;/code&gt;はそのブランチを指すよう更新される。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;&amp;lt;コミット&amp;gt;&lt;/code&gt;がSHA1ハッシュ値: &lt;code&gt;HEAD&lt;/code&gt;はコミットを指すよう更新される。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;&amp;lt;コミット&amp;gt;&lt;/code&gt;がタグかシンボリック参照: &lt;code&gt;HEAD&lt;/code&gt;はタグかシンボリック参照が指すコミットを指すよう更新される。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;ul class=&#34;bxslider&#34;&gt;
+  &lt;li&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド1.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド2.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド3.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド4.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド5.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド6.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド7.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド8.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド9.PNG&#34; /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;上のスライド中のコミットをチェックアウトした例を見ると分かるが、コマンド実行前後でワーキングディレクトリからファイルが削除されることもある。
+これは多分、実際にはインデックスの更新処理の前に、&lt;code&gt;HEAD&lt;/code&gt;が指すコミットに含まれるファイルをワーキングディレクトリから削除する処理があるからだと考えられる。&lt;/p&gt;
+
+&lt;p&gt;また、上のスライドには表現していないが、コマンド実行前にワーキングディレクトリやインデックスに未コミットな変更が入っている場合、Gitはそれをコマンド実行後のワーキングディレクトリに適用しようとしてくれる。
+これは例えばあるブランチで作った変更を別のブランチにコミットしたいようなときは便利だが、&lt;code&gt;checkout&lt;/code&gt;したコミットに別途変更が入っているとその適用は失敗し、コマンドがエラーになるので、普通はコマンド実行前に&lt;code&gt;git stash&lt;/code&gt;しておくのが無難。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -263,7 +368,7 @@ Gitの開発陣は当初から部分cloneの実装に乗り気ではないし、
           <guid>https://tbd.kaitoy.xyz/2016/01/01/git-revert-reset/</guid>
           <description>
 
-&lt;p&gt;&lt;a href=&#34;https://tbd.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を読んだことを前提に、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;の &lt;code&gt;git revert&lt;/code&gt; と &lt;code&gt;git reset&lt;/code&gt;というコマンドについて説明する。
+&lt;p&gt;&lt;a href=&#34;https://tbd.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;の &lt;code&gt;git revert&lt;/code&gt; と &lt;code&gt;git reset&lt;/code&gt;というコマンドについて説明する。
 この二つはしばしばコミットを取り消すコマンドとして同じ文脈で説明されることが多いのでこのエントリでも一緒に説明するが、実際は全く異なるコマンドだし、そもそもどちらもコミットを取り消すコマンドではない。&lt;/p&gt;
 
 &lt;h2 id=&#34;git-revert&#34;&gt;git revert&lt;/h2&gt;
@@ -375,7 +480,7 @@ Gitの開発陣は当初から部分cloneの実装に乗り気ではないし、
           <guid>https://tbd.kaitoy.xyz/2015/12/31/git-dvc/</guid>
           <description>
 
-&lt;p&gt;このエントリでは、&lt;a href=&#34;https://tbd.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を読んだことを前提に、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;の分散バージョン管理の仕組みについて説明する。&lt;/p&gt;
+&lt;p&gt;このエントリでは、&lt;a href=&#34;https://tbd.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;の分散バージョン管理の仕組みについて説明する。&lt;/p&gt;
 
 &lt;h2 id=&#34;gitの分散バージョン管理&#34;&gt;Gitの分散バージョン管理&lt;/h2&gt;
 
@@ -596,7 +701,7 @@ error: failed to push some refs to &#39;file://C:/Users/Kaito/Desktop/master&#39
 &lt;p&gt;このエントリでは、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;が提供するマージのための機能の内、主なもの4つ、&lt;strong&gt;真のマージ&lt;/strong&gt;、&lt;strong&gt;リベース&lt;/strong&gt;、&lt;strong&gt;ファストフォワードマージ&lt;/strong&gt;、&lt;strong&gt;チェリーピック&lt;/strong&gt; について図解する。
 ここでマージとは、とあるブランチのコミットが入れた修正を別のブランチに取り込むこととする。&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://tbd.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を事前に呼んでおくとわかりやすいかもしれない。&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://tbd.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を事前に読んでGitのオブジェクトモデルを理解しておくと分かりやすいかもしれない。&lt;/p&gt;
 
 &lt;p&gt;ここで説明するマージは全てローカルリポジトリ内のブランチを操作対象とする。&lt;/p&gt;
 
