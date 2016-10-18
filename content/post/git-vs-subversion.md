@@ -8,7 +8,7 @@ tags = ["git", "subversion", "vcs"]
 title = "Gitの良さが分からない？ ちょっとそこに座れ"
 +++
 
-[Gitの良さが分からない](http://crapp.hatenablog.com/entry/2016/10/01/111528)という人がいるようなので、Git派の一人としてSubversion(以下SVN)と比較してのGitの良さ(メリット)について語りたい。
+[Gitの良さがいまだに分からない](http://crapp.hatenablog.com/entry/2016/10/01/111528)という人がいるようなので、Git派の一人としてSubversion(以下SVN)と比較してのGitの良さ(メリット)について語りたい。
 (GitとSVNの違いについては他の人の記事に詳しいのであまり書いていない一方、勢い余ってGitのデメリットも書いた。)
 
 本題に入る前に、冒頭にリンクを貼った記事についてひとつだけつっこんでおく。
