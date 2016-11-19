@@ -4,7 +4,7 @@ date = "2016-01-12T08:43:30-07:00"
 draft = false
 eyecatch = "pcap4jlogo.png"
 slug = "pcap4j-with-four-native-libraries-on-windows10"
-tags = [ "pcap4j" ]
+tags = [ "pcap4j", "windows" ]
 title = "Pcap4J with Four Native Libraries on Windows 10"
 +++
 

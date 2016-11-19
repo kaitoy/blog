@@ -4,7 +4,7 @@ date = "2016-07-31T14:34:16-06:00"
 draft = false
 eyecatch = "docker.png"
 slug = "docker-for-windows"
-tags = [ "docker" ]
+tags = [ "docker", " windows" ]
 title = "Docker for Windowsがコレジャナかった"
 
 +++

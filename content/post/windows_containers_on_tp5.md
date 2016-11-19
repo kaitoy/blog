@@ -4,7 +4,7 @@ date = "2016-07-11T00:30:33-06:00"
 draft = false
 eyecatch = "pcap4j-docker.png"
 slug = "windows_containers_on_tp5"
-tags = [ "pcap4j", "docker" ]
+tags = [ "pcap4j", "docker", "windows" ]
 title = "Windows Server 2016 TP5でWindows Containersにリトライ"
 
 +++
