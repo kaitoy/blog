@@ -6,8 +6,167 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2016</rights>
-    <updated>2016-10-08 16:39:46 -0600 MDT</updated>
+    <updated>2016-11-19 01:05:26 -0700 MST</updated>
 
+    
+      
+        <item>
+          <title>Bash on WindowsでWindows側からUbuntu側のファイルをいじると壊れることがあるので注意</title>
+          <link>https://tbd.kaitoy.xyz/2016/11/19/bow-do-not-change-linux-files-from-windows/</link>
+          <pubDate>Sat, 19 Nov 2016 01:05:26 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2016/11/19/bow-do-not-change-linux-files-from-windows/</guid>
+          <description>
+
+&lt;p&gt;Bash on WindowsでWindows側からUbuntu側のファイルをいじると危険という情報を見つけたので、試してみたら確かに困った状態になった話。&lt;/p&gt;
+
+&lt;h1 id=&#34;bash-on-windowsとは&#34;&gt;Bash on Windowsとは&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://msdn.microsoft.com/en-us/commandline/wsl/about&#34;&gt;Bash on Windows&lt;/a&gt; (aka BoW)は、2016/8/3に公開されたWindows 10 Anniversary Updateで使えるようになった、Windows上でBashが使えるようになる機能。&lt;/p&gt;
+
+&lt;p&gt;POSIX APIのWindows実装を提供する&lt;a href=&#34;https://www.cygwin.com/&#34;&gt;Cygwin&lt;/a&gt;などとは違い、WindowsのサブシステムとしてUbuntuが動き、その上でBashが動き、そこからUbuntu用のバイナリをそのまま利用できるというもの。&lt;/p&gt;
+
+&lt;p&gt;2016/11/17現在でまだベータ版の機能。&lt;/p&gt;
+
+&lt;h1 id=&#34;windows側からubuntu側のファイルをいじると壊れる問題&#34;&gt;Windows側からUbuntu側のファイルをいじると壊れる問題&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://blogs.msdn.microsoft.com/commandline/2016/11/17/do-not-change-linux-files-using-windows-apps-and-tools/&#34;&gt;Microsoftの中の人のブログ&lt;/a&gt;に、BoWがセットアップされた環境で、Windows側からUbuntu側のファイル(i.e. &lt;code&gt;%localappdata%\lxss\&lt;/code&gt;以下のファイル)をいじると壊れるという話があった。
+いかにもやってしまいそうな操作で危険だし、実際このブログの人はこれに関する問い合わせに毎日1,2件対応しているそうな。&lt;/p&gt;
+
+&lt;p&gt;原因は上記ブログに詳しいが、簡単に言うと、Windows側のプロセスがUbuntu側のファイルを作ったり編集したりする際、パーミッションなどのメタデータを適切に設定しないため、Ubuntu側でファイルが壊れたと判断されてしまうから。
+こうなると、結果としてファイルが消えてしまったり、壊れたデータで上書きされてしまったりするとのこと。&lt;/p&gt;
+
+&lt;p&gt;因みに、Ubuntu側からWindows側のファイルをいじるのは問題ないらしい。&lt;/p&gt;
+
+&lt;h1 id=&#34;再現確認&#34;&gt;再現確認&lt;/h1&gt;
+
+&lt;p&gt;そういえばまだBoWをさわったことがなかったので、セットアップして件の問題を体験してみた。&lt;/p&gt;
+
+&lt;p&gt;環境は、VMware Player 7.1.0で作ったVMに評価版のWindows 10 Enterprise v1607をインストールしたもの。
+セットアップは&lt;a href=&#34;https://msdn.microsoft.com/en-us/commandline/wsl/install_guide&#34;&gt;公式の手順&lt;/a&gt;に従うだけ。2ステップだけの簡単な手順。&lt;/p&gt;
+
+&lt;p&gt;セットアップ後、コマンドプロンプトで&lt;code&gt;bash&lt;/code&gt;とうつとBoWが起動する。(初回はインストール処理が走り、十数分待たされる。)&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;[コマンドプロンプト → Bash]&lt;/strong&gt;
+&lt;img src=&#34;https://tbd.kaitoy.xyz/images/bow-do-not-change-linux-files-from-windows/bow.png&#34; alt=&#34;bow.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;再現確認に使うのは&lt;code&gt;hoge&lt;/code&gt;と書いた&lt;code&gt;hoge.txt&lt;/code&gt;。
+これをWindows側の&lt;code&gt;C:\Users\kaitoy\Desktop\&lt;/code&gt;とUbuntu側の&lt;code&gt;/home/kaitoy/&lt;/code&gt;に置く。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;[コマンドプロンプト]&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/bow-do-not-change-linux-files-from-windows/hoge_cmd.png&#34; alt=&#34;hoge_cmd.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;[Bash]&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/bow-do-not-change-linux-files-from-windows/hoge_ubuntu.png&#34; alt=&#34;hoge_ubuntu.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Windows側からは、Ubuntuのファイルシステムが&lt;code&gt;%localappdata%\lxss\&lt;/code&gt;にマウントされているように見える。
+(&lt;code&gt;lxss&lt;/code&gt;はエクスプローラーのオプションから「保護されたオペレーティングシステムファイルを表示しない（推奨）」のチェックをはずさないと見えない。見えなくてもアドレスバーにパスを入力すればアクセスできるけど。)&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/bow-do-not-change-linux-files-from-windows/lxss.png&#34; alt=&#34;lxss.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;一方Ubuntu側からは、WindowsのCドライブが&lt;code&gt;/mnt/c&lt;/code&gt;にマウントされているように見える。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;[Bash]&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/bow-do-not-change-linux-files-from-windows/mntc.png&#34; alt=&#34;mntc.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ここで、コマンドプロンプトを開き、&lt;code&gt;%localappdata%\lxss\hoge\kaitoy\&lt;/code&gt;(i.e. Ubuntu側の&lt;code&gt;/home/kaitoy/&lt;/code&gt;)に&lt;code&gt;cd&lt;/code&gt;し、&lt;code&gt;hoge.txt&lt;/code&gt;を&lt;code&gt;echo&lt;/code&gt;で編集してみた。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;[コマンドプロンプト]&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/bow-do-not-change-linux-files-from-windows/mod_from_cmd.png&#34; alt=&#34;mod_from_cmd.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;したらBashから見えなくなった。アクセスしようとすると「Input/output error」というエラーになる。これが件の現象か。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;[Bash]&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/bow-do-not-change-linux-files-from-windows/disappeared.png&#34; alt=&#34;disappeared.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;エクスプローラからは見えていたので、GUIで&lt;code&gt;%localappdata%\lxss\hoge\kaitoy\hoge.txt&lt;/code&gt;を削除したら正常な状態に戻った。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;再度同じ&lt;code&gt;hoge.txt&lt;/code&gt;を作り、今度はメモ帳で編集して内容を&lt;code&gt;foo&lt;/code&gt;に変えてみた。
+この場合は特に問題なし。なぜだ?&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;[Bash]&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/bow-do-not-change-linux-files-from-windows/no_problem.png&#34; alt=&#34;no_problem.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;例のブログをよく読むと、実際に問題になるのはファイルの作成だけのように読める。
+編集しているようにみえても、アプリによっては新規ファイルを作って既存のを置き換えていることがあるから、編集もするなと言っている模様。
+メモ帳は実際に編集しているから大丈夫だったということか。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;今編集した&lt;code&gt;hoge.txt&lt;/code&gt;を今度はエクスプローラから消してみる。
+Ubuntu側からは消えてないように見えるが、アクセスしようとするとないと言われる。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;[Bash]&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/bow-do-not-change-linux-files-from-windows/not_deleted.png&#34; alt=&#34;not_deleted.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;エクスプローラのビューをF5で更新したら、今消したはずの&lt;code&gt;hoge.txt&lt;/code&gt;が復活した。
+これをダブルクリックで開こうとしたら「Access is denied.」。
+エクスプローラから何度消してもすぐ復活する。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/bow-do-not-change-linux-files-from-windows/access_denied.png&#34; alt=&#34;access_denied.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Bashで消そうとしても「Permission denied」。詰んだ。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;[Bash]&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/bow-do-not-change-linux-files-from-windows/permission_denied.png&#34; alt=&#34;permission_denied.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ということで、むしろWindows側からUbuntu側のファイルを消すのがもっともやばいと言うことがわかった。
+&lt;code&gt;lxrun /uninstall /full&lt;/code&gt;、&lt;code&gt;lxrun /install&lt;/code&gt;でUbuntuイメージをインストールしなおさないと直らない。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;最後に、Ubuntu側(i.e. Bash)からWindows側の&lt;code&gt;C:\Users\kaitoy\Desktop\hoge.txt&lt;/code&gt;をいじってみたが、例のブログに書いてある通りなんの問題もなかった。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;[Bash]&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/bow-do-not-change-linux-files-from-windows/fin.png&#34; alt=&#34;fin.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;件の問題もベータがとれたら直るかもしれないが、&lt;code&gt;%localappdata%\lxss\&lt;/code&gt;は保護された隠しフォルダなのでやはり触らないのが無難か。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>

@@ -13,9 +13,9 @@
     <meta property="og:url" content="https://tbd.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="この記事を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、Gitの git checkout というコマンドについて説明する。 このコマンドは普通ブランチを切り替えるものと説明されるが、主たる機能は オブジェクト格納領域から指定されたファイルを取り出し、ワーキングディレクトリに配置する ものである。 つまりこれがGitにおけるチェックアウトで、チェックアウト=ブランチの切り替えではない。 コマンドに与える引数によっては HEAD の付け替え、つまりはブランチの切り替えもする、というだけ。 git checkout の動作を HEAD の付け替えの有無によって分けて考えると分かりやすく覚えやすいので、以下そのように説明する。 HEADを付け替えないgit checkout HEAD を付け替えない git checkout は、引数にワーキングディレクトリ内の ファイルまたはディレクトリへのパスを与えた場合 のもの。 ディレクトリを指定した場合はそれ以下の全ファイルが操作対象となる。 パスは絶対パスかカレントディレクトリからの相対パスで、複数指定できる。 つまりは以下の様なコマンド形式になる。 git checkout &lt;パス(複数可)&gt; これを実行すると、指定したファイルについて、インデックスが指しているブロブ をオブジェクト格納領域から取り出し、ワーキングディレクトリのファイルを置き変える。 上のスライドではインデックスが指しているブロブを取り出したが、任意のブロブを取り出すこともできる。 この場合、以下の様なコマンド形式を使う。 git checkout &lt;コミット&gt; &lt;パス(複数可)&gt; このコマンド形式だと、指定したコミットが指すツリー以下のブロブ が取り出される。 &lt;コミット&gt;の部分には、コミットオブジェクトのSHA1ハッシュ値、参照(i.e. ブランチかタグ)、シンボリック参照(e.g. HEAD)を指定できる。(実際にはこれらが全てではないが、実用的にはこの3種。) この形式だと、ワーキングディレクトリだけでなく、取り出すブロブを指すよう インデックスも更新される ことに注意。 HEADを付け替えるgit checkout HEAD を付け替える git checkout は、引数に パスを与えない場合 のもの。 代わりにコミットを与える。 つまりは以下の様なコマンド形式になる。 git checkout &lt;コミット&gt; &lt;コミット&gt;の部分には、コミットオブジェクトのSHA1ハッシュ値、参照(i.e. ブランチかタグ)、シンボリック参照(e.g. HEAD)を指定できる。(実際にはこれらが全てではないが、実用的にはこの3種。) これを実行すると、指定したコミットが指すツリー以下の全てのブロブ を指すようインデックスを更新し、それらのブロブをオブジェクト格納領域から取り出してワーキングディレクトリに配置する。 この上更にHEADを付け替えるわけだが、付け替え先は&lt;コミット&gt;の種類によって以下の三通りある。 &lt;コミット&gt;がブランチ: HEADはそのブランチを指すよう更新される。 &lt;コミット&gt;がSHA1ハッシュ値:">
+    <meta property="og:description" content="Bash on WindowsでWindows側からUbuntu側のファイルをいじると危険という情報を見つけたので、試してみたら確かに困った状態になった話。 Bash on Windowsとは Bash on Windows (aka BoW)は、2016/8/3に公開されたWindows 10 Anniversary Updateで使えるようになった、Windows上でBashが使えるようになる機能。 POSIX APIのWindows実装を提供するCygwinなどとは違い、WindowsのサブシステムとしてUbuntuが動き、その上でBashが動き、そこからUbuntu用のバイナリをそのまま利用できるというもの。 2016/11/17現在でまだベータ版の機能。 Windows側からUbuntu側のファイルをいじると壊れる問題 Microsoftの中の人のブログに、BoWがセットアップされた環境で、Windows側からUbuntu側のファイル(i.e. %localappdata%\lxss\以下のファイル)をいじると壊れるという話があった。 いかにもやってしまいそうな操作で危険だし、実際このブログの人はこれに関する問い合わせに毎日1,2件対応しているそうな。 原因は上記ブログに詳しいが、簡単に言うと、Windows側のプロセスがUbuntu側のファイルを作ったり編集したりする際、パーミッションなどのメタデータを適切に設定しないため、Ubuntu側でファイルが壊れたと判断されてしまうから。 こうなると、結果としてファイルが消えてしまったり、壊れたデータで上書きされてしまったりするとのこと。 因みに、Ubuntu側からWindows側のファイルをいじるのは問題ないらしい。 再現確認 そういえばまだBoWをさわったことがなかったので、セットアップして件の問題を体験してみた。 環境は、VMware Player 7.1.0で作ったVMに評価版のWindows 10 Enterprise v1607をインストールしたもの。 セットアップは公式の手順に従うだけ。2ステップだけの簡単な手順。 セットアップ後、コマンドプロンプトでbashとうつとBoWが起動する。(初回はインストール処理が走り、十数分待たされる。) [コマンドプロンプト → Bash] 再現確認に使うのはhogeと書いたhoge.txt。 これをWindows側のC:\Users\kaitoy\Desktop\とUbuntu側の/home/kaitoy/に置く。 [コマンドプロンプト] [Bash] Windows側からは、Ubuntuのファイルシステムが%localappdata%\lxss\にマウントされているように見える。 (lxssはエクスプローラーのオプションから「保護されたオペレーティングシステムファイルを表示しない（推奨）」のチェックをはずさないと見えない。見えなくてもアドレスバーにパスを入力すればアクセスできるけど。) 一方Ubuntu側からは、WindowsのCドライブが/mnt/cにマウントされているように見える。 [Bash] ここで、コマンドプロンプトを開き、%localappdata%\lxss\hoge\kaitoy\(i.e. Ubuntu側の/home/kaitoy/)にcdし、hoge.txtをechoで編集してみた。 [コマンドプロンプト] したらBashから見えなくなった。アクセスしようとすると「Input/output error」というエラーになる。これが件の現象か。 [Bash] エクスプローラからは見えていたので、GUIで%localappdata%\lxss\hoge\kaitoy\hoge.txtを削除したら正常な状態に戻った。 再度同じhoge.txtを作り、今度はメモ帳で編集して内容をfooに変えてみた。 この場合は特に問題なし。なぜだ? [Bash] 例のブログをよく読むと、実際に問題になるのはファイルの作成だけのように読める。 編集しているようにみえても、アプリによっては新規ファイルを作って既存のを置き換えていることがあるから、編集もするなと言っている模様。 メモ帳は実際に編集しているから大丈夫だったということか。 今編集したhoge.txtを今度はエクスプローラから消してみる。 Ubuntu側からは消えてないように見えるが、アクセスしようとするとないと言われる。 [Bash] エクスプローラのビューをF5で更新したら、今消したはずのhoge.txtが復活した。 これをダブルクリックで開こうとしたら「Access is denied.」。 エクスプローラから何度消してもすぐ復活する。 Bashで消そうとしても「Permission denied」。詰んだ。 [Bash] ということで、むしろWindows側からUbuntu側のファイルを消すのがもっともやばいと言うことがわかった。 lxrun /uninstall /full、lxrun /installでUbuntuイメージをインストールしなおさないと直らない。 最後に、Ubuntu側(i.e.">
     
-    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/git.png">
+    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/microsoft.png">
     
     
     
@@ -64,6 +64,28 @@
     <div id="posts">
       
       <div class="row">
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2016/11/19/bow-do-not-change-linux-files-from-windows/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/microsoft.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sat, Nov 19, 2016</span>
+              </div>
+              <h2 class="title">Bash on WindowsでWindows側からUbuntu側のファイルをいじると壊れることがあるので注意</h2>
+              <div class="summary">
+                Bash on WindowsでWindows側からUbuntu側のファイルをいじると危険という情報を見つけたので、試してみたら確かに困った状態になった話。 Bash on Windowsとは Bash on Windows (aka BoW)は、2016/8/3に公開されたWindows 10 Anniversary Updateで使えるようになった、Windows上でBashが使えるようになる機能。 POSIX APIのWindows実装を提供するCygwinなどとは違い、WindowsのサブシステムとしてUbuntuが動き、その上でBashが動き、そこからUbuntu用のバイナリをそのまま利用できるというもの。 2016/11/17現在でまだベータ版の機能。 Windows側からUbuntu側のファイルをいじると壊れる問題 Microsoftの中の人のブログに、BoWがセットアップされた環境で、Windows側からUbuntu側のファイル(i.e. %localappdata%\lxss\以下のファイル)をいじると壊れるという話があった。 いかにもやってしまいそうな操作で危険だし、実際このブログの人はこれに関する問い合わせに毎日1,2件対応しているそうな。 原因は上記ブログに詳しいが、簡単に言うと、Windows側のプロセスがUbuntu側のファイルを作ったり編集したりする際、パーミッションなどのメタデータを適切に設定しないため、Ubuntu側でファイルが壊れたと判断されてしまうから。 こうなると、結果としてファイルが消えてしまったり、壊れたデータで上書きされてしまったりするとのこと。 因みに、Ubuntu側からWindows側のファイルをいじるのは問題ないらしい。 再現確認 そういえばまだBoWをさわったことがなかったので、セットアップして件の問題を体験してみた。 環境は、VMware Player 7.1.0で作ったVMに評価版のWindows 10 Enterprise v1607をインストールしたもの。 セットアップは公式の手順に従うだけ。2ステップだけの簡単な手順。 セットアップ後、コマンドプロンプトでbashとうつとBoWが起動する。(初回はインストール処理が走り、十数分待たされる。) [コマンドプロンプト → Bash] 再現確認に使うのはhogeと書いたhoge.txt。 これをWindows側のC:\Users\kaitoy\Desktop\とUbuntu側の/home/kaitoy/に置く。 [コマンドプロンプト] [Bash] Windows側からは、Ubuntuのファイルシステムが%localappdata%\lxss\にマウントされているように見える。 (lxssはエクスプローラーのオプションから「保護されたオペレーティングシステムファイルを表示しない（推奨）」のチェックをはずさないと見えない。見えなくてもアドレスバーにパスを入力すればアクセスできるけど。) 一方Ubuntu側からは、WindowsのCドライブが/mnt/cにマウントされているように見える。 [Bash] ここで、コマンドプロンプトを開き、%localappdata%\lxss\hoge\kaitoy\(i.e. Ubuntu側の/home/kaitoy/)にcdし、hoge.txtをechoで編集してみた。 [コマンドプロンプト] したらBashから見えなくなった。アクセスしようとすると「Input/output error」というエラーになる。これが件の現象か。 [Bash] エクスプローラからは見えていたので、GUIで%localappdata%\lxss\hoge\kaitoy\hoge.txtを削除したら正常な状態に戻った。 再度同じhoge.txtを作り、今度はメモ帳で編集して内容をfooに変えてみた。 この場合は特に問題なし。なぜだ? [Bash] 例のブログをよく読むと、実際に問題になるのはファイルの作成だけのように読める。 編集しているようにみえても、アプリによっては新規ファイルを作って既存のを置き換えていることがあるから、編集もするなと言っている模様。 メモ帳は実際に編集しているから大丈夫だったということか。 今編集したhoge.txtを今度はエクスプローラから消してみる。 Ubuntu側からは消えてないように見えるが、アクセスしようとするとないと言われる。 [Bash] エクスプローラのビューをF5で更新したら、今消したはずのhoge.txtが復活した。 これをダブルクリックで開こうとしたら「Access is denied.」。 エクスプローラから何度消してもすぐ復活する。 Bashで消そうとしても「Permission denied」。詰んだ。 [Bash] ということで、むしろWindows側からUbuntu側のファイルを消すのがもっともやばいと言うことがわかった。 lxrun /uninstall /full、lxrun /installでUbuntuイメージをインストールしなおさないと直らない。 最後に、Ubuntu側(i.e.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
         
         
         
@@ -129,33 +151,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://tbd.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/" class="post post-topix">
+            <a href="https://tbd.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://tbd.kaitoy.xyz/images/nanoserver.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Mon, Sep 12, 2016</span>
               </div>
-              <h2 class="title">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</h2>
-              <div class="summary">
-                Nano Serverでunzipしたかっただけだったのに、妙に苦労した話。 Nano Serverとは Nano Serverは、Windows Server 2016で追加されるWindows Serverの新たなインストール形式で、Server Coreよりさらに機能を絞り、リモートで管理するクラウドホストやWebサーバ向けにに特化したもの。 Server Coreが数GBくらいなのに対し、Nano Serverは数百MBととても軽量で、それゆえ起動が速くセキュア。 unzipとは unzipとは、zipファイルを解凍する、ただそれだけのこと。 ただそれだけのことで、基本的な機能だと思うのだが、Windowsはこれをコマンドラインで実行する方法をつい最近まで正式に提供していなかった。 Nano Serverでunzip Windows 10のHyper-V Containersの上でPcap4JのビルドとテストをするDockerイメージをビルドしたくて、そのための依存ライブラリなどをインストールする処理をDockerfileに書いていて、ADDでzipをダウンロードしたところまではいいんだけど、このzipどうやって解凍してやろうかとなった。 (Dockerホストに置いたものをコンテナにADDするのはなんか格好悪いから無しで。Dockerfile裸一貫で実現したい。) Windows 10のHyper-V Containersは、現時点でNano Serverしかサポートしていないのが厳しい点。Server Coreだったら楽だったのに。 以下、いろいろ試したことを書く。 正攻法: Expand-Archive PowerShellの v5 で実装されたExpand-Archiveというコマンドレットでzipを解凍できる。 Nano ServerのPowerShellのバージョンを確認したら 5.1 だったのでこれでいけるかと思った。 C:\&gt;powershell -command &quot;$PSVersionTable.PSVersion&quot; Major Minor Build Revision ----- ----- ----- -------- 5 1 14284 1000 したらこのエラー。 Add-Type : Cannot find path 'C:\System.IO.Compression.FileSystem.dll' because it does not exist. At C:\windows\system32\windowspowershell\v1.0\Modules\Microsoft.PowerShell.Archive\Microsoft.PowerShell.Archive.psm1:914 char:5 + Add-Type -AssemblyName System.IO.Compression.FileSystem + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ + CategoryInfo : ObjectNotFound: (C:\System.IO.Compression.FileSystem.dll:String) [Add-Type], ItemNotFoun dException + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.AddTypeCommand どうもPowerShellの 5.1 以降には、.NET FrameworkベースのDesktop Editionと、そこから機能を絞った.NET CoreベースのCore Editionがあり、Nano ServerのはCore Editionなんだそうな。 Expand-ArchiveはSystem.IO.Compression.FileSystem.dllの中のZipFileクラスに依存しているんだけど、.NET CoreにはSystem.IO.Compression.FileSystem.dllが含まれていないっぽい。 ShellオブジェクトのCopyHere PowerShellでのunzip方法を調べたらStack Overflowにいくつか載っていた。 Expand-Archiveと、System.IO.Compression.ZipFileを直接使う方法と、Shellオブジェクト(COMオブジェクト)のCopyHereメソッドを使う方法。 最初の2つはCore Editionでは使えないことが分かっているので、3つめにトライ。 こんなの↓ $shell = New-Object -ComObject shell.application $zip = $shell.NameSpace(&quot;C:\a.zip&quot;) MkDir(&quot;C:\a&quot;) foreach ($item in $zip.items()) { $shell.Namespace(&quot;C:\a&quot;).CopyHere($item) } 調べたらこの方法はMicrosoftから非推奨にされていることが分かったんだけど、一応やってみる。 したら以下のエラー。 new-object : Retrieving the COM class factory for component with CLSID {00000000-0000-0000-0000-000000000000} failed due to the following error: 80040154 Class not registered (Exception from HRESULT: 0x80040154 (REGDB_E_CLASSNOTREG)).
-              </div>
+              <h3 class="title">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         
@@ -988,6 +1007,9 @@
       
       
       <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/bow">bow</a>
       
       
       <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>

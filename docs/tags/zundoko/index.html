@@ -130,6 +130,9 @@
       <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
       
       
+      <a href="https://tbd.kaitoy.xyz/tags/bow">bow</a>
+      
+      
       <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
       
       
