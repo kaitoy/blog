@@ -55,6 +55,17 @@ Gitのリポジトリは、プロジェクトをクローンしたときとか�
 例えば`.git/objects/16/cacde1ddabe1698b0e41e091e4697313e2b7e5`というファイルがあったら、これは __16cacde1ddabe1698b0e41e091e4697313e2b7e5__ という名のオブジェクトの実体。
 
 `git cat-file -p <SHA1ハッシュ>`でオブジェクトのコンテンツを見れるので、いくつか見てみると面白い。
+たとえばコミットオブジェクトは以下の様になっている。
+
+```sh
+$ git cat-file -p d444447526f91a97f2edeefc65d4f58e8e006d78
+tree 5d43dfbb8dd89018b9a383d6b9f663166e3cf9f9
+parent adcf8b197c6c156860dc8aa66ccb9a0c0a3bebb6
+author kaitoy <kaitoy@pcap4j.org> 1480004891 -0700
+committer kaitoy <kaitoy@pcap4j.org> 1480004891 -0700
+
+[#76] Rmove unneeded makePacketForInvokingPacketField call from IcmpV4InvokingPacketPacket.
+```
 
 ### インデックス
 インデックスは、`git add`の説明とかに出てくる「インデックス」とか「ステージング」とか呼ばれる機能を実現するためのデータ構造で、ファイルシステム上では`.git/index`というバイナリファイルにあたる。
@@ -63,6 +74,27 @@ Gitのリポジトリは、プロジェクトをクローンしたときとか�
 具体的には、プロジェクトの各ファイルについて、対応するブロブへのポインタと、プロジェクトルートディレクトリからの相対パスが記録されている。
 
 `git ls-files --stage`で`.git/index`の内容を見れる。
+
+例として、`https://github.com/kaitoy/japanese-word-selection`をクローンして上記コマンドを実行すると以下の様に表示される。
+
+```sh
+$ git ls-files --stage
+100644 ade14b9196fcad03cd0177c25ec1c31000ecf86a 0       .gitignore
+100644 bbbbcd3415597bac39b0314f5c708d90684161fc 0       CHANGES.md
+100644 f6b0b485fec1ee0bc53a452bc82cb6b7de2a1d91 0       LICENSE
+100644 10e50f7b628d83f1b66f34f2d9d34029e7fc8670 0       README.md
+100644 4dc8027d17765180fac5c3292a0195bb09b10ceb 0       assets/japanese-word-selection.gif
+100644 dd92c48bae50307b55fb623c1b2beccab963096e 0       lib/japanese-word-selection.coffee
+100644 8152af5ad39515fcd5021e3c8afee32910c0cf79 0       package.json
+100644 9c0d180898d841bb319f51f1b1c7e07320426eeb 0       spec/japanese-word-selection-spec.coffee
+100644 3d32fc0f42cc9babccd5525165e8227dce00a206 0       spec/japanese-word-selection-whitespace-spec.coffee
+```
+
+一行がひとつのファイルの情報で、左からファイルモード(パーミッション)、ブロブのSHA1ハッシュ、ステージ、ファイルパスが表示されている。
+ステージは0～3の値になり得る。
+
+ステージは普段は0だけだけど、マージコンフリクトが起きた場合は、ベースバージョン、一方のブランチのバージョン、他方のブランチのバージョンの3つをそれぞれステージ1、2、3としてインデックスに保持する。
+これは、マージコンフリクトの解消(i.e. 3-wayマージ)を[サポートする機能](https://git-scm.com/docs/git-merge#_how_to_resolve_conflicts)のためだ。
 
 ### オブジェクト格納領域とインデックスの図解
 ワーキングディレクトリに変更を入れ、`git add`、`git commit`をする中で、オブジェクト格納領域とインデックスがどう変化するかを図にした。
