@@ -127,6 +127,12 @@
       <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
       
       
+      <a href="https://tbd.kaitoy.xyz/tags/aws">aws</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      
+      
       <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
       
       
@@ -151,6 +157,9 @@
       <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
       
       
+      <a href="https://tbd.kaitoy.xyz/tags/goslings">goslings</a>
+      
+      
       <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
       
       
@@ -167,6 +176,9 @@
       
       
       <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/jgit">jgit</a>
       
       
       <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
@@ -191,6 +203,12 @@
       
       
       <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/spring">spring</a>
+      
+      
+      <a href="https://tbd.kaitoy.xyz/tags/spring-boot">spring-boot</a>
       
       
       <a href="https://tbd.kaitoy.xyz/tags/subversion">subversion</a>

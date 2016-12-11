@@ -6,8 +6,126 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2016</rights>
-    <updated>2016-11-19 11:41:07 -0700 MST</updated>
+    <updated>2016-12-11 15:26:45 -0700 MST</updated>
 
+    
+      
+        <item>
+          <title>Goslings開発メモ - その0: 紹介と概要と設計編</title>
+          <link>https://tbd.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/</link>
+          <pubDate>Sun, 11 Dec 2016 15:26:45 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/</guid>
+          <description>
+
+&lt;p&gt;つい先日&lt;a href=&#34;https://github.com/kaitoy/goslings&#34;&gt;&lt;strong&gt;Goslings&lt;/strong&gt;&lt;/a&gt;というものを作った。
+&lt;a href=&#34;https://tbd.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;Gitのリポジトリの中身&lt;/a&gt;をビジュアライズするWebアプリケーションだ。
+なんとなく見て楽しいという効用がある他は、Gitの勉強にちょっと使えるかもしれないという程度のものだが、もともと&lt;a href=&#34;http://qiita.com/advent-calendar/2016/git&#34;&gt;Git Advent Calendar 2016&lt;/a&gt;のネタを作るために作ろうと思ったものなので、とりあえずはこんなものでいいのだ。
+将来気が向いたら、リポジトリの変更をリアルタイムに反映したり、リポジトリの操作もできるように拡張してもいいかもしれないけど、実用性が感じられないので多分やらない。&lt;/p&gt;
+
+&lt;p&gt;因みに、goslingsというのはgeese(雁)の子供を指す、ちょっとマイナーな英語。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/goslings-development-memo0-design/geese.JPG&#34; alt=&#34;geese&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Gitオブジェクトを見るアプリだから、GOで始まる名前にしようかと思っていて、そういえば今住んでいるFort Collinsに大量にいるgeeseの子供がgoslingsというし、並んで歩いている姿がちょうどコミットグラフのようだと思い、Goslilngsと名付けた。
+単数形だと&lt;a href=&#34;https://en.wikipedia.org/wiki/Ryan_Gosling&#34;&gt;カナダのイケメン俳優&lt;/a&gt;かと思われてしまうので、複数形にした。goslingが一人でいることってないし。&lt;/p&gt;
+
+&lt;p&gt;Goslingsは&lt;a href=&#34;https://projects.spring.io/spring-boot/&#34;&gt;Spring Boot&lt;/a&gt;や&lt;a href=&#34;https://eclipse.org/jgit/&#34;&gt;JGit&lt;/a&gt;などの習作でもある。
+学んだことはアプリケーションとしてアウトプットするとよく身に付くものだ。
+また文章としてもアウトプットしておくとさらによく身に付き、備忘録にもなるので、Goslingsの開発メモをいくつかのエントリに分けて書いていくことにする。&lt;/p&gt;
+
+&lt;p&gt;まずはSpring Boot編を書こうかと思うが、その前にGoslingsの設計等について書いておく。&lt;/p&gt;
+
+&lt;h1 id=&#34;goslingsのアーキテクチャ&#34;&gt;Goslingsのアーキテクチャ&lt;/h1&gt;
+
+&lt;p&gt;GoslingsはWebサーバとして動き、始めにクライアントにHTML文書を返した後は、REST APIサーバとして働く。&lt;/p&gt;
+
+&lt;p&gt;サーバ側はJavaでできていて、Spring BootとJGitを使っている。
+JGitを使いたかったのでJavaにしたが、そうでなければ&lt;a href=&#34;https://nodejs.org/ja/&#34;&gt;Node&lt;/a&gt;で書きたかった。&lt;/p&gt;
+
+&lt;p&gt;因みに、今回はコーディングの詳細にあまりこだわらないつもりだったので、&lt;a href=&#34;https://projectlombok.org/&#34;&gt;Lombok&lt;/a&gt;で楽をしようかと思ったけど、うっとうしい&lt;a href=&#34;https://github.com/rzwitserloot/lombok/issues/879&#34;&gt;バグ&lt;/a&gt;を踏み、どうやっても回避できなかったので使うのやめた。
+二度と使うまい。&lt;/p&gt;
+
+&lt;p&gt;クライアント側はJavaScript(ES2015 + async/await)の&lt;a href=&#34;https://en.wikipedia.org/wiki/Single-page_application&#34;&gt;SPA&lt;/a&gt;で、禁&lt;a href=&#34;https://jquery.com/&#34;&gt;jQuery&lt;/a&gt;縛り。
+&lt;a href=&#34;https://facebook.github.io/react/&#34;&gt;React&lt;/a&gt; + &lt;a href=&#34;https://github.com/reactjs/redux&#34;&gt;Redux&lt;/a&gt;というのをやってみたかったが、なんか大げさだしそこまで時間がとれなそうだったので、フレームワークなしで作った。ので、
+「&lt;a href=&#34;http://qiita.com/tatesuke/items/b9548dd484b01b139b74&#34;&gt;You Don&amp;rsquo;t Need jQuery&lt;/a&gt;」とにらめっこしながら書いた。&lt;/p&gt;
+
+&lt;p&gt;Gitのコミットグラフの描画には、&lt;a href=&#34;http://visjs.org/&#34;&gt;vis.js&lt;/a&gt;を使った。
+&lt;a href=&#34;http://stackoverflow.com/questions/7034/graph-visualization-library-in-javascript&#34;&gt;Stack Overflowの回答&lt;/a&gt;から雰囲気で選んだけど、やりたかったことが全部できて、見た目もよかったのでよかった。&lt;/p&gt;
+
+&lt;p&gt;サーバは&lt;a href=&#34;https://www.docker.com/&#34;&gt;Docker&lt;/a&gt;で動かすためにステートレスに作ったつもりで、後述の作業ディレクトリをコンテナ間で共有し、サーバの負荷に応じてコンテナを増やしたり減らしたり、簡単にスケールするようになっているはず。&lt;/p&gt;
+
+&lt;h1 id=&#34;goslingsの機能設計&#34;&gt;Goslingsの機能設計&lt;/h1&gt;
+
+&lt;p&gt;Goslingsサーバにブラウザでアクセスすると、まず参照したいGitリポジトリのURIを入力するフォームが表示される。
+ここにはローカルにあるリポジトリへのファイルシステム上のパス(e.g. &lt;code&gt;C:\repos\project-hoge\.git&lt;/code&gt;)か、リモートにあるリポジトリのURL(e.g. &lt;code&gt;https://repos.foo.com/project-hoge.git&lt;/code&gt;)を入力できる。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/goslings-development-memo0-design/goslings-form.png&#34; alt=&#34;goslings-form&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;URIを入力して&lt;code&gt;Browse&lt;/code&gt;ボタンを&lt;a href=&#34;http://qiita.com/yaju/items/0ceb6a0343561b4d208e&#34;&gt;押下する&lt;/a&gt;と、Goslingsの作業ディレクトリ(デフォルトではtmpディレクトリの下の&lt;code&gt;goslings&lt;/code&gt;)に、ローカルリポジトリの場合はそこへのsymlinkを、リモートリポジトリの場合はベアなクローンを作成する。
+いずれの場合にも、正規化したURIから生成したUID(SHA-1ハッシュ)をsymlinkファイル名とクローンディレクトリ名に使う。
+サーバはリポジトリの準備ができたら、そのUIDをトークン(i.e. リポジトリ引換券)としてクライアントに渡す。
+クライアントはそのトークンを使って、リポジトリの情報をサーバに要求する。&lt;/p&gt;
+
+&lt;p&gt;こうすることで、以下の様に後でリポジトリを取り扱いやすくなる。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;クライアントやサーバは、可変長の長ったらしい特殊文字の含まれたURIの代わりに、40文字の数字とアルファベットだけで構成されたトークンでリポジトリを特定でき、処理がしやすい。&lt;/li&gt;
+&lt;li&gt;後でサーバがリポジトリにアクセスする際、ローカルとリモートを区別する必要がないので、処理がしやすい。&lt;/li&gt;
+&lt;li&gt;サーバ内部でリポジトリというエンティティを扱う際、リポジトリに直接触るデータレイヤと、クライアントからのリクエストをさばくインターフェースレイヤとの間で、単なる文字列であるトークンをやりとりすればよく、データレイヤの実装の詳細をインターフェースレイヤに曝さなくてよくなり、レイヤをきれいに分離できる。これはJavaの&lt;a href=&#34;https://docs.oracle.com/javase/tutorial/java/IandI/createinterface.html&#34;&gt;インターフェース&lt;/a&gt;を作ってやってもできるが、インターフェースのAPIを考える手間を考えるとトークンの方が楽。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;クライアントはトークンを受け取ったらコミットグラフビューに遷移する。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/goslings-development-memo0-design/graph.png&#34; alt=&#34;graph&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;このビューでの表示は&lt;a href=&#34;https://tbd.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;以前Gitリポジトリの中身を解説した記事&lt;/a&gt;に合わせた。&lt;/p&gt;
+
+&lt;p&gt;初期状態ではコミットと参照とタグだけが表示されていて、コミットをダブルクリックするとツリーが表示され、さらにツリーをダブルクリックするとドリルダウンしていける。
+ノードをシングルクリックするとそのコンテンツを参照できる。&lt;/p&gt;
+
+&lt;h1 id=&#34;goslingsの使い方&#34;&gt;Goslingsの使い方&lt;/h1&gt;
+
+&lt;p&gt;Spring Bootを使ったおかげで、ビルド成果物は単一のjarで、これを以下の様に実行するだけでサーバが立ち上がる。Webアプリケーションコンテナいらず。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ java -jar goslings-server-0.0.1.jar　--server.port 80
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;com.github.kaitoy.goslings.server.reposDir&lt;/code&gt;というシステムプロパティを使って作業ディレクトリのパスを指定できる。&lt;/p&gt;
+
+&lt;p&gt;また、&lt;code&gt;com.github.kaitoy.goslings.server.uriPrefix&lt;/code&gt;というシステムプロパティに値を設定すると、その値で始まるURI以外をフォームで入力するとエラーになるようになる。
+リモートリポジトリを何でもかんでもクローンされるとディスク容量がいくらあっても足りないので、URLに制限をかけるために作った設定。
+汎用性は考えておらず、複数指定したり正規表現を指定したりといったことはできない。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://hub.docker.com/r/kaitoy/goslings/&#34;&gt;Dockerコンテナイメージ&lt;/a&gt;もあって、以下のようなコマンドでダウンロードして起動できる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ docker pull kaitoy/goslings
+$ docker run -p 80:80 -itd kaitoy/goslings 80 /goslings-repos https://github.com/kaitoy/
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;docker run&lt;/code&gt;の後ろの方の&lt;code&gt;80 /goslings-repos https://github.com/kaitoy/&lt;/code&gt;が、それぞれ&lt;code&gt;--server.port&lt;/code&gt;、&lt;code&gt;com.github.kaitoy.goslings.server.reposDir&lt;/code&gt;、&lt;code&gt;com.github.kaitoy.goslings.server.uriPrefix&lt;/code&gt;に渡される。
+&lt;code&gt;--server.port&lt;/code&gt;のもの以外は省略してもいい。&lt;/p&gt;
+
+&lt;h1 id=&#34;goslings-as-a-service&#34;&gt;Goslings as a Service&lt;/h1&gt;
+
+&lt;p&gt;Goslings as a Service、略してGaaSを &lt;a href=&#34;http://www.goslings.tk&#34;&gt;http://www.goslings.tk&lt;/a&gt; で公開している。
+&lt;code&gt;https://github.com/kaitoy/&lt;/code&gt;で始まるURLしか受け付けないようにしてある。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://aws.amazon.com/&#34;&gt;AWS&lt;/a&gt;の無料枠を活用して&lt;a href=&#34;https://aws.amazon.com/ecs/&#34;&gt;EC2 Container Service (ECS)&lt;/a&gt;でホストしていて、&lt;a href=&#34;http://www.freenom.com/ja/index.html&#34;&gt;Freenom&lt;/a&gt;で無料で取得した&lt;code&gt;goslings.tk&lt;/code&gt;ドメインとこれまた無料のFreenomのネームサーバを利用して上記のアドレスにしている。&lt;/p&gt;
+
+&lt;p&gt;AWSもFreenomも無料なのは12か月だけなので、それが過ぎたらGaaSは終了する予定。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
