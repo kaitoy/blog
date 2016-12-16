@@ -197,7 +197,8 @@ Pcap4JはJavaなので __[Mavenリポジトリ](https://mvnrepository.com/)__。
 プロジェクトのホームページを作るのはいいアイデアだ。
 箔がつくし、少なくとも作っている自分が楽しい。
 
-GitHubのプロジェクトページをホームページと言ってもいいが、せっかく __[GitHub Pages](https://pages.github.com/)__ が使えるのでトライすべし。
+GitHubのプロジェクトページをホームページと言ってもいいが、せっかく __[GitHub Pages](https://pages.github.com/)__ が使えるのでトライすべし。(2016/12/16 追記: GitHub PagesにJekyll Theme Chooserという機能が追加され、[非常に簡単にホームページを作れるようにもなった。](http://qiita.com/kaitoy/items/509ccefb1b31d80ba3f1))
+
 最近はシングルページのシンプルなホームページが流行りなので、内容は薄くても構わない。
 [Gulpのホームページ](http://gulpjs.com/)を見て勇気づけられよう。
 [webpack](https://webpack.github.io/)もなかなかの手抜きだ。
