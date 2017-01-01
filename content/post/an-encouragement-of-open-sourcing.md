@@ -274,16 +274,7 @@ Pcap4Jを5年近く続けたことで、単純に楽しい以上によかった�
 Pcap4Jにスターを付けてくれた人は5大陸31ヶ国にわたり、世界中に向けて公開されている実感がある。
 プログラミングに国境はなく、日本も西洋諸国も同じ天地の間にあって、同じ日輪に照らされ、同じ月を眺め、海をともにし、空気をともにしているんだと、なんとなくグローバルな気分になれた。
 
-<!-- <div style="margin: 0 auto; text-align: center;">
-<iframe width="480px" height="460px" src="http://statpedia.com/embed/HJUP7kHq" frameborder="0" allowfullscreen></iframe>
-<br>
-(所在不明者のスターはグリーンランドに置いた。)
-<br>
-(国にホバーしてスター数表示。)
-</div> -->
-
-<div style="margin: 0 auto; text-align: center;">
-<a href="http://statpedia.com/embed/HJUP7kHq"><img src="/images/an-encouragement-of-open-sourcing/map.png" alt="map.png" style="width: 80%; min-width: 200px;"></a>
+<iframe width="480" height="440" src="https://statpedia.com/embed/HJUP7kHq" frameborder="0" allowfullscreen></iframe>
 <br>
 (所在不明者のスターはグリーンランドに置いた。)
 </div>
