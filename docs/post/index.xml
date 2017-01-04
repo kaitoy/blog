@@ -5,9 +5,335 @@
     <link>https://tbd.kaitoy.xyz/post/</link>
     <language>en-us</language>
     <author>Kaito Yamada</author>
-    <rights>(C) 2016</rights>
-    <updated>2016-12-11 15:26:45 -0700 MST</updated>
+    <rights>(C) 2017</rights>
+    <updated>2017-01-03 23:36:01 -0700 MST</updated>
 
+    
+      
+        <item>
+          <title>Goslings開発メモ - その1: Spring Boot編</title>
+          <link>https://tbd.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/</link>
+          <pubDate>Tue, 03 Jan 2017 23:36:01 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://tbd.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/</guid>
+          <description>
+
+&lt;p&gt;「&lt;a href=&#34;https://tbd.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/&#34;&gt;Goslings開発メモ - その0: 紹介と概要と設計編&lt;/a&gt;」の続き。&lt;/p&gt;
+
+&lt;p&gt;Spring Boot編。&lt;/p&gt;
+
+&lt;h1 id=&#34;spring-bootとは&#34;&gt;Spring Bootとは&lt;/h1&gt;
+
+&lt;p&gt;Spring Bootは&lt;a href=&#34;http://projects.spring.io/spring-framework/&#34;&gt;Spring Framework&lt;/a&gt;というJavaのWebアプリケーションフレームワークを簡単に利用するためのツールやライブラリ群。&lt;/p&gt;
+
+&lt;p&gt;これを使うと、Webアプリケーションコンテナ(e.g. &lt;a href=&#34;http://tomcat.apache.org/&#34;&gt;Tomcat&lt;/a&gt;)なしで起動できるSpringアプリケーションを、自動コード生成も設定ファイル作成もせずに作ることができる。
+必要な設定は自動で構成され、設定のカスタマイズもアノテーションでできる。&lt;/p&gt;
+
+&lt;p&gt;GAになったのが&lt;a href=&#34;https://www.infoq.com/news/2014/04/spring-boot-goes-ga&#34;&gt;2014年4月&lt;/a&gt;なのでかなり新しいものだが、JavaのWebアプリケーションを作るためのものとしては今世界的に最も流行っているもの。&lt;/p&gt;
+
+&lt;p&gt;私が昔とあるWebアプリを作った時は&lt;a href=&#34;http://projects.spring.io/spring-roo/&#34;&gt;Spring Roo&lt;/a&gt;という&lt;a href=&#34;https://ja.wikipedia.org/wiki/RAD_(%E8%A8%88%E7%AE%97%E6%A9%9F%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%9F%E3%83%B3%E3%82%B0%E7%92%B0%E5%A2%83&#34;&gt;RADツール&lt;/a&gt;が熱かったが、これはコード自動生成をして開発を助けてくれるもので、なんだか結局あまり流行らなかったようだ。&lt;/p&gt;
+
+&lt;p&gt;Goslingsには最新バージョンの1.4.3.RELEASEを使った。&lt;/p&gt;
+
+&lt;h1 id=&#34;spring-bootことはじめ&#34;&gt;Spring Bootことはじめ&lt;/h1&gt;
+
+&lt;p&gt;包括的網羅的なドキュメントは「&lt;a href=&#34;http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/htmlsingle/&#34;&gt;Spring Boot Reference Guide&lt;/a&gt;」だが、今回あまり深く学ぶ時間が取れなかったのでこれはちら見した程度。
+それよりも、ユースケースごとのチュートリアルが60個以上も載っている「&lt;a href=&#34;https://spring.io/guides/&#34;&gt;Getting Started Guides&lt;/a&gt;」を参考にした。&lt;/p&gt;
+
+&lt;p&gt;Goslingsサーバは基本REST APIサーバなので、上記チュートリアルの内「&lt;a href=&#34;https://spring.io/guides/gs/rest-service/&#34;&gt;Building a RESTful Web Service&lt;/a&gt;」を見ながら以下を実施した。&lt;/p&gt;
+
+&lt;h4 id=&#34;1-プロジェクト作成&#34;&gt;1. プロジェクト作成&lt;/h4&gt;
+
+&lt;p&gt;チュートリアルにはGradleプロジェクトのディレクトリ構成を手動で作るところから書いてあるけど、そこは&lt;a href=&#34;http://qiita.com/grachro/items/d1ebad3857a794895426&#34;&gt;IDEなどで楽できる&lt;/a&gt;。
+私はEclipseを使っていて、いつのまにかGradleプラグインである&lt;a href=&#34;https://projects.eclipse.org/projects/tools.buildship&#34;&gt;Eclipse Buildship: Eclipse Plug-ins for Gradle&lt;/a&gt;と&lt;a href=&#34;https://marketplace.eclipse.org/content/gradle-ide-pack&#34;&gt;Gradle IDE Pack&lt;/a&gt;がインストールされていたので、これらを使った。&lt;/p&gt;
+
+&lt;p&gt;どちらのプラグインでもプロジェクトは作成できるが、&lt;a href=&#34;qiita.com/grachro/items/16bba860f9d9fe5ee4c5&#34;&gt;Qiitaのこの記事&lt;/a&gt;にあるとおり、Gradle IDE Pack(に含まれる&lt;a href=&#34;https://github.com/spring-projects/eclipse-integration-gradle/&#34;&gt;Gradle (STS) Integration for Eclipse by Pivotal&lt;/a&gt;)で作った場合、Gradle Wrapperが生成されないなどの問題があるので、Buildshipの方で作成。
+ただ、Gradle IDE Packの方がパッケージ・エクスプローラでの見え方がちょっとよかったので、こちらでプロジェクトをインポートしなおした。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/goslings-development-memo1-spring-boot/gradle_import.png&#34; alt=&#34;gradle_import.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;(上がBuildshipのやつで、下がGradle IDE Packのやつ)&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;出来たプロジェクトは以下の感じ。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://tbd.kaitoy.xyz/images/goslings-development-memo1-spring-boot/project_structure.png&#34; alt=&#34;project_structure.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;h4 id=&#34;2-spring-boot-gradle-plugin適用&#34;&gt;2. Spring Boot Gradle plugin適用&lt;/h4&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/build-tool-plugins-gradle-plugin.html&#34;&gt;Spring Boot Gradle plugin&lt;/a&gt;というものがあって、これをプロジェクトに適用すると以下の恩恵を受けられる。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;依存ライブラリ管理機能&lt;/p&gt;
+
+&lt;p&gt;Spring関係のライブラリについて適切なバージョンを設定してくれるので、Gradleビルド設定(i.e. &lt;code&gt;build.gradle&lt;/code&gt;)の&lt;code&gt;dependencies&lt;/code&gt;に自分でバージョンを書かなくていい。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;実行可能jar(war)のパッケージング機能&lt;/p&gt;
+
+&lt;p&gt;ビルドされたjar(やwar)を、単独で実行可能になるようにマニフェストやライブラリを詰めて再パッケージングする&lt;code&gt;bootRepackage&lt;/code&gt;というGradleタスクが追加される。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;プロジェクトから直接アプリを起動する機能&lt;/p&gt;
+
+&lt;p&gt;jarなどのアーティファクトをビルドせずに、プロジェクトから直接アプリを起動できる&lt;code&gt;bootRun&lt;/code&gt;というGradleタスクが追加される。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;build.gradle&lt;/code&gt;に以下の様に書くとSpring Boot Gradle pluginを適用できる。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Gradle 2.1より古いバージョン&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-gradle&#34;&gt;buildscript {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath(&#39;org.springframework.boot:spring-boot-gradle-plugin:1.4.3.RELEASE&#39;)
+  }
+}
+
+
+apply plugin: &#39;org.springframework.boot&#39;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;(&lt;code&gt;apply plugin: &#39;org.springframework.boot&#39;&lt;/code&gt;の部分は、Spring Boot Gradle plugin 1.4.1.RELEASE以前は&lt;code&gt;apply plugin: &#39;spring-boot&#39;&lt;/code&gt;だった。)&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Gradle 2.1以降&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-gradle&#34;&gt;plugins {
+  id &#39;org.springframework.boot&#39; version &#39;1.4.3.RELEASE&#39;
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;3-依存ライブラリ追加&#34;&gt;3. 依存ライブラリ追加&lt;/h4&gt;
+
+&lt;p&gt;Spring Bootは依存ライブラリの管理も簡易化してくれる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;spring-boot-starter-&lt;/code&gt;で始まる&lt;a href=&#34;http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/htmlsingle/#using-boot-starter&#34;&gt;スターター&lt;/a&gt;と呼ばれるライブラリがいくつか提供されていて、作りたいアプリの種類や機能に応じたものをプロジェクトの依存ライブラリとして追加すると、推移的に諸々の必要なライブラリが追加されるようになっている。
+例えば、&lt;a href=&#34;http://www.thymeleaf.org/&#34;&gt;Thymeleaf&lt;/a&gt;をテンプレートエンジンに使ったWebアプリを作るなら&lt;code&gt;spring-boot-starter-thymeleaf&lt;/code&gt;、&lt;a href=&#34;http://projects.spring.io/spring-data-jpa/&#34;&gt;JPA&lt;/a&gt; (&lt;a href=&#34;http://hibernate.org/orm/&#34;&gt;Hibernate&lt;/a&gt;)でデータベースアクセスしたい場合は&lt;code&gt;spring-boot-starter-data-jpa&lt;/code&gt;を使う。&lt;/p&gt;
+
+&lt;p&gt;Webアプリを作るのに最も一般的なのは&lt;code&gt;spring-boot-starter-web&lt;/code&gt;で、Goslingsにもこれを使った。
+また、&lt;a href=&#34;http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/htmlsingle/#production-ready&#34;&gt;Spring Boot Actuator&lt;/a&gt;という、アプリをプロダクション環境で運用するための機能を有効にするため、&lt;code&gt;spring-boot-starter-actuator&lt;/code&gt;も使った。
+これを有効にすると、Web APIでアプリの状態取得などができるようになる。
+例えば、&lt;code&gt;http://&amp;lt;サーバ&amp;gt;/health&lt;/code&gt;にアクセスするとアプリの基本的なヘルス情報がJSONで取得できる。&lt;/p&gt;
+
+&lt;p&gt;これら二つのスターターを追加するには、&lt;code&gt;build.gradle&lt;/code&gt;の&lt;code&gt;dependencies&lt;/code&gt;に以下の様に書くだけでいい。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-gradle&#34;&gt;dependencies {
+  compile &#39;org.springframework.boot:spring-boot-starter-web&#39;
+  compile &#39;org.springframework.boot:spring-boot-starter-actuator&#39;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;前節に書いた通り、Spring Boot Gradle pluginのおかげでバージョンの指定は不要。&lt;/p&gt;
+
+&lt;h4 id=&#34;4-ディベロッパツール追加&#34;&gt;4. ディベロッパツール追加&lt;/h4&gt;
+
+&lt;p&gt;Spring Bootの&lt;a href=&#34;http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/using-boot-devtools.html&#34;&gt;ディベロッパツール&lt;/a&gt;を利用すると、以下の恩恵を受けられる。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;キャッシュの無効化&lt;/p&gt;
+
+&lt;p&gt;Spring Bootがサポートしているライブラリ(e.g. Thymeleafといったテンプレートエンジン)にはキャッシュ機能を持つものがある。
+こうした機能はプロダクション環境では性能改善に有効だが、開発時にはじゃまになる。
+ディベロッパツールを使うとデフォルトで様々なキャッシュを無効にしてくれる。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;自動再起動&lt;/p&gt;
+
+&lt;p&gt;クラスパスに含まれるファイルに変更があるとアプリが自動で再起動される。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;ライブリロード&lt;/p&gt;
+
+&lt;p&gt;ブラウザのアドオンを&lt;a href=&#34;http://livereload.com/extensions/&#34;&gt;インストール&lt;/a&gt;すると、アプリに変更があったらブラウザが自動でリロードしてくれるようになる。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ディベロッパツールを追加するには、&lt;code&gt;build.gradle&lt;/code&gt;の&lt;code&gt;dependencies&lt;/code&gt;に以下の様に書くだけでいい。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-gradle&#34;&gt;dependencies {
+  compile &#39;org.springframework.boot:spring-boot-devtools&#39;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ディベロッパツールは、アプリがプロダクション環境で起動されたと判定すると自動で無効になるので、アーティファクトに含まれても問題ない。
+&lt;code&gt;java -jar&lt;/code&gt;で起動されるか、または通常のものではないクラスローダが起動に使われると、プロダクション環境だと判定される。
+&lt;code&gt;build.gradle&lt;/code&gt;に以下の様に書けば、アーティファクトに含まれないようにもできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-gradle&#34;&gt;bootRepackage {
+  excludeDevtools = true
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ディベロッパツールへの推移的依存を避けるための&lt;a href=&#34;https://github.com/spring-projects/gradle-plugins/tree/master/propdeps-plugin&#34;&gt;propdeps-plugin&lt;/a&gt;というプラグインもあるが、Goslingsは他のアプリが依存するようなものではないので使わなかった。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;自動再起動については、Eclipseの自動ビルドはデフォルトで&lt;code&gt;goslings/bin&lt;/code&gt;にクラスファイルを吐くので、ビルドパスの構成で「デフォルト出力フォルダー」を&lt;code&gt;goslings/build/classes/main&lt;/code&gt;に変えないと動かなかった。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ここまででベースとなる&lt;code&gt;build.gradle&lt;/code&gt;ができて、以下の様になった。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-gradle&#34;&gt;buildscript {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath &amp;quot;org.springframework.boot:spring-boot-gradle-plugin:${springBootVer}&amp;quot;
+  }
+}
+
+repositories {
+  mavenCentral()
+}
+
+apply plugin: &#39;java&#39;
+apply plugin: &#39;org.springframework.boot&#39;
+
+archivesBaseName = &#39;goslings&#39;
+version = &#39;0.0.1&#39;
+
+[compileJava, compileTestJava]*.options*.encoding = &#39;UTF-8&#39;
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+bootRepackage {
+  excludeDevtools = true
+}
+
+dependencies {
+  compile &#39;org.springframework.boot:spring-boot-starter-web&#39;
+  compile &#39;org.springframework.boot:spring-boot-starter-actuator&#39;
+  compile &#39;org.springframework.boot:spring-boot-devtools&#39;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;5-リソースクラス作成&#34;&gt;5. リソースクラス作成&lt;/h3&gt;
+
+&lt;p&gt;ここからやっとコーディング。
+まずはREST APIで取得するリソースを表現するクラスを作る。&lt;/p&gt;
+
+&lt;p&gt;Goslingsの場合、Gitリポジトリのオブジェクトやリファレンスなどがリソースになる。
+例えばコミットオブジェクトを表すクラスは以下の様に書いた。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public final class Commit {
+
+  private final String id;
+  private final String[] parentIds;
+  private final String treeId;
+
+  // 以下、全フィールドをセットするコンストラクタとgetters。
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;(Commit.javaの完全なソースは&lt;a href=&#34;https://github.com/kaitoy/goslings/blob/dba65bf4ca7ad1dd91b927d623b6ea9a39870b62/goslings-server/src/main/java/com/github/kaitoy/goslings/server/resource/Commit.java&#34;&gt;これ&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;POJOとして書けばいいので、&lt;a href=&#34;https://projectlombok.org/&#34;&gt;Lombok&lt;/a&gt;の&lt;code&gt;@Data&lt;/code&gt;か&lt;code&gt;@Value&lt;/code&gt;を使うと楽だろうが、Goslingsには使わなかった。&lt;/p&gt;
+
+&lt;h4 id=&#34;6-リソースコントローラ-rest-apiコントローラ-作成&#34;&gt;6. リソースコントローラ(REST APIコントローラ)作成&lt;/h4&gt;
+
+&lt;p&gt;クライアントからのHTTPリクエストを処理するクラスはコントローラクラスと呼ばれる。
+クライアントからのREST API呼び出しもHTTPリクエストなのでコントローラクラスで処理する。&lt;/p&gt;
+
+&lt;p&gt;REST API呼び出しを処理するコントローラクラスは、&lt;a href=&#34;https://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/RestController.html&#34;&gt;&lt;code&gt;@RestController&lt;/code&gt;&lt;/a&gt;を付けて宣言して、メソッドにURL毎の処理を&lt;a href=&#34;https://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/RequestMapping.html&#34;&gt;&lt;code&gt;@RequestMapping&lt;/code&gt;&lt;/a&gt;を使って以下の様に記述する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@RestController
+@RequestMapping(
+  path=&amp;quot;/v1&amp;quot;,
+  method=RequestMethod.GET
+)
+public final class RestApiV1Controller {
+
+  // この辺でフィールド定義など
+
+  @RequestMapping(path=&amp;quot;{token}/objects/commits&amp;quot;)
+  public Commit[] getCommits(@PathVariable String token) {
+    return objectDao.getCommits(token);
+  }
+
+  // 以下他のメソッド
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;(RestApiV1Controller.javaの完全なソースは&lt;a href=&#34;https://github.com/kaitoy/goslings/blob/dba65bf4ca7ad1dd91b927d623b6ea9a39870b62/goslings-server/src/main/java/com/github/kaitoy/goslings/server/controller/RestApiV1Controller.java&#34;&gt;こちら&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;上のコードでは、&lt;code&gt;http://&amp;lt;Goslingsサーバ&amp;gt;/v1/&amp;lt;トークン&amp;gt;/objects/commits&lt;/code&gt;というURLを&lt;code&gt;getCommits&lt;/code&gt;メソッドで処理するようにしている。
+このAPIを呼び出すと、前節で作った&lt;code&gt;Commit&lt;/code&gt;クラスのインスタンスの配列がJSON形式で返ってくる。
+(getCommitsの実装については次回書く。)&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;@RestController&lt;/code&gt;を付けると以下の二つのアノテーションを付けたのと同じことになる。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Controller.html&#34;&gt;&lt;code&gt;@Controller&lt;/code&gt;&lt;/a&gt;: 一般的なコントローラクラスに付けるアノテーション。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/ResponseBody.html&#34;&gt;&lt;code&gt;@ResponseBody&lt;/code&gt;&lt;/a&gt;: メソッドの戻り値をHTTPレスポンスボディにバインドすることを指示する。これを付けると、戻り値は&lt;a href=&#34;http://wiki.fasterxml.com/JacksonHome&#34;&gt;Jackson JSON&lt;/a&gt;でJSONに変換されてクライアントに返される。これを付けないと、戻り値はスタティックリソースへのパスなどとして扱われ、View(e.g. Thymeleaf)が処理した結果がクライアントに返される。(&lt;a href=&#34;http://qiita.com/tag1216/items/3680b92cf96eb5a170f0&#34;&gt;参考記事&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;見ての通り、URLのパス中の値は&lt;a href=&#34;https://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/PathVariable.html&#34;&gt;&lt;code&gt;@PathVariable&lt;/code&gt;&lt;/a&gt;を使って取得できる。&lt;/p&gt;
+
+&lt;p&gt;ここには書いてないけど、URLクエリパラメータは&lt;a href=&#34;https://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/RequestParam.html&#34;&gt;&lt;code&gt;@RequestParam&lt;/code&gt;&lt;/a&gt;を使って取得できるし、&lt;a href=&#34;http://mergedoc.osdn.jp/tomcat-servletapi-5-ja/javax/servlet/http/HttpServletRequest.html&#34;&gt;&lt;code&gt;HttpServletRequest&lt;/code&gt;&lt;/a&gt;もメソッドの引数として宣言しておけばSpringが渡してくれる。&lt;/p&gt;
+
+&lt;h4 id=&#34;7-メインクラス作成&#34;&gt;7. メインクラス作成&lt;/h4&gt;
+
+&lt;p&gt;最後に、アプリを起動するメインクラスを作る。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/api/org/springframework/boot/autoconfigure/SpringBootApplication.html&#34;&gt;&lt;code&gt;@SpringBootApplication&lt;/code&gt;&lt;/a&gt;を付けたクラスに&lt;code&gt;main&lt;/code&gt;メソッドを以下の様に定義すればいいだけ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@SpringBootApplication
+public class Application {
+
+  public static void main(String[] args) {
+    SpringApplication.run(Application.class, args);
+  }
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;(Application.javaの完全なソースは&lt;a href=&#34;https://github.com/kaitoy/goslings/blob/dba65bf4ca7ad1dd91b927d623b6ea9a39870b62/goslings-server/src/main/java/com/github/kaitoy/goslings/server/Application.java&#34;&gt;こちら&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;@SpringBootApplication&lt;/code&gt;を付けると、以下の三つのアノテーションを付けたのと同じことになる。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/context/annotation/Configuration.html&#34;&gt;&lt;code&gt;@Configuration&lt;/code&gt;&lt;/a&gt; (&lt;a href=&#34;http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/api/org/springframework/boot/SpringBootConfiguration.html&#34;&gt;&lt;code&gt;@SpringBootConfiguration&lt;/code&gt;&lt;/a&gt;): Bean定義を提供するクラスであることを示す。(意味不明。)&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/api/org/springframework/boot/autoconfigure/EnableAutoConfiguration.html&#34;&gt;&lt;code&gt;@EnableAutoConfiguration&lt;/code&gt;&lt;/a&gt;: Springの&lt;a href=&#34;http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/using-boot-auto-configuration.html&#34;&gt;自動設定機能&lt;/a&gt;を有効にする。この機能は、ライブラリの依存関係から推定して必要な設定をしてくれるもの。例えば&lt;code&gt;tomcat-embedded.jar&lt;/code&gt;に依存していたら、&lt;a href=&#34;http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/api/org/springframework/boot/context/embedded/tomcat/TomcatEmbeddedServletContainerFactory.html&#34;&gt;&lt;code&gt;TomcatEmbeddedServletContainerFactory&lt;/code&gt;&lt;/a&gt;をセットアップしてくれるなど。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/context/annotation/ComponentScan.html&#34;&gt;&lt;code&gt;@ComponentScan&lt;/code&gt;&lt;/a&gt;: このアノテーションを付けたクラスのパッケージ以下から、&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Component.html&#34;&gt;&lt;code&gt;@Component&lt;/code&gt;&lt;/a&gt;、&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Service.html&#34;&gt;&lt;code&gt;@Service&lt;/code&gt;&lt;/a&gt;、&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Repository.html&#34;&gt;&lt;code&gt;@Repository&lt;/code&gt;&lt;/a&gt;、&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Controller.html&#34;&gt;&lt;code&gt;@Controller&lt;/code&gt;&lt;/a&gt;(など?)が付いたクラスが検索され、&lt;a href=&#34;http://qiita.com/KevinFQ/items/abc7369cb07eb4b9ae29&#34;&gt;Beanとして登録される&lt;/a&gt;。XMLのBean設定ファイルを書かなくてよい。前節で作ったリソースコントローラがこのアノテーションによって利用できるようになる。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;@SpringBootApplication&lt;/code&gt;、というか&lt;code&gt;@Configuration&lt;/code&gt;をつけたクラスは&lt;code&gt;final&lt;/code&gt;にしてはいけない。
+すると実行時にエラーになる。&lt;/p&gt;
+
+&lt;h4 id=&#34;8-ビルド-実行&#34;&gt;8. ビルド、実行&lt;/h4&gt;
+
+&lt;p&gt;以上でとりあえず動くものができた。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;gradlew bootRun&lt;/code&gt;を実行するとディベロッパツール付きでアプリが動くし、&lt;code&gt;gradlew build&lt;/code&gt;を実行すれば&lt;code&gt;build/libs/goslings-0.0.1.jar&lt;/code&gt;というアーティファクトが生成され、&lt;code&gt;java -jar build/libs/goslings-0.0.1.jar&lt;/code&gt;でアプリを起動できる。
+(いずれもポートは8080)&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;次回は多分またSpring Bootで、エラー処理やDIについて書く。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>

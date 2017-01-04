@@ -13,7 +13,7 @@
     <meta property="og:url" content="https://tbd.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="つい先日Goslingsというものを作った。 Gitのリポジトリの中身をビジュアライズするWebアプリケーションだ。 なんとなく見て楽しいという効用がある他は、Gitの勉強にちょっと使えるかもしれないという程度のものだが、もともとGit Advent Calendar 2016のネタを作るために作ろうと思ったものなので、とりあえずはこんなものでいいのだ。 将来気が向いたら、リポジトリの変更をリアルタイムに反映したり、リポジトリの操作もできるように拡張してもいいかもしれないけど、実用性が感じられないので多分やらない。 因みに、goslingsというのはgeese(雁)の子供を指す、ちょっとマイナーな英語。 Gitオブジェクトを見るアプリだから、GOで始まる名前にしようかと思っていて、そういえば今住んでいるFort Collinsに大量にいるgeeseの子供がgoslingsというし、並んで歩いている姿がちょうどコミットグラフのようだと思い、Goslilngsと名付けた。 単数形だとカナダのイケメン俳優かと思われてしまうので、複数形にした。goslingが一人でいることってないし。 GoslingsはSpring BootやJGitなどの習作でもある。 学んだことはアプリケーションとしてアウトプットするとよく身に付くものだ。 また文章としてもアウトプットしておくとさらによく身に付き、備忘録にもなるので、Goslingsの開発メモをいくつかのエントリに分けて書いていくことにする。 まずはSpring Boot編を書こうかと思うが、その前にGoslingsの設計等について書いておく。 Goslingsのアーキテクチャ GoslingsはWebサーバとして動き、始めにクライアントにHTML文書を返した後は、REST APIサーバとして働く。 サーバ側はJavaでできていて、Spring BootとJGitを使っている。 JGitを使いたかったのでJavaにしたが、そうでなければNodeで書きたかった。 因みに、今回はコーディングの詳細にあまりこだわらないつもりだったので、Lombokで楽をしようかと思ったけど、うっとうしいバグを踏み、どうやっても回避できなかったので使うのやめた。 二度と使うまい。 クライアント側はJavaScript(ES2015 &#43; async/await)のSPAで、禁jQuery縛り。 React &#43; Reduxというのをやってみたかったが、なんか大げさだしそこまで時間がとれなそうだったので、フレームワークなしで作った。ので、 「You Don&rsquo;t Need jQuery」とにらめっこしながら書いた。 Gitのコミットグラフの描画には、vis.jsを使った。 Stack Overflowの回答から雰囲気で選んだけど、やりたかったことが全部できて、見た目もよかったのでよかった。 サーバはDockerで動かすためにステートレスに作ったつもりで、後述の作業ディレクトリをコンテナ間で共有し、サーバの負荷に応じてコンテナを増やしたり減らしたり、簡単にスケールするようになっているはず。 Goslingsの機能設計 Goslingsサーバにブラウザでアクセスすると、まず参照したいGitリポジトリのURIを入力するフォームが表示される。 ここにはローカルにあるリポジトリへのファイルシステム上のパス(e.g. C:\repos\project-hoge\.git)か、リモートにあるリポジトリのURL(e.g. https://repos.foo.com/project-hoge.git)を入力できる。 URIを入力してBrowseボタンを押下すると、Goslingsの作業ディレクトリ(デフォルトではtmpディレクトリの下のgoslings)に、ローカルリポジトリの場合はそこへのsymlinkを、リモートリポジトリの場合はベアなクローンを作成する。 いずれの場合にも、正規化したURIから生成したUID(SHA-1ハッシュ)をsymlinkファイル名とクローンディレクトリ名に使う。 サーバはリポジトリの準備ができたら、そのUIDをトークン(i.e. リポジトリ引換券)としてクライアントに渡す。 クライアントはそのトークンを使って、リポジトリの情報をサーバに要求する。 こうすることで、以下の様に後でリポジトリを取り扱いやすくなる。 クライアントやサーバは、可変長の長ったらしい特殊文字の含まれたURIの代わりに、40文字の数字とアルファベットだけで構成されたトークンでリポジトリを特定でき、処理がしやすい。 後でサーバがリポジトリにアクセスする際、ローカルとリモートを区別する必要がないので、処理がしやすい。 サーバ内部でリポジトリというエンティティを扱う際、リポジトリに直接触るデータレイヤと、クライアントからのリクエストをさばくインターフェースレイヤとの間で、単なる文字列であるトークンをやりとりすればよく、データレイヤの実装の詳細をインターフェースレイヤに曝さなくてよくなり、レイヤをきれいに分離できる。これはJavaのインターフェースを作ってやってもできるが、インターフェースのAPIを考える手間を考えるとトークンの方が楽。 クライアントはトークンを受け取ったらコミットグラフビューに遷移する。 このビューでの表示は以前Gitリポジトリの中身を解説した記事に合わせた。 初期状態ではコミットと参照とタグだけが表示されていて、コミットをダブルクリックするとツリーが表示され、さらにツリーをダブルクリックするとドリルダウンしていける。 ノードをシングルクリックするとそのコンテンツを参照できる。 Goslingsの使い方 Spring Bootを使ったおかげで、ビルド成果物は単一のjarで、これを以下の様に実行するだけでサーバが立ち上がる。Webアプリケーションコンテナいらず。 $ java -jar goslings-server-0.0.1.jar --server.port 80 com.github.kaitoy.goslings.server.reposDirというシステムプロパティを使って作業ディレクトリのパスを指定できる。 また、com.github.kaitoy.goslings.server.uriPrefixというシステムプロパティに値を設定すると、その値で始まるURI以外をフォームで入力するとエラーになるようになる。 リモートリポジトリを何でもかんでもクローンされるとディスク容量がいくらあっても足りないので、URLに制限をかけるために作った設定。 汎用性は考えておらず、複数指定したり正規表現を指定したりといったことはできない。">
+    <meta property="og:description" content="「Goslings開発メモ - その0: 紹介と概要と設計編」の続き。 Spring Boot編。 Spring Bootとは Spring BootはSpring FrameworkというJavaのWebアプリケーションフレームワークを簡単に利用するためのツールやライブラリ群。 これを使うと、Webアプリケーションコンテナ(e.g. Tomcat)なしで起動できるSpringアプリケーションを、自動コード生成も設定ファイル作成もせずに作ることができる。 必要な設定は自動で構成され、設定のカスタマイズもアノテーションでできる。 GAになったのが2014年4月なのでかなり新しいものだが、JavaのWebアプリケーションを作るためのものとしては今世界的に最も流行っているもの。 私が昔とあるWebアプリを作った時はSpring RooというRADツールが熱かったが、これはコード自動生成をして開発を助けてくれるもので、なんだか結局あまり流行らなかったようだ。 Goslingsには最新バージョンの1.4.3.RELEASEを使った。 Spring Bootことはじめ 包括的網羅的なドキュメントは「Spring Boot Reference Guide」だが、今回あまり深く学ぶ時間が取れなかったのでこれはちら見した程度。 それよりも、ユースケースごとのチュートリアルが60個以上も載っている「Getting Started Guides」を参考にした。 Goslingsサーバは基本REST APIサーバなので、上記チュートリアルの内「Building a RESTful Web Service」を見ながら以下を実施した。 1. プロジェクト作成 チュートリアルにはGradleプロジェクトのディレクトリ構成を手動で作るところから書いてあるけど、そこはIDEなどで楽できる。 私はEclipseを使っていて、いつのまにかGradleプラグインであるEclipse Buildship: Eclipse Plug-ins for GradleとGradle IDE Packがインストールされていたので、これらを使った。 どちらのプラグインでもプロジェクトは作成できるが、Qiitaのこの記事にあるとおり、Gradle IDE Pack(に含まれるGradle (STS) Integration for Eclipse by Pivotal)で作った場合、Gradle Wrapperが生成されないなどの問題があるので、Buildshipの方で作成。 ただ、Gradle IDE Packの方がパッケージ・エクスプローラでの見え方がちょっとよかったので、こちらでプロジェクトをインポートしなおした。 (上がBuildshipのやつで、下がGradle IDE Packのやつ) 出来たプロジェクトは以下の感じ。 2. Spring Boot Gradle plugin適用 Spring Boot Gradle pluginというものがあって、これをプロジェクトに適用すると以下の恩恵を受けられる。 依存ライブラリ管理機能 Spring関係のライブラリについて適切なバージョンを設定してくれるので、Gradleビルド設定(i.e.">
     
     <meta property="og:image" content="https://tbd.kaitoy.xyz/images/goslings-logo.png">
     
@@ -64,6 +64,28 @@
     <div id="posts">
       
       <div class="row">
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://tbd.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://tbd.kaitoy.xyz/images/goslings-logo.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Tue, Jan 3, 2017</span>
+              </div>
+              <h2 class="title">Goslings開発メモ - その1: Spring Boot編</h2>
+              <div class="summary">
+                「Goslings開発メモ - その0: 紹介と概要と設計編」の続き。 Spring Boot編。 Spring Bootとは Spring BootはSpring FrameworkというJavaのWebアプリケーションフレームワークを簡単に利用するためのツールやライブラリ群。 これを使うと、Webアプリケーションコンテナ(e.g. Tomcat)なしで起動できるSpringアプリケーションを、自動コード生成も設定ファイル作成もせずに作ることができる。 必要な設定は自動で構成され、設定のカスタマイズもアノテーションでできる。 GAになったのが2014年4月なのでかなり新しいものだが、JavaのWebアプリケーションを作るためのものとしては今世界的に最も流行っているもの。 私が昔とあるWebアプリを作った時はSpring RooというRADツールが熱かったが、これはコード自動生成をして開発を助けてくれるもので、なんだか結局あまり流行らなかったようだ。 Goslingsには最新バージョンの1.4.3.RELEASEを使った。 Spring Bootことはじめ 包括的網羅的なドキュメントは「Spring Boot Reference Guide」だが、今回あまり深く学ぶ時間が取れなかったのでこれはちら見した程度。 それよりも、ユースケースごとのチュートリアルが60個以上も載っている「Getting Started Guides」を参考にした。 Goslingsサーバは基本REST APIサーバなので、上記チュートリアルの内「Building a RESTful Web Service」を見ながら以下を実施した。 1. プロジェクト作成 チュートリアルにはGradleプロジェクトのディレクトリ構成を手動で作るところから書いてあるけど、そこはIDEなどで楽できる。 私はEclipseを使っていて、いつのまにかGradleプラグインであるEclipse Buildship: Eclipse Plug-ins for GradleとGradle IDE Packがインストールされていたので、これらを使った。 どちらのプラグインでもプロジェクトは作成できるが、Qiitaのこの記事にあるとおり、Gradle IDE Pack(に含まれるGradle (STS) Integration for Eclipse by Pivotal)で作った場合、Gradle Wrapperが生成されないなどの問題があるので、Buildshipの方で作成。 ただ、Gradle IDE Packの方がパッケージ・エクスプローラでの見え方がちょっとよかったので、こちらでプロジェクトをインポートしなおした。 (上がBuildshipのやつで、下がGradle IDE Packのやつ) 出来たプロジェクトは以下の感じ。 2. Spring Boot Gradle plugin適用 Spring Boot Gradle pluginというものがあって、これをプロジェクトに適用すると以下の恩恵を受けられる。 依存ライブラリ管理機能 Spring関係のライブラリについて適切なバージョンを設定してくれるので、Gradleビルド設定(i.e.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
         
         
         
@@ -129,33 +151,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://tbd.kaitoy.xyz/2016/10/08/git-checkout/" class="post post-topix">
+            <a href="https://tbd.kaitoy.xyz/2016/10/08/git-checkout/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://tbd.kaitoy.xyz/images/git.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Sat, Oct 8, 2016</span>
               </div>
-              <h2 class="title">git checkoutを図解する</h2>
-              <div class="summary">
-                この記事を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、Gitの git checkout というコマンドについて説明する。 このコマンドは普通ブランチを切り替えるものと説明されるが、主たる機能は オブジェクト格納領域から指定されたファイルを取り出し、ワーキングディレクトリに配置する ものである。 つまりこれがGitにおけるチェックアウトで、チェックアウト=ブランチの切り替えではない。 コマンドに与える引数によっては HEAD の付け替え、つまりはブランチの切り替えもする、というだけ。 git checkout の動作を HEAD の付け替えの有無によって分けて考えると分かりやすく覚えやすいので、以下そのように説明する。 HEADを付け替えないgit checkout HEAD を付け替えない git checkout は、引数にワーキングディレクトリ内の ファイルまたはディレクトリへのパスを与えた場合 のもの。 ディレクトリを指定した場合はそれ以下の全ファイルが操作対象となる。 パスは絶対パスかカレントディレクトリからの相対パスで、複数指定できる。 つまりは以下の様なコマンド形式になる。 git checkout &lt;パス(複数可)&gt; これを実行すると、指定したファイルについて、インデックスが指しているブロブ をオブジェクト格納領域から取り出し、ワーキングディレクトリのファイルを置き変える。 上のスライドではインデックスが指しているブロブを取り出したが、任意のブロブを取り出すこともできる。 この場合、以下の様なコマンド形式を使う。 git checkout &lt;コミット&gt; &lt;パス(複数可)&gt; このコマンド形式だと、指定したコミットが指すツリー以下のブロブ が取り出される。 &lt;コミット&gt;の部分には、コミットオブジェクトのSHA1ハッシュ値、参照(i.e. ブランチかタグ)、シンボリック参照(e.g. HEAD)を指定できる。(実際にはこれらが全てではないが、実用的にはこの3種。) この形式だと、ワーキングディレクトリだけでなく、取り出すブロブを指すよう インデックスも更新される ことに注意。 HEADを付け替えるgit checkout HEAD を付け替える git checkout は、引数に パスを与えない場合 のもの。 代わりにコミットを与える。 つまりは以下の様なコマンド形式になる。 git checkout &lt;コミット&gt; &lt;コミット&gt;の部分には、コミットオブジェクトのSHA1ハッシュ値、参照(i.e. ブランチかタグ)、シンボリック参照(e.g. HEAD)を指定できる。(実際にはこれらが全てではないが、実用的にはこの3種。) これを実行すると、指定したコミットが指すツリー以下の全てのブロブ を指すようインデックスを更新し、それらのブロブをオブジェクト格納領域から取り出してワーキングディレクトリに配置する。 この上更にHEADを付け替えるわけだが、付け替え先は&lt;コミット&gt;の種類によって以下の三通りある。 &lt;コミット&gt;がブランチ: HEADはそのブランチを指すよう更新される。 &lt;コミット&gt;がSHA1ハッシュ値:
-              </div>
+              <h3 class="title">git checkoutを図解する</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         
@@ -1165,7 +1184,7 @@
     </main>
 
     <footer id="site-footer" class="text-center font-logo">
-      <p>&copy;  2015 -  2016  Kaito Yamada </p>
+      <p>&copy;  2015 -  2017  Kaito Yamada </p>
       <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
       <p>
         Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
