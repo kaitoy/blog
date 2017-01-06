@@ -88,7 +88,7 @@ title = "ソフトウェアアーキテクトは何をするのか?"
 
 以上がYegorの記事。
 
-[スタンドアップミーティングに関する記事](https://tbd.kaitoy.xyz/2015/08/11/daily-stand-up-meetings-are-a-good-tool-for-a-bad-manager/)でも言っていた責任の委譲がこの記事でも触れられている。
+[スタンドアップミーティングに関する記事](https://www.kaitoy.xyz/2015/08/11/daily-stand-up-meetings-are-a-good-tool-for-a-bad-manager/)でも言っていた責任の委譲がこの記事でも触れられている。
 プロジェクトマネージャは技術的な責任を誰かに委譲して、そいつをアーキテクトと呼べということだ。
 責任には権限が伴うので、アーキテクトは技術面での最終決定権を持つ。
 

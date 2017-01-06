@@ -8,7 +8,7 @@ tags = [ "git", "vcs" ]
 title = "Gitの分散バージョン管理の仕組み"
 +++
 
-このエントリでは、[この記事](https://tbd.kaitoy.xyz/2015/12/27/git-repository/)を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、[__Git__](https://git-scm.com/)の分散バージョン管理の仕組みについて説明する。
+このエントリでは、[この記事](https://www.kaitoy.xyz/2015/12/27/git-repository/)を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、[__Git__](https://git-scm.com/)の分散バージョン管理の仕組みについて説明する。
 
 ## Gitの分散バージョン管理
 分散バージョン管理とは、分散したリポジトリでのバージョン管理ということ。
@@ -154,7 +154,7 @@ Gitは分散バージョン管理のために、リポジトリのクローン(�
 Gitで分散バージョン管理する際の注意点を二つ挙げる。
 
 #### 他のリポジトリにもあるコミットを変更してはいけない
-Gitには、`git commit --amend`、[`git rebase`](https://tbd.kaitoy.xyz/2015/12/28/git-merge/#%E3%83%AA%E3%83%99%E3%83%BC%E3%82%B9)といったコミットを変更するコマンドや、[`git reset`](https://tbd.kaitoy.xyz/2016/01/01/git-revert-reset/#git-reset)というコミットの削除につながるコマンドがある。
+Gitには、`git commit --amend`、[`git rebase`](https://www.kaitoy.xyz/2015/12/28/git-merge/#%E3%83%AA%E3%83%99%E3%83%BC%E3%82%B9)といったコミットを変更するコマンドや、[`git reset`](https://www.kaitoy.xyz/2016/01/01/git-revert-reset/#git-reset)というコミットの削除につながるコマンドがある。
 こういうコマンドで他のリポジトリにもあるコミットを変更してはいけない。
 
 他のリポジトリにもあるコミットとは、クローン時にコピーしてきたコミット、プルしたコミット、プッシュしたコミットなどのこと。

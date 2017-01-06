@@ -11,8 +11,8 @@ title = "CloudFlareでブログをHTTPS化"
 最近[GitHub Pages](https://pages.github.com/)がHTTPSに正式対応したというニュースを見たことをきっかけに、このブログを[CloudFlare](https://www.cloudflare.com/)で常時HTTPS化した話。
 
 ## このブログ
-このブログは[GitHub Pagesでホストされている](https://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/)。
-GitHub Pages上のWebサイトはデフォルトでは`<GitHubユーザ名>.github.io`というドメインで公開されるが、ちょっとかっこつけたかったのでカスタムドメイン(`tbd.kaitoy.xyz`)にした。
+このブログは[GitHub Pagesでホストされている](https://www.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/)。
+GitHub Pages上のWebサイトはデフォルトでは`<GitHubユーザ名>.github.io`というドメインで公開されるが、ちょっとかっこつけたかったのでカスタムドメイン(`www.kaitoy.xyz`)にした。
 
 GitHub Pagesは2014年3月から非公式にHTTPSをサポートしていて、2016年6月8日に[正式サポートを表明](https://github.com/blog/2186-https-for-github-pages)したが、これは`<GitHubユーザ名>.github.io`ドメインだけが対象であり、カスタムドメインはHTTPSサポートされていない。
 
@@ -123,7 +123,7 @@ CloudFlareの始め方は[Qiitaの記事](http://qiita.com/superbrothers/items/9
 <br>
 
 ダッシュボードの`Overview`の`Statusは`最初は`Pending`になっていて、これはネームサーバの変更を反映中ということらしかった。
-ネームサーバの変更は数時間くらいかかったが、変更中も`http://tbd.kaitoy.xyz/`にはアクセスできた。
+ネームサーバの変更は数時間くらいかかったが、変更中も`http://www.kaitoy.xyz/`にはアクセスできた。
 
 ダッシュボードからやった設定は以下。
 これも[Qiitaの記事](http://qiita.com/superbrothers/items/95e5723e9bd320094537)を参考にした。
@@ -135,7 +135,7 @@ CloudFlareの始め方は[Qiitaの記事](http://qiita.com/superbrothers/items/9
     上で書いたようにGitHub Pagesの方はSSL対応できずこの設定は使えないので、`Flexible`に変更。
     こちらはブラウザ-CloudFlare間だけをSSL化する。
 
-    この設定変更をして、SSL証明書が発行されるまで数時間待ったら`https://tbd.kaitoy.xyz/`にアクセスできるようになった。
+    この設定変更をして、SSL証明書が発行されるまで数時間待ったら`https://www.kaitoy.xyz/`にアクセスできるようになった。
 
 2. HSTS
 
@@ -145,7 +145,7 @@ CloudFlareの始め方は[Qiitaの記事](http://qiita.com/superbrothers/items/9
 
     ![hsts.png](/images/https-support-by-cloudflare/hsts.png "hsts.png")
 
-    `kaitoy.xyz`だけじゃなくて`tbd.kaitoy.xyz`で有効にするため、`Include subdomains`を`On`にしておくのが肝要のはず。
+    `kaitoy.xyz`だけじゃなくて`www.kaitoy.xyz`で有効にするため、`Include subdomains`を`On`にしておくのが肝要のはず。
 
 3. HTTPSへのリダイレクト
 
@@ -155,5 +155,5 @@ CloudFlareの始め方は[Qiitaの記事](http://qiita.com/superbrothers/items/9
     ![page_rules.png](/images/https-support-by-cloudflare/page_rules.png "page_rules.png")
 
 ## ブログサイトの修正
-`link`タグや`script`タグの`tbd.kaitoy.xyz`を指しているURLをHTTPSに修正。
+`link`タグや`script`タグの`www.kaitoy.xyz`を指しているURLをHTTPSに修正。
 内部リンクも全部HTTPSにした。これで完了。

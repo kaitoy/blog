@@ -11,10 +11,10 @@
     
     <meta property="og:type" content="article">
     <meta property="og:title" content="Pcap4J Meets Windows Containers | To Be Decided">
-    <meta property="og:url" content="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">
     <meta property="og:description" content="Windows Containers で Pcap4J のコンテナをビルドしてみた話。 Windows Containersとは Windows Containersは、MicrosoftがDocker, Incと提携して開発しているコンテナ技術で、Windows版Dockerとも言われる機能。 今年リリースされる Windows Server 2016 に実装される予定で、その3つめのテクニカルプレビューである Windows Server 2016 Technical Preview 3 (2015/8/19公開)から評価できるようになった。 Windows Containersには次の二種類がある。 Windows Server Containers プロセスと名前空間の分離を実現する機能で、これによるコンテナはカーネルをホストと共有する。 つまり本家Dockerに近い形の機能。 Hyper-V Containers それぞれのコンテナを軽量化されたHyper-Vの仮想マシンっぽいものの上で動かす機能。 このコンテナの実行にはHyper-Vが必要。 Windows Server Containersよりコンテナ間の分離性が高く、カーネルの共有もしないが、そもそもそれってコンテナなの? どちらも同じようなインターフェースで操作でき、このインターフェースにはPowershellのコマンドレットとDockerコマンドの二種類がある。 より詳しくは、Microsoftによる解説や@ITのこの記事がわかりやすい。 また、Qiitaのこの記事がDockerとWindows Server Containersのアーキテクチャを詳細に説明していて面白い。 Windows Containersセットアップ まず、Windows 7 x64のノートPCにVMware Player 7.1.0を入れてWindows 10 x64用のVM(CPU2つとメモリ2.5GB)を作り、そこに2015/11/19に公開された Windows Server 2016 Technical Preview 4 をインストール。 コマンドでいろいろ設定するの慣れていないのでGUI(Desktop Experience)付きで。 (リモートデスクトップ使えばよかったのかもしれないけど。) ロケールは英語以外は問題が起きそうなので英語で。 このVMに、Microsoftのセットアップガイドと@ITの記事を参照しながらWindows Containersをセットアップ。 後者の記事によると、Hyper-V ContainersをVM上にセットアップするには、Nested VirtualizationというHyper-VのVMの上でHyper-Vを動かす機能を有効にしたホスト上のHyper-V VMを使わないといけないようなので、Windows Server Containersの方を試すことに。 Windows Server Containersをセットアップする手順は以下。 VM上でコマンドプロンプトを開いて powershell start-process powershell -Verb runas を実行。 青いパワーシェルウィンドウが開くのでそこで wget -uri https://aka.ms/tp4/Install-ContainerHost -OutFile C:\Install-ContainerHost.ps1 を実行。Install-ContainerHost.ps1 というスクリプトがダウンロードされる。 青いパワーシェルウィンドウで C:\Install-ContainerHost.ps1 を実行するとWindows Server Containersのインストールが始まる。 途中再起動が一回あって、ログインしたらインストール処理が再開した。 全部で2時間以上かかった。 仮想Ethernetスイッチ接続の追加に失敗したというエラーが出たけどなんなんだろう。 ipconfig の出力によると vEthernet というDockerのvirtual Ethernet bridgeにあたるものはちゃんと作られているみたいなんだけど。 Windows Server Containers味見 コマンドプロンプトで docker images を実行すると、既に windowsservercore というコンテナイメージが入っていることがわかる。 C:\Users\Administrator&gt;docker images REPOSITORY TAG IMAGE ID CREATED VIRTUAL SIZE windowsservercore 10.0.10586.0 6801d964fda5 11 weeks ago 0 B windowsservercore latest 6801d964fda5 11 weeks ago 0 B docker run -it windowsservercore cmd を実行すると windowsservercore からコンテナを起動してその上でコマンドプロンプトを起動できる。 コンテナの起動は非常に遅い。30秒以上かかる。これは今の時点での制限らしい。 docker login --help するとわかるが、コンテナイメージのリポジトリは https://registry-win-tp3.docker.io/v1/ という仮っぽいサーバにあって、docker search * を実行するとそこに登録されたイメージのリストが見れる。 C:\Users\Administrator&gt;docker search * NAME DESCRIPTION STARS OFFICIAL AUTOMATED microsoft/aspnet ASP.NET 5 framework installed in a Windows...">
     
-    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/pcap4j-docker.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/pcap4j-docker.png">
     
     
     <meta property="og:site_name" content="To Be Decided">
@@ -26,20 +26,20 @@
     </title>
 
     
-    <link rel="shortcut icon" href="https://tbd.kaitoy.xyz/assets/favicon.ico">
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
 
     
-    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://tbd.kaitoy.xyz/index.xml">
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
 
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
     <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
     <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
 
     
   </head>
@@ -48,7 +48,7 @@
     <header id="site-header">
       <div class="container">
         <h1 class="text-center">
-          <a href="https://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
         </h1>
       </div>
     </header>
@@ -64,7 +64,7 @@
 
       <div class="eyecatch text-center">
         
-        <img src="https://tbd.kaitoy.xyz/images/pcap4j-docker.png" alt="Pcap4J Meets Windows Containers">
+        <img src="https://www.kaitoy.xyz/images/pcap4j-docker.png" alt="Pcap4J Meets Windows Containers">
         
       </div>
 
@@ -126,7 +126,7 @@ Windows Server Containersよりコンテナ間の分離性が高く、カーネ�
 全部で2時間以上かかった。</p>
 
 <p>仮想Ethernetスイッチ接続の追加に失敗したというエラーが出たけどなんなんだろう。
-<code>ipconfig</code> の出力によると <code>vEthernet</code> というDockerの<a href="https://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/#docker-network">virtual Ethernet bridge</a>にあたるものはちゃんと作られているみたいなんだけど。</p>
+<code>ipconfig</code> の出力によると <code>vEthernet</code> というDockerの<a href="https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/#docker-network">virtual Ethernet bridge</a>にあたるものはちゃんと作られているみたいなんだけど。</p>
 
 <h2 id="windows-server-containers味見">Windows Server Containers味見</h2>
 
@@ -299,11 +299,11 @@ Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/wi
           <div class="col-sm-5">
             <section id="share">
               <h3>Share</h3>
-              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f22%2fpcap4j-meets-windows-containers%2f&t=Pcap4J%20Meets%20Windows%20Containers" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
-              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f22%2fpcap4j-meets-windows-containers%2f&text=Pcap4J%20Meets%20Windows%20Containers&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
-              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f22%2fpcap4j-meets-windows-containers%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
-              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f22%2fpcap4j-meets-windows-containers%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
-              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f22%2fpcap4j-meets-windows-containers%2f&title=Pcap4J%20Meets%20Windows%20Containers" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f01%2f22%2fpcap4j-meets-windows-containers%2f&t=Pcap4J%20Meets%20Windows%20Containers" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f01%2f22%2fpcap4j-meets-windows-containers%2f&text=Pcap4J%20Meets%20Windows%20Containers&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f01%2f22%2fpcap4j-meets-windows-containers%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f01%2f22%2fpcap4j-meets-windows-containers%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f01%2f22%2fpcap4j-meets-windows-containers%2f&title=Pcap4J%20Meets%20Windows%20Containers" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
             </section>
           </div>
 
@@ -316,11 +316,11 @@ Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/wi
               <h3>Related Post</h3>
               <div id="tags">
                 
-                <a href="https://tbd.kaitoy.xyz/tags/pcap4j"><i class="fa fa-tags"></i> pcap4j </a>
+                <a href="https://www.kaitoy.xyz/tags/pcap4j"><i class="fa fa-tags"></i> pcap4j </a>
                 
-                <a href="https://tbd.kaitoy.xyz/tags/docker"><i class="fa fa-tags"></i> docker </a>
+                <a href="https://www.kaitoy.xyz/tags/docker"><i class="fa fa-tags"></i> docker </a>
                 
-                <a href="https://tbd.kaitoy.xyz/tags/windows"><i class="fa fa-tags"></i> windows </a>
+                <a href="https://www.kaitoy.xyz/tags/windows"><i class="fa fa-tags"></i> windows </a>
                 
               </div>
 
@@ -339,13 +339,13 @@ Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/wi
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/11/19/pcap4j-doesnt-work-on-bow-yet/">Currently Pcap4J Doesn&#39;t Work on Bash on Windows</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/11/19/pcap4j-doesnt-work-on-bow-yet/">Currently Pcap4J Doesn&#39;t Work on Bash on Windows</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/11/19/bow-do-not-change-linux-files-from-windows/">Bash on WindowsでWindows側からUbuntu側のファイルをいじると壊れることがあるので注意</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/11/19/bow-do-not-change-linux-files-from-windows/">Bash on WindowsでWindows側からUbuntu側のファイルをいじると壊れることがあるので注意</a></li>
                 
                 
                 
@@ -359,19 +359,19 @@ Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/wi
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/08/21/an-encouragement-of-open-sourcing/">オープンソースプロジェクトのすゝめ</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/08/21/an-encouragement-of-open-sourcing/">オープンソースプロジェクトのすゝめ</a></li>
                 
                 
                 
@@ -381,13 +381,13 @@ Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/wi
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/07/31/docker-for-windows/">Docker for Windowsがコレジャナかった</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/07/31/docker-for-windows/">Docker for Windowsがコレジャナかった</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/">Windows Server 2016 TP5でWindows Containersにリトライ</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/">Windows Server 2016 TP5でWindows Containersにリトライ</a></li>
                 
                 
                 
@@ -401,19 +401,19 @@ Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/wi
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/04/16/pcap4j-in-kotlin/">Pcap4J in Kotlin</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/04/16/pcap4j-in-kotlin/">Pcap4J in Kotlin</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/">Pcap4J in Groovy</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/">Pcap4J in Groovy</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/03/19/zundoko-kiyoshi-with-pcap4j/"> ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/03/19/zundoko-kiyoshi-with-pcap4j/"> ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた</a></li>
                 
                 
                 
@@ -427,7 +427,7 @@ Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/wi
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/">Pcap4J with Four Native Libraries on Windows 10</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/">Pcap4J with Four Native Libraries on Windows 10</a></li>
                 
                 
                 
@@ -437,7 +437,7 @@ Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/wi
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/01/10/pcap-ng-support-in-pcap4j/">pcap-ng support in Pcap4J</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/01/10/pcap-ng-support-in-pcap4j/">pcap-ng support in Pcap4J</a></li>
                 
                 
                 
@@ -471,7 +471,7 @@ Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/wi
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/12/03/software-quality-award-2015/">Pcap4JがSoftware Quality Award 2015で入賞</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/12/03/software-quality-award-2015/">Pcap4JがSoftware Quality Award 2015で入賞</a></li>
                 
                 
                 
@@ -489,7 +489,7 @@ Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/wi
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/">Step by Step to Add a Protocol Support to Pcap4J (Part 2)</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/">Step by Step to Add a Protocol Support to Pcap4J (Part 2)</a></li>
                 
                 
                 
@@ -527,13 +527,13 @@ Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/wi
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/08/09/step-by-step-to-add-a-protocol-support-to-pcap4j-1/">Step by Step to Add a Protocol Support to Pcap4J (Part 1)</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/08/09/step-by-step-to-add-a-protocol-support-to-pcap4j-1/">Step by Step to Add a Protocol Support to Pcap4J (Part 1)</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></li>
                 
                 
                 
@@ -543,7 +543,7 @@ Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/wi
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></li>
                 
                 
                 
@@ -553,7 +553,7 @@ Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/wi
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></li>
                 
                 
                 
@@ -574,7 +574,7 @@ Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/wi
             <div class="col-sm-6">
               <div class="prev">
                 
-                <a href="https://tbd.kaitoy.xyz/2016/02/09/continuous-integration-is-dead/">
+                <a href="https://www.kaitoy.xyz/2016/02/09/continuous-integration-is-dead/">
                   <i class="fa fa-chevron-left"></i>
                   継続的インテグレーションは死んだ
                 </a>
@@ -584,7 +584,7 @@ Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/wi
             <div class="col-sm-6">
               <div class="next text-right">
                 
-                <a href="https://tbd.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/">
+                <a href="https://www.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/">
                   Pcap4J with Four Native Libraries on Windows 10
                   <i class="fa fa-chevron-right"></i>
                 </a>
@@ -662,106 +662,106 @@ Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/wi
       
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/aws">aws</a>
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/bow">bow</a>
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/ci">ci</a>
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/docker">docker</a>
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/git">git</a>
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/goslings">goslings</a>
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jgit">jgit</a>
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/kotlin">kotlin</a>
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/react">react</a>
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/spring">spring</a>
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/subversion">subversion</a>
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/vcs">vcs</a>
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/windows">windows</a>
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
       
     </div>
     
@@ -795,7 +795,7 @@ Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/wi
     </footer>
 
     <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
-    <script src="https://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
     
     <script>
       $(document).ready(function(){
@@ -806,7 +806,7 @@ Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/wi
       });
     </script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
-    <script src="https://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script src="https://www.kaitoy.xyz/js/highlight.pack.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
 
     

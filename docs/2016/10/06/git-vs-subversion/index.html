@@ -11,10 +11,10 @@
     
     <meta property="og:type" content="article">
     <meta property="og:title" content="Gitの良さが分からない？ ちょっとそこに座れ | To Be Decided">
-    <meta property="og:url" content="https://tbd.kaitoy.xyz/2016/10/06/git-vs-subversion/">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2016/10/06/git-vs-subversion/">
     <meta property="og:description" content="Gitの良さがいまだに分からないという人がいるようなので、Git派の一人としてSubversion(以下SVN)と比較してのGitの良さ(メリット)について語りたい。 (GitとSVNの違いについては他の人の記事に詳しいのであまり書いていない一方、勢い余ってGitのデメリットも書いた。) 本題に入る前に、冒頭にリンクを貼った記事についてひとつだけつっこんでおく。 つっこみどころは他にも沢山あるけど。 ※話の前提としてgitとSVNを採用している現場に下記のような割と違いがあるとする。 git イシューごとにブランチを切り、ローカルでコミットして、リモートブランチにpushして、GitHub・GitLab・Bitbucket経由でマージリクエスト。コードレビューの後にマージ。 SVN リモートのtrunkに個々人が直接コミット。コードレビューはあまりない。ブランチを切ることもない。 このような違いが出る背景には次のものがある。 gitを採用する現場は、猫も杓子もgit-flowというプラクティスに従う傾向がある gitを採用する現場は、コードの品質もある程度管理する傾向がある SVNは集中型でありブランチ機能などが非常に使いにくい SVNを採用する現場はコードの品質よりも「リリースに含めるならさっさとコミット」と考える傾向がある この前提には無理がある。 Gitのところに書いてあるのが、Gitというツールの枠を大きくはみだしたGitHub Flowというブランチ戦略&#43;開発プロセスに当たるものであり、 それでGitを批判するのはお門違いであろうという点については、Gitの流行がGitHubの人気によるところが大きく、GitHubを使えることがGitの大きなメリットであるので、目をつむることにする。(マージリクエストを使う羽目になるデメリットなんて言いがかりでしかないとだけ言っておく。) 看過できないのは、SVNを使った開発がコードレビューもブランチもないという点。 どこの世界の話をしているんだろうか。 Gitが世に出る前は世間にコードレビューもブランチもあまりなかったかのような前提だが、もちろんそんなことは全くない。 60万個以上のOSSプロジェクト情報を統括するOpen HUBによれば、OSSプロジェクトの46%がSVNを使っている。この中にはGitの誕生以降にSVNを使い始めたプロジェクトも多くある。270000余りのプロジェクトの大部分がブランチすら使っていないとでも? GitHub Flowと対比するために無理やりこじつけたんだろうけど、その無理のせいで議論のスタート地点からめちゃくちゃだ。 まともな開発にはコードレビューもブランチも必要だ。 品質管理もリリース管理もしないなら要らないのかもしれないが、そんないい加減な開発現場を前提にSVNかGitかなんて議論しても意味がない。 高品質なソフトウェアを効率よく開発するために則りたい素晴らしい開発フローがあるとして、そのフローをSVNやGitやその他のツールないしひょっとしたらアナクロな日付フォルダの内どれがもっとも上手く実現してくれるか、というのがあるべき議論だ。 この「素晴らしい開発フロー」には一般的に品質管理と並行開発が含まれていて、それらにはコードレビューとブランチの利用が含まれている。 Git(&#43;GitHub)がこんなにも急速にSVNに取って代わって流行ったのは、分散リポジトリの仕組みとブランチの軽量な実装によって効率的な並行開発が実現でき、またプルリクエストなどの機能によりコードレビューを含む快適なソーシャルコーディングが実現できるからだ。 逆に言えば、Gitが流行ったことが、人々が効率的な並行開発やコードレビューを開発フローに取り入れたかった証拠と言えるかもしれない。 Gitのメリット 前置きが長くなったが、少なくともブランチとコードレビューを活用した高品質で高効率なソフトウェア開発をしたいという前提で、SVNに対するGitのメリットを挙げてみたい。 1. リポジトリ構造がシンプル Gitリポジトリはすごくシンプルに作られているそうな。 確かに、その構造を見ると、add、commit、log、resetくらいは自前ですぐに実装できそうだ。 このシンプルな構造のおかげで、Gitリポジトリは壊れにくい。ここで壊れにくいとは、リポジトリ内部で不整合が起こりにくいということで、コマンドミスでコミット履歴が一部消えたりとかいうトラブルは壊れるに入らない。 実のところSVNリポジトリの構造を知らないので経験的なことしか言えないが、SVNリポジトリ(というより作業ディレクトリの管理情報?)はちょくちょく変な状態になり、クリーンアップしたり、酷い時には.svn内のファイルを手動でいじったりしなければならなかった。 因みに、シンプルというのはリポジトリサイズがすごく小さいということにはならず、同等の履歴を含むGitリポジトリとSVNリポジトリはだいたい同サイズなんだそうな。 2. ブランチが軽い Gitのブランチは単一のコミットを指す参照で、リポジトリ内ではSHA-1ハッシュ値が書かれただけのたった一つのファイルに過ぎない。 その為ブランチは一瞬で作成できるし、ディスクも圧迫しないので、じゃんじゃん作ってじゃんじゃん消せる。 さらに、ローカルリポジトリに過去の全ファイルの全バージョンが入っているという分散リポジトリの特長のおかげで、ブランチの切り替えも軽快にできる。 ローカルから必要なファイルを作業ディレクトリに展開するだけなので。 一方SVNはそもそもブランチをサポートする直接的な機能がないため、ブランチはリビジョンのコピーという形で実装されている。 コピーと言ってもハードリンクみたいなものでディスク上に物理的なコピーが作られるわけではなく、軽量という点ではGitと大差ないが、集中リポジトリなせいでブランチの切り替えには差が出る。 svn switchにしろsvn checkoutにしろネットワークの向こうのサーバとの通信が必要なので、それなりの時間がかかるし、通信が途切れると切り替えられなくなる。 冒頭に貼った記事にはGitはブランチを切り替える際にstashとかしないといけなくて面倒とあったが、そんなのSVNだって同じだし、stashすればいいだけだし、stashという機能があるだけSVNよりまし。Gitならコミットはあとから書き変えられるので、stashの代わりに一時的にコミットしちゃってもいい。 それも嫌ならworktree使えばよろしい。 3. バージョン間の差分取得が速い Gitは全てのファイルについて全てのバージョンのコンテンツをまるまるリポジトリに持っている。 一方SVNのリポジトリにはバージョン間の変更が記録されている。 このため、あるファイルについて任意のバージョン間の差分を取るのに、Gitはシンプルにそれぞれのバージョンのファイルを取り出して比較するだけでよいが、SVNは隣り合ったバージョンでなければバージョン間の変更を足し合わせて差分を計算しなければいけない。 さらに、Gitは比較するファイルをローカルリポジトリから取り出すだけでよいが、SVNはサーバへのアクセスが必要なので、差分取得はGitの方が大分速い。 4. ログ取得が速い Gitのコミットは常にプロジェクトの全ファイルに対するものだ。 これは変更したファイルの一部だけを対象とするコミット操作ができないという意味ではない。 Gitがひとつのコミット操作をコミットオブジェクトと呼ばれる単一のファイルに記録し、そのファイルが常にプロジェクトの全ファイルの特定のバージョンを参照しているという意味だ。(正確に言うとこのファイル自身に全ての参照が記録されているわけではないが。) このためGitのコミット履歴は実にシンプルで、ログ一覧を取得するには単にコミットをたどりながらコミットオブジェクトに書かれたログを集めればいい。 一方SVNはファイル毎にバージョンを管理するので、もう少しややこしい。 さらに、Gitはコミットオブジェクトをローカルリポジトリから持ってこれるがSVNは(以下略)。 5. オフラインでだいたいなんでもできる と、ここまで書いて、Gitのいいところはオフライン作業が捗るところではないかと思い立った。 実際Gitは、clone、fetch、pull、pushといったあからさまな操作以外はオフラインでできる。 多くの操作にネットワーク通信コストを払わなくていい上、リモートリポジトリサーバが落ちたりネットワークが落ちたり山に籠ったりしていても作業が続けられる。 ノマドに最適。 一方SVNがネットワーク通信なしでできることは、…ベースバージョンとのdiffくらい?">
     
-    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/git-subversion.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/git-subversion.png">
     
     
     <meta property="og:site_name" content="To Be Decided">
@@ -26,20 +26,20 @@
     </title>
 
     
-    <link rel="shortcut icon" href="https://tbd.kaitoy.xyz/assets/favicon.ico">
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
 
     
-    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://tbd.kaitoy.xyz/index.xml">
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
 
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
     <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
     <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
 
     
   </head>
@@ -48,7 +48,7 @@
     <header id="site-header">
       <div class="container">
         <h1 class="text-center">
-          <a href="https://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
         </h1>
       </div>
     </header>
@@ -64,7 +64,7 @@
 
       <div class="eyecatch text-center">
         
-        <img src="https://tbd.kaitoy.xyz/images/git-subversion.png" alt="Gitの良さが分からない？ ちょっとそこに座れ">
+        <img src="https://www.kaitoy.xyz/images/git-subversion.png" alt="Gitの良さが分からない？ ちょっとそこに座れ">
         
       </div>
 
@@ -122,7 +122,7 @@ Git(+GitHub)がこんなにも急速にSVNに取って代わって流行った�
 <h4 id="1-リポジトリ構造がシンプル">1. リポジトリ構造がシンプル</h4>
 
 <p>Gitリポジトリはすごくシンプルに作られているそうな。
-確かに、<a href="https://tbd.kaitoy.xyz/2015/12/27/git-repository/">その構造</a>を見ると、<code>add</code>、<code>commit</code>、<code>log</code>、<code>reset</code>くらいは自前ですぐに実装できそうだ。</p>
+確かに、<a href="https://www.kaitoy.xyz/2015/12/27/git-repository/">その構造</a>を見ると、<code>add</code>、<code>commit</code>、<code>log</code>、<code>reset</code>くらいは自前ですぐに実装できそうだ。</p>
 
 <p>このシンプルな構造のおかげで、Gitリポジトリは壊れにくい。ここで壊れにくいとは、リポジトリ内部で不整合が起こりにくいということで、コマンドミスでコミット履歴が一部消えたりとかいうトラブルは壊れるに入らない。</p>
 
@@ -315,11 +315,11 @@ Gitの開発陣は当初から部分cloneの実装に乗り気ではないし、
           <div class="col-sm-5">
             <section id="share">
               <h3>Share</h3>
-              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f10%2f06%2fgit-vs-subversion%2f&t=Git%e3%81%ae%e8%89%af%e3%81%95%e3%81%8c%e5%88%86%e3%81%8b%e3%82%89%e3%81%aa%e3%81%84%ef%bc%9f%20%e3%81%a1%e3%82%87%e3%81%a3%e3%81%a8%e3%81%9d%e3%81%93%e3%81%ab%e5%ba%a7%e3%82%8c" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
-              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f10%2f06%2fgit-vs-subversion%2f&text=Git%e3%81%ae%e8%89%af%e3%81%95%e3%81%8c%e5%88%86%e3%81%8b%e3%82%89%e3%81%aa%e3%81%84%ef%bc%9f%20%e3%81%a1%e3%82%87%e3%81%a3%e3%81%a8%e3%81%9d%e3%81%93%e3%81%ab%e5%ba%a7%e3%82%8c&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
-              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f10%2f06%2fgit-vs-subversion%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
-              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f10%2f06%2fgit-vs-subversion%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
-              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f10%2f06%2fgit-vs-subversion%2f&title=Git%e3%81%ae%e8%89%af%e3%81%95%e3%81%8c%e5%88%86%e3%81%8b%e3%82%89%e3%81%aa%e3%81%84%ef%bc%9f%20%e3%81%a1%e3%82%87%e3%81%a3%e3%81%a8%e3%81%9d%e3%81%93%e3%81%ab%e5%ba%a7%e3%82%8c" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f10%2f06%2fgit-vs-subversion%2f&t=Git%e3%81%ae%e8%89%af%e3%81%95%e3%81%8c%e5%88%86%e3%81%8b%e3%82%89%e3%81%aa%e3%81%84%ef%bc%9f%20%e3%81%a1%e3%82%87%e3%81%a3%e3%81%a8%e3%81%9d%e3%81%93%e3%81%ab%e5%ba%a7%e3%82%8c" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f10%2f06%2fgit-vs-subversion%2f&text=Git%e3%81%ae%e8%89%af%e3%81%95%e3%81%8c%e5%88%86%e3%81%8b%e3%82%89%e3%81%aa%e3%81%84%ef%bc%9f%20%e3%81%a1%e3%82%87%e3%81%a3%e3%81%a8%e3%81%9d%e3%81%93%e3%81%ab%e5%ba%a7%e3%82%8c&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f10%2f06%2fgit-vs-subversion%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f10%2f06%2fgit-vs-subversion%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f10%2f06%2fgit-vs-subversion%2f&title=Git%e3%81%ae%e8%89%af%e3%81%95%e3%81%8c%e5%88%86%e3%81%8b%e3%82%89%e3%81%aa%e3%81%84%ef%bc%9f%20%e3%81%a1%e3%82%87%e3%81%a3%e3%81%a8%e3%81%9d%e3%81%93%e3%81%ab%e5%ba%a7%e3%82%8c" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
             </section>
           </div>
 
@@ -332,11 +332,11 @@ Gitの開発陣は当初から部分cloneの実装に乗り気ではないし、
               <h3>Related Post</h3>
               <div id="tags">
                 
-                <a href="https://tbd.kaitoy.xyz/tags/git"><i class="fa fa-tags"></i> git </a>
+                <a href="https://www.kaitoy.xyz/tags/git"><i class="fa fa-tags"></i> git </a>
                 
-                <a href="https://tbd.kaitoy.xyz/tags/subversion"><i class="fa fa-tags"></i> subversion </a>
+                <a href="https://www.kaitoy.xyz/tags/subversion"><i class="fa fa-tags"></i> subversion </a>
                 
-                <a href="https://tbd.kaitoy.xyz/tags/vcs"><i class="fa fa-tags"></i> vcs </a>
+                <a href="https://www.kaitoy.xyz/tags/vcs"><i class="fa fa-tags"></i> vcs </a>
                 
               </div>
 
@@ -363,7 +363,7 @@ Gitの開発陣は当初から部分cloneの実装に乗り気ではないし、
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/10/08/git-checkout/">git checkoutを図解する</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/10/08/git-checkout/">git checkoutを図解する</a></li>
                 
                 
                 
@@ -441,25 +441,25 @@ Gitの開発陣は当初から部分cloneの実装に乗り気ではないし、
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/01/01/git-revert-reset/">git resetとrevertを図解する</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/01/01/git-revert-reset/">git resetとrevertを図解する</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/12/31/git-dvc/">Gitの分散バージョン管理の仕組み</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/12/31/git-dvc/">Gitの分散バージョン管理の仕組み</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/12/28/git-merge/">Gitのマージを図解する</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/12/28/git-merge/">Gitのマージを図解する</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/12/27/git-repository/">Gitのリポジトリの中身をなるべく正確に理解する</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/12/27/git-repository/">Gitのリポジトリの中身をなるべく正確に理解する</a></li>
                 
                 
                 
@@ -564,7 +564,7 @@ Gitの開発陣は当初から部分cloneの実装に乗り気ではないし、
             <div class="col-sm-6">
               <div class="prev">
                 
-                <a href="https://tbd.kaitoy.xyz/2016/10/08/git-checkout/">
+                <a href="https://www.kaitoy.xyz/2016/10/08/git-checkout/">
                   <i class="fa fa-chevron-left"></i>
                   git checkoutを図解する
                 </a>
@@ -574,7 +574,7 @@ Gitの開発陣は当初から部分cloneの実装に乗り気ではないし、
             <div class="col-sm-6">
               <div class="next text-right">
                 
-                <a href="https://tbd.kaitoy.xyz/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">
+                <a href="https://www.kaitoy.xyz/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">
                   Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ
                   <i class="fa fa-chevron-right"></i>
                 </a>
@@ -652,106 +652,106 @@ Gitの開発陣は当初から部分cloneの実装に乗り気ではないし、
       
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/aws">aws</a>
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/bow">bow</a>
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/ci">ci</a>
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/docker">docker</a>
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/git">git</a>
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/goslings">goslings</a>
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jgit">jgit</a>
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/kotlin">kotlin</a>
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/react">react</a>
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/spring">spring</a>
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/subversion">subversion</a>
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/vcs">vcs</a>
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/windows">windows</a>
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
       
     </div>
     
@@ -785,7 +785,7 @@ Gitの開発陣は当初から部分cloneの実装に乗り気ではないし、
     </footer>
 
     <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
-    <script src="https://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
     
     <script>
       $(document).ready(function(){
@@ -796,7 +796,7 @@ Gitの開発陣は当初から部分cloneの実装に乗り気ではないし、
       });
     </script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
-    <script src="https://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script src="https://www.kaitoy.xyz/js/highlight.pack.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
 
     

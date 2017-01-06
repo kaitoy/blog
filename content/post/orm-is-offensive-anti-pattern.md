@@ -138,7 +138,7 @@ Javaのチュートリアルは、データベースに接続するアプリケ�
 そうだ。
 
 私はORMの根底にあるアイデア全体が間違っていると訴えている。
-この発明は多分、OOPにおいて最大の失敗である[NULL](https://tbd.kaitoy.xyz/2015/07/26/why-null-is-bad/)に次ぐ失敗だ。
+この発明は多分、OOPにおいて最大の失敗である[NULL](https://www.kaitoy.xyz/2015/07/26/why-null-is-bad/)に次ぐ失敗だ。
 
 実際、私だけがこんなことを言っているわけではないし、最初に言ったわけでもないことは明白だ。
 この問題に関しては、既に多くの記述が尊敬すべき著者によって公開されている。例えば、Martin Fowlerによる[OrmHate](http://martinfowler.com/bliki/OrmHate.html)、Jeff Atwoodによる[Object-Relational Mapping Is the Vietnam of Computer Science](http://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/)、Ted Newardによる[The Vietnam of Computer Science](http://blogs.tedneward.com/2006/06/26/The+Vietnam+Of+Computer+Science.aspx)、Laurie Vossによる[ORM Is an Anti-Pattern](http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern)などで、他にも沢山ある。
@@ -147,7 +147,7 @@ Javaのチュートリアルは、データベースに接続するアプリケ�
 彼らが挙げている、「ORMは遅い」とか「データベースアップグレードが難しい」といった理由は実用的で有効ではあるが、重要なポイントが欠けている。
 こういう実用的な論点に対しては、Bozhidar Bozhanovが彼のブログポストの[ORM Haters Don’t Get It](http://techblog.bozho.net/orm-haters-dont-get-it/)の中でとてもよい実用的な回答を示している。
 
-重要なポイントとは、ORMが、データベースとのやり取りをオブジェクト内にカプセル化するのではなく、それを抜き取り、密で堅い[生ける有機体](https://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/)を文字通りばらばらに引き裂く、ということだ。
+重要なポイントとは、ORMが、データベースとのやり取りをオブジェクト内にカプセル化するのではなく、それを抜き取り、密で堅い[生ける有機体](https://www.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/)を文字通りばらばらに引き裂く、ということだ。
 引き裂かれたオブジェクトの欠片はデータを保持し、ほかの欠片(ORMのエンジンであるセッションファクトリ内に実装されているもの)はそのデータの扱い方を知っていて、それをリレーショナルデータベースへ転送する。
 下の絵を見てくれ。これはORMがやっていることを図示している。
 
@@ -181,7 +181,7 @@ ORMユーザはSQL(もしくは[HQL](https://docs.jboss.org/hibernate/orm/3.3/re
 しかしこういうテストは遅く、さらに注目すべきことには、データベースに対して何もしないオブジェクトがデータベースインスタンスに対してテストされることになる。最悪な設計だ。
 
 もう一度繰り返すが、ORMの実用的な問題は結果に過ぎない。
-根本的な欠陥は、ORMがオブジェクトをバラバラにし、[オブジェクト](https://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/)の真の概念にひどく違反していることだ。
+根本的な欠陥は、ORMがオブジェクトをバラバラにし、[オブジェクト](https://www.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/)の真の概念にひどく違反していることだ。
 
 # SQLを話すオブジェクト
 他の選択肢は?
@@ -189,14 +189,14 @@ ORMユーザはSQL(もしくは[HQL](https://docs.jboss.org/hibernate/orm/3.3/re
 あの、`Post`クラスを私のやり方で設計してみよう。
 これは二つのクラスに分ける必要がある。`Post`と`Posts`だ。
 単数形と複数形。
-私の[以前の記事](https://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/)ですでに述べたように、よいオブジェクトは常に現実世界のエンティティの抽象だ。
+私の[以前の記事](https://www.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/)ですでに述べたように、よいオブジェクトは常に現実世界のエンティティの抽象だ。
 この原則が実際にどう働くかをここに示す。
 我々は二つのエンティティを扱う。データベーステーブルとテーブルの行だ。
 これが二つのクラスを作る理由だ。`Posts`がテーブルを表し、`Post`が行を表す。
 
 ![sql-speaking-object.svg](/images/orm-is-offensive-anti-pattern/sql-speaking-object.svg)
 
-例の[記事](https://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/)で既に述べたように、全てのオブジェクトは契約によって働き、インターフェースを実装すべきだ。
+例の[記事](https://www.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/)で既に述べたように、全てのオブジェクトは契約によって働き、インターフェースを実装すべきだ。
 我々の設計も二つのインターフェースから始めよう。
 もちろん、オブジェクトは不変だ。`Posts`は以下のようになる。
 
@@ -470,4 +470,4 @@ Yegorが言っていること、ORMは本来オブジェクトの仕事である
 Yegor自身が前半で書いているORMを使ったコードより、後半のOOP原理的コードの方がかなり長い。
 それってORMを使った方がやっぱりいいんじゃないのという感想を持つ人が多いのでは。(少なくとも「実用的な問題」を抜きにすれば。)
 
-オブジェクト原理主義をしっかり理解し、そのメリットを知らなければYegorの説教も馬の耳にだ。というわけで、次は[Seven Virtues of a Good Object](http://www.yegor256.com/2014/11/20/seven-virtues-of-good-object.html)を読むか。([訳した。](https://tbd.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/))
+オブジェクト原理主義をしっかり理解し、そのメリットを知らなければYegorの説教も馬の耳にだ。というわけで、次は[Seven Virtues of a Good Object](http://www.yegor256.com/2014/11/20/seven-virtues-of-good-object.html)を読むか。([訳した。](https://www.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/))

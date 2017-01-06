@@ -11,10 +11,10 @@
     
     <meta property="og:type" content="article">
     <meta property="og:title" content="AtomにおけるGIF画像のキャッシュ | To Be Decided">
-    <meta property="og:url" content="https://tbd.kaitoy.xyz/2015/09/07/caching-gifs-on-atom/">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2015/09/07/caching-gifs-on-atom/">
     <meta property="og:description" content="以前、disturb-meというAtomパッケージを作ったというエントリを書いた。 このエントリでは、disturb-meに見つけたバグの修正のなかで、AtomがGIF画像をキャッシュする問題に対応したという話を書く。 disturb-meのバグ 以前のエントリの最後にも書いた通り、disturb-me 1.0.0には、ループしないGIFアニメーション画像を設定で指定した場合、そのアニメーションが画像の初回表示時にしか再生されないというバグがある。 disturb-meは、Ctrl&#43;Alt&#43;d Ctrl&#43;Alt&#43;mと入力すると画像を表示し、もう一度それを入力すると画像を消す。 デフォルトで表示する画像はAtomのロゴで、表示を始める時と消す時にGIF画像でループしないアニメーションを再生する。 このデフォルトの状態で、一度Atomロゴを表示して消して、再度表示して消すと、消すときのアニメーションが再生されない。(表示を始める時のアニメーションはなぜか再生される。) バグの原因 disturb-meは、imgタグをAtomウィンドウ内に追加した後、そのsrc属性に画像へのパスをセットして画像を表示させるが、どうもAtom(のChromium)が画像をキャッシュしてくれるせいで、一度表示し終わったGIFアニメーションは二度と再生されない模様。 なぜ表示開始時のアニメーションが再生されるかは不明。 バグ修正 外部リソースをロードするときにブラウザによるキャッシュを回避するには、URLにランダムな値をもつクエリストリングを付けるのが常套手段。 今回のバグも、srcにセットするGIF画像のパス(URL)にそのようなクエリストリングをつければよい。 例えば、C:\images\hoge.gifを表示したいなら、&lt;img src=&quot;C:\images\hoge.gif?time=1441559906660&quot;&gt;&lt;img&gt;という風にする。 ここでtimeの値にはDate.now()とかで毎回違う値を生成して使う。 Atomプロトコルの問題 ここで一つ問題が。disturb-meがデフォルトで使うAtomロゴの画像はパッケージに含まれていて、そういうリソースのURLにはAtomプロトコルを使うのが普通。 Atomプロトコルを使うと、atom://disturb-me/assets/atom/white/atom_born.gifみたいに書いて、パッケージ内の相対パスでリソースを指定できる。 このAtomプロトコルが、今の時点(Atom v1.0.11)でクエリストリングに対応していない。困った。 Atomプロトコルの問題への対応 いい機会なので、Atomのソースをfork、cloneして、Atomプロトコルを(簡易的に)クエリストリングに対応させ、ビルドして確認し、プルリクエストを送ってみた。これについてはまた別のエントリで書くかもしれない。 このプルリクエストが取り込まれるまでの暫定対策として、Atomプロトコルハンドラのソースを見て、AtomプロトコルのURLからリソースのファイルシステム上での絶対パスを導いている部分をdisturb-me内にパクって、srcにセットする値としてatom://を使わないようにした。 これでちゃんと動いた。">
     
-    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/atom_editor_logo.svg.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/atom_editor_logo.svg.png">
     
     
     <meta property="og:site_name" content="To Be Decided">
@@ -26,20 +26,20 @@
     </title>
 
     
-    <link rel="shortcut icon" href="https://tbd.kaitoy.xyz/assets/favicon.ico">
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
 
     
-    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://tbd.kaitoy.xyz/index.xml">
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
 
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
     <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
     <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
 
     
   </head>
@@ -48,7 +48,7 @@
     <header id="site-header">
       <div class="container">
         <h1 class="text-center">
-          <a href="https://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
         </h1>
       </div>
     </header>
@@ -64,19 +64,19 @@
 
       <div class="eyecatch text-center">
         
-        <img src="https://tbd.kaitoy.xyz/images/atom_editor_logo.svg.png" alt="AtomにおけるGIF画像のキャッシュ">
+        <img src="https://www.kaitoy.xyz/images/atom_editor_logo.svg.png" alt="AtomにおけるGIF画像のキャッシュ">
         
       </div>
 
       <div class="content">
         
 
-<p>以前、<a href="https://atom.io/packages/disturb-me"><strong>disturb-me</strong></a>という<a href="https://atom.io/"><strong>Atom</strong></a>パッケージを作ったという<a href="https://tbd.kaitoy.xyz/2015/09/06/disturb-me/">エントリ</a>を書いた。
+<p>以前、<a href="https://atom.io/packages/disturb-me"><strong>disturb-me</strong></a>という<a href="https://atom.io/"><strong>Atom</strong></a>パッケージを作ったという<a href="https://www.kaitoy.xyz/2015/09/06/disturb-me/">エントリ</a>を書いた。
 このエントリでは、disturb-meに見つけたバグの修正のなかで、AtomがGIF画像をキャッシュする問題に対応したという話を書く。</p>
 
 <h2 id="disturb-meのバグ">disturb-meのバグ</h2>
 
-<p><a href="https://tbd.kaitoy.xyz/2015/09/06/disturb-me/#6-%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%81%AA%E3%81%A9">以前のエントリの最後</a>にも書いた通り、disturb-me 1.0.0には、ループしないGIFアニメーション画像を設定で指定した場合、そのアニメーションが画像の初回表示時にしか再生されないというバグがある。</p>
+<p><a href="https://www.kaitoy.xyz/2015/09/06/disturb-me/#6-%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%81%AA%E3%81%A9">以前のエントリの最後</a>にも書いた通り、disturb-me 1.0.0には、ループしないGIFアニメーション画像を設定で指定した場合、そのアニメーションが画像の初回表示時にしか再生されないというバグがある。</p>
 
 <p>disturb-meは、<code>Ctrl+Alt+d Ctrl+Alt+m</code>と入力すると画像を表示し、もう一度それを入力すると画像を消す。
 デフォルトで表示する画像はAtomのロゴで、表示を始める時と消す時にGIF画像でループしないアニメーションを再生する。</p>
@@ -127,11 +127,11 @@ Atomプロトコルを使うと、<code>atom://disturb-me/assets/atom/white/atom
           <div class="col-sm-5">
             <section id="share">
               <h3>Share</h3>
-              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f09%2f07%2fcaching-gifs-on-atom%2f&t=Atom%e3%81%ab%e3%81%8a%e3%81%91%e3%82%8bGIF%e7%94%bb%e5%83%8f%e3%81%ae%e3%82%ad%e3%83%a3%e3%83%83%e3%82%b7%e3%83%a5" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
-              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f09%2f07%2fcaching-gifs-on-atom%2f&text=Atom%e3%81%ab%e3%81%8a%e3%81%91%e3%82%8bGIF%e7%94%bb%e5%83%8f%e3%81%ae%e3%82%ad%e3%83%a3%e3%83%83%e3%82%b7%e3%83%a5&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
-              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f09%2f07%2fcaching-gifs-on-atom%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
-              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f09%2f07%2fcaching-gifs-on-atom%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
-              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f09%2f07%2fcaching-gifs-on-atom%2f&title=Atom%e3%81%ab%e3%81%8a%e3%81%91%e3%82%8bGIF%e7%94%bb%e5%83%8f%e3%81%ae%e3%82%ad%e3%83%a3%e3%83%83%e3%82%b7%e3%83%a5" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f09%2f07%2fcaching-gifs-on-atom%2f&t=Atom%e3%81%ab%e3%81%8a%e3%81%91%e3%82%8bGIF%e7%94%bb%e5%83%8f%e3%81%ae%e3%82%ad%e3%83%a3%e3%83%83%e3%82%b7%e3%83%a5" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f09%2f07%2fcaching-gifs-on-atom%2f&text=Atom%e3%81%ab%e3%81%8a%e3%81%91%e3%82%8bGIF%e7%94%bb%e5%83%8f%e3%81%ae%e3%82%ad%e3%83%a3%e3%83%83%e3%82%b7%e3%83%a5&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f09%2f07%2fcaching-gifs-on-atom%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f09%2f07%2fcaching-gifs-on-atom%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f09%2f07%2fcaching-gifs-on-atom%2f&title=Atom%e3%81%ab%e3%81%8a%e3%81%91%e3%82%8bGIF%e7%94%bb%e5%83%8f%e3%81%ae%e3%82%ad%e3%83%a3%e3%83%83%e3%82%b7%e3%83%a5" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
             </section>
           </div>
 
@@ -144,9 +144,9 @@ Atomプロトコルを使うと、<code>atom://disturb-me/assets/atom/white/atom
               <h3>Related Post</h3>
               <div id="tags">
                 
-                <a href="https://tbd.kaitoy.xyz/tags/atom"><i class="fa fa-tags"></i> atom </a>
+                <a href="https://www.kaitoy.xyz/tags/atom"><i class="fa fa-tags"></i> atom </a>
                 
-                <a href="https://tbd.kaitoy.xyz/tags/disturb-me"><i class="fa fa-tags"></i> disturb-me </a>
+                <a href="https://www.kaitoy.xyz/tags/disturb-me"><i class="fa fa-tags"></i> disturb-me </a>
                 
               </div>
 
@@ -265,35 +265,29 @@ Atomプロトコルを使うと、<code>atom://disturb-me/assets/atom/white/atom
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/12/21/hello-react/">ReactをAtomパッケージ開発に使ってみた</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/12/21/hello-react/">ReactをAtomパッケージ開発に使ってみた</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/12/19/atom-impress/">impress.jsでのプレゼン資料作成をサポートするAtomパッケージ - impress</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://tbd.kaitoy.xyz/2015/12/02/unpublish-atom-package/">Atomパッケージをアンパブリッシュする</a></li>
-                
-                
-                
-                
-                
-                <li><a href="https://tbd.kaitoy.xyz/2015/11/16/thanks-bye-bye-japanese-wrap/">ありがとうさようならjapanese-wrap</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/12/19/atom-impress/">impress.jsでのプレゼン資料作成をサポートするAtomパッケージ - impress</a></li>
                 
                 
                 
                 
                 
                 
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/12/02/unpublish-atom-package/">Atomパッケージをアンパブリッシュする</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/11/16/thanks-bye-bye-japanese-wrap/">ありがとうさようならjapanese-wrap</a></li>
                 
                 
                 
@@ -309,7 +303,13 @@ Atomプロトコルを使うと、<code>atom://disturb-me/assets/atom/white/atom
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/09/06/disturb-me/">Atomウィンドウ内で画像を動かすパッケージ - disturb-me</a></li>
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/09/06/disturb-me/">Atomウィンドウ内で画像を動かすパッケージ - disturb-me</a></li>
                 
                 
                 
@@ -323,7 +323,7 @@ Atomプロトコルを使うと、<code>atom://disturb-me/assets/atom/white/atom
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/">Atomパッケージを作る - ワード境界を日本語対応させるパッケージ: japanese-word-selection</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/08/21/japanese-word-selection/">Atomパッケージを作る - ワード境界を日本語対応させるパッケージ: japanese-word-selection</a></li>
                 
                 
                 
@@ -376,7 +376,7 @@ Atomプロトコルを使うと、<code>atom://disturb-me/assets/atom/white/atom
             <div class="col-sm-6">
               <div class="prev">
                 
-                <a href="https://tbd.kaitoy.xyz/2015/09/13/orm-is-offensive-anti-pattern/">
+                <a href="https://www.kaitoy.xyz/2015/09/13/orm-is-offensive-anti-pattern/">
                   <i class="fa fa-chevron-left"></i>
                   ORMは不快なアンチパターン
                 </a>
@@ -386,7 +386,7 @@ Atomプロトコルを使うと、<code>atom://disturb-me/assets/atom/white/atom
             <div class="col-sm-6">
               <div class="next text-right">
                 
-                <a href="https://tbd.kaitoy.xyz/2015/09/06/disturb-me/">
+                <a href="https://www.kaitoy.xyz/2015/09/06/disturb-me/">
                   Atomウィンドウ内で画像を動かすパッケージ - disturb-me
                   <i class="fa fa-chevron-right"></i>
                 </a>
@@ -464,106 +464,106 @@ Atomプロトコルを使うと、<code>atom://disturb-me/assets/atom/white/atom
       
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/aws">aws</a>
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/bow">bow</a>
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/ci">ci</a>
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/docker">docker</a>
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/git">git</a>
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/goslings">goslings</a>
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jgit">jgit</a>
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/kotlin">kotlin</a>
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/react">react</a>
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/spring">spring</a>
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/subversion">subversion</a>
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/vcs">vcs</a>
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/windows">windows</a>
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
       
     </div>
     
@@ -597,7 +597,7 @@ Atomプロトコルを使うと、<code>atom://disturb-me/assets/atom/white/atom
     </footer>
 
     <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
-    <script src="https://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
     
     <script>
       $(document).ready(function(){
@@ -608,7 +608,7 @@ Atomプロトコルを使うと、<code>atom://disturb-me/assets/atom/white/atom
       });
     </script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
-    <script src="https://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script src="https://www.kaitoy.xyz/js/highlight.pack.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
 
     

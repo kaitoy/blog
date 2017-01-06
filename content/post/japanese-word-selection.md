@@ -270,7 +270,7 @@ Check it out at https://atom.io/packages/japanese-word-selection
 https://atom.io/packages/japanese-word-selection に行ったらちゃんとjapanese-word-selectionのページができていた。
 これでパブリッシュまで完了。
 
-因みに、`apm unpublish パッケージ名@バージョン`で[パブリッシュを取り消す](https://tbd.kaitoy.xyz/2015/12/02/unpublish-atom-package/)ことができる。
+因みに、`apm unpublish パッケージ名@バージョン`で[パブリッシュを取り消す](https://www.kaitoy.xyz/2015/12/02/unpublish-atom-package/)ことができる。
 
 #### 11. パッケージのアップデートの開発
 `apm publish`をすると、パブリッシュしたバージョンがインストールされた状態になる。
@@ -286,5 +286,5 @@ https://atom.io/packages/japanese-word-selection に行ったらちゃんとjapa
 因みに、Package Generatorは、作成したパッケージフォルダへのリンクを`.atom\packages\`に作成する。リンクの一覧は`apm links`で参照でき、`apm unlink`で削除できる。
 
 ## 関連エントリ
-後日もう一つパッケージを作り、[それに関する記事](https://tbd.kaitoy.xyz/2015/09/06/disturb-me/)を書いた。
+後日もう一つパッケージを作り、[それに関する記事](https://www.kaitoy.xyz/2015/09/06/disturb-me/)を書いた。
 こちらはjapanese-word-selectionでやらなかったコマンドなどの実装をやっている。

@@ -18,7 +18,7 @@ Hyper-V Containersは、MicrosoftによるWindowsネイティブなコンテナ�
 
 Windows 10の[Anniversary Update](https://blogs.windows.com/japan/2016/08/03/how-to-get-the-windows-10-anniversary-update/#eFCYhK68sDp1V0F7.97)で正式にリリースされたが、なんだかあまり注目されていない気がする。
 
-[Docker for Windows](https://tbd.kaitoy.xyz/2016/07/31/docker-for-windows/#docker-for-windows%E3%81%A8%E3%81%AF)とは全く別物なので注意。
+[Docker for Windows](https://www.kaitoy.xyz/2016/07/31/docker-for-windows/#docker-for-windows%E3%81%A8%E3%81%AF)とは全く別物なので注意。
 
 ## Hyper-V Containersのインストール (on VMware Player)
 自前のPCが5年前に買った[dynabook](https://dynabook.com/)でWindows 10をサポートしていないので、VMware PlayerのVM上のWindows 10にHyper-V Containersをインストールしてみる。
@@ -27,7 +27,7 @@ VMは、Windows 7に入れたVMware Workstation 11.1.0 build-2496824に付属の
 VMのバージョンは11.0。
 2CPUでメモリは2.5GB。
 ネットワークインターフェースはNAT。
-このVMを、[Hyper-Vが使えるように設定しておく](https://tbd.kaitoy.xyz/2016/07/31/docker-for-windows/#vmware-player%E3%81%AEvm%E3%81%A7hyper-v%E3%82%92%E4%BD%BF%E3%81%86%E3%81%9F%E3%82%81%E3%81%AE%E8%A8%AD%E5%AE%9A)。
+このVMを、[Hyper-Vが使えるように設定しておく](https://www.kaitoy.xyz/2016/07/31/docker-for-windows/#vmware-player%E3%81%AEvm%E3%81%A7hyper-v%E3%82%92%E4%BD%BF%E3%81%86%E3%81%9F%E3%82%81%E3%81%AE%E8%A8%AD%E5%AE%9A)。
 
 [この記事](http://ascii.jp/elem/000/001/216/1216220/)にしたがい、Windows 10の評価版をダウンロード。
 今公開されている評価版はAnniversary Update適用済みのバージョン1607で、Hyper-V Containersをサポートしている。
@@ -144,7 +144,7 @@ Windows 10を起動し、以下、[Windows Containers on Windows 10](https://msd
 
 ## Pcap4Jコンテナのビルド
 Pcap4Jコンテナを、`docker build`でビルドしてみる。
-Dockerfileはとりあえず[以前のもの](https://tbd.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/#pcap4j%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%81%AE%E3%83%93%E3%83%AB%E3%83%89)をちょっと書き変えただけのものを試す。
+Dockerfileはとりあえず[以前のもの](https://www.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/#pcap4j%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%81%AE%E3%83%93%E3%83%AB%E3%83%89)をちょっと書き変えただけのものを試す。
 
 ```dockerfile
 # escape=`
@@ -227,7 +227,7 @@ Chocolateyのダウンロード・インストールスクリプトを実行す�
 これは`https://chocolatey.org/api/v2/package/chocolatey/`というWeb APIをたたいてアーカイブをダウンロードする方法だけど、このURLを`ADD`に渡してもうまくいかなかったので、このWeb APIが最終的に呼ぶ`https://packages.chocolatey.org/chocolatey.0.10.0.nupkg`を`ADD`するようにした。
 これでダウンロードできる`chocolatey.0.10.0.nupkg`はzipファイルで、unzipするとインストールスクリプトが出てくる。
 
-しかしこのunzipが曲者で、[妙に苦労した話](https://tbd.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/)を最近書いた。
+しかしこのunzipが曲者で、[妙に苦労した話](https://www.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/)を最近書いた。
 
 で、苦労して取り出したインストールスクリプトを実行したら、エラーがわんさと出ただけだった。
 そんなこったろうと思ってはいたが。

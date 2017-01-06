@@ -11,10 +11,10 @@
     
     <meta property="og:type" content="article">
     <meta property="og:title" content="Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え | To Be Decided">
-    <meta property="og:url" content="https://tbd.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/">
     <meta property="og:description" content="Nano Serverでunzipしたかっただけだったのに、妙に苦労した話。 Nano Serverとは Nano Serverは、Windows Server 2016で追加されるWindows Serverの新たなインストール形式で、Server Coreよりさらに機能を絞り、リモートで管理するクラウドホストやWebサーバ向けにに特化したもの。 Server Coreが数GBくらいなのに対し、Nano Serverは数百MBととても軽量で、それゆえ起動が速くセキュア。 unzipとは unzipとは、zipファイルを解凍する、ただそれだけのこと。 ただそれだけのことで、基本的な機能だと思うのだが、Windowsはこれをコマンドラインで実行する方法をつい最近まで正式に提供していなかった。 Nano Serverでunzip Windows 10のHyper-V Containersの上でPcap4JのビルドとテストをするDockerイメージをビルドしたくて、そのための依存ライブラリなどをインストールする処理をDockerfileに書いていて、ADDでzipをダウンロードしたところまではいいんだけど、このzipどうやって解凍してやろうかとなった。 (Dockerホストに置いたものをコンテナにADDするのはなんか格好悪いから無しで。Dockerfile裸一貫で実現したい。) Windows 10のHyper-V Containersは、現時点でNano Serverしかサポートしていないのが厳しい点。Server Coreだったら楽だったのに。 以下、いろいろ試したことを書く。 正攻法: Expand-Archive PowerShellの v5 で実装されたExpand-Archiveというコマンドレットでzipを解凍できる。 Nano ServerのPowerShellのバージョンを確認したら 5.1 だったのでこれでいけるかと思った。 C:\&gt;powershell -command &quot;$PSVersionTable.PSVersion&quot; Major Minor Build Revision ----- ----- ----- -------- 5 1 14284 1000 したらこのエラー。 Add-Type : Cannot find path &#39;C:\System.IO.Compression.FileSystem.dll&#39; because it does not exist. At C:\windows\system32\windowspowershell\v1.0\Modules\Microsoft.PowerShell.Archive\Microsoft.PowerShell.Archive.psm1:914 char:5 &#43; Add-Type -AssemblyName System.IO.Compression.FileSystem &#43; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ &#43; CategoryInfo : ObjectNotFound: (C:\System.IO.Compression.FileSystem.dll:String) [Add-Type], ItemNotFoun dException &#43; FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.AddTypeCommand どうもPowerShellの 5.1 以降には、.NET FrameworkベースのDesktop Editionと、そこから機能を絞った.NET CoreベースのCore Editionがあり、Nano ServerのはCore Editionなんだそうな。 Expand-ArchiveはSystem.IO.Compression.FileSystem.dllの中のZipFileクラスに依存しているんだけど、.NET CoreにはSystem.IO.Compression.FileSystem.dllが含まれていないっぽい。 ShellオブジェクトのCopyHere PowerShellでのunzip方法を調べたらStack Overflowにいくつか載っていた。 Expand-Archiveと、System.IO.Compression.ZipFileを直接使う方法と、Shellオブジェクト(COMオブジェクト)のCopyHereメソッドを使う方法。 最初の2つはCore Editionでは使えないことが分かっているので、3つめにトライ。 こんなの↓ $shell = New-Object -ComObject shell.application $zip = $shell.NameSpace(&quot;C:\a.zip&quot;) MkDir(&quot;C:\a&quot;) foreach ($item in $zip.items()) { $shell.Namespace(&quot;C:\a&quot;).CopyHere($item) } 調べたらこの方法はMicrosoftから非推奨にされていることが分かったんだけど、一応やってみる。 したら以下のエラー。 new-object : Retrieving the COM class factory for component with CLSID {00000000-0000-0000-0000-000000000000} failed due to the following error: 80040154 Class not registered (Exception from HRESULT: 0x80040154 (REGDB_E_CLASSNOTREG)).">
     
-    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/nanoserver.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/nanoserver.png">
     
     
     <meta property="og:site_name" content="To Be Decided">
@@ -26,20 +26,20 @@
     </title>
 
     
-    <link rel="shortcut icon" href="https://tbd.kaitoy.xyz/assets/favicon.ico">
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
 
     
-    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://tbd.kaitoy.xyz/index.xml">
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
 
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
     <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
     <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
 
     
   </head>
@@ -48,7 +48,7 @@
     <header id="site-header">
       <div class="container">
         <h1 class="text-center">
-          <a href="https://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
         </h1>
       </div>
     </header>
@@ -64,7 +64,7 @@
 
       <div class="eyecatch text-center">
         
-        <img src="https://tbd.kaitoy.xyz/images/nanoserver.png" alt="Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え">
+        <img src="https://www.kaitoy.xyz/images/nanoserver.png" alt="Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え">
         
       </div>
 
@@ -87,7 +87,7 @@
 
 <h2 id="nano-serverでunzip">Nano Serverでunzip</h2>
 
-<p>Windows 10の<a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containers%E3%81%A8%E3%81%AF">Hyper-V Containers</a>の上で<a href="https://github.com/kaitoy/pcap4j">Pcap4J</a>のビルドとテストをするDockerイメージをビルドしたくて、そのための依存ライブラリなどをインストールする処理をDockerfileに書いていて、<code>ADD</code>でzipをダウンロードしたところまではいいんだけど、このzipどうやって解凍してやろうかとなった。
+<p>Windows 10の<a href="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containers%E3%81%A8%E3%81%AF">Hyper-V Containers</a>の上で<a href="https://github.com/kaitoy/pcap4j">Pcap4J</a>のビルドとテストをするDockerイメージをビルドしたくて、そのための依存ライブラリなどをインストールする処理をDockerfileに書いていて、<code>ADD</code>でzipをダウンロードしたところまではいいんだけど、このzipどうやって解凍してやろうかとなった。
 (Dockerホストに置いたものをコンテナに<code>ADD</code>するのはなんか格好悪いから無しで。Dockerfile裸一貫で実現したい。)</p>
 
 <p>Windows 10のHyper-V Containersは、<a href="https://social.msdn.microsoft.com/Forums/en-US/9eea93ac-18de-4953-bc7c-efd76a155526/are-microsoftwindowsservercore-containers-working-on-windows-10?forum=windowscontainers">現時点でNano Serverしかサポートしていない</a>のが厳しい点。Server Coreだったら楽だったのに。</p>
@@ -195,11 +195,11 @@ OpenJDK 64-Bit Server VM (build 25.102-b14, mixed mode)
           <div class="col-sm-5">
             <section id="share">
               <h3>Share</h3>
-              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f09%2f12%2funzip-on-nanoserver%2f&t=Hyper-V%e3%82%b3%e3%83%b3%e3%83%86%e3%83%8a%28Nano%20Server%29%e3%81%a7unzip%e3%81%97%e3%81%9f%e3%81%84%e3%81%aa%e3%82%89jar%e3%82%92%e4%bd%bf%e3%81%88" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
-              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f09%2f12%2funzip-on-nanoserver%2f&text=Hyper-V%e3%82%b3%e3%83%b3%e3%83%86%e3%83%8a%28Nano%20Server%29%e3%81%a7unzip%e3%81%97%e3%81%9f%e3%81%84%e3%81%aa%e3%82%89jar%e3%82%92%e4%bd%bf%e3%81%88&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
-              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f09%2f12%2funzip-on-nanoserver%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
-              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f09%2f12%2funzip-on-nanoserver%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
-              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f09%2f12%2funzip-on-nanoserver%2f&title=Hyper-V%e3%82%b3%e3%83%b3%e3%83%86%e3%83%8a%28Nano%20Server%29%e3%81%a7unzip%e3%81%97%e3%81%9f%e3%81%84%e3%81%aa%e3%82%89jar%e3%82%92%e4%bd%bf%e3%81%88" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f09%2f12%2funzip-on-nanoserver%2f&t=Hyper-V%e3%82%b3%e3%83%b3%e3%83%86%e3%83%8a%28Nano%20Server%29%e3%81%a7unzip%e3%81%97%e3%81%9f%e3%81%84%e3%81%aa%e3%82%89jar%e3%82%92%e4%bd%bf%e3%81%88" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f09%2f12%2funzip-on-nanoserver%2f&text=Hyper-V%e3%82%b3%e3%83%b3%e3%83%86%e3%83%8a%28Nano%20Server%29%e3%81%a7unzip%e3%81%97%e3%81%9f%e3%81%84%e3%81%aa%e3%82%89jar%e3%82%92%e4%bd%bf%e3%81%88&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f09%2f12%2funzip-on-nanoserver%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f09%2f12%2funzip-on-nanoserver%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f09%2f12%2funzip-on-nanoserver%2f&title=Hyper-V%e3%82%b3%e3%83%b3%e3%83%86%e3%83%8a%28Nano%20Server%29%e3%81%a7unzip%e3%81%97%e3%81%9f%e3%81%84%e3%81%aa%e3%82%89jar%e3%82%92%e4%bd%bf%e3%81%88" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
             </section>
           </div>
 
@@ -212,11 +212,11 @@ OpenJDK 64-Bit Server VM (build 25.102-b14, mixed mode)
               <h3>Related Post</h3>
               <div id="tags">
                 
-                <a href="https://tbd.kaitoy.xyz/tags/windows"><i class="fa fa-tags"></i> windows </a>
+                <a href="https://www.kaitoy.xyz/tags/windows"><i class="fa fa-tags"></i> windows </a>
                 
-                <a href="https://tbd.kaitoy.xyz/tags/nanoserver"><i class="fa fa-tags"></i> nanoserver </a>
+                <a href="https://www.kaitoy.xyz/tags/nanoserver"><i class="fa fa-tags"></i> nanoserver </a>
                 
-                <a href="https://tbd.kaitoy.xyz/tags/docker"><i class="fa fa-tags"></i> docker </a>
+                <a href="https://www.kaitoy.xyz/tags/docker"><i class="fa fa-tags"></i> docker </a>
                 
               </div>
 
@@ -235,13 +235,13 @@ OpenJDK 64-Bit Server VM (build 25.102-b14, mixed mode)
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/11/19/pcap4j-doesnt-work-on-bow-yet/">Currently Pcap4J Doesn&#39;t Work on Bash on Windows</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/11/19/pcap4j-doesnt-work-on-bow-yet/">Currently Pcap4J Doesn&#39;t Work on Bash on Windows</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/11/19/bow-do-not-change-linux-files-from-windows/">Bash on WindowsでWindows側からUbuntu側のファイルをいじると壊れることがあるので注意</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/11/19/bow-do-not-change-linux-files-from-windows/">Bash on WindowsでWindows側からUbuntu側のファイルをいじると壊れることがあるので注意</a></li>
                 
                 
                 
@@ -255,7 +255,7 @@ OpenJDK 64-Bit Server VM (build 25.102-b14, mixed mode)
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ</a></li>
                 
                 
                 
@@ -273,13 +273,13 @@ OpenJDK 64-Bit Server VM (build 25.102-b14, mixed mode)
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/07/31/docker-for-windows/">Docker for Windowsがコレジャナかった</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/07/31/docker-for-windows/">Docker for Windowsがコレジャナかった</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/">Windows Server 2016 TP5でWindows Containersにリトライ</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/">Windows Server 2016 TP5でWindows Containersにリトライ</a></li>
                 
                 
                 
@@ -309,13 +309,13 @@ OpenJDK 64-Bit Server VM (build 25.102-b14, mixed mode)
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">Pcap4J Meets Windows Containers</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">Pcap4J Meets Windows Containers</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/">Pcap4J with Four Native Libraries on Windows 10</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/">Pcap4J with Four Native Libraries on Windows 10</a></li>
                 
                 
                 
@@ -413,7 +413,7 @@ OpenJDK 64-Bit Server VM (build 25.102-b14, mixed mode)
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></li>
                 
                 
                 
@@ -423,7 +423,7 @@ OpenJDK 64-Bit Server VM (build 25.102-b14, mixed mode)
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></li>
                 
                 
                 
@@ -433,7 +433,7 @@ OpenJDK 64-Bit Server VM (build 25.102-b14, mixed mode)
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></li>
                 
                 
                 
@@ -454,7 +454,7 @@ OpenJDK 64-Bit Server VM (build 25.102-b14, mixed mode)
             <div class="col-sm-6">
               <div class="prev">
                 
-                <a href="https://tbd.kaitoy.xyz/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">
+                <a href="https://www.kaitoy.xyz/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">
                   <i class="fa fa-chevron-left"></i>
                   Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ
                 </a>
@@ -464,7 +464,7 @@ OpenJDK 64-Bit Server VM (build 25.102-b14, mixed mode)
             <div class="col-sm-6">
               <div class="next text-right">
                 
-                <a href="https://tbd.kaitoy.xyz/2016/08/21/an-encouragement-of-open-sourcing/">
+                <a href="https://www.kaitoy.xyz/2016/08/21/an-encouragement-of-open-sourcing/">
                   オープンソースプロジェクトのすゝめ
                   <i class="fa fa-chevron-right"></i>
                 </a>
@@ -542,106 +542,106 @@ OpenJDK 64-Bit Server VM (build 25.102-b14, mixed mode)
       
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/aws">aws</a>
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/bow">bow</a>
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/ci">ci</a>
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/docker">docker</a>
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/git">git</a>
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/goslings">goslings</a>
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jgit">jgit</a>
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/kotlin">kotlin</a>
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/react">react</a>
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/spring">spring</a>
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/subversion">subversion</a>
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/vcs">vcs</a>
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/windows">windows</a>
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
       
     </div>
     
@@ -675,7 +675,7 @@ OpenJDK 64-Bit Server VM (build 25.102-b14, mixed mode)
     </footer>
 
     <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
-    <script src="https://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
     
     <script>
       $(document).ready(function(){
@@ -686,7 +686,7 @@ OpenJDK 64-Bit Server VM (build 25.102-b14, mixed mode)
       });
     </script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
-    <script src="https://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script src="https://www.kaitoy.xyz/js/highlight.pack.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
 
     

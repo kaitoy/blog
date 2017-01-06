@@ -8,7 +8,7 @@ tags = [ "docker", "pcap4j" ]
 title = "Another way to capture LAN packets with pcap4j container"
 +++
 
-2 days ago, I posted an article [How to capture packets on a local network with Pcap4J container](https://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/).
+2 days ago, I posted an article [How to capture packets on a local network with Pcap4J container](https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/).
 
 Today, I was reading [Docker Docs](https://docs.docker.com/reference/run/#network-settings) and found another way to do it.
 I'm writing about it here.
@@ -27,7 +27,7 @@ This sounds easy. And more, according to the Docker Docs, the `host` mode gives 
 
 ### What I did
 
-In the same environment with [2 days ago](https://tbd.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/#what-i-did:a3622224f79a64f15ba6f2b66e1010d9), I did the followings:
+In the same environment with [2 days ago](https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/#what-i-did:a3622224f79a64f15ba6f2b66e1010d9), I did the followings:
 
 1. Start a Pcap4J container with the network mode set to host
 

@@ -40,7 +40,7 @@ Docker for Windowsもだいたい同じで、Docker EngineとDocker ComposeとDo
 Hyper-Vを使うため、VirtualBoxより速くて高信頼らしい。
 KitematicはDocker for Windowsには付属しないが、別途ダウンロードすればコンテナ管理に使える。Docker for WindowsとDocker Toolboxとは共存はできない。
 
-私は勝手にDocker for Windowsは[Hyper-V Containers](https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containersとは)のデスクトップOS版のようなものかと勘違いしていて、Windowsのコンテナが使えるようになったのかと期待したが違った。
+私は勝手にDocker for Windowsは[Hyper-V Containers](https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containersとは)のデスクトップOS版のようなものかと勘違いしていて、Windowsのコンテナが使えるようになったのかと期待したが違った。
 Docker for Windowsは単にDocker ToolboxのVirtualBoxがHyper-Vになっただけのもので、結局Linux VMの中でDockerを使うだけのものだということにセットアップ中に気付いた。
 
 コレジャナイ感がすごかった。

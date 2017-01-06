@@ -11,10 +11,10 @@
     
     <meta property="og:type" content="article">
     <meta property="og:title" content="Goslings開発メモ - その0: 紹介と概要と設計編 | To Be Decided">
-    <meta property="og:url" content="https://tbd.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/">
     <meta property="og:description" content="つい先日Goslingsというものを作った。 Gitのリポジトリの中身をビジュアライズするWebアプリケーションだ。 なんとなく見て楽しいという効用がある他は、Gitの勉強にちょっと使えるかもしれないという程度のものだが、もともとGit Advent Calendar 2016のネタを作るために作ろうと思ったものなので、とりあえずはこんなものでいいのだ。 将来気が向いたら、リポジトリの変更をリアルタイムに反映したり、リポジトリの操作もできるように拡張してもいいかもしれないけど、実用性が感じられないので多分やらない。 因みに、goslingsというのはgeese(雁)の子供を指す、ちょっとマイナーな英語。 Gitオブジェクトを見るアプリだから、GOで始まる名前にしようかと思っていて、そういえば今住んでいるFort Collinsに大量にいるgeeseの子供がgoslingsというし、並んで歩いている姿がちょうどコミットグラフのようだと思い、Goslilngsと名付けた。 単数形だとカナダのイケメン俳優かと思われてしまうので、複数形にした。goslingが一人でいることってないし。 GoslingsはSpring BootやJGitなどの習作でもある。 学んだことはアプリケーションとしてアウトプットするとよく身に付くものだ。 また文章としてもアウトプットしておくとさらによく身に付き、備忘録にもなるので、Goslingsの開発メモをいくつかのエントリに分けて書いていくことにする。 まずはSpring Boot編を書こうかと思うが、その前にGoslingsの設計等について書いておく。 Goslingsのアーキテクチャ GoslingsはWebサーバとして動き、始めにクライアントにHTML文書を返した後は、REST APIサーバとして働く。 サーバ側はJavaでできていて、Spring BootとJGitを使っている。 JGitを使いたかったのでJavaにしたが、そうでなければNodeで書きたかった。 因みに、今回はコーディングの詳細にあまりこだわらないつもりだったので、Lombokで楽をしようかと思ったけど、うっとうしいバグを踏み、どうやっても回避できなかったので使うのやめた。 二度と使うまい。 クライアント側はJavaScript(ES2015 &#43; async/await)のSPAで、禁jQuery縛り。 React &#43; Reduxというのをやってみたかったが、なんか大げさだしそこまで時間がとれなそうだったので、フレームワークなしで作った。ので、 「You Don&rsquo;t Need jQuery」とにらめっこしながら書いた。 Gitのコミットグラフの描画には、vis.jsを使った。 Stack Overflowの回答から雰囲気で選んだけど、やりたかったことが全部できて、見た目もよかったのでよかった。 サーバはDockerで動かすためにステートレスに作ったつもりで、後述の作業ディレクトリをコンテナ間で共有し、サーバの負荷に応じてコンテナを増やしたり減らしたり、簡単にスケールするようになっているはず。 Goslingsの機能設計 Goslingsサーバにブラウザでアクセスすると、まず参照したいGitリポジトリのURIを入力するフォームが表示される。 ここにはローカルにあるリポジトリへのファイルシステム上のパス(e.g. C:\repos\project-hoge\.git)か、リモートにあるリポジトリのURL(e.g. https://repos.foo.com/project-hoge.git)を入力できる。 URIを入力してBrowseボタンを押下すると、Goslingsの作業ディレクトリ(デフォルトではtmpディレクトリの下のgoslings)に、ローカルリポジトリの場合はそこへのsymlinkを、リモートリポジトリの場合はベアなクローンを作成する。 いずれの場合にも、正規化したURIから生成したUID(SHA-1ハッシュ)をsymlinkファイル名とクローンディレクトリ名に使う。 サーバはリポジトリの準備ができたら、そのUIDをトークン(i.e. リポジトリ引換券)としてクライアントに渡す。 クライアントはそのトークンを使って、リポジトリの情報をサーバに要求する。 こうすることで、以下の様に後でリポジトリを取り扱いやすくなる。 クライアントやサーバは、可変長の長ったらしい特殊文字の含まれたURIの代わりに、40文字の数字とアルファベットだけで構成されたトークンでリポジトリを特定でき、処理がしやすい。 後でサーバがリポジトリにアクセスする際、ローカルとリモートを区別する必要がないので、処理がしやすい。 サーバ内部でリポジトリというエンティティを扱う際、リポジトリに直接触るデータレイヤと、クライアントからのリクエストをさばくインターフェースレイヤとの間で、単なる文字列であるトークンをやりとりすればよく、データレイヤの実装の詳細をインターフェースレイヤに曝さなくてよくなり、レイヤをきれいに分離できる。これはJavaのインターフェースを作ってやってもできるが、インターフェースのAPIを考える手間を考えるとトークンの方が楽。 クライアントはトークンを受け取ったらコミットグラフビューに遷移する。 このビューでの表示は以前Gitリポジトリの中身を解説した記事に合わせた。 初期状態ではコミットと参照とタグだけが表示されていて、コミットをダブルクリックするとツリーが表示され、さらにツリーをダブルクリックするとドリルダウンしていける。 ノードをシングルクリックするとそのコンテンツを参照できる。 Goslingsの使い方 Spring Bootを使ったおかげで、ビルド成果物は単一のjarで、これを以下の様に実行するだけでサーバが立ち上がる。Webアプリケーションコンテナいらず。 $ java -jar goslings-server-0.0.1.jar --server.port 80 com.github.kaitoy.goslings.server.reposDirというシステムプロパティを使って作業ディレクトリのパスを指定できる。 また、com.github.kaitoy.goslings.server.uriPrefixというシステムプロパティに値を設定すると、その値で始まるURI以外をフォームで入力するとエラーになるようになる。 リモートリポジトリを何でもかんでもクローンされるとディスク容量がいくらあっても足りないので、URLに制限をかけるために作った設定。 汎用性は考えておらず、複数指定したり正規表現を指定したりといったことはできない。">
     
-    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/goslings-logo.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/goslings-logo.png">
     
     
     <meta property="og:site_name" content="To Be Decided">
@@ -26,20 +26,20 @@
     </title>
 
     
-    <link rel="shortcut icon" href="https://tbd.kaitoy.xyz/assets/favicon.ico">
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
 
     
-    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://tbd.kaitoy.xyz/index.xml">
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
 
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
     <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
     <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
 
     
   </head>
@@ -48,7 +48,7 @@
     <header id="site-header">
       <div class="container">
         <h1 class="text-center">
-          <a href="https://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
         </h1>
       </div>
     </header>
@@ -64,7 +64,7 @@
 
       <div class="eyecatch text-center">
         
-        <img src="https://tbd.kaitoy.xyz/images/goslings-logo.png" alt="Goslings開発メモ - その0: 紹介と概要と設計編">
+        <img src="https://www.kaitoy.xyz/images/goslings-logo.png" alt="Goslings開発メモ - その0: 紹介と概要と設計編">
         
       </div>
 
@@ -72,7 +72,7 @@
         
 
 <p>つい先日<a href="https://github.com/kaitoy/goslings"><strong>Goslings</strong></a>というものを作った。
-<a href="https://tbd.kaitoy.xyz/2015/12/27/git-repository/">Gitのリポジトリの中身</a>をビジュアライズするWebアプリケーションだ。
+<a href="https://www.kaitoy.xyz/2015/12/27/git-repository/">Gitのリポジトリの中身</a>をビジュアライズするWebアプリケーションだ。
 なんとなく見て楽しいという効用がある他は、Gitの勉強にちょっと使えるかもしれないという程度のものだが、もともと<a href="http://qiita.com/advent-calendar/2016/git">Git Advent Calendar 2016</a>のネタを作るために作ろうと思ったものなので、とりあえずはこんなものでいいのだ。
 将来気が向いたら、リポジトリの変更をリアルタイムに反映したり、リポジトリの操作もできるように拡張してもいいかもしれないけど、実用性が感じられないので多分やらない。</p>
 
@@ -141,7 +141,7 @@ JGitを使いたかったのでJavaにしたが、そうでなければ<a href="
 
 <p><br></p>
 
-<p>このビューでの表示は<a href="https://tbd.kaitoy.xyz/2015/12/27/git-repository/">以前Gitリポジトリの中身を解説した記事</a>に合わせた。</p>
+<p>このビューでの表示は<a href="https://www.kaitoy.xyz/2015/12/27/git-repository/">以前Gitリポジトリの中身を解説した記事</a>に合わせた。</p>
 
 <p>初期状態ではコミットと参照とタグだけが表示されていて、コミットをダブルクリックするとツリーが表示され、さらにツリーをダブルクリックするとドリルダウンしていける。
 ノードをシングルクリックするとそのコンテンツを参照できる。</p>
@@ -188,11 +188,11 @@ $ docker run -p 80:80 -itd kaitoy/goslings 80 /goslings-repos https://github.com
           <div class="col-sm-5">
             <section id="share">
               <h3>Share</h3>
-              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f12%2f11%2fgoslings-development-memo0-intro-design%2f&t=Goslings%e9%96%8b%e7%99%ba%e3%83%a1%e3%83%a2%20-%20%e3%81%9d%e3%81%ae0%3a%20%e7%b4%b9%e4%bb%8b%e3%81%a8%e6%a6%82%e8%a6%81%e3%81%a8%e8%a8%ad%e8%a8%88%e7%b7%a8" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
-              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f12%2f11%2fgoslings-development-memo0-intro-design%2f&text=Goslings%e9%96%8b%e7%99%ba%e3%83%a1%e3%83%a2%20-%20%e3%81%9d%e3%81%ae0%3a%20%e7%b4%b9%e4%bb%8b%e3%81%a8%e6%a6%82%e8%a6%81%e3%81%a8%e8%a8%ad%e8%a8%88%e7%b7%a8&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
-              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f12%2f11%2fgoslings-development-memo0-intro-design%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
-              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f12%2f11%2fgoslings-development-memo0-intro-design%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
-              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f12%2f11%2fgoslings-development-memo0-intro-design%2f&title=Goslings%e9%96%8b%e7%99%ba%e3%83%a1%e3%83%a2%20-%20%e3%81%9d%e3%81%ae0%3a%20%e7%b4%b9%e4%bb%8b%e3%81%a8%e6%a6%82%e8%a6%81%e3%81%a8%e8%a8%ad%e8%a8%88%e7%b7%a8" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f12%2f11%2fgoslings-development-memo0-intro-design%2f&t=Goslings%e9%96%8b%e7%99%ba%e3%83%a1%e3%83%a2%20-%20%e3%81%9d%e3%81%ae0%3a%20%e7%b4%b9%e4%bb%8b%e3%81%a8%e6%a6%82%e8%a6%81%e3%81%a8%e8%a8%ad%e8%a8%88%e7%b7%a8" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f12%2f11%2fgoslings-development-memo0-intro-design%2f&text=Goslings%e9%96%8b%e7%99%ba%e3%83%a1%e3%83%a2%20-%20%e3%81%9d%e3%81%ae0%3a%20%e7%b4%b9%e4%bb%8b%e3%81%a8%e6%a6%82%e8%a6%81%e3%81%a8%e8%a8%ad%e8%a8%88%e7%b7%a8&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f12%2f11%2fgoslings-development-memo0-intro-design%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f12%2f11%2fgoslings-development-memo0-intro-design%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f12%2f11%2fgoslings-development-memo0-intro-design%2f&title=Goslings%e9%96%8b%e7%99%ba%e3%83%a1%e3%83%a2%20-%20%e3%81%9d%e3%81%ae0%3a%20%e7%b4%b9%e4%bb%8b%e3%81%a8%e6%a6%82%e8%a6%81%e3%81%a8%e8%a8%ad%e8%a8%88%e7%b7%a8" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
             </section>
           </div>
 
@@ -205,17 +205,17 @@ $ docker run -p 80:80 -itd kaitoy/goslings 80 /goslings-repos https://github.com
               <h3>Related Post</h3>
               <div id="tags">
                 
-                <a href="https://tbd.kaitoy.xyz/tags/goslings"><i class="fa fa-tags"></i> goslings </a>
+                <a href="https://www.kaitoy.xyz/tags/goslings"><i class="fa fa-tags"></i> goslings </a>
                 
-                <a href="https://tbd.kaitoy.xyz/tags/spring"><i class="fa fa-tags"></i> spring </a>
+                <a href="https://www.kaitoy.xyz/tags/spring"><i class="fa fa-tags"></i> spring </a>
                 
-                <a href="https://tbd.kaitoy.xyz/tags/spring-boot"><i class="fa fa-tags"></i> spring-boot </a>
+                <a href="https://www.kaitoy.xyz/tags/spring-boot"><i class="fa fa-tags"></i> spring-boot </a>
                 
-                <a href="https://tbd.kaitoy.xyz/tags/jgit"><i class="fa fa-tags"></i> jgit </a>
+                <a href="https://www.kaitoy.xyz/tags/jgit"><i class="fa fa-tags"></i> jgit </a>
                 
-                <a href="https://tbd.kaitoy.xyz/tags/aws"><i class="fa fa-tags"></i> aws </a>
+                <a href="https://www.kaitoy.xyz/tags/aws"><i class="fa fa-tags"></i> aws </a>
                 
-                <a href="https://tbd.kaitoy.xyz/tags/aws-ecs"><i class="fa fa-tags"></i> aws-ecs </a>
+                <a href="https://www.kaitoy.xyz/tags/aws-ecs"><i class="fa fa-tags"></i> aws-ecs </a>
                 
               </div>
 
@@ -226,7 +226,7 @@ $ docker run -p 80:80 -itd kaitoy/goslings 80 /goslings-repos https://github.com
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/">Goslings開発メモ - その1: Spring Boot編</a></li>
+                <li><a href="https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/">Goslings開発メモ - その1: Spring Boot編</a></li>
                 
                 
                 
@@ -435,7 +435,7 @@ $ docker run -p 80:80 -itd kaitoy/goslings 80 /goslings-repos https://github.com
             <div class="col-sm-6">
               <div class="prev">
                 
-                <a href="https://tbd.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/">
+                <a href="https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/">
                   <i class="fa fa-chevron-left"></i>
                   Goslings開発メモ - その1: Spring Boot編
                 </a>
@@ -445,7 +445,7 @@ $ docker run -p 80:80 -itd kaitoy/goslings 80 /goslings-repos https://github.com
             <div class="col-sm-6">
               <div class="next text-right">
                 
-                <a href="https://tbd.kaitoy.xyz/2016/11/19/pcap4j-doesnt-work-on-bow-yet/">
+                <a href="https://www.kaitoy.xyz/2016/11/19/pcap4j-doesnt-work-on-bow-yet/">
                   Currently Pcap4J Doesn&#39;t Work on Bash on Windows
                   <i class="fa fa-chevron-right"></i>
                 </a>
@@ -523,106 +523,106 @@ $ docker run -p 80:80 -itd kaitoy/goslings 80 /goslings-repos https://github.com
       
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/aws">aws</a>
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/bow">bow</a>
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/ci">ci</a>
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/docker">docker</a>
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/git">git</a>
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/goslings">goslings</a>
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jgit">jgit</a>
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/kotlin">kotlin</a>
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/react">react</a>
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/spring">spring</a>
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/subversion">subversion</a>
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/vcs">vcs</a>
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/windows">windows</a>
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
       
     </div>
     
@@ -656,7 +656,7 @@ $ docker run -p 80:80 -itd kaitoy/goslings 80 /goslings-repos https://github.com
     </footer>
 
     <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
-    <script src="https://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
     
     <script>
       $(document).ready(function(){
@@ -667,7 +667,7 @@ $ docker run -p 80:80 -itd kaitoy/goslings 80 /goslings-repos https://github.com
       });
     </script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
-    <script src="https://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script src="https://www.kaitoy.xyz/js/highlight.pack.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
 
     

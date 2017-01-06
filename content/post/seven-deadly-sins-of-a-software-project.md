@@ -45,11 +45,11 @@ title = "ソフトウェアプロジェクトの7つの大罪"
 
 ところで、[既存の有名なアンチパターン](https://ja.wikipedia.org/wiki/%E3%82%A2%E3%83%B3%E3%83%81%E3%83%91%E3%82%BF%E3%83%BC%E3%83%B3)のほかに、私は以下のものもダメなコーディング法だと考えている。
 
-* [NULL参照](https://tbd.kaitoy.xyz/2015/07/26/why-null-is-bad/)
-* [ユーティリティクラス](https://tbd.kaitoy.xyz/2016/01/03/oop-alternative-to-utility-classes/)
+* [NULL参照](https://www.kaitoy.xyz/2015/07/26/why-null-is-bad/)
+* [ユーティリティクラス](https://www.kaitoy.xyz/2016/01/03/oop-alternative-to-utility-classes/)
 * [可変オブジェクト](http://www.yegor256.com/2014/06/09/objects-should-be-immutable.html)
-* [GetterとSetter](https://tbd.kaitoy.xyz/2015/07/22/getters-setters-evil/)
-* [オブジェクト関係マッピング(ORM)](https://tbd.kaitoy.xyz/2015/09/13/orm-is-offensive-anti-pattern/)
+* [GetterとSetter](https://www.kaitoy.xyz/2015/07/22/getters-setters-evil/)
+* [オブジェクト関係マッピング(ORM)](https://www.kaitoy.xyz/2015/09/13/orm-is-offensive-anti-pattern/)
 * シングルトン
 * [Controllers、Managers、Validators](http://www.yegor256.com/2015/03/09/objects-end-with-er.html)
 * [Public Static メソッド](http://www.yegor256.com/2015/02/20/utility-classes-vs-functional-programming.html)

@@ -8,7 +8,7 @@ tags = [ "blog", "github", "hugo" ]
 title = "GitHub Pagesでブログ立ち上げ - Hugoを使う"
 +++
 
-[__GitHub Pagesでブログ立ち上げ - Jekyllのためのツール__](https://tbd.kaitoy.xyz/2015/08/25/tools-for-jekyll/)の続き。
+[__GitHub Pagesでブログ立ち上げ - Jekyllのためのツール__](https://www.kaitoy.xyz/2015/08/25/tools-for-jekyll/)の続き。
 前回は、[__GitHub Pages__](https://pages.github.com/)で公開するブログサイトを構築するのに、[__Jekyll__](http://jekyllrb.com/docs/home/)とJekyll関連ツールを使おうと四苦八苦したが、結局Jekyllに見切りをつけ、[__Hugo__](https://gohugo.io/)を使うことに決めた。
 
 ## Hugoとは
@@ -44,7 +44,7 @@ C:\Users\Kaito\Desktop\tool\hugo_0.14_windows_amd64\hugo_0.14_windows_amd64.exe 
 * サーバサイド: Hugoでのブログサイト生成時にハイライトしておく方法。
 * クライアントサイド: クライアントがブログを読み込んだ時にJavaScriptでハイライトする方法。
 
-前者の方が当然クライアントの負荷が軽くなるが、[__Pygments__](http://pygments.org/)のインストールが必要だったりめんどくさそうなので後者にする。(Pygmentsは[Jekyllのとき](https://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/)にすでに入れたけど…)
+前者の方が当然クライアントの負荷が軽くなるが、[__Pygments__](http://pygments.org/)のインストールが必要だったりめんどくさそうなので後者にする。(Pygmentsは[Jekyllのとき](https://www.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/)にすでに入れたけど…)
 
 クライアントサイドでやるのもいくつかやり方があるが、例えば[Highlight.js](https://highlightjs.org/)を使うなら以下をHTMLヘッダに加えるだけでいい。
 
@@ -191,9 +191,9 @@ blog内の変更をコミットして、GitHubにblogという名のリポジト
 
 これでgh-pagesブランチが__blog\pages\__フォルダに展開された。
 
-因みにgh-pagesは、[以前のエントリ](https://tbd.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/#github-pages%E5%91%B3%E8%A6%8B)にも書いたが、GitHub Pagesで公開するサイトを置く特別なブランチ。
+因みにgh-pagesは、[以前のエントリ](https://www.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/#github-pages%E5%91%B3%E8%A6%8B)にも書いたが、GitHub Pagesで公開するサイトを置く特別なブランチ。
 
-(2016/8/18追記: [今はgh-pagesブランチは不要。](https://tbd.kaitoy.xyz/2016/08/18/simpler-github-pages-publishing/))
+(2016/8/18追記: [今はgh-pagesブランチは不要。](https://www.kaitoy.xyz/2016/08/18/simpler-github-pages-publishing/))
 
 ## ビルド・デプロイ
 ビルドコマンドは単に`hugo`。ビルド成果物はデフォルトで__public__というフォルダに入る。
@@ -209,11 +209,11 @@ blog内の変更をコミットして、GitHubにblogという名のリポジト
 `https://kaitoy.github.io/blog/`でサイトを確認できる。
 
 ## カスタムドメイン
-サイトに`http://tbd.kaitoy.xyz`でアクセスできるようにする。手順は以下。
+サイトに`http://www.kaitoy.xyz`でアクセスできるようにする。手順は以下。
 
 1. [__VALUE-DOMAIN__](https://www.value-domain.com/)でkaitoy.xyzを取得。
 2. VALUE-DOMAINのDNS設定に`cname tbd kaitoy.github.io.`を追加。
-3. gh-pagesブランチのルートに__CNAME__というファイルを作り、__tbd.kaitoy.xyz__とだけ書いておく。
-4. config.tomlのbaseurlを__http://tbd.kaitoy.xyz__に変更。ビルドしてプッシュ。
+3. gh-pagesブランチのルートに__CNAME__というファイルを作り、__www.kaitoy.xyz__とだけ書いておく。
+4. config.tomlのbaseurlを__http://www.kaitoy.xyz__に変更。ビルドしてプッシュ。
 
 以上でブログサイト立ち上げ完了。あとはテーマをカスタマイズしたり、ひたすらエントリを書く。

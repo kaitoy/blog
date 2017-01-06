@@ -48,7 +48,7 @@ Error: EINVAL, invalid argument
 コマンドプロンプトでやるべし。
 
 ## 注意すべき点 2: アンパブリッシュはパブリッシュの真逆じゃない
-[以前の記事](https://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/#10-%E3%83%91%E3%83%96%E3%83%AA%E3%83%83%E3%82%B7%E3%83%A5)で
+[以前の記事](https://www.kaitoy.xyz/2015/08/21/japanese-word-selection/#10-%E3%83%91%E3%83%96%E3%83%AA%E3%83%83%E3%82%B7%E3%83%A5)で
 `apm publish`は以下の処理をすると書いた。
 
 > 1. (初回のみ)パッケージ名をatom.ioに登録する。
@@ -81,7 +81,7 @@ git revert <ハッシュ>
 
 1. バージョン`0.1.0`をパブリッシュ。
 2. `hoge`をちゃんとインストールできるかを確認するために、
-    1. `apm unlink hoge`で`.atom\packages`からリンクを削除。([以前](https://tbd.kaitoy.xyz/2015/08/21/japanese-word-selection/#11-%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AE%E3%82%A2%E3%83%83%E3%83%97%E3%83%87%E3%83%BC%E3%83%88%E3%81%AE%E9%96%8B%E7%99%BA)、パブリッシュすると`.atom\packages`にはパッケージの実ファイルが入ると書いたが、リンクのままだった。勘違い?)
+    1. `apm unlink hoge`で`.atom\packages`からリンクを削除。([以前](https://www.kaitoy.xyz/2015/08/21/japanese-word-selection/#11-%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AE%E3%82%A2%E3%83%83%E3%83%97%E3%83%87%E3%83%BC%E3%83%88%E3%81%AE%E9%96%8B%E7%99%BA)、パブリッシュすると`.atom\packages`にはパッケージの実ファイルが入ると書いたが、リンクのままだった。勘違い?)
     2. AtomのSettingsから`hoge`をインストール。
 3. ちゃんとインストールできなかったので`apm unpublish hoge`して、バージョンも戻す。
 4. `hoge`を修正して、再度`0.1.0`としてパブリッシュ。

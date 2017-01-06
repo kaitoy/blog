@@ -11,10 +11,10 @@
     
     <meta property="og:type" content="article">
     <meta property="og:title" content="Gitのリポジトリの中身をなるべく正確に理解する | To Be Decided">
-    <meta property="og:url" content="https://tbd.kaitoy.xyz/2015/12/27/git-repository/">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2015/12/27/git-repository/">
     <meta property="og:description" content="このエントリでは、Gitの基本的な使い方は理解している前提で、そのリポジトリの構造をなるべく正確に説明する。 ここに書いてあることは概ね、筆者がO&rsquo;Reillyの蝙蝠本を読んで得た知識に基づく。 リポジトリの構造というとコアで上級者向けの知識のように聞こえるが、これをまず理解しておくことで強力で複雑なGitの機能を習得するのが非常に楽になる。 具体的には、Gitにおけるブランチの概念などの理解が深まったり、git resetなどのGit特有で分かり辛いコマンドを自信をもって使えるようになったり、なにより、Gitを使う上での最大のハードルである インデックス や HEAD の概念を完璧に理解できるというメリットがある。 チュートリアルを終えたくらいの初心者にこそ読んでほしいエントリである。 Gitリポジトリの中身 Gitのリポジトリは、プロジェクトをクローンしたときとかにできる.gitディレクトリ内に詰まっている。 このディレクトリには、オブジェクト格納領域 と インデックス というデータ構造が入っている。 また、参照 (ref) や シンボリック参照 (symref) というものも入っている。 以下、それぞれについて説明する。 オブジェクト格納領域 オブジェクト格納領域は、ファイルシステム上では.git/objects/以下にあたる。 ここには、バージョン管理されているファイルの情報やそのコミット履歴などが保存されていて、具体的には以下の4種類のオブジェクトが置かれている。 ブロブ 一つのファイルを表すオブジェクト。 バージョン管理対象のファイルの内容(だけ)を保持する。 ツリー 一つのディレクトリを表すオブジェクト。ブロブや別のツリーを指すポインタを持ち、またそれらが表すファイル/ディレクトリの名前や属性を保持する。 つまり、これとブロブを組み合わせると、ファイルシステム上のディレクトリツリーを表すことができる。 コミット 一つのコミットを表すオブジェクト。コミット日時やログメッセージなどの情報と、一つ前のコミット(親コミット)を指すポインタと、一つのツリーを指すポインタを持つ。 このツリーはプロジェクトのルートディレクトリを表す。 つまり、一つのコミットは、プロジェクトのある時点でのディレクトリツリー全体を表してもいる。 タグ 一つの注釈付きタグ(git tag -aで作るタグ)を表すオブジェクト。 タグ名やタグにつけたコメントなどの情報と、一つのオブジェクト(普通はコミット)へのポインタを持つ。 因みに軽量タグ(git tagで作るタグ)はオブジェクトにならない。 ファイルシステム上で、一つのオブジェクトは一つのファイルに書き込まれ、zlibで圧縮され、.git/objects/以下に配置される。 そのファイルへのパスには、オブジェクトのコンテンツから計算されたSHA1ハッシュの値(i.e. オブジェクトの名前)が使われる。 例えば.git/objects/16/cacde1ddabe1698b0e41e091e4697313e2b7e5というファイルがあったら、これは 16cacde1ddabe1698b0e41e091e4697313e2b7e5 という名のオブジェクトの実体。 git cat-file -p &lt;SHA1ハッシュ&gt;でオブジェクトのコンテンツを見れるので、いくつか見てみると面白い。 たとえばコミットオブジェクトは以下の様になっている。 $ git cat-file -p d444447526f91a97f2edeefc65d4f58e8e006d78 tree 5d43dfbb8dd89018b9a383d6b9f663166e3cf9f9 parent adcf8b197c6c156860dc8aa66ccb9a0c0a3bebb6 author kaitoy &lt;kaitoy@pcap4j.org&gt; 1480004891 -0700 committer kaitoy &lt;kaitoy@pcap4j.org&gt; 1480004891 -0700 [#76] Rmove unneeded makePacketForInvokingPacketField call from IcmpV4InvokingPacketPacket.">
     
-    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/git.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/git.png">
     
     
     <meta property="og:site_name" content="To Be Decided">
@@ -26,20 +26,20 @@
     </title>
 
     
-    <link rel="shortcut icon" href="https://tbd.kaitoy.xyz/assets/favicon.ico">
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
 
     
-    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://tbd.kaitoy.xyz/index.xml">
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
 
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
     <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
     <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
 
     
   </head>
@@ -48,7 +48,7 @@
     <header id="site-header">
       <div class="container">
         <h1 class="text-center">
-          <a href="https://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
         </h1>
       </div>
     </header>
@@ -64,7 +64,7 @@
 
       <div class="eyecatch text-center">
         
-        <img src="https://tbd.kaitoy.xyz/images/git.png" alt="Gitのリポジトリの中身をなるべく正確に理解する">
+        <img src="https://www.kaitoy.xyz/images/git.png" alt="Gitのリポジトリの中身をなるべく正確に理解する">
         
       </div>
 
@@ -75,7 +75,7 @@
 ここに書いてあることは概ね、筆者が<a href="https://www.oreilly.co.jp/books/9784873114408/">O&rsquo;Reillyの蝙蝠本</a>を読んで得た知識に基づく。</p>
 
 <p>リポジトリの構造というとコアで上級者向けの知識のように聞こえるが、これをまず理解しておくことで強力で複雑なGitの機能を習得するのが非常に楽になる。
-具体的には、Gitにおけるブランチの概念などの理解が深まったり、<a href="https://tbd.kaitoy.xyz/2016/01/01/git-revert-reset/#git-reset"><code>git reset</code></a>などのGit特有で分かり辛いコマンドを自信をもって使えるようになったり、なにより、Gitを使う上での最大のハードルである <strong>インデックス</strong> や <strong>HEAD</strong> の概念を完璧に理解できるというメリットがある。</p>
+具体的には、Gitにおけるブランチの概念などの理解が深まったり、<a href="https://www.kaitoy.xyz/2016/01/01/git-revert-reset/#git-reset"><code>git reset</code></a>などのGit特有で分かり辛いコマンドを自信をもって使えるようになったり、なにより、Gitを使う上での最大のハードルである <strong>インデックス</strong> や <strong>HEAD</strong> の概念を完璧に理解できるというメリットがある。</p>
 
 <p>チュートリアルを終えたくらいの初心者にこそ読んでほしいエントリである。</p>
 
@@ -235,7 +235,7 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
 
 <p><br></p>
 
-<p>リモート追跡ブランチについては<a href="https://tbd.kaitoy.xyz/2015/12/31/git-dvc/">別のエントリ</a>で書く。</p>
+<p>リモート追跡ブランチについては<a href="https://www.kaitoy.xyz/2015/12/31/git-dvc/">別のエントリ</a>で書く。</p>
 
 <h3 id="シンボリック参照-symref">シンボリック参照 (symref)</h3>
 
@@ -248,7 +248,7 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
 
 <li><p><strong>ORIG_HEAD</strong></p>
 
-<p><code>git merge</code>や<a href="https://tbd.kaitoy.xyz/2016/01/01/git-revert-reset/#git-reset"><code>git reset</code></a>でHEADが更新されたとき、更新前のHEADが指していたブランチが指していたコミットを指す。</p></li>
+<p><code>git merge</code>や<a href="https://www.kaitoy.xyz/2016/01/01/git-revert-reset/#git-reset"><code>git reset</code></a>でHEADが更新されたとき、更新前のHEADが指していたブランチが指していたコミットを指す。</p></li>
 
 <li><p><strong>FETCH_HEAD</strong></p>
 
@@ -287,7 +287,7 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
 
 <p><br></p>
 
-<p>実際のGitリポジトリのオブジェクト、参照、シンボリック参照を、この記事のスライドと同じ見た目でビジュアライズするツール、<a href="https://tbd.kaitoy.xyz/tags/goslings/"><strong>Goslings</strong></a>を作った。
+<p>実際のGitリポジトリのオブジェクト、参照、シンボリック参照を、この記事のスライドと同じ見た目でビジュアライズするツール、<a href="https://www.kaitoy.xyz/tags/goslings/"><strong>Goslings</strong></a>を作った。
 このツールを使って実際のリポジトリの中身を見ながらこの記事を内容を確認すると、より理解が深まるかもしれない。</p>
 
       </div>
@@ -301,11 +301,11 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
           <div class="col-sm-5">
             <section id="share">
               <h3>Share</h3>
-              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f27%2fgit-repository%2f&t=Git%e3%81%ae%e3%83%aa%e3%83%9d%e3%82%b8%e3%83%88%e3%83%aa%e3%81%ae%e4%b8%ad%e8%ba%ab%e3%82%92%e3%81%aa%e3%82%8b%e3%81%b9%e3%81%8f%e6%ad%a3%e7%a2%ba%e3%81%ab%e7%90%86%e8%a7%a3%e3%81%99%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
-              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f27%2fgit-repository%2f&text=Git%e3%81%ae%e3%83%aa%e3%83%9d%e3%82%b8%e3%83%88%e3%83%aa%e3%81%ae%e4%b8%ad%e8%ba%ab%e3%82%92%e3%81%aa%e3%82%8b%e3%81%b9%e3%81%8f%e6%ad%a3%e7%a2%ba%e3%81%ab%e7%90%86%e8%a7%a3%e3%81%99%e3%82%8b&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
-              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f27%2fgit-repository%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
-              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f27%2fgit-repository%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
-              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2015%2f12%2f27%2fgit-repository%2f&title=Git%e3%81%ae%e3%83%aa%e3%83%9d%e3%82%b8%e3%83%88%e3%83%aa%e3%81%ae%e4%b8%ad%e8%ba%ab%e3%82%92%e3%81%aa%e3%82%8b%e3%81%b9%e3%81%8f%e6%ad%a3%e7%a2%ba%e3%81%ab%e7%90%86%e8%a7%a3%e3%81%99%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f12%2f27%2fgit-repository%2f&t=Git%e3%81%ae%e3%83%aa%e3%83%9d%e3%82%b8%e3%83%88%e3%83%aa%e3%81%ae%e4%b8%ad%e8%ba%ab%e3%82%92%e3%81%aa%e3%82%8b%e3%81%b9%e3%81%8f%e6%ad%a3%e7%a2%ba%e3%81%ab%e7%90%86%e8%a7%a3%e3%81%99%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f12%2f27%2fgit-repository%2f&text=Git%e3%81%ae%e3%83%aa%e3%83%9d%e3%82%b8%e3%83%88%e3%83%aa%e3%81%ae%e4%b8%ad%e8%ba%ab%e3%82%92%e3%81%aa%e3%82%8b%e3%81%b9%e3%81%8f%e6%ad%a3%e7%a2%ba%e3%81%ab%e7%90%86%e8%a7%a3%e3%81%99%e3%82%8b&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f12%2f27%2fgit-repository%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f12%2f27%2fgit-repository%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f12%2f27%2fgit-repository%2f&title=Git%e3%81%ae%e3%83%aa%e3%83%9d%e3%82%b8%e3%83%88%e3%83%aa%e3%81%ae%e4%b8%ad%e8%ba%ab%e3%82%92%e3%81%aa%e3%82%8b%e3%81%b9%e3%81%8f%e6%ad%a3%e7%a2%ba%e3%81%ab%e7%90%86%e8%a7%a3%e3%81%99%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
             </section>
           </div>
 
@@ -318,9 +318,9 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
               <h3>Related Post</h3>
               <div id="tags">
                 
-                <a href="https://tbd.kaitoy.xyz/tags/git"><i class="fa fa-tags"></i> git </a>
+                <a href="https://www.kaitoy.xyz/tags/git"><i class="fa fa-tags"></i> git </a>
                 
-                <a href="https://tbd.kaitoy.xyz/tags/vcs"><i class="fa fa-tags"></i> vcs </a>
+                <a href="https://www.kaitoy.xyz/tags/vcs"><i class="fa fa-tags"></i> vcs </a>
                 
               </div>
 
@@ -347,13 +347,13 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/10/08/git-checkout/">git checkoutを図解する</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/10/08/git-checkout/">git checkoutを図解する</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/10/06/git-vs-subversion/">Gitの良さが分からない？ ちょっとそこに座れ</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/10/06/git-vs-subversion/">Gitの良さが分からない？ ちょっとそこに座れ</a></li>
                 
                 
                 
@@ -427,19 +427,19 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/01/01/git-revert-reset/">git resetとrevertを図解する</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/01/01/git-revert-reset/">git resetとrevertを図解する</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/12/31/git-dvc/">Gitの分散バージョン管理の仕組み</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/12/31/git-dvc/">Gitの分散バージョン管理の仕組み</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/12/28/git-merge/">Gitのマージを図解する</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/12/28/git-merge/">Gitのマージを図解する</a></li>
                 
                 
                 
@@ -548,7 +548,7 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
             <div class="col-sm-6">
               <div class="prev">
                 
-                <a href="https://tbd.kaitoy.xyz/2015/12/28/git-merge/">
+                <a href="https://www.kaitoy.xyz/2015/12/28/git-merge/">
                   <i class="fa fa-chevron-left"></i>
                   Gitのマージを図解する
                 </a>
@@ -558,7 +558,7 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
             <div class="col-sm-6">
               <div class="next text-right">
                 
-                <a href="https://tbd.kaitoy.xyz/2015/12/21/hello-react/">
+                <a href="https://www.kaitoy.xyz/2015/12/21/hello-react/">
                   ReactをAtomパッケージ開発に使ってみた
                   <i class="fa fa-chevron-right"></i>
                 </a>
@@ -636,106 +636,106 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
       
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/aws">aws</a>
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/bow">bow</a>
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/ci">ci</a>
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/docker">docker</a>
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/git">git</a>
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/goslings">goslings</a>
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jgit">jgit</a>
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/kotlin">kotlin</a>
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/react">react</a>
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/spring">spring</a>
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/subversion">subversion</a>
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/vcs">vcs</a>
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/windows">windows</a>
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
       
     </div>
     
@@ -769,7 +769,7 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
     </footer>
 
     <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
-    <script src="https://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
     
     <script>
       $(document).ready(function(){
@@ -780,7 +780,7 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
       });
     </script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
-    <script src="https://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script src="https://www.kaitoy.xyz/js/highlight.pack.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
 
     

@@ -11,10 +11,10 @@
     
     <meta property="og:type" content="article">
     <meta property="og:title" content="Bash on WindowsでWindows側からUbuntu側のファイルをいじると壊れることがあるので注意 | To Be Decided">
-    <meta property="og:url" content="https://tbd.kaitoy.xyz/2016/11/19/bow-do-not-change-linux-files-from-windows/">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2016/11/19/bow-do-not-change-linux-files-from-windows/">
     <meta property="og:description" content="Bash on WindowsでWindows側からUbuntu側のファイルをいじると危険という情報を見つけたので、試してみたら確かに困った状態になった話。 Bash on Windowsとは Bash on Windows (aka BoW)は、2016/8/3に公開されたWindows 10 Anniversary Updateで使えるようになった、Windows上でBashが使えるようになる機能。 POSIX APIのWindows実装を提供するCygwinなどとは違い、WindowsのサブシステムとしてUbuntuが動き、その上でBashが動き、そこからUbuntu用のバイナリをそのまま利用できるというもの。 2016/11/17現在でまだベータ版の機能。 Windows側からUbuntu側のファイルをいじると壊れる問題 Microsoftの中の人のブログに、BoWがセットアップされた環境で、Windows側からUbuntu側のファイル(i.e. %localappdata%\lxss\以下のファイル)をいじると壊れるという話があった。 いかにもやってしまいそうな操作で危険だし、実際このブログの人はこれに関する問い合わせに毎日1,2件対応しているそうな。 原因は上記ブログに詳しいが、簡単に言うと、Windows側のプロセスがUbuntu側のファイルを作ったり編集したりする際、パーミッションなどのメタデータを適切に設定しないため、Ubuntu側でファイルが壊れたと判断されてしまうから。 こうなると、結果としてファイルが消えてしまったり、壊れたデータで上書きされてしまったりするとのこと。 因みに、Ubuntu側からWindows側のファイルをいじるのは問題ないらしい。 再現確認 そういえばまだBoWをさわったことがなかったので、セットアップして件の問題を体験してみた。 環境は、VMware Player 7.1.0で作ったVMに評価版のWindows 10 Enterprise v1607をインストールしたもの。 セットアップは公式の手順に従うだけ。2ステップだけの簡単な手順。 セットアップ後、コマンドプロンプトでbashとうつとBoWが起動する。(初回はインストール処理が走り、十数分待たされる。) [コマンドプロンプト → Bash] 再現確認に使うのはhogeと書いたhoge.txt。 これをWindows側のC:\Users\kaitoy\Desktop\とUbuntu側の/home/kaitoy/に置く。 [コマンドプロンプト] [Bash] Windows側からは、Ubuntuのファイルシステムが%localappdata%\lxss\にマウントされているように見える。 (lxssはエクスプローラーのオプションから「保護されたオペレーティングシステムファイルを表示しない（推奨）」のチェックをはずさないと見えない。見えなくてもアドレスバーにパスを入力すればアクセスできるけど。) 一方Ubuntu側からは、WindowsのCドライブが/mnt/cにマウントされているように見える。 [Bash] ここで、コマンドプロンプトを開き、%localappdata%\lxss\hoge\kaitoy\(i.e. Ubuntu側の/home/kaitoy/)にcdし、hoge.txtをechoで編集してみた。 [コマンドプロンプト] したらBashから見えなくなった。アクセスしようとすると「Input/output error」というエラーになる。これが件の現象か。 [Bash] エクスプローラからは見えていたので、GUIで%localappdata%\lxss\hoge\kaitoy\hoge.txtを削除したら正常な状態に戻った。 再度同じhoge.txtを作り、今度はメモ帳で編集して内容をfooに変えてみた。 この場合は特に問題なし。なぜだ? [Bash] 例のブログをよく読むと、実際に問題になるのはファイルの作成だけのように読める。 編集しているようにみえても、アプリによっては新規ファイルを作って既存のを置き換えていることがあるから、編集もするなと言っている模様。 メモ帳は実際に編集しているから大丈夫だったということか。 今編集したhoge.txtを今度はエクスプローラから消してみる。 Ubuntu側からは消えてないように見えるが、アクセスしようとするとないと言われる。 [Bash] エクスプローラのビューをF5で更新したら、今消したはずのhoge.txtが復活した。 これをダブルクリックで開こうとしたら「Access is denied.」。 エクスプローラから何度消してもすぐ復活する。 Bashで消そうとしても「Permission denied」。詰んだ。 [Bash] ということで、むしろWindows側からUbuntu側のファイルを消すのがもっともやばいと言うことがわかった。 lxrun /uninstall /full、lxrun /installでUbuntuイメージをインストールしなおさないと直らない。 最後に、Ubuntu側(i.e.">
     
-    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/microsoft.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/microsoft.png">
     
     
     <meta property="og:site_name" content="To Be Decided">
@@ -26,20 +26,20 @@
     </title>
 
     
-    <link rel="shortcut icon" href="https://tbd.kaitoy.xyz/assets/favicon.ico">
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
 
     
-    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://tbd.kaitoy.xyz/index.xml">
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
 
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
     <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
     <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
 
     
   </head>
@@ -48,7 +48,7 @@
     <header id="site-header">
       <div class="container">
         <h1 class="text-center">
-          <a href="https://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
         </h1>
       </div>
     </header>
@@ -64,7 +64,7 @@
 
       <div class="eyecatch text-center">
         
-        <img src="https://tbd.kaitoy.xyz/images/microsoft.png" alt="Bash on WindowsでWindows側からUbuntu側のファイルをいじると壊れることがあるので注意">
+        <img src="https://www.kaitoy.xyz/images/microsoft.png" alt="Bash on WindowsでWindows側からUbuntu側のファイルをいじると壊れることがあるので注意">
         
       </div>
 
@@ -229,11 +229,11 @@ Ubuntu側からは消えてないように見えるが、アクセスしよう�
           <div class="col-sm-5">
             <section id="share">
               <h3>Share</h3>
-              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f11%2f19%2fbow-do-not-change-linux-files-from-windows%2f&t=Bash%20on%20Windows%e3%81%a7Windows%e5%81%b4%e3%81%8b%e3%82%89Ubuntu%e5%81%b4%e3%81%ae%e3%83%95%e3%82%a1%e3%82%a4%e3%83%ab%e3%82%92%e3%81%84%e3%81%98%e3%82%8b%e3%81%a8%e5%a3%8a%e3%82%8c%e3%82%8b%e3%81%93%e3%81%a8%e3%81%8c%e3%81%82%e3%82%8b%e3%81%ae%e3%81%a7%e6%b3%a8%e6%84%8f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
-              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f11%2f19%2fbow-do-not-change-linux-files-from-windows%2f&text=Bash%20on%20Windows%e3%81%a7Windows%e5%81%b4%e3%81%8b%e3%82%89Ubuntu%e5%81%b4%e3%81%ae%e3%83%95%e3%82%a1%e3%82%a4%e3%83%ab%e3%82%92%e3%81%84%e3%81%98%e3%82%8b%e3%81%a8%e5%a3%8a%e3%82%8c%e3%82%8b%e3%81%93%e3%81%a8%e3%81%8c%e3%81%82%e3%82%8b%e3%81%ae%e3%81%a7%e6%b3%a8%e6%84%8f&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
-              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f11%2f19%2fbow-do-not-change-linux-files-from-windows%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
-              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f11%2f19%2fbow-do-not-change-linux-files-from-windows%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
-              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f11%2f19%2fbow-do-not-change-linux-files-from-windows%2f&title=Bash%20on%20Windows%e3%81%a7Windows%e5%81%b4%e3%81%8b%e3%82%89Ubuntu%e5%81%b4%e3%81%ae%e3%83%95%e3%82%a1%e3%82%a4%e3%83%ab%e3%82%92%e3%81%84%e3%81%98%e3%82%8b%e3%81%a8%e5%a3%8a%e3%82%8c%e3%82%8b%e3%81%93%e3%81%a8%e3%81%8c%e3%81%82%e3%82%8b%e3%81%ae%e3%81%a7%e6%b3%a8%e6%84%8f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f11%2f19%2fbow-do-not-change-linux-files-from-windows%2f&t=Bash%20on%20Windows%e3%81%a7Windows%e5%81%b4%e3%81%8b%e3%82%89Ubuntu%e5%81%b4%e3%81%ae%e3%83%95%e3%82%a1%e3%82%a4%e3%83%ab%e3%82%92%e3%81%84%e3%81%98%e3%82%8b%e3%81%a8%e5%a3%8a%e3%82%8c%e3%82%8b%e3%81%93%e3%81%a8%e3%81%8c%e3%81%82%e3%82%8b%e3%81%ae%e3%81%a7%e6%b3%a8%e6%84%8f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f11%2f19%2fbow-do-not-change-linux-files-from-windows%2f&text=Bash%20on%20Windows%e3%81%a7Windows%e5%81%b4%e3%81%8b%e3%82%89Ubuntu%e5%81%b4%e3%81%ae%e3%83%95%e3%82%a1%e3%82%a4%e3%83%ab%e3%82%92%e3%81%84%e3%81%98%e3%82%8b%e3%81%a8%e5%a3%8a%e3%82%8c%e3%82%8b%e3%81%93%e3%81%a8%e3%81%8c%e3%81%82%e3%82%8b%e3%81%ae%e3%81%a7%e6%b3%a8%e6%84%8f&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f11%2f19%2fbow-do-not-change-linux-files-from-windows%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f11%2f19%2fbow-do-not-change-linux-files-from-windows%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f11%2f19%2fbow-do-not-change-linux-files-from-windows%2f&title=Bash%20on%20Windows%e3%81%a7Windows%e5%81%b4%e3%81%8b%e3%82%89Ubuntu%e5%81%b4%e3%81%ae%e3%83%95%e3%82%a1%e3%82%a4%e3%83%ab%e3%82%92%e3%81%84%e3%81%98%e3%82%8b%e3%81%a8%e5%a3%8a%e3%82%8c%e3%82%8b%e3%81%93%e3%81%a8%e3%81%8c%e3%81%82%e3%82%8b%e3%81%ae%e3%81%a7%e6%b3%a8%e6%84%8f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
             </section>
           </div>
 
@@ -246,9 +246,9 @@ Ubuntu側からは消えてないように見えるが、アクセスしよう�
               <h3>Related Post</h3>
               <div id="tags">
                 
-                <a href="https://tbd.kaitoy.xyz/tags/bow"><i class="fa fa-tags"></i> bow </a>
+                <a href="https://www.kaitoy.xyz/tags/bow"><i class="fa fa-tags"></i> bow </a>
                 
-                <a href="https://tbd.kaitoy.xyz/tags/windows"><i class="fa fa-tags"></i> windows </a>
+                <a href="https://www.kaitoy.xyz/tags/windows"><i class="fa fa-tags"></i> windows </a>
                 
               </div>
 
@@ -267,7 +267,7 @@ Ubuntu側からは消えてないように見えるが、アクセスしよう�
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/11/19/pcap4j-doesnt-work-on-bow-yet/">Currently Pcap4J Doesn&#39;t Work on Bash on Windows</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/11/19/pcap4j-doesnt-work-on-bow-yet/">Currently Pcap4J Doesn&#39;t Work on Bash on Windows</a></li>
                 
                 
                 
@@ -285,13 +285,13 @@ Ubuntu側からは消えてないように見えるが、アクセスしよう�
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</a></li>
                 
                 
                 
@@ -309,7 +309,7 @@ Ubuntu側からは消えてないように見えるが、アクセスしよう�
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/">Windows Server 2016 TP5でWindows Containersにリトライ</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/">Windows Server 2016 TP5でWindows Containersにリトライ</a></li>
                 
                 
                 
@@ -339,13 +339,13 @@ Ubuntu側からは消えてないように見えるが、アクセスしよう�
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">Pcap4J Meets Windows Containers</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">Pcap4J Meets Windows Containers</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/">Pcap4J with Four Native Libraries on Windows 10</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/">Pcap4J with Four Native Libraries on Windows 10</a></li>
                 
                 
                 
@@ -478,7 +478,7 @@ Ubuntu側からは消えてないように見えるが、アクセスしよう�
             <div class="col-sm-6">
               <div class="prev">
                 
-                <a href="https://tbd.kaitoy.xyz/2016/11/19/pcap4j-doesnt-work-on-bow-yet/">
+                <a href="https://www.kaitoy.xyz/2016/11/19/pcap4j-doesnt-work-on-bow-yet/">
                   <i class="fa fa-chevron-left"></i>
                   Currently Pcap4J Doesn&#39;t Work on Bash on Windows
                 </a>
@@ -488,7 +488,7 @@ Ubuntu側からは消えてないように見えるが、アクセスしよう�
             <div class="col-sm-6">
               <div class="next text-right">
                 
-                <a href="https://tbd.kaitoy.xyz/2016/10/08/git-checkout/">
+                <a href="https://www.kaitoy.xyz/2016/10/08/git-checkout/">
                   git checkoutを図解する
                   <i class="fa fa-chevron-right"></i>
                 </a>
@@ -566,106 +566,106 @@ Ubuntu側からは消えてないように見えるが、アクセスしよう�
       
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/aws">aws</a>
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/bow">bow</a>
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/ci">ci</a>
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/docker">docker</a>
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/git">git</a>
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/goslings">goslings</a>
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jgit">jgit</a>
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/kotlin">kotlin</a>
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/react">react</a>
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/spring">spring</a>
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/subversion">subversion</a>
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/vcs">vcs</a>
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/windows">windows</a>
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
       
     </div>
     
@@ -699,7 +699,7 @@ Ubuntu側からは消えてないように見えるが、アクセスしよう�
     </footer>
 
     <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
-    <script src="https://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
     
     <script>
       $(document).ready(function(){
@@ -710,7 +710,7 @@ Ubuntu側からは消えてないように見えるが、アクセスしよう�
       });
     </script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
-    <script src="https://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script src="https://www.kaitoy.xyz/js/highlight.pack.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
 
     

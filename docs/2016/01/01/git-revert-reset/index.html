@@ -11,10 +11,10 @@
     
     <meta property="og:type" content="article">
     <meta property="og:title" content="git resetとrevertを図解する | To Be Decided">
-    <meta property="og:url" content="https://tbd.kaitoy.xyz/2016/01/01/git-revert-reset/">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2016/01/01/git-revert-reset/">
     <meta property="og:description" content="この記事を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、Gitの git revert と git resetというコマンドについて説明する。 この二つはしばしばコミットを取り消すコマンドとして同じ文脈で説明されることが多いのでこのエントリでも一緒に説明するが、実際は全く異なるコマンドだし、そもそもどちらもコミットを取り消すコマンドではない。 git revert git revertは、指定したコミットが持ち込んだ変更を打ち消すコミットを追加する。 リバースパッチを適用すると言ってもよい。 コミットを追加しかしないので、このコマンドによって既存のコミットが消えたり変わったりすることはない。 図にすると以下の感じ。単純。 git reset git resetには二つの機能がある。 インデックスを再設定する(i.e. resetする)機能と、HEADを付け替える(i.e. resetする)機能だ。 インデックスの再設定 インデックスの再設定をするコマンドはgit reset &lt;ワーキングディレクトリ内のファイルのパス(複数可)&gt;。 これを実行すると、指定したファイルについて、HEADが指すコミットが指すツリー内のブロブを指すようインデックスを更新する。 何を言っているのかわからないので図にする。 (この図では便宜的にHEAD、つまり参照をオブジェクト格納領域内に書いているが、実際には別の場所にあることに注意。) 図を見ると、git add Readme.mdとgit reset Readme.mdがだいたい逆のことをしていることがわかる。 要するに、git add &lt;パス&gt;は指定したファイルをステージし、git reset &lt;パス&gt;は指定したファイルをアンステージする。 HEADの付け替え HEADの付け替えをするコマンドはgit reset &lt;コミット&gt;。 これを実行すると、HEADが指しているコミットを指すようORIG_HEADを作成または更新し、指定したコミットを指すようHEADを更新する。 オプションによってはさらにインデックスやワーキングディレクトリを指定したコミットが指すツリーと同期するよう更新する。 このオプションには--soft、--mixed (デフォルト)、--hardの三種類があり、それぞれのオプションを付けた時の更新対象を次の表に示す。 オプション HEAD インデックス ワーキングディレクトリ --soft ○ --mixed ○ ○ --hard ○ ○ ○ この三者の違いについては面倒だしだいたい分かるはずなので図にしないが、git reset &lt;コミット&gt;したときのHEAD動きについて次に図示する。 スライド中でgit reset HEAD^した時点で、コミットDは実質的に削除されたに近い状態になる。 ORIG_HEADという一時的なシンボリック参照で指されているだけで、どの参照からもたどり着けなくなるからだ。 コミットDはいずれgit gcによって実際に削除されるはずだし、git pushしてもコミットD、それが指すツリー、そのツリーの下にしかないブロブはリモートリポジトリに送られない。 よって、git">
     
-    <meta property="og:image" content="https://tbd.kaitoy.xyz/images/git.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/git.png">
     
     
     <meta property="og:site_name" content="To Be Decided">
@@ -26,20 +26,20 @@
     </title>
 
     
-    <link rel="shortcut icon" href="https://tbd.kaitoy.xyz/assets/favicon.ico">
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
 
     
-    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://tbd.kaitoy.xyz/index.xml">
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
 
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
     <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
     <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/styles.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/custom.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/table.css" rel="stylesheet">
-    <link href="https://tbd.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
 
     
   </head>
@@ -48,7 +48,7 @@
     <header id="site-header">
       <div class="container">
         <h1 class="text-center">
-          <a href="https://tbd.kaitoy.xyz" class="font-logo">To Be Decided</a>
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
         </h1>
       </div>
     </header>
@@ -64,14 +64,14 @@
 
       <div class="eyecatch text-center">
         
-        <img src="https://tbd.kaitoy.xyz/images/git.png" alt="git resetとrevertを図解する">
+        <img src="https://www.kaitoy.xyz/images/git.png" alt="git resetとrevertを図解する">
         
       </div>
 
       <div class="content">
         
 
-<p><a href="https://tbd.kaitoy.xyz/2015/12/27/git-repository/">この記事</a>を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、<a href="https://git-scm.com/"><strong>Git</strong></a>の <code>git revert</code> と <code>git reset</code>というコマンドについて説明する。
+<p><a href="https://www.kaitoy.xyz/2015/12/27/git-repository/">この記事</a>を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、<a href="https://git-scm.com/"><strong>Git</strong></a>の <code>git revert</code> と <code>git reset</code>というコマンドについて説明する。
 この二つはしばしばコミットを取り消すコマンドとして同じ文脈で説明されることが多いのでこのエントリでも一緒に説明するが、実際は全く異なるコマンドだし、そもそもどちらもコミットを取り消すコマンドではない。</p>
 
 <h2 id="git-revert">git revert</h2>
@@ -182,11 +182,11 @@
           <div class="col-sm-5">
             <section id="share">
               <h3>Share</h3>
-              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f01%2fgit-revert-reset%2f&t=git%20reset%e3%81%a8revert%e3%82%92%e5%9b%b3%e8%a7%a3%e3%81%99%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
-              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f01%2fgit-revert-reset%2f&text=git%20reset%e3%81%a8revert%e3%82%92%e5%9b%b3%e8%a7%a3%e3%81%99%e3%82%8b&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
-              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f01%2fgit-revert-reset%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
-              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f01%2fgit-revert-reset%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
-              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2ftbd.kaitoy.xyz%2f2016%2f01%2f01%2fgit-revert-reset%2f&title=git%20reset%e3%81%a8revert%e3%82%92%e5%9b%b3%e8%a7%a3%e3%81%99%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://tbd.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f01%2f01%2fgit-revert-reset%2f&t=git%20reset%e3%81%a8revert%e3%82%92%e5%9b%b3%e8%a7%a3%e3%81%99%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f01%2f01%2fgit-revert-reset%2f&text=git%20reset%e3%81%a8revert%e3%82%92%e5%9b%b3%e8%a7%a3%e3%81%99%e3%82%8b&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f01%2f01%2fgit-revert-reset%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f01%2f01%2fgit-revert-reset%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f01%2f01%2fgit-revert-reset%2f&title=git%20reset%e3%81%a8revert%e3%82%92%e5%9b%b3%e8%a7%a3%e3%81%99%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
             </section>
           </div>
 
@@ -199,9 +199,9 @@
               <h3>Related Post</h3>
               <div id="tags">
                 
-                <a href="https://tbd.kaitoy.xyz/tags/git"><i class="fa fa-tags"></i> git </a>
+                <a href="https://www.kaitoy.xyz/tags/git"><i class="fa fa-tags"></i> git </a>
                 
-                <a href="https://tbd.kaitoy.xyz/tags/vcs"><i class="fa fa-tags"></i> vcs </a>
+                <a href="https://www.kaitoy.xyz/tags/vcs"><i class="fa fa-tags"></i> vcs </a>
                 
               </div>
 
@@ -228,13 +228,13 @@
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/10/08/git-checkout/">git checkoutを図解する</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/10/08/git-checkout/">git checkoutを図解する</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2016/10/06/git-vs-subversion/">Gitの良さが分からない？ ちょっとそこに座れ</a></li>
+                <li><a href="https://www.kaitoy.xyz/2016/10/06/git-vs-subversion/">Gitの良さが分からない？ ちょっとそこに座れ</a></li>
                 
                 
                 
@@ -312,19 +312,19 @@
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/12/31/git-dvc/">Gitの分散バージョン管理の仕組み</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/12/31/git-dvc/">Gitの分散バージョン管理の仕組み</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/12/28/git-merge/">Gitのマージを図解する</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/12/28/git-merge/">Gitのマージを図解する</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://tbd.kaitoy.xyz/2015/12/27/git-repository/">Gitのリポジトリの中身をなるべく正確に理解する</a></li>
+                <li><a href="https://www.kaitoy.xyz/2015/12/27/git-repository/">Gitのリポジトリの中身をなるべく正確に理解する</a></li>
                 
                 
                 
@@ -429,7 +429,7 @@
             <div class="col-sm-6">
               <div class="prev">
                 
-                <a href="https://tbd.kaitoy.xyz/2016/01/03/oop-alternative-to-utility-classes/">
+                <a href="https://www.kaitoy.xyz/2016/01/03/oop-alternative-to-utility-classes/">
                   <i class="fa fa-chevron-left"></i>
                   オブジェクト指向プログラミングにおいてユーティリティクラスに代わるもの
                 </a>
@@ -439,7 +439,7 @@
             <div class="col-sm-6">
               <div class="next text-right">
                 
-                <a href="https://tbd.kaitoy.xyz/2015/12/31/git-dvc/">
+                <a href="https://www.kaitoy.xyz/2015/12/31/git-dvc/">
                   Gitの分散バージョン管理の仕組み
                   <i class="fa fa-chevron-right"></i>
                 </a>
@@ -517,106 +517,106 @@
       
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/atom">atom</a>
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/aws">aws</a>
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/blog">blog</a>
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/bow">bow</a>
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/cdn">cdn</a>
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/ci">ci</a>
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/docker">docker</a>
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/git">git</a>
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/github">github</a>
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/goslings">goslings</a>
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/groovy">groovy</a>
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/hugo">hugo</a>
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/impress.js">impress.js</a>
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/javascript">javascript</a>
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jekyll">jekyll</a>
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jgit">jgit</a>
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/kotlin">kotlin</a>
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/management">management</a>
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/oop">oop</a>
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/react">react</a>
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/runc">runc</a>
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/spring">spring</a>
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/subversion">subversion</a>
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/vcs">vcs</a>
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/windows">windows</a>
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/yegor256">yegor256</a>
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
       
       
-      <a href="https://tbd.kaitoy.xyz/tags/zundoko">zundoko</a>
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
       
     </div>
     
@@ -650,7 +650,7 @@
     </footer>
 
     <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
-    <script src="https://tbd.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
     
     <script>
       $(document).ready(function(){
@@ -661,7 +661,7 @@
       });
     </script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
-    <script src="https://tbd.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script src="https://www.kaitoy.xyz/js/highlight.pack.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
 
     

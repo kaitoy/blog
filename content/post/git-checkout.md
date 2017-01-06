@@ -8,7 +8,7 @@ tags = [ "git", "vcs" ]
 title = "git checkoutを図解する"
 +++
 
-[この記事](https://tbd.kaitoy.xyz/2015/12/27/git-repository/)を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、[__Git__](https://git-scm.com/)の `git checkout` というコマンドについて説明する。
+[この記事](https://www.kaitoy.xyz/2015/12/27/git-repository/)を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、[__Git__](https://git-scm.com/)の `git checkout` というコマンドについて説明する。
 
 このコマンドは普通ブランチを切り替えるものと説明されるが、主たる機能は __オブジェクト格納領域から指定されたファイルを取り出し、ワーキングディレクトリに配置する__ ものである。
 つまりこれがGitにおけるチェックアウトで、チェックアウト=ブランチの切り替えではない。

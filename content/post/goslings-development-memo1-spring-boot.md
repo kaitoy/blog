@@ -8,7 +8,7 @@ tags = [ "goslings", "spring", "spring-boot" ]
 title = "Goslings開発メモ - その1: Spring Boot編"
 +++
 
-「[Goslings開発メモ - その0: 紹介と概要と設計編](https://tbd.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/)」の続き。
+「[Goslings開発メモ - その0: 紹介と概要と設計編](https://www.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/)」の続き。
 
 Spring Boot編。
 
@@ -289,9 +289,9 @@ public class Application {
 
 `@SpringBootApplication`を付けると、以下の三つのアノテーションを付けたのと同じことになる。
 
-* [`@Configuration`](http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/context/annotation/Configuration.html) ([`@SpringBootConfiguration`](http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/api/org/springframework/boot/SpringBootConfiguration.html)): Bean定義を提供するクラスであることを示す。(意味不明。)
+* [`@Configuration`](http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/context/annotation/Configuration.html) ([`@SpringBootConfiguration`](http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/api/org/springframework/boot/SpringBootConfiguration.html)): Spring Bean定義を提供するクラスであることを示す。(意味不明。)
 * [`@EnableAutoConfiguration`](http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/api/org/springframework/boot/autoconfigure/EnableAutoConfiguration.html): Springの[自動設定機能](http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/using-boot-auto-configuration.html)を有効にする。この機能は、ライブラリの依存関係から推定して必要な設定をしてくれるもの。例えば`tomcat-embedded.jar`に依存していたら、[`TomcatEmbeddedServletContainerFactory`](http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/api/org/springframework/boot/context/embedded/tomcat/TomcatEmbeddedServletContainerFactory.html)をセットアップしてくれるなど。
-* [`@ComponentScan`](http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/context/annotation/ComponentScan.html): このアノテーションを付けたクラスのパッケージ以下から、[`@Component`](http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Component.html)、[`@Service`](http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Service.html)、[`@Repository`](http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Repository.html)、[`@Controller`](http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Controller.html)(など?)が付いたクラスが検索され、[Beanとして登録される](http://qiita.com/KevinFQ/items/abc7369cb07eb4b9ae29)。XMLのBean設定ファイルを書かなくてよい。前節で作ったリソースコントローラがこのアノテーションによって利用できるようになる。
+* [`@ComponentScan`](http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/context/annotation/ComponentScan.html): このアノテーションを付けたクラスのパッケージ以下から、[`@Component`](http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Component.html)、[`@Service`](http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Service.html)、[`@Repository`](http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Repository.html)、[`@Controller`](http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Controller.html)(など?)が付いたクラスが検索され、Spring Beanとして登録される。XMLのSpring Bean設定ファイルを書かなくてよい。前節で作ったリソースコントローラがこのアノテーションによって利用できるようになる。
 
 <br>
 

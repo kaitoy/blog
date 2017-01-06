@@ -21,7 +21,7 @@ unzipとは、[zip](https://ja.wikipedia.org/wiki/ZIP_(%E3%83%95%E3%82%A1%E3%82%
 ただそれだけのことで、基本的な機能だと思うのだが、Windowsはこれを[コマンドラインで実行する方法](https://technet.microsoft.com/en-us/library/dn841359.aspx)をつい最近まで正式に提供していなかった。
 
 ## Nano Serverでunzip
-Windows 10の[Hyper-V Containers](https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containers%E3%81%A8%E3%81%AF)の上で[Pcap4J](https://github.com/kaitoy/pcap4j)のビルドとテストをするDockerイメージをビルドしたくて、そのための依存ライブラリなどをインストールする処理をDockerfileに書いていて、`ADD`でzipをダウンロードしたところまではいいんだけど、このzipどうやって解凍してやろうかとなった。
+Windows 10の[Hyper-V Containers](https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containers%E3%81%A8%E3%81%AF)の上で[Pcap4J](https://github.com/kaitoy/pcap4j)のビルドとテストをするDockerイメージをビルドしたくて、そのための依存ライブラリなどをインストールする処理をDockerfileに書いていて、`ADD`でzipをダウンロードしたところまではいいんだけど、このzipどうやって解凍してやろうかとなった。
 (Dockerホストに置いたものをコンテナに`ADD`するのはなんか格好悪いから無しで。Dockerfile裸一貫で実現したい。)
 
 Windows 10のHyper-V Containersは、[現時点でNano Serverしかサポートしていない](https://social.msdn.microsoft.com/Forums/en-US/9eea93ac-18de-4953-bc7c-efd76a155526/are-microsoftwindowsservercore-containers-working-on-windows-10?forum=windowscontainers)のが厳しい点。Server Coreだったら楽だったのに。

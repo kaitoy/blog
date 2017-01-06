@@ -10,13 +10,13 @@ title = "Windows Server 2016 TP5でWindows Containersにリトライ"
 +++
 
 [Windows Server 2016のTechnical Preview 5(TP5)が公開されていた](https://www.microsoft.com/ja-jp/evalcenter/evaluate-windows-server-technical-preview)ので、
-[TP4でバグに阻まれて挫折した](https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/)、Windows Containersで[Pcap4J](https://github.com/kaitoy/pcap4j)を使ってパケットキャプチャする試みにリトライした話。
+[TP4でバグに阻まれて挫折した](https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/)、Windows Containersで[Pcap4J](https://github.com/kaitoy/pcap4j)を使ってパケットキャプチャする試みにリトライした話。
 
 ## OSセットアップ
-[TP4のとき](https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containersセットアップ)と同じ環境。
+[TP4のとき](https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containersセットアップ)と同じ環境。
 
 以降は[Windows Server Containersのクイックスタートガイド](https://msdn.microsoft.com/en-us/virtualization/windowscontainers/quick_start/quick_start_windows_server)に沿ってセットアップを進める。
-[TP4](https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containersセットアップ)からは大分変わっていて、単一のPowershellスクリプトを実行する形式から、Powershellのコマンドレットを逐次手動実行する形式になっている。
+[TP4](https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containersセットアップ)からは大分変わっていて、単一のPowershellスクリプトを実行する形式から、Powershellのコマンドレットを逐次手動実行する形式になっている。
 面倒だけど何やってるかわかりやすくて好き。
 
 ## コンテナ機能のインストール
@@ -208,12 +208,12 @@ RUN echo @echo off > bin\capture.bat && \
 
 <br>
 
-Dockerfileに書いた処理内容は[TP4のとき](https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container)とだいたい同じ。
+Dockerfileに書いた処理内容は[TP4のとき](https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container)とだいたい同じ。
 以下、Dockerfile書いているときに気付いたこと。
 
 #### TP4からのアップデート
 > WORKDIR や ENV や COPY でパスの区切りは \ 一つだと消えちゃうので \\ か / を使わないといけない。
-> <div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のときのエントリ</a></cite></div>
+> <div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のときのエントリ</a></cite></div>
 
 [このページ](https://msdn.microsoft.com/en-us/virtualization/windowscontainers/docker/manage_windows_dockerfile)の各コマンドの__Windows Considerations__に、`WORKDIR`のパスの区切りのバックスラッシュはエスケープしないといけないとか、`ADD`のパスの区切りはスラッシュじゃないといけないとか書いてある。
 TP4のときはなかったような。
@@ -221,42 +221,42 @@ TP4のときはなかったような。
 <br>
 
 > WORKDIR や COPY のコンテナ内のパスに絶対パスを指定したい場合、C:\hoge、C:/hoge、C:\\hoge、いずれもダメ。 以下の様なエラーが出る。
-> <div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のときのエントリ</a></cite></div>
+> <div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のときのエントリ</a></cite></div>
 
 これは直った。`WORKDIR c:\\pcap4j`で行ける。
 
 <br>
 
 > install.ps1の中でChocolateyのインストーラをHTTPSで取ってこようとしてエラー
-> <div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のときのエントリ</a></cite></div>
+> <div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のときのエントリ</a></cite></div>
 
 普通に`choco install`できたので、HTTPSが使えない制限は消えた模様。
 
 <br>
 
 > ビルドしてみると、各ステップの実行(多分レイヤの作成)がすごく遅い。
-> <div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のときのエントリ</a></cite></div>
+> <div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のときのエントリ</a></cite></div>
 
 各ステップの実行は相変わらず重い。特にファイル変更が多いときはすごく重い。
 
 <br>
 
 > コンテナの起動は非常に遅い。30秒以上かかる。
-> <div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-server-containers味見">TP4のときのエントリ</a></cite></div>
+> <div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-server-containers味見">TP4のときのエントリ</a></cite></div>
 
 コンテナ起動は早くなったけどまだ5秒くらいかかる。
 
 <br>
 
 > WORKDIR や ENV で環境変数が展開されない。
-> <div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のときのエントリ</a></cite></div>
+> <div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のときのエントリ</a></cite></div>
 
 これはまだ直っていない。`%tmp%`、`%TMP%`、`$TMP`、`${TMP}`、どれもだめ。
 
 <br>
 
 > コンテナ内で C:\ 直下に . で始まる名前のフォルダ作ると次のステップで消えてる。
-> <div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://tbd.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のときのエントリ</a></cite></div>
+> <div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のときのエントリ</a></cite></div>
 
 これは再現しなかった。以前のも勘違いだったのかもしれない。
 なんにせよデフォルトの.m2フォルダのパスが`C:\Users\ContainerAdministrator\.m2`になったので気にしなくてよくなった。
