@@ -11,6 +11,7 @@
     
     <meta property="og:title" content="To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz">
+    <link rel="canonical" href="https://www.kaitoy.xyz">
     
     <meta property="og:site_name" content="To Be Decided">
 
