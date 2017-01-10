@@ -71,6 +71,27 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2017/01/10/goslings-development-memo2-spring-boot-di/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="/images/goslings-logo.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Tue, Jan 10, 2017</span>
+              </div>
+              <h2 class="title">Goslings開発メモ - その2: Spring Boot続編 (DI)</h2>
+              <div class="summary">
+                「Goslings開発メモ - その1: Spring Boot編」の続き。 Spring Boot続編で、DIについて。 DIとは DIはDependency Injectionの略。依存性注入と訳される。 これは、Javaの文脈で具体的目に言うと、あるクラスが依存する具象クラスのインスタンス化と取得をフレームワークに任せることで、具象クラス間の直接的な依存を排除し、よってコンポーネント間を疎結合にする手法。 これにより、アプリの拡張性を高めたり、テストがしやすくなったりする。(参考記事) Spring FrameworkはもともとこのDI機能を提供するフレームワーク(i.e. DIコンテナ)として普及した。 GoslingsでDI Goslingsサーバの内部機能はざっくり、クライアントからのREST API呼び出しを処理するユーザインタフェース層と、Gitリポジトリにアクセスするデータベース層に分かれる。 Gitリポジトリにアクセスする部分は今回はJGitで実装するが、将来的に別のライブラリで実装しなおす可能性が微レ存なのと、Goslingsの開発自体がWebアプリ開発の練習でもあるので、ちゃんとしたアーキテクチャでと思い、DAOパターンを使ってやった。 つまり例えば、GitのコミットオブジェクトはJGitのAPIではRevCommitクラスで表されるが、ユーザインタフェース層からはリソースクラスであるCommitクラス(前回参照)を扱う以下の様なDAOインターフェースを呼ぶようにし、JGit依存の実装とは切り離す。 public interface ObjectDao { public Commit[] getCommits(String token) throws DaoException; } (ObjectDao.javaの完全なソースはこれ) ObjectDaoを実装するObjectDaoImplクラスでは、以下の様にJGitを使ってごりごりと実装を書く。 public final class ObjectDaoImpl implements ObjectDao { // フィールド定義は省略 @Override public Commit[] getCommits(String token) { try { return StreamSupport.stream(resolver.getGit(token).log().all().call().spliterator(), false) .map(this::convertToCommit) .toArray(Commit[]::new); } catch (NoHeadException e) { // エラー処理 } } private Commit convertToCommit(RevCommit commit) { // RevCommitをCommitに変換する処理 } } ユーザインターフェース層はRestApiV1Controllerクラス(前回参照)のgetCommitsメソッドで、以下の様にObjectDaoを使いたい。 public final class RestApiV1Controller { private ObjectDao objectDao; @RequestMapping(path=&quot;{token}/objects/commits&quot;) public Commit[] getCommits(@PathVariable String token) { return objectDao.getCommits(token); } // 以下他のメソッド } ここで問題になるのが、RestApiV1ControllerのobjectDaoフィールドへのインスタンスの代入だが、RestApiV1Controller内(e.g.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="/images/goslings-logo.png" alt="eyecatch">

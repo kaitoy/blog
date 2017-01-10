@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://www.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="「Goslings開発メモ - その0: 紹介と概要と設計編」の続き。 Spring Boot編。 Spring Bootとは Spring BootはSpring FrameworkというJavaのWebアプリケーションフレームワークを簡単に利用するためのツールやライブラリ群。 これを使うと、Webアプリケーションコンテナ(e.g. Tomcat)なしで起動できるSpringアプリケーションを、自動コード生成も設定ファイル作成もせずに作ることができる。 必要な設定は自動で構成され、設定のカスタマイズもアノテーションでできる。 GAになったのが2014年4月なのでかなり新しいものだが、JavaのWebアプリケーションを作るためのものとしては今世界的に最も流行っているもの。 私が昔とあるWebアプリを作った時はSpring RooというRADツールが熱かったが、これはコード自動生成をして開発を助けてくれるもので、なんだか結局あまり流行らなかったようだ。 Goslingsには最新バージョンの1.4.3.RELEASEを使った。 Spring Bootことはじめ 包括的網羅的なドキュメントは「Spring Boot Reference Guide」だが、今回あまり深く学ぶ時間が取れなかったのでこれはちら見した程度。 それよりも、ユースケースごとのチュートリアルが60個以上も載っている「Getting Started Guides」を参考にした。 Goslingsサーバは基本REST APIサーバなので、上記チュートリアルの内「Building a RESTful Web Service」を見ながら以下を実施した。 1. プロジェクト作成 チュートリアルにはGradleプロジェクトのディレクトリ構成を手動で作るところから書いてあるけど、そこはIDEなどで楽できる。 私はEclipseを使っていて、いつのまにかGradleプラグインであるEclipse Buildship: Eclipse Plug-ins for GradleとGradle IDE Packがインストールされていたので、これらを使った。 どちらのプラグインでもプロジェクトは作成できるが、Qiitaのこの記事にあるとおり、Gradle IDE Pack(に含まれるGradle (STS) Integration for Eclipse by Pivotal)で作った場合、Gradle Wrapperが生成されないなどの問題があるので、Buildshipの方で作成。 ただ、Gradle IDE Packの方がパッケージ・エクスプローラでの見え方がちょっとよかったので、こちらでプロジェクトをインポートしなおした。 (上がBuildshipのやつで、下がGradle IDE Packのやつ) 出来たプロジェクトは以下の感じ。 2. Spring Boot Gradle plugin適用 Spring Boot Gradle pluginというものがあって、これをプロジェクトに適用すると以下の恩恵を受けられる。 依存ライブラリ管理機能 Spring関係のライブラリについて適切なバージョンを設定してくれるので、Gradleビルド設定(i.e.">
+    <meta property="og:description" content="「Goslings開発メモ - その1: Spring Boot編」の続き。 Spring Boot続編で、DIについて。 DIとは DIはDependency Injectionの略。依存性注入と訳される。 これは、Javaの文脈で具体的目に言うと、あるクラスが依存する具象クラスのインスタンス化と取得をフレームワークに任せることで、具象クラス間の直接的な依存を排除し、よってコンポーネント間を疎結合にする手法。 これにより、アプリの拡張性を高めたり、テストがしやすくなったりする。(参考記事) Spring FrameworkはもともとこのDI機能を提供するフレームワーク(i.e. DIコンテナ)として普及した。 GoslingsでDI Goslingsサーバの内部機能はざっくり、クライアントからのREST API呼び出しを処理するユーザインタフェース層と、Gitリポジトリにアクセスするデータベース層に分かれる。 Gitリポジトリにアクセスする部分は今回はJGitで実装するが、将来的に別のライブラリで実装しなおす可能性が微レ存なのと、Goslingsの開発自体がWebアプリ開発の練習でもあるので、ちゃんとしたアーキテクチャでと思い、DAOパターンを使ってやった。 つまり例えば、GitのコミットオブジェクトはJGitのAPIではRevCommitクラスで表されるが、ユーザインタフェース層からはリソースクラスであるCommitクラス(前回参照)を扱う以下の様なDAOインターフェースを呼ぶようにし、JGit依存の実装とは切り離す。 public interface ObjectDao { public Commit[] getCommits(String token) throws DaoException; } (ObjectDao.javaの完全なソースはこれ) ObjectDaoを実装するObjectDaoImplクラスでは、以下の様にJGitを使ってごりごりと実装を書く。 public final class ObjectDaoImpl implements ObjectDao { // フィールド定義は省略 @Override public Commit[] getCommits(String token) { try { return StreamSupport.stream(resolver.getGit(token).log().all().call().spliterator(), false) .map(this::convertToCommit) .toArray(Commit[]::new); } catch (NoHeadException e) { // エラー処理 } } private Commit convertToCommit(RevCommit commit) { // RevCommitをCommitに変換する処理 } } ユーザインターフェース層はRestApiV1Controllerクラス(前回参照)のgetCommitsメソッドで、以下の様にObjectDaoを使いたい。 public final class RestApiV1Controller { private ObjectDao objectDao; @RequestMapping(path=&quot;{token}/objects/commits&quot;) public Commit[] getCommits(@PathVariable String token) { return objectDao.getCommits(token); } // 以下他のメソッド } ここで問題になるのが、RestApiV1ControllerのobjectDaoフィールドへのインスタンスの代入だが、RestApiV1Controller内(e.g.">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/goslings-logo.png">
     
@@ -74,6 +74,28 @@
     <div id="posts">
       
       <div class="row">
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://www.kaitoy.xyz/2017/01/10/goslings-development-memo2-spring-boot-di/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/goslings-logo.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Tue, Jan 10, 2017</span>
+              </div>
+              <h2 class="title">Goslings開発メモ - その2: Spring Boot続編 (DI)</h2>
+              <div class="summary">
+                「Goslings開発メモ - その1: Spring Boot編」の続き。 Spring Boot続編で、DIについて。 DIとは DIはDependency Injectionの略。依存性注入と訳される。 これは、Javaの文脈で具体的目に言うと、あるクラスが依存する具象クラスのインスタンス化と取得をフレームワークに任せることで、具象クラス間の直接的な依存を排除し、よってコンポーネント間を疎結合にする手法。 これにより、アプリの拡張性を高めたり、テストがしやすくなったりする。(参考記事) Spring FrameworkはもともとこのDI機能を提供するフレームワーク(i.e. DIコンテナ)として普及した。 GoslingsでDI Goslingsサーバの内部機能はざっくり、クライアントからのREST API呼び出しを処理するユーザインタフェース層と、Gitリポジトリにアクセスするデータベース層に分かれる。 Gitリポジトリにアクセスする部分は今回はJGitで実装するが、将来的に別のライブラリで実装しなおす可能性が微レ存なのと、Goslingsの開発自体がWebアプリ開発の練習でもあるので、ちゃんとしたアーキテクチャでと思い、DAOパターンを使ってやった。 つまり例えば、GitのコミットオブジェクトはJGitのAPIではRevCommitクラスで表されるが、ユーザインタフェース層からはリソースクラスであるCommitクラス(前回参照)を扱う以下の様なDAOインターフェースを呼ぶようにし、JGit依存の実装とは切り離す。 public interface ObjectDao { public Commit[] getCommits(String token) throws DaoException; } (ObjectDao.javaの完全なソースはこれ) ObjectDaoを実装するObjectDaoImplクラスでは、以下の様にJGitを使ってごりごりと実装を書く。 public final class ObjectDaoImpl implements ObjectDao { // フィールド定義は省略 @Override public Commit[] getCommits(String token) { try { return StreamSupport.stream(resolver.getGit(token).log().all().call().spliterator(), false) .map(this::convertToCommit) .toArray(Commit[]::new); } catch (NoHeadException e) { // エラー処理 } } private Commit convertToCommit(RevCommit commit) { // RevCommitをCommitに変換する処理 } } ユーザインターフェース層はRestApiV1Controllerクラス(前回参照)のgetCommitsメソッドで、以下の様にObjectDaoを使いたい。 public final class RestApiV1Controller { private ObjectDao objectDao; @RequestMapping(path=&quot;{token}/objects/commits&quot;) public Commit[] getCommits(@PathVariable String token) { return objectDao.getCommits(token); } // 以下他のメソッド } ここで問題になるのが、RestApiV1ControllerのobjectDaoフィールドへのインスタンスの代入だが、RestApiV1Controller内(e.g.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
         
         
         
@@ -139,33 +161,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2016/11/19/bow-do-not-change-linux-files-from-windows/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2016/11/19/bow-do-not-change-linux-files-from-windows/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/microsoft.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Sat, Nov 19, 2016</span>
               </div>
-              <h2 class="title">Bash on WindowsでWindows側からUbuntu側のファイルをいじると壊れることがあるので注意</h2>
-              <div class="summary">
-                Bash on WindowsでWindows側からUbuntu側のファイルをいじると危険という情報を見つけたので、試してみたら確かに困った状態になった話。 Bash on Windowsとは Bash on Windows (aka BoW)は、2016/8/3に公開されたWindows 10 Anniversary Updateで使えるようになった、Windows上でBashが使えるようになる機能。 POSIX APIのWindows実装を提供するCygwinなどとは違い、WindowsのサブシステムとしてUbuntuが動き、その上でBashが動き、そこからUbuntu用のバイナリをそのまま利用できるというもの。 2016/11/17現在でまだベータ版の機能。 Windows側からUbuntu側のファイルをいじると壊れる問題 Microsoftの中の人のブログに、BoWがセットアップされた環境で、Windows側からUbuntu側のファイル(i.e. %localappdata%\lxss\以下のファイル)をいじると壊れるという話があった。 いかにもやってしまいそうな操作で危険だし、実際このブログの人はこれに関する問い合わせに毎日1,2件対応しているそうな。 原因は上記ブログに詳しいが、簡単に言うと、Windows側のプロセスがUbuntu側のファイルを作ったり編集したりする際、パーミッションなどのメタデータを適切に設定しないため、Ubuntu側でファイルが壊れたと判断されてしまうから。 こうなると、結果としてファイルが消えてしまったり、壊れたデータで上書きされてしまったりするとのこと。 因みに、Ubuntu側からWindows側のファイルをいじるのは問題ないらしい。 再現確認 そういえばまだBoWをさわったことがなかったので、セットアップして件の問題を体験してみた。 環境は、VMware Player 7.1.0で作ったVMに評価版のWindows 10 Enterprise v1607をインストールしたもの。 セットアップは公式の手順に従うだけ。2ステップだけの簡単な手順。 セットアップ後、コマンドプロンプトでbashとうつとBoWが起動する。(初回はインストール処理が走り、十数分待たされる。) [コマンドプロンプト → Bash] 再現確認に使うのはhogeと書いたhoge.txt。 これをWindows側のC:\Users\kaitoy\Desktop\とUbuntu側の/home/kaitoy/に置く。 [コマンドプロンプト] [Bash] Windows側からは、Ubuntuのファイルシステムが%localappdata%\lxss\にマウントされているように見える。 (lxssはエクスプローラーのオプションから「保護されたオペレーティングシステムファイルを表示しない（推奨）」のチェックをはずさないと見えない。見えなくてもアドレスバーにパスを入力すればアクセスできるけど。) 一方Ubuntu側からは、WindowsのCドライブが/mnt/cにマウントされているように見える。 [Bash] ここで、コマンドプロンプトを開き、%localappdata%\lxss\hoge\kaitoy\(i.e. Ubuntu側の/home/kaitoy/)にcdし、hoge.txtをechoで編集してみた。 [コマンドプロンプト] したらBashから見えなくなった。アクセスしようとすると「Input/output error」というエラーになる。これが件の現象か。 [Bash] エクスプローラからは見えていたので、GUIで%localappdata%\lxss\hoge\kaitoy\hoge.txtを削除したら正常な状態に戻った。 再度同じhoge.txtを作り、今度はメモ帳で編集して内容をfooに変えてみた。 この場合は特に問題なし。なぜだ? [Bash] 例のブログをよく読むと、実際に問題になるのはファイルの作成だけのように読める。 編集しているようにみえても、アプリによっては新規ファイルを作って既存のを置き換えていることがあるから、編集もするなと言っている模様。 メモ帳は実際に編集しているから大丈夫だったということか。 今編集したhoge.txtを今度はエクスプローラから消してみる。 Ubuntu側からは消えてないように見えるが、アクセスしようとするとないと言われる。 [Bash] エクスプローラのビューをF5で更新したら、今消したはずのhoge.txtが復活した。 これをダブルクリックで開こうとしたら「Access is denied.」。 エクスプローラから何度消してもすぐ復活する。 Bashで消そうとしても「Permission denied」。詰んだ。 [Bash] ということで、むしろWindows側からUbuntu側のファイルを消すのがもっともやばいと言うことがわかった。 lxrun /uninstall /full、lxrun /installでUbuntuイメージをインストールしなおさないと直らない。 最後に、Ubuntu側(i.e.
-              </div>
+              <h3 class="title">Bash on WindowsでWindows側からUbuntu側のファイルをいじると壊れることがあるので注意</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         

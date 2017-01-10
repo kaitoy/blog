@@ -6,8 +6,190 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2017</rights>
-    <updated>2017-01-03 23:36:01 -0700 MST</updated>
+    <updated>2017-01-10 00:21:27 -0700 MST</updated>
 
+    
+      
+        <item>
+          <title>Goslings開発メモ - その2: Spring Boot続編 (DI)</title>
+          <link>https://www.kaitoy.xyz/2017/01/10/goslings-development-memo2-spring-boot-di/</link>
+          <pubDate>Tue, 10 Jan 2017 00:21:27 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2017/01/10/goslings-development-memo2-spring-boot-di/</guid>
+          <description>
+
+&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/&#34;&gt;Goslings開発メモ - その1: Spring Boot編&lt;/a&gt;」の続き。&lt;/p&gt;
+
+&lt;p&gt;Spring Boot続編で、&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E4%BE%9D%E5%AD%98%E6%80%A7%E3%81%AE%E6%B3%A8%E5%85%A5&#34;&gt;DI&lt;/a&gt;について。&lt;/p&gt;
+
+&lt;h1 id=&#34;diとは&#34;&gt;DIとは&lt;/h1&gt;
+
+&lt;p&gt;DIはDependency Injectionの略。依存性注入と訳される。&lt;/p&gt;
+
+&lt;p&gt;これは、Javaの文脈で具体的目に言うと、あるクラスが依存する具象クラスのインスタンス化と取得をフレームワークに任せることで、具象クラス間の直接的な依存を排除し、よってコンポーネント間を疎結合にする手法。
+これにより、アプリの拡張性を高めたり、テストがしやすくなったりする。(&lt;a href=&#34;http://qiita.com/mizunowanko/items/53eed059fc044c5aa5dc&#34;&gt;参考記事&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://projects.spring.io/spring-framework/&#34;&gt;Spring Framework&lt;/a&gt;はもともとこのDI機能を提供するフレームワーク(i.e. DIコンテナ)として普及した。&lt;/p&gt;
+
+&lt;h1 id=&#34;goslingsでdi&#34;&gt;GoslingsでDI&lt;/h1&gt;
+
+&lt;p&gt;Goslingsサーバの内部機能はざっくり、クライアントからのREST API呼び出しを処理するユーザインタフェース層と、Gitリポジトリにアクセスするデータベース層に分かれる。&lt;/p&gt;
+
+&lt;p&gt;Gitリポジトリにアクセスする部分は今回は&lt;a href=&#34;https://eclipse.org/jgit/&#34;&gt;JGit&lt;/a&gt;で実装するが、将来的に別のライブラリで実装しなおす可能性が微レ存なのと、Goslingsの開発自体がWebアプリ開発の練習でもあるので、ちゃんとしたアーキテクチャでと思い、&lt;a href=&#34;https://ja.wikipedia.org/wiki/Data_Access_Object&#34;&gt;DAO&lt;/a&gt;パターンを使ってやった。&lt;/p&gt;
+
+&lt;p&gt;つまり例えば、GitのコミットオブジェクトはJGitのAPIでは&lt;a href=&#34;http://download.eclipse.org/jgit/site/3.7.1.201504261725-r/apidocs/org/eclipse/jgit/revwalk/RevCommit.html&#34;&gt;&lt;code&gt;RevCommitクラス&lt;/code&gt;&lt;/a&gt;で表されるが、ユーザインタフェース層からはリソースクラスである&lt;a href=&#34;https://github.com/kaitoy/goslings/blob/dba65bf4ca7ad1dd91b927d623b6ea9a39870b62/goslings-server/src/main/java/com/github/kaitoy/goslings/server/resource/Commit.java&#34;&gt;Commitクラス&lt;/a&gt;(&lt;a href=&#34;https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/#5-%E3%83%AA%E3%82%BD%E3%83%BC%E3%82%B9%E3%82%AF%E3%83%A9%E3%82%B9%E4%BD%9C%E6%88%90&#34;&gt;前回&lt;/a&gt;参照)を扱う以下の様なDAOインターフェースを呼ぶようにし、JGit依存の実装とは切り離す。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public interface ObjectDao {
+
+  public Commit[] getCommits(String token) throws DaoException;
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;(ObjectDao.javaの完全なソースは&lt;a href=&#34;https://github.com/kaitoy/goslings/blob/dba65bf4ca7ad1dd91b927d623b6ea9a39870b62/goslings-server/src/main/java/com/github/kaitoy/goslings/server/dao/ObjectDao.java&#34;&gt;これ&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;ObjectDao&lt;/code&gt;を実装する&lt;code&gt;ObjectDaoImpl&lt;/code&gt;クラスでは、以下の様にJGitを使ってごりごりと実装を書く。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public final class ObjectDaoImpl implements ObjectDao {
+
+  // フィールド定義は省略
+
+  @Override
+  public Commit[] getCommits(String token) {
+    try {
+      return StreamSupport.stream(resolver.getGit(token).log().all().call().spliterator(), false)
+               .map(this::convertToCommit)
+               .toArray(Commit[]::new);
+    } catch (NoHeadException e) {
+      // エラー処理
+    }
+  }
+
+  private Commit convertToCommit(RevCommit commit) {
+    // RevCommitをCommitに変換する処理
+  }
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ユーザインターフェース層は&lt;code&gt;RestApiV1Controller&lt;/code&gt;クラス(&lt;a href=&#34;https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/#6-%E3%82%B3%E3%83%B3%E3%83%88%E3%83%AD%E3%83%BC%E3%83%A9-rest-api%E3%82%B3%E3%83%B3%E3%83%88%E3%83%AD%E3%83%BC%E3%83%A9-%E4%BD%9C%E6%88%90&#34;&gt;前回&lt;/a&gt;参照)の&lt;code&gt;getCommits&lt;/code&gt;メソッドで、以下の様にObjectDaoを使いたい。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public final class RestApiV1Controller {
+
+  private ObjectDao objectDao;
+
+  @RequestMapping(path=&amp;quot;{token}/objects/commits&amp;quot;)
+  public Commit[] getCommits(@PathVariable String token) {
+    return objectDao.getCommits(token);
+  }
+
+  // 以下他のメソッド
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ここで問題になるのが、&lt;code&gt;RestApiV1Controller&lt;/code&gt;の&lt;code&gt;objectDao&lt;/code&gt;フィールドへのインスタンスの代入だが、&lt;code&gt;RestApiV1Controller&lt;/code&gt;内(e.g. &lt;code&gt;RestApiV1Controller&lt;/code&gt;のコンストラクタ)で&lt;code&gt;ObjectDaoImpl&lt;/code&gt;をインスタンス化して代入するのでは、&lt;code&gt;ObjectDaoImpl&lt;/code&gt;というデータベース層の具象クラスへの直接的な依存(i.e. &lt;code&gt;import ObjectDaoImpl&lt;/code&gt;)が発生してしまってまずい。
+ユーザインターフェース層とデータベース層が密に結合してしまう。&lt;/p&gt;
+
+&lt;p&gt;ここがDIの使いどころだ。
+&lt;code&gt;RestApiV1Controller&lt;/code&gt;への&lt;code&gt;ObjectDaoImpl&lt;/code&gt;インスタンスの注入をフレームワークに任せればいい。&lt;/p&gt;
+
+&lt;h1 id=&#34;spring-bootでのdi&#34;&gt;Spring BootでのDI&lt;/h1&gt;
+
+&lt;p&gt;Spring Bootアプリでは&lt;a href=&#34;https://docs.spring.io/spring/docs/4.3.4.RELEASE/spring-framework-reference/html/beans.html&#34;&gt;Spring FrameworkのDI機能&lt;/a&gt;を何でも使えるが、普通、もっとも簡単な方法である&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/context/annotation/ComponentScan.html&#34;&gt;&lt;code&gt;@ComponentScan&lt;/code&gt;&lt;/a&gt;と&lt;a href=&#34;https://docs.spring.io/spring/docs/4.3.4.RELEASE/spring-framework-reference/html/beans.html#beans-autowired-annotation&#34;&gt;&lt;code&gt;@Autowired&lt;/code&gt;&lt;/a&gt;を使う方法を採る。&lt;/p&gt;
+
+&lt;p&gt;まずは&lt;code&gt;@ComponentScan&lt;/code&gt;だが、これは、&lt;a href=&#34;https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/#7-%E3%83%A1%E3%82%A4%E3%83%B3%E3%82%AF%E3%83%A9%E3%82%B9%E4%BD%9C%E6%88%90&#34;&gt;前回&lt;/a&gt;書いたように既に使っていて、プロジェクト内の全てのSpring Beanが検索されDIコンテナに登録されるようになっている。
+なので、注入したい&lt;code&gt;ObjectDaoImpl&lt;/code&gt;がSpring Beanと判定されるようにすればよい。&lt;/p&gt;
+
+&lt;p&gt;そのためには、&lt;code&gt;ObjectDaoImpl&lt;/code&gt;に以下のアノテーションのいずれかを付ける必要がある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Service.html&#34;&gt;&lt;code&gt;@Service&lt;/code&gt;&lt;/a&gt;: 業務手続を表すAPIを提供する(しばしば状態を持たない)コンポーネント。またはそれっぽいもの。MVCアーキテクチャのM(モデル)や、3層アーキテクチャのビジネスロジック層のコンポーネント。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Repository.html&#34;&gt;&lt;code&gt;@Repository&lt;/code&gt;&lt;/a&gt;: データの保持、取得、検索といった振る舞いを持つ、オブジェクトコレクションを表すコンポーネント。またはそれっぽいもの。MVCアーキテクチャのM(モデル)の内、特にデータベースを扱うコンポーネントや、3層アーキテクチャのデータベース層のコンポーネント。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Controller.html&#34;&gt;&lt;code&gt;@Controller&lt;/code&gt;&lt;/a&gt;: MVCアーキテクチャのC(コントローラ)のコンポーネント。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Component.html&#34;&gt;&lt;code&gt;@Component&lt;/code&gt;&lt;/a&gt;: 一般的なコンポーネント。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;(&lt;a href=&#34;http://qiita.com/KevinFQ/items/abc7369cb07eb4b9ae29&#34;&gt;参考記事&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;ObjectDaoImpl&lt;/code&gt;はDAOコンポーネントで、これはもちろん&lt;code&gt;@Repository&lt;/code&gt;にあたるのでこれを付ける。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@Repository
+public final class ObjectDaoImpl implements ObjectDao {
+  // 省略
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;これで&lt;code&gt;ObjectDaoImpl&lt;/code&gt;がSpring Beanとして登録されるので、あとは&lt;code&gt;RestApiV1Controller&lt;/code&gt;に&lt;code&gt;@Autowired&lt;/code&gt;で注入してやればいい。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public final class RestApiV1Controller {
+
+  @Autowired
+  private ObjectDao objectDao;
+
+  // 以下省略。
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;@Autowired&lt;/code&gt;を付けたことにより、&lt;code&gt;RestApiV1Controller&lt;/code&gt;のインスタンス化直後に、&lt;code&gt;objectDao&lt;/code&gt;フィールドに適切なSpring Beanが注入されるようになった。&lt;/p&gt;
+
+&lt;p&gt;注入されるSpring Beanはフィールドの型から判断される。
+&lt;code&gt;objectDao&lt;/code&gt;フィールドの型は&lt;code&gt;ObjectDao&lt;/code&gt;で、この実装はプロジェクト内に&lt;code&gt;ObjectDaoImpl&lt;/code&gt;しかないので、狙い通り&lt;code&gt;ObjectDaoImpl&lt;/code&gt;が注入される。
+今はこれでもいいが、将来&lt;code&gt;ObjectDao&lt;/code&gt;の実装が増えた場合、どの実装を注入すべきかSpring Frameworkには分からなくなるので、今のうちに&lt;a href=&#34;http://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/beans/factory/annotation/Qualifier.html&#34;&gt;&lt;code&gt;@Qualifier&lt;/code&gt;&lt;/a&gt;を使って明示しておくことにする。(&lt;a href=&#34;https://docs.spring.io/spring/docs/4.3.4.RELEASE/spring-framework-reference/html/beans.html#beans-autowired-annotation-qualifiers&#34;&gt;参考&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;まずSpring Beanの方に&lt;code&gt;jgit&lt;/code&gt;という値を持つ&lt;code&gt;@Qualifier&lt;/code&gt;をつける。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@Repository
+@Qualifier(&amp;quot;jgit&amp;quot;)
+public final class ObjectDaoImpl implements ObjectDao {
+  // 省略
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;(ObjectDaoImpl.javaの完全なソースは&lt;a href=&#34;https://github.com/kaitoy/goslings/blob/dba65bf4ca7ad1dd91b927d623b6ea9a39870b62/goslings-server/src/main/java/com/github/kaitoy/goslings/server/dao/jgit/ObjectDaoImpl.java&#34;&gt;これ&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Spring Beanを使う側にも同じ&lt;code&gt;@Qualifier&lt;/code&gt;をつける。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public final class RestApiV1Controller {
+
+  @Autowired
+  @Qualifier(&amp;quot;jgit&amp;quot;)
+  private ObjectDao objectDao;
+
+  // 以下省略。
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;(RestApiV1Controller.javaの完全なソースは&lt;a href=&#34;https://github.com/kaitoy/goslings/blob/dba65bf4ca7ad1dd91b927d623b6ea9a39870b62/goslings-server/src/main/java/com/github/kaitoy/goslings/server/controller/RestApiV1Controller.java&#34;&gt;こちら&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;これで&lt;code&gt;RestApiV1Controller&lt;/code&gt;の&lt;code&gt;objectDao&lt;/code&gt;フィールドにどの&lt;code&gt;ObjectDao&lt;/code&gt;実装が注入されるかがより明確になった。
+将来&lt;code&gt;ObjectDao&lt;/code&gt;の別の実装を作るときには、その実装クラスには別の値の&lt;code&gt;@Qualifier&lt;/code&gt;を付けてやれば、&lt;code&gt;RestApiV1Controller&lt;/code&gt;の方の&lt;code&gt;@Qualifier&lt;/code&gt;の値によって注入する実装を切り替えられる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;今日はここまで。
+次回もまたSpring Bootで、例外処理とロギングについて。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -118,7 +300,9 @@ apply plugin: &#39;org.springframework.boot&#39;
 例えば、&lt;a href=&#34;http://www.thymeleaf.org/&#34;&gt;Thymeleaf&lt;/a&gt;をテンプレートエンジンに使ったWebアプリを作るなら&lt;code&gt;spring-boot-starter-thymeleaf&lt;/code&gt;、&lt;a href=&#34;http://projects.spring.io/spring-data-jpa/&#34;&gt;JPA&lt;/a&gt; (&lt;a href=&#34;http://hibernate.org/orm/&#34;&gt;Hibernate&lt;/a&gt;)でデータベースアクセスしたい場合は&lt;code&gt;spring-boot-starter-data-jpa&lt;/code&gt;を使う。&lt;/p&gt;
 
 &lt;p&gt;Webアプリを作るのに最も一般的なのは&lt;code&gt;spring-boot-starter-web&lt;/code&gt;で、Goslingsにもこれを使った。
-また、&lt;a href=&#34;http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/htmlsingle/#production-ready&#34;&gt;Spring Boot Actuator&lt;/a&gt;という、アプリをプロダクション環境で運用するための機能を有効にするため、&lt;code&gt;spring-boot-starter-actuator&lt;/code&gt;も使った。
+これを使うと&lt;a href=&#34;https://docs.spring.io/spring/docs/4.3.4.RELEASE/spring-framework-reference/html/mvc.html&#34;&gt;Spring MVC&lt;/a&gt;でアプリを作ることになる。&lt;/p&gt;
+
+&lt;p&gt;また、&lt;a href=&#34;http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/htmlsingle/#production-ready&#34;&gt;Spring Boot Actuator&lt;/a&gt;という、アプリをプロダクション環境で運用するための機能を有効にするため、&lt;code&gt;spring-boot-starter-actuator&lt;/code&gt;も使った。
 これを有効にすると、Web APIでアプリの状態取得などができるようになる。
 例えば、&lt;code&gt;http://&amp;lt;サーバ&amp;gt;/health&lt;/code&gt;にアクセスするとアプリの基本的なヘルス情報がJSONで取得できる。&lt;/p&gt;
 
@@ -241,7 +425,7 @@ dependencies {
 
 &lt;p&gt;POJOとして書けばいいので、&lt;a href=&#34;https://projectlombok.org/&#34;&gt;Lombok&lt;/a&gt;の&lt;code&gt;@Data&lt;/code&gt;か&lt;code&gt;@Value&lt;/code&gt;を使うと楽だろうが、Goslingsには使わなかった。&lt;/p&gt;
 
-&lt;h4 id=&#34;6-リソースコントローラ-rest-apiコントローラ-作成&#34;&gt;6. リソースコントローラ(REST APIコントローラ)作成&lt;/h4&gt;
+&lt;h4 id=&#34;6-コントローラ-rest-apiコントローラ-作成&#34;&gt;6. コントローラ(REST APIコントローラ)作成&lt;/h4&gt;
 
 &lt;p&gt;クライアントからのHTTPリクエストを処理するクラスはコントローラクラスと呼ばれる。
 クライアントからのREST API呼び出しもHTTPリクエストなのでコントローラクラスで処理する。&lt;/p&gt;
@@ -330,7 +514,8 @@ public class Application {
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
-&lt;p&gt;次回は多分またSpring Bootで、エラー処理やDIについて書く。&lt;/p&gt;
+&lt;p&gt;今日はここまで。
+&lt;a href=&#34;https://www.kaitoy.xyz/2017/1/10/goslings-development-memo2-spring-boot-di/&#34;&gt;次回&lt;/a&gt;はまたSpring Bootで、DIについて。&lt;/p&gt;
 </description>
         </item>
       

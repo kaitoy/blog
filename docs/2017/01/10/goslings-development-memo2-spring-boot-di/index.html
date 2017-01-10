@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Goslings開発メモ - その2: Spring Boot続編 (DI) | To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2017/01/10/goslings-development-memo2-spring-boot-di/">
+    <link rel="canonical" href="https://www.kaitoy.xyz/2017/01/10/goslings-development-memo2-spring-boot-di/">
+    <meta property="og:description" content="「Goslings開発メモ - その1: Spring Boot編」の続き。 Spring Boot続編で、DIについて。 DIとは DIはDependency Injectionの略。依存性注入と訳される。 これは、Javaの文脈で具体的目に言うと、あるクラスが依存する具象クラスのインスタンス化と取得をフレームワークに任せることで、具象クラス間の直接的な依存を排除し、よってコンポーネント間を疎結合にする手法。 これにより、アプリの拡張性を高めたり、テストがしやすくなったりする。(参考記事) Spring FrameworkはもともとこのDI機能を提供するフレームワーク(i.e. DIコンテナ)として普及した。 GoslingsでDI Goslingsサーバの内部機能はざっくり、クライアントからのREST API呼び出しを処理するユーザインタフェース層と、Gitリポジトリにアクセスするデータベース層に分かれる。 Gitリポジトリにアクセスする部分は今回はJGitで実装するが、将来的に別のライブラリで実装しなおす可能性が微レ存なのと、Goslingsの開発自体がWebアプリ開発の練習でもあるので、ちゃんとしたアーキテクチャでと思い、DAOパターンを使ってやった。 つまり例えば、GitのコミットオブジェクトはJGitのAPIではRevCommitクラスで表されるが、ユーザインタフェース層からはリソースクラスであるCommitクラス(前回参照)を扱う以下の様なDAOインターフェースを呼ぶようにし、JGit依存の実装とは切り離す。 public interface ObjectDao { public Commit[] getCommits(String token) throws DaoException; } (ObjectDao.javaの完全なソースはこれ) ObjectDaoを実装するObjectDaoImplクラスでは、以下の様にJGitを使ってごりごりと実装を書く。 public final class ObjectDaoImpl implements ObjectDao { // フィールド定義は省略 @Override public Commit[] getCommits(String token) { try { return StreamSupport.stream(resolver.getGit(token).log().all().call().spliterator(), false) .map(this::convertToCommit) .toArray(Commit[]::new); } catch (NoHeadException e) { // エラー処理 } } private Commit convertToCommit(RevCommit commit) { // RevCommitをCommitに変換する処理 } } ユーザインターフェース層はRestApiV1Controllerクラス(前回参照)のgetCommitsメソッドで、以下の様にObjectDaoを使いたい。 public final class RestApiV1Controller { private ObjectDao objectDao; @RequestMapping(path=&quot;{token}/objects/commits&quot;) public Commit[] getCommits(@PathVariable String token) { return objectDao.getCommits(token); } // 以下他のメソッド } ここで問題になるのが、RestApiV1ControllerのobjectDaoフィールドへのインスタンスの代入だが、RestApiV1Controller内(e.g.">
+    
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/goslings-logo.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      Goslings開発メモ - その2: Spring Boot続編 (DI) | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-7852181473528684",
+        enable_page_level_ads: true
+      });
+    </script>
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Tue, Jan 10, 2017</span>
+      <h2 class="title">Goslings開発メモ - その2: Spring Boot続編 (DI)</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://www.kaitoy.xyz/images/goslings-logo.png" alt="Goslings開発メモ - その2: Spring Boot続編 (DI)">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>「<a href="https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/">Goslings開発メモ - その1: Spring Boot編</a>」の続き。</p>
+
+<p>Spring Boot続編で、<a href="https://ja.wikipedia.org/wiki/%E4%BE%9D%E5%AD%98%E6%80%A7%E3%81%AE%E6%B3%A8%E5%85%A5">DI</a>について。</p>
+
+<h1 id="diとは">DIとは</h1>
+
+<p>DIはDependency Injectionの略。依存性注入と訳される。</p>
+
+<p>これは、Javaの文脈で具体的目に言うと、あるクラスが依存する具象クラスのインスタンス化と取得をフレームワークに任せることで、具象クラス間の直接的な依存を排除し、よってコンポーネント間を疎結合にする手法。
+これにより、アプリの拡張性を高めたり、テストがしやすくなったりする。(<a href="http://qiita.com/mizunowanko/items/53eed059fc044c5aa5dc">参考記事</a>)</p>
+
+<p><a href="http://projects.spring.io/spring-framework/">Spring Framework</a>はもともとこのDI機能を提供するフレームワーク(i.e. DIコンテナ)として普及した。</p>
+
+<h1 id="goslingsでdi">GoslingsでDI</h1>
+
+<p>Goslingsサーバの内部機能はざっくり、クライアントからのREST API呼び出しを処理するユーザインタフェース層と、Gitリポジトリにアクセスするデータベース層に分かれる。</p>
+
+<p>Gitリポジトリにアクセスする部分は今回は<a href="https://eclipse.org/jgit/">JGit</a>で実装するが、将来的に別のライブラリで実装しなおす可能性が微レ存なのと、Goslingsの開発自体がWebアプリ開発の練習でもあるので、ちゃんとしたアーキテクチャでと思い、<a href="https://ja.wikipedia.org/wiki/Data_Access_Object">DAO</a>パターンを使ってやった。</p>
+
+<p>つまり例えば、GitのコミットオブジェクトはJGitのAPIでは<a href="http://download.eclipse.org/jgit/site/3.7.1.201504261725-r/apidocs/org/eclipse/jgit/revwalk/RevCommit.html"><code>RevCommitクラス</code></a>で表されるが、ユーザインタフェース層からはリソースクラスである<a href="https://github.com/kaitoy/goslings/blob/dba65bf4ca7ad1dd91b927d623b6ea9a39870b62/goslings-server/src/main/java/com/github/kaitoy/goslings/server/resource/Commit.java">Commitクラス</a>(<a href="https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/#5-%E3%83%AA%E3%82%BD%E3%83%BC%E3%82%B9%E3%82%AF%E3%83%A9%E3%82%B9%E4%BD%9C%E6%88%90">前回</a>参照)を扱う以下の様なDAOインターフェースを呼ぶようにし、JGit依存の実装とは切り離す。</p>
+
+<pre><code class="language-java">public interface ObjectDao {
+
+  public Commit[] getCommits(String token) throws DaoException;
+
+}
+</code></pre>
+
+<p>(ObjectDao.javaの完全なソースは<a href="https://github.com/kaitoy/goslings/blob/dba65bf4ca7ad1dd91b927d623b6ea9a39870b62/goslings-server/src/main/java/com/github/kaitoy/goslings/server/dao/ObjectDao.java">これ</a>)</p>
+
+<p><br></p>
+
+<p><code>ObjectDao</code>を実装する<code>ObjectDaoImpl</code>クラスでは、以下の様にJGitを使ってごりごりと実装を書く。</p>
+
+<pre><code class="language-java">public final class ObjectDaoImpl implements ObjectDao {
+
+  // フィールド定義は省略
+
+  @Override
+  public Commit[] getCommits(String token) {
+    try {
+      return StreamSupport.stream(resolver.getGit(token).log().all().call().spliterator(), false)
+               .map(this::convertToCommit)
+               .toArray(Commit[]::new);
+    } catch (NoHeadException e) {
+      // エラー処理
+    }
+  }
+
+  private Commit convertToCommit(RevCommit commit) {
+    // RevCommitをCommitに変換する処理
+  }
+
+}
+</code></pre>
+
+<p><br></p>
+
+<p>ユーザインターフェース層は<code>RestApiV1Controller</code>クラス(<a href="https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/#6-%E3%82%B3%E3%83%B3%E3%83%88%E3%83%AD%E3%83%BC%E3%83%A9-rest-api%E3%82%B3%E3%83%B3%E3%83%88%E3%83%AD%E3%83%BC%E3%83%A9-%E4%BD%9C%E6%88%90">前回</a>参照)の<code>getCommits</code>メソッドで、以下の様にObjectDaoを使いたい。</p>
+
+<pre><code class="language-java">public final class RestApiV1Controller {
+
+  private ObjectDao objectDao;
+
+  @RequestMapping(path=&quot;{token}/objects/commits&quot;)
+  public Commit[] getCommits(@PathVariable String token) {
+    return objectDao.getCommits(token);
+  }
+
+  // 以下他のメソッド
+
+}
+</code></pre>
+
+<p><br></p>
+
+<p>ここで問題になるのが、<code>RestApiV1Controller</code>の<code>objectDao</code>フィールドへのインスタンスの代入だが、<code>RestApiV1Controller</code>内(e.g. <code>RestApiV1Controller</code>のコンストラクタ)で<code>ObjectDaoImpl</code>をインスタンス化して代入するのでは、<code>ObjectDaoImpl</code>というデータベース層の具象クラスへの直接的な依存(i.e. <code>import ObjectDaoImpl</code>)が発生してしまってまずい。
+ユーザインターフェース層とデータベース層が密に結合してしまう。</p>
+
+<p>ここがDIの使いどころだ。
+<code>RestApiV1Controller</code>への<code>ObjectDaoImpl</code>インスタンスの注入をフレームワークに任せればいい。</p>
+
+<h1 id="spring-bootでのdi">Spring BootでのDI</h1>
+
+<p>Spring Bootアプリでは<a href="https://docs.spring.io/spring/docs/4.3.4.RELEASE/spring-framework-reference/html/beans.html">Spring FrameworkのDI機能</a>を何でも使えるが、普通、もっとも簡単な方法である<a href="http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/context/annotation/ComponentScan.html"><code>@ComponentScan</code></a>と<a href="https://docs.spring.io/spring/docs/4.3.4.RELEASE/spring-framework-reference/html/beans.html#beans-autowired-annotation"><code>@Autowired</code></a>を使う方法を採る。</p>
+
+<p>まずは<code>@ComponentScan</code>だが、これは、<a href="https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/#7-%E3%83%A1%E3%82%A4%E3%83%B3%E3%82%AF%E3%83%A9%E3%82%B9%E4%BD%9C%E6%88%90">前回</a>書いたように既に使っていて、プロジェクト内の全てのSpring Beanが検索されDIコンテナに登録されるようになっている。
+なので、注入したい<code>ObjectDaoImpl</code>がSpring Beanと判定されるようにすればよい。</p>
+
+<p>そのためには、<code>ObjectDaoImpl</code>に以下のアノテーションのいずれかを付ける必要がある。</p>
+
+<ul>
+<li><a href="http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Service.html"><code>@Service</code></a>: 業務手続を表すAPIを提供する(しばしば状態を持たない)コンポーネント。またはそれっぽいもの。MVCアーキテクチャのM(モデル)や、3層アーキテクチャのビジネスロジック層のコンポーネント。</li>
+<li><a href="http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Repository.html"><code>@Repository</code></a>: データの保持、取得、検索といった振る舞いを持つ、オブジェクトコレクションを表すコンポーネント。またはそれっぽいもの。MVCアーキテクチャのM(モデル)の内、特にデータベースを扱うコンポーネントや、3層アーキテクチャのデータベース層のコンポーネント。</li>
+<li><a href="http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Controller.html"><code>@Controller</code></a>: MVCアーキテクチャのC(コントローラ)のコンポーネント。</li>
+<li><a href="http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Component.html"><code>@Component</code></a>: 一般的なコンポーネント。</li>
+</ul>
+
+<p>(<a href="http://qiita.com/KevinFQ/items/abc7369cb07eb4b9ae29">参考記事</a>)</p>
+
+<p><br></p>
+
+<p><code>ObjectDaoImpl</code>はDAOコンポーネントで、これはもちろん<code>@Repository</code>にあたるのでこれを付ける。</p>
+
+<pre><code class="language-java">@Repository
+public final class ObjectDaoImpl implements ObjectDao {
+  // 省略
+}
+</code></pre>
+
+<p><br></p>
+
+<p>これで<code>ObjectDaoImpl</code>がSpring Beanとして登録されるので、あとは<code>RestApiV1Controller</code>に<code>@Autowired</code>で注入してやればいい。</p>
+
+<pre><code class="language-java">public final class RestApiV1Controller {
+
+  @Autowired
+  private ObjectDao objectDao;
+
+  // 以下省略。
+
+}
+</code></pre>
+
+<p><br></p>
+
+<p><code>@Autowired</code>を付けたことにより、<code>RestApiV1Controller</code>のインスタンス化直後に、<code>objectDao</code>フィールドに適切なSpring Beanが注入されるようになった。</p>
+
+<p>注入されるSpring Beanはフィールドの型から判断される。
+<code>objectDao</code>フィールドの型は<code>ObjectDao</code>で、この実装はプロジェクト内に<code>ObjectDaoImpl</code>しかないので、狙い通り<code>ObjectDaoImpl</code>が注入される。
+今はこれでもいいが、将来<code>ObjectDao</code>の実装が増えた場合、どの実装を注入すべきかSpring Frameworkには分からなくなるので、今のうちに<a href="http://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/beans/factory/annotation/Qualifier.html"><code>@Qualifier</code></a>を使って明示しておくことにする。(<a href="https://docs.spring.io/spring/docs/4.3.4.RELEASE/spring-framework-reference/html/beans.html#beans-autowired-annotation-qualifiers">参考</a>)</p>
+
+<p>まずSpring Beanの方に<code>jgit</code>という値を持つ<code>@Qualifier</code>をつける。</p>
+
+<pre><code class="language-java">@Repository
+@Qualifier(&quot;jgit&quot;)
+public final class ObjectDaoImpl implements ObjectDao {
+  // 省略
+}
+</code></pre>
+
+<p>(ObjectDaoImpl.javaの完全なソースは<a href="https://github.com/kaitoy/goslings/blob/dba65bf4ca7ad1dd91b927d623b6ea9a39870b62/goslings-server/src/main/java/com/github/kaitoy/goslings/server/dao/jgit/ObjectDaoImpl.java">これ</a>)</p>
+
+<p><br></p>
+
+<p>Spring Beanを使う側にも同じ<code>@Qualifier</code>をつける。</p>
+
+<pre><code class="language-java">public final class RestApiV1Controller {
+
+  @Autowired
+  @Qualifier(&quot;jgit&quot;)
+  private ObjectDao objectDao;
+
+  // 以下省略。
+
+}
+</code></pre>
+
+<p>(RestApiV1Controller.javaの完全なソースは<a href="https://github.com/kaitoy/goslings/blob/dba65bf4ca7ad1dd91b927d623b6ea9a39870b62/goslings-server/src/main/java/com/github/kaitoy/goslings/server/controller/RestApiV1Controller.java">こちら</a>)</p>
+
+<p><br></p>
+
+<p>これで<code>RestApiV1Controller</code>の<code>objectDao</code>フィールドにどの<code>ObjectDao</code>実装が注入されるかがより明確になった。
+将来<code>ObjectDao</code>の別の実装を作るときには、その実装クラスには別の値の<code>@Qualifier</code>を付けてやれば、<code>RestApiV1Controller</code>の方の<code>@Qualifier</code>の値によって注入する実装を切り替えられる。</p>
+
+<p><br></p>
+
+<p>今日はここまで。
+次回もまたSpring Bootで、例外処理とロギングについて。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f01%2f10%2fgoslings-development-memo2-spring-boot-di%2f&t=Goslings%e9%96%8b%e7%99%ba%e3%83%a1%e3%83%a2%20-%20%e3%81%9d%e3%81%ae2%3a%20Spring%20Boot%e7%b6%9a%e7%b7%a8%20%28DI%29" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f01%2f10%2fgoslings-development-memo2-spring-boot-di%2f&text=Goslings%e9%96%8b%e7%99%ba%e3%83%a1%e3%83%a2%20-%20%e3%81%9d%e3%81%ae2%3a%20Spring%20Boot%e7%b6%9a%e7%b7%a8%20%28DI%29&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f01%2f10%2fgoslings-development-memo2-spring-boot-di%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f01%2f10%2fgoslings-development-memo2-spring-boot-di%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f01%2f10%2fgoslings-development-memo2-spring-boot-di%2f&title=Goslings%e9%96%8b%e7%99%ba%e3%83%a1%e3%83%a2%20-%20%e3%81%9d%e3%81%ae2%3a%20Spring%20Boot%e7%b6%9a%e7%b7%a8%20%28DI%29" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://www.kaitoy.xyz/tags/goslings"><i class="fa fa-tags"></i> goslings </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/spring"><i class="fa fa-tags"></i> spring </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/spring-boot"><i class="fa fa-tags"></i> spring-boot </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/">Goslings開発メモ - その1: Spring Boot編</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/">Goslings開発メモ - その0: 紹介と概要と設計編</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/">
+                  Goslings開発メモ - その1: Spring Boot編
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2017  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

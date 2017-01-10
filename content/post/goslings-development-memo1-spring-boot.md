@@ -98,6 +98,8 @@ Spring Bootは依存ライブラリの管理も簡易化してくれる。
 例えば、[Thymeleaf](http://www.thymeleaf.org/)をテンプレートエンジンに使ったWebアプリを作るなら`spring-boot-starter-thymeleaf`、[JPA](http://projects.spring.io/spring-data-jpa/) ([Hibernate](http://hibernate.org/orm/))でデータベースアクセスしたい場合は`spring-boot-starter-data-jpa`を使う。
 
 Webアプリを作るのに最も一般的なのは`spring-boot-starter-web`で、Goslingsにもこれを使った。
+これを使うと[Spring MVC](https://docs.spring.io/spring/docs/4.3.4.RELEASE/spring-framework-reference/html/mvc.html)でアプリを作ることになる。
+
 また、[Spring Boot Actuator](http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/htmlsingle/#production-ready)という、アプリをプロダクション環境で運用するための機能を有効にするため、`spring-boot-starter-actuator`も使った。
 これを有効にすると、Web APIでアプリの状態取得などができるようになる。
 例えば、`http://<サーバ>/health`にアクセスするとアプリの基本的なヘルス情報がJSONで取得できる。
@@ -222,7 +224,7 @@ public final class Commit {
 
 POJOとして書けばいいので、[Lombok](https://projectlombok.org/)の`@Data`か`@Value`を使うと楽だろうが、Goslingsには使わなかった。
 
-#### 6. リソースコントローラ(REST APIコントローラ)作成
+#### 6. コントローラ(REST APIコントローラ)作成
 クライアントからのHTTPリクエストを処理するクラスはコントローラクラスと呼ばれる。
 クライアントからのREST API呼び出しもHTTPリクエストなのでコントローラクラスで処理する。
 
@@ -306,4 +308,5 @@ public class Application {
 
 <br>
 
-次回は多分またSpring Bootで、エラー処理やDIについて書く。
+今日はここまで。
+[次回](https://www.kaitoy.xyz/2017/1/10/goslings-development-memo2-spring-boot-di/)はまたSpring Bootで、DIについて。
