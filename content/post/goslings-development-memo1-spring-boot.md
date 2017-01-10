@@ -309,4 +309,4 @@ public class Application {
 <br>
 
 今日はここまで。
-[次回](https://www.kaitoy.xyz/2017/1/10/goslings-development-memo2-spring-boot-di/)はまたSpring Bootで、DIについて。
+[次回](https://www.kaitoy.xyz/2017/01/10/goslings-development-memo2-spring-boot-di/)はまたSpring Bootで、DIについて。
