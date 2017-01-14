@@ -2,7 +2,7 @@
 categories = [ "Programing" ]
 date = "2017-01-10T00:21:27-07:00"
 draft = false
-eyecatch = "goslings-logo.png"
+eyecatch = "goslings-spring.png"
 slug = "goslings-development-memo2-spring-boot-di"
 tags = [ "goslings", "spring", "spring-boot" ]
 title = "Goslings開発メモ - その2: Spring Boot続編 (DI)"
@@ -178,4 +178,4 @@ public final class RestApiV1Controller {
 <br>
 
 今日はここまで。
-次回もまたSpring Bootで、例外処理とロギングについて。
+[次回](https://www.kaitoy.xyz/2017/01/13/goslings-development-memo3-spring-boot-exception/)もまたSpring Bootで、例外処理について。

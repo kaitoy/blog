@@ -2,7 +2,7 @@
 categories = [ "Programing" ]
 date = "2017-01-03T23:36:01-07:00"
 draft = false
-eyecatch = "goslings-logo.png"
+eyecatch = "goslings-spring.png"
 slug = "goslings-development-memo1-spring-boot"
 tags = [ "goslings", "spring", "spring-boot" ]
 title = "Goslings開発メモ - その1: Spring Boot編"
@@ -228,7 +228,9 @@ POJOとして書けばいいので、[Lombok](https://projectlombok.org/)の`@Da
 クライアントからのHTTPリクエストを処理するクラスはコントローラクラスと呼ばれる。
 クライアントからのREST API呼び出しもHTTPリクエストなのでコントローラクラスで処理する。
 
-REST API呼び出しを処理するコントローラクラスは、[`@RestController`](https://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/RestController.html)を付けて宣言して、メソッドにURL毎の処理を[`@RequestMapping`](https://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/RequestMapping.html)を使って以下の様に記述する。
+REST API呼び出しを処理するコントローラクラスは、[`@RestController`](https://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/RestController.html)を付けて宣言して、[`@RequestMapping`](https://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/RequestMapping.html)を付けたメソッド(リクエストハンドラ)にURL毎の処理を書いてやればいい。
+
+以下の様な感じ。
 
 ```java
 @RestController

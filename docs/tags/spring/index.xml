@@ -6,8 +6,113 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2017</rights>
-    <updated>2017-01-10 00:21:27 -0700 MST</updated>
+    <updated>2017-01-13 14:01:01 -0700 MST</updated>
 
+    
+      
+        <item>
+          <title>Goslings開発メモ - その3: Spring Boot続続編 (例外処理)</title>
+          <link>https://www.kaitoy.xyz/2017/01/13/goslings-development-memo3-spring-boot-exception/</link>
+          <pubDate>Fri, 13 Jan 2017 14:01:01 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2017/01/13/goslings-development-memo3-spring-boot-exception/</guid>
+          <description>
+
+&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2017/01/10/goslings-development-memo2-spring-boot-di/&#34;&gt;Goslings開発メモ - その2: Spring Boot続編 (DI)&lt;/a&gt;」の続き。&lt;/p&gt;
+
+&lt;p&gt;Spring Boot続続編で、例外処理について。&lt;/p&gt;
+
+&lt;h1 id=&#34;spring-mvcアプリにおける例外処理&#34;&gt;Spring MVCアプリにおける例外処理&lt;/h1&gt;
+
+&lt;p&gt;Goslingsは&lt;a href=&#34;https://www.kaitoy.xyz/2016/12/11/goslings-development-memo1-spring-boot/&#34;&gt;前回&lt;/a&gt;書いたように&lt;code&gt;spring-boot-starter-web&lt;/code&gt;というスターターを使っていて、つまりSpring MVCアプリだ。&lt;/p&gt;
+
+&lt;p&gt;Spring MVCアプリにおける例外処理についてはちょっと古いが&lt;a href=&#34;https://spring.io/blog/2013/11/01/exception-handling-in-spring-mvc&#34;&gt;この記事&lt;/a&gt;に詳しい。&lt;/p&gt;
+
+&lt;p&gt;まず、例外処理を何も書かなかった場合、コントローラのリクエストハンドラから例外が投げられると、ログにスタックトレースが出力され、クライアントにはHTTPステータスコード&lt;code&gt;500 (Internal Server Error)&lt;/code&gt;とともにエラーページが返る。
+エラーページはデフォルトで以下の様なもの。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/goslings-development-memo3-spring-boot-exception/err_page.png&#34; alt=&#34;err_page.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;なんだかこれでも十分な気がするが、実際にはちゃんと明示的に例外処理をしたほうがいいだろう。
+エラー時に返すHTTPステータスコードをカスタマイズしたり、遷移するページを変えたりしたくなるだろうから。&lt;/p&gt;
+
+&lt;p&gt;記事によれば、コントローラのメソッド内で例外をキャッチして処理するのはイケてなくて、関心事の分離のために別の場所に処理を書くのが良いらしい。&lt;/p&gt;
+
+&lt;p&gt;Spring MVCアプリにおける例外処理には以下の3つの段階がある。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;投げる例外をカスタマイズする&lt;/li&gt;
+&lt;li&gt;例外クラス毎の例外ハンドラをコントローラに実装する&lt;/li&gt;
+&lt;li&gt;コントローラ間で共用する例外ハンドラクラスを作る&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;以下それぞれについて書く。&lt;/p&gt;
+
+&lt;h4 id=&#34;1-投げる例外をカスタマイズする&#34;&gt;1. 投げる例外をカスタマイズする&lt;/h4&gt;
+
+&lt;p&gt;リクエストハンドラから投げる例外に&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/ResponseStatus.html&#34;&gt;&lt;code&gt;@ResponseStatus&lt;/code&gt;&lt;/a&gt;をつけることで、クライアントに返すHTTPステータスコード(とリーズンフレーズ)をカスタマイズできる。&lt;/p&gt;
+
+&lt;p&gt;例えば以下のような例外を投げると、HTTPステータスコード&lt;code&gt;500 (Internal Server Error)&lt;/code&gt;の代わりに&lt;code&gt;400 (Bad Request)&lt;/code&gt;がクライアントに返る。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@ResponseStatus(HttpStatus.BAD_REQUEST)
+public final class BadRequestException extends RuntimeException {
+  // 省略
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;2-例外クラス毎の例外ハンドラをコントローラに実装する&#34;&gt;2. 例外クラス毎の例外ハンドラをコントローラに実装する&lt;/h4&gt;
+
+&lt;p&gt;コントローラのメソッドに&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/ExceptionHandler.html&#34;&gt;&lt;code&gt;@ExceptionHandler&lt;/code&gt;&lt;/a&gt;をつけてやると、そのメソッドは例外ハンドラになり、そのコントローラのリクエストハンドラから特定の例外が投げられたときの処理を書くことができる。
+さらに例外ハンドラに&lt;code&gt;@ResponseStatus&lt;/code&gt;をつければ、HTTPステータスコードをカスタマイズできる。
+例外ハンドラの戻り値はリクエストハンドラのと同様に処理されるので、遷移するページ等も自由にカスタマイズできる。&lt;/p&gt;
+
+&lt;p&gt;Goslingsでは、上記&lt;code&gt;BadRequestException&lt;/code&gt;からは&lt;code&gt;@ResponseStatus&lt;/code&gt;を削除したうえで、&lt;code&gt;RestApiV1Controller&lt;/code&gt;に以下の様に例外ハンドラを書いた。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public final class RestApiV1Controller {
+
+  // 例外ハンドラ
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  @ExceptionHandler(BadRequestException.class)
+  ErrorInfo handleBadRequestException(HttpServletRequest req, Exception ex) {
+    return new ErrorInfo(req.getRequestURL().toString(), ex);
+  }
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;(RestApiV1Controller.javaの完全なソースは&lt;a href=&#34;https://github.com/kaitoy/goslings/blob/dba65bf4ca7ad1dd91b927d623b6ea9a39870b62/goslings-server/src/main/java/com/github/kaitoy/goslings/server/controller/RestApiV1Controller.java&#34;&gt;こちら&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;こう書くと、&lt;code&gt;RestApiV1Controller&lt;/code&gt;の任意のリクエストハンドラから&lt;code&gt;BadRequestException&lt;/code&gt;が投げられると、&lt;code&gt;handleBadRequestException&lt;/code&gt;が呼び出され、HTTPステータスコード&lt;code&gt;400 (Bad Request)&lt;/code&gt;とともにクライアントにHTTPレスポンスが返る。
+&lt;code&gt;RestApiV1Controller&lt;/code&gt;はREST APIコントローラなので、このHTTPレスポンスのボディは、&lt;code&gt;handleBadRequestException&lt;/code&gt;の戻り値である&lt;code&gt;ErrorInfo&lt;/code&gt;オブジェクトをJSONに変換したものになる。&lt;/p&gt;
+
+&lt;p&gt;例外ハンドラの仮引数は、上のコードに書いたもののほか、サーブレット関係のクラスなど(e.g. &lt;code&gt;HttpServletResponse&lt;/code&gt;や&lt;code&gt;HttpSession&lt;/code&gt;。詳しくは&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/ExceptionHandler.html&#34;&gt;Javadoc&lt;/a&gt;参照)を適当に書いておくとSpring MVCがよしなに渡してくれる。&lt;/p&gt;
+
+&lt;p&gt;冒頭に貼った記事には例外ハンドラは&lt;code&gt;Model&lt;/code&gt;を受け取れないとあるが、これは古い情報で、今は受け取れるっぽい。&lt;/p&gt;
+
+&lt;h4 id=&#34;3-コントローラ間で共用する例外ハンドラクラスを作る&#34;&gt;3. コントローラ間で共用する例外ハンドラクラスを作る&lt;/h4&gt;
+
+&lt;p&gt;コントローラから例外処理を完全に分離したい場合や、複数のコントローラで例外ハンドラを共有したい場合は、コントローラアドバイスクラスを書けばいい。&lt;/p&gt;
+
+&lt;p&gt;コントローラアドバイスクラスは&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/ControllerAdvice.html&#34;&gt;&lt;code&gt;@ControllerAdvice&lt;/code&gt;&lt;/a&gt;を付けて定義したクラスで、このクラスに例外ハンドラを書いておくと複数のコントローラで有効になる。&lt;/p&gt;
+
+&lt;p&gt;コントローラアドバイスクラスには例外ハンドラ以外も書ける。
+コントローラアドバイスクラスが適用されるのはデフォルトでは全てのコントローラクラスだが、&lt;code&gt;@ControllerAdvice&lt;/code&gt;の値により適用範囲を絞ることもできる。
+詳しくは&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/ControllerAdvice.html&#34;&gt;Javadoc&lt;/a&gt;参照。&lt;/p&gt;
+
+&lt;p&gt;Goslingsではコントローラアドバイスクラスは作らなかった。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;今日はここまで。
+次回もまたSpring Bootで、ロギングとHTMLドキュメント配信について。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -186,7 +291,7 @@ public final class ObjectDaoImpl implements ObjectDao {
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
 &lt;p&gt;今日はここまで。
-次回もまたSpring Bootで、例外処理とロギングについて。&lt;/p&gt;
+&lt;a href=&#34;https://www.kaitoy.xyz/2017/01/13/goslings-development-memo3-spring-boot-exception/&#34;&gt;次回&lt;/a&gt;もまたSpring Bootで、例外処理について。&lt;/p&gt;
 </description>
         </item>
       
@@ -430,7 +535,9 @@ dependencies {
 &lt;p&gt;クライアントからのHTTPリクエストを処理するクラスはコントローラクラスと呼ばれる。
 クライアントからのREST API呼び出しもHTTPリクエストなのでコントローラクラスで処理する。&lt;/p&gt;
 
-&lt;p&gt;REST API呼び出しを処理するコントローラクラスは、&lt;a href=&#34;https://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/RestController.html&#34;&gt;&lt;code&gt;@RestController&lt;/code&gt;&lt;/a&gt;を付けて宣言して、メソッドにURL毎の処理を&lt;a href=&#34;https://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/RequestMapping.html&#34;&gt;&lt;code&gt;@RequestMapping&lt;/code&gt;&lt;/a&gt;を使って以下の様に記述する。&lt;/p&gt;
+&lt;p&gt;REST API呼び出しを処理するコントローラクラスは、&lt;a href=&#34;https://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/RestController.html&#34;&gt;&lt;code&gt;@RestController&lt;/code&gt;&lt;/a&gt;を付けて宣言して、&lt;a href=&#34;https://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/RequestMapping.html&#34;&gt;&lt;code&gt;@RequestMapping&lt;/code&gt;&lt;/a&gt;を付けたメソッド(リクエストハンドラ)にURL毎の処理を書いてやればいい。&lt;/p&gt;
+
+&lt;p&gt;以下の様な感じ。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@RestController
 @RequestMapping(
