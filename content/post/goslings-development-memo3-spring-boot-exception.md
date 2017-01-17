@@ -93,4 +93,4 @@ Goslingsではコントローラアドバイスクラスは作らなかった。
 <br>
 
 今日はここまで。
-次回もまたSpring Bootで、ロギングとHTMLドキュメント配信について。
+[次回](https://www.kaitoy.xyz/2017/01/17/goslings-development-memo4-spring-boot-logging/)もまたSpring Bootで、ロギングについて。

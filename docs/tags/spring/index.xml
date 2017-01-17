@@ -6,8 +6,126 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2017</rights>
-    <updated>2017-01-13 14:01:01 -0700 MST</updated>
+    <updated>2017-01-17 00:15:25 -0700 MST</updated>
 
+    
+      
+        <item>
+          <title>Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)</title>
+          <link>https://www.kaitoy.xyz/2017/01/17/goslings-development-memo4-spring-boot-logging/</link>
+          <pubDate>Tue, 17 Jan 2017 00:15:25 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2017/01/17/goslings-development-memo4-spring-boot-logging/</guid>
+          <description>
+
+&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2017/01/13/goslings-development-memo3-spring-boot-exception/&#34;&gt;Goslings開発メモ - その3: Spring Boot続続編 (例外処理)&lt;/a&gt;」の続き。&lt;/p&gt;
+
+&lt;p&gt;Spring Boot続続続編で、ロギングについて。&lt;/p&gt;
+
+&lt;h1 id=&#34;spring-bootアプリにおけるロギング&#34;&gt;Spring Bootアプリにおけるロギング&lt;/h1&gt;
+
+&lt;p&gt;Spring Bootアプリにおけるロギングについては公式の&lt;a href=&#34;https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/boot-features-logging.html&#34;&gt;マニュアル&lt;/a&gt;と&lt;a href=&#34;https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/howto-logging.html&#34;&gt;How-toガイド&lt;/a&gt;を読むべし。
+この記事にはこれらの内容をまとめておく。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Spring Bootは内部でのロギングにApacheの&lt;a href=&#34;https://commons.apache.org/proper/commons-logging/&#34;&gt;Commons Logging&lt;/a&gt;を使っている。&lt;/p&gt;
+
+&lt;p&gt;Commons Loggingはファサードライブラリだ。
+つまり、Commons LoggingはロギングAPIだけをアプリケーションに提供し、実際のログ出力処理をするロギング実装ライブラリへの橋渡しとして機能する。
+ロギング実装ライブラリには色々な選択肢があるが、Spring Bootは&lt;a href=&#34;https://docs.oracle.com/javase/jp/8/docs/api/java/util/logging/package-summary.html&#34;&gt;JUL&lt;/a&gt;、 &lt;a href=&#34;http://logging.apache.org/log4j/2.x/&#34;&gt;Log4j 2&lt;/a&gt;、&lt;a href=&#34;http://logback.qos.ch/&#34;&gt;Logback&lt;/a&gt;用のデフォルト設定を備えているので、これらのいずれかを使うのが楽であろう。&lt;/p&gt;
+
+&lt;p&gt;全てのスターターは&lt;code&gt;spring-boot-starter-logging&lt;/code&gt;というロギングスターターに依存していて、これがLogbackを使うので、普通はそのままLogbackを使うことになる。
+&lt;code&gt;spring-boot-starter-logging&lt;/code&gt;は、JUL、Commons Logging、Log4j、&lt;a href=&#34;https://www.slf4j.org/&#34;&gt;SLF4J&lt;/a&gt;によるログ出力をLogbackにルーティングするため、アプリ側や他の依存ライブラリがこれらを使っていてもLogbackに一本化できる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;spring-boot-starter-logging&lt;/code&gt;の代わりに&lt;code&gt;spring-boot-starter-log4j2&lt;/code&gt;に依存し、Log4j 2を使う&lt;a href=&#34;https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/howto-logging.html#howto-configure-log4j-for-logging&#34;&gt;方法もある&lt;/a&gt;が、Goslingsには普通に&lt;code&gt;spring-boot-starter-logging&lt;/code&gt;を使った。&lt;/p&gt;
+
+&lt;p&gt;また、Goslings本体のログ出力には、プレースホルダを使いたかったのでSLF4Jを使った。&lt;/p&gt;
+
+&lt;h1 id=&#34;spring-bootアプリにおけるロギング設定&#34;&gt;Spring Bootアプリにおけるロギング設定&lt;/h1&gt;
+
+&lt;p&gt;Spring Bootが備えているデフォルトのロギング設定は、&lt;code&gt;ERROR&lt;/code&gt;、&lt;code&gt;WARN&lt;/code&gt;、&lt;code&gt;INFO&lt;/code&gt;レベルのログをいい感じにフォーマットしてコンソールに吐くというものになっている。&lt;/p&gt;
+
+&lt;p&gt;以下この設定の変更方法などを書く。&lt;/p&gt;
+
+&lt;h4 id=&#34;ファイルへのログ出力&#34;&gt;ファイルへのログ出力&lt;/h4&gt;
+
+&lt;p&gt;ログをファイルにも吐くようにするには、&lt;code&gt;logging.file&lt;/code&gt;というプロパティでファイルパスを指定するか、&lt;code&gt;logging.path&lt;/code&gt;というプロパティでディレクトリパスを指定すればいい。
+(後者の場合ログファイル名は&lt;code&gt;spring.log&lt;/code&gt;になる。)&lt;/p&gt;
+
+&lt;p&gt;Spring Bootアプリでプロパティを指定する方法は色々あり(&lt;a href=&#34;https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/htmlsingle/#boot-features-external-config&#34;&gt;ここ&lt;/a&gt;とか&lt;a href=&#34;https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/howto-properties-and-configuration.html&#34;&gt;ここ&lt;/a&gt;参照)、大抵は&lt;code&gt;application.properties&lt;/code&gt;で指定するんだろうけど、手軽にコマンドラインで以下の様に指定することもできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;java -jar build/libs/goslings-0.0.1.jar --logging.file=build/hoge.log
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ログファイルはデフォルトで10MBでローテーションする。&lt;/p&gt;
+
+&lt;h4 id=&#34;ログレベル&#34;&gt;ログレベル&lt;/h4&gt;
+
+&lt;p&gt;ログレベルには重大度の低い方から&lt;code&gt;TRACE&lt;/code&gt;、&lt;code&gt;DEBUG&lt;/code&gt;、&lt;code&gt;INFO&lt;/code&gt;、&lt;code&gt;WARN&lt;/code&gt;、&lt;code&gt;ERROR&lt;/code&gt;、&lt;code&gt;FATAL&lt;/code&gt;の6段階があり、指定したログレベル以上のログが出力される。(&lt;code&gt;OFF&lt;/code&gt;というログ出力を止めるものもある。)
+つまりSpring Bootのデフォルトのログレベルは&lt;code&gt;INFO&lt;/code&gt;だということだ。(Logbackには&lt;code&gt;FATAL&lt;/code&gt;がなく&lt;code&gt;ERROR&lt;/code&gt;として出力される。)&lt;/p&gt;
+
+&lt;p&gt;ログレベルは&lt;code&gt;logging.level.&amp;lt;ロガー名&amp;gt;&lt;/code&gt;という形式のプロパティで指定できる。
+例えばコマンドラインから指定するなら以下の感じ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;java -jar build/libs/goslings-0.0.1.jar --logging.level.org.springframework.web=DEBUG
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;全ロガーのログレベルは&lt;code&gt;logging.level.root&lt;/code&gt;で指定できる。&lt;/p&gt;
+
+&lt;h4 id=&#34;ロギング実装ライブラリの設定&#34;&gt;ロギング実装ライブラリの設定&lt;/h4&gt;
+
+&lt;p&gt;ロギング実装ライブラリの設定ファイルをカスタマイズして、より詳細な設定をすることもできる。&lt;/p&gt;
+
+&lt;p&gt;Logbackの場合、クラスパスのルートに置かれた&lt;code&gt;logback-spring.xml&lt;/code&gt;か&lt;code&gt;logback.xml&lt;/code&gt;がロードされる。
+設定ファイルの二重初期化を防いだり&lt;a href=&#34;https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/boot-features-logging.html#boot-features-logback-extensions&#34;&gt;Spring Boot拡張設定&lt;/a&gt;を利用可能にするために、前者のファイル名が推奨されている。
+(Groovyが使える環境なら&lt;code&gt;logback-spring.groovy&lt;/code&gt;でもいい。)&lt;/p&gt;
+
+&lt;p&gt;いつものようにjavaコマンドでアプリを起動する場合は&lt;code&gt;-jar&lt;/code&gt;オプションを使うため、&lt;code&gt;-cp&lt;/code&gt;オプションでクラスパスを指定しても無視されてしまうので、基本は&lt;code&gt;logback-spring.xml&lt;/code&gt;はjarの中に入れることになる。
+プロジェクトのリソースディレクトリのトップ(デフォルトでは&lt;code&gt;src/main/resources/&lt;/code&gt;)に&lt;code&gt;logback-spring.xml&lt;/code&gt;を置いておけば、GradleのJavaプラグインの&lt;code&gt;processResources&lt;/code&gt;タスクによってjar内の適切な場所に取り込まれる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;logging.config&lt;/code&gt;プロパティで設定ファイルのパスを指定することもできる。
+例えばコマンドラインから指定するなら以下の感じ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;java -jar build/libs/goslings-0.0.1.jar --logging.config=logback-spring.xml
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;logback-spring.xml&lt;/code&gt;の中身は、例えば以下の様に書くとコンソール出力をなくしてファイル出力だけにできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-xml&#34;&gt;&amp;lt;?xml version=&amp;quot;1.0&amp;quot; encoding=&amp;quot;UTF-8&amp;quot;?&amp;gt;
+&amp;lt;configuration&amp;gt;
+  &amp;lt;include resource=&amp;quot;org/springframework/boot/logging/logback/defaults.xml&amp;quot; /&amp;gt;
+  &amp;lt;property name=&amp;quot;LOG_FILE&amp;quot; value=&amp;quot;${LOG_FILE:-${LOG_PATH:-${LOG_TEMP:-${java.io.tmpdir:-/tmp}}/}spring.log}&amp;quot;/&amp;gt;
+  &amp;lt;include resource=&amp;quot;org/springframework/boot/logging/logback/file-appender.xml&amp;quot; /&amp;gt;
+  &amp;lt;root level=&amp;quot;INFO&amp;quot;&amp;gt;
+    &amp;lt;appender-ref ref=&amp;quot;FILE&amp;quot; /&amp;gt;
+  &amp;lt;/root&amp;gt;
+&amp;lt;/configuration&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ここで注目すべきは2点。&lt;/p&gt;
+
+&lt;p&gt;まずは&lt;code&gt;include&lt;/code&gt;している&lt;code&gt;defaults.xml&lt;/code&gt;と&lt;code&gt;file-appender.xml&lt;/code&gt;だ。
+これらはSpring Bootのコアライブラリである&lt;code&gt;spring-boot.jar&lt;/code&gt;に含まれるファイル。
+&lt;code&gt;spring-boot.jar&lt;/code&gt;には他にも&lt;code&gt;base.xml&lt;/code&gt;と&lt;code&gt;console-appender.xml&lt;/code&gt;が含まれている。
+これらは、前節までに書いたSpring Bootのロギング挙動を実現している設定ファイルなので、これらを&lt;code&gt;include&lt;/code&gt;して利用すれば自分のカスタム設定ファイルが簡単に書ける。&lt;/p&gt;
+
+&lt;p&gt;もう一点は&lt;code&gt;LOG_FILE&lt;/code&gt;といったプロパティ。
+これらはSpring Bootが設定してくれるプロパティで、詳細は&lt;a href=&#34;https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/boot-features-logging.html#boot-features-custom-log-configuration&#34;&gt;ここ&lt;/a&gt;に。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;今日はここまで。
+次回もまたSpring Bootで、HTMLドキュメント配信について。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -108,7 +226,7 @@ public final class BadRequestException extends RuntimeException {
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
 &lt;p&gt;今日はここまで。
-次回もまたSpring Bootで、ロギングとHTMLドキュメント配信について。&lt;/p&gt;
+&lt;a href=&#34;https://www.kaitoy.xyz/2017/01/17/goslings-development-memo4-spring-boot-logging/&#34;&gt;次回&lt;/a&gt;もまたSpring Bootで、ロギングについて。&lt;/p&gt;
 </description>
         </item>
       

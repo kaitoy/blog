@@ -6,8 +6,126 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2017</rights>
-    <updated>2017-01-13 14:01:01 -0700 MST</updated>
+    <updated>2017-01-17 00:15:25 -0700 MST</updated>
 
+    
+      
+        <item>
+          <title>Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)</title>
+          <link>https://www.kaitoy.xyz/2017/01/17/goslings-development-memo4-spring-boot-logging/</link>
+          <pubDate>Tue, 17 Jan 2017 00:15:25 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2017/01/17/goslings-development-memo4-spring-boot-logging/</guid>
+          <description>
+
+&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2017/01/13/goslings-development-memo3-spring-boot-exception/&#34;&gt;Goslings開発メモ - その3: Spring Boot続続編 (例外処理)&lt;/a&gt;」の続き。&lt;/p&gt;
+
+&lt;p&gt;Spring Boot続続続編で、ロギングについて。&lt;/p&gt;
+
+&lt;h1 id=&#34;spring-bootアプリにおけるロギング&#34;&gt;Spring Bootアプリにおけるロギング&lt;/h1&gt;
+
+&lt;p&gt;Spring Bootアプリにおけるロギングについては公式の&lt;a href=&#34;https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/boot-features-logging.html&#34;&gt;マニュアル&lt;/a&gt;と&lt;a href=&#34;https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/howto-logging.html&#34;&gt;How-toガイド&lt;/a&gt;を読むべし。
+この記事にはこれらの内容をまとめておく。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Spring Bootは内部でのロギングにApacheの&lt;a href=&#34;https://commons.apache.org/proper/commons-logging/&#34;&gt;Commons Logging&lt;/a&gt;を使っている。&lt;/p&gt;
+
+&lt;p&gt;Commons Loggingはファサードライブラリだ。
+つまり、Commons LoggingはロギングAPIだけをアプリケーションに提供し、実際のログ出力処理をするロギング実装ライブラリへの橋渡しとして機能する。
+ロギング実装ライブラリには色々な選択肢があるが、Spring Bootは&lt;a href=&#34;https://docs.oracle.com/javase/jp/8/docs/api/java/util/logging/package-summary.html&#34;&gt;JUL&lt;/a&gt;、 &lt;a href=&#34;http://logging.apache.org/log4j/2.x/&#34;&gt;Log4j 2&lt;/a&gt;、&lt;a href=&#34;http://logback.qos.ch/&#34;&gt;Logback&lt;/a&gt;用のデフォルト設定を備えているので、これらのいずれかを使うのが楽であろう。&lt;/p&gt;
+
+&lt;p&gt;全てのスターターは&lt;code&gt;spring-boot-starter-logging&lt;/code&gt;というロギングスターターに依存していて、これがLogbackを使うので、普通はそのままLogbackを使うことになる。
+&lt;code&gt;spring-boot-starter-logging&lt;/code&gt;は、JUL、Commons Logging、Log4j、&lt;a href=&#34;https://www.slf4j.org/&#34;&gt;SLF4J&lt;/a&gt;によるログ出力をLogbackにルーティングするため、アプリ側や他の依存ライブラリがこれらを使っていてもLogbackに一本化できる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;spring-boot-starter-logging&lt;/code&gt;の代わりに&lt;code&gt;spring-boot-starter-log4j2&lt;/code&gt;に依存し、Log4j 2を使う&lt;a href=&#34;https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/howto-logging.html#howto-configure-log4j-for-logging&#34;&gt;方法もある&lt;/a&gt;が、Goslingsには普通に&lt;code&gt;spring-boot-starter-logging&lt;/code&gt;を使った。&lt;/p&gt;
+
+&lt;p&gt;また、Goslings本体のログ出力には、プレースホルダを使いたかったのでSLF4Jを使った。&lt;/p&gt;
+
+&lt;h1 id=&#34;spring-bootアプリにおけるロギング設定&#34;&gt;Spring Bootアプリにおけるロギング設定&lt;/h1&gt;
+
+&lt;p&gt;Spring Bootが備えているデフォルトのロギング設定は、&lt;code&gt;ERROR&lt;/code&gt;、&lt;code&gt;WARN&lt;/code&gt;、&lt;code&gt;INFO&lt;/code&gt;レベルのログをいい感じにフォーマットしてコンソールに吐くというものになっている。&lt;/p&gt;
+
+&lt;p&gt;以下この設定の変更方法などを書く。&lt;/p&gt;
+
+&lt;h4 id=&#34;ファイルへのログ出力&#34;&gt;ファイルへのログ出力&lt;/h4&gt;
+
+&lt;p&gt;ログをファイルにも吐くようにするには、&lt;code&gt;logging.file&lt;/code&gt;というプロパティでファイルパスを指定するか、&lt;code&gt;logging.path&lt;/code&gt;というプロパティでディレクトリパスを指定すればいい。
+(後者の場合ログファイル名は&lt;code&gt;spring.log&lt;/code&gt;になる。)&lt;/p&gt;
+
+&lt;p&gt;Spring Bootアプリでプロパティを指定する方法は色々あり(&lt;a href=&#34;https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/htmlsingle/#boot-features-external-config&#34;&gt;ここ&lt;/a&gt;とか&lt;a href=&#34;https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/howto-properties-and-configuration.html&#34;&gt;ここ&lt;/a&gt;参照)、大抵は&lt;code&gt;application.properties&lt;/code&gt;で指定するんだろうけど、手軽にコマンドラインで以下の様に指定することもできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;java -jar build/libs/goslings-0.0.1.jar --logging.file=build/hoge.log
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ログファイルはデフォルトで10MBでローテーションする。&lt;/p&gt;
+
+&lt;h4 id=&#34;ログレベル&#34;&gt;ログレベル&lt;/h4&gt;
+
+&lt;p&gt;ログレベルには重大度の低い方から&lt;code&gt;TRACE&lt;/code&gt;、&lt;code&gt;DEBUG&lt;/code&gt;、&lt;code&gt;INFO&lt;/code&gt;、&lt;code&gt;WARN&lt;/code&gt;、&lt;code&gt;ERROR&lt;/code&gt;、&lt;code&gt;FATAL&lt;/code&gt;の6段階があり、指定したログレベル以上のログが出力される。(&lt;code&gt;OFF&lt;/code&gt;というログ出力を止めるものもある。)
+つまりSpring Bootのデフォルトのログレベルは&lt;code&gt;INFO&lt;/code&gt;だということだ。(Logbackには&lt;code&gt;FATAL&lt;/code&gt;がなく&lt;code&gt;ERROR&lt;/code&gt;として出力される。)&lt;/p&gt;
+
+&lt;p&gt;ログレベルは&lt;code&gt;logging.level.&amp;lt;ロガー名&amp;gt;&lt;/code&gt;という形式のプロパティで指定できる。
+例えばコマンドラインから指定するなら以下の感じ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;java -jar build/libs/goslings-0.0.1.jar --logging.level.org.springframework.web=DEBUG
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;全ロガーのログレベルは&lt;code&gt;logging.level.root&lt;/code&gt;で指定できる。&lt;/p&gt;
+
+&lt;h4 id=&#34;ロギング実装ライブラリの設定&#34;&gt;ロギング実装ライブラリの設定&lt;/h4&gt;
+
+&lt;p&gt;ロギング実装ライブラリの設定ファイルをカスタマイズして、より詳細な設定をすることもできる。&lt;/p&gt;
+
+&lt;p&gt;Logbackの場合、クラスパスのルートに置かれた&lt;code&gt;logback-spring.xml&lt;/code&gt;か&lt;code&gt;logback.xml&lt;/code&gt;がロードされる。
+設定ファイルの二重初期化を防いだり&lt;a href=&#34;https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/boot-features-logging.html#boot-features-logback-extensions&#34;&gt;Spring Boot拡張設定&lt;/a&gt;を利用可能にするために、前者のファイル名が推奨されている。
+(Groovyが使える環境なら&lt;code&gt;logback-spring.groovy&lt;/code&gt;でもいい。)&lt;/p&gt;
+
+&lt;p&gt;いつものようにjavaコマンドでアプリを起動する場合は&lt;code&gt;-jar&lt;/code&gt;オプションを使うため、&lt;code&gt;-cp&lt;/code&gt;オプションでクラスパスを指定しても無視されてしまうので、基本は&lt;code&gt;logback-spring.xml&lt;/code&gt;はjarの中に入れることになる。
+プロジェクトのリソースディレクトリのトップ(デフォルトでは&lt;code&gt;src/main/resources/&lt;/code&gt;)に&lt;code&gt;logback-spring.xml&lt;/code&gt;を置いておけば、GradleのJavaプラグインの&lt;code&gt;processResources&lt;/code&gt;タスクによってjar内の適切な場所に取り込まれる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;logging.config&lt;/code&gt;プロパティで設定ファイルのパスを指定することもできる。
+例えばコマンドラインから指定するなら以下の感じ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;java -jar build/libs/goslings-0.0.1.jar --logging.config=logback-spring.xml
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;logback-spring.xml&lt;/code&gt;の中身は、例えば以下の様に書くとコンソール出力をなくしてファイル出力だけにできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-xml&#34;&gt;&amp;lt;?xml version=&amp;quot;1.0&amp;quot; encoding=&amp;quot;UTF-8&amp;quot;?&amp;gt;
+&amp;lt;configuration&amp;gt;
+  &amp;lt;include resource=&amp;quot;org/springframework/boot/logging/logback/defaults.xml&amp;quot; /&amp;gt;
+  &amp;lt;property name=&amp;quot;LOG_FILE&amp;quot; value=&amp;quot;${LOG_FILE:-${LOG_PATH:-${LOG_TEMP:-${java.io.tmpdir:-/tmp}}/}spring.log}&amp;quot;/&amp;gt;
+  &amp;lt;include resource=&amp;quot;org/springframework/boot/logging/logback/file-appender.xml&amp;quot; /&amp;gt;
+  &amp;lt;root level=&amp;quot;INFO&amp;quot;&amp;gt;
+    &amp;lt;appender-ref ref=&amp;quot;FILE&amp;quot; /&amp;gt;
+  &amp;lt;/root&amp;gt;
+&amp;lt;/configuration&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ここで注目すべきは2点。&lt;/p&gt;
+
+&lt;p&gt;まずは&lt;code&gt;include&lt;/code&gt;している&lt;code&gt;defaults.xml&lt;/code&gt;と&lt;code&gt;file-appender.xml&lt;/code&gt;だ。
+これらはSpring Bootのコアライブラリである&lt;code&gt;spring-boot.jar&lt;/code&gt;に含まれるファイル。
+&lt;code&gt;spring-boot.jar&lt;/code&gt;には他にも&lt;code&gt;base.xml&lt;/code&gt;と&lt;code&gt;console-appender.xml&lt;/code&gt;が含まれている。
+これらは、前節までに書いたSpring Bootのロギング挙動を実現している設定ファイルなので、これらを&lt;code&gt;include&lt;/code&gt;して利用すれば自分のカスタム設定ファイルが簡単に書ける。&lt;/p&gt;
+
+&lt;p&gt;もう一点は&lt;code&gt;LOG_FILE&lt;/code&gt;といったプロパティ。
+これらはSpring Bootが設定してくれるプロパティで、詳細は&lt;a href=&#34;https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/boot-features-logging.html#boot-features-custom-log-configuration&#34;&gt;ここ&lt;/a&gt;に。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;今日はここまで。
+次回もまたSpring Bootで、HTMLドキュメント配信について。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -108,7 +226,7 @@ public final class BadRequestException extends RuntimeException {
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
 &lt;p&gt;今日はここまで。
-次回もまたSpring Bootで、ロギングとHTMLドキュメント配信について。&lt;/p&gt;
+&lt;a href=&#34;https://www.kaitoy.xyz/2017/01/17/goslings-development-memo4-spring-boot-logging/&#34;&gt;次回&lt;/a&gt;もまたSpring Bootで、ロギングについて。&lt;/p&gt;
 </description>
         </item>
       
@@ -9157,137 +9275,6 @@ APIと分離させることを図るデザインパターンの技術的役割�
 ただ、プログラマにボールを無下につっこまれるビフォーの犬よりも、
 自ら能動的にボールを受け取り返してくれるアフターの犬の方が幸せそうで愛らしいのは確かだ。
 真のオブジェクト界を垣間見た気がする。&lt;/p&gt;
-</description>
-        </item>
-      
-    
-      
-        <item>
-          <title>Pcap4J container with runC</title>
-          <link>https://www.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/</link>
-          <pubDate>Sun, 19 Jul 2015 16:25:03 MDT</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/</guid>
-          <description>
-
-&lt;p&gt;I tried to run a &lt;a href=&#34;https://registry.hub.docker.com/u/kaitoy/pcap4j/&#34;&gt;Pcap4J container&lt;/a&gt; with &lt;a href=&#34;https://runc.io/&#34;&gt;runC&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h2 id=&#34;what-is-pcap4j&#34;&gt;What is Pcap4J?&lt;/h2&gt;
-
-&lt;p&gt;Pcap4J is a Java library for capturing, crafting, and sending packets.
-It&amp;rsquo;s actually a Java wrapper for libpcap/WinPcap plus packet analyzer.
-We can see the details in its &lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;README&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h2 id=&#34;what-is-runc&#34;&gt;What is runC?&lt;/h2&gt;
-
-&lt;p&gt;runC is a container runtime developed by Docker and released on June 22, 2015.
-With runC, we can start a container from a docker image without the docker service or the docker command.&lt;/p&gt;
-
-&lt;p&gt;That said, as of now, runC cannot directory use docker images.
-We need to create a container form a docker image and export its filesystem before executing runC.&lt;/p&gt;
-
-&lt;p&gt;It seems currently it supports only Linux but Windows support is in the roadmap.&lt;/p&gt;
-
-&lt;h2 id=&#34;what-i-did&#34;&gt;What I did&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Environment
-
-&lt;ul&gt;
-&lt;li&gt;OS: CentOS 7 (on VMware Player 7.1.0 on Windows 7)&lt;/li&gt;
-&lt;li&gt;user: root&lt;/li&gt;
-&lt;li&gt;runC version: 0.2&lt;/li&gt;
-&lt;li&gt;Pcap4J version: 1.5.1-SNAPSHOT&lt;/li&gt;
-&lt;li&gt;Docker version: 1.6.2&lt;/li&gt;
-&lt;/ul&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Prerequisites:
-
-&lt;ul&gt;
-&lt;li&gt;Docker is installed and Docker service is started&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://golang.org/&#34;&gt;Go&lt;/a&gt; is installed&lt;/li&gt;
-&lt;/ul&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Step by step&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;&lt;p&gt;Install runC&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# mkdir -p $GOPATH/src/github.com/opencontainers
-[root@localhost ~]# cd $GOPATH/src/github.com/opencontainers
-[root@localhost opencontainers]# git clone https://github.com/opencontainers/runc
-[root@localhost opencontainers]# cd runc
-[root@localhost runc]# make &amp;amp;&amp;amp; make install
-&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Pull the Pcap4J docker image.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# docker pull kaitoy/pcap4j
-&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Create a container from the image.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# docker run -d --name pcap4j-tmp kaitoy/pcap4j:latest /bin/bash
-&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Export the container&amp;rsquo;s file system.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost ~]# mkdir /tmp/pcap4j-test
-[root@localhost pcap4j-test]# cd /tmp/pcap4j-test
-[root@localhost pcap4j-test]# docker export pcap4j-tmp &amp;gt; pcap4j.tar
-[root@localhost pcap4j-test]# tar xf pcap4j.tar
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;We are now free from Docker. We don&amp;rsquo;t need Docker service, Docker command, Docker images, nor Docker containers anymore.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Generate a container config file.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost pcap4j-test]# runc spec | sed -e &#39;s/rootfs/\/root\/Desktop\/pcap4j-container/&#39; -e &#39;s/&amp;quot;readonly&amp;quot;: true/&amp;quot;readonly&amp;quot;: false/&#39; -e &#39;s/&amp;quot;NET_BIND_SERVICE&amp;quot;/&amp;quot;NET_BIND_SERVICE&amp;quot;,&amp;quot;NET_ADMIN&amp;quot;,&amp;quot;NET_RAW&amp;quot;/&#39; &amp;gt; config.json
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;In the above command, &lt;code&gt;runc spec&lt;/code&gt; generates a standard container config file and &lt;code&gt;sed&lt;/code&gt; modifies it for Pcap4J.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Run a container.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@localhost pcap4j-test]# runc
-&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;In the container, enable lo.&lt;/p&gt;
-
-&lt;p&gt;As far as I saw, lo is the only interface we can use in a container.
-So, I used it to capture packets.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;sh-4.1# ifconfig lo up
-&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Generate a script to ping localhost and run it background.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;sh-4.1# cd /usr/local/src/pcap4j/bin
-sh-4.1# echo ping 127.0.0.1 \&amp;gt; /dev/null &amp;gt; pinger.sh
-sh-4.1# chmod +x pinger.sh
-sh-4.1# ./pinger.sh &amp;amp;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;In the next step, ICMP packets from this pinger.sh will be captured.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Generate a script to start capturing packets with Pcap4J and run it.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;sh-4.1# cat runGetNextPacket.sh | sed -e &#39;s/eth0/lo/&#39; &amp;gt; foo.sh
-sh-4.1# chmod +x foo.sh
-sh-4.1# ./foo.sh
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;We will see the ICMP packets are dumped on the terminal. That&amp;rsquo;s it!&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;&lt;/li&gt;
-&lt;/ul&gt;
 </description>
         </item>
       

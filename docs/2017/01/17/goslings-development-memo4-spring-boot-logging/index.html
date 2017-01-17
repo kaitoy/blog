@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Goslings開発メモ - その4: Spring Boot続続続編 (ロギング) | To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2017/01/17/goslings-development-memo4-spring-boot-logging/">
+    <link rel="canonical" href="https://www.kaitoy.xyz/2017/01/17/goslings-development-memo4-spring-boot-logging/">
+    <meta property="og:description" content="「Goslings開発メモ - その3: Spring Boot続続編 (例外処理)」の続き。 Spring Boot続続続編で、ロギングについて。 Spring Bootアプリにおけるロギング Spring Bootアプリにおけるロギングについては公式のマニュアルとHow-toガイドを読むべし。 この記事にはこれらの内容をまとめておく。 Spring Bootは内部でのロギングにApacheのCommons Loggingを使っている。 Commons Loggingはファサードライブラリだ。 つまり、Commons LoggingはロギングAPIだけをアプリケーションに提供し、実際のログ出力処理をするロギング実装ライブラリへの橋渡しとして機能する。 ロギング実装ライブラリには色々な選択肢があるが、Spring BootはJUL、 Log4j 2、Logback用のデフォルト設定を備えているので、これらのいずれかを使うのが楽であろう。 全てのスターターはspring-boot-starter-loggingというロギングスターターに依存していて、これがLogbackを使うので、普通はそのままLogbackを使うことになる。 spring-boot-starter-loggingは、JUL、Commons Logging、Log4j、SLF4Jによるログ出力をLogbackにルーティングするため、アプリ側や他の依存ライブラリがこれらを使っていてもLogbackに一本化できる。 spring-boot-starter-loggingの代わりにspring-boot-starter-log4j2に依存し、Log4j 2を使う方法もあるが、Goslingsには普通にspring-boot-starter-loggingを使った。 また、Goslings本体のログ出力には、プレースホルダを使いたかったのでSLF4Jを使った。 Spring Bootアプリにおけるロギング設定 Spring Bootが備えているデフォルトのロギング設定は、ERROR、WARN、INFOレベルのログをいい感じにフォーマットしてコンソールに吐くというものになっている。 以下この設定の変更方法などを書く。 ファイルへのログ出力 ログをファイルにも吐くようにするには、logging.fileというプロパティでファイルパスを指定するか、logging.pathというプロパティでディレクトリパスを指定すればいい。 (後者の場合ログファイル名はspring.logになる。) Spring Bootアプリでプロパティを指定する方法は色々あり(こことかここ参照)、大抵はapplication.propertiesで指定するんだろうけど、手軽にコマンドラインで以下の様に指定することもできる。 java -jar build/libs/goslings-0.0.1.jar --logging.file=build/hoge.log ログファイルはデフォルトで10MBでローテーションする。 ログレベル ログレベルには重大度の低い方からTRACE、DEBUG、INFO、WARN、ERROR、FATALの6段階があり、指定したログレベル以上のログが出力される。(OFFというログ出力を止めるものもある。) つまりSpring BootのデフォルトのログレベルはINFOだということだ。(LogbackにはFATALがなくERRORとして出力される。) ログレベルはlogging.level.&lt;ロガー名&gt;という形式のプロパティで指定できる。 例えばコマンドラインから指定するなら以下の感じ。 java -jar build/libs/goslings-0.0.1.jar --logging.level.org.springframework.web=DEBUG 全ロガーのログレベルはlogging.level.rootで指定できる。 ロギング実装ライブラリの設定 ロギング実装ライブラリの設定ファイルをカスタマイズして、より詳細な設定をすることもできる。 Logbackの場合、クラスパスのルートに置かれたlogback-spring.xmlかlogback.xmlがロードされる。 設定ファイルの二重初期化を防いだりSpring Boot拡張設定を利用可能にするために、前者のファイル名が推奨されている。 (Groovyが使える環境ならlogback-spring.groovyでもいい。) いつものようにjavaコマンドでアプリを起動する場合は-jarオプションを使うため、-cpオプションでクラスパスを指定しても無視されてしまうので、基本はlogback-spring.xmlはjarの中に入れることになる。 プロジェクトのリソースディレクトリのトップ(デフォルトではsrc/main/resources/)にlogback-spring.xmlを置いておけば、GradleのJavaプラグインのprocessResourcesタスクによってjar内の適切な場所に取り込まれる。 logging.configプロパティで設定ファイルのパスを指定することもできる。 例えばコマンドラインから指定するなら以下の感じ。 java -jar build/libs/goslings-0.0.1.jar --logging.config=logback-spring.xml">
+    
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/goslings-spring.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      Goslings開発メモ - その4: Spring Boot続続続編 (ロギング) | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Tue, Jan 17, 2017</span>
+      <h2 class="title">Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://www.kaitoy.xyz/images/goslings-spring.png" alt="Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>「<a href="https://www.kaitoy.xyz/2017/01/13/goslings-development-memo3-spring-boot-exception/">Goslings開発メモ - その3: Spring Boot続続編 (例外処理)</a>」の続き。</p>
+
+<p>Spring Boot続続続編で、ロギングについて。</p>
+
+<h1 id="spring-bootアプリにおけるロギング">Spring Bootアプリにおけるロギング</h1>
+
+<p>Spring Bootアプリにおけるロギングについては公式の<a href="https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/boot-features-logging.html">マニュアル</a>と<a href="https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/howto-logging.html">How-toガイド</a>を読むべし。
+この記事にはこれらの内容をまとめておく。</p>
+
+<p><br></p>
+
+<p>Spring Bootは内部でのロギングにApacheの<a href="https://commons.apache.org/proper/commons-logging/">Commons Logging</a>を使っている。</p>
+
+<p>Commons Loggingはファサードライブラリだ。
+つまり、Commons LoggingはロギングAPIだけをアプリケーションに提供し、実際のログ出力処理をするロギング実装ライブラリへの橋渡しとして機能する。
+ロギング実装ライブラリには色々な選択肢があるが、Spring Bootは<a href="https://docs.oracle.com/javase/jp/8/docs/api/java/util/logging/package-summary.html">JUL</a>、 <a href="http://logging.apache.org/log4j/2.x/">Log4j 2</a>、<a href="http://logback.qos.ch/">Logback</a>用のデフォルト設定を備えているので、これらのいずれかを使うのが楽であろう。</p>
+
+<p>全てのスターターは<code>spring-boot-starter-logging</code>というロギングスターターに依存していて、これがLogbackを使うので、普通はそのままLogbackを使うことになる。
+<code>spring-boot-starter-logging</code>は、JUL、Commons Logging、Log4j、<a href="https://www.slf4j.org/">SLF4J</a>によるログ出力をLogbackにルーティングするため、アプリ側や他の依存ライブラリがこれらを使っていてもLogbackに一本化できる。</p>
+
+<p><code>spring-boot-starter-logging</code>の代わりに<code>spring-boot-starter-log4j2</code>に依存し、Log4j 2を使う<a href="https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/howto-logging.html#howto-configure-log4j-for-logging">方法もある</a>が、Goslingsには普通に<code>spring-boot-starter-logging</code>を使った。</p>
+
+<p>また、Goslings本体のログ出力には、プレースホルダを使いたかったのでSLF4Jを使った。</p>
+
+<h1 id="spring-bootアプリにおけるロギング設定">Spring Bootアプリにおけるロギング設定</h1>
+
+<p>Spring Bootが備えているデフォルトのロギング設定は、<code>ERROR</code>、<code>WARN</code>、<code>INFO</code>レベルのログをいい感じにフォーマットしてコンソールに吐くというものになっている。</p>
+
+<p>以下この設定の変更方法などを書く。</p>
+
+<h4 id="ファイルへのログ出力">ファイルへのログ出力</h4>
+
+<p>ログをファイルにも吐くようにするには、<code>logging.file</code>というプロパティでファイルパスを指定するか、<code>logging.path</code>というプロパティでディレクトリパスを指定すればいい。
+(後者の場合ログファイル名は<code>spring.log</code>になる。)</p>
+
+<p>Spring Bootアプリでプロパティを指定する方法は色々あり(<a href="https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/htmlsingle/#boot-features-external-config">ここ</a>とか<a href="https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/howto-properties-and-configuration.html">ここ</a>参照)、大抵は<code>application.properties</code>で指定するんだろうけど、手軽にコマンドラインで以下の様に指定することもできる。</p>
+
+<pre><code class="language-cmd">java -jar build/libs/goslings-0.0.1.jar --logging.file=build/hoge.log
+</code></pre>
+
+<p><br></p>
+
+<p>ログファイルはデフォルトで10MBでローテーションする。</p>
+
+<h4 id="ログレベル">ログレベル</h4>
+
+<p>ログレベルには重大度の低い方から<code>TRACE</code>、<code>DEBUG</code>、<code>INFO</code>、<code>WARN</code>、<code>ERROR</code>、<code>FATAL</code>の6段階があり、指定したログレベル以上のログが出力される。(<code>OFF</code>というログ出力を止めるものもある。)
+つまりSpring Bootのデフォルトのログレベルは<code>INFO</code>だということだ。(Logbackには<code>FATAL</code>がなく<code>ERROR</code>として出力される。)</p>
+
+<p>ログレベルは<code>logging.level.&lt;ロガー名&gt;</code>という形式のプロパティで指定できる。
+例えばコマンドラインから指定するなら以下の感じ。</p>
+
+<pre><code>java -jar build/libs/goslings-0.0.1.jar --logging.level.org.springframework.web=DEBUG
+</code></pre>
+
+<p><br></p>
+
+<p>全ロガーのログレベルは<code>logging.level.root</code>で指定できる。</p>
+
+<h4 id="ロギング実装ライブラリの設定">ロギング実装ライブラリの設定</h4>
+
+<p>ロギング実装ライブラリの設定ファイルをカスタマイズして、より詳細な設定をすることもできる。</p>
+
+<p>Logbackの場合、クラスパスのルートに置かれた<code>logback-spring.xml</code>か<code>logback.xml</code>がロードされる。
+設定ファイルの二重初期化を防いだり<a href="https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/boot-features-logging.html#boot-features-logback-extensions">Spring Boot拡張設定</a>を利用可能にするために、前者のファイル名が推奨されている。
+(Groovyが使える環境なら<code>logback-spring.groovy</code>でもいい。)</p>
+
+<p>いつものようにjavaコマンドでアプリを起動する場合は<code>-jar</code>オプションを使うため、<code>-cp</code>オプションでクラスパスを指定しても無視されてしまうので、基本は<code>logback-spring.xml</code>はjarの中に入れることになる。
+プロジェクトのリソースディレクトリのトップ(デフォルトでは<code>src/main/resources/</code>)に<code>logback-spring.xml</code>を置いておけば、GradleのJavaプラグインの<code>processResources</code>タスクによってjar内の適切な場所に取り込まれる。</p>
+
+<p><code>logging.config</code>プロパティで設定ファイルのパスを指定することもできる。
+例えばコマンドラインから指定するなら以下の感じ。</p>
+
+<pre><code>java -jar build/libs/goslings-0.0.1.jar --logging.config=logback-spring.xml
+</code></pre>
+
+<p><br></p>
+
+<p><code>logback-spring.xml</code>の中身は、例えば以下の様に書くとコンソール出力をなくしてファイル出力だけにできる。</p>
+
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;configuration&gt;
+  &lt;include resource=&quot;org/springframework/boot/logging/logback/defaults.xml&quot; /&gt;
+  &lt;property name=&quot;LOG_FILE&quot; value=&quot;${LOG_FILE:-${LOG_PATH:-${LOG_TEMP:-${java.io.tmpdir:-/tmp}}/}spring.log}&quot;/&gt;
+  &lt;include resource=&quot;org/springframework/boot/logging/logback/file-appender.xml&quot; /&gt;
+  &lt;root level=&quot;INFO&quot;&gt;
+    &lt;appender-ref ref=&quot;FILE&quot; /&gt;
+  &lt;/root&gt;
+&lt;/configuration&gt;
+</code></pre>
+
+<p>ここで注目すべきは2点。</p>
+
+<p>まずは<code>include</code>している<code>defaults.xml</code>と<code>file-appender.xml</code>だ。
+これらはSpring Bootのコアライブラリである<code>spring-boot.jar</code>に含まれるファイル。
+<code>spring-boot.jar</code>には他にも<code>base.xml</code>と<code>console-appender.xml</code>が含まれている。
+これらは、前節までに書いたSpring Bootのロギング挙動を実現している設定ファイルなので、これらを<code>include</code>して利用すれば自分のカスタム設定ファイルが簡単に書ける。</p>
+
+<p>もう一点は<code>LOG_FILE</code>といったプロパティ。
+これらはSpring Bootが設定してくれるプロパティで、詳細は<a href="https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/boot-features-logging.html#boot-features-custom-log-configuration">ここ</a>に。</p>
+
+<p><br></p>
+
+<p>今日はここまで。
+次回もまたSpring Bootで、HTMLドキュメント配信について。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-7852181473528684"
+             data-ad-slot="3938339651"
+             data-ad-format="auto"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </aside>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f01%2f17%2fgoslings-development-memo4-spring-boot-logging%2f&t=Goslings%e9%96%8b%e7%99%ba%e3%83%a1%e3%83%a2%20-%20%e3%81%9d%e3%81%ae4%3a%20Spring%20Boot%e7%b6%9a%e7%b6%9a%e7%b6%9a%e7%b7%a8%20%28%e3%83%ad%e3%82%ae%e3%83%b3%e3%82%b0%29" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f01%2f17%2fgoslings-development-memo4-spring-boot-logging%2f&text=Goslings%e9%96%8b%e7%99%ba%e3%83%a1%e3%83%a2%20-%20%e3%81%9d%e3%81%ae4%3a%20Spring%20Boot%e7%b6%9a%e7%b6%9a%e7%b6%9a%e7%b7%a8%20%28%e3%83%ad%e3%82%ae%e3%83%b3%e3%82%b0%29&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f01%2f17%2fgoslings-development-memo4-spring-boot-logging%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f01%2f17%2fgoslings-development-memo4-spring-boot-logging%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f01%2f17%2fgoslings-development-memo4-spring-boot-logging%2f&title=Goslings%e9%96%8b%e7%99%ba%e3%83%a1%e3%83%a2%20-%20%e3%81%9d%e3%81%ae4%3a%20Spring%20Boot%e7%b6%9a%e7%b6%9a%e7%b6%9a%e7%b7%a8%20%28%e3%83%ad%e3%82%ae%e3%83%b3%e3%82%b0%29" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://www.kaitoy.xyz/tags/goslings"><i class="fa fa-tags"></i> goslings </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/spring"><i class="fa fa-tags"></i> spring </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/spring-boot"><i class="fa fa-tags"></i> spring-boot </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/01/13/goslings-development-memo3-spring-boot-exception/">Goslings開発メモ - その3: Spring Boot続続編 (例外処理)</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/01/10/goslings-development-memo2-spring-boot-di/">Goslings開発メモ - その2: Spring Boot続編 (DI)</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/">Goslings開発メモ - その1: Spring Boot編</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/">Goslings開発メモ - その0: 紹介と概要と設計編</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://www.kaitoy.xyz/2017/01/13/goslings-development-memo3-spring-boot-exception/">
+                  Goslings開発メモ - その3: Spring Boot続続編 (例外処理)
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-7852181473528684"
+     data-ad-slot="3938339651"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2017  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+
