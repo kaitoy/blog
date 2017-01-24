@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://www.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="「Goslings開発メモ - その3: Spring Boot続続編 (例外処理)」の続き。 Spring Boot続続続編で、ロギングについて。 Spring Bootアプリにおけるロギング Spring Bootアプリにおけるロギングについては公式のマニュアルとHow-toガイドを読むべし。 この記事にはこれらの内容をまとめておく。 Spring Bootは内部でのロギングにApacheのCommons Loggingを使っている。 Commons Loggingはファサードライブラリだ。 つまり、Commons LoggingはロギングAPIだけをアプリケーションに提供し、実際のログ出力処理をするロギング実装ライブラリへの橋渡しとして機能する。 ロギング実装ライブラリには色々な選択肢があるが、Spring BootはJUL、 Log4j 2、Logback用のデフォルト設定を備えているので、これらのいずれかを使うのが楽であろう。 全てのスターターはspring-boot-starter-loggingというロギングスターターに依存していて、これがLogbackを使うので、普通はそのままLogbackを使うことになる。 spring-boot-starter-loggingは、JUL、Commons Logging、Log4j、SLF4Jによるログ出力をLogbackにルーティングするため、アプリ側や他の依存ライブラリがこれらを使っていてもLogbackに一本化できる。 spring-boot-starter-loggingの代わりにspring-boot-starter-log4j2に依存し、Log4j 2を使う方法もあるが、Goslingsには普通にspring-boot-starter-loggingを使った。 また、Goslings本体のログ出力には、プレースホルダを使いたかったのでSLF4Jを使った。 Spring Bootアプリにおけるロギング設定 Spring Bootが備えているデフォルトのロギング設定は、ERROR、WARN、INFOレベルのログをいい感じにフォーマットしてコンソールに吐くというものになっている。 以下この設定の変更方法などを書く。 ファイルへのログ出力 ログをファイルにも吐くようにするには、logging.fileというプロパティでファイルパスを指定するか、logging.pathというプロパティでディレクトリパスを指定すればいい。 (後者の場合ログファイル名はspring.logになる。) Spring Bootアプリでプロパティを指定する方法は色々あり(こことかここ参照)、大抵はapplication.propertiesで指定するんだろうけど、手軽にコマンドラインで以下の様に指定することもできる。 java -jar build/libs/goslings-0.0.1.jar --logging.file=build/hoge.log ログファイルはデフォルトで10MBでローテーションする。 ログレベル ログレベルには重大度の低い方からTRACE、DEBUG、INFO、WARN、ERROR、FATALの6段階があり、指定したログレベル以上のログが出力される。(OFFというログ出力を止めるものもある。) つまりSpring BootのデフォルトのログレベルはINFOだということだ。(LogbackにはFATALがなくERRORとして出力される。) ログレベルはlogging.level.&lt;ロガー名&gt;という形式のプロパティで指定できる。 例えばコマンドラインから指定するなら以下の感じ。 java -jar build/libs/goslings-0.0.1.jar --logging.level.org.springframework.web=DEBUG 全ロガーのログレベルはlogging.level.rootで指定できる。 ロギング実装ライブラリの設定 ロギング実装ライブラリの設定ファイルをカスタマイズして、より詳細な設定をすることもできる。 Logbackの場合、クラスパスのルートに置かれたlogback-spring.xmlかlogback.xmlがロードされる。 設定ファイルの二重初期化を防いだりSpring Boot拡張設定を利用可能にするために、前者のファイル名が推奨されている。 (Groovyが使える環境ならlogback-spring.groovyでもいい。) いつものようにjavaコマンドでアプリを起動する場合は-jarオプションを使うため、-cpオプションでクラスパスを指定しても無視されてしまうので、基本はlogback-spring.xmlはjarの中に入れることになる。 プロジェクトのリソースディレクトリのトップ(デフォルトではsrc/main/resources/)にlogback-spring.xmlを置いておけば、GradleのJavaプラグインのprocessResourcesタスクによってjar内の適切な場所に取り込まれる。 logging.configプロパティで設定ファイルのパスを指定することもできる。 例えばコマンドラインから指定するなら以下の感じ。 java -jar build/libs/goslings-0.0.1.jar --logging.config=logback-spring.xml">
+    <meta property="og:description" content="「Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)」の続き。 Spring Boot最終編で、静的リソース処理について。 Spring Boot(Spring MVC)での静的リソース処理 この時点でのGoslingsは単なるREST APIサーバで、アクセスしてもJSONを返すだけだ。 アプリとしての体を成すためには、そのAPIを利用するクライアントコード、つまりHTMLドキュメントやCSSファイルやJavaScriptファイル(静的リソース)も返すようにしないといけない。 HTMLドキュメントを返す場合、普通はなんらかのテンプレートエンジンを使うものだが、Goslingsは本当に単純なGUIなので、サーバに置いたHTMLファイルをそのまま返したい。 「Getting Started Guides」にはServing Web Content with Spring MVCというのが乗っているが、これはThymeleafというテンプレートエンジンを使うものなのでちょっと違う。 Spring Bootリファレンスガイドによると、クラスパス(またはServletContextのルート)の/static/、/public/、/resources/、/META-INF/resources/のいずれかに静的リソースを置けば、特にコードを書かなくてもクライアントからアクセスできるらしい。 (逆に、一般的に静的リソースを置く場所である、プロジェクトのsrc/main/webapp/には置くべきでないとのこと。これは、jarにパッケージングするときにビルドツールに無視されることが多いため。) この仕組みについて、この記事を参考にちょろっとソースを見た感じでは、これらのパスはResourcePropertiesのCLASSPATH_RESOURCE_LOCATIONSに定義されていて、これをWebMvcAutoConfigurationがResourceHandlerRegistryでリソースロケーションとして登録することで静的リソース置き場たらしめている模様。 (このResourceHandlerRegistryはResourceHttpRequestHandlerを設定するファサード的なものっぽい。) で、@SpringBootApplication(その1参照)が付いているクラスがあって、spring-webmvc.jarがクラスパスにあると、@EnableWebMvcがSpring Bootによって付けられ、そこからごにょごにょして上記WebMvcAutoConfigurationが実行される。 spring-webmvc.jarはspring-boot-starter-web.jar(その1参照)が引っ張ってくる。 なお、Spring MVCの静的リソース処理の全体の流れについては 、ちょっと古いけど「handling static web resources」という記事が分かりやすい。 要は、URLに指定されたパスからサーバ上のリソースを探し当てるResourceResolverというものが優先度順に連なっているリゾルバチェイン(ResourceResolverChain)があって、まずこいつがリソースを取得する。 次に、そのリソースを加工するトランスフォーマチェイン(ResourceTransformerChain)というものに通し、その結果をクライアントに返す。 トランスフォーマチェインはResourceTransformerが連なったもの。 リゾルバチェインとトランスフォーマチェインは上記ResourceHttpRequestHandlerに設定される。 リゾルバには以下の様なものがある。 PathResourceResolver: ResourceHttpRequestHandlerに設定されたリソースロケーションからリソースを単純に検索するリゾルバ。 CachingResourceResolver: キャッシュからリソースを検索するリゾルバ。テンプレートエンジンの処理結果のキャッシュとかが返るのは多分ここから。 GzipResourceResolver: gzipで圧縮されたリソース、つまりURLで指定されたパスに.gzという拡張子を付けたリソースを検索するリゾルバ。 VersionResourceResolver: リソースバージョニングを実現するためのリゾルバ。 WebJarsResourceResolver: WebJarsのjarファイル内のリソースを検索するリゾルバ。 リゾルバの設定などについてはQiitaのこの記事ががよくまとまっている。 凝ったことをしたいときは参照しよう。 トランスフォーマには以下の様なものがある。 CssLinkResourceTransformer: CSSファイル内のリンクをクライアントがアクセスできるURLに変換する。 CachingResourceTransformer: 変換したリソースをキャッシュする。 AppCacheManifestTransformer: HTML5のAppCacheマニフェスト内のリソースを扱うトランスフォーマ。 デフォルトでResourceHttpRequestHandlerにはPathResourceResolverだけが設定されている。 以上をまとめると、クライアントからGetリクエストが来ると、WebMvcAutoConfigurationが設定したリソースロケーション(e.g. /static/)をPathResourceResolverが検索して、そこに置いてあるHTMLファイルとかをクライアントに返してくれる、ということであろう。 Javaのコードを全く書かなくていいので楽。 Javaのコードを書いて静的リソースファイルを明示することもできる。 Qiitaの記事によれば、@Controllerを付けたクラスのリクエストハンドラで以下の様にファイルへのパスを返せばいいらしい。 @RequestMapping(&quot;/hoge&quot;) public String hoge() { return &quot;/hoge.html&quot;; } 単純な静的リソースに対してこれをやるユースケースはあまりなさそう。 テンプレートエンジンを使っていてパラメータを渡したいときにはこういうリクエストハンドラを書くことになる。 Spring Bootのウェルカムページとファビコン Spring Bootはindex.htmlとfavicon.icoという名のファイルを特別扱いする。 前者がウェルカムページで後者がファビコン。 ウェルカムページ Spring Bootのリファレンスガイドにもちらっとかいてあるけど、リソースロケーションにindex.htmlというファイルを置いておくと、それがウェルカムページとして設定され、URLのパスにルート(e.g.">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/goslings-spring.png">
     
@@ -65,6 +65,28 @@
     <div id="posts">
       
       <div class="row">
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://www.kaitoy.xyz/2017/01/24/goslings-development-memo5-spring-boot-static-resources/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/goslings-spring.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Tue, Jan 24, 2017</span>
+              </div>
+              <h2 class="title">Goslings開発メモ - その5: Spring Boot最終編 (静的リソース処理)</h2>
+              <div class="summary">
+                「Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)」の続き。 Spring Boot最終編で、静的リソース処理について。 Spring Boot(Spring MVC)での静的リソース処理 この時点でのGoslingsは単なるREST APIサーバで、アクセスしてもJSONを返すだけだ。 アプリとしての体を成すためには、そのAPIを利用するクライアントコード、つまりHTMLドキュメントやCSSファイルやJavaScriptファイル(静的リソース)も返すようにしないといけない。 HTMLドキュメントを返す場合、普通はなんらかのテンプレートエンジンを使うものだが、Goslingsは本当に単純なGUIなので、サーバに置いたHTMLファイルをそのまま返したい。 「Getting Started Guides」にはServing Web Content with Spring MVCというのが乗っているが、これはThymeleafというテンプレートエンジンを使うものなのでちょっと違う。 Spring Bootリファレンスガイドによると、クラスパス(またはServletContextのルート)の/static/、/public/、/resources/、/META-INF/resources/のいずれかに静的リソースを置けば、特にコードを書かなくてもクライアントからアクセスできるらしい。 (逆に、一般的に静的リソースを置く場所である、プロジェクトのsrc/main/webapp/には置くべきでないとのこと。これは、jarにパッケージングするときにビルドツールに無視されることが多いため。) この仕組みについて、この記事を参考にちょろっとソースを見た感じでは、これらのパスはResourcePropertiesのCLASSPATH_RESOURCE_LOCATIONSに定義されていて、これをWebMvcAutoConfigurationがResourceHandlerRegistryでリソースロケーションとして登録することで静的リソース置き場たらしめている模様。 (このResourceHandlerRegistryはResourceHttpRequestHandlerを設定するファサード的なものっぽい。) で、@SpringBootApplication(その1参照)が付いているクラスがあって、spring-webmvc.jarがクラスパスにあると、@EnableWebMvcがSpring Bootによって付けられ、そこからごにょごにょして上記WebMvcAutoConfigurationが実行される。 spring-webmvc.jarはspring-boot-starter-web.jar(その1参照)が引っ張ってくる。 なお、Spring MVCの静的リソース処理の全体の流れについては 、ちょっと古いけど「handling static web resources」という記事が分かりやすい。 要は、URLに指定されたパスからサーバ上のリソースを探し当てるResourceResolverというものが優先度順に連なっているリゾルバチェイン(ResourceResolverChain)があって、まずこいつがリソースを取得する。 次に、そのリソースを加工するトランスフォーマチェイン(ResourceTransformerChain)というものに通し、その結果をクライアントに返す。 トランスフォーマチェインはResourceTransformerが連なったもの。 リゾルバチェインとトランスフォーマチェインは上記ResourceHttpRequestHandlerに設定される。 リゾルバには以下の様なものがある。 PathResourceResolver: ResourceHttpRequestHandlerに設定されたリソースロケーションからリソースを単純に検索するリゾルバ。 CachingResourceResolver: キャッシュからリソースを検索するリゾルバ。テンプレートエンジンの処理結果のキャッシュとかが返るのは多分ここから。 GzipResourceResolver: gzipで圧縮されたリソース、つまりURLで指定されたパスに.gzという拡張子を付けたリソースを検索するリゾルバ。 VersionResourceResolver: リソースバージョニングを実現するためのリゾルバ。 WebJarsResourceResolver: WebJarsのjarファイル内のリソースを検索するリゾルバ。 リゾルバの設定などについてはQiitaのこの記事ががよくまとまっている。 凝ったことをしたいときは参照しよう。 トランスフォーマには以下の様なものがある。 CssLinkResourceTransformer: CSSファイル内のリンクをクライアントがアクセスできるURLに変換する。 CachingResourceTransformer: 変換したリソースをキャッシュする。 AppCacheManifestTransformer: HTML5のAppCacheマニフェスト内のリソースを扱うトランスフォーマ。 デフォルトでResourceHttpRequestHandlerにはPathResourceResolverだけが設定されている。 以上をまとめると、クライアントからGetリクエストが来ると、WebMvcAutoConfigurationが設定したリソースロケーション(e.g. /static/)をPathResourceResolverが検索して、そこに置いてあるHTMLファイルとかをクライアントに返してくれる、ということであろう。 Javaのコードを全く書かなくていいので楽。 Javaのコードを書いて静的リソースファイルを明示することもできる。 Qiitaの記事によれば、@Controllerを付けたクラスのリクエストハンドラで以下の様にファイルへのパスを返せばいいらしい。 @RequestMapping(&quot;/hoge&quot;) public String hoge() { return &quot;/hoge.html&quot;; } 単純な静的リソースに対してこれをやるユースケースはあまりなさそう。 テンプレートエンジンを使っていてパラメータを渡したいときにはこういうリクエストハンドラを書くことになる。 Spring Bootのウェルカムページとファビコン Spring Bootはindex.htmlとfavicon.icoという名のファイルを特別扱いする。 前者がウェルカムページで後者がファビコン。 ウェルカムページ Spring Bootのリファレンスガイドにもちらっとかいてあるけど、リソースロケーションにindex.htmlというファイルを置いておくと、それがウェルカムページとして設定され、URLのパスにルート(e.g.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
         
         
         
@@ -130,33 +152,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/goslings-spring.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Tue, Jan 3, 2017</span>
               </div>
-              <h2 class="title">Goslings開発メモ - その1: Spring Boot編</h2>
-              <div class="summary">
-                「Goslings開発メモ - その0: 紹介と概要と設計編」の続き。 Spring Boot編。 Spring Bootとは Spring BootはSpring FrameworkというJavaのWebアプリケーションフレームワークを簡単に利用するためのツールやライブラリ群。 これを使うと、Webアプリケーションコンテナ(e.g. Tomcat)なしで起動できるSpringアプリケーションを、自動コード生成も設定ファイル作成もせずに作ることができる。 必要な設定は自動で構成され、設定のカスタマイズもアノテーションでできる。 GAになったのが2014年4月なのでかなり新しいものだが、JavaのWebアプリケーションを作るためのものとしては今世界的に最も流行っているもの。 私が昔とあるWebアプリを作った時はSpring RooというRADツールが熱かったが、これはコード自動生成をして開発を助けてくれるもので、なんだか結局あまり流行らなかったようだ。 Goslingsには最新バージョンの1.4.3.RELEASEを使った。 Spring Bootことはじめ 包括的網羅的なドキュメントは「Spring Boot Reference Guide」だが、今回あまり深く学ぶ時間が取れなかったのでこれはちら見した程度。 それよりも、ユースケースごとのチュートリアルが60個以上も載っている「Getting Started Guides」を参考にした。 Goslingsサーバは基本REST APIサーバなので、上記チュートリアルの内「Building a RESTful Web Service」を見ながら以下を実施した。 1. プロジェクト作成 チュートリアルにはGradleプロジェクトのディレクトリ構成を手動で作るところから書いてあるけど、そこはIDEなどで楽できる。 私はEclipseを使っていて、いつのまにかGradleプラグインであるEclipse Buildship: Eclipse Plug-ins for GradleとGradle IDE Packがインストールされていたので、これらを使った。 どちらのプラグインでもプロジェクトは作成できるが、Qiitaのこの記事にあるとおり、Gradle IDE Pack(に含まれるGradle (STS) Integration for Eclipse by Pivotal)で作った場合、Gradle Wrapperが生成されないなどの問題があるので、Buildshipの方で作成。 ただ、Gradle IDE Packの方がパッケージ・エクスプローラでの見え方がちょっとよかったので、こちらでプロジェクトをインポートしなおした。 (上がBuildshipのやつで、下がGradle IDE Packのやつ) 出来たプロジェクトは以下の感じ。 2. Spring Boot Gradle plugin適用 Spring Boot Gradle pluginというものがあって、これをプロジェクトに適用すると以下の恩恵を受けられる。 依存ライブラリ管理機能 Spring関係のライブラリについて適切なバージョンを設定してくれるので、Gradleビルド設定(i.e.
-              </div>
+              <h3 class="title">Goslings開発メモ - その1: Spring Boot編</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         

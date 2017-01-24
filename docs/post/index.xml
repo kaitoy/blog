@@ -6,8 +6,139 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2017</rights>
-    <updated>2017-01-17 00:15:25 -0700 MST</updated>
+    <updated>2017-01-24 09:01:49 -0700 MST</updated>
 
+    
+      
+        <item>
+          <title>Goslings開発メモ - その5: Spring Boot最終編 (静的リソース処理)</title>
+          <link>https://www.kaitoy.xyz/2017/01/24/goslings-development-memo5-spring-boot-static-resources/</link>
+          <pubDate>Tue, 24 Jan 2017 09:01:49 MST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2017/01/24/goslings-development-memo5-spring-boot-static-resources/</guid>
+          <description>
+
+&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2017/01/17/goslings-development-memo4-spring-boot-logging/&#34;&gt;Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)&lt;/a&gt;」の続き。&lt;/p&gt;
+
+&lt;p&gt;Spring Boot最終編で、静的リソース処理について。&lt;/p&gt;
+
+&lt;h1 id=&#34;spring-boot-spring-mvc-での静的リソース処理&#34;&gt;Spring Boot(Spring MVC)での静的リソース処理&lt;/h1&gt;
+
+&lt;p&gt;この時点でのGoslingsは単なるREST APIサーバで、アクセスしてもJSONを返すだけだ。
+アプリとしての体を成すためには、そのAPIを利用するクライアントコード、つまりHTMLドキュメントやCSSファイルやJavaScriptファイル(静的リソース)も返すようにしないといけない。
+HTMLドキュメントを返す場合、普通はなんらかの&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E3%83%86%E3%83%B3%E3%83%97%E3%83%AC%E3%83%BC%E3%83%88%E3%82%A8%E3%83%B3%E3%82%B8%E3%83%B3&#34;&gt;テンプレートエンジン&lt;/a&gt;を使うものだが、Goslingsは本当に単純なGUIなので、サーバに置いたHTMLファイルをそのまま返したい。&lt;/p&gt;
+
+&lt;p&gt;「Getting Started Guides」には&lt;a href=&#34;https://spring.io/guides/gs/serving-web-content/&#34;&gt;Serving Web Content with Spring MVC&lt;/a&gt;というのが乗っているが、これは&lt;a href=&#34;http://www.thymeleaf.org/&#34;&gt;Thymeleaf&lt;/a&gt;というテンプレートエンジンを使うものなのでちょっと違う。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/htmlsingle/#boot-features-spring-mvc-static-content&#34;&gt;Spring Bootリファレンスガイド&lt;/a&gt;によると、クラスパス(または&lt;code&gt;ServletContext&lt;/code&gt;のルート)の&lt;code&gt;/static/&lt;/code&gt;、&lt;code&gt;/public/&lt;/code&gt;、&lt;code&gt;/resources/&lt;/code&gt;、&lt;code&gt;/META-INF/resources/&lt;/code&gt;のいずれかに静的リソースを置けば、特にコードを書かなくてもクライアントからアクセスできるらしい。
+(逆に、一般的に静的リソースを置く場所である、プロジェクトの&lt;code&gt;src/main/webapp/&lt;/code&gt;には置くべきでないとのこと。これは、jarにパッケージングするときにビルドツールに無視されることが多いため。)&lt;/p&gt;
+
+&lt;p&gt;この仕組みについて、&lt;a href=&#34;https://spring.io/blog/2013/12/19/serving-static-web-content-with-spring-boot&#34;&gt;この記事&lt;/a&gt;を参考にちょろっとソースを見た感じでは、これらのパスは&lt;a href=&#34;https://github.com/spring-projects/spring-boot/blob/v1.4.3.RELEASE/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/web/ResourceProperties.java#L44&#34;&gt;&lt;code&gt;ResourceProperties&lt;/code&gt;の&lt;code&gt;CLASSPATH_RESOURCE_LOCATIONS&lt;/code&gt;&lt;/a&gt;に定義されていて、これを&lt;a href=&#34;http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/api/org/springframework/boot/autoconfigure/web/WebMvcAutoConfiguration.html&#34;&gt;&lt;code&gt;WebMvcAutoConfiguration&lt;/code&gt;&lt;/a&gt;が&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/servlet/config/annotation/ResourceHandlerRegistry.html&#34;&gt;&lt;code&gt;ResourceHandlerRegistry&lt;/code&gt;&lt;/a&gt;で&lt;a href=&#34;https://github.com/spring-projects/spring-boot/blob/v1.4.3.RELEASE/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/web/WebMvcAutoConfiguration.java#L291&#34;&gt;リソースロケーションとして登録する&lt;/a&gt;ことで静的リソース置き場たらしめている模様。
+(この&lt;code&gt;ResourceHandlerRegistry&lt;/code&gt;は&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/servlet/resource/ResourceHttpRequestHandler.html&#34;&gt;&lt;code&gt;ResourceHttpRequestHandler&lt;/code&gt;&lt;/a&gt;を設定するファサード的なものっぽい。)&lt;/p&gt;
+
+&lt;p&gt;で、&lt;code&gt;@SpringBootApplication&lt;/code&gt;(&lt;a href=&#34;https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/&#34;&gt;その1&lt;/a&gt;参照)が付いているクラスがあって、&lt;code&gt;spring-webmvc.jar&lt;/code&gt;がクラスパスにあると、&lt;a href=&#34;http://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/servlet/config/annotation/EnableWebMvc.html&#34;&gt;&lt;code&gt;@EnableWebMvc&lt;/code&gt;&lt;/a&gt;がSpring Bootによって付けられ、そこからごにょごにょして上記&lt;code&gt;WebMvcAutoConfiguration&lt;/code&gt;が実行される。
+&lt;code&gt;spring-webmvc.jar&lt;/code&gt;は&lt;code&gt;spring-boot-starter-web.jar&lt;/code&gt;(&lt;a href=&#34;https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/&#34;&gt;その1&lt;/a&gt;参照)が引っ張ってくる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;なお、Spring MVCの静的リソース処理の全体の流れについては
+、ちょっと古いけど「&lt;a href=&#34;https://spring.io/blog/2014/07/24/spring-framework-4-1-handling-static-web-resources&#34;&gt;handling static web resources&lt;/a&gt;」という記事が分かりやすい。
+要は、URLに指定されたパスからサーバ上のリソースを探し当てる&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/servlet/resource/ResourceResolver.html&#34;&gt;&lt;code&gt;ResourceResolver&lt;/code&gt;&lt;/a&gt;というものが優先度順に連なっているリゾルバチェイン(&lt;a href=&#34;http://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/servlet/resource/ResourceResolverChain.html&#34;&gt;&lt;code&gt;ResourceResolverChain&lt;/code&gt;&lt;/a&gt;)があって、まずこいつがリソースを取得する。
+次に、そのリソースを加工するトランスフォーマチェイン(&lt;a href=&#34;http://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/servlet/resource/ResourceTransformerChain.html&#34;&gt;&lt;code&gt;ResourceTransformerChain&lt;/code&gt;&lt;/a&gt;)というものに通し、その結果をクライアントに返す。
+トランスフォーマチェインは&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/servlet/resource/ResourceTransformer.html&#34;&gt;&lt;code&gt;ResourceTransformer&lt;/code&gt;&lt;/a&gt;が連なったもの。
+リゾルバチェインとトランスフォーマチェインは上記&lt;code&gt;ResourceHttpRequestHandler&lt;/code&gt;に設定される。&lt;/p&gt;
+
+&lt;p&gt;リゾルバには以下の様なものがある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/servlet/resource/PathResourceResolver.html&#34;&gt;&lt;code&gt;PathResourceResolver&lt;/code&gt;&lt;/a&gt;: &lt;code&gt;ResourceHttpRequestHandler&lt;/code&gt;に設定されたリソースロケーションからリソースを単純に検索するリゾルバ。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/servlet/resource/CachingResourceResolver.html&#34;&gt;&lt;code&gt;CachingResourceResolver&lt;/code&gt;&lt;/a&gt;: キャッシュからリソースを検索するリゾルバ。テンプレートエンジンの処理結果のキャッシュとかが返るのは多分ここから。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/servlet/resource/GzipResourceResolver.html&#34;&gt;&lt;code&gt;GzipResourceResolver&lt;/code&gt;&lt;/a&gt;: &lt;a href=&#34;https://ja.wikipedia.org/wiki/Gzip&#34;&gt;gzip&lt;/a&gt;で圧縮されたリソース、つまりURLで指定されたパスに&lt;code&gt;.gz&lt;/code&gt;という拡張子を付けたリソースを検索するリゾルバ。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/servlet/resource/VersionResourceResolver.html&#34;&gt;&lt;code&gt;VersionResourceResolver&lt;/code&gt;&lt;/a&gt;: &lt;a href=&#34;https://spring.io/blog/2014/07/24/spring-framework-4-1-handling-static-web-resources#resource-versioning&#34;&gt;リソースバージョニング&lt;/a&gt;を実現するためのリゾルバ。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/servlet/resource/WebJarsResourceResolver.html&#34;&gt;&lt;code&gt;WebJarsResourceResolver&lt;/code&gt;&lt;/a&gt;: &lt;a href=&#34;http://www.webjars.org/&#34;&gt;WebJars&lt;/a&gt;のjarファイル内のリソースを検索するリゾルバ。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;リゾルバの設定などについてはQiitaの&lt;a href=&#34;http://qiita.com/kazuki43zoo/items/e12a72d4ac4de418ee37&#34;&gt;この記事&lt;/a&gt;ががよくまとまっている。
+凝ったことをしたいときは参照しよう。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;トランスフォーマには以下の様なものがある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/servlet/resource/CssLinkResourceTransformer.html&#34;&gt;&lt;code&gt;CssLinkResourceTransformer&lt;/code&gt;&lt;/a&gt;: CSSファイル内のリンクをクライアントがアクセスできるURLに変換する。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/servlet/resource/CachingResourceTransformer.html&#34;&gt;&lt;code&gt;CachingResourceTransformer&lt;/code&gt;&lt;/a&gt;: 変換したリソースをキャッシュする。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/servlet/resource/AppCacheManifestTransformer.html&#34;&gt;&lt;code&gt;AppCacheManifestTransformer&lt;/code&gt;&lt;/a&gt;: HTML5のAppCacheマニフェスト内のリソースを扱うトランスフォーマ。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;デフォルトで&lt;code&gt;ResourceHttpRequestHandler&lt;/code&gt;には&lt;code&gt;PathResourceResolver&lt;/code&gt;だけが設定されている。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;以上をまとめると、クライアントからGetリクエストが来ると、&lt;code&gt;WebMvcAutoConfiguration&lt;/code&gt;が設定したリソースロケーション(e.g. &lt;code&gt;/static/&lt;/code&gt;)を&lt;code&gt;PathResourceResolver&lt;/code&gt;が検索して、そこに置いてあるHTMLファイルとかをクライアントに返してくれる、ということであろう。&lt;/p&gt;
+
+&lt;p&gt;Javaのコードを全く書かなくていいので楽。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Javaのコードを書いて静的リソースファイルを明示することもできる。
+&lt;a href=&#34;http://qiita.com/tag1216/items/3680b92cf96eb5a170f0&#34;&gt;Qiitaの記事&lt;/a&gt;によれば、&lt;a href=&#34;http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/stereotype/Controller.html&#34;&gt;&lt;code&gt;@Controller&lt;/code&gt;&lt;/a&gt;を付けたクラスのリクエストハンドラで以下の様にファイルへのパスを返せばいいらしい。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;@RequestMapping(&amp;quot;/hoge&amp;quot;)
+public String hoge() {
+    return &amp;quot;/hoge.html&amp;quot;;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;単純な静的リソースに対してこれをやるユースケースはあまりなさそう。
+テンプレートエンジンを使っていてパラメータを渡したいときにはこういうリクエストハンドラを書くことになる。&lt;/p&gt;
+
+&lt;h1 id=&#34;spring-bootのウェルカムページとファビコン&#34;&gt;Spring Bootのウェルカムページとファビコン&lt;/h1&gt;
+
+&lt;p&gt;Spring Bootは&lt;code&gt;index.html&lt;/code&gt;と&lt;code&gt;favicon.ico&lt;/code&gt;という名のファイルを特別扱いする。
+前者がウェルカムページで後者がファビコン。&lt;/p&gt;
+
+&lt;h4 id=&#34;ウェルカムページ&#34;&gt;ウェルカムページ&lt;/h4&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/htmlsingle/#boot-features-spring-mvc-static-content&#34;&gt;Spring Bootのリファレンスガイド&lt;/a&gt;にもちらっとかいてあるけど、リソースロケーションに&lt;code&gt;index.html&lt;/code&gt;というファイルを置いておくと、それがウェルカムページとして設定され、URLのパスにルート(e.g. &lt;code&gt;http://localhost:8080/&lt;/code&gt;)を指定したときにクライアントに返るようになる。&lt;/p&gt;
+
+&lt;p&gt;ソースを見ると、上記&lt;code&gt;WebMvcAutoConfiguration&lt;/code&gt;の&lt;a href=&#34;https://github.com/spring-projects/spring-boot/blob/v1.4.3.RELEASE/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/web/WebMvcAutoConfiguration.java#L297&#34;&gt;ここ&lt;/a&gt;でそのための設定している。
+&lt;code&gt;/META-INF/resources/index.html&lt;/code&gt;、&lt;code&gt;/resources/index.html&lt;/code&gt;、&lt;code&gt;/static/index.html&lt;/code&gt;、&lt;code&gt;/public/index.html&lt;/code&gt;の順に探すようで、複数個所に&lt;code&gt;index.html&lt;/code&gt;を置いた場合は最初に見つかったものがウェルカムページになる。(そんなことする意味はないが。)&lt;/p&gt;
+
+&lt;h4 id=&#34;ファビコン&#34;&gt;ファビコン&lt;/h4&gt;
+
+&lt;p&gt;ファビコンについてはSpring Bootの現時点でリリース済みバージョンのリファレンスガイドにはほとんど情報がないが、&lt;code&gt;1.5.0.BUILD-SNAPSHOT&lt;/code&gt;のリファレンスガイドには以下の様に書いてある。&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;27.1.6 Custom Favicon&lt;/p&gt;
+
+&lt;p&gt;Spring Boot looks for a favicon.ico in the configured static content locations and the root of &amp;gt; the classpath (in that order). If such file is present, it is automatically used as the favicon &amp;gt; of the application.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;つまり、リソースロケーションかクラスパスのルートに&lt;code&gt;favicon.ico&lt;/code&gt;というファイルを置いておくと、それをファビコンとしてクライアントに返してくれる。&lt;/p&gt;
+
+&lt;p&gt;これもやっぱり&lt;code&gt;WebMvcAutoConfiguration&lt;/code&gt;が&lt;a href=&#34;https://github.com/spring-projects/spring-boot/blob/v1.4.3.RELEASE/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/web/WebMvcAutoConfiguration.java#L319&#34;&gt;設定する&lt;/a&gt;。&lt;/p&gt;
+
+&lt;h1 id=&#34;goslingsの静的リソース&#34;&gt;Goslingsの静的リソース&lt;/h1&gt;
+
+&lt;p&gt;Goslingsの静的リソースは&lt;code&gt;favicon.ico&lt;/code&gt;以外は&lt;code&gt;/static/&lt;/code&gt;に全部直接置くことにした。
+&lt;code&gt;favicon.ico&lt;/code&gt;はクラスパスのルートに。
+プロジェクトのソースツリーで言うと、&lt;code&gt;src/main/resources/static/&lt;/code&gt;に&lt;code&gt;index.html&lt;/code&gt;やら&lt;code&gt;goslings.css&lt;/code&gt;やらのクライアントファイルを置いて、あとは&lt;code&gt;src/main/resources/favicon.ico&lt;/code&gt;があるという形。
+こうしておけば、GradleのJavaプラグインの&lt;code&gt;processResources&lt;/code&gt;タスクによってjar内の適切な場所に取り込まれる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;index.html&lt;/code&gt;には&lt;code&gt;http://&amp;lt;Goslingsサーバ&amp;gt;/&lt;/code&gt;でアクセスできるし、&lt;code&gt;goslings.css&lt;/code&gt;も&lt;code&gt;index.html&lt;/code&gt;に&lt;code&gt;&amp;lt;link rel=&amp;quot;stylesheet&amp;quot; href=&amp;quot;goslings.css&amp;quot;&amp;gt;&lt;/code&gt;みたいに書けば取得できる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;今日はここまで。
+次回からはクライアントサイドの話。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -122,7 +253,7 @@
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
 &lt;p&gt;今日はここまで。
-次回もまたSpring Bootで、HTMLドキュメント配信について。&lt;/p&gt;
+&lt;a href=&#34;https://www.kaitoy.xyz/2017/01/24/goslings-development-memo5-spring-boot-static-resources/&#34;&gt;次回&lt;/a&gt;もまたSpring Bootで、静的リソース処理について。&lt;/p&gt;
 </description>
         </item>
       

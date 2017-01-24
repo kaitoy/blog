@@ -111,4 +111,4 @@ java -jar build/libs/goslings-0.0.1.jar --logging.config=logback-spring.xml
 <br>
 
 今日はここまで。
-次回もまたSpring Bootで、HTMLドキュメント配信について。
+[次回](https://www.kaitoy.xyz/2017/01/24/goslings-development-memo5-spring-boot-static-resources/)もまたSpring Bootで、静的リソース処理について。
