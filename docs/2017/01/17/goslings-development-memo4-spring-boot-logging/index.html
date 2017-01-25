@@ -13,7 +13,7 @@
     <meta property="og:title" content="Goslings開発メモ - その4: Spring Boot続続続編 (ロギング) | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2017/01/17/goslings-development-memo4-spring-boot-logging/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2017/01/17/goslings-development-memo4-spring-boot-logging/">
-    <meta property="og:description" content="「Goslings開発メモ - その3: Spring Boot続続編 (例外処理)」の続き。 Spring Boot続続続編で、ロギングについて。 Spring Bootアプリにおけるロギング Spring Bootアプリにおけるロギングについては公式のマニュアルとHow-toガイドを読むべし。 この記事にはこれらの内容をまとめておく。 Spring Bootは内部でのロギングにApacheのCommons Loggingを使っている。 Commons Loggingはファサードライブラリだ。 つまり、Commons LoggingはロギングAPIだけをアプリケーションに提供し、実際のログ出力処理をするロギング実装ライブラリへの橋渡しとして機能する。 ロギング実装ライブラリには色々な選択肢があるが、Spring BootはJUL、 Log4j 2、Logback用のデフォルト設定を備えているので、これらのいずれかを使うのが楽であろう。 全てのスターターはspring-boot-starter-loggingというロギングスターターに依存していて、これがLogbackを使うので、普通はそのままLogbackを使うことになる。 spring-boot-starter-loggingは、JUL、Commons Logging、Log4j、SLF4Jによるログ出力をLogbackにルーティングするため、アプリ側や他の依存ライブラリがこれらを使っていてもLogbackに一本化できる。 spring-boot-starter-loggingの代わりにspring-boot-starter-log4j2に依存し、Log4j 2を使う方法もあるが、Goslingsには普通にspring-boot-starter-loggingを使った。 また、Goslings本体のログ出力には、プレースホルダを使いたかったのでSLF4Jを使った。 Spring Bootアプリにおけるロギング設定 Spring Bootが備えているデフォルトのロギング設定は、ERROR、WARN、INFOレベルのログをいい感じにフォーマットしてコンソールに吐くというものになっている。 以下この設定の変更方法などを書く。 ファイルへのログ出力 ログをファイルにも吐くようにするには、logging.fileというプロパティでファイルパスを指定するか、logging.pathというプロパティでディレクトリパスを指定すればいい。 (後者の場合ログファイル名はspring.logになる。) Spring Bootアプリでプロパティを指定する方法は色々あり(こことかここ参照)、大抵はapplication.propertiesで指定するんだろうけど、手軽にコマンドラインで以下の様に指定することもできる。 java -jar build/libs/goslings-0.0.1.jar --logging.file=build/hoge.log ログファイルはデフォルトで10MBでローテーションする。 ログレベル ログレベルには重大度の低い方からTRACE、DEBUG、INFO、WARN、ERROR、FATALの6段階があり、指定したログレベル以上のログが出力される。(OFFというログ出力を止めるものもある。) つまりSpring BootのデフォルトのログレベルはINFOだということだ。(LogbackにはFATALがなくERRORとして出力される。) ログレベルはlogging.level.&lt;ロガー名&gt;という形式のプロパティで指定できる。 例えばコマンドラインから指定するなら以下の感じ。 java -jar build/libs/goslings-0.0.1.jar --logging.level.org.springframework.web=DEBUG 全ロガーのログレベルはlogging.level.rootで指定できる。 ロギング実装ライブラリの設定 ロギング実装ライブラリの設定ファイルをカスタマイズして、より詳細な設定をすることもできる。 Logbackの場合、クラスパスのルートに置かれたlogback-spring.xmlかlogback.xmlがロードされる。 設定ファイルの二重初期化を防いだりSpring Boot拡張設定を利用可能にするために、前者のファイル名が推奨されている。 (Groovyが使える環境ならlogback-spring.groovyでもいい。) いつものようにjavaコマンドでアプリを起動する場合は-jarオプションを使うため、-cpオプションでクラスパスを指定しても無視されてしまうので、基本はlogback-spring.xmlはjarの中に入れることになる。 プロジェクトのリソースディレクトリのトップ(デフォルトではsrc/main/resources/)にlogback-spring.xmlを置いておけば、GradleのJavaプラグインのprocessResourcesタスクによってjar内の適切な場所に取り込まれる。 logging.configプロパティで設定ファイルのパスを指定することもできる。 例えばコマンドラインから指定するなら以下の感じ。 java -jar build/libs/goslings-0.0.1.jar --logging.config=logback-spring.xml">
+    <meta property="og:description" content="「Goslings開発メモ - その3: Spring Boot続続編 (例外処理)」の続き。 Spring Boot続続続編で、ロギングについて。 (adsbygoogle = window.adsbygoogle || []).push({}); Spring Bootアプリにおけるロギング Spring Bootアプリにおけるロギングについては公式のマニュアルとHow-toガイドを読むべし。 この記事にはこれらの内容をまとめておく。 Spring Bootは内部でのロギングにApacheのCommons Loggingを使っている。 Commons Loggingはファサードライブラリだ。 つまり、Commons LoggingはロギングAPIだけをアプリケーションに提供し、実際のログ出力処理をするロギング実装ライブラリへの橋渡しとして機能する。 ロギング実装ライブラリには色々な選択肢があるが、Spring BootはJUL、 Log4j 2、Logback用のデフォルト設定を備えているので、これらのいずれかを使うのが楽であろう。 全てのスターターはspring-boot-starter-loggingというロギングスターターに依存していて、これがLogbackを使うので、普通はそのままLogbackを使うことになる。 spring-boot-starter-loggingは、JUL、Commons Logging、Log4j、SLF4Jによるログ出力をLogbackにルーティングするため、アプリ側や他の依存ライブラリがこれらを使っていてもLogbackに一本化できる。 spring-boot-starter-loggingの代わりにspring-boot-starter-log4j2に依存し、Log4j 2を使う方法もあるが、Goslingsには普通にspring-boot-starter-loggingを使った。 また、Goslings本体のログ出力には、プレースホルダを使いたかったのでSLF4Jを使った。 Spring Bootアプリにおけるロギング設定 Spring Bootが備えているデフォルトのロギング設定は、ERROR、WARN、INFOレベルのログをいい感じにフォーマットしてコンソールに吐くというものになっている。 以下この設定の変更方法などを書く。 ファイルへのログ出力 ログをファイルにも吐くようにするには、logging.fileというプロパティでファイルパスを指定するか、logging.pathというプロパティでディレクトリパスを指定すればいい。 (後者の場合ログファイル名はspring.logになる。) Spring Bootアプリでプロパティを指定する方法は色々あり(こことかここ参照)、大抵はapplication.propertiesで指定するんだろうけど、手軽にコマンドラインで以下の様に指定することもできる。 java -jar build/libs/goslings-0.0.1.jar --logging.file=build/hoge.log ログファイルはデフォルトで10MBでローテーションする。 ログレベル ログレベルには重大度の低い方からTRACE、DEBUG、INFO、WARN、ERROR、FATALの6段階があり、指定したログレベル以上のログが出力される。(OFFというログ出力を止めるものもある。) つまりSpring BootのデフォルトのログレベルはINFOだということだ。(LogbackにはFATALがなくERRORとして出力される。) ログレベルはlogging.level.&lt;ロガー名&gt;という形式のプロパティで指定できる。 例えばコマンドラインから指定するなら以下の感じ。 java -jar build/libs/goslings-0.0.1.jar --logging.level.org.springframework.web=DEBUG 全ロガーのログレベルはlogging.level.rootで指定できる。 ロギング実装ライブラリの設定 ロギング実装ライブラリの設定ファイルをカスタマイズして、より詳細な設定をすることもできる。 Logbackの場合、クラスパスのルートに置かれたlogback-spring.xmlかlogback.xmlがロードされる。 設定ファイルの二重初期化を防いだりSpring Boot拡張設定を利用可能にするために、前者のファイル名が推奨されている。 (Groovyが使える環境ならlogback-spring.groovyでもいい。) いつものようにjavaコマンドでアプリを起動する場合は-jarオプションを使うため、-cpオプションでクラスパスを指定しても無視されてしまうので、基本はlogback-spring.xmlはjarの中に入れることになる。 プロジェクトのリソースディレクトリのトップ(デフォルトではsrc/main/resources/)にlogback-spring.xmlを置いておけば、GradleのJavaプラグインのprocessResourcesタスクによってjar内の適切な場所に取り込まれる。 logging.configプロパティで設定ファイルのパスを指定することもできる。">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/goslings-spring.png">
     
@@ -75,6 +75,20 @@
 <p>「<a href="https://www.kaitoy.xyz/2017/01/13/goslings-development-memo3-spring-boot-exception/">Goslings開発メモ - その3: Spring Boot続続編 (例外処理)</a>」の続き。</p>
 
 <p>Spring Boot続続続編で、ロギングについて。</p>
+
+<p><br></p>
+
+<!-- Google AdSense -->
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-7852181473528684"
+     data-ad-slot="3938339651"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
 
 <h1 id="spring-bootアプリにおけるロギング">Spring Bootアプリにおけるロギング</h1>
 
@@ -671,6 +685,9 @@
 <script>
 (adsbygoogle = window.adsbygoogle || []).push({});
 </script>
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 <ins class="adsbygoogle"
      style="display:block"
      data-ad-client="ca-pub-7852181473528684"

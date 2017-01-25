@@ -12,6 +12,8 @@ title = "Goslings開発メモ - その5: Spring Boot最終編 (静的リソー�
 
 Spring Boot最終編で、静的リソース処理について。
 
+<br>
+
 <!-- Google AdSense -->
 <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 <ins class="adsbygoogle"

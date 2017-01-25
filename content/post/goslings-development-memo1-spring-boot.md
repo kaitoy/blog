@@ -12,6 +12,19 @@ title = "Goslings開発メモ - その1: Spring Boot編"
 
 Spring Boot編。
 
+<br>
+
+<!-- Google AdSense -->
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-7852181473528684"
+     data-ad-slot="3938339651"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
 # Spring Bootとは
 Spring Bootは[Spring Framework](http://projects.spring.io/spring-framework/)というJavaのWebアプリケーションフレームワークを簡単に利用するためのツールやライブラリ群。
 

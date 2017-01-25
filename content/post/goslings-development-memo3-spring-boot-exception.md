@@ -12,6 +12,19 @@ title = "Goslings開発メモ - その3: Spring Boot続続編 (例外処理)"
 
 Spring Boot続続編で、例外処理について。
 
+<br>
+
+<!-- Google AdSense -->
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-7852181473528684"
+     data-ad-slot="3938339651"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
 # Spring MVCアプリにおける例外処理
 Goslingsは[前回](https://www.kaitoy.xyz/2016/12/11/goslings-development-memo1-spring-boot/)書いたように`spring-boot-starter-web`というスターターを使っていて、つまりSpring MVCアプリだ。
 

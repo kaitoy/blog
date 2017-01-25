@@ -28,6 +28,19 @@ Goslingsは[Spring Boot](https://projects.spring.io/spring-boot/)や[JGit](https
 
 まずはSpring Boot編を書こうかと思うが、その前にGoslingsの設計等について書いておく。
 
+<br>
+
+<!-- Google AdSense -->
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-7852181473528684"
+     data-ad-slot="3938339651"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
 # Goslingsのアーキテクチャ
 GoslingsはWebサーバとして動き、始めにクライアントにHTML文書を返した後は、REST APIサーバとして働く。
 
