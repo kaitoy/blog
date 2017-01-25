@@ -12,6 +12,17 @@ title = "Goslings開発メモ - その5: Spring Boot最終編 (静的リソー�
 
 Spring Boot最終編で、静的リソース処理について。
 
+<!-- Google AdSense -->
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-7852181473528684"
+     data-ad-slot="3938339651"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
 # Spring Boot(Spring MVC)での静的リソース処理
 この時点でのGoslingsは単なるREST APIサーバで、アクセスしてもJSONを返すだけだ。
 アプリとしての体を成すためには、そのAPIを利用するクライアントコード、つまりHTMLドキュメントやCSSファイルやJavaScriptファイル(静的リソース)も返すようにしないといけない。
