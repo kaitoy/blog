@@ -13,6 +13,10 @@ title = "Another way to capture LAN packets with pcap4j container"
 Today, I was reading [Docker Docs](https://docs.docker.com/reference/run/#network-settings) and found another way to do it.
 I'm writing about it here.
 
+<br>
+
+{{< google-adsense >}}
+
 ### --net option for docker run
 
 When we start a docker container we use `docker run` command. It accepts some options.
@@ -36,7 +40,7 @@ In the same environment with [2 days ago](https://www.kaitoy.xyz/2015/07/25/how-
       ```
 
       That's it.
-      
+
       The above command create a container named `pcap4j-hostnet` from the image `kaitoy/pcap4j:latest` and execute `/bin/sh /usr/local/src/pcap4j/bin/capture.sh eth0 false` in the container.
       The `capture.sh` starts packet capturing on `eth0` using Pcap4J.
       This `eth0` is the interface of the docker host mashine because the network mode is set to `host`.

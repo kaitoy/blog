@@ -14,16 +14,7 @@ Spring Boot続続続編で、ロギングについて。
 
 <br>
 
-<!-- Google AdSense -->
-<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-7852181473528684"
-     data-ad-slot="3938339651"
-     data-ad-format="auto"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+{{< google-adsense >}}
 
 # Spring Bootアプリにおけるロギング
 Spring Bootアプリにおけるロギングについては公式の[マニュアル](https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/boot-features-logging.html)と[How-toガイド](https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/howto-logging.html)を読むべし。

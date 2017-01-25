@@ -14,16 +14,7 @@ Spring Boot続編で、[DI](https://ja.wikipedia.org/wiki/%E4%BE%9D%E5%AD%98%E6%
 
 <br>
 
-<!-- Google AdSense -->
-<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-7852181473528684"
-     data-ad-slot="3938339651"
-     data-ad-format="auto"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+{{< google-adsense >}}
 
 # DIとは
 DIはDependency Injectionの略。依存性注入と訳される。
