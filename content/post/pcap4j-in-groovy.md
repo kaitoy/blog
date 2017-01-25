@@ -14,6 +14,10 @@ title = "Pcap4J in Groovy"
 GroovyからでもPcap4Jちゃんと動くよということを実証するのが主な目的。
 また、さすがにそろそろ[Maven](https://maven.apache.org/)を卒業してGradle(下記)使おうと思うので、予習も兼ねている。
 
+<br>
+
+{{< google-adsense >}}
+
 ## Groovyとは
 GroovyはJVM言語、つまりJavaのバイトコードにコンパイルされてJavaの実行環境で動くプログラミング言語のひとつ。
 Javaのプログラマにとってとっつきやすい文法を保ちつつ、動的型付けを実現し、また[Ruby](https://www.ruby-lang.org/ja/)などのスクリプト言語の記法や機能を取り入れ、生産性を高めている。

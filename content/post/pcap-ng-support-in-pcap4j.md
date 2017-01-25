@@ -11,6 +11,10 @@ title = "pcap-ng support in Pcap4J"
 Sometimes I receive inquiries about support for __pcap-ng__ files in [__Pcap4J__](https://github.com/kaitoy/pcap4j).
 I wrote the result of my investigation on it in this article.
 
+<br>
+
+{{< google-adsense >}}
+
 ## What's a pcap-ng file
 A pcap-ng file (i.e. a file with `.pcapng` extension ) is a packet dump file in [__The pcap Next Generation Capture File Format__](https://github.com/pcapng/pcapng) (or pcap-ng format for short).
 This format was created to overcome the limitations of the traditional [__Libpcap File Format__](https://wiki.wireshark.org/Development/LibpcapFileFormat) (or pcap format for short) which is used in pcap files.

@@ -14,6 +14,10 @@ title = "Pcap4J in Kotlin"
 KotlinからでもPcap4Jちゃんと動くよということを実証するのが主な目的。
 また、今後JavaなアプリはKotlinで書こうかと思っているので、その予習も兼ねている。
 
+<br>
+
+{{< google-adsense >}}
+
 ## Kotlinとは
 KotlinはJVM言語、つまりJavaのバイトコードにコンパイルされてJavaの実行環境で動くプログラミング言語のひとつ。
 [IntelliJ IDEA](https://www.jetbrains.com/idea/)で有名な[JetBrains社](https://www.jetbrains.com/)によって[OSS](https://github.com/JetBrains/kotlin)として開発されている。

@@ -11,6 +11,10 @@ title = "GitHub Pagesでブログ立ち上げ - GitHub PagesとJekyll"
 このブログを立ち上げたときの作業を、主に備忘録としていくつかのエントリに分けて書く。
 このエントリでは主に[__GitHub Pages__](https://pages.github.com/)と[__Jekyll__](http://jekyllrb.com/docs/home/)について書く。
 
+<br>
+
+{{< google-adsense >}}
+
 ## 今の構成
 このブログは、[__Hugo__](https://gohugo.io/)で作って、GitHub Pagesで公開している。
 

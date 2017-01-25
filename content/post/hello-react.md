@@ -17,6 +17,10 @@ Grommetはいずれ仕事で触ることになりそうなので、まずはReac
 
 (因みにGrommetは[GitHub](https://github.com/grommet/grommet)で公開されているが、ほとんど話題になっておらずスターも現時点で245しかついていない。。。)
 
+<br>
+
+{{< google-adsense >}}
+
 ## Reactとは
 ReactはFacebookが開発しているWeb UIのフレームワークで、[MVC](https://ja.wikipedia.org/wiki/Model_View_Controller)のVだけを実装したもの。
 2013年に最初のバージョンが公開され、世界中で流行ってきているらしい。

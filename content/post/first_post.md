@@ -9,6 +9,10 @@ eyecatch = "teamedio_logo.svg"
 
 初投稿。
 
+<br>
+
+{{< google-adsense >}}
+
 ブログを立ち上げようと思ったきっかけは、[Teamed.io](http://www.teamed.io/)というCaliforniaのソフトウェアアウトソーシング(?)をやってる会社のCTO、
 Yegor Bugayenko (yegor256)のブログのエントリ、[How Much Do You Cost?](http://www.yegor256.com/2014/10/29/how-much-do-you-cost.html)。
 

@@ -17,6 +17,10 @@ title = "Atomパッケージをアンパブリッシュする"
 * Atom 1.2.4
 * Git for Windows 2.6.3
 
+<br>
+
+{{< google-adsense >}}
+
 ## アンパブリッシュのやり方
 リリースしたパッケージのプロジェクトのルートフォルダ(package.jsonがあるところ)に`cd`して、`apm unpublish`を実行するだけ。
 

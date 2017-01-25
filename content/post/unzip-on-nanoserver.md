@@ -10,6 +10,10 @@ title = "Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え"
 
 Nano Serverでunzipしたかっただけだったのに、妙に苦労した話。
 
+<br>
+
+{{< google-adsense >}}
+
 ## Nano Serverとは
 [Nano Server](https://technet.microsoft.com/en-us/windows-server-docs/compute/nano-server/getting-started-with-nano-server)は、Windows Server 2016で追加されるWindows Serverの新たなインストール形式で、[Server Core](https://en.wikipedia.org/wiki/Server_Core)よりさらに機能を絞り、リモートで管理するクラウドホストやWebサーバ向けにに特化したもの。
 

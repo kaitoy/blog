@@ -11,6 +11,10 @@ title = "AtomにおけるGIF画像のキャッシュ"
 以前、[__disturb-me__](https://atom.io/packages/disturb-me)という[__Atom__](https://atom.io/)パッケージを作ったという[エントリ](https://www.kaitoy.xyz/2015/09/06/disturb-me/)を書いた。
 このエントリでは、disturb-meに見つけたバグの修正のなかで、AtomがGIF画像をキャッシュする問題に対応したという話を書く。
 
+<br>
+
+{{< google-adsense >}}
+
 ## disturb-meのバグ
 [以前のエントリの最後](https://www.kaitoy.xyz/2015/09/06/disturb-me/#6-%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%81%AA%E3%81%A9)にも書いた通り、disturb-me 1.0.0には、ループしないGIFアニメーション画像を設定で指定した場合、そのアニメーションが画像の初回表示時にしか再生されないというバグがある。
 

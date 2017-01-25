@@ -12,6 +12,10 @@ title = "Getter/Setterは悪だ。以上。"
 (Yegorから和訳と転載の許可は得た。)
 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。
 
+<br>
+
+{{< google-adsense >}}
+
 ----------------
 
 2003年にAllen Holubが書いた[Why getter and setter methods are evil](http://www.javaworld.com/article/2073723/core-java/why-getter-and-setter-methods-are-evil.html)という有名な記事に端を発する古い議論がある。それは、getter/setterはアンチパターンで避けるべきものなのか、

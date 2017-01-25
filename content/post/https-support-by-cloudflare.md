@@ -10,6 +10,10 @@ title = "CloudFlareでブログをHTTPS化"
 
 最近[GitHub Pages](https://pages.github.com/)がHTTPSに正式対応したというニュースを見たことをきっかけに、このブログを[CloudFlare](https://www.cloudflare.com/)で常時HTTPS化した話。
 
+<br>
+
+{{< google-adsense >}}
+
 ## このブログ
 このブログは[GitHub Pagesでホストされている](https://www.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/)。
 GitHub Pages上のWebサイトはデフォルトでは`<GitHubユーザ名>.github.io`というドメインで公開されるが、ちょっとかっこつけたかったのでカスタムドメイン(`www.kaitoy.xyz`)にした。

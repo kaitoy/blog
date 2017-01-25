@@ -13,7 +13,7 @@
     <meta property="og:title" content="Bash on WindowsでWindows側からUbuntu側のファイルをいじると壊れることがあるので注意 | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2016/11/19/bow-do-not-change-linux-files-from-windows/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2016/11/19/bow-do-not-change-linux-files-from-windows/">
-    <meta property="og:description" content="Bash on WindowsでWindows側からUbuntu側のファイルをいじると危険という情報を見つけたので、試してみたら確かに困った状態になった話。 Bash on Windowsとは Bash on Windows (aka BoW)は、2016/8/3に公開されたWindows 10 Anniversary Updateで使えるようになった、Windows上でBashが使えるようになる機能。 POSIX APIのWindows実装を提供するCygwinなどとは違い、WindowsのサブシステムとしてUbuntuが動き、その上でBashが動き、そこからUbuntu用のバイナリをそのまま利用できるというもの。 2016/11/17現在でまだベータ版の機能。 Windows側からUbuntu側のファイルをいじると壊れる問題 Microsoftの中の人のブログに、BoWがセットアップされた環境で、Windows側からUbuntu側のファイル(i.e. %localappdata%\lxss\以下のファイル)をいじると壊れるという話があった。 いかにもやってしまいそうな操作で危険だし、実際このブログの人はこれに関する問い合わせに毎日1,2件対応しているそうな。 原因は上記ブログに詳しいが、簡単に言うと、Windows側のプロセスがUbuntu側のファイルを作ったり編集したりする際、パーミッションなどのメタデータを適切に設定しないため、Ubuntu側でファイルが壊れたと判断されてしまうから。 こうなると、結果としてファイルが消えてしまったり、壊れたデータで上書きされてしまったりするとのこと。 因みに、Ubuntu側からWindows側のファイルをいじるのは問題ないらしい。 再現確認 そういえばまだBoWをさわったことがなかったので、セットアップして件の問題を体験してみた。 環境は、VMware Player 7.1.0で作ったVMに評価版のWindows 10 Enterprise v1607をインストールしたもの。 セットアップは公式の手順に従うだけ。2ステップだけの簡単な手順。 セットアップ後、コマンドプロンプトでbashとうつとBoWが起動する。(初回はインストール処理が走り、十数分待たされる。) [コマンドプロンプト → Bash] 再現確認に使うのはhogeと書いたhoge.txt。 これをWindows側のC:\Users\kaitoy\Desktop\とUbuntu側の/home/kaitoy/に置く。 [コマンドプロンプト] [Bash] Windows側からは、Ubuntuのファイルシステムが%localappdata%\lxss\にマウントされているように見える。 (lxssはエクスプローラーのオプションから「保護されたオペレーティングシステムファイルを表示しない（推奨）」のチェックをはずさないと見えない。見えなくてもアドレスバーにパスを入力すればアクセスできるけど。) 一方Ubuntu側からは、WindowsのCドライブが/mnt/cにマウントされているように見える。 [Bash] ここで、コマンドプロンプトを開き、%localappdata%\lxss\hoge\kaitoy\(i.e. Ubuntu側の/home/kaitoy/)にcdし、hoge.txtをechoで編集してみた。 [コマンドプロンプト] したらBashから見えなくなった。アクセスしようとすると「Input/output error」というエラーになる。これが件の現象か。 [Bash] エクスプローラからは見えていたので、GUIで%localappdata%\lxss\hoge\kaitoy\hoge.txtを削除したら正常な状態に戻った。 再度同じhoge.txtを作り、今度はメモ帳で編集して内容をfooに変えてみた。 この場合は特に問題なし。なぜだ? [Bash] 例のブログをよく読むと、実際に問題になるのはファイルの作成だけのように読める。 編集しているようにみえても、アプリによっては新規ファイルを作って既存のを置き換えていることがあるから、編集もするなと言っている模様。 メモ帳は実際に編集しているから大丈夫だったということか。 今編集したhoge.txtを今度はエクスプローラから消してみる。 Ubuntu側からは消えてないように見えるが、アクセスしようとするとないと言われる。 [Bash] エクスプローラのビューをF5で更新したら、今消したはずのhoge.txtが復活した。 これをダブルクリックで開こうとしたら「Access is denied.」。 エクスプローラから何度消してもすぐ復活する。 Bashで消そうとしても「Permission denied」。詰んだ。 [Bash] ということで、むしろWindows側からUbuntu側のファイルを消すのがもっともやばいと言うことがわかった。 lxrun /uninstall /full、lxrun /installでUbuntuイメージをインストールしなおさないと直らない。 最後に、Ubuntu側(i.e.">
+    <meta property="og:description" content="Bash on WindowsでWindows側からUbuntu側のファイルをいじると危険という情報を見つけたので、試してみたら確かに困った状態になった話。 (adsbygoogle = window.adsbygoogle || []).push({}); Bash on Windowsとは Bash on Windows (aka BoW)は、2016/8/3に公開されたWindows 10 Anniversary Updateで使えるようになった、Windows上でBashが使えるようになる機能。 POSIX APIのWindows実装を提供するCygwinなどとは違い、WindowsのサブシステムとしてUbuntuが動き、その上でBashが動き、そこからUbuntu用のバイナリをそのまま利用できるというもの。 2016/11/17現在でまだベータ版の機能。 Windows側からUbuntu側のファイルをいじると壊れる問題 Microsoftの中の人のブログに、BoWがセットアップされた環境で、Windows側からUbuntu側のファイル(i.e. %localappdata%\lxss\以下のファイル)をいじると壊れるという話があった。 いかにもやってしまいそうな操作で危険だし、実際このブログの人はこれに関する問い合わせに毎日1,2件対応しているそうな。 原因は上記ブログに詳しいが、簡単に言うと、Windows側のプロセスがUbuntu側のファイルを作ったり編集したりする際、パーミッションなどのメタデータを適切に設定しないため、Ubuntu側でファイルが壊れたと判断されてしまうから。 こうなると、結果としてファイルが消えてしまったり、壊れたデータで上書きされてしまったりするとのこと。 因みに、Ubuntu側からWindows側のファイルをいじるのは問題ないらしい。 再現確認 そういえばまだBoWをさわったことがなかったので、セットアップして件の問題を体験してみた。 環境は、VMware Player 7.1.0で作ったVMに評価版のWindows 10 Enterprise v1607をインストールしたもの。 セットアップは公式の手順に従うだけ。2ステップだけの簡単な手順。 セットアップ後、コマンドプロンプトでbashとうつとBoWが起動する。(初回はインストール処理が走り、十数分待たされる。) [コマンドプロンプト → Bash] 再現確認に使うのはhogeと書いたhoge.txt。 これをWindows側のC:\Users\kaitoy\Desktop\とUbuntu側の/home/kaitoy/に置く。 [コマンドプロンプト] [Bash] Windows側からは、Ubuntuのファイルシステムが%localappdata%\lxss\にマウントされているように見える。 (lxssはエクスプローラーのオプションから「保護されたオペレーティングシステムファイルを表示しない（推奨）」のチェックをはずさないと見えない。見えなくてもアドレスバーにパスを入力すればアクセスできるけど。) 一方Ubuntu側からは、WindowsのCドライブが/mnt/cにマウントされているように見える。 [Bash] ここで、コマンドプロンプトを開き、%localappdata%\lxss\hoge\kaitoy\(i.e. Ubuntu側の/home/kaitoy/)にcdし、hoge.txtをechoで編集してみた。 [コマンドプロンプト] したらBashから見えなくなった。アクセスしようとすると「Input/output error」というエラーになる。これが件の現象か。 [Bash] エクスプローラからは見えていたので、GUIで%localappdata%\lxss\hoge\kaitoy\hoge.txtを削除したら正常な状態に戻った。 再度同じhoge.txtを作り、今度はメモ帳で編集して内容をfooに変えてみた。 この場合は特に問題なし。なぜだ? [Bash] 例のブログをよく読むと、実際に問題になるのはファイルの作成だけのように読める。 編集しているようにみえても、アプリによっては新規ファイルを作って既存のを置き換えていることがあるから、編集もするなと言っている模様。 メモ帳は実際に編集しているから大丈夫だったということか。 今編集したhoge.txtを今度はエクスプローラから消してみる。 Ubuntu側からは消えてないように見えるが、アクセスしようとするとないと言われる。 [Bash] エクスプローラのビューをF5で更新したら、今消したはずのhoge.txtが復活した。 これをダブルクリックで開こうとしたら「Access is denied.」。 エクスプローラから何度消してもすぐ復活する。 Bashで消そうとしても「Permission denied」。詰んだ。 [Bash] ということで、むしろWindows側からUbuntu側のファイルを消すのがもっともやばいと言うことがわかった。 lxrun /uninstall /full、lxrun /installでUbuntuイメージをインストールしなおさないと直らない。 最後に、Ubuntu側(i.e.">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/microsoft.png">
     
@@ -73,6 +73,19 @@
         
 
 <p>Bash on WindowsでWindows側からUbuntu側のファイルをいじると危険という情報を見つけたので、試してみたら確かに困った状態になった話。</p>
+
+<p><br></p>
+
+<p><script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-7852181473528684"
+     data-ad-slot="3938339651"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</p>
 
 <h1 id="bash-on-windowsとは">Bash on Windowsとは</h1>
 

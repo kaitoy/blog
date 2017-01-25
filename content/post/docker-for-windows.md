@@ -11,6 +11,10 @@ title = "Docker for Windowsがコレジャナかった"
 
 7/28にDocker for Winodws(とDocker for Mac)の正式版リリースの[アナウンス](https://blog.docker.com/2016/07/docker-for-mac-and-windows-production-ready/)があったので試してみたけど、期待していたものと違ったしなんだか上手く動かなかった話。
 
+<br>
+
+{{< google-adsense >}}
+
 ## Docker for Windowsとは
 [Docker for Windows](https://docs.docker.com/docker-for-windows/)は[Docker Toolbox](https://www.docker.com/products/docker-toolbox)の後継製品。(多分。)
 

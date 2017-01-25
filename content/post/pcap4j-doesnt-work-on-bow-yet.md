@@ -11,6 +11,10 @@ title = "Currently Pcap4J Doesn't Work on Bash on Windows"
 # TL;DR
 I've attempted to run [__Pcap4J__](https://github.com/kaitoy/pcap4j) on [__Bash on Windows__](https://msdn.microsoft.com/en-us/commandline/wsl/about) (BoW) but it didn't work due to lack of support for network staff in BoW.
 
+<br>
+
+{{< google-adsense >}}
+
 # What's Bash on Windows
 Bash on Windows is a feature released in [Windows 10 Anniversary Update](https://blogs.windows.com/windowsexperience/2016/08/02/how-to-get-the-windows-10-anniversary-update/#j0WW1oOyf4smWkeX.97) to add Linux fanctionalities to Windows.
 

@@ -12,6 +12,10 @@ title = "よいオブジェクトの七つの美徳"
 (Yegorから和訳と転載の許可は得た。)
 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。
 
+<br>
+
+{{< google-adsense >}}
+
 ----------------
 Martin Fowler[曰く](http://martinfowler.com/bliki/InversionOfControl.html)、
 

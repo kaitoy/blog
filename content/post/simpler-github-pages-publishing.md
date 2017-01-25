@@ -11,6 +11,10 @@ title = "GitHub Pagesの新機能、ソース設定が地味にいい"
 
 今日、[よりシンプルにGitHub Pagesを使えるようになった](https://github.com/blog/2228-simpler-github-pages-publishing)というアナウンスがあり、ソース設定という新機能が追加されていたので、さっそく試してみた話。
 
+<br>
+
+{{< google-adsense >}}
+
 ## GitHub Pagesの新機能: ソース設定
 [GitHub Pages](https://pages.github.com/)には[User Pages、Organization Pages、Project Pages](https://help.github.com/articles/user-organization-and-project-pages/)の三種類があるが、ソース設定が使えるのはProject Pages、つまりGitHubリポジトリごとに使えて`username.github.io/projectname`のようなURLのやつだけ。
 

@@ -10,6 +10,10 @@ title = "How to capture packets on a local network with Pcap4J container"
 
 I'll show how to capture packets on a local network with Pcap4J container.
 
+<br>
+
+{{< google-adsense >}}
+
 ### Docker network
 By default, Docker containers are not connected to a local network.
 They are connected only to a virtual network Docker creates as like below:

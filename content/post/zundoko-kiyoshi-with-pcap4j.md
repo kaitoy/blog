@@ -19,6 +19,10 @@ title = " ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装し
 
 私もこのビッグウェーブに乗らないわけにいかないので、専門分野であるネットワーク周りを開拓しようと思い、ZUNDOKOプロトコルというものを考案して実装してみた。書いたソースは[GitHub](https://github.com/kaitoy/zundoko-protocol)においた。
 
+<br>
+
+{{< google-adsense >}}
+
 ZUNDOKOプロトコル
 ---------------
 クライアントはサーバに「ズン」か「ドコ」を送る。

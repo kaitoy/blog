@@ -10,6 +10,10 @@ title = "Bash on WindowsでWindows側からUbuntu側のファイルをいじる�
 
 Bash on WindowsでWindows側からUbuntu側のファイルをいじると危険という情報を見つけたので、試してみたら確かに困った状態になった話。
 
+<br>
+
+{{< google-adsense >}}
+
 # Bash on Windowsとは
 [Bash on Windows](https://msdn.microsoft.com/en-us/commandline/wsl/about) (aka BoW)は、2016/8/3に公開されたWindows 10 Anniversary Updateで使えるようになった、Windows上でBashが使えるようになる機能。
 

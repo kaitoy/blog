@@ -17,6 +17,10 @@ I did some basic tests for __[Pcap4J](https://github.com/kaitoy/pcap4j)__ 1.6.2 
 
 This article explains each of the above libraries and tells the test results.
 
+<br>
+
+{{< google-adsense >}}
+
 ## Official WinPcap
 WinPcap is the most common native packet capture library developed based on [__libpcap__](http://www.tcpdump.org/).
 (WinPcap 4.1.3 is based on libpcap 1.0.0.)

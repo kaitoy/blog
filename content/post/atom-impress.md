@@ -12,6 +12,10 @@ title = "impress.jsでのプレゼン資料作成をサポートするAtomパッ
 
 ついでに、パッケージプロジェクト内で別のプロジェクトを取り込んで使いたい場合に、[Gitのサブモジュール](https://git-scm.com/book/ja/v2/Git-%E3%81%AE%E3%81%95%E3%81%BE%E3%81%96%E3%81%BE%E3%81%AA%E3%83%84%E3%83%BC%E3%83%AB-%E3%82%B5%E3%83%96%E3%83%A2%E3%82%B8%E3%83%A5%E3%83%BC%E3%83%AB)を使ってはダメという話。
 
+<br>
+
+{{< google-adsense >}}
+
 ## impress.js
 [__impress.js__](https://github.com/impress/impress.js)というJavaScriptライブラリがある。
 HTML5とCSS3とJavaScriptでプレゼン資料を作るためのライブラリで、これを使うと、[PowerPoint](https://products.office.com/ja-jp/powerpoint)や[Keynote](http://www.apple.com/jp/mac/keynote/)といった従来のツールによるものからは一線を画す斬新な資料を作ることができる。

@@ -12,6 +12,10 @@ title = "継続的インテグレーションは死んだ"
 (Yegorから和訳と転載の許可は得た。)
 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。
 
+<br>
+
+{{< google-adsense >}}
+
 ----------------
 数日前、「[なぜ継続的インテグレーションは機能しないのか](http://devops.com/blogs/continuous-integration-doesnt-work/)」という私の記事が[DevOps.com](http://www.devops.com/)に公開された。
 それとほぼ同じ日に、Twitterで非常に否定的な批評が送られてきた。

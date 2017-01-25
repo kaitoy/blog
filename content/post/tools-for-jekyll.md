@@ -14,6 +14,10 @@ title = "GitHub Pagesでブログ立ち上げ - Jekyllのためのツール"
 Jekyllがだいたいセットアップできたところで、どんなサイトデザインにしようか考え始めた。
 調べたところ、生のJekyllを使うよりも簡単に見栄えのいいサイトを作れる方法がある模様。
 
+<br>
+
+{{< google-adsense >}}
+
 ## Octopress
 もっとも有名なのは[__Octopress__](http://octopress.org/)。
 ホームページの説明によると、「Octopress is a framework designed for Jekyll, the static blogging engine powering Github Pages」とのこと。

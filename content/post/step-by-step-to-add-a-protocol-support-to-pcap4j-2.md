@@ -12,6 +12,10 @@ This is continued from [the part 1](https://www.kaitoy.xyz/2015/08/09/step-by-st
 
 We are adding DHCP support to [Pcap4J](https://github.com/kaitoy/pcap4j).
 
+<br>
+
+{{< google-adsense >}}
+
 ### Packet Piece Class
 A packet piece class is a Java class which represents a field of a packet.
 We should create such classes instead of using a primitive types in some cases.

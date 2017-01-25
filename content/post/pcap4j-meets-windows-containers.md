@@ -10,6 +10,10 @@ title = "Pcap4J Meets Windows Containers"
 
 __[Windows Containers](https://msdn.microsoft.com/en-us/virtualization/windowscontainers/about/about_overview)__ で __[Pcap4J](https://github.com/kaitoy/pcap4j)__ のコンテナをビルドしてみた話。
 
+<br>
+
+{{< google-adsense >}}
+
 ## Windows Containersとは
 Windows Containersは、Microsoftが[Docker, Inc](https://www.docker.com/company)と提携して開発している[コンテナ技術](http://www.sophia-it.com/content/%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E6%8A%80%E8%A1%93)で、Windows版[Docker](https://www.docker.com/)とも言われる機能。
 今年リリースされる __Windows Server 2016__ に実装される予定で、その3つめのテクニカルプレビューである __Windows Server 2016 Technical Preview 3__ (2015/8/19公開)から評価できるようになった。

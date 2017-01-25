@@ -12,6 +12,10 @@ title = "オブジェクト指向プログラミングにおいてユーティ�
 (Yegorから和訳と転載の許可は得た。)
 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。
 
+<br>
+
+{{< google-adsense >}}
+
 ----------------
 ユーティリティクラス(またはヘルパークラス)は、スタティックメソッドだけを持っていて、状態を内包しない「構造体」だ。
 [Apache Commons](http://commons.apache.org/)の`StringUtils`、`IOUtils`、`FileUtils`や、[Guava](https://code.google.com/p/guava-libraries/)の`Iterables`、`Iterators`、またJDK7の`Files`はユーティリティクラスのいい例だ。
