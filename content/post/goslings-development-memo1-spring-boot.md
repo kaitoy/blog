@@ -38,7 +38,7 @@ Goslingsサーバは基本REST APIサーバなので、上記チュートリア�
 チュートリアルにはGradleプロジェクトのディレクトリ構成を手動で作るところから書いてあるけど、そこは[IDEなどで楽できる](http://qiita.com/grachro/items/d1ebad3857a794895426)。
 私はEclipseを使っていて、いつのまにかGradleプラグインである[Eclipse Buildship: Eclipse Plug-ins for Gradle](https://projects.eclipse.org/projects/tools.buildship)と[Gradle IDE Pack](https://marketplace.eclipse.org/content/gradle-ide-pack)がインストールされていたので、これらを使った。
 
-どちらのプラグインでもプロジェクトは作成できるが、[Qiitaのこの記事](qiita.com/grachro/items/16bba860f9d9fe5ee4c5)にあるとおり、Gradle IDE Pack(に含まれる[Gradle (STS) Integration for Eclipse by Pivotal](https://github.com/spring-projects/eclipse-integration-gradle/))で作った場合、Gradle Wrapperが生成されないなどの問題があるので、Buildshipの方で作成。
+どちらのプラグインでもプロジェクトは作成できるが、[Qiitaのこの記事](http://qiita.com/grachro/items/16bba860f9d9fe5ee4c5)にあるとおり、Gradle IDE Pack(に含まれる[Gradle (STS) Integration for Eclipse by Pivotal](https://github.com/spring-projects/eclipse-integration-gradle/))で作った場合、Gradle Wrapperが生成されないなどの問題があるので、Buildshipの方で作成。
 ただ、Gradle IDE Packの方がパッケージ・エクスプローラでの見え方がちょっとよかったので、こちらでプロジェクトをインポートしなおした。
 
 ![gradle_import.png](/images/goslings-development-memo1-spring-boot/gradle_import.png)

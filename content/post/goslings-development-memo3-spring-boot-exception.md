@@ -17,7 +17,7 @@ Spring Boot続続編で、例外処理について。
 {{< google-adsense >}}
 
 # Spring MVCアプリにおける例外処理
-Goslingsは[前回](https://www.kaitoy.xyz/2016/12/11/goslings-development-memo1-spring-boot/)書いたように`spring-boot-starter-web`というスターターを使っていて、つまりSpring MVCアプリだ。
+Goslingsは[前々回](https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/)書いたように`spring-boot-starter-web`というスターターを使っていて、つまりSpring MVCアプリだ。
 
 Spring MVCアプリにおける例外処理についてはちょっと古いが[この記事](https://spring.io/blog/2013/11/01/exception-handling-in-spring-mvc)に詳しい。
 
