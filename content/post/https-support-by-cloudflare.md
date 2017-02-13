@@ -5,10 +5,10 @@ draft = false
 eyecatch = "cloudflare.png"
 slug = "https-support-by-cloudflare"
 tags = [ "blog", "cdn"]
-title = "CloudFlareでブログをHTTPS化"
+title = "CloudflareでブログをHTTPS化"
 +++
 
-最近[GitHub Pages](https://pages.github.com/)がHTTPSに正式対応したというニュースを見たことをきっかけに、このブログを[CloudFlare](https://www.cloudflare.com/)で常時HTTPS化した話。
+最近[GitHub Pages](https://pages.github.com/)がHTTPSに正式対応したというニュースを見たことをきっかけに、このブログを[Cloudflare](https://www.cloudflare.com/)で常時HTTPS化した話。
 
 <br>
 
@@ -36,11 +36,11 @@ Googleの検索結果の2,3ページ目までに出てこないなら、その�
 リバースプロキシサーバを自分で運用するのは大変なので、[CDN](https://ja.wikipedia.org/wiki/%E3%82%B3%E3%83%B3%E3%83%86%E3%83%B3%E3%83%84%E3%83%87%E3%83%AA%E3%83%90%E3%83%AA%E3%83%8D%E3%83%83%E3%83%88%E3%83%AF%E3%83%BC%E3%82%AF)サービスを利用する。
 
 CDNサービスでまず思い当たったのはAWSの[CloudFront](https://aws.amazon.com/jp/cloudfront/)だけど、なんだか大げさで面倒そう。
-あとは[CloudFlare](https://www.cloudflare.com/)が有名なので調べたところ、手軽で無料でよさそうだったのでこれにした。
+あとは[Cloudflare](https://www.cloudflare.com/)が有名なので調べたところ、手軽で無料でよさそうだったのでこれにした。
 
 因みに、ごく最近始まったサービスの[Kloudsec](https://www.kloudsec.com/)というのも見つけたけど、まだベータが付いているし、遅いだのそもそもつながらないだの評判が悪かったのでこれは無し。
 
-CloudFlareを利用すると、もともとだいたいこんな感じ↓だったのが、
+Cloudflareを利用すると、もともとだいたいこんな感じ↓だったのが、
 
 <ul class="bxslider">
   <li><img src="/images/https-support-by-cloudflare/direct/スライド1.PNG" /></li>
@@ -72,14 +72,14 @@ CloudFlareを利用すると、もともとだいたいこんな感じ↓だっ�
 
 上のスライド中のリバースプロキシは実際にはいくつもあり、[エニーキャスト](https://ja.wikipedia.org/wiki/%E3%82%A8%E3%83%8B%E3%83%BC%E3%82%AD%E3%83%A3%E3%82%B9%E3%83%88)によってブラウザから一番近いものが使われる。
 
-## CloudFlare事始め
-CloudFlareの始め方は[Qiitaの記事](http://qiita.com/superbrothers/items/95e5723e9bd320094537)を参考にした。
+## Cloudflare事始め
+Cloudflareの始め方は[Qiitaの記事](http://qiita.com/superbrothers/items/95e5723e9bd320094537)を参考にした。
 
-1. CloudFlareのアカウント作成
+1. Cloudflareのアカウント作成
 
-    [CloudFlareのサイト](https://www.cloudflare.com/)に行って`Sign up`のリンクからメアドとパスワードを渡してアカウントを作成。
+    [Cloudflareのサイト](https://www.cloudflare.com/)に行って`Sign up`のリンクからメアドとパスワードを渡してアカウントを作成。
 
-2. CloudFlareにサイトを登録
+2. Cloudflareにサイトを登録
 
     アカウント作成後に開くページに従い、4つのステップをこなすとサービス利用開始できる。
 
@@ -90,9 +90,9 @@ CloudFlareの始め方は[Qiitaの記事](http://qiita.com/superbrothers/items/9
 
     何かのスキャンが始まるので1分ほど待つ。何をしているのかはよくわからない。
 
-3. CloudFlareのDNSの設定
+3. CloudflareのDNSの設定
 
-    次のステップでCloudFlareのDNSにレコードを登録する。
+    次のステップでCloudflareのDNSにレコードを登録する。
     ブラウザからのトラフィックの誘導には`A`か`AAAA`か`CNAME`を登録できる。
     トラフィックは`kaitoy.github.io`に送りたいけど、IPアドレスは自分でコントロールできないので`A`と`AAAA`は使えない。
     `CNAME`を登録した。
@@ -100,7 +100,7 @@ CloudFlareの始め方は[Qiitaの記事](http://qiita.com/superbrothers/items/9
     ![dns.png](/images/https-support-by-cloudflare/dns.png "dns.png")
 
     適当に入力して`Add Record`を押すとレコードを登録できるが、`Status`のところがデフォルトで`DNS only`(灰色のクラウドのアイコン)になっているので、アイコンをクリックして`DNS and HTTP proxy (CDN)`(オレンジ色のクラウドのアイコン)にしておく。
-    こうしないとブラウザからのトラフィックがCloudFlareを経由せず、HTTPS化できないはず。
+    こうしないとブラウザからのトラフィックがCloudflareを経由せず、HTTPS化できないはず。
 
 4. プランの選択
 
@@ -114,11 +114,11 @@ CloudFlareの始め方は[Qiitaの記事](http://qiita.com/superbrothers/items/9
 
     ![change_your_ns.png](/images/https-support-by-cloudflare/change_your_ns.png "change_your_ns.png")
 
-    CloudFlareからは二つのネームサーバが割り当てられたようだ。
+    Cloudflareからは二つのネームサーバが割り当てられたようだ。
     指示されたとおりに変更する。
 
-## CloudFlareの設定
-サインアップが終わるとCloudFlareのダッシュボードが開く。
+## Cloudflareの設定
+サインアップが終わるとCloudflareのダッシュボードが開く。
 
 <br>
 
@@ -135,9 +135,9 @@ CloudFlareの始め方は[Qiitaの記事](http://qiita.com/superbrothers/items/9
 1. SSL
 
     ダッシュボードの`Crypto`の`SSL`の設定はデフォルトで`Full (strict)`になっている。
-    これはブラウザ-CloudFlare間とCloudFlare-GitHub Pages間両方をSSL化する設定。
+    これはブラウザ-Cloudflare間とCloudflare-GitHub Pages間両方をSSL化する設定。
     上で書いたようにGitHub Pagesの方はSSL対応できずこの設定は使えないので、`Flexible`に変更。
-    こちらはブラウザ-CloudFlare間だけをSSL化する。
+    こちらはブラウザ-Cloudflare間だけをSSL化する。
 
     この設定変更をして、SSL証明書が発行されるまで数時間待ったら`https://www.kaitoy.xyz/`にアクセスできるようになった。
 

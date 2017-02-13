@@ -10,10 +10,10 @@
     
     
     <meta property="og:type" content="article">
-    <meta property="og:title" content="CloudFlareでブログをHTTPS化 | To Be Decided">
+    <meta property="og:title" content="CloudflareでブログをHTTPS化 | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2016/07/01/https-support-by-cloudflare/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2016/07/01/https-support-by-cloudflare/">
-    <meta property="og:description" content="最近GitHub PagesがHTTPSに正式対応したというニュースを見たことをきっかけに、このブログをCloudFlareで常時HTTPS化した話。 (adsbygoogle = window.adsbygoogle || []).push({}); このブログ このブログはGitHub Pagesでホストされている。 GitHub Pages上のWebサイトはデフォルトでは&lt;GitHubユーザ名&gt;.github.ioというドメインで公開されるが、ちょっとかっこつけたかったのでカスタムドメイン(www.kaitoy.xyz)にした。 GitHub Pagesは2014年3月から非公式にHTTPSをサポートしていて、2016年6月8日に正式サポートを表明したが、これは&lt;GitHubユーザ名&gt;.github.ioドメインだけが対象であり、カスタムドメインはHTTPSサポートされていない。 要するにこのブログにはHTTP接続しかできない状態だった。 これをなんとかHTTPSに対応させたかった。 なぜHTTPS HTTPS化(常時SSL化)が世界的な流行りな雰囲気を感じていたのと、なにより、Googleに優遇してもらえるから。 Googleの検索結果の2,3ページ目までに出てこないなら、そのサイトはこの世に存在しないのとあまり変わらない。 昔はHTTPSにするとSSLプロトコルのオーバーヘッドや暗号化/復号化処理によりHTTPに比べて遅くなると言われていたが、最近ではサーバ/クライアントマシンの性能が上がり、このデメリットは気にするほどのものではなくなった。 逆に、常時SSL化するとSPDYやHTTP/2といった高速なプロトコルの恩恵を受けることができるようになり、HTTPより速くなることもあるらしい。 カスタムドメインなGitHub PagesサイトをHTTPS対応する方法 上記の通りこのブログはカスタムドメインでGitHub Pagesのサポートがなく直接にはHTTPS対応できない。 よって間接的に対応することになるので、リバースプロキシを使うことになる。 リバースプロキシサーバを自分で運用するのは大変なので、CDNサービスを利用する。 CDNサービスでまず思い当たったのはAWSのCloudFrontだけど、なんだか大げさで面倒そう。 あとはCloudFlareが有名なので調べたところ、手軽で無料でよさそうだったのでこれにした。 因みに、ごく最近始まったサービスのKloudsecというのも見つけたけど、まだベータが付いているし、遅いだのそもそもつながらないだの評判が悪かったのでこれは無し。 CloudFlareを利用すると、もともとだいたいこんな感じ↓だったのが、 こんな感じ↓になる。多分。 上のスライド中のリバースプロキシは実際にはいくつもあり、エニーキャストによってブラウザから一番近いものが使われる。 CloudFlare事始め CloudFlareの始め方はQiitaの記事を参考にした。 CloudFlareのアカウント作成 CloudFlareのサイトに行ってSign upのリンクからメアドとパスワードを渡してアカウントを作成。 CloudFlareにサイトを登録 アカウント作成後に開くページに従い、4つのステップをこなすとサービス利用開始できる。 まずはサイトの登録。 サブドメインを除いたkaitoy.xyzを入力してBegin Scanをクリック。 何かのスキャンが始まるので1分ほど待つ。何をしているのかはよくわからない。 CloudFlareのDNSの設定 次のステップでCloudFlareのDNSにレコードを登録する。 ブラウザからのトラフィックの誘導にはAかAAAAかCNAMEを登録できる。 トラフィックはkaitoy.github.ioに送りたいけど、IPアドレスは自分でコントロールできないのでAとAAAAは使えない。 CNAMEを登録した。 適当に入力してAdd Recordを押すとレコードを登録できるが、StatusのところがデフォルトでDNS only(灰色のクラウドのアイコン)になっているので、アイコンをクリックしてDNS and HTTP proxy (CDN)(オレンジ色のクラウドのアイコン)にしておく。 こうしないとブラウザからのトラフィックがCloudFlareを経由せず、HTTPS化できないはず。 プランの選択 サービスプランは無料のFree Websiteを選択。常時SSL化するだけならこれで十分なはず。 レジストラのネームサーバの変更 最後にレジストラのサイトに行ってネームサーバを変更するように指示される。 CloudFlareからは二つのネームサーバが割り当てられたようだ。 指示されたとおりに変更する。 CloudFlareの設定 サインアップが終わるとCloudFlareのダッシュボードが開く。 ダッシュボードのOverviewのStatusは最初はPendingになっていて、これはネームサーバの変更を反映中ということらしかった。 ネームサーバの変更は数時間くらいかかったが、変更中もhttp://www.kaitoy.xyz/にはアクセスできた。 ダッシュボードからやった設定は以下。 これもQiitaの記事を参考にした。">
+    <meta property="og:description" content="最近GitHub PagesがHTTPSに正式対応したというニュースを見たことをきっかけに、このブログをCloudflareで常時HTTPS化した話。 (adsbygoogle = window.adsbygoogle || []).push({}); このブログ このブログはGitHub Pagesでホストされている。 GitHub Pages上のWebサイトはデフォルトでは&lt;GitHubユーザ名&gt;.github.ioというドメインで公開されるが、ちょっとかっこつけたかったのでカスタムドメイン(www.kaitoy.xyz)にした。 GitHub Pagesは2014年3月から非公式にHTTPSをサポートしていて、2016年6月8日に正式サポートを表明したが、これは&lt;GitHubユーザ名&gt;.github.ioドメインだけが対象であり、カスタムドメインはHTTPSサポートされていない。 要するにこのブログにはHTTP接続しかできない状態だった。 これをなんとかHTTPSに対応させたかった。 なぜHTTPS HTTPS化(常時SSL化)が世界的な流行りな雰囲気を感じていたのと、なにより、Googleに優遇してもらえるから。 Googleの検索結果の2,3ページ目までに出てこないなら、そのサイトはこの世に存在しないのとあまり変わらない。 昔はHTTPSにするとSSLプロトコルのオーバーヘッドや暗号化/復号化処理によりHTTPに比べて遅くなると言われていたが、最近ではサーバ/クライアントマシンの性能が上がり、このデメリットは気にするほどのものではなくなった。 逆に、常時SSL化するとSPDYやHTTP/2といった高速なプロトコルの恩恵を受けることができるようになり、HTTPより速くなることもあるらしい。 カスタムドメインなGitHub PagesサイトをHTTPS対応する方法 上記の通りこのブログはカスタムドメインでGitHub Pagesのサポートがなく直接にはHTTPS対応できない。 よって間接的に対応することになるので、リバースプロキシを使うことになる。 リバースプロキシサーバを自分で運用するのは大変なので、CDNサービスを利用する。 CDNサービスでまず思い当たったのはAWSのCloudFrontだけど、なんだか大げさで面倒そう。 あとはCloudflareが有名なので調べたところ、手軽で無料でよさそうだったのでこれにした。 因みに、ごく最近始まったサービスのKloudsecというのも見つけたけど、まだベータが付いているし、遅いだのそもそもつながらないだの評判が悪かったのでこれは無し。 Cloudflareを利用すると、もともとだいたいこんな感じ↓だったのが、 こんな感じ↓になる。多分。 上のスライド中のリバースプロキシは実際にはいくつもあり、エニーキャストによってブラウザから一番近いものが使われる。 Cloudflare事始め Cloudflareの始め方はQiitaの記事を参考にした。 Cloudflareのアカウント作成 Cloudflareのサイトに行ってSign upのリンクからメアドとパスワードを渡してアカウントを作成。 Cloudflareにサイトを登録 アカウント作成後に開くページに従い、4つのステップをこなすとサービス利用開始できる。 まずはサイトの登録。 サブドメインを除いたkaitoy.xyzを入力してBegin Scanをクリック。 何かのスキャンが始まるので1分ほど待つ。何をしているのかはよくわからない。 CloudflareのDNSの設定 次のステップでCloudflareのDNSにレコードを登録する。 ブラウザからのトラフィックの誘導にはAかAAAAかCNAMEを登録できる。 トラフィックはkaitoy.github.ioに送りたいけど、IPアドレスは自分でコントロールできないのでAとAAAAは使えない。 CNAMEを登録した。 適当に入力してAdd Recordを押すとレコードを登録できるが、StatusのところがデフォルトでDNS only(灰色のクラウドのアイコン)になっているので、アイコンをクリックしてDNS and HTTP proxy (CDN)(オレンジ色のクラウドのアイコン)にしておく。 こうしないとブラウザからのトラフィックがCloudflareを経由せず、HTTPS化できないはず。 プランの選択 サービスプランは無料のFree Websiteを選択。常時SSL化するだけならこれで十分なはず。 レジストラのネームサーバの変更 最後にレジストラのサイトに行ってネームサーバを変更するように指示される。 Cloudflareからは二つのネームサーバが割り当てられたようだ。 指示されたとおりに変更する。 Cloudflareの設定 サインアップが終わるとCloudflareのダッシュボードが開く。 ダッシュボードのOverviewのStatusは最初はPendingになっていて、これはネームサーバの変更を反映中ということらしかった。 ネームサーバの変更は数時間くらいかかったが、変更中もhttp://www.kaitoy.xyz/にはアクセスできた。 ダッシュボードからやった設定は以下。 これもQiitaの記事を参考にした。">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/cloudflare.png">
     
@@ -22,7 +22,7 @@
 
     <title>
       
-      CloudFlareでブログをHTTPS化 | To Be Decided
+      CloudflareでブログをHTTPS化 | To Be Decided
       
     </title>
 
@@ -70,18 +70,18 @@
   <div class="col-md-9">
     <article id="post">
       <span class="date">Fri, Jul 1, 2016</span>
-      <h2 class="title">CloudFlareでブログをHTTPS化</h2>
+      <h2 class="title">CloudflareでブログをHTTPS化</h2>
 
       <div class="eyecatch text-center">
         
-        <img src="https://www.kaitoy.xyz/images/cloudflare.png" alt="CloudFlareでブログをHTTPS化">
+        <img src="https://www.kaitoy.xyz/images/cloudflare.png" alt="CloudflareでブログをHTTPS化">
         
       </div>
 
       <div class="content">
         
 
-<p>最近<a href="https://pages.github.com/">GitHub Pages</a>がHTTPSに正式対応したというニュースを見たことをきっかけに、このブログを<a href="https://www.cloudflare.com/">CloudFlare</a>で常時HTTPS化した話。</p>
+<p>最近<a href="https://pages.github.com/">GitHub Pages</a>がHTTPSに正式対応したというニュースを見たことをきっかけに、このブログを<a href="https://www.cloudflare.com/">Cloudflare</a>で常時HTTPS化した話。</p>
 
 <p><br></p>
 
@@ -121,11 +121,11 @@ Googleの検索結果の2,3ページ目までに出てこないなら、その�
 リバースプロキシサーバを自分で運用するのは大変なので、<a href="https://ja.wikipedia.org/wiki/%E3%82%B3%E3%83%B3%E3%83%86%E3%83%B3%E3%83%84%E3%83%87%E3%83%AA%E3%83%90%E3%83%AA%E3%83%8D%E3%83%83%E3%83%88%E3%83%AF%E3%83%BC%E3%82%AF">CDN</a>サービスを利用する。</p>
 
 <p>CDNサービスでまず思い当たったのはAWSの<a href="https://aws.amazon.com/jp/cloudfront/">CloudFront</a>だけど、なんだか大げさで面倒そう。
-あとは<a href="https://www.cloudflare.com/">CloudFlare</a>が有名なので調べたところ、手軽で無料でよさそうだったのでこれにした。</p>
+あとは<a href="https://www.cloudflare.com/">Cloudflare</a>が有名なので調べたところ、手軽で無料でよさそうだったのでこれにした。</p>
 
 <p>因みに、ごく最近始まったサービスの<a href="https://www.kloudsec.com/">Kloudsec</a>というのも見つけたけど、まだベータが付いているし、遅いだのそもそもつながらないだの評判が悪かったのでこれは無し。</p>
 
-<p>CloudFlareを利用すると、もともとだいたいこんな感じ↓だったのが、</p>
+<p>Cloudflareを利用すると、もともとだいたいこんな感じ↓だったのが、</p>
 
 <ul class="bxslider">
   <li><img src="/images/https-support-by-cloudflare/direct/スライド1.PNG" /></li>
@@ -157,16 +157,16 @@ Googleの検索結果の2,3ページ目までに出てこないなら、その�
 
 <p>上のスライド中のリバースプロキシは実際にはいくつもあり、<a href="https://ja.wikipedia.org/wiki/%E3%82%A8%E3%83%8B%E3%83%BC%E3%82%AD%E3%83%A3%E3%82%B9%E3%83%88">エニーキャスト</a>によってブラウザから一番近いものが使われる。</p>
 
-<h2 id="cloudflare事始め">CloudFlare事始め</h2>
+<h2 id="cloudflare事始め">Cloudflare事始め</h2>
 
-<p>CloudFlareの始め方は<a href="http://qiita.com/superbrothers/items/95e5723e9bd320094537">Qiitaの記事</a>を参考にした。</p>
+<p>Cloudflareの始め方は<a href="http://qiita.com/superbrothers/items/95e5723e9bd320094537">Qiitaの記事</a>を参考にした。</p>
 
 <ol>
-<li><p>CloudFlareのアカウント作成</p>
+<li><p>Cloudflareのアカウント作成</p>
 
-<p><a href="https://www.cloudflare.com/">CloudFlareのサイト</a>に行って<code>Sign up</code>のリンクからメアドとパスワードを渡してアカウントを作成。</p></li>
+<p><a href="https://www.cloudflare.com/">Cloudflareのサイト</a>に行って<code>Sign up</code>のリンクからメアドとパスワードを渡してアカウントを作成。</p></li>
 
-<li><p>CloudFlareにサイトを登録</p>
+<li><p>Cloudflareにサイトを登録</p>
 
 <p>アカウント作成後に開くページに従い、4つのステップをこなすとサービス利用開始できる。</p>
 
@@ -178,9 +178,9 @@ Googleの検索結果の2,3ページ目までに出てこないなら、その�
 
 <p>何かのスキャンが始まるので1分ほど待つ。何をしているのかはよくわからない。</p></li>
 
-<li><p>CloudFlareのDNSの設定</p>
+<li><p>CloudflareのDNSの設定</p>
 
-<p>次のステップでCloudFlareのDNSにレコードを登録する。
+<p>次のステップでCloudflareのDNSにレコードを登録する。
 ブラウザからのトラフィックの誘導には<code>A</code>か<code>AAAA</code>か<code>CNAME</code>を登録できる。
 トラフィックは<code>kaitoy.github.io</code>に送りたいけど、IPアドレスは自分でコントロールできないので<code>A</code>と<code>AAAA</code>は使えない。
 <code>CNAME</code>を登録した。</p>
@@ -189,7 +189,7 @@ Googleの検索結果の2,3ページ目までに出てこないなら、その�
 </p>
 
 <p>適当に入力して<code>Add Record</code>を押すとレコードを登録できるが、<code>Status</code>のところがデフォルトで<code>DNS only</code>(灰色のクラウドのアイコン)になっているので、アイコンをクリックして<code>DNS and HTTP proxy (CDN)</code>(オレンジ色のクラウドのアイコン)にしておく。
-こうしないとブラウザからのトラフィックがCloudFlareを経由せず、HTTPS化できないはず。</p></li>
+こうしないとブラウザからのトラフィックがCloudflareを経由せず、HTTPS化できないはず。</p></li>
 
 <li><p>プランの選択</p>
 
@@ -205,13 +205,13 @@ Googleの検索結果の2,3ページ目までに出てこないなら、その�
 <p><img src="/images/https-support-by-cloudflare/change_your_ns.png" alt="change_your_ns.png" title="change_your_ns.png" />
 </p>
 
-<p>CloudFlareからは二つのネームサーバが割り当てられたようだ。
+<p>Cloudflareからは二つのネームサーバが割り当てられたようだ。
 指示されたとおりに変更する。</p></li>
 </ol>
 
-<h2 id="cloudflareの設定">CloudFlareの設定</h2>
+<h2 id="cloudflareの設定">Cloudflareの設定</h2>
 
-<p>サインアップが終わるとCloudFlareのダッシュボードが開く。</p>
+<p>サインアップが終わるとCloudflareのダッシュボードが開く。</p>
 
 <p><br></p>
 
@@ -230,9 +230,9 @@ Googleの検索結果の2,3ページ目までに出てこないなら、その�
 <li><p>SSL</p>
 
 <p>ダッシュボードの<code>Crypto</code>の<code>SSL</code>の設定はデフォルトで<code>Full (strict)</code>になっている。
-これはブラウザ-CloudFlare間とCloudFlare-GitHub Pages間両方をSSL化する設定。
+これはブラウザ-Cloudflare間とCloudflare-GitHub Pages間両方をSSL化する設定。
 上で書いたようにGitHub Pagesの方はSSL対応できずこの設定は使えないので、<code>Flexible</code>に変更。
-こちらはブラウザ-CloudFlare間だけをSSL化する。</p>
+こちらはブラウザ-Cloudflare間だけをSSL化する。</p>
 
 <p>この設定変更をして、SSL証明書が発行されるまで数時間待ったら<code>https://www.kaitoy.xyz/</code>にアクセスできるようになった。</p></li>
 
@@ -285,11 +285,11 @@ Googleの検索結果の2,3ページ目までに出てこないなら、その�
           <div class="col-sm-5">
             <section id="share">
               <h3>Share</h3>
-              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f07%2f01%2fhttps-support-by-cloudflare%2f&t=CloudFlare%e3%81%a7%e3%83%96%e3%83%ad%e3%82%b0%e3%82%92HTTPS%e5%8c%96" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
-              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f07%2f01%2fhttps-support-by-cloudflare%2f&text=CloudFlare%e3%81%a7%e3%83%96%e3%83%ad%e3%82%b0%e3%82%92HTTPS%e5%8c%96&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f07%2f01%2fhttps-support-by-cloudflare%2f&t=Cloudflare%e3%81%a7%e3%83%96%e3%83%ad%e3%82%b0%e3%82%92HTTPS%e5%8c%96" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f07%2f01%2fhttps-support-by-cloudflare%2f&text=Cloudflare%e3%81%a7%e3%83%96%e3%83%ad%e3%82%b0%e3%82%92HTTPS%e5%8c%96&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
               <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f07%2f01%2fhttps-support-by-cloudflare%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
               <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f07%2f01%2fhttps-support-by-cloudflare%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
-              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f07%2f01%2fhttps-support-by-cloudflare%2f&title=CloudFlare%e3%81%a7%e3%83%96%e3%83%ad%e3%82%b0%e3%82%92HTTPS%e5%8c%96" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2016%2f07%2f01%2fhttps-support-by-cloudflare%2f&title=Cloudflare%e3%81%a7%e3%83%96%e3%83%ad%e3%82%b0%e3%82%92HTTPS%e5%8c%96" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
             </section>
           </div>
 
@@ -530,6 +530,10 @@ Googleの検索結果の2,3ページ目までに出てこないなら、その�
                 
                 
                 <li><a href="https://www.kaitoy.xyz/2015/07/18/first-post/">First Post</a></li>
+                
+                
+                
+                
                 
                 
               </ul>
