@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="ブログアドレスを変更したときにやったこと | To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2017/02/14/change-subdomain/">
+    <link rel="canonical" href="https://www.kaitoy.xyz/2017/02/14/change-subdomain/">
+    <meta property="og:description" content="このブログの閲覧数がそこそこの規模になってきたので、Google AdSenseで小遣い稼ぎを始めようとしたら、最近サブドメインがwwwじゃないとできないようになったようだったので、サブドメインをtbdからwwwに変更した話。 変更自体はそんなに難しくなかったけど、Googleの検索順位を保つためにいろいろ気を使う必要があった。 (adsbygoogle = window.adsbygoogle || []).push({}); ブログアドレスの変更 以前にも書いたが、このブログはHugoで作ってGitHub Pagesでカスタムドメインで公開している。 コメント欄を設けるためにDisqusを使っている。 Cloudflareを使って全体をHTTPS化していて、その関係でkaitoy.xyzドメインの名前解決にはCloudflareのDNSを使っている。 アクセス解析などのためにGoogle AnalyticsとGoogle Search Consoleを使ってる。 この構成で、ブログアドレスの変更に必要だった修正を列挙する。(この順にやったわけではない。) 1. ブログソース修正 Hugoの設定ファイルであるconfig.tomlに書いてあるbaseurlの値をhttps://tbd.kaitoy.xyzからhttps://www.kaitoy.xyzに変え、また、各記事の内部リンクのURLもwwwのに変えた。 あとrobots.txtのSitemapのURLもhttps://www.kaitoy.xyz/sitemap.xmlに更新した。 2. GitHub Pagesの設定変更 ブログリポジトリに行って、SettingsのGitHub Pages欄のCustom domainの値をhttps://www.kaitoy.xyzに変えた。 ついでにブログリポジトリのトップに表示されるDescriptionのWebsiteの値も新しいURLに変更した。 この変更によりありがたい副作用もあった。 GitHub Pagesはwwwというサブドメインを特別扱いしていて、以下の恩恵を受けられるのだ。 wwwを省略したURL(apex domain)でアクセスすると、GitHub Pagesサーバがwww付きのURLにリダイレクトしてくれる。 安定していて速い。 3. CloudflareのDNS設定変更 CloudflareのDNSで、もともとCNAMEレコードでkaitoy.github.io(GitHub Pagesのデフォルトのドメイン)のエイリアスをtbdにしていたのをwwwに変更した。 また、上記の通りapex domainでGitHub Pagesにアクセスしても上手いことやってくれるようになったので、www.kaitoy.xyzのエイリアスをkaitoy.xyzとするCNAMEレコードを追加した。 CloudflareのDNSはapex domain(i.e. kaitoy.xyz)に対するCNAMEレコード設定をサポートしているので、これでwww.kaitoy.xyzでもkaitoy.xyzでもGitHub Pagesにルーティングされるようになった。 4. Disqusの設定変更 ホームの右上の歯車アイコンからAdminを開いて、ヘッダのSettingsからブログのURLを選んでその設定画面を開き、Website URLをhttps://www.kaitoy.xyzに変更した。 5. Google Analyticsの設定変更 管理タブのプロパティ設定のデフォルトの URLをhttps://www.kaitoy.xyzに変更しただけ。 Googleのページランクを保つためのあれこれ 以前もどこかに書いたが、どんなにすばらしい内容の記事を書いてもGoogle検索結果の2,3ページくらいまでに出てこないんであれば誰も読んでくれない。 このブログのいくつかの記事はそれなりにいいキーワードでいい検索順位になっていたので、サブドメイン変更によってページランクに悪影響が出るのはなるべく避けたかった。 調べたら、Google Search Consoleのヘルプにまさにその悪影響を防ぐ方法が載っていたので、これに従ってあれこれした。 1. 自身を参照する rel=&quot;canonical&quot;リンクタグを付ける ブログの全てのページのヘッダに以下の様な移転先アドレスを指すlinkタグを付け、変更後のアドレスが正式なアドレスであることをGooglebotに教えてやる。 &lt;link rel=&quot;canonical&quot; href=&quot;https://www.kaitoy.xyz/2015/07/18/first-post/&quot;&gt; Hugoのソースでいうと以下の感じ。 &lt;link rel=&quot;canonical&quot; href=&quot;{{ .Permalink }}&quot;&gt; 2.">
+    
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/Google-search-console.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      ブログアドレスを変更したときにやったこと | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-7852181473528684",
+        enable_page_level_ads: true
+      });
+    </script>
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Tue, Feb 14, 2017</span>
+      <h2 class="title">ブログアドレスを変更したときにやったこと</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://www.kaitoy.xyz/images/Google-search-console.png" alt="ブログアドレスを変更したときにやったこと">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>このブログの閲覧数がそこそこの規模になってきたので、<a href="https://www.google.co.jp/adsense/start/">Google AdSense</a>で小遣い稼ぎを始めようとしたら、最近サブドメインが<code>www</code>じゃないとできないようになったようだったので、サブドメインを<code>tbd</code>から<code>www</code>に変更した話。</p>
+
+<p>変更自体はそんなに難しくなかったけど、Googleの検索順位を保つためにいろいろ気を使う必要があった。</p>
+
+<p><br></p>
+
+<p><script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-7852181473528684"
+     data-ad-slot="3938339651"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</p>
+
+<h1 id="ブログアドレスの変更">ブログアドレスの変更</h1>
+
+<p><a href="https://www.kaitoy.xyz/2015/08/28/using-hugo/">以前</a>にも書いたが、このブログは<a href="https://gohugo.io/"><strong>Hugo</strong></a>で作って<a href="https://pages.github.com/"><strong>GitHub Pages</strong></a>でカスタムドメインで公開している。</p>
+
+<p>コメント欄を設けるために<a href="https://disqus.com/"><strong>Disqus</strong></a>を使っている。</p>
+
+<p><a href="https://www.cloudflare.com/"><strong>Cloudflare</strong></a>を使って<a href="https://www.kaitoy.xyz/2016/07/01/https-support-by-cloudflare/">全体をHTTPS化</a>していて、その関係で<code>kaitoy.xyz</code>ドメインの名前解決にはCloudflareのDNSを使っている。</p>
+
+<p>アクセス解析などのために<a href="https://analytics.google.com/"><strong>Google Analytics</strong></a>と<a href="https://www.google.com/webmasters/tools/home"><strong>Google Search Console</strong></a>を使ってる。</p>
+
+<p>この構成で、ブログアドレスの変更に必要だった修正を列挙する。(この順にやったわけではない。)</p>
+
+<h4 id="1-ブログソース修正">1. ブログソース修正</h4>
+
+<p>Hugoの設定ファイルである<code>config.toml</code>に書いてある<code>baseurl</code>の値を<code>https://tbd.kaitoy.xyz</code>から<code>https://www.kaitoy.xyz</code>に変え、また、各記事の内部リンクのURLも<code>www</code>のに変えた。</p>
+
+<p>あと<code>robots.txt</code>の<code>Sitemap</code>のURLも<code>https://www.kaitoy.xyz/sitemap.xml</code>に更新した。</p>
+
+<h4 id="2-github-pagesの設定変更">2. GitHub Pagesの設定変更</h4>
+
+<p><a href="https://github.com/kaitoy/blog">ブログリポジトリ</a>に行って、<code>Settings</code>の<code>GitHub Pages</code>欄の<code>Custom domain</code>の値を<code>https://www.kaitoy.xyz</code>に変えた。</p>
+
+<p>ついでにブログリポジトリのトップに表示される<code>Description</code>の<code>Website</code>の値も新しいURLに変更した。</p>
+
+<p>この変更によりありがたい副作用もあった。
+GitHub Pagesは<code>www</code>というサブドメインを特別扱いしていて、以下の恩恵を受けられるのだ。</p>
+
+<ul>
+<li>wwwを省略したURL(apex domain)でアクセスすると、GitHub Pagesサーバがwww付きのURLに<a href="https://help.github.com/articles/setting-up-an-apex-domain-and-www-subdomain/">リダイレクトしてくれる</a>。</li>
+<li><a href="https://help.github.com/articles/about-supported-custom-domains/#www-subdomains">安定していて速い</a>。</li>
+</ul>
+
+<h4 id="3-cloudflareのdns設定変更">3. CloudflareのDNS設定変更</h4>
+
+<p>CloudflareのDNSで、もともと<code>CNAME</code>レコードで<code>kaitoy.github.io</code>(GitHub Pagesのデフォルトのドメイン)のエイリアスを<code>tbd</code>にしていたのを<code>www</code>に変更した。</p>
+
+<p>また、上記の通りapex domainでGitHub Pagesにアクセスしても上手いことやってくれるようになったので、<code>www.kaitoy.xyz</code>のエイリアスを<code>kaitoy.xyz</code>とする<code>CNAME</code>レコードを追加した。
+CloudflareのDNSはapex domain(i.e. <code>kaitoy.xyz</code>)に対する<code>CNAME</code>レコード設定を<a href="https://support.cloudflare.com/hc/en-us/articles/200169056-CNAME-Flattening-RFC-compliant-support-for-CNAME-at-the-root">サポートしている</a>ので、これで<code>www.kaitoy.xyz</code>でも<code>kaitoy.xyz</code>でもGitHub Pagesにルーティングされるようになった。</p>
+
+<h4 id="4-disqusの設定変更">4. Disqusの設定変更</h4>
+
+<p>ホームの右上の歯車アイコンから<code>Admin</code>を開いて、ヘッダの<code>Settings</code>からブログのURLを選んでその設定画面を開き、<code>Website URL</code>を<code>https://www.kaitoy.xyz</code>に変更した。</p>
+
+<h4 id="5-google-analyticsの設定変更">5. Google Analyticsの設定変更</h4>
+
+<p><code>管理</code>タブの<code>プロパティ設定</code>の<code>デフォルトの URL</code>を<code>https://www.kaitoy.xyz</code>に変更しただけ。</p>
+
+<h1 id="googleのページランクを保つためのあれこれ">Googleのページランクを保つためのあれこれ</h1>
+
+<p>以前もどこかに書いたが、どんなにすばらしい内容の記事を書いてもGoogle検索結果の2,3ページくらいまでに出てこないんであれば誰も読んでくれない。
+このブログのいくつかの記事はそれなりにいいキーワードでいい検索順位になっていたので、サブドメイン変更によってページランクに悪影響が出るのはなるべく避けたかった。</p>
+
+<p>調べたら、<a href="https://support.google.com/webmasters/answer/6033049?hl=ja&amp;ref_topic=6033084">Google Search Consoleのヘルプ</a>にまさにその悪影響を防ぐ方法が載っていたので、これに従ってあれこれした。</p>
+
+<h4 id="1-自身を参照する-rel-canonical-リンクタグを付ける">1. 自身を参照する <code>rel=&quot;canonical&quot;</code>リンクタグを付ける</h4>
+
+<p>ブログの全てのページのヘッダに以下の様な移転先アドレスを指すlinkタグを付け、変更後のアドレスが正式なアドレスであることをGooglebotに教えてやる。</p>
+
+<pre><code class="language-html">&lt;link rel=&quot;canonical&quot; href=&quot;https://www.kaitoy.xyz/2015/07/18/first-post/&quot;&gt;
+</code></pre>
+
+<p>Hugoのソースでいうと以下の感じ。</p>
+
+<pre><code class="language-html">&lt;link rel=&quot;canonical&quot; href=&quot;{{ .Permalink }}&quot;&gt;
+</code></pre>
+
+<h4 id="2-http-301リダイレクトを設定">2. HTTP 301リダイレクトを設定</h4>
+
+<p>多分これが一番重要なんじゃなかろうか。</p>
+
+<p>HTTPステータスコードの<a href="https://support.google.com/webmasters/answer/93633">301</a>はサイトのコンテンツが別のURLに恒久的に移転したことを示すもので、移転前のURLにアクセスしたクライアントに301を移転先のURLとともに返してやることで、HTTPレベルでのリダイレクトをさせることができる。</p>
+
+<p>GooglebotもこのステータスコードでブログURLの変更を知ることができるので、検索結果をよしなに移行してくれるはず。</p>
+
+<p>301を返すサーバには<a href="https://www.xrea.com/">XREA</a>の無料サーバを使った。
+このブログのドメインは<a href="https://www.value-domain.com/">バリュードメイン</a>で買ったもので、ここがXREAと提携していたので無料サーバも合わせて確保していたもののほとんど使っていなかったので調度よかった。
+調べたらこのサーバで、<a href="https://httpd.apache.org/">Apache HTTP Server</a>の設定ファイルである<code>.htaccess</code>が使えることが分かったので、以下の内容で作って<code>/public_html/</code>に置いた。</p>
+
+<pre><code>&lt;Files ~ &quot;^\.ht&quot;&gt;
+deny from all
+&lt;/Files&gt;
+
+# Redirect
+Redirect permanent / https://www.kaitoy.xyz/
+</code></pre>
+
+<p>また、サーバの管理ページからドメインウェブ設定画面に行き、Mainのドメイン名を<code>tbd.kaitoy.xyz</code>に設定。</p>
+
+<p>あとはCloudflareのDNS設定で、<code>tbd</code>を上記XREAサーバのIPアドレスに解決する<code>A</code>レコードを追加して完了。</p>
+
+<h4 id="3-google-search-consoleのアドレス変更ツール実行">3. Google Search Consoleのアドレス変更ツール実行</h4>
+
+<p>最後の仕上げとして、Google Search Consoleの<a href="https://support.google.com/webmasters/answer/83106">アドレス変更ツール</a>を使ってGooglebotにアドレス変更を通知した。</p>
+
+<p>このツールはGoogle Search Consoleの管理サイトごとのページの右上の歯車アイコンから<code>アドレス変更</code>を選択すると開け、以下のようなものが表示される。</p>
+
+<p><img src="/images/change-subdomain/change_address.png" alt="change_address.png" />
+</p>
+
+<p><br></p>
+
+<p>このウィザードに従って、移転先URL(プロパティ)の追加、301リダイレクトの動作確認、サイトの存在確認をして、アドレス変更のリクエストを送信するだけ。</p>
+
+<p>最後に、追加したプロパティの<code>クロール</code>の<code>サイトマップ</code>から、移転先サイトのサイトマップを送信して完了。
+サイトマップはHugoがビルド時に生成してくれたやつ。</p>
+
+<p>今<a href="https://support.google.com/webmasters/answer/6033049?hl=ja&amp;ref_topic=6033084">Google Search Consoleのヘルプ</a>を見直したら移転前のサイトマップも送信しろと書いてあるのに気付いた。
+これはやらなかったけど、やった方がよかったのかも。</p>
+
+<p>ともあれ、移転後一時的に検索順位が大きく落ちたものの、1,2週間位でもとにもどったので、この移転は概ね成功だったと思う。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-7852181473528684"
+             data-ad-slot="3938339651"
+             data-ad-format="auto"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </aside>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f02%2f14%2fchange-subdomain%2f&t=%e3%83%96%e3%83%ad%e3%82%b0%e3%82%a2%e3%83%89%e3%83%ac%e3%82%b9%e3%82%92%e5%a4%89%e6%9b%b4%e3%81%97%e3%81%9f%e3%81%a8%e3%81%8d%e3%81%ab%e3%82%84%e3%81%a3%e3%81%9f%e3%81%93%e3%81%a8" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f02%2f14%2fchange-subdomain%2f&text=%e3%83%96%e3%83%ad%e3%82%b0%e3%82%a2%e3%83%89%e3%83%ac%e3%82%b9%e3%82%92%e5%a4%89%e6%9b%b4%e3%81%97%e3%81%9f%e3%81%a8%e3%81%8d%e3%81%ab%e3%82%84%e3%81%a3%e3%81%9f%e3%81%93%e3%81%a8&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f02%2f14%2fchange-subdomain%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f02%2f14%2fchange-subdomain%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f02%2f14%2fchange-subdomain%2f&title=%e3%83%96%e3%83%ad%e3%82%b0%e3%82%a2%e3%83%89%e3%83%ac%e3%82%b9%e3%82%92%e5%a4%89%e6%9b%b4%e3%81%97%e3%81%9f%e3%81%a8%e3%81%8d%e3%81%ab%e3%82%84%e3%81%a3%e3%81%9f%e3%81%93%e3%81%a8" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://www.kaitoy.xyz/tags/blog"><i class="fa fa-tags"></i> blog </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/github"><i class="fa fa-tags"></i> github </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/hugo"><i class="fa fa-tags"></i> hugo </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/seo"><i class="fa fa-tags"></i> seo </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/08/21/an-encouragement-of-open-sourcing/">オープンソースプロジェクトのすゝめ</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/08/18/simpler-github-pages-publishing/">GitHub Pagesの新機能、ソース設定が地味にいい</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/07/01/https-support-by-cloudflare/">CloudflareでブログをHTTPS化</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/08/28/using-hugo/">GitHub Pagesでブログ立ち上げ - Hugoを使う</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/08/25/tools-for-jekyll/">GitHub Pagesでブログ立ち上げ - Jekyllのためのツール</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/">GitHub Pagesでブログ立ち上げ - GitHub PagesとJekyll</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/07/18/first-post/">First Post</a></li>
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://www.kaitoy.xyz/2017/01/24/goslings-development-memo5-spring-boot-static-resources/">
+                  Goslings開発メモ - その5: Spring Boot最終編 (静的リソース処理)
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-7852181473528684"
+     data-ad-slot="3938339651"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2017  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

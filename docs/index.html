@@ -14,9 +14,9 @@
     <link rel="canonical" href="https://www.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="「Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)」の続き。 Spring Boot最終編で、静的リソース処理について。 (adsbygoogle = window.adsbygoogle || []).push({}); Spring Boot(Spring MVC)での静的リソース処理 この時点でのGoslingsは単なるREST APIサーバで、アクセスしてもJSONを返すだけだ。 アプリとしての体を成すためには、そのAPIを利用するクライアントコード、つまりHTMLドキュメントやCSSファイルやJavaScriptファイル(静的リソース)も返すようにしないといけない。 HTMLドキュメントを返す場合、普通はなんらかのテンプレートエンジンを使うものだが、Goslingsは本当に単純なGUIなので、サーバに置いたHTMLファイルをそのまま返したい。 「Getting Started Guides」にはServing Web Content with Spring MVCというのが乗っているが、これはThymeleafというテンプレートエンジンを使うものなのでちょっと違う。 Spring Bootリファレンスガイドによると、クラスパス(またはServletContextのルート)の/static/、/public/、/resources/、/META-INF/resources/のいずれかに静的リソースを置けば、特にコードを書かなくてもクライアントからアクセスできるらしい。 (逆に、一般的に静的リソースを置く場所である、プロジェクトのsrc/main/webapp/には置くべきでないとのこと。これは、jarにパッケージングするときにビルドツールに無視されることが多いため。) この仕組みについて、この記事を参考にちょろっとソースを見た感じでは、これらのパスはResourcePropertiesのCLASSPATH_RESOURCE_LOCATIONSに定義されていて、これをWebMvcAutoConfigurationがResourceHandlerRegistryでリソースロケーションとして登録することで静的リソース置き場たらしめている模様。 (このResourceHandlerRegistryはResourceHttpRequestHandlerを設定するファサード的なものっぽい。) で、@SpringBootApplication(その1参照)が付いているクラスがあって、spring-webmvc.jarがクラスパスにあると、@EnableWebMvcがSpring Bootによって付けられ、そこからごにょごにょして上記WebMvcAutoConfigurationが実行される。 spring-webmvc.jarはspring-boot-starter-web.jar(その1参照)が引っ張ってくる。 なお、Spring MVCの静的リソース処理の全体の流れについては 、ちょっと古いけど「handling static web resources」という記事が分かりやすい。 要は、URLに指定されたパスからサーバ上のリソースを探し当てるResourceResolverというものが優先度順に連なっているリゾルバチェイン(ResourceResolverChain)があって、まずこいつがリソースを取得する。 次に、そのリソースを加工するトランスフォーマチェイン(ResourceTransformerChain)というものに通し、その結果をクライアントに返す。 トランスフォーマチェインはResourceTransformerが連なったもの。 リゾルバチェインとトランスフォーマチェインは上記ResourceHttpRequestHandlerに設定される。 リゾルバには以下の様なものがある。 PathResourceResolver: ResourceHttpRequestHandlerに設定されたリソースロケーションからリソースを単純に検索するリゾルバ。 CachingResourceResolver: キャッシュからリソースを検索するリゾルバ。テンプレートエンジンの処理結果のキャッシュとかが返るのは多分ここから。 GzipResourceResolver: gzipで圧縮されたリソース、つまりURLで指定されたパスに.gzという拡張子を付けたリソースを検索するリゾルバ。 VersionResourceResolver: リソースバージョニングを実現するためのリゾルバ。 WebJarsResourceResolver: WebJarsのjarファイル内のリソースを検索するリゾルバ。 リゾルバの設定などについてはQiitaのこの記事ががよくまとまっている。 凝ったことをしたいときは参照しよう。 トランスフォーマには以下の様なものがある。 CssLinkResourceTransformer: CSSファイル内のリンクをクライアントがアクセスできるURLに変換する。 CachingResourceTransformer: 変換したリソースをキャッシュする。 AppCacheManifestTransformer: HTML5のAppCacheマニフェスト内のリソースを扱うトランスフォーマ。 デフォルトでResourceHttpRequestHandlerにはPathResourceResolverだけが設定されている。 以上をまとめると、クライアントからGetリクエストが来ると、WebMvcAutoConfigurationが設定したリソースロケーション(e.g. /static/)をPathResourceResolverが検索して、そこに置いてあるHTMLファイルとかをクライアントに返してくれる、ということであろう。 Javaのコードを全く書かなくていいので楽。 Javaのコードを書いて静的リソースファイルを明示することもできる。 Qiitaの記事によれば、@Controllerを付けたクラスのリクエストハンドラで以下の様にファイルへのパスを返せばいいらしい。 @RequestMapping(&quot;/hoge&quot;) public String hoge() { return &quot;/hoge.html&quot;; } 単純な静的リソースに対してこれをやるユースケースはあまりなさそう。 テンプレートエンジンを使っていてパラメータを渡したいときにはこういうリクエストハンドラを書くことになる。 Spring Bootのウェルカムページとファビコン Spring Bootはindex.htmlとfavicon.icoという名のファイルを特別扱いする。 前者がウェルカムページで後者がファビコン。 ウェルカムページ Spring Bootのリファレンスガイドにもちらっとかいてあるけど、リソースロケーションにindex.htmlというファイルを置いておくと、それがウェルカムページとして設定され、URLのパスにルート(e.g.">
+    <meta property="og:description" content="このブログの閲覧数がそこそこの規模になってきたので、Google AdSenseで小遣い稼ぎを始めようとしたら、最近サブドメインがwwwじゃないとできないようになったようだったので、サブドメインをtbdからwwwに変更した話。 変更自体はそんなに難しくなかったけど、Googleの検索順位を保つためにいろいろ気を使う必要があった。 (adsbygoogle = window.adsbygoogle || []).push({}); ブログアドレスの変更 以前にも書いたが、このブログはHugoで作ってGitHub Pagesでカスタムドメインで公開している。 コメント欄を設けるためにDisqusを使っている。 Cloudflareを使って全体をHTTPS化していて、その関係でkaitoy.xyzドメインの名前解決にはCloudflareのDNSを使っている。 アクセス解析などのためにGoogle AnalyticsとGoogle Search Consoleを使ってる。 この構成で、ブログアドレスの変更に必要だった修正を列挙する。(この順にやったわけではない。) 1. ブログソース修正 Hugoの設定ファイルであるconfig.tomlに書いてあるbaseurlの値をhttps://tbd.kaitoy.xyzからhttps://www.kaitoy.xyzに変え、また、各記事の内部リンクのURLもwwwのに変えた。 あとrobots.txtのSitemapのURLもhttps://www.kaitoy.xyz/sitemap.xmlに更新した。 2. GitHub Pagesの設定変更 ブログリポジトリに行って、SettingsのGitHub Pages欄のCustom domainの値をhttps://www.kaitoy.xyzに変えた。 ついでにブログリポジトリのトップに表示されるDescriptionのWebsiteの値も新しいURLに変更した。 この変更によりありがたい副作用もあった。 GitHub Pagesはwwwというサブドメインを特別扱いしていて、以下の恩恵を受けられるのだ。 wwwを省略したURL(apex domain)でアクセスすると、GitHub Pagesサーバがwww付きのURLにリダイレクトしてくれる。 安定していて速い。 3. CloudflareのDNS設定変更 CloudflareのDNSで、もともとCNAMEレコードでkaitoy.github.io(GitHub Pagesのデフォルトのドメイン)のエイリアスをtbdにしていたのをwwwに変更した。 また、上記の通りapex domainでGitHub Pagesにアクセスしても上手いことやってくれるようになったので、www.kaitoy.xyzのエイリアスをkaitoy.xyzとするCNAMEレコードを追加した。 CloudflareのDNSはapex domain(i.e. kaitoy.xyz)に対するCNAMEレコード設定をサポートしているので、これでwww.kaitoy.xyzでもkaitoy.xyzでもGitHub Pagesにルーティングされるようになった。 4. Disqusの設定変更 ホームの右上の歯車アイコンからAdminを開いて、ヘッダのSettingsからブログのURLを選んでその設定画面を開き、Website URLをhttps://www.kaitoy.xyzに変更した。 5. Google Analyticsの設定変更 管理タブのプロパティ設定のデフォルトの URLをhttps://www.kaitoy.xyzに変更しただけ。 Googleのページランクを保つためのあれこれ 以前もどこかに書いたが、どんなにすばらしい内容の記事を書いてもGoogle検索結果の2,3ページくらいまでに出てこないんであれば誰も読んでくれない。 このブログのいくつかの記事はそれなりにいいキーワードでいい検索順位になっていたので、サブドメイン変更によってページランクに悪影響が出るのはなるべく避けたかった。 調べたら、Google Search Consoleのヘルプにまさにその悪影響を防ぐ方法が載っていたので、これに従ってあれこれした。 1. 自身を参照する rel=&quot;canonical&quot;リンクタグを付ける ブログの全てのページのヘッダに以下の様な移転先アドレスを指すlinkタグを付け、変更後のアドレスが正式なアドレスであることをGooglebotに教えてやる。 &lt;link rel=&quot;canonical&quot; href=&quot;https://www.kaitoy.xyz/2015/07/18/first-post/&quot;&gt; Hugoのソースでいうと以下の感じ。 &lt;link rel=&quot;canonical&quot; href=&quot;{{ .Permalink }}&quot;&gt; 2.">
     
-    <meta property="og:image" content="https://www.kaitoy.xyz/images/goslings-spring.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/Google-search-console.png">
     
     
     
@@ -74,6 +74,28 @@
     <div id="posts">
       
       <div class="row">
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://www.kaitoy.xyz/2017/02/14/change-subdomain/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/Google-search-console.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Tue, Feb 14, 2017</span>
+              </div>
+              <h2 class="title">ブログアドレスを変更したときにやったこと</h2>
+              <div class="summary">
+                このブログの閲覧数がそこそこの規模になってきたので、Google AdSenseで小遣い稼ぎを始めようとしたら、最近サブドメインがwwwじゃないとできないようになったようだったので、サブドメインをtbdからwwwに変更した話。 変更自体はそんなに難しくなかったけど、Googleの検索順位を保つためにいろいろ気を使う必要があった。 (adsbygoogle = window.adsbygoogle || []).push({}); ブログアドレスの変更 以前にも書いたが、このブログはHugoで作ってGitHub Pagesでカスタムドメインで公開している。 コメント欄を設けるためにDisqusを使っている。 Cloudflareを使って全体をHTTPS化していて、その関係でkaitoy.xyzドメインの名前解決にはCloudflareのDNSを使っている。 アクセス解析などのためにGoogle AnalyticsとGoogle Search Consoleを使ってる。 この構成で、ブログアドレスの変更に必要だった修正を列挙する。(この順にやったわけではない。) 1. ブログソース修正 Hugoの設定ファイルであるconfig.tomlに書いてあるbaseurlの値をhttps://tbd.kaitoy.xyzからhttps://www.kaitoy.xyzに変え、また、各記事の内部リンクのURLもwwwのに変えた。 あとrobots.txtのSitemapのURLもhttps://www.kaitoy.xyz/sitemap.xmlに更新した。 2. GitHub Pagesの設定変更 ブログリポジトリに行って、SettingsのGitHub Pages欄のCustom domainの値をhttps://www.kaitoy.xyzに変えた。 ついでにブログリポジトリのトップに表示されるDescriptionのWebsiteの値も新しいURLに変更した。 この変更によりありがたい副作用もあった。 GitHub Pagesはwwwというサブドメインを特別扱いしていて、以下の恩恵を受けられるのだ。 wwwを省略したURL(apex domain)でアクセスすると、GitHub Pagesサーバがwww付きのURLにリダイレクトしてくれる。 安定していて速い。 3. CloudflareのDNS設定変更 CloudflareのDNSで、もともとCNAMEレコードでkaitoy.github.io(GitHub Pagesのデフォルトのドメイン)のエイリアスをtbdにしていたのをwwwに変更した。 また、上記の通りapex domainでGitHub Pagesにアクセスしても上手いことやってくれるようになったので、www.kaitoy.xyzのエイリアスをkaitoy.xyzとするCNAMEレコードを追加した。 CloudflareのDNSはapex domain(i.e. kaitoy.xyz)に対するCNAMEレコード設定をサポートしているので、これでwww.kaitoy.xyzでもkaitoy.xyzでもGitHub Pagesにルーティングされるようになった。 4. Disqusの設定変更 ホームの右上の歯車アイコンからAdminを開いて、ヘッダのSettingsからブログのURLを選んでその設定画面を開き、Website URLをhttps://www.kaitoy.xyzに変更した。 5. Google Analyticsの設定変更 管理タブのプロパティ設定のデフォルトの URLをhttps://www.kaitoy.xyzに変更しただけ。 Googleのページランクを保つためのあれこれ 以前もどこかに書いたが、どんなにすばらしい内容の記事を書いてもGoogle検索結果の2,3ページくらいまでに出てこないんであれば誰も読んでくれない。 このブログのいくつかの記事はそれなりにいいキーワードでいい検索順位になっていたので、サブドメイン変更によってページランクに悪影響が出るのはなるべく避けたかった。 調べたら、Google Search Consoleのヘルプにまさにその悪影響を防ぐ方法が載っていたので、これに従ってあれこれした。 1. 自身を参照する rel=&quot;canonical&quot;リンクタグを付ける ブログの全てのページのヘッダに以下の様な移転先アドレスを指すlinkタグを付け、変更後のアドレスが正式なアドレスであることをGooglebotに教えてやる。 &lt;link rel=&quot;canonical&quot; href=&quot;https://www.kaitoy.xyz/2015/07/18/first-post/&quot;&gt; Hugoのソースでいうと以下の感じ。 &lt;link rel=&quot;canonical&quot; href=&quot;{{ .Permalink }}&quot;&gt; 2.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
         
         
         
@@ -139,33 +161,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2017/01/10/goslings-development-memo2-spring-boot-di/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2017/01/10/goslings-development-memo2-spring-boot-di/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/goslings-spring.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Tue, Jan 10, 2017</span>
               </div>
-              <h2 class="title">Goslings開発メモ - その2: Spring Boot続編 (DI)</h2>
-              <div class="summary">
-                「Goslings開発メモ - その1: Spring Boot編」の続き。 Spring Boot続編で、DIについて。 (adsbygoogle = window.adsbygoogle || []).push({}); DIとは DIはDependency Injectionの略。依存性注入と訳される。 これは、Javaの文脈で具体的目に言うと、あるクラスが依存する具象クラスのインスタンス化と取得をフレームワークに任せることで、具象クラス間の直接的な依存を排除し、よってコンポーネント間を疎結合にする手法。 これにより、アプリの拡張性を高めたり、テストがしやすくなったりする。(参考記事) Spring FrameworkはもともとこのDI機能を提供するフレームワーク(i.e. DIコンテナ)として普及した。 GoslingsでDI Goslingsサーバの内部機能はざっくり、クライアントからのREST API呼び出しを処理するユーザインタフェース層と、Gitリポジトリにアクセスするデータベース層に分かれる。 Gitリポジトリにアクセスする部分は今回はJGitで実装するが、将来的に別のライブラリで実装しなおす可能性が微レ存なのと、Goslingsの開発自体がWebアプリ開発の練習でもあるので、ちゃんとしたアーキテクチャでと思い、DAOパターンを使ってやった。 つまり例えば、GitのコミットオブジェクトはJGitのAPIではRevCommitクラスで表されるが、ユーザインタフェース層からはリソースクラスであるCommitクラス(前回参照)を扱う以下の様なDAOインターフェースを呼ぶようにし、JGit依存の実装とは切り離す。 public interface ObjectDao { public Commit[] getCommits(String token) throws DaoException; } (ObjectDao.javaの完全なソースはこれ) ObjectDaoを実装するObjectDaoImplクラスでは、以下の様にJGitを使ってごりごりと実装を書く。 public final class ObjectDaoImpl implements ObjectDao { // フィールド定義は省略 @Override public Commit[] getCommits(String token) { try { return StreamSupport.stream(resolver.getGit(token).log().all().call().spliterator(), false) .map(this::convertToCommit) .toArray(Commit[]::new); } catch (NoHeadException e) { // エラー処理 } } private Commit convertToCommit(RevCommit commit) { // RevCommitをCommitに変換する処理 } } ユーザインターフェース層はRestApiV1Controllerクラス(前回参照)のgetCommitsメソッドで、以下の様にObjectDaoを使いたい。 public final class RestApiV1Controller { private ObjectDao objectDao; @RequestMapping(path=&quot;{token}/objects/commits&quot;) public Commit[] getCommits(@PathVariable String token) { return objectDao.getCommits(token); } // 以下他のメソッド } ここで問題になるのが、RestApiV1ControllerのobjectDaoフィールドへのインスタンスの代入だが、RestApiV1Controller内(e.g.
-              </div>
+              <h3 class="title">Goslings開発メモ - その2: Spring Boot続編 (DI)</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         
@@ -1100,25 +1119,6 @@
         
         
         
-        
-        
-        <div class="col-md-3 col-sm-4 col-xs-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/1/01/01/" class="post">
-              <header class="eyecatch text-center">
-                <img src="https://www.kaitoy.xyz/images/nopicture.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Mon, Jan 1, 0001</span>
-              </div>
-              <h3 class="title"></h3>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
       </div>
     </div>
   </div>
@@ -1244,6 +1244,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
