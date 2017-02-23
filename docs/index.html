@@ -14,9 +14,9 @@
     <link rel="canonical" href="https://www.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="このブログの閲覧数がそこそこの規模になってきたので、Google AdSenseで小遣い稼ぎを始めようとしたら、最近サブドメインがwwwじゃないとできないようになったようだったので、サブドメインをtbdからwwwに変更した話。 変更自体はそんなに難しくなかったけど、Googleの検索順位を保つためにいろいろ気を使う必要があった。 (adsbygoogle = window.adsbygoogle || []).push({}); ブログアドレスの変更 以前にも書いたが、このブログはHugoで作ってGitHub Pagesでカスタムドメインで公開している。 コメント欄を設けるためにDisqusを使っている。 Cloudflareを使って全体をHTTPS化していて、その関係でkaitoy.xyzドメインの名前解決にはCloudflareのDNSを使っている。 アクセス解析などのためにGoogle AnalyticsとGoogle Search Consoleを使ってる。 この構成で、ブログアドレスの変更に必要だった修正を列挙する。(この順にやったわけではない。) 1. ブログソース修正 Hugoの設定ファイルであるconfig.tomlに書いてあるbaseurlの値をhttps://tbd.kaitoy.xyzからhttps://www.kaitoy.xyzに変え、また、各記事の内部リンクのURLもwwwのに変えた。 あとrobots.txtのSitemapのURLもhttps://www.kaitoy.xyz/sitemap.xmlに更新した。 2. GitHub Pagesの設定変更 ブログリポジトリに行って、SettingsのGitHub Pages欄のCustom domainの値をhttps://www.kaitoy.xyzに変えた。 ついでにブログリポジトリのトップに表示されるDescriptionのWebsiteの値も新しいURLに変更した。 この変更によりありがたい副作用もあった。 GitHub Pagesはwwwというサブドメインを特別扱いしていて、以下の恩恵を受けられるのだ。 wwwを省略したURL(apex domain)でアクセスすると、GitHub Pagesサーバがwww付きのURLにリダイレクトしてくれる。 安定していて速い。 3. CloudflareのDNS設定変更 CloudflareのDNSで、もともとCNAMEレコードでkaitoy.github.io(GitHub Pagesのデフォルトのドメイン)のエイリアスをtbdにしていたのをwwwに変更した。 また、上記の通りapex domainでGitHub Pagesにアクセスしても上手いことやってくれるようになったので、www.kaitoy.xyzのエイリアスをkaitoy.xyzとするCNAMEレコードを追加した。 CloudflareのDNSはapex domain(i.e. kaitoy.xyz)に対するCNAMEレコード設定をサポートしているので、これでwww.kaitoy.xyzでもkaitoy.xyzでもGitHub Pagesにルーティングされるようになった。 4. Disqusの設定変更 ホームの右上の歯車アイコンからAdminを開いて、ヘッダのSettingsからブログのURLを選んでその設定画面を開き、Website URLをhttps://www.kaitoy.xyzに変更した。 5. Google Analyticsの設定変更 管理タブのプロパティ設定のデフォルトの URLをhttps://www.kaitoy.xyzに変更しただけ。 Googleのページランクを保つためのあれこれ 以前もどこかに書いたが、どんなにすばらしい内容の記事を書いてもGoogle検索結果の2,3ページくらいまでに出てこないんであれば誰も読んでくれない。 このブログのいくつかの記事はそれなりにいいキーワードでいい検索順位になっていたので、サブドメイン変更によってページランクに悪影響が出るのはなるべく避けたかった。 調べたら、Google Search Consoleのヘルプにまさにその悪影響を防ぐ方法が載っていたので、これに従ってあれこれした。 1. 自身を参照する rel=&quot;canonical&quot;リンクタグを付ける ブログの全てのページのヘッダに以下の様な移転先アドレスを指すlinkタグを付け、変更後のアドレスが正式なアドレスであることをGooglebotに教えてやる。 &lt;link rel=&quot;canonical&quot; href=&quot;https://www.kaitoy.xyz/2015/07/18/first-post/&quot;&gt; Hugoのソースでいうと以下の感じ。 &lt;link rel=&quot;canonical&quot; href=&quot;{{ .Permalink }}&quot;&gt; 2.">
+    <meta property="og:description" content="このエントリでは、Grzegorz Gajosによる記事、How Hibernate Almost Ruined My Careerを紹介する。 (Grzegorzから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 (adsbygoogle = window.adsbygoogle || []).push({}); 想像してくれ。 君はJava開発者で、次のビッグプロジェクトを開始しようとしているところだ。 君は、そのプロジェクト全体に影響する根本的な決断をする必要がある。 君の柔軟なデータモデルをオブジェクト指向で抽象化するベストな方法を選択したい。生のSQLを扱いたくはないからね。 どんな種類のデータもサポートしたいし、理想では全種のデータベースをサポートしたい。 すぐに思いつくのは、単にHibernateを使うという解だ。そうだろ？ Javaディベロッパの90%は君に同意するだろう。 しかし、それって正しい決断になっているだろうか？ Hibernateが一般に受け入れられているスタンダードだからといって盲目的に採用してしまうと、どんな問題が発生するかを見てみよう。 モニカというJava開発者がいるとしよう。 モニカは最近出世してアーキテクトの役職に就き、会社の新製品のための技術スタックを選定する責任者になった。 彼女は、Javaの世界にはデータベースとのやり取りを扱うたった一つの適切なツールがあることを知っている。Hibernateだ。 Hibernateは良く知られ支持されているJPAのスタンダードではあるが、プロジェクト開始前に多少のチェックをするのが定跡だ。 幸いにも、同僚のベンが適任者を知っている。 4年前、Hibernateは銀の弾丸かのように見えた ベン: やあモニカ。ジョンを紹介させてくれ。彼はHibernateの達人だ。君の助けになるはずだ。 モニカ: ジョン、時間を取ってくれてありがとう。 今、私たちが次なる目玉製品を開発しようとしてるのは知ってる？ 次のFacebookやGoogleになるつもりなの。 忙しくなるわ。巨大なものになる。 本当にすてき！ みんなとても興奮してる！ 私はアーキテクトの役に就いたから、とりあえず採用する技術スタックを選定しなければいけないの。 ひとつだけまだ欠けてるのが永続化なんだけど… ジョン: Hibernate！ モニカ: そう！そのとおり！ わたしもそう考えていたの！ それならわたしたちにぴったりで上手く行きそうでしょう。 マーケットと豊富な実績に裏付けられた、真の業務問題のための真の業務ソリューション。 とてもたくさんのポジティブな経験談を聞いたことがあるわ。 けど、一つ問題があって、チームメンバのひとりがそれに絶対反対してるの。 アプリケーションとデータベースの間に別のレイヤを加えるのを気にして。 彼はすごく頭がいいから、これが良い決断だと納得させるには本当にしっかりした根拠が必要なの。 助けてくれる？ ジョン: もちろん、よろこんで！ Hibernateは、実際、すばらしいツールです。 銀行といった、大きな真の業務ソリューションで広く使われています。 それを使って失敗するということはありえません。 永続化ときたらHibernate。 Javaで書いているならそれが完全に正しい選択ですし、さらには他の言語への移植もあります。 どれだけ多くの職務記述書がそれを要求しているか！ モニカ: 全く同感！ 同じことを感じていたわ。 前のプロジェクトで、ほとんどのところで生のJDBCからSQLを使っていたんだけど、ばかげてた！ そうでしょ！ けど、実は、ほんとに優秀なSQL屋がチームにいて、Hibernateが生成したSQLを見て神経質になってるの。 きたなくて読みにくいって。 これって将来問題になりそう？ ジョン: 気を付けてください。DBA屋ってのは違ったものの見方をします。">
     
-    <meta property="og:image" content="https://www.kaitoy.xyz/images/Google-search-console.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/hibernate_logo.png">
     
     
     
@@ -74,6 +74,28 @@
     <div id="posts">
       
       <div class="row">
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://www.kaitoy.xyz/2017/02/23/how-hibernate-ruined-my-career/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/hibernate_logo.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Thu, Feb 23, 2017</span>
+              </div>
+              <h2 class="title">Hibernateはどのようにして私のキャリアを破滅寸前にしたか</h2>
+              <div class="summary">
+                このエントリでは、Grzegorz Gajosによる記事、How Hibernate Almost Ruined My Careerを紹介する。 (Grzegorzから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 (adsbygoogle = window.adsbygoogle || []).push({}); 想像してくれ。 君はJava開発者で、次のビッグプロジェクトを開始しようとしているところだ。 君は、そのプロジェクト全体に影響する根本的な決断をする必要がある。 君の柔軟なデータモデルをオブジェクト指向で抽象化するベストな方法を選択したい。生のSQLを扱いたくはないからね。 どんな種類のデータもサポートしたいし、理想では全種のデータベースをサポートしたい。 すぐに思いつくのは、単にHibernateを使うという解だ。そうだろ？ Javaディベロッパの90%は君に同意するだろう。 しかし、それって正しい決断になっているだろうか？ Hibernateが一般に受け入れられているスタンダードだからといって盲目的に採用してしまうと、どんな問題が発生するかを見てみよう。 モニカというJava開発者がいるとしよう。 モニカは最近出世してアーキテクトの役職に就き、会社の新製品のための技術スタックを選定する責任者になった。 彼女は、Javaの世界にはデータベースとのやり取りを扱うたった一つの適切なツールがあることを知っている。Hibernateだ。 Hibernateは良く知られ支持されているJPAのスタンダードではあるが、プロジェクト開始前に多少のチェックをするのが定跡だ。 幸いにも、同僚のベンが適任者を知っている。 4年前、Hibernateは銀の弾丸かのように見えた ベン: やあモニカ。ジョンを紹介させてくれ。彼はHibernateの達人だ。君の助けになるはずだ。 モニカ: ジョン、時間を取ってくれてありがとう。 今、私たちが次なる目玉製品を開発しようとしてるのは知ってる？ 次のFacebookやGoogleになるつもりなの。 忙しくなるわ。巨大なものになる。 本当にすてき！ みんなとても興奮してる！ 私はアーキテクトの役に就いたから、とりあえず採用する技術スタックを選定しなければいけないの。 ひとつだけまだ欠けてるのが永続化なんだけど… ジョン: Hibernate！ モニカ: そう！そのとおり！ わたしもそう考えていたの！ それならわたしたちにぴったりで上手く行きそうでしょう。 マーケットと豊富な実績に裏付けられた、真の業務問題のための真の業務ソリューション。 とてもたくさんのポジティブな経験談を聞いたことがあるわ。 けど、一つ問題があって、チームメンバのひとりがそれに絶対反対してるの。 アプリケーションとデータベースの間に別のレイヤを加えるのを気にして。 彼はすごく頭がいいから、これが良い決断だと納得させるには本当にしっかりした根拠が必要なの。 助けてくれる？ ジョン: もちろん、よろこんで！ Hibernateは、実際、すばらしいツールです。 銀行といった、大きな真の業務ソリューションで広く使われています。 それを使って失敗するということはありえません。 永続化ときたらHibernate。 Javaで書いているならそれが完全に正しい選択ですし、さらには他の言語への移植もあります。 どれだけ多くの職務記述書がそれを要求しているか！ モニカ: 全く同感！ 同じことを感じていたわ。 前のプロジェクトで、ほとんどのところで生のJDBCからSQLを使っていたんだけど、ばかげてた！ そうでしょ！ けど、実は、ほんとに優秀なSQL屋がチームにいて、Hibernateが生成したSQLを見て神経質になってるの。 きたなくて読みにくいって。 これって将来問題になりそう？ ジョン: 気を付けてください。DBA屋ってのは違ったものの見方をします。
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
         
         
         
@@ -139,33 +161,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2017/01/13/goslings-development-memo3-spring-boot-exception/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2017/01/13/goslings-development-memo3-spring-boot-exception/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/goslings-spring.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Fri, Jan 13, 2017</span>
               </div>
-              <h2 class="title">Goslings開発メモ - その3: Spring Boot続続編 (例外処理)</h2>
-              <div class="summary">
-                「Goslings開発メモ - その2: Spring Boot続編 (DI)」の続き。 Spring Boot続続編で、例外処理について。 (adsbygoogle = window.adsbygoogle || []).push({}); Spring MVCアプリにおける例外処理 Goslingsは前々回書いたようにspring-boot-starter-webというスターターを使っていて、つまりSpring MVCアプリだ。 Spring MVCアプリにおける例外処理についてはちょっと古いがこの記事に詳しい。 まず、Goslingsの構成で例外処理を何も書かなかった場合、コントローラのリクエストハンドラから例外が投げられると、ログにスタックトレースが出力され、クライアントにはHTTPステータスコード500 (Internal Server Error)とともに以下の様なデフォルトのエラーページが返る。 なんだかこれでも十分な気がするが、実際にはちゃんと明示的に例外処理をしたほうがいいだろう。 エラー時に返すHTTPステータスコードをカスタマイズしたり、遷移するページを変えたりしたくなるだろうから。 記事によれば、リクエストハンドラ内で例外をキャッチして処理するのはイケてなくて、関心事の分離のために別の場所に処理を書くのが良いらしい。 Spring MVCアプリにおける例外処理には以下の3つの段階がある。 投げる例外をカスタマイズする 例外クラス毎の例外ハンドラをコントローラに実装する コントローラ間で共用する例外ハンドラクラスを作る 以下それぞれについて書く。 1. 投げる例外をカスタマイズする リクエストハンドラから投げる例外に@ResponseStatusをつけることで、クライアントに返すHTTPステータスコード(とリーズンフレーズ)をカスタマイズできる。 例えば以下のような例外を投げると、HTTPステータスコード500 (Internal Server Error)の代わりに400 (Bad Request)がクライアントに返る。 @ResponseStatus(HttpStatus.BAD_REQUEST) public final class BadRequestException extends RuntimeException { // 省略 } 2. 例外クラス毎の例外ハンドラをコントローラに実装する コントローラのメソッドに@ExceptionHandlerをつけてやると、そのメソッドは例外ハンドラになり、そのコントローラのリクエストハンドラから特定の例外が投げられたときの処理を書くことができる。 さらに例外ハンドラに@ResponseStatusをつければ、HTTPステータスコードをカスタマイズできる。 例外ハンドラの戻り値はリクエストハンドラのと同様に処理されるので、遷移するページ等も自由にカスタマイズできる。 Goslingsでは、上記BadRequestExceptionからは@ResponseStatusを削除したうえで、RestApiV1Controllerに以下の様に例外ハンドラを書いた。 public final class RestApiV1Controller { // 例外ハンドラ @ResponseStatus(HttpStatus.BAD_REQUEST) @ExceptionHandler(BadRequestException.class) ErrorInfo handleBadRequestException(HttpServletRequest req, Exception ex) { return new ErrorInfo(req.getRequestURL().toString(), ex); } } (RestApiV1Controller.javaの完全なソースはこちら) こう書くと、RestApiV1Controllerの任意のリクエストハンドラからBadRequestExceptionが投げられると、handleBadRequestExceptionが呼び出され、HTTPステータスコード400 (Bad Request)とともにクライアントにHTTPレスポンスが返る。 RestApiV1ControllerはREST APIコントローラなので、このHTTPレスポンスのボディは、handleBadRequestExceptionの戻り値であるErrorInfoオブジェクトをJSONに変換したものになる。 例外ハンドラの仮引数は、上のコードに書いたもののほか、サーブレット関係のクラスなど(e.g.
-              </div>
+              <h3 class="title">Goslings開発メモ - その3: Spring Boot続続編 (例外処理)</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         
@@ -1204,6 +1223,9 @@
       <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
       
       
+      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
+      
+      
       <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
       
       
@@ -1235,6 +1257,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>

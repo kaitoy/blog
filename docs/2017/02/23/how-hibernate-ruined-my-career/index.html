@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Hibernateはどのようにして私のキャリアを破滅寸前にしたか | To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2017/02/23/how-hibernate-ruined-my-career/">
+    <link rel="canonical" href="https://www.kaitoy.xyz/2017/02/23/how-hibernate-ruined-my-career/">
+    <meta property="og:description" content="このエントリでは、Grzegorz Gajosによる記事、How Hibernate Almost Ruined My Careerを紹介する。 (Grzegorzから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 (adsbygoogle = window.adsbygoogle || []).push({}); 想像してくれ。 君はJava開発者で、次のビッグプロジェクトを開始しようとしているところだ。 君は、そのプロジェクト全体に影響する根本的な決断をする必要がある。 君の柔軟なデータモデルをオブジェクト指向で抽象化するベストな方法を選択したい。生のSQLを扱いたくはないからね。 どんな種類のデータもサポートしたいし、理想では全種のデータベースをサポートしたい。 すぐに思いつくのは、単にHibernateを使うという解だ。そうだろ？ Javaディベロッパの90%は君に同意するだろう。 しかし、それって正しい決断になっているだろうか？ Hibernateが一般に受け入れられているスタンダードだからといって盲目的に採用してしまうと、どんな問題が発生するかを見てみよう。 モニカというJava開発者がいるとしよう。 モニカは最近出世してアーキテクトの役職に就き、会社の新製品のための技術スタックを選定する責任者になった。 彼女は、Javaの世界にはデータベースとのやり取りを扱うたった一つの適切なツールがあることを知っている。Hibernateだ。 Hibernateは良く知られ支持されているJPAのスタンダードではあるが、プロジェクト開始前に多少のチェックをするのが定跡だ。 幸いにも、同僚のベンが適任者を知っている。 4年前、Hibernateは銀の弾丸かのように見えた ベン: やあモニカ。ジョンを紹介させてくれ。彼はHibernateの達人だ。君の助けになるはずだ。 モニカ: ジョン、時間を取ってくれてありがとう。 今、私たちが次なる目玉製品を開発しようとしてるのは知ってる？ 次のFacebookやGoogleになるつもりなの。 忙しくなるわ。巨大なものになる。 本当にすてき！ みんなとても興奮してる！ 私はアーキテクトの役に就いたから、とりあえず採用する技術スタックを選定しなければいけないの。 ひとつだけまだ欠けてるのが永続化なんだけど… ジョン: Hibernate！ モニカ: そう！そのとおり！ わたしもそう考えていたの！ それならわたしたちにぴったりで上手く行きそうでしょう。 マーケットと豊富な実績に裏付けられた、真の業務問題のための真の業務ソリューション。 とてもたくさんのポジティブな経験談を聞いたことがあるわ。 けど、一つ問題があって、チームメンバのひとりがそれに絶対反対してるの。 アプリケーションとデータベースの間に別のレイヤを加えるのを気にして。 彼はすごく頭がいいから、これが良い決断だと納得させるには本当にしっかりした根拠が必要なの。 助けてくれる？ ジョン: もちろん、よろこんで！ Hibernateは、実際、すばらしいツールです。 銀行といった、大きな真の業務ソリューションで広く使われています。 それを使って失敗するということはありえません。 永続化ときたらHibernate。 Javaで書いているならそれが完全に正しい選択ですし、さらには他の言語への移植もあります。 どれだけ多くの職務記述書がそれを要求しているか！ モニカ: 全く同感！ 同じことを感じていたわ。 前のプロジェクトで、ほとんどのところで生のJDBCからSQLを使っていたんだけど、ばかげてた！ そうでしょ！ けど、実は、ほんとに優秀なSQL屋がチームにいて、Hibernateが生成したSQLを見て神経質になってるの。 きたなくて読みにくいって。 これって将来問題になりそう？ ジョン: 気を付けてください。DBA屋ってのは違ったものの見方をします。">
+    
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/hibernate_logo.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      Hibernateはどのようにして私のキャリアを破滅寸前にしたか | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-7852181473528684",
+        enable_page_level_ads: true
+      });
+    </script>
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Thu, Feb 23, 2017</span>
+      <h2 class="title">Hibernateはどのようにして私のキャリアを破滅寸前にしたか</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://www.kaitoy.xyz/images/hibernate_logo.png" alt="Hibernateはどのようにして私のキャリアを破滅寸前にしたか">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>このエントリでは、Grzegorz Gajosによる記事、<a href="http://ggajos.com/how-hibernate-ruined-my-career/">How Hibernate Almost Ruined My Career</a>を紹介する。
+(Grzegorzから和訳と転載の許可は得た。)
+以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。</p>
+
+<p><br></p>
+
+<p><script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-7852181473528684"
+     data-ad-slot="3938339651"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</p>
+
+<hr />
+
+<p>想像してくれ。
+君はJava開発者で、次のビッグプロジェクトを開始しようとしているところだ。
+君は、そのプロジェクト全体に影響する根本的な決断をする必要がある。
+君の柔軟なデータモデルをオブジェクト指向で抽象化するベストな方法を選択したい。生のSQLを扱いたくはないからね。
+どんな種類のデータもサポートしたいし、理想では全種のデータベースをサポートしたい。</p>
+
+<p>すぐに思いつくのは、単にHibernateを使うという解だ。そうだろ？
+Javaディベロッパの90%は君に同意するだろう。
+しかし、それって正しい決断になっているだろうか？</p>
+
+<p>Hibernateが一般に受け入れられているスタンダードだからといって盲目的に採用してしまうと、どんな問題が発生するかを見てみよう。</p>
+
+<p>モニカというJava開発者がいるとしよう。
+モニカは最近出世してアーキテクトの役職に就き、会社の新製品のための技術スタックを選定する責任者になった。
+彼女は、Javaの世界にはデータベースとのやり取りを扱うたった一つの適切なツールがあることを知っている。Hibernateだ。
+Hibernateは良く知られ支持されているJPAのスタンダードではあるが、プロジェクト開始前に多少のチェックをするのが定跡だ。
+幸いにも、同僚のベンが適任者を知っている。</p>
+
+<h1 id="4年前-hibernateは銀の弾丸かのように見えた">4年前、Hibernateは銀の弾丸かのように見えた</h1>
+
+<ul>
+<li>ベン: やあモニカ。ジョンを紹介させてくれ。彼はHibernateの達人だ。君の助けになるはずだ。</li>
+<li>モニカ: ジョン、時間を取ってくれてありがとう。
+今、私たちが次なる目玉製品を開発しようとしてるのは知ってる？
+次のFacebookやGoogleになるつもりなの。
+忙しくなるわ。巨大なものになる。
+本当にすてき！
+みんなとても興奮してる！
+私はアーキテクトの役に就いたから、とりあえず採用する技術スタックを選定しなければいけないの。
+ひとつだけまだ欠けてるのが永続化なんだけど…</li>
+<li>ジョン: Hibernate！</li>
+<li>モニカ: そう！そのとおり！
+わたしもそう考えていたの！
+それならわたしたちにぴったりで上手く行きそうでしょう。
+マーケットと豊富な実績に裏付けられた、真の業務問題のための真の業務ソリューション。
+とてもたくさんのポジティブな経験談を聞いたことがあるわ。
+けど、一つ問題があって、チームメンバのひとりがそれに絶対反対してるの。
+アプリケーションとデータベースの間に別のレイヤを加えるのを気にして。
+彼はすごく頭がいいから、これが良い決断だと納得させるには本当にしっかりした根拠が必要なの。
+助けてくれる？</li>
+<li>ジョン: もちろん、よろこんで！
+Hibernateは、実際、すばらしいツールです。
+銀行といった、大きな真の業務ソリューションで広く使われています。
+それを使って失敗するということはありえません。
+永続化ときたらHibernate。
+Javaで書いているならそれが完全に正しい選択ですし、さらには他の言語への移植もあります。
+どれだけ多くの職務記述書がそれを要求しているか！</li>
+<li>モニカ: 全く同感！
+同じことを感じていたわ。
+前のプロジェクトで、ほとんどのところで生のJDBCからSQLを使っていたんだけど、ばかげてた！
+そうでしょ！
+けど、実は、ほんとに優秀なSQL屋がチームにいて、Hibernateが生成したSQLを見て神経質になってるの。
+きたなくて読みにくいって。
+これって将来問題になりそう？</li>
+<li>ジョン: 気を付けてください。DBA屋ってのは違ったものの見方をします。
+彼らはプロジェクトにおける自分の立場をHibernateに奪われるのではないかと危惧しています。
+さらに、データベースには組み込みのクエリ最適化機構があるので、クエリの実際の見た目がどんなかは気にする必要はありません。
+データベースが最適化してくれます。
+それが高速開発ってものです。
+SQLにはまねできません。</li>
+<li>モニカ: ほんとに？
+もうSQLを触らなくていいの？
+すごい！
+この前DBAがクエリの最適化に数週間かけていたわ。
+数週間！
+あぁ、こんなこと言うのは恥ずかしいんだけど、わたしたちが何を使っていたか分かる？
+…ストアドプロシージャ(笑)
+もうくちゃくちゃだった。
+そのプロジェクト、まだそれ使ってるって信じられる？
+そこの人たちほんとに気の毒だわ。
+未だにあんな退屈なコードを何度も何度も書かないといけないなんて。
+あれってJavaというかもうSQLプロジェクトじゃない？</li>
+<li>ジョン: それはまさにオブジェクト指向とリレーショナルのアプローチの違いです。
+いわゆるオブジェクト指向インピーダンスミスマッチですね。
+Hibernateはその溝を埋めてくれます。
+開発者はビジネスロジックの構築に専念できます。
+ステークホルダもマネージメント全体も幸せになれます。
+最も重要となることをしましょう。ビジネスです！
+ボイラープレートの多くは消え去り、魔法のようで目には見えませんが、ロジックとデータとの間にしっかりとしたコネクションができるのです。</li>
+<li>モニカ: 相互協調。充実したシナジー。
+まるでデータベースが最初から言語の一部だったかのよう。
+信念の技術的飛躍の指導者になれてとても幸せ。
+ソフトウェアという旅路でワープスピードに乗ったみたい。</li>
+<li>ジョン: そう！その調子！</li>
+<li>モニカ: わーい！すごーい！
+わくわくしてきた！たーのしー！
+ありがとうジョン。
+準備万端！</li>
+</ul>
+
+<h1 id="3年前-柔軟性のないソリューションとともに大きくなる苦悩">3年前、柔軟性のないソリューションとともに大きくなる苦悩</h1>
+
+<ul>
+<li>モニカ: ねえジョン、去年話したプロジェクト覚えてる？</li>
+<li>ジョン: もちろん。調子はどうですか？</li>
+<li>モニカ: もうすぐリリースするわ。
+全て順調。だけどいくつか疑問がわいてきたの。</li>
+<li>ジョン: いいですよ。聞いてください。</li>
+<li>モニカ: ええと、もうデータベーススキーマを一から生成することはできないんだけど、データロスのないスキーマ変更をサポートするにはどうするのが一番いい？</li>
+<li>ジョン: えぇ、まず、Hibernateはプロダクション環境での以降ツールとして使われることを想定していません。
+FlywayDBやLiquibaseといったものを使うべきです。
+結構簡単ですよ。移行スクリプトを書いて、それでエンティティモデルを更新しつつ、Hibernateのマッピングも直して、
+実際のデータベース構造と同期するようにしてください。</li>
+<li>モニカ: ふーん、分かった。前のプロジェクトでは単に生のSQLで移行してた。</li>
+<li>ジョン: それでもいいと思います。エンティティモデルとスキーマが同期してさえいれば、好きなやり方でやってください。</li>
+<li>モニカ: そうね。
+もう一つ、わたしたちいつも遅延フェッチと即時フェッチの問題と戦ってるの。
+ある時、全部を即時でやることに決めたんだけど、それって最適じゃないでしょ？
+それに、たまにセッションが残ってないせいかなにかで、フィールドにアクセスできないことがあるの。
+それって普通？</li>
+<li>ジョン: もっとHibernateについて学ぶ必要があります。
+データベースとのマッピングは単純ではありません。
+複数のやりかたがあるのが普通です。
+その中から自分に合ったものを選ぶのです。
+遅延フェッチはオブジェクトを必要なときにロードできるようにしますが、アクティブなセッションの中で実行しないといけません。</li>
+<li>モニカ: わたしたちはまだ最終的なデプロイでどのデータベースエンジンを使うべきか迷ってるの。
+Hibernateってポータブルだと思ってたけど、MS SQLの魔法を使うためにちょっとネイティブクエリを使ってて、実際にはプロダクション環境ではMySQLで行きたいんだけど。</li>
+<li>ジョン: HibernateはdetachedなCriteriaクエリかHQLを使っている限りは柔軟です。
+ネイティブクエリを使ったらそのデータベースにソリューションが固定されちゃいますよ。</li>
+<li>モニカ: それならMS SQL専用にしないとダメみたいね。
+最後の質問。チームメンバからHQLには「limit」キーワードがないと聞いたわ。
+冗談かと思ったけど、わたしも見つけられなかった。
+バカな質問で申し訳ないんだけど…</li>
+<li>ジョン: 確かに。HQLには「limit」はありません。
+クエリオブジェクトでコントロールすることはできます。
+データベースベンダ依存のものなので。</li>
+<li>モニカ: 他の要素は全部HQLにあるのに変ね。
+まあ気にしないで。
+時間取ってくれてありがとう！</li>
+</ul>
+
+<h1 id="2年前-わたしたちは今再びsqlでソリューションをハックしている">2年前、わたしたちは今再びSQLでソリューションをハックしている</h1>
+
+<ul>
+<li>モニカ: ジョン、最初わたしたちSQLを触らないつもりだったけど、今はその必要があると感じてる。
+要件が大きくなってきていて、それを避ける手立てはないみたいなの。
+間違ったことをしているかもしれないけど、またSQLを毎日のように使い始めたわ。</li>
+<li>ジョン: いえ、それは間違っていません。
+最初期にはデータベースを気に掛ける必要はありませんでしたが、プロジェクトが進んだ今では、SQLを使ってパフォーマンスの最適化に取り組むのはいいことです。</li>
+<li>モニカ: ときどきエラーを調査するのに数日かかるの。
+なぜ期待通りに動かないのか、なぜ思いがけない結果が出力されるのかが全く分からないから、Hibernateが生成したSQLを解析しないといけないみたい。
+Hibernateのバグトラッカーに載ってる有名な問題に当たったこともある。
+それだけじゃない。エンティティモデルの同期を保ったまま適切な移行処理を書くのは難しいの。
+Hibernateの内部をよく調査して、どう動くのかを予測する必要があって、時間を取られてしまう。</li>
+<li>ジョン: 学習曲線というのは常にあります。
+たくさんの記述はいりませんが、どう動くかは知っておく必要があります。</li>
+<li>モニカ: 大きなデータセットを扱うのも厄介。
+最近データベースに大量のインポートをしたんだけど、あまりにも遅かった。
+あとで、速くするにはセッションをクリアする必要があったって分かったんだけど、それでもまだ全然遅い。
+だから生のSQLで書き直すことにしたの。
+笑ったわ。生のSQLを書くのが実際最速の方法だったから。
+だから最後の選択肢としてそうすることに決めたの。</li>
+<li>ジョン: インポートはオブジェクト指向な処理ではないです。
+Hibernateはオブジェクト指向設計に焦点を当てています。
+ネイティブクエリという選択肢を忘れてはいけません。</li>
+<li>モニカ: Hibernateのキャッシュがどう動くか知りたいんだけど、教えてくれる？
+ちょっと分からないの。
+一次キャッシュとか二次キャッシュとかあるけど、どういうものなの？</li>
+<li>ジョン: もちろんです。
+それはいわゆる永続データのトランザクションレベルキャッシュです。
+クラスタやJVMレベルで、クラス毎やコレクション毎のキャッシュを設定できます。
+クラスタキャッシュを組み込むことさえできます。
+しかし、キャッシュは他のアプリケーションが永続化領域に加えた変更については関知しないことを覚えておいてください。
+期限切れのキャッシュデータを定期的に消すように設定することはできますが。</li>
+<li>モニカ: ごめん。気分が悪くなってきた。
+もう少し説明してくれる？</li>
+<li>ジョン: はい。
+<code>save</code>とか<code>update</code>とか<code>saveOrUpdate</code>にオブジェクトを渡したり、<code>load</code>、<code>get</code>、<code>list</code>、<code>iterate</code>、<code>scroll</code>でオブジェクトを取得するときは常に、そのオブジェクトはセッションの内部キャッシュに追加されます。
+一次キャッシュからオブジェクトやそのコレクションを削除することもできます。</li>
+<li>モニカ: あぁ…</li>
+<li>ジョン: さらに、キャッシュモードを制御することもできます。
+<code>normal</code>モードでは読み込みと書き込みで二次キャッシュを使います。
+<code>get</code>モードでは二次から読みますがライトバックはできません。
+<code>put</code>は<code>get</code>と同じですが二次から読むことはできません。
+<code>refresh</code>モードもあります。
+これは二次に書き込みますが、そこからは読み込まず、<code>use minimal puts</code>プロパティを無視し、データベースからの全ての読み込み時に二次キャッシュを強制リフレッシュします。</li>
+<li>モニカ: いいわ。わかった。
+ちょっと考えさせて。
+もう遅いわ。行かなきゃ。
+説明ありがとう！</li>
+<li>ジョン: どういたしまして！</li>
+</ul>
+
+<h1 id="2週間前-hibernateをあきらめる">2週間前、Hibernateをあきらめる</h1>
+
+<ul>
+<li>モニカ: ジョン、わたしソフトウェア開発の新時代に入ろうとしてるんだと思ってた。
+一光年の飛躍をしてるんだと思ってた。
+けど、4年たった今も、わたしたちは同じ問題に対応してるみたい。単に違う方向から。
+私はHibernateのアーキテクチャ、設定、ロギング、ネーミング戦略、Tuplizer、エンティティ名リゾルバ、拡張IDジェネレータ、IDジェネレータ最適化、ユニオンサブクラス、XDocletマークアップ、インデックス付きコレクションの双方向関連、3項関連、idbag、暗黙的ポリモーフィズムと他の継承マッピングの組み合わせ、二つの異なるデータストア間でのオブジェクトレプリケーション、detachedオブジェクトと自動バージョニング、コネクション開放モード、ステートレスセッションインターフェース、コレクション永続化の分類法、キャッシュレベル、遅延/即時フェッチ、他にもいろんなことを学ばなければならなかった。
+わたしの知ってる全てがあっても、ひどい失敗になっていたと思う。
+ソフトウェアの出来損ないだわ！
+究極の失敗！
+大参事！
+アルマゲドン！</li>
+<li>ジョン: 待ってください！なにがあったんですか？</li>
+<li>モニカ: わたしたち行き詰ったの。
+わたしたちのアプリケーションは性能がばかばかしいほど遅い！
+レポートを取得するのに二日も待たないといけない！
+二日でやっと顧客にダッシュボードを生成して見せられるの。
+つまり毎日計算処理を開始させなければならない上に、ダッシュボードの情報はどんどん遅れてしまう。
+うちのDBAエキスパートがクエリ最適化に2か月取り組んでるけど、データベース構造がめちゃくちゃで。
+それを手伝ってる開発者もいるけど、困ったことに、DBAはSQLで考えているから、開発者はそれをdetached CriteriaかHQLに翻訳しようと何日も費やしてしまうの。
+今となっては性能がかなり重要だから、できるだけネイティブSQLを使おうとしてるわ。
+なんにせよ、データベーススキーマがはっきり間違っちゃってるから大したことはできない。
+オブジェクト指向な視点ではそれでいいと感じていたけど、リレーショナルな視点では最悪だったみたい。
+どうしてこうなっちゃったんだろう？
+開発者はエンティティ構造を変えるのはかなりの労力になると言うから、それをする余裕はないし。
+前のプロジェクトは乱雑ではあったけど、そんな窮地には陥らなかった。
+既存のデータを処理する完全に別のアプリケーションを書くこともできた。
+今は、生成されたテーブルを変えるのは危険だわ。
+エンティティモデルが完全に正しく動くことを保証するのは本当に難しいもの。
+けどこれさえも最悪な点ってわけではないわ！
+性能改善するには、データベース問題だけでなく、データベースとアプリケーションの間のレイヤ全体の問題も解決しないといけない。
+それが圧倒的！
+この新しい人たちはね、コンサルタントなの。
+彼らはデータを抽出して、なにか別のストレージに入れて、外側から計算を実行しようとしてる。
+どれも時間かかりすぎ！</li>
+<li>ジョン: なんと言っていいか分かりません。</li>
+<li>モニカ: いいのよジョン、あなたを責めはしないわ。
+わたしはHibernateを選択して全ての問題を解決しようとしたけど、今ではそれが銀の弾丸ではないと分かる。
+もうダメージは負ったし、それをなかったことにはできない。
+実は、あなたにお願いしたいことがあるの。
+わたしはこの4年間のキャリアをHibernateのあれこれとの戦いに費やしてしまったわ。
+もう今の会社でわたしに未来はないみたい。
+助けてくれない？</li>
+</ul>
+
+<h1 id="今日-学んだ教訓は">今日、学んだ教訓は？</h1>
+
+<ul>
+<li>ジョン: やあピーター、モニカを紹介するよ。</li>
+<li>ピーター: やあモニカ！
+わたしたちは新しい次なる目玉を開発しようとしてるんだけどね。
+巨大なものになりそうだよ！
+Uberみたいになりたいんだ！
+永続化について何か知って…</li>
+<li>モニカ: Hibernateはダメ！</li>
+</ul>
+
+<h1 id="まとめ">まとめ</h1>
+
+<p>モニカはHibernateのエキスパートだ。
+しかし、この例ではHibernateは間違った選択だった。
+彼女のソリューションが以前より大きな問題に変化したと気付いたときには、プロジェクト全体を脅かす最大の脅威になってしまっていた。</p>
+
+<p>データはアプリケーションの目的の中心で、好むと好まざるにかかわらず、アーキテクチャ全体に影響する。
+このストーリーから学んだとおり、アプリケーションがデータベースを使うからとか、<a href="http://d.hatena.ne.jp/keyword/%A5%BD%A1%BC%A5%B7%A5%E3%A5%EB%A5%D7%A5%EB%A1%BC%A5%D5">ソーシャルプルーフ</a>があるからというだけの理由でHibernateを選択してはいけない。
+柔軟性をもつソリューションを選ぶべきだ。
+堅牢なJDBCラッパには<a href="http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/jdbc/core/JdbcTemplate.html">JdbcTemplate</a>や<a href="http://jdbc.jcabi.com/">Fluent JDBC Wrapper</a>といった多くの選択肢がある。
+あるいは他にも、<a href="http://www.jooq.org/">jOOQ</a>といった強力なソリューションがある。</p>
+
+<hr />
+
+<p>以上がGrzegorzの記事。</p>
+
+<p>ジョンにそそのかされて、Hibernateへの期待が高まるあまり一時ケモノなみの知能になったモニカが、4年の間に現実を知り絶望していくさまが生々しく怖い話だ。
+オブジェクト指向の都合だけでデータベーススキーマを決めてしまった辺りが一番の失敗だったんだろうか。
+SQL中心に考えつつHibernateでORマッピングやスキーマを構築することも、HibernateとSQL両方熟知してればできるんだろうか。</p>
+
+<p>なんにせよ、Hibernateが忌み嫌われるようになった理由がよくわかる面白い記事だった。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-7852181473528684"
+             data-ad-slot="3938339651"
+             data-ad-format="auto"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </aside>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f02%2f23%2fhow-hibernate-ruined-my-career%2f&t=Hibernate%e3%81%af%e3%81%a9%e3%81%ae%e3%82%88%e3%81%86%e3%81%ab%e3%81%97%e3%81%a6%e7%a7%81%e3%81%ae%e3%82%ad%e3%83%a3%e3%83%aa%e3%82%a2%e3%82%92%e7%a0%b4%e6%bb%85%e5%af%b8%e5%89%8d%e3%81%ab%e3%81%97%e3%81%9f%e3%81%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f02%2f23%2fhow-hibernate-ruined-my-career%2f&text=Hibernate%e3%81%af%e3%81%a9%e3%81%ae%e3%82%88%e3%81%86%e3%81%ab%e3%81%97%e3%81%a6%e7%a7%81%e3%81%ae%e3%82%ad%e3%83%a3%e3%83%aa%e3%82%a2%e3%82%92%e7%a0%b4%e6%bb%85%e5%af%b8%e5%89%8d%e3%81%ab%e3%81%97%e3%81%9f%e3%81%8b&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f02%2f23%2fhow-hibernate-ruined-my-career%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f02%2f23%2fhow-hibernate-ruined-my-career%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f02%2f23%2fhow-hibernate-ruined-my-career%2f&title=Hibernate%e3%81%af%e3%81%a9%e3%81%ae%e3%82%88%e3%81%86%e3%81%ab%e3%81%97%e3%81%a6%e7%a7%81%e3%81%ae%e3%82%ad%e3%83%a3%e3%83%aa%e3%82%a2%e3%82%92%e7%a0%b4%e6%bb%85%e5%af%b8%e5%89%8d%e3%81%ab%e3%81%97%e3%81%9f%e3%81%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://www.kaitoy.xyz/tags/hibernate"><i class="fa fa-tags"></i> hibernate </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/orm"><i class="fa fa-tags"></i> orm </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/09/13/orm-is-offensive-anti-pattern/">ORMは不快なアンチパターン</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://www.kaitoy.xyz/2017/02/14/change-subdomain/">
+                  ブログアドレスを変更したときにやったこと
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-7852181473528684"
+     data-ad-slot="3938339651"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2017  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

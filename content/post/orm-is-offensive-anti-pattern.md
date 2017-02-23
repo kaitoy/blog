@@ -4,7 +4,7 @@ date = "2015-09-13T13:52:30-06:00"
 draft = false
 eyecatch = "teamedio_logo.svg"
 slug = "orm-is-offensive-anti-pattern"
-tags = [ "yegor256", "oop" ]
+tags = [ "yegor256", "oop", "orm" ]
 title = "ORMは不快なアンチパターン"
 +++
 
