@@ -14,9 +14,9 @@
     <link rel="canonical" href="https://www.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="Firedropという現在開発中のサービスがある。 WebサイトのデザインをAIがサポートしてくれるサービスだ。 2016年夏のニュースを見たとき、AIがテキストコンテンツを解析してサイトを自動構成してくれ、さらにA/Bテストなどを自動でやってサイトを継続的に改善すると言う衝撃的なふれこみだったので、即座にアーリーアクセスに登録した。 それからしばらく忘れていたが、3月2日にプライベートベータへの招待メールが来たので早速試してみたら、かなりのスモールスタートをしたようで全く期待外れだった。 (adsbygoogle = window.adsbygoogle || []).push({}); Firedrop(プライベートベータ)の機能 Firedrop(プライベートベータ)では、SachaというAIがWebサイトの構築をサポートしてくれる。 こいつが実のところほとんど知性を感じない単なるチャットボットで、なるほどこれは見事な人工無脳だと感心してしまうほどだ。 Firedropのアカウントを作るとまず、Sachaとチャットしながらサイトの概要(タイトル、概要、画像など)を教えることになる。 するとSachaがざっくりとシングルページのサイトを作ってくれるので、それをまたSachaとのチャットで調整したりコンテンツ追加したりする。 チャットと言っても、基本はこちらは5,6個ある選択肢の中からセリフを選ぶサウンドノベル方式で、一応任意の文章も入力できるがあいさつするくらいしか使い道がない。 追加コンテンツはテキストと画像を渡すと自動でレイアウトしてくれるが、すごくいい感じにしてくれるというわけでもないし、むしろ画像が見切れたりするし、細かい調整はできないので、妥協できるレイアウトになるまでチェンジを繰り返すデリヘル方式を採ることになる。 デリヘルなんて利用したことないけど。 画像は自分でアップロードもできるけどFiredropが提供しているものもあって、後者のやつはSachaにキーワードを伝えるとそれっぽい画像を探してくれるあたりに唯一知性を感じる。 デザインができたらSachaに頼むとfiredrop.meドメインで公開してくれる。 (FiredropのUIのスクリーンショットを載せようかと思ったけど、プライベートベータの規約を読んだ感じだめそうだったので載せない。) 実際に作ってみた 今回実際にFiredropでGoslingsのサイトを作ってみて、できたのがこれ。 ひどい。 そもそも当初のテキストコンテンツを解析してサイトを自動構成というコンセプトはどこへ行ったのか。 GoslingsのReadmeを入力したらシャレオツなサイトをささっと作ってくれるイメージだったんだけど。 まだまだ開発中の機能がたくさんあるそうなので、GAまでにはもうちょっとなんとかなるんだろう。 あまり期待はしない。">
+    <meta property="og:description" content="NNMiログをFilebeatで集めてLogstashで構造化してElasticsearchに入れてelasticsearch-headで見てみたけど、ログ量が少なかったせいかあんまり恩恵が感じられなかった話。 (adsbygoogle = window.adsbygoogle || []).push({}); Elasticsearchとは ElasticsearchはElastic社が開発しているElastic Stack(旧ELK Stack)というオープンソースなデータ収集分析ツール群のコア製品。 内部でLuceneを使っていて、そのためJava製。 「分散型RESTful検索/分析エンジン」と自称しているが、スキーマレスでNoSQLなドキュメント指向分散データベース管理システムとも見れる。 Elasticsearchインスタンスはノードと呼ばれ、単一または複数のノードによるシステムはクラスタと呼ばれる。 同一ネットワークに複数のノードを立ち上げると自動で相互検出してクラスタを構成してくれ、そこにデータを入れると自動で冗長化して分散配置してくれるので、堅牢でレジリエントでスケーラブルなシステムが簡単に構築できる。 Elasticsearchが管理するデータの最小単位はドキュメントと呼ばれ、これはひとつのJSONオブジェクトで、RDBにおける行にあたる。 つまり、JSONオブジェクトの各フィールドがRDBにおける列にあたる。 同種のドキュメントの集まりはインデックスと呼ばれ、これはRDBにおけるテーブルにあたる。 テーブルのスキーマにあたるものはマッピングと呼ばれ、ドキュメントのフィールドの型情報(e.g. string, integer)などを含み、Elasticsearchが自動で生成してくれる。(指定もできる、というかすべきらしい。) インデックス内ではさらにタイプという属性でドキュメントをカテゴライズできる、が、ドキュメントからはタイプはあまり使ってほしくない雰囲気が感じられる。 因みに、インデックスがRDBのデータベースでタイプがRDBのテーブルと説明されることもあるが、これは古いたとえで、公式が間違いだったとしているので忘れてあげたい。 インデックスは分散処理のために分割でき、分割した各部分はシャードと呼ばれる。 シャードを冗長化のためにコピーしたものはレプリカシャードと呼ばれ、レプリカシャードにより成るインデックスはレプリカと呼ばれる。 デフォルトでは、ひとつのインデックスは5つのシャードに分割され、1つのレプリカが作成される。 インターフェースはREST APIだけ。 REST APIに検索したいドキュメントを投げると、ドキュメントのフィールド毎に自動で形態素解析とかして転置インデックス作って保管してくれる。 検索もJSONで表現したクエリをREST APIに投げることで結果をJSONで受け取ることができる。 検索は転置インデックスや分散処理のおかげで速く、またスコアリングによってより適切な結果が得られるようになっている。 今回使ったのはv5.2.1。 Logstashとは LogstashはElastic Stackに含まれる製品で、データ収集エンジンであり、データの受け取り、解析/加工、出力の三つの機能を持つリアルタイムパイプラインを構成する。 この三つの機能はそれぞれインプットプラグイン、フィルタプラグイン、アウトプットプラグインで提供されていて、プラグインの組み合わせにより様々なパイプラインを構成できる。 インプットプラグインは単位データ(一回分のログなど)を受け取り、タイムスタンプなどのメタデータを付けたりパースしたりしてイベントを生成し、パイプラインに流す。 フィルタプラグインはインプットプラグインからイベントを受け取り、設定されたルールに従って情報を拡充したり変更したり構造化したり秘匿情報を消したりしてアウトプットプラグインに渡す。 アウトプットプラグインは指定されたディスク上のパスやデータベースやアプリやサービスにイベントを書き込んだり送信したりする。 名前の通りもともとログ収集ツールだったが、今では様々なデータに対応していて、テキストログファイルの他にsyslog、HTTPリクエストやJDBCなんかの入力を受けることもできる。 Ruby(とJava)で書かれている。 今回使ったのはv5.2.2で、プラグインは以下を使った。 インプット: beats 3.1.12: Beats(後述)からデータを受け取るプラグイン。LumberjackというElastic社が開発しているプロトコルを使い、TCPネットワーク上でデータを受信する。 フィルタ: grok 3.3.1: 正規表現でパターンマッチして非構造化データを構造化するプラグイン。ログ解析の定番で、例えば、ログからタイムスタンプ、クラス名、ログメッセージを抽出したりする。組み込みのパターンが120個くらいあり、Apache HTTP Serverやsyslogのログであれば自分で正規表現を書く必要はない。 アウトプット: elasticsearch 6.2.6: Elasticsearchにイベントをポストするプラグイン。 Beatsとは BeatsもElastic Stackに含まれる製品で、データを採取してLogstashやElasticsearchに送信する製品群の総称。 libbeatというGoのライブラリを使って作られていて、以下のようなものがある。 Filebeat: ログファイルからログを取得する。 Heartbeat: リモートサービスをpingして生死監視する。 Metricbeat: OSとその上のサービスやアプリから稼動情報を取得する。 Packetbeat: パケットキャプチャしてネットワークのトラフィックを監視する。 Winlogbeat: Windowsのイベントログを取得する。 今回使ったのはFilebeat 5.2.2。 Filebeatは指定したログファイルを監視し、変更を検知してリアルタイムにログを送信してくれる。 FilebeatとLogstashが仲良くやってくれて、バッファがあふれるなどすることによるログの損失が起きないようにしてくれるらしい。 Logstashが単位データを受け取るので、ログファイルからひとつひとつのログを切り出すのはFilebeatの責務。 一行一ログなら何も考えなくていいけど、大抵複数行のログがあるのでなんとかする必要がある。 elasticsearch-headとは elasticsearch-headは3rdパーティ製(個人製?)のElasticsearchのWeb UI。 ElasticsearchのUIはREST APIしかないのでこういうものを使わないと辛い。 ElasticsearchのGUIとしてはElastic StackのKibanaが有名だけど、これは大量のログから統計的な情報を見るのに便利そうなものであって、今回やりたかった障害原因調査のためにログを細かく追うのには向いてなさそうだったので使わなかった。 実験環境 今回は単にログがどんな感じに見えるか試したかっただけなので、全部ローカルで動かして、ローカルに置いた静的なログファイルを読むだけ。 環境はWindows 7のノートPC。 ログファイルはC:\Users\Kaito\Desktop\logs\においたnnm-trace.logとnnm-trace.log.1。 これらはNNMiのメインログで、JULで出力されたもの。 NNMiは無料のコミュニティエディションのv10.00をVMのCentOSに適当に入れて採った。 ログはだいたい以下の様な一行のもの。 2017-03-15 19:09:55.896 INFO [com.hp.ov.nms.spi.common.deployment.deployers.ExtensionServicesDeployer] (Thread-2) Deploying arris-device 2017-03-15 19:09:55.923 WARNING [com.hp.ov.nms.topo.spi.server.concurrent.NmsTimerTaskImpl] (NmsWorkManager Scheduler) Skipping task execution because previous execution has not completed: com.hp.ov.nnm.im.NnmIntegrationModule$EnablerTask@3abdac77 2017-03-15 19:09:56.120 INFO [com.hp.ov.nms.disco.spi.DiscoExtensionNotificationListener] (Thread-2) Disco deployed mapping rules: META-INF/disco/rules/cards/ArrisCard.xml たまに複数行のものがある。 2017-03-15 19:13:30.872 INFO [com.hp.ov.nms.trapd.narrowfilter.NarrowTrapAnalysis] (pool-1-thread-18) ***** Hosted Object Trap Rate Report ***** Hosted object trap storm detection and suppression stage started: Wed Mar 15, 2017 19:09:00.746 PM.">
     
-    <meta property="og:image" content="https://www.kaitoy.xyz/images/firedrop.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/logo-elastic.png">
     
     
     
@@ -74,6 +74,28 @@
     <div id="posts">
       
       <div class="row">
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://www.kaitoy.xyz/2017/04/04/elasticsearch-in-nnmi-log/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/logo-elastic.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Tue, Apr 4, 2017</span>
+              </div>
+              <h2 class="title">ElasticsearchでNNMiのログを見てみた</h2>
+              <div class="summary">
+                NNMiログをFilebeatで集めてLogstashで構造化してElasticsearchに入れてelasticsearch-headで見てみたけど、ログ量が少なかったせいかあんまり恩恵が感じられなかった話。 (adsbygoogle = window.adsbygoogle || []).push({}); Elasticsearchとは ElasticsearchはElastic社が開発しているElastic Stack(旧ELK Stack)というオープンソースなデータ収集分析ツール群のコア製品。 内部でLuceneを使っていて、そのためJava製。 「分散型RESTful検索/分析エンジン」と自称しているが、スキーマレスでNoSQLなドキュメント指向分散データベース管理システムとも見れる。 Elasticsearchインスタンスはノードと呼ばれ、単一または複数のノードによるシステムはクラスタと呼ばれる。 同一ネットワークに複数のノードを立ち上げると自動で相互検出してクラスタを構成してくれ、そこにデータを入れると自動で冗長化して分散配置してくれるので、堅牢でレジリエントでスケーラブルなシステムが簡単に構築できる。 Elasticsearchが管理するデータの最小単位はドキュメントと呼ばれ、これはひとつのJSONオブジェクトで、RDBにおける行にあたる。 つまり、JSONオブジェクトの各フィールドがRDBにおける列にあたる。 同種のドキュメントの集まりはインデックスと呼ばれ、これはRDBにおけるテーブルにあたる。 テーブルのスキーマにあたるものはマッピングと呼ばれ、ドキュメントのフィールドの型情報(e.g. string, integer)などを含み、Elasticsearchが自動で生成してくれる。(指定もできる、というかすべきらしい。) インデックス内ではさらにタイプという属性でドキュメントをカテゴライズできる、が、ドキュメントからはタイプはあまり使ってほしくない雰囲気が感じられる。 因みに、インデックスがRDBのデータベースでタイプがRDBのテーブルと説明されることもあるが、これは古いたとえで、公式が間違いだったとしているので忘れてあげたい。 インデックスは分散処理のために分割でき、分割した各部分はシャードと呼ばれる。 シャードを冗長化のためにコピーしたものはレプリカシャードと呼ばれ、レプリカシャードにより成るインデックスはレプリカと呼ばれる。 デフォルトでは、ひとつのインデックスは5つのシャードに分割され、1つのレプリカが作成される。 インターフェースはREST APIだけ。 REST APIに検索したいドキュメントを投げると、ドキュメントのフィールド毎に自動で形態素解析とかして転置インデックス作って保管してくれる。 検索もJSONで表現したクエリをREST APIに投げることで結果をJSONで受け取ることができる。 検索は転置インデックスや分散処理のおかげで速く、またスコアリングによってより適切な結果が得られるようになっている。 今回使ったのはv5.2.1。 Logstashとは LogstashはElastic Stackに含まれる製品で、データ収集エンジンであり、データの受け取り、解析/加工、出力の三つの機能を持つリアルタイムパイプラインを構成する。 この三つの機能はそれぞれインプットプラグイン、フィルタプラグイン、アウトプットプラグインで提供されていて、プラグインの組み合わせにより様々なパイプラインを構成できる。 インプットプラグインは単位データ(一回分のログなど)を受け取り、タイムスタンプなどのメタデータを付けたりパースしたりしてイベントを生成し、パイプラインに流す。 フィルタプラグインはインプットプラグインからイベントを受け取り、設定されたルールに従って情報を拡充したり変更したり構造化したり秘匿情報を消したりしてアウトプットプラグインに渡す。 アウトプットプラグインは指定されたディスク上のパスやデータベースやアプリやサービスにイベントを書き込んだり送信したりする。 名前の通りもともとログ収集ツールだったが、今では様々なデータに対応していて、テキストログファイルの他にsyslog、HTTPリクエストやJDBCなんかの入力を受けることもできる。 Ruby(とJava)で書かれている。 今回使ったのはv5.2.2で、プラグインは以下を使った。 インプット: beats 3.1.12: Beats(後述)からデータを受け取るプラグイン。LumberjackというElastic社が開発しているプロトコルを使い、TCPネットワーク上でデータを受信する。 フィルタ: grok 3.3.1: 正規表現でパターンマッチして非構造化データを構造化するプラグイン。ログ解析の定番で、例えば、ログからタイムスタンプ、クラス名、ログメッセージを抽出したりする。組み込みのパターンが120個くらいあり、Apache HTTP Serverやsyslogのログであれば自分で正規表現を書く必要はない。 アウトプット: elasticsearch 6.2.6: Elasticsearchにイベントをポストするプラグイン。 Beatsとは BeatsもElastic Stackに含まれる製品で、データを採取してLogstashやElasticsearchに送信する製品群の総称。 libbeatというGoのライブラリを使って作られていて、以下のようなものがある。 Filebeat: ログファイルからログを取得する。 Heartbeat: リモートサービスをpingして生死監視する。 Metricbeat: OSとその上のサービスやアプリから稼動情報を取得する。 Packetbeat: パケットキャプチャしてネットワークのトラフィックを監視する。 Winlogbeat: Windowsのイベントログを取得する。 今回使ったのはFilebeat 5.2.2。 Filebeatは指定したログファイルを監視し、変更を検知してリアルタイムにログを送信してくれる。 FilebeatとLogstashが仲良くやってくれて、バッファがあふれるなどすることによるログの損失が起きないようにしてくれるらしい。 Logstashが単位データを受け取るので、ログファイルからひとつひとつのログを切り出すのはFilebeatの責務。 一行一ログなら何も考えなくていいけど、大抵複数行のログがあるのでなんとかする必要がある。 elasticsearch-headとは elasticsearch-headは3rdパーティ製(個人製?)のElasticsearchのWeb UI。 ElasticsearchのUIはREST APIしかないのでこういうものを使わないと辛い。 ElasticsearchのGUIとしてはElastic StackのKibanaが有名だけど、これは大量のログから統計的な情報を見るのに便利そうなものであって、今回やりたかった障害原因調査のためにログを細かく追うのには向いてなさそうだったので使わなかった。 実験環境 今回は単にログがどんな感じに見えるか試したかっただけなので、全部ローカルで動かして、ローカルに置いた静的なログファイルを読むだけ。 環境はWindows 7のノートPC。 ログファイルはC:\Users\Kaito\Desktop\logs\においたnnm-trace.logとnnm-trace.log.1。 これらはNNMiのメインログで、JULで出力されたもの。 NNMiは無料のコミュニティエディションのv10.00をVMのCentOSに適当に入れて採った。 ログはだいたい以下の様な一行のもの。 2017-03-15 19:09:55.896 INFO [com.hp.ov.nms.spi.common.deployment.deployers.ExtensionServicesDeployer] (Thread-2) Deploying arris-device 2017-03-15 19:09:55.923 WARNING [com.hp.ov.nms.topo.spi.server.concurrent.NmsTimerTaskImpl] (NmsWorkManager Scheduler) Skipping task execution because previous execution has not completed: com.hp.ov.nnm.im.NnmIntegrationModule$EnablerTask@3abdac77 2017-03-15 19:09:56.120 INFO [com.hp.ov.nms.disco.spi.DiscoExtensionNotificationListener] (Thread-2) Disco deployed mapping rules: META-INF/disco/rules/cards/ArrisCard.xml たまに複数行のものがある。 2017-03-15 19:13:30.872 INFO [com.hp.ov.nms.trapd.narrowfilter.NarrowTrapAnalysis] (pool-1-thread-18) ***** Hosted Object Trap Rate Report ***** Hosted object trap storm detection and suppression stage started: Wed Mar 15, 2017 19:09:00.746 PM.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
         
         
         
@@ -139,33 +161,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2017/01/24/goslings-development-memo5-spring-boot-static-resources/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2017/01/24/goslings-development-memo5-spring-boot-static-resources/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/goslings-spring.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Tue, Jan 24, 2017</span>
               </div>
-              <h2 class="title">Goslings開発メモ - その5: Spring Boot最終編 (静的リソース処理)</h2>
-              <div class="summary">
-                「Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)」の続き。 Spring Boot最終編で、静的リソース処理について。 (adsbygoogle = window.adsbygoogle || []).push({}); Spring Boot(Spring MVC)での静的リソース処理 この時点でのGoslingsは単なるREST APIサーバで、アクセスしてもJSONを返すだけだ。 アプリとしての体を成すためには、そのAPIを利用するクライアントコード、つまりHTMLドキュメントやCSSファイルやJavaScriptファイル(静的リソース)も返すようにしないといけない。 HTMLドキュメントを返す場合、普通はなんらかのテンプレートエンジンを使うものだが、Goslingsは本当に単純なGUIなので、サーバに置いたHTMLファイルをそのまま返したい。 「Getting Started Guides」にはServing Web Content with Spring MVCというのが乗っているが、これはThymeleafというテンプレートエンジンを使うものなのでちょっと違う。 Spring Bootリファレンスガイドによると、クラスパス(またはServletContextのルート)の/static/、/public/、/resources/、/META-INF/resources/のいずれかに静的リソースを置けば、特にコードを書かなくてもクライアントからアクセスできるらしい。 (逆に、一般的に静的リソースを置く場所である、プロジェクトのsrc/main/webapp/には置くべきでないとのこと。これは、jarにパッケージングするときにビルドツールに無視されることが多いため。) この仕組みについて、この記事を参考にちょろっとソースを見た感じでは、これらのパスはResourcePropertiesのCLASSPATH_RESOURCE_LOCATIONSに定義されていて、これをWebMvcAutoConfigurationがResourceHandlerRegistryでリソースロケーションとして登録することで静的リソース置き場たらしめている模様。 (このResourceHandlerRegistryはResourceHttpRequestHandlerを設定するファサード的なものっぽい。) で、@SpringBootApplication(その1参照)が付いているクラスがあって、spring-webmvc.jarがクラスパスにあると、@EnableWebMvcがSpring Bootによって付けられ、そこからごにょごにょして上記WebMvcAutoConfigurationが実行される。 spring-webmvc.jarはspring-boot-starter-web.jar(その1参照)が引っ張ってくる。 なお、Spring MVCの静的リソース処理の全体の流れについては 、ちょっと古いけど「handling static web resources」という記事が分かりやすい。 要は、URLに指定されたパスからサーバ上のリソースを探し当てるResourceResolverというものが優先度順に連なっているリゾルバチェイン(ResourceResolverChain)があって、まずこいつがリソースを取得する。 次に、そのリソースを加工するトランスフォーマチェイン(ResourceTransformerChain)というものに通し、その結果をクライアントに返す。 トランスフォーマチェインはResourceTransformerが連なったもの。 リゾルバチェインとトランスフォーマチェインは上記ResourceHttpRequestHandlerに設定される。 リゾルバには以下の様なものがある。 PathResourceResolver: ResourceHttpRequestHandlerに設定されたリソースロケーションからリソースを単純に検索するリゾルバ。 CachingResourceResolver: キャッシュからリソースを検索するリゾルバ。テンプレートエンジンの処理結果のキャッシュとかが返るのは多分ここから。 GzipResourceResolver: gzipで圧縮されたリソース、つまりURLで指定されたパスに.gzという拡張子を付けたリソースを検索するリゾルバ。 VersionResourceResolver: リソースバージョニングを実現するためのリゾルバ。 WebJarsResourceResolver: WebJarsのjarファイル内のリソースを検索するリゾルバ。 リゾルバの設定などについてはQiitaのこの記事ががよくまとまっている。 凝ったことをしたいときは参照しよう。 トランスフォーマには以下の様なものがある。 CssLinkResourceTransformer: CSSファイル内のリンクをクライアントがアクセスできるURLに変換する。 CachingResourceTransformer: 変換したリソースをキャッシュする。 AppCacheManifestTransformer: HTML5のAppCacheマニフェスト内のリソースを扱うトランスフォーマ。 デフォルトでResourceHttpRequestHandlerにはPathResourceResolverだけが設定されている。 以上をまとめると、クライアントからGetリクエストが来ると、WebMvcAutoConfigurationが設定したリソースロケーション(e.g. /static/)をPathResourceResolverが検索して、そこに置いてあるHTMLファイルとかをクライアントに返してくれる、ということであろう。 Javaのコードを全く書かなくていいので楽。 Javaのコードを書いて静的リソースファイルを明示することもできる。 Qiitaの記事によれば、@Controllerを付けたクラスのリクエストハンドラで以下の様にファイルへのパスを返せばいいらしい。 @RequestMapping(&quot;/hoge&quot;) public String hoge() { return &quot;/hoge.html&quot;; } 単純な静的リソースに対してこれをやるユースケースはあまりなさそう。 テンプレートエンジンを使っていてパラメータを渡したいときにはこういうリクエストハンドラを書くことになる。 Spring Bootのウェルカムページとファビコン Spring Bootはindex.htmlとfavicon.icoという名のファイルを特別扱いする。 前者がウェルカムページで後者がファビコン。 ウェルカムページ Spring Bootのリファレンスガイドにもちらっとかいてあるけど、リソースロケーションにindex.htmlというファイルを置いておくと、それがウェルカムページとして設定され、URLのパスにルート(e.g.
-              </div>
+              <h3 class="title">Goslings開発メモ - その5: Spring Boot最終編 (静的リソース処理)</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         
@@ -1230,6 +1249,12 @@
       <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
       
       
+      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
+      
+      
       <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
       
       
@@ -1270,6 +1295,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/management">management</a>

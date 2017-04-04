@@ -161,6 +161,12 @@
       <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
       
       
+      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
+      
+      
       <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
       
       
@@ -201,6 +207,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/management">management</a>
