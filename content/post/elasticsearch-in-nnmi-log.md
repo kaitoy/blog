@@ -24,7 +24,7 @@ Elasticsearchが管理するデータの最小単位はドキュメントと呼�
 つまり、JSONオブジェクトの各フィールドがRDBにおける列にあたる。
 同種のドキュメントの集まりはインデックスと呼ばれ、これはRDBにおけるテーブルにあたる。
 テーブルのスキーマにあたるものはマッピングと呼ばれ、ドキュメントのフィールドの型情報(e.g. string, integer)などを含み、Elasticsearchが自動で生成してくれる。(指定もできる、というかすべきらしい。)
-インデックス内ではさらにタイプという属性でドキュメントをカテゴライズできる、が、ドキュメントからはタイプはあまり[使ってほしくない](https://www.elastic.co/guide/en/elasticsearch/reference/5.2/general-recommendations.html#_avoid_types)雰囲気が感じられる。
+インデックス内ではさらにタイプという属性でドキュメントをカテゴライズできる、が、マニュアルからはタイプはあまり[使ってほしくない](https://www.elastic.co/guide/en/elasticsearch/reference/5.2/general-recommendations.html#_avoid_types)雰囲気が感じられる。
 
 因みに、インデックスがRDBのデータベースでタイプがRDBのテーブルと説明されることもあるが、これは古いたとえで、[公式が間違いだったとしている](https://www.elastic.co/blog/index-vs-type)ので忘れてあげたい。
 
