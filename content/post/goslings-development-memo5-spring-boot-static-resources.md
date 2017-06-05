@@ -120,3 +120,6 @@ Goslingsの静的リソースは`favicon.ico`以外は`/static/`に全部直接�
 
 今日はここまで。
 次回からはクライアントサイドの話。
+
+と思ったけど、対して書くことないのでこれで終わりにする。
+[Qiita](http://qiita.com/kaitoy/items/91585ba1a3081ffd2111)のほうにちょっと書いたし。
