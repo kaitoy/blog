@@ -71,6 +71,27 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2017/06/10/git-rebase/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="/images/git.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sat, Jun 10, 2017</span>
+              </div>
+              <h2 class="title">git rebaseを図解する</h2>
+              <div class="summary">
+                この記事を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、Gitの git rebase というコマンドについて説明する。 このコマンドは、コミット履歴を改変できるGit特有のコマンドで、分かり辛いGitコマンドの中でも最も分かり辛い部類のものだ。 Gitの最後の関門と言えよう。 けど、それだけに使いこなせばとても便利なものでもある。 (adsbygoogle = window.adsbygoogle || []).push({}); git rebaseがもつたった一つの機能 git rebaseにはいろんなオプションがあって、ちょっと調べただけだと、コミットを移動する機能とコミットを修正する機能の二つがあるように見えるかもしれないが、実際は単一の機能しかないシンプルなコマンドだ。 その機能とは、指定した範囲のコミットが含む変更を、別に指定したコミットのコードベースに適用するというもの。 コマンドの基本形は次のようなものだ。 $ git rebase --onto master dev bugfix このコマンドは、bugfixから辿れるコミット群から、devから辿れるコミット群を除いたコミット群が含む変更を、masterのコードベースに適用する。 と書いても分からないので図解する。 このスライドを見ると、git rebaseに指定した3つのブランチのそれぞれの使われ方が分かるはず。 git rebase --onto master dev bugfixが実行する処理をもっと正確に言うと、 bugfixをcheckoutして(i.e. HEADをbugfixにして)、 dev..HEADのコミット群が含む変更を、それぞれ仮領域にパッチとして保存して、 git reset --hard masterして、 仮領域に保存した変更を、HEADが指すコミットのコードベースにひとつひとつ順番に適用する。 上記コマンドでbugfixのところを省略すると、ステップ1のcheckoutが省略される。 言い換えると、上記コマンドは次の二つのコマンドに分解できる。 $ git checkout bugfix $ git rebase --onto master dev さらに、--onto masterを省略すると、ステップ3のreset先が変わり、devになる。 このときのコマンドの形は、 $ git rebase dev という見慣れたものになるが、これが最初に挙げた基本形の省略形だと認識しておくと応用が利く。 以下にgit rebase devの動きを細かめに図解する。 インタラクティブモード 前節のスライドに書いたパッチの適用をカスタマイズできるのがインタラクティブモードで、これは-iオプションで有効にできる。 インタラクティブモードを使うと、パッチをスキップしたり、順番を変えたり、まとめたり、分割したり、編集したりでき、またパッチとパッチの間に任意のコマンドを実行でき、例えばパッチごとにユニットテストを実行できたりする。 インタラクティブモードの使い方についてはググればたくさん出てくるのでここには書かない。
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2016/10/08/git-checkout/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="/images/git.png" alt="eyecatch">
@@ -132,19 +153,16 @@
         
         
         
-        <div class="col-sm-6">
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2015/12/31/git-dvc/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2015/12/31/git-dvc/" class="post">
               <header class="eyecatch text-center">
                 <img src="/images/git.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Thu, Dec 31, 2015</span>
               </div>
-              <h2 class="title">Gitの分散バージョン管理の仕組み</h2>
-              <div class="summary">
-                このエントリでは、この記事を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、Gitの分散バージョン管理の仕組みについて説明する。 (adsbygoogle = window.adsbygoogle || []).push({}); Gitの分散バージョン管理 分散バージョン管理とは、分散したリポジトリでのバージョン管理ということ。 ここでリポジトリが分散しているとは、同じプロジェクトの履歴を管理する完全で独立したリポジトリが複数あるということ。 これにより一つのプロジェクトの開発を地理的に分散して並行して進めることができる。 Gitは分散バージョン管理のために、リポジトリのクローン(≒コピー)を作る機能と、リポジトリ間でコミットグラフを同期する機能を提供している。 リポジトリのクローンを作ると言うと、オリジナルとクローンの間に格差があるような気がするが、 実際にはGitは全てのリポジトリが対等であるという思想のもとで実装されている。 このため、リポジトリをクローンする時には(デフォルトで)クローン元の完全なコミットグラフがクローンにコピーされるし、任意のリポジトリ間のデータのやり取りをpeer-to-peerでできる。 クローンからクローンを作ることももちろん可能。 git pushでデータを送る先をアップストリームと呼ぶことはあるし、次節でローカルリポジトリとリモートリポジトリという関係が出てくるが、これはあくまでその時点でそういう設定になっているというだけ。 アップストリームはいつでもいくつでもgit remoteコマンドで追加したり削除したりできる。 このような実装により、Gitの分散バージョン管理ではリポジトリ間で柔軟なデータのやり取りができる。 例えば以下の様な複雑なリポジトリネットワークを組むこともできる。 ローカルリポジトリとリモートリポジトリ 一人の開発者から見て、手元にあるリポジトリを ローカルリポジトリ と呼ぶのに対して、git pushやgit pullやgit fetchでデータをやり取りする相手のリポジトリを リモートリポジトリ と呼ぶ。 リモートリポジトリとのやり取りは、リモート追跡ブランチ と リモート というものを使って実装されている。 リモート追跡ブランチ リモート追跡ブランチは、ローカルリポジトリの.git/refs/remotes/に格納される参照で、リモートリポジトリ内のローカルブランチのコミットグラフを取得してローカルリポジトリ内に保持するために使われる。 git branch -rでその一覧が見れる。 「追跡」ブランチというだけあって、リモートリポジトリ内でコミットグラフが成長した場合、この変更に追随することができる。 このためのコマンドがgit fetch。 因みにgit pullは、git fetchでリモート追跡ブランチを更新した後、git merge(オプションによってはgit rebase)でそのリモート追跡ブランチをローカルブランチにマージするのと同じ。 リモート リモートとは、リモートリポジトリのこと、またはリモートリポジトリに接続するための定義のこと。 この定義は、ローカルリポジトリの.git/configにremoteセクションとして書かれている。 以下がその例。 [remote &quot;origin&quot;] fetch = +refs/heads/*:refs/remotes/origin/* url = git@github.com:kaitoy/blog.git セクション名のところに&quot;origin&quot;とあるがこれは、この定義で接続するリモートリポジトリをGitコマンドなどでoriginと指定できるということ。 ここで定義されているのはurlとfetchで、それぞれ以下を意味する。 url リモートリポジトリのURL。 つまり、リモートリポジトリがどのサーバのどのディレクトリにあって、それとのデータのやり取りをどのプロトコルでやるかという定義。 このURLには以下の書式が使える。 ファイルパス /path/to/repo.gitとかC:\\Users\\Kaito\\Desktop\\pcap4jといった、普通のファイルパスの書式。 NFSなどでリモートリポジトリが共有されている場合などに使われる。 シンボリックリンクがサポートされているOS上では、クローンはリモートリポジトリをハードリンクで参照する。 このシンボリック参照でのファイル共有がトラブルの元なため、この書式は非推奨。 ファイルURL file:///path/to/repo.gitとかfile://C:/Users/Kaito/Desktop/pcap4jといった、ローカルホスト上のパスを示すファイルURLの書式。 用途はファイルパスと同様だが、ハードリンクを作る代わりにコピーするのでより安全。 HTTP(S) https://github.com/kaitoy/pcap4j.gitといったHTTPSやHTTPのURL。 リポジトリへのアクセス制御にHTTPの認証機能やHTTPSのクライアント証明書などが使えるほか、HTTPSなら通信の暗号化もできる。 使用するポートがファイアウォールにブロックされていることが少ないのも使いやすい。 Gitプロトコル git://example.com/path/to/repo.gitといった書式で、GitデーモンによるGitネイティブプロトコルを使うURL。 HTTPよりも高速な通信ができるが、認証機能も暗号化機能もない。 SSH + Gitプロトコル ssh://git@github.com/kaitoy/pcap4j.gitのようなSSHのURLで、これを使うとSSHトンネルを通してGitプロトコルで通信できる。 Gitプロトコル単体を使うのに比べ、SSHの認証機能と暗号化機能を利用できるが、やや遅くなるはず。 このプロトコルには、git@github.com:kaitoy/pcap4j.gitのようなSCP書式も使える。 Git自体はGitデーモンを含めリポジトリへのアクセス制御の機能を一切持たないので、認証などが必要な場合はHTTPなどその機能を持つプロトコルのURLを使う必要がある。 fetch リモートリポジトリ内のローカルブランチとローカルリポジトリ内の追跡ブランチとがどう対応するかを定義する。 この定義はrefspecと呼ばれる。 上の例のfetch = +refs/heads/*:refs/remotes/origin/*だと、リモートリポジトリの.git/refs/heads/にある全てのブランチをそれぞれ、ローカルリポジトリの.git/refs/remotes/origin/にある同名のブランチで追跡する、という意味。 クローン時の挙動 クローン時のデフォルトの挙動は以下の様なもの。 オブジェクト格納領域内のオブジェクトが全てクローンにコピーされる。 (多分。参照からたどれないオブジェクトもコピーされることを確認した。) つまり、元のリポジトリ(i.e.
-              </div>
+              <h3 class="title">Gitの分散バージョン管理の仕組み</h3>
             </a>
           </article>
         </div>

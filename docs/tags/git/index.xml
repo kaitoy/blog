@@ -6,8 +6,142 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2017</rights>
-    <updated>2016-10-08 16:39:46 -0600 -0600</updated>
+    <updated>2017-06-10 00:00:17 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>git rebaseを図解する</title>
+          <link>https://www.kaitoy.xyz/2017/06/10/git-rebase/</link>
+          <pubDate>Sat, 10 Jun 2017 00:00:17 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2017/06/10/git-rebase/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;の &lt;code&gt;git rebase&lt;/code&gt; というコマンドについて説明する。&lt;/p&gt;
+
+&lt;p&gt;このコマンドは、コミット履歴を改変できるGit特有のコマンドで、&lt;a href=&#34;http://qiita.com/kaitoy/items/ed22474837b943eb6d97&#34;&gt;分かり辛いGitコマンド&lt;/a&gt;の中でも最も分かり辛い部類のものだ。
+Gitの最後の関門と言えよう。
+けど、それだけに使いこなせばとても便利なものでもある。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-7852181473528684&#34;
+     data-ad-slot=&#34;3938339651&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h1 id=&#34;git-rebaseがもつたった一つの機能&#34;&gt;git rebaseがもつたった一つの機能&lt;/h1&gt;
+
+&lt;p&gt;&lt;code&gt;git rebase&lt;/code&gt;にはいろんなオプションがあって、ちょっと調べただけだと、コミットを移動する機能とコミットを修正する機能の二つがあるように見えるかもしれないが、実際は単一の機能しかないシンプルなコマンドだ。&lt;/p&gt;
+
+&lt;p&gt;その機能とは、指定した範囲のコミットが含む変更を、別に指定したコミットのコードベースに適用するというもの。&lt;/p&gt;
+
+&lt;p&gt;コマンドの基本形は次のようなものだ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;$ git rebase --onto master dev bugfix
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;このコマンドは、&lt;code&gt;bugfix&lt;/code&gt;から辿れるコミット群から、&lt;code&gt;dev&lt;/code&gt;から辿れるコミット群を除いたコミット群が含む変更を、&lt;code&gt;master&lt;/code&gt;のコードベースに適用する。&lt;/p&gt;
+
+&lt;p&gt;と書いても分からないので図解する。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;ul class=&#34;bxslider&#34;&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase/スライド1.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase/スライド2.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase/スライド3.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase/スライド4.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase/スライド5.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase/スライド6.PNG&#34; /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;このスライドを見ると、&lt;code&gt;git rebase&lt;/code&gt;に指定した3つのブランチのそれぞれの使われ方が分かるはず。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;git rebase --onto master dev bugfix&lt;/code&gt;が実行する処理をもっと正確に言うと、&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;bugfix&lt;/code&gt;を&lt;code&gt;checkout&lt;/code&gt;して(i.e. &lt;code&gt;HEAD&lt;/code&gt;を&lt;code&gt;bugfix&lt;/code&gt;にして)、&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dev..HEAD&lt;/code&gt;のコミット群が含む変更を、それぞれ仮領域にパッチとして保存して、&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;git reset --hard master&lt;/code&gt;して、&lt;/li&gt;
+&lt;li&gt;仮領域に保存した変更を、&lt;code&gt;HEAD&lt;/code&gt;が指すコミットのコードベースにひとつひとつ順番に適用する。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;上記コマンドで&lt;code&gt;bugfix&lt;/code&gt;のところを省略すると、ステップ1の&lt;code&gt;checkout&lt;/code&gt;が省略される。
+言い換えると、上記コマンドは次の二つのコマンドに分解できる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;$ git checkout bugfix
+$ git rebase --onto master dev
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;さらに、&lt;code&gt;--onto master&lt;/code&gt;を省略すると、ステップ3の&lt;code&gt;reset&lt;/code&gt;先が変わり、&lt;code&gt;dev&lt;/code&gt;になる。
+このときのコマンドの形は、&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;$ git rebase dev
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;という見慣れたものになるが、これが最初に挙げた基本形の省略形だと認識しておくと応用が利く。&lt;/p&gt;
+
+&lt;p&gt;以下に&lt;code&gt;git rebase dev&lt;/code&gt;の動きを細かめに図解する。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;ul class=&#34;bxslider&#34;&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド1.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド2.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド3.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド4.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド5.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド6.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド7.PNG&#34; /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;インタラクティブモード&#34;&gt;インタラクティブモード&lt;/h2&gt;
+
+&lt;p&gt;前節のスライドに書いたパッチの適用をカスタマイズできるのがインタラクティブモードで、これは&lt;code&gt;-i&lt;/code&gt;オプションで有効にできる。
+インタラクティブモードを使うと、パッチをスキップしたり、順番を変えたり、まとめたり、分割したり、編集したりでき、またパッチとパッチの間に任意のコマンドを実行でき、例えばパッチごとにユニットテストを実行できたりする。&lt;/p&gt;
+
+&lt;p&gt;インタラクティブモードの使い方についてはググればたくさん出てくるのでここには書かない。
+&lt;a href=&#34;http://tkengo.github.io/blog/2013/05/16/git-rebase-reference/&#34;&gt;この記事&lt;/a&gt;辺りがわかりやすい。&lt;/p&gt;
+
+&lt;p&gt;インタラクティブモードのユースケースとしてよく紹介されるのが、&lt;code&gt;git rebase -i HEAD^^&lt;/code&gt;で直近の二つのコミットを変更するといったものだが、これを図解すると以下のようになる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;ul class=&#34;bxslider&#34;&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド1.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド2.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド3.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド4.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド5.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド6.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド7.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド8.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド9.PNG&#34; /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;このスライドを見ると、&lt;code&gt;git rebase dev&lt;/code&gt;と&lt;code&gt;git rebase -i HEAD^^&lt;/code&gt;は、パッチの適用がインタラクティブかどうか以外は同じ処理をしていることがわかる。
+見た目の違いに惑わされないようにしたい。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;git rebase&lt;/code&gt;はブランチを複数指定したりして分かり辛いコマンドであることは確かだけど、上記の基本形を押さえておけばすんなり理解できるはず。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>

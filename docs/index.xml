@@ -6,8 +6,142 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2017</rights>
-    <updated>2017-04-04 09:24:12 &#43;0900 JST</updated>
+    <updated>2017-06-10 00:00:17 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>git rebaseを図解する</title>
+          <link>https://www.kaitoy.xyz/2017/06/10/git-rebase/</link>
+          <pubDate>Sat, 10 Jun 2017 00:00:17 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2017/06/10/git-rebase/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;の &lt;code&gt;git rebase&lt;/code&gt; というコマンドについて説明する。&lt;/p&gt;
+
+&lt;p&gt;このコマンドは、コミット履歴を改変できるGit特有のコマンドで、&lt;a href=&#34;http://qiita.com/kaitoy/items/ed22474837b943eb6d97&#34;&gt;分かり辛いGitコマンド&lt;/a&gt;の中でも最も分かり辛い部類のものだ。
+Gitの最後の関門と言えよう。
+けど、それだけに使いこなせばとても便利なものでもある。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-7852181473528684&#34;
+     data-ad-slot=&#34;3938339651&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h1 id=&#34;git-rebaseがもつたった一つの機能&#34;&gt;git rebaseがもつたった一つの機能&lt;/h1&gt;
+
+&lt;p&gt;&lt;code&gt;git rebase&lt;/code&gt;にはいろんなオプションがあって、ちょっと調べただけだと、コミットを移動する機能とコミットを修正する機能の二つがあるように見えるかもしれないが、実際は単一の機能しかないシンプルなコマンドだ。&lt;/p&gt;
+
+&lt;p&gt;その機能とは、指定した範囲のコミットが含む変更を、別に指定したコミットのコードベースに適用するというもの。&lt;/p&gt;
+
+&lt;p&gt;コマンドの基本形は次のようなものだ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;$ git rebase --onto master dev bugfix
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;このコマンドは、&lt;code&gt;bugfix&lt;/code&gt;から辿れるコミット群から、&lt;code&gt;dev&lt;/code&gt;から辿れるコミット群を除いたコミット群が含む変更を、&lt;code&gt;master&lt;/code&gt;のコードベースに適用する。&lt;/p&gt;
+
+&lt;p&gt;と書いても分からないので図解する。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;ul class=&#34;bxslider&#34;&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase/スライド1.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase/スライド2.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase/スライド3.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase/スライド4.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase/スライド5.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase/スライド6.PNG&#34; /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;このスライドを見ると、&lt;code&gt;git rebase&lt;/code&gt;に指定した3つのブランチのそれぞれの使われ方が分かるはず。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;git rebase --onto master dev bugfix&lt;/code&gt;が実行する処理をもっと正確に言うと、&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;bugfix&lt;/code&gt;を&lt;code&gt;checkout&lt;/code&gt;して(i.e. &lt;code&gt;HEAD&lt;/code&gt;を&lt;code&gt;bugfix&lt;/code&gt;にして)、&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dev..HEAD&lt;/code&gt;のコミット群が含む変更を、それぞれ仮領域にパッチとして保存して、&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;git reset --hard master&lt;/code&gt;して、&lt;/li&gt;
+&lt;li&gt;仮領域に保存した変更を、&lt;code&gt;HEAD&lt;/code&gt;が指すコミットのコードベースにひとつひとつ順番に適用する。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;上記コマンドで&lt;code&gt;bugfix&lt;/code&gt;のところを省略すると、ステップ1の&lt;code&gt;checkout&lt;/code&gt;が省略される。
+言い換えると、上記コマンドは次の二つのコマンドに分解できる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;$ git checkout bugfix
+$ git rebase --onto master dev
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;さらに、&lt;code&gt;--onto master&lt;/code&gt;を省略すると、ステップ3の&lt;code&gt;reset&lt;/code&gt;先が変わり、&lt;code&gt;dev&lt;/code&gt;になる。
+このときのコマンドの形は、&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;$ git rebase dev
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;という見慣れたものになるが、これが最初に挙げた基本形の省略形だと認識しておくと応用が利く。&lt;/p&gt;
+
+&lt;p&gt;以下に&lt;code&gt;git rebase dev&lt;/code&gt;の動きを細かめに図解する。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;ul class=&#34;bxslider&#34;&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド1.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド2.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド3.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド4.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド5.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド6.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド7.PNG&#34; /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;インタラクティブモード&#34;&gt;インタラクティブモード&lt;/h2&gt;
+
+&lt;p&gt;前節のスライドに書いたパッチの適用をカスタマイズできるのがインタラクティブモードで、これは&lt;code&gt;-i&lt;/code&gt;オプションで有効にできる。
+インタラクティブモードを使うと、パッチをスキップしたり、順番を変えたり、まとめたり、分割したり、編集したりでき、またパッチとパッチの間に任意のコマンドを実行でき、例えばパッチごとにユニットテストを実行できたりする。&lt;/p&gt;
+
+&lt;p&gt;インタラクティブモードの使い方についてはググればたくさん出てくるのでここには書かない。
+&lt;a href=&#34;http://tkengo.github.io/blog/2013/05/16/git-rebase-reference/&#34;&gt;この記事&lt;/a&gt;辺りがわかりやすい。&lt;/p&gt;
+
+&lt;p&gt;インタラクティブモードのユースケースとしてよく紹介されるのが、&lt;code&gt;git rebase -i HEAD^^&lt;/code&gt;で直近の二つのコミットを変更するといったものだが、これを図解すると以下のようになる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;ul class=&#34;bxslider&#34;&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド1.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド2.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド3.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド4.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド5.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド6.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド7.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド8.PNG&#34; /&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド9.PNG&#34; /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;このスライドを見ると、&lt;code&gt;git rebase dev&lt;/code&gt;と&lt;code&gt;git rebase -i HEAD^^&lt;/code&gt;は、パッチの適用がインタラクティブかどうか以外は同じ処理をしていることがわかる。
+見た目の違いに惑わされないようにしたい。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;git rebase&lt;/code&gt;はブランチを複数指定したりして分かり辛いコマンドであることは確かだけど、上記の基本形を押さえておけばすんなり理解できるはず。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -9559,229 +9693,6 @@ Jekyllのサイトでも紹介されている&lt;a href=&#34;http://jekyll-windo
 &lt;h2 id=&#34;5-jekyllとの決別&#34;&gt;5. Jekyllとの決別&lt;/h2&gt;
 
 &lt;p&gt;この辺りまでJekyllをセットアップした後、JekyllのWindowsとの相性の悪さに嫌気がさしつつ、Jekyllで簡単にかっこいいサイトを作るためのツールなどを調べているうちに、Jekyllを使うのをやめた。それについては&lt;a href=&#34;https://www.kaitoy.xyz/2015/08/25/tools-for-jekyll/&#34;&gt;別のエントリ&lt;/a&gt;で書く。&lt;/p&gt;
-</description>
-        </item>
-      
-    
-      
-        <item>
-          <title>スタンドアップミーティングはダメマネージャーが好む手法</title>
-          <link>https://www.kaitoy.xyz/2015/08/11/daily-stand-up-meetings-are-a-good-tool-for-a-bad-manager/</link>
-          <pubDate>Tue, 11 Aug 2015 22:35:09 -0600</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2015/08/11/daily-stand-up-meetings-are-a-good-tool-for-a-bad-manager/</guid>
-          <description>
-
-&lt;p&gt;このエントリでは、Yegor Bugayenkoによる記事、&lt;a href=&#34;http://www.yegor256.com/2015/01/08/morning-standup-meetings.html&#34;&gt;Daily Stand-Up Meetings Are a Good Tool for a Bad Manager&lt;/a&gt;を紹介する。
-(Yegorから和訳と転載の許可は得た。)
-以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-7852181473528684&#34;
-     data-ad-slot=&#34;3938339651&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;スタンドアップミーティング (または単純にスタンドアップ)は、「チームマネージャに状況報告をするためのデイリーチームミーティング」であるとWikipediaに書かれている。
-こうしたミーティングは、ソフトウェア開発チームの間でとても人気な手法ではあるが、単なる悪であり、よいマネージャは決してやらない。
-以下、その理由を説明する。&lt;/p&gt;
-
-&lt;p&gt;私は、スタンドアップのやり方が適切だったり不適切だったりする、と言いたいわけではない。それについて述べた記事は大量にある。
-また、スタンドアップを上手く機能するように実施する方法についてアドバイスしようとしているわけでもない。
-よいマネージャはデイリースタンドアップを決して実施すべきでないと言っているのだ。
-スタンドアップは、単に「機能しない」だけでなく、非常に悪い、時に破壊的なものをマネジメントプロセスにもたらす。それがアジャイルかどうかにかかわらず。
-一方、ダメなマネージャは常に、デイリースタンドアップを重要なマネジメント手法として使う。&lt;/p&gt;
-
-&lt;p&gt;私の意図を説明するため、マネジメントをいくつかの異なった視点から見ながら、よいマネージャとダメなマネージャが仕事をどのように進めるかを比べてみよう。&lt;/p&gt;
-
-&lt;h3 id=&#34;情報&#34;&gt;情報&lt;/h3&gt;
-
-&lt;p&gt;&lt;strong&gt;ダメなマネージャは進捗を尋ねる。&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;オフィスを歩き回り進捗を訪ねて回るのは、ひどいマネージャの崇高な習慣だ。
-彼は、プロセスと情報伝達フローを適切に構築できるほど賢明ではなく、チームが何をしているかを知らない。
-しかし、彼は進捗を知る必要がある。彼もまた上司からちょくちょく尋ねられるからだ。
-必要な情報を収集する唯一の方法は、チームに「今何の作業をしているの?」と尋ねることだ。
-朝のスタンドアップは、メンバの作業内容を知らないことに気付かれずに、このうっとうしい質問を正式に尋ねる最高の場だ。&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;よいマネージャは必要なときに報告を受ける。&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;プロジェクトマネージメントにはコミュニケーション管理が必要だ。
-情報伝達フローが適切に構成されていれば、チームメンバはいつどのようにマネージャに報告すればいいかが分かる。
-何か問題が起きたとき、そういう状況をどのように報告しなければいけないかを全員が知っている。即時、直接報告するのだ。
-作業が完了したとき、必要に応じてプロジェクトマネージャにどのように知らせるかを全員が理解している。
-完璧なプロジェクトマネージャは決してチームに質問しない。代わりに、チームが必要なときにマネージャに報告する。
-そして、報告を怠るメンバが出たときには、その壊れたコミュニケーションチャネルを修復するのがよいプロジェクトマネージャだ。
-ただし、情報収集のためにデイリーミーティングは決して実施しない。&lt;/p&gt;
-
-&lt;p&gt;よいマネージャとして、何がゴールで何がプロジェクトマネージャ(またはスクラムマスタ)として重要かをチームに伝えるべきだ。
-チームメンバは、マネージャがチームの進捗、リスク、障害、失敗について知るために何が重要であるかを知っているべきだし、チームメンバがマネージャの期待に沿えなければどんなトラブルに陥るかを理解しているべきだ。
-プロジェクトやチームが取り組んでいる最も重要な課題についてをチームに伝えることは、よいマネージャとしてすべき仕事だ。
-また、よいチームメンバとしては、重要な情報をつかんだら、すぐにマネージャに知らせることが重要だ。
-これが完璧なマネージメントというものだ。&lt;/p&gt;
-
-&lt;p&gt;もしそのようなチームワークを築いたなら、開発者が今日何をしてどんな問題にあったかを、明日の朝まで待ってから尋ねる必要はなくなる。
-マネージャはこういった情報をもっと早く、まさに必要なタイミングで知るようになる。
-オフィスの外にいるときでさえ、プロジェクトで起こっていることを知ることができるようになる。
-実際には、オフィスは全く不要にさえなるが、これはまた別の機会に議論したい。&lt;/p&gt;
-
-&lt;p&gt;デイリースタンドアップはプログラマ間で情報交換する最高の機会で、スクラムマスタに報告してフィードバックを受けるだけの場ではないと言う人がいるかもしれない。
-もう一度、同じことを言うが、なぜ、その日の必要になった時点で情報交換をしないのか?
-なぜ、10人のメンバを毎朝集めて、その内たった5人だけに関係することを議論する必要がある?
-答えよう。ダメなマネージャは、チームメンバ間で情報交換する場を用意する他の方法を知らず、朝のスタンドアップを適切なコミュニケーションモデルの代わりとして使う。
-こういったミーティングは、マネージャが熱心に働いていて、大げさな給料を受け取るに値するかのような印象を与える。
-対照的に、よいマネージャは定期的な状況報告ミーティングをいっさい実施しない。
-なぜなら、効果的なコミュニケーションツールの使い方を知っているからだ。
-例えば、問題追跡ツール、メール、コードレビュー、意思決定ミーティング、ペアプログラミングなど。&lt;/p&gt;
-
-&lt;h3 id=&#34;責任&#34;&gt;責任&lt;/h3&gt;
-
-&lt;p&gt;&lt;strong&gt;ダメなマネージャはマイクロマネージメントをする。&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;ダメなマネージャはプロジェクトマネージメントのことをほとんど知らないので、大きな不安を抱えている。
-彼はチームのコントロールを失うことを恐れていて、チームを信頼せず、いつも十分な情報を得ていないと感じ、上司から状況を尋ねられたときに動揺する。
-このため、彼はチームメンバを抗うつ薬として使う。チームメンバが彼の言う通りのことをしているとき、彼はより安心と安定を感じる。
-デイリースタンドアップミーティングは、彼がメンバに何をしているかを尋ね、代わりに何をすべきかを指示するためのすばらしい機会だ。
-このマネージャは、メンバに個人の目標と計画を報告するよう強制し、必要だと感じればそれらを修正する。
-次のようなやりとりをを何回聞いたことがある?「私はテストXをやるつもりです。…いや、それは来週だ。今日はYをやってくれ。」
-これはマイクロマネージメントだ。デイリースタンドアップはマイクロマネージャのための完璧なツールだ。&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;よいマネージャは責任を委譲する。&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;理想的なマネージメントには4つのステップが必要だ。&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;複雑なタスクを小さいサブタスクに分解する。&lt;/li&gt;
-&lt;li&gt;それらを部下に委譲する。&lt;/li&gt;
-&lt;li&gt;報酬と、ペナルティと、ルールをはっきりと伝える。&lt;/li&gt;
-&lt;li&gt;報酬はちゃんと支払われること、ペナルティは免れられないこと、ルールは厳格に守られることを確実にする。&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;完璧なマネージャは日々何をするかをメンバに指示しないし、業務時間の使い方にも口を出さない。
-彼は信頼し、コントロールする。
-彼は、メンバに作業方法を指示して自尊心を削ぐようなことは決してしない。
-すばらしいマネージャは次のようなことを言う。「今日はテストXをやるつもりだって? それは君の判断だ。最大限尊重するよ。ただ、Yが今週中に完了しなければ、君は約束どおりプロジェクトからはずされるということを忘れないでくれ。」
-こういうマネージャにデイリースタンドアップが必要だろうか?
-チームメンバに何をしているか聞く必要があるだろうか?
-彼はメンバの計画によけいな干渉はしない。
-代わりに、メンバを信頼し、成果をコントロールするだけだ。&lt;/p&gt;
-
-&lt;p&gt;重ねて言うが、私は責任は委譲されるべきだと強く信じている。この委譲は3つの要素からなる。報酬、ペナルティ、ルールだ。
-近代西洋文化の中では、これらを定めるのはむしろ難しいかもしれない。普通は長期の契約と月々の給料がある。
-しかし、よいマネージャは方法を模索しないといけない。それぞれのタスクは委譲され、分離されないといけない。
-これは、あるタスクに従事しているプログラマは、その成功または失敗に個人的な責任を持たなければいけないということだ。
-また、そのタスクの結果が与える影響を知っていなければいけない。&lt;/p&gt;
-
-&lt;p&gt;よいマネージャは、どんなチームメンバでも必ず責任逃れをしようとするということを理解している。
-誰もがマネージャの両肩に&lt;a href=&#34;http://hbr.org/1999/11/management-time-whos-got-the-monkey/ar/1&#34;&gt;責任猿&lt;/a&gt;(訳注: 責任のメタファである猿)を返そうとする。
-それは自然で不可避なことだ。デイリースタンドアップミーティングはこのたくらみを助長するだけだ。&lt;/p&gt;
-
-&lt;p&gt;朝、君が私に進捗を聞くと、私はいくつか問題があって今週末までにタスクが完了できるか怪しいと言う。
-それだけだ。私はもうそのタスクに責任がない。もし間に合わなくても私の失敗ではない。
-私は失敗するかもしれないと伝えたよね?
-今後、その責任は君がもつんだ。&lt;/p&gt;
-
-&lt;p&gt;よいマネージャはこういう策略について知っていて、それを防ぐために報酬・ペナルティ・ルールを明確に規定する。
-もし間に合わないかもしれないと言われたら、報酬を逃しペナルティを受けることを思い出させればいい。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;- 締め切りに間に合わないかもしれない…
-- それは残念だ。君は$200の週末ボーナスを逃すことになる。
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;プロジェクトマネージャやスクラムマスタがこんなことを言っているのを見たことがあるかい?
-あまりないと思う。そう、よいマネージャは珍獣なんだ。
-しかし、よいマネージャだけが報酬・ペナルティ・ルールを明確に厳格に定義する能力を持つ。&lt;/p&gt;
-
-&lt;p&gt;この3点が定義されれば、毎朝状況報告ミーティングをする必要はなくなる。
-全てがありのままに明確になる。全員がゴールと目標を把握する。
-全員が失敗したときに何が起こるかを知っているし、成功したときに何を得られるかも知っている。
-マネージャは毎朝それをメンバに確認する必要はない。マネージャはメンバの進捗を確認する必要もない。
-マネージャは既に非常に明確に各メンバの目標を定めている。それについて毎朝話す必要があるだろうか?&lt;/p&gt;
-
-&lt;p&gt;ダメなマネージャは目標を定める能力がないので、毎朝メンバをマイクロマネージメントしようとする。
-実際、ダメなマネージャは一日中マイクロマネージメントしている。
-明確なゴールやルールがないので、チームが間違ったことをしたり何もできなかったりするのではないかと恐れている。
-しょっちゅう状況確認するのはそのせいだ。
-実際のところ、彼はチームの首根っこをつかんでいるのだ。&lt;/p&gt;
-
-&lt;h3 id=&#34;モチベーション&#34;&gt;モチベーション&lt;/h3&gt;
-
-&lt;p&gt;&lt;strong&gt;ダメなマネージャは皆の前で恥をさらさせてモチベーションを下げさせる。&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;ダメなマネージャはチームメンバにやる気を出させる適切な仕組みの作り方を知らないため、恥をさらすことへの生理的な恐怖を利用する。
-誰も「忘れました」と皆の前で言いたくないのが当然だ。
-デイリースタンドアップミーティングは全員を一列に並べて「昨日何をした?」と尋ねる場だ。
-この恐怖の時間はチームにやる気を出させるだろ?
-私はそうは思わないが。&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;よいマネージャは目標でモチベーションを上げさせる。&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;理想的なマネージメントは、目標を定めて、チームメンバがスキル、リソース、知識、情熱を駆使してそれを達成できるようにする。
-適切に定められた目標は常に3つの要素からなる。報酬、ペナルティ、ルールだ。
-すばらしいマネージャは組織の目標を個人の目標に落とし込む方法を知っている。
-「もし今週中にこの機能を納品できたら、会社はさらなる利益を出せる。サリー、君個人としては$500を得る。もし君がしくじったら、君は他の、あまり面白くないプロジェクトに異動することになる。」
-これが完璧に定められた目標だ。毎朝、皆の前で、機能の実装を忘れてないかとか、熱心に作業しているかとか、サリーに尋ねる必要があるだろうか?
-この尋問は彼女の手助けになるだろうか?
-なるはずがない !
-彼女は既に何のために作業しているか知っていて、動機付けは十分だ。
-彼女が期日に作業を終えたら、ミーティングを開いて、皆の前で$500のチェックをあげよう。
-これがよいマネージャによるミーティングの使い方だ。&lt;/p&gt;
-
-&lt;p&gt;他にもある。
-皆の前での日々の進捗報告は、チーム内最高のメンバを堕落させ、最悪にしてしまう。
-主な理由は、彼らは突出した成果を出すことで他の人の気を損ねたくないからだ。
-グループ内で他の皆と同じように振舞おうとするのは、人間の性だ。
-皆が「まだ結果は出ていません」と報告しているときに、有能なプログラマが「全てのタスクを終えたので、他の仕事をください」と言うことを期待するのは奇妙だ。
-いや、一回くらいはこういうことを言うかもしれないが、しばらくするとこの有能なプログラマは熱心に作業することをやめるか、チームを抜ける。
-彼は、彼の成果が際立っていることを知り、それがグループから評価されていないことを知る。マネージャが何を言おうとも。&lt;/p&gt;
-
-&lt;p&gt;よいマネージャは、プログラマそれぞれに固有の作業速度、質、給料があることを理解する。
-よいマネージャは、人によって与えるタスクを変え、異なる結果が返ってくることを期待する。
-明らかに、朝全員を並ばせて、皆が同じような報告をすることを期待するのは大きな間違いだ。
-この間違いは、突出した成果を出して格別な評価と報酬を得たがっている有能なメンバに破壊的な効果をもたらす。&lt;/p&gt;
-
-&lt;p&gt;ダメなマネージャは異なる人々を異なる方法でマネージメントできない。単にやり方を知らないからだ。
-そのため、デイリースタンドアップという、全員が同じような、比較しやすい成果を報告する場が必要になる。
-また、皆と違った報告をする人を責めたり励ましたりもしやすい。
-言い換えると、ダメなマネージャはデイリースタンドアップを平等の手段として使う。この場合の平等は、チーム全体のモチベーションを破滅させるだけだ。&lt;/p&gt;
-
-&lt;p&gt;デイリースタンドアップや、他のあらゆる状況報告ミーティングは、怠惰で愚かなマネージャを隠して守るのにはすばらしい手段だ。
-マネージャの無能っぷりをチームメンバから隠すことができる。
-適正のなさを隠し、問題や挑戦やリスクへの恐れを隠す。
-よいマネージャになりたいなら、デイリースタンドアップで自分自身を困らせないことだ。&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;以上がYegorの記事。&lt;/p&gt;
-
-&lt;p&gt;Yegorは、自身が経営する&lt;a href=&#34;http://www.teamed.io/&#34;&gt;Teamed.io&lt;/a&gt;という会社でのソフトウェア開発プロジェクトを、自身が考案した&lt;a href=&#34;http://www.xdsd.org/&#34;&gt;XDSD&lt;/a&gt;という手法を使ってマネジメントしている。
-上の記事は、そのXDSDを念頭に、
-巷で流行っている&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E3%82%B9%E3%82%AF%E3%83%A9%E3%83%A0_%28%E3%82%BD%E3%83%95%E3%83%88%E3%82%A6%E3%82%A7%E3%82%A2%E9%96%8B%E7%99%BA%29&#34;&gt;スクラム&lt;/a&gt;などで行われるデイリースタンドアップにはっきりと異を唱えるものだ。&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.agilemanifesto.org/iso/ja/&#34;&gt;アジャイルソフトウェア開発宣言&lt;/a&gt;が発表されてから14年もたち、私の会社のような古い体質の組織にもアジャイルな手法や理念はさすがに浸透していて、私の周りでもデイリーミーティングをするチームが目立つ。私としては、管理される側にとっても、管理する側にとっても、いい情報交換の場だとは思うが、だらだら長くなりがちで、じわじわ煩わしくなるのが難。&lt;/p&gt;
-
-&lt;p&gt;Yegorは、定例ミーティングなんかやめて、情報交換は必要なときに必要な人どうしでやれよと言っているわけだけど、悪いニュースは隠したくなるし、いいニュースもきっかけがないと報告するのがおっくうになるのは自然の摂理ではないか。
-この摂理を乗り越え、適時情報共有するための、「適切な情報伝達フロー」の作り方は、また別の記事に書かれているんだろうか。&lt;/p&gt;
-
-&lt;p&gt;責任の委譲についてのくだりは、以前読んだドラッカーを思い出した。もしドラだけど。
-ドラッカーは「権限 (authority) を委譲しろ」と言っていたけど、Yegorは「責任 (responsibility) を委譲すべき」と言っている。
-また、ドラッカーは、「権限の委譲を責任の放棄と混同してはいけない。権限を委譲したらむしろマネージャの責任は大きくなる」と言っていた。
-つまり、Yegorはここでさらっとドラッカーにも異を唱えていることになる。
-権威によるバイアスもあるのかもしれないが、私にはやはりドラッカーの話の方がしっくりくる。責任は猿みたいに身軽に移動できるものとは思えない。
-失敗した部下のボーナスを減らして別のプロジェクトに飛ばしたところで、開発の遅れを取り戻せるわけではないし、納品が遅れたら怒られるのは結局上の人たちだ。&lt;/p&gt;
-
-&lt;p&gt;ところで、XDSDもそうっぽいけど、アジャイルな開発手法は基本的に、意欲に満ちた優秀なメンバで構成されたチームを前提に組み立てられたものだ。
-私の会社を含む、日本の大企業がやっているような、経験(ほぼ)不問、サークルやバイトでの体験談を聞いて新卒一括人柄採用なんてボランティアみたいな選考方法を刷新しない限り、上手く回るようになることはない。
-こんないい加減なやり方で集められた烏合の衆で、何千万も何億も稼ぐソフトウェアを作ろうってんだから、上の人たちはさぞかし大変なんだろう。意欲に欠けた部下の尻を叩くためにデイリースタンドアップをやらざるを得ないマネージャを批判するのは、ちょっと気の毒に思える。&lt;/p&gt;
 </description>
         </item>
       

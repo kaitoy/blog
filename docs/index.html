@@ -14,9 +14,9 @@
     <link rel="canonical" href="https://www.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="NNMiログをFilebeatで集めてLogstashで構造化してElasticsearchに入れてelasticsearch-headで見てみたけど、ログ量が少なかったせいかあんまり恩恵が感じられなかった話。 (adsbygoogle = window.adsbygoogle || []).push({}); Elasticsearchとは ElasticsearchはElastic社が開発しているElastic Stack(旧ELK Stack)というオープンソースなデータ収集分析ツール群のコア製品。 内部でLuceneを使っていて、そのためJava製。 「分散型RESTful検索/分析エンジン」と自称しているが、スキーマレスでNoSQLなドキュメント指向分散データベース管理システムとも見れる。 Elasticsearchインスタンスはノードと呼ばれ、単一または複数のノードによるシステムはクラスタと呼ばれる。 同一ネットワークに複数のノードを立ち上げると自動で相互検出してクラスタを構成してくれ、そこにデータを入れると自動で冗長化して分散配置してくれるので、堅牢でレジリエントでスケーラブルなシステムが簡単に構築できる。 Elasticsearchが管理するデータの最小単位はドキュメントと呼ばれ、これはひとつのJSONオブジェクトで、RDBにおける行にあたる。 つまり、JSONオブジェクトの各フィールドがRDBにおける列にあたる。 同種のドキュメントの集まりはインデックスと呼ばれ、これはRDBにおけるテーブルにあたる。 テーブルのスキーマにあたるものはマッピングと呼ばれ、ドキュメントのフィールドの型情報(e.g. string, integer)などを含み、Elasticsearchが自動で生成してくれる。(指定もできる、というかすべきらしい。) インデックス内ではさらにタイプという属性でドキュメントをカテゴライズできる、が、マニュアルからはタイプはあまり使ってほしくない雰囲気が感じられる。 因みに、インデックスがRDBのデータベースでタイプがRDBのテーブルと説明されることもあるが、これは古いたとえで、公式が間違いだったとしているので忘れてあげたい。 インデックスは分散処理のために分割でき、分割した各部分はシャードと呼ばれる。 シャードを冗長化のためにコピーしたものはレプリカシャードと呼ばれ、レプリカシャードにより成るインデックスはレプリカと呼ばれる。 デフォルトでは、ひとつのインデックスは5つのシャードに分割され、1つのレプリカが作成される。 インターフェースはREST APIだけ。 REST APIに検索したいドキュメントを投げると、ドキュメントのフィールド毎に自動で形態素解析とかして転置インデックス作って保管してくれる。 検索もJSONで表現したクエリをREST APIに投げることで結果をJSONで受け取ることができる。 検索は転置インデックスや分散処理のおかげで速く、またスコアリングによってより適切な結果が得られるようになっている。 今回使ったのはv5.2.1。 Logstashとは LogstashはElastic Stackに含まれる製品で、データ収集エンジンであり、データの受け取り、解析/加工、出力の三つの機能を持つリアルタイムパイプラインを構成する。 この三つの機能はそれぞれインプットプラグイン、フィルタプラグイン、アウトプットプラグインで提供されていて、プラグインの組み合わせにより様々なパイプラインを構成できる。 インプットプラグインは単位データ(一回分のログなど)を受け取り、タイムスタンプなどのメタデータを付けたりパースしたりしてイベントを生成し、パイプラインに流す。 フィルタプラグインはインプットプラグインからイベントを受け取り、設定されたルールに従って情報を拡充したり変更したり構造化したり秘匿情報を消したりしてアウトプットプラグインに渡す。 アウトプットプラグインは指定されたディスク上のパスやデータベースやアプリやサービスにイベントを書き込んだり送信したりする。 名前の通りもともとログ収集ツールだったが、今では様々なデータに対応していて、テキストログファイルの他にsyslog、HTTPリクエストやJDBCなんかの入力を受けることもできる。 Ruby(とJava)で書かれている。 今回使ったのはv5.2.2で、プラグインは以下を使った。 インプット: beats 3.1.12: Beats(後述)からデータを受け取るプラグイン。LumberjackというElastic社が開発しているプロトコルを使い、TCPネットワーク上でデータを受信する。 フィルタ: grok 3.3.1: 正規表現でパターンマッチして非構造化データを構造化するプラグイン。ログ解析の定番で、例えば、ログからタイムスタンプ、クラス名、ログメッセージを抽出したりする。組み込みのパターンが120個くらいあり、Apache HTTP Serverやsyslogのログであれば自分で正規表現を書く必要はない。 アウトプット: elasticsearch 6.2.6: Elasticsearchにイベントをポストするプラグイン。 Beatsとは BeatsもElastic Stackに含まれる製品で、データを採取してLogstashやElasticsearchに送信する製品群の総称。 libbeatというGoのライブラリを使って作られていて、以下のようなものがある。 Filebeat: ログファイルからログを取得する。 Heartbeat: リモートサービスをpingして生死監視する。 Metricbeat: OSとその上のサービスやアプリから稼動情報を取得する。 Packetbeat: パケットキャプチャしてネットワークのトラフィックを監視する。 Winlogbeat: Windowsのイベントログを取得する。 今回使ったのはFilebeat 5.2.2。 Filebeatは指定したログファイルを監視し、変更を検知してリアルタイムにログを送信してくれる。 FilebeatとLogstashが仲良くやってくれて、バッファがあふれるなどすることによるログの損失が起きないようにしてくれるらしい。 Logstashが単位データを受け取るので、ログファイルからひとつひとつのログを切り出すのはFilebeatの責務。 一行一ログなら何も考えなくていいけど、大抵複数行のログがあるのでなんとかする必要がある。 elasticsearch-headとは elasticsearch-headは3rdパーティ製(個人製?)のElasticsearchのWeb UI。 ElasticsearchのUIはREST APIしかないのでこういうものを使わないと辛い。 ElasticsearchのGUIとしてはElastic StackのKibanaが有名だけど、これは大量のログから統計的な情報を見るのに便利そうなものであって、今回やりたかった障害原因調査のためにログを細かく追うのには向いてなさそうだったので使わなかった。 実験環境 今回は単にログがどんな感じに見えるか試したかっただけなので、全部ローカルで動かして、ローカルに置いた静的なログファイルを読むだけ。 環境はWindows 7のノートPC。 ログファイルはC:\Users\Kaito\Desktop\logs\においたnnm-trace.logとnnm-trace.log.1。 これらはNNMiのメインログで、JULで出力されたもの。 NNMiは無料のコミュニティエディションのv10.00をVMのCentOSに適当に入れて採った。 ログはだいたい以下の様な一行のもの。 2017-03-15 19:09:55.896 INFO [com.hp.ov.nms.spi.common.deployment.deployers.ExtensionServicesDeployer] (Thread-2) Deploying arris-device 2017-03-15 19:09:55.923 WARNING [com.hp.ov.nms.topo.spi.server.concurrent.NmsTimerTaskImpl] (NmsWorkManager Scheduler) Skipping task execution because previous execution has not completed: com.hp.ov.nnm.im.NnmIntegrationModule$EnablerTask@3abdac77 2017-03-15 19:09:56.120 INFO [com.hp.ov.nms.disco.spi.DiscoExtensionNotificationListener] (Thread-2) Disco deployed mapping rules: META-INF/disco/rules/cards/ArrisCard.xml たまに複数行のものがある。 2017-03-15 19:13:30.872 INFO [com.hp.ov.nms.trapd.narrowfilter.NarrowTrapAnalysis] (pool-1-thread-18) ***** Hosted Object Trap Rate Report ***** Hosted object trap storm detection and suppression stage started: Wed Mar 15, 2017 19:09:00.746 PM.">
+    <meta property="og:description" content="この記事を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、Gitの git rebase というコマンドについて説明する。 このコマンドは、コミット履歴を改変できるGit特有のコマンドで、分かり辛いGitコマンドの中でも最も分かり辛い部類のものだ。 Gitの最後の関門と言えよう。 けど、それだけに使いこなせばとても便利なものでもある。 (adsbygoogle = window.adsbygoogle || []).push({}); git rebaseがもつたった一つの機能 git rebaseにはいろんなオプションがあって、ちょっと調べただけだと、コミットを移動する機能とコミットを修正する機能の二つがあるように見えるかもしれないが、実際は単一の機能しかないシンプルなコマンドだ。 その機能とは、指定した範囲のコミットが含む変更を、別に指定したコミットのコードベースに適用するというもの。 コマンドの基本形は次のようなものだ。 $ git rebase --onto master dev bugfix このコマンドは、bugfixから辿れるコミット群から、devから辿れるコミット群を除いたコミット群が含む変更を、masterのコードベースに適用する。 と書いても分からないので図解する。 このスライドを見ると、git rebaseに指定した3つのブランチのそれぞれの使われ方が分かるはず。 git rebase --onto master dev bugfixが実行する処理をもっと正確に言うと、 bugfixをcheckoutして(i.e. HEADをbugfixにして)、 dev..HEADのコミット群が含む変更を、それぞれ仮領域にパッチとして保存して、 git reset --hard masterして、 仮領域に保存した変更を、HEADが指すコミットのコードベースにひとつひとつ順番に適用する。 上記コマンドでbugfixのところを省略すると、ステップ1のcheckoutが省略される。 言い換えると、上記コマンドは次の二つのコマンドに分解できる。 $ git checkout bugfix $ git rebase --onto master dev さらに、--onto masterを省略すると、ステップ3のreset先が変わり、devになる。 このときのコマンドの形は、 $ git rebase dev という見慣れたものになるが、これが最初に挙げた基本形の省略形だと認識しておくと応用が利く。 以下にgit rebase devの動きを細かめに図解する。 インタラクティブモード 前節のスライドに書いたパッチの適用をカスタマイズできるのがインタラクティブモードで、これは-iオプションで有効にできる。 インタラクティブモードを使うと、パッチをスキップしたり、順番を変えたり、まとめたり、分割したり、編集したりでき、またパッチとパッチの間に任意のコマンドを実行でき、例えばパッチごとにユニットテストを実行できたりする。 インタラクティブモードの使い方についてはググればたくさん出てくるのでここには書かない。">
     
-    <meta property="og:image" content="https://www.kaitoy.xyz/images/logo-elastic.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/git.png">
     
     
     
@@ -74,6 +74,28 @@
     <div id="posts">
       
       <div class="row">
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://www.kaitoy.xyz/2017/06/10/git-rebase/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/git.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sat, Jun 10, 2017</span>
+              </div>
+              <h2 class="title">git rebaseを図解する</h2>
+              <div class="summary">
+                この記事を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、Gitの git rebase というコマンドについて説明する。 このコマンドは、コミット履歴を改変できるGit特有のコマンドで、分かり辛いGitコマンドの中でも最も分かり辛い部類のものだ。 Gitの最後の関門と言えよう。 けど、それだけに使いこなせばとても便利なものでもある。 (adsbygoogle = window.adsbygoogle || []).push({}); git rebaseがもつたった一つの機能 git rebaseにはいろんなオプションがあって、ちょっと調べただけだと、コミットを移動する機能とコミットを修正する機能の二つがあるように見えるかもしれないが、実際は単一の機能しかないシンプルなコマンドだ。 その機能とは、指定した範囲のコミットが含む変更を、別に指定したコミットのコードベースに適用するというもの。 コマンドの基本形は次のようなものだ。 $ git rebase --onto master dev bugfix このコマンドは、bugfixから辿れるコミット群から、devから辿れるコミット群を除いたコミット群が含む変更を、masterのコードベースに適用する。 と書いても分からないので図解する。 このスライドを見ると、git rebaseに指定した3つのブランチのそれぞれの使われ方が分かるはず。 git rebase --onto master dev bugfixが実行する処理をもっと正確に言うと、 bugfixをcheckoutして(i.e. HEADをbugfixにして)、 dev..HEADのコミット群が含む変更を、それぞれ仮領域にパッチとして保存して、 git reset --hard masterして、 仮領域に保存した変更を、HEADが指すコミットのコードベースにひとつひとつ順番に適用する。 上記コマンドでbugfixのところを省略すると、ステップ1のcheckoutが省略される。 言い換えると、上記コマンドは次の二つのコマンドに分解できる。 $ git checkout bugfix $ git rebase --onto master dev さらに、--onto masterを省略すると、ステップ3のreset先が変わり、devになる。 このときのコマンドの形は、 $ git rebase dev という見慣れたものになるが、これが最初に挙げた基本形の省略形だと認識しておくと応用が利く。 以下にgit rebase devの動きを細かめに図解する。 インタラクティブモード 前節のスライドに書いたパッチの適用をカスタマイズできるのがインタラクティブモードで、これは-iオプションで有効にできる。 インタラクティブモードを使うと、パッチをスキップしたり、順番を変えたり、まとめたり、分割したり、編集したりでき、またパッチとパッチの間に任意のコマンドを実行でき、例えばパッチごとにユニットテストを実行できたりする。 インタラクティブモードの使い方についてはググればたくさん出てくるのでここには書かない。
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
         
         
         
@@ -139,33 +161,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2017/02/14/change-subdomain/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2017/02/14/change-subdomain/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/Google-search-console.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Tue, Feb 14, 2017</span>
               </div>
-              <h2 class="title">ブログアドレスを変更したときにやったこと</h2>
-              <div class="summary">
-                このブログの閲覧数がそこそこの規模になってきたので、Google AdSenseで小遣い稼ぎを始めようとしたら、最近サブドメインがwwwじゃないとできないようになったようだったので、サブドメインをtbdからwwwに変更した話。 変更自体はそんなに難しくなかったけど、Googleの検索順位を保つためにいろいろ気を使う必要があった。 (adsbygoogle = window.adsbygoogle || []).push({}); ブログアドレスの変更 以前にも書いたが、このブログはHugoで作ってGitHub Pagesでカスタムドメインで公開している。 コメント欄を設けるためにDisqusを使っている。 Cloudflareを使って全体をHTTPS化していて、その関係でkaitoy.xyzドメインの名前解決にはCloudflareのDNSを使っている。 アクセス解析などのためにGoogle AnalyticsとGoogle Search Consoleを使ってる。 この構成で、ブログアドレスの変更に必要だった修正を列挙する。(この順にやったわけではない。) 1. ブログソース修正 Hugoの設定ファイルであるconfig.tomlに書いてあるbaseurlの値をhttps://tbd.kaitoy.xyzからhttps://www.kaitoy.xyzに変え、また、各記事の内部リンクのURLもwwwのに変えた。 あとrobots.txtのSitemapのURLもhttps://www.kaitoy.xyz/sitemap.xmlに更新した。 2. GitHub Pagesの設定変更 ブログリポジトリに行って、SettingsのGitHub Pages欄のCustom domainの値をhttps://www.kaitoy.xyzに変えた。 ついでにブログリポジトリのトップに表示されるDescriptionのWebsiteの値も新しいURLに変更した。 この変更によりありがたい副作用もあった。 GitHub Pagesはwwwというサブドメインを特別扱いしていて、以下の恩恵を受けられるのだ。 wwwを省略したURL(apex domain)でアクセスすると、GitHub Pagesサーバがwww付きのURLにリダイレクトしてくれる。 安定していて速い。 3. CloudflareのDNS設定変更 CloudflareのDNSで、もともとCNAMEレコードでkaitoy.github.io(GitHub Pagesのデフォルトのドメイン)のエイリアスをtbdにしていたのをwwwに変更した。 また、上記の通りapex domainでGitHub Pagesにアクセスしても上手いことやってくれるようになったので、www.kaitoy.xyzのエイリアスをkaitoy.xyzとするCNAMEレコードを追加した。 CloudflareのDNSはapex domain(i.e. kaitoy.xyz)に対するCNAMEレコード設定をサポートしているので、これでwww.kaitoy.xyzでもkaitoy.xyzでもGitHub Pagesにルーティングされるようになった。 4. Disqusの設定変更 ホームの右上の歯車アイコンからAdminを開いて、ヘッダのSettingsからブログのURLを選んでその設定画面を開き、Website URLをhttps://www.kaitoy.xyzに変更した。 5. Google Analyticsの設定変更 管理タブのプロパティ設定のデフォルトの URLをhttps://www.kaitoy.xyzに変更しただけ。 Googleのページランクを保つためのあれこれ 以前もどこかに書いたが、どんなにすばらしい内容の記事を書いてもGoogle検索結果の2,3ページくらいまでに出てこないんであれば誰も読んでくれない。 このブログのいくつかの記事はそれなりにいいキーワードでいい検索順位になっていたので、サブドメイン変更によってページランクに悪影響が出るのはなるべく避けたかった。 調べたら、Google Search Consoleのヘルプにまさにその悪影響を防ぐ方法が載っていたので、これに従ってあれこれした。 1. 自身を参照する rel=&quot;canonical&quot;リンクタグを付ける ブログの全てのページのヘッダに以下の様な移転先アドレスを指すlinkタグを付け、変更後のアドレスが正式なアドレスであることをGooglebotに教えてやる。 &lt;link rel=&quot;canonical&quot; href=&quot;https://www.kaitoy.xyz/2015/07/18/first-post/&quot;&gt; Hugoのソースでいうと以下の感じ。 &lt;link rel=&quot;canonical&quot; href=&quot;{{ .Permalink }}&quot;&gt; 2.
-              </div>
+              <h3 class="title">ブログアドレスを変更したときにやったこと</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         
