@@ -84,7 +84,7 @@ URIを入力して`Browse`ボタンを[押下する](http://qiita.com/yaju/items
 Spring Bootを使ったおかげで、ビルド成果物は単一のjarで、これを以下の様に実行するだけでサーバが立ち上がる。Webアプリケーションコンテナいらず。
 
 ```sh
-$ java -jar goslings-server-0.0.1.jar　--server.port 80
+$ java -jar goslings-server-0.0.1.jar --server.port=80
 ```
 
 `com.github.kaitoy.goslings.server.reposDir`というシステムプロパティを使って作業ディレクトリのパスを指定できる。
