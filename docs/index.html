@@ -14,9 +14,9 @@
     <link rel="canonical" href="https://www.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="この記事を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、Gitの git rebase というコマンドについて説明する。 このコマンドは、コミット履歴を改変できるGit特有のコマンドで、分かり辛いGitコマンドの中でも最も分かり辛い部類のものだ。 Gitの最後の関門と言えよう。 けど、それだけに使いこなせばとても便利なものでもある。 (adsbygoogle = window.adsbygoogle || []).push({}); git rebaseがもつたった一つの機能 git rebaseにはいろんなオプションがあって、ちょっと調べただけだと、コミットを移動する機能とコミットを修正する機能の二つがあるように見えるかもしれないが、実際は単一の機能しかないシンプルなコマンドだ。 その機能とは、指定した範囲のコミットが含む変更を、別に指定したコミットのコードベースに適用するというもの。 コマンドの基本形は次のようなものだ。 $ git rebase --onto master dev bugfix このコマンドは、bugfixから辿れるコミット群から、devから辿れるコミット群を除いたコミット群が含む変更を、masterのコードベースに適用する。 と書いても分からないので図解する。 このスライドを見ると、git rebaseに指定した3つのブランチのそれぞれの使われ方が分かるはず。 git rebase --onto master dev bugfixが実行する処理をもっと正確に言うと、 bugfixをcheckoutして(i.e. HEADをbugfixにして)、 dev..HEADのコミット群が含む変更を、それぞれ仮領域にパッチとして保存して、 git reset --hard masterして、 仮領域に保存した変更を、HEADが指すコミットのコードベースにひとつひとつ順番に適用する。 上記コマンドでbugfixのところを省略すると、ステップ1のcheckoutが省略される。 言い換えると、上記コマンドは次の二つのコマンドに分解できる。 $ git checkout bugfix $ git rebase --onto master dev さらに、--onto masterを省略すると、ステップ3のreset先が変わり、devになる。 このときのコマンドの形は、 $ git rebase dev という見慣れたものになるが、これが最初に挙げた基本形の省略形だと認識しておくと応用が利く。 以下にgit rebase devの動きを細かめに図解する。 インタラクティブモード 前節のスライドに書いたパッチの適用をカスタマイズできるのがインタラクティブモードで、これは-iオプションで有効にできる。 インタラクティブモードを使うと、パッチをスキップしたり、順番を変えたり、まとめたり、分割したり、編集したりでき、またパッチとパッチの間に任意のコマンドを実行でき、例えばパッチごとにユニットテストを実行できたりする。 インタラクティブモードの使い方についてはググればたくさん出てくるのでここには書かない。">
+    <meta property="og:description" content="現在仕事でServiceNow上で動くアプリケーションを開発していて、それのブラウザテストをどうやろうかというのを少し考えたので、書き残しておく。 (adsbygoogle = window.adsbygoogle || []).push({}); ServiceNowとは 本題とほとんど関係ないけど、一応ServiceNowに簡単に触れる。 ServiceNowはITサービス管理のSaaS。 世界的にはITサービス管理のデファクトスタンダードとなっているが、日本ではこれから盛り上がりそうといった感じ。 アプリケーションを開発するプラットフォームとしての側面もあり、JavaScript(ブラウザ側とサーバ側両方)でServiceNowの機能を拡張し、他システムと連携させたり処理を自動化したりできる。 アプリケーションがServiceNowプラットフォームで動くので、テスト方法が悩ましい。 Automated Test Frameworkというテストフレームワークが提供されてはいるが、2017年1月にリリースされたばかりということもあるのか、機能がしょぼく、大したことはできない。 これが自前でブラウザテスト環境を作ろうと思った理由。 アプリケーションがJavaScriptなので、テストもJavaScriptで書きたい。 ブラウザテストとは ここでブラウザテストとは、稼働しているWebアプリケーションに、HTTPクライアントで接続して、レンダリングされたWebページを操作して実行する自動E2Eテストのこととする。 HTTPでWebコンテンツを取得して、HTML・CSSをパースしてレンダリングして、JavaScriptを実行するツール、つまりWebブラウザを何にするかというのと、それを自動で操作するのをどうするかというのと、テストどう書くのかということと、書いたテストをどう実行するかということと、テスト結果をどう集計してレポートするかといった辺りを考える必要がある。 Qiitaの記事「ブラウザテストツール総まとめ・2016年夏版」にブラウザテストのためのツールが色々載っている。 レイヤや目的が異なるツールがちょっとごっちゃになってる気がするけど。 SeleniumとかWebDriverとか ブラウザテストはWebDriver抜きでは語れないので、とりあえずそれについて書く。 それにはまずSeleniumについて語らなければなるまい。 ブラウザテスト創世記にはこうある。 神は「光あれ」と言われた。 するとSeleniumがあった。 神はその光を見て、良しとされた。 神はその光と闇とを分けられた。 神は光をSelenium RC (aka Selenium 1)と名づけ、 闇 をSelenium WebDriver (aka Selenium 2)と名づけられた。 (Seleniumの歴史をもっとちゃんと知りたければこの記事を読むべし。) 要は、今ブラウザテストと言ったらSelenium、Seleniumと言ったらSelenium WebDriverというわけだ。 Selenium WebDriverは、WebDriver APIでブラウザやDOMエレメントを操作するツール。 このAPIを実装したクライアントライブラリが各言語(Java、Ruby、Python、JavaScriptなど)で提供されていて、テストコードから利用できる。 APIの裏ではドライバなるものが暗躍していて、OSやブラウザのネイティブAPIを使ってブラウザを操作している。 このドライバはブラウザごと(Chrome、Firefox、IEなど)に用意されていて、その実装形式がドライバ毎に割と違っている。 例えばFirefox用のやつ(Firefox Driver)はFirefox のアドオンを使うし、Chrome用のやつ(ChromeDriver)は独立したネイティブアプリを介してブラウザを操作する。 ドライバは(基本的に)ブラウザと同じマシンにある必要があり、実行するテストコードとも(基本的に)同居している必要がある。 テストを実行するマシンとは別のマシンのブラウザでテストしたければSelenium Server (aka Selenium Standalone Server)を使う。 Selenium Serverはブラウザとドライバと同じマシンで動き、テストコードから送信されたブラウザ操作コマンドを受信してドライバに伝える、プロキシ的な働きをしてくれる。 Selenium Serverを使えば、クライアントライブラリが対応していないドライバでも利用できるというメリットもある。 Selenium Serverを使うと、オーバーヘッドはあるけどメリットが多いので、とりあえず使うようにしておけば間違いなさそう。 Selenium Serverが受け取るブラウザ操作コマンドは、HTTPでJSONデータとして送信される。 この辺りの通信は、もともとJsonWireProtocol (aka">
     
-    <meta property="og:image" content="https://www.kaitoy.xyz/images/git.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/Seleniumlogo.png">
     
     
     
@@ -74,6 +74,28 @@
     <div id="posts">
       
       <div class="row">
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://www.kaitoy.xyz/2017/07/12/2017-selenium-headless-browsers/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/Seleniumlogo.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Wed, Jul 12, 2017</span>
+              </div>
+              <h2 class="title">2017年夏、Selenium、ヘッドレスブラウザ</h2>
+              <div class="summary">
+                現在仕事でServiceNow上で動くアプリケーションを開発していて、それのブラウザテストをどうやろうかというのを少し考えたので、書き残しておく。 (adsbygoogle = window.adsbygoogle || []).push({}); ServiceNowとは 本題とほとんど関係ないけど、一応ServiceNowに簡単に触れる。 ServiceNowはITサービス管理のSaaS。 世界的にはITサービス管理のデファクトスタンダードとなっているが、日本ではこれから盛り上がりそうといった感じ。 アプリケーションを開発するプラットフォームとしての側面もあり、JavaScript(ブラウザ側とサーバ側両方)でServiceNowの機能を拡張し、他システムと連携させたり処理を自動化したりできる。 アプリケーションがServiceNowプラットフォームで動くので、テスト方法が悩ましい。 Automated Test Frameworkというテストフレームワークが提供されてはいるが、2017年1月にリリースされたばかりということもあるのか、機能がしょぼく、大したことはできない。 これが自前でブラウザテスト環境を作ろうと思った理由。 アプリケーションがJavaScriptなので、テストもJavaScriptで書きたい。 ブラウザテストとは ここでブラウザテストとは、稼働しているWebアプリケーションに、HTTPクライアントで接続して、レンダリングされたWebページを操作して実行する自動E2Eテストのこととする。 HTTPでWebコンテンツを取得して、HTML・CSSをパースしてレンダリングして、JavaScriptを実行するツール、つまりWebブラウザを何にするかというのと、それを自動で操作するのをどうするかというのと、テストどう書くのかということと、書いたテストをどう実行するかということと、テスト結果をどう集計してレポートするかといった辺りを考える必要がある。 Qiitaの記事「ブラウザテストツール総まとめ・2016年夏版」にブラウザテストのためのツールが色々載っている。 レイヤや目的が異なるツールがちょっとごっちゃになってる気がするけど。 SeleniumとかWebDriverとか ブラウザテストはWebDriver抜きでは語れないので、とりあえずそれについて書く。 それにはまずSeleniumについて語らなければなるまい。 ブラウザテスト創世記にはこうある。 神は「光あれ」と言われた。 するとSeleniumがあった。 神はその光を見て、良しとされた。 神はその光と闇とを分けられた。 神は光をSelenium RC (aka Selenium 1)と名づけ、 闇 をSelenium WebDriver (aka Selenium 2)と名づけられた。 (Seleniumの歴史をもっとちゃんと知りたければこの記事を読むべし。) 要は、今ブラウザテストと言ったらSelenium、Seleniumと言ったらSelenium WebDriverというわけだ。 Selenium WebDriverは、WebDriver APIでブラウザやDOMエレメントを操作するツール。 このAPIを実装したクライアントライブラリが各言語(Java、Ruby、Python、JavaScriptなど)で提供されていて、テストコードから利用できる。 APIの裏ではドライバなるものが暗躍していて、OSやブラウザのネイティブAPIを使ってブラウザを操作している。 このドライバはブラウザごと(Chrome、Firefox、IEなど)に用意されていて、その実装形式がドライバ毎に割と違っている。 例えばFirefox用のやつ(Firefox Driver)はFirefox のアドオンを使うし、Chrome用のやつ(ChromeDriver)は独立したネイティブアプリを介してブラウザを操作する。 ドライバは(基本的に)ブラウザと同じマシンにある必要があり、実行するテストコードとも(基本的に)同居している必要がある。 テストを実行するマシンとは別のマシンのブラウザでテストしたければSelenium Server (aka Selenium Standalone Server)を使う。 Selenium Serverはブラウザとドライバと同じマシンで動き、テストコードから送信されたブラウザ操作コマンドを受信してドライバに伝える、プロキシ的な働きをしてくれる。 Selenium Serverを使えば、クライアントライブラリが対応していないドライバでも利用できるというメリットもある。 Selenium Serverを使うと、オーバーヘッドはあるけどメリットが多いので、とりあえず使うようにしておけば間違いなさそう。 Selenium Serverが受け取るブラウザ操作コマンドは、HTTPでJSONデータとして送信される。 この辺りの通信は、もともとJsonWireProtocol (aka
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
         
         
         
@@ -139,33 +161,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2017/02/23/how-hibernate-ruined-my-career/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2017/02/23/how-hibernate-ruined-my-career/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/hibernate_logo.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Thu, Feb 23, 2017</span>
               </div>
-              <h2 class="title">Hibernateはどのようにして私のキャリアを破滅寸前にしたか</h2>
-              <div class="summary">
-                このエントリでは、Grzegorz Gajosによる記事、How Hibernate Almost Ruined My Careerを紹介する。 (Grzegorzから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 (adsbygoogle = window.adsbygoogle || []).push({}); 想像してくれ。 君はJava開発者で、次のビッグプロジェクトを開始しようとしているところだ。 君は、そのプロジェクト全体に影響する根本的な決断をする必要がある。 君の柔軟なデータモデルをオブジェクト指向で抽象化するベストな方法を選択したい。生のSQLを扱いたくはないからね。 どんな種類のデータもサポートしたいし、理想では全種のデータベースをサポートしたい。 すぐに思いつくのは、単にHibernateを使うという解だ。そうだろ？ Javaディベロッパの90%は君に同意するだろう。 しかし、それって正しい決断になっているだろうか？ Hibernateが一般に受け入れられているスタンダードだからといって盲目的に採用してしまうと、どんな問題が発生するかを見てみよう。 モニカというJava開発者がいるとしよう。 モニカは最近出世してアーキテクトの役職に就き、会社の新製品のための技術スタックを選定する責任者になった。 彼女は、Javaの世界にはデータベースとのやり取りを扱うたった一つの適切なツールがあることを知っている。Hibernateだ。 Hibernateは良く知られ支持されているJPAのスタンダードではあるが、プロジェクト開始前に多少のチェックをするのが定跡だ。 幸いにも、同僚のベンが適任者を知っている。 4年前、Hibernateは銀の弾丸かのように見えた ベン: やあモニカ。ジョンを紹介させてくれ。彼はHibernateの達人だ。君の助けになるはずだ。 モニカ: ジョン、時間を取ってくれてありがとう。 今、私たちが次なる目玉製品を開発しようとしてるのは知ってる？ 次のFacebookやGoogleになるつもりなの。 忙しくなるわ。巨大なものになる。 本当にすてき！ みんなとても興奮してる！ 私はアーキテクトの役に就いたから、とりあえず採用する技術スタックを選定しなければいけないの。 ひとつだけまだ欠けてるのが永続化なんだけど… ジョン: Hibernate！ モニカ: そう！そのとおり！ わたしもそう考えていたの！ それならわたしたちにぴったりで上手く行きそうでしょう。 マーケットと豊富な実績に裏付けられた、真の業務問題のための真の業務ソリューション。 とてもたくさんのポジティブな経験談を聞いたことがあるわ。 けど、一つ問題があって、チームメンバのひとりがそれに絶対反対してるの。 アプリケーションとデータベースの間に別のレイヤを加えるのを気にして。 彼はすごく頭がいいから、これが良い決断だと納得させるには本当にしっかりした根拠が必要なの。 助けてくれる？ ジョン: もちろん、よろこんで！ Hibernateは、実際、すばらしいツールです。 銀行といった、大きな真の業務ソリューションで広く使われています。 それを使って失敗するということはありえません。 永続化ときたらHibernate。 Javaで書いているならそれが完全に正しい選択ですし、さらには他の言語への移植もあります。 どれだけ多くの職務記述書がそれを要求しているか！ モニカ: 全く同感！ 同じことを感じていたわ。 前のプロジェクトで、ほとんどのところで生のJDBCからSQLを使っていたんだけど、ばかげてた！ そうでしょ！ けど、実は、ほんとに優秀なSQL屋がチームにいて、Hibernateが生成したSQLを見て神経質になってるの。 きたなくて読みにくいって。 これって将来問題になりそう？ ジョン: 気を付けてください。DBA屋ってのは違ったものの見方をします。
-              </div>
+              <h3 class="title">Hibernateはどのようにして私のキャリアを破滅寸前にしたか</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         
@@ -1289,6 +1308,9 @@
       <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
       
       
+      <a href="https://www.kaitoy.xyz/tags/headless-browser">headless-browser</a>
+      
+      
       <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
       
       
@@ -1338,6 +1360,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/selenium">selenium</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/seo">seo</a>

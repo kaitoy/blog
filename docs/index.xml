@@ -6,8 +6,212 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2017</rights>
-    <updated>2017-06-10 00:00:17 &#43;0900 JST</updated>
+    <updated>2017-07-12 22:36:22 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>2017年夏、Selenium、ヘッドレスブラウザ</title>
+          <link>https://www.kaitoy.xyz/2017/07/12/2017-selenium-headless-browsers/</link>
+          <pubDate>Wed, 12 Jul 2017 22:36:22 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2017/07/12/2017-selenium-headless-browsers/</guid>
+          <description>
+
+&lt;p&gt;現在仕事で&lt;a href=&#34;https://www.servicenow.com/ja&#34;&gt;ServiceNow&lt;/a&gt;上で動くアプリケーションを開発していて、それのブラウザテストをどうやろうかというのを少し考えたので、書き残しておく。&lt;/p&gt;
+
+&lt;p&gt;&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-7852181473528684&#34;
+     data-ad-slot=&#34;3938339651&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h1 id=&#34;servicenowとは&#34;&gt;ServiceNowとは&lt;/h1&gt;
+
+&lt;p&gt;本題とほとんど関係ないけど、一応ServiceNowに簡単に触れる。&lt;/p&gt;
+
+&lt;p&gt;ServiceNowはITサービス管理のSaaS。
+世界的にはITサービス管理のデファクトスタンダードとなっているが、日本ではこれから盛り上がりそうといった感じ。&lt;/p&gt;
+
+&lt;p&gt;アプリケーションを開発するプラットフォームとしての側面もあり、JavaScript(ブラウザ側とサーバ側両方)でServiceNowの機能を拡張し、他システムと連携させたり処理を自動化したりできる。&lt;/p&gt;
+
+&lt;p&gt;アプリケーションがServiceNowプラットフォームで動くので、テスト方法が悩ましい。
+&lt;a href=&#34;https://docs.servicenow.com/bundle/istanbul-release-notes/page/release-notes/servicenow-platform/automated-test-framework-rn.html&#34;&gt;Automated Test Framework&lt;/a&gt;というテストフレームワークが提供されてはいるが、2017年1月にリリースされたばかりということもあるのか、機能がしょぼく、大したことはできない。
+これが自前でブラウザテスト環境を作ろうと思った理由。&lt;/p&gt;
+
+&lt;p&gt;アプリケーションがJavaScriptなので、テストもJavaScriptで書きたい。&lt;/p&gt;
+
+&lt;h1 id=&#34;ブラウザテストとは&#34;&gt;ブラウザテストとは&lt;/h1&gt;
+
+&lt;p&gt;ここでブラウザテストとは、稼働しているWebアプリケーションに、HTTPクライアントで接続して、レンダリングされたWebページを操作して実行する自動E2Eテストのこととする。
+HTTPでWebコンテンツを取得して、HTML・CSSをパースしてレンダリングして、JavaScriptを実行するツール、つまりWebブラウザを何にするかというのと、それを自動で操作するのをどうするかというのと、テストどう書くのかということと、書いたテストをどう実行するかということと、テスト結果をどう集計してレポートするかといった辺りを考える必要がある。&lt;/p&gt;
+
+&lt;p&gt;Qiitaの記事「&lt;a href=&#34;http://qiita.com/cognitom/items/6cce719b57341769c14d&#34;&gt;ブラウザテストツール総まとめ・2016年夏版&lt;/a&gt;」にブラウザテストのためのツールが色々載っている。
+レイヤや目的が異なるツールがちょっとごっちゃになってる気がするけど。&lt;/p&gt;
+
+&lt;h1 id=&#34;seleniumとかwebdriverとか&#34;&gt;SeleniumとかWebDriverとか&lt;/h1&gt;
+
+&lt;p&gt;ブラウザテストはWebDriver抜きでは語れないので、とりあえずそれについて書く。
+それにはまず&lt;a href=&#34;http://www.seleniumhq.org/&#34;&gt;Selenium&lt;/a&gt;について語らなければなるまい。&lt;/p&gt;
+
+&lt;p&gt;ブラウザテスト創世記にはこうある。&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;神は「光あれ」と言われた。
+するとSeleniumがあった。&lt;/p&gt;
+
+&lt;p&gt;神はその光を見て、良しとされた。
+神はその光と闇とを分けられた。&lt;/p&gt;
+
+&lt;p&gt;神は光を&lt;a href=&#34;http://www.seleniumhq.org/projects/remote-control/&#34;&gt;Selenium RC&lt;/a&gt; (aka Selenium 1)と名づけ、
+闇 を&lt;a href=&#34;http://www.seleniumhq.org/projects/webdriver/&#34;&gt;Selenium WebDriver&lt;/a&gt; (aka Selenium 2)と名づけられた。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;(Seleniumの歴史をもっとちゃんと知りたければ&lt;a href=&#34;http://blog.trident-qa.com/2013/05/so-many-seleniums/&#34;&gt;この記事&lt;/a&gt;を読むべし。)&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;要は、今ブラウザテストと言ったらSelenium、Seleniumと言ったらSelenium WebDriverというわけだ。&lt;/p&gt;
+
+&lt;p&gt;Selenium WebDriverは、WebDriver APIでブラウザやDOMエレメントを操作するツール。
+このAPIを実装したクライアントライブラリが各言語(Java、Ruby、Python、JavaScriptなど)で提供されていて、テストコードから利用できる。&lt;/p&gt;
+
+&lt;p&gt;APIの裏ではドライバなるものが暗躍していて、OSやブラウザのネイティブAPIを使ってブラウザを操作している。
+このドライバはブラウザごと(Chrome、Firefox、IEなど)に用意されていて、その実装形式がドライバ毎に割と違っている。
+例えばFirefox用のやつ(&lt;a href=&#34;https://github.com/SeleniumHQ/selenium/wiki/FirefoxDriver&#34;&gt;Firefox Driver&lt;/a&gt;)はFirefox のアドオンを使うし、Chrome用のやつ(&lt;a href=&#34;https://github.com/SeleniumHQ/selenium/wiki/ChromeDriver&#34;&gt;ChromeDriver&lt;/a&gt;)は独立したネイティブアプリを介してブラウザを操作する。&lt;/p&gt;
+
+&lt;p&gt;ドライバは(基本的に)ブラウザと同じマシンにある必要があり、実行するテストコードとも(基本的に)同居している必要がある。
+テストを実行するマシンとは別のマシンのブラウザでテストしたければ&lt;a href=&#34;http://docs.seleniumhq.org/download/&#34;&gt;Selenium Server&lt;/a&gt; (aka Selenium Standalone Server)を使う。
+Selenium Serverはブラウザとドライバと同じマシンで動き、テストコードから送信されたブラウザ操作コマンドを受信してドライバに伝える、プロキシ的な働きをしてくれる。&lt;/p&gt;
+
+&lt;p&gt;Selenium Serverを使えば、クライアントライブラリが対応していないドライバでも利用できるというメリットもある。
+Selenium Serverを使うと、オーバーヘッドはあるけどメリットが多いので、とりあえず使うようにしておけば間違いなさそう。&lt;/p&gt;
+
+&lt;p&gt;Selenium Serverが受け取るブラウザ操作コマンドは、HTTPでJSONデータとして送信される。
+この辺りの通信は、もともと&lt;a href=&#34;https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol&#34;&gt;JsonWireProtocol&lt;/a&gt; (aka WebDriver Wire Protocol)で規定されていた。
+JsonWireProtocolを&lt;a href=&#34;https://en.wikipedia.org/wiki/World_Wide_Web_Consortium&#34;&gt;W3C&lt;/a&gt;が国際標準規格化したのが&lt;a href=&#34;https://www.w3.org/TR/webdriver/&#34;&gt;WebDriver&lt;/a&gt;というプロトコル。
+このWebDriverプロトコルは、ユーザエージェントとDOMエレメントをリモートコントロールするためのインターフェースを定めている。
+現在、JsonWireProtocolは廃止扱いで、Selenium WebDriverはWebDriverプロトコルを実装している。&lt;/p&gt;
+
+&lt;p&gt;この辺り、&lt;a href=&#34;https://app.codegrid.net/entry/selenium-1&#34;&gt;この記事&lt;/a&gt;が図解してて分かりやすい。&lt;/p&gt;
+
+&lt;p&gt;ChromeDriverはWebDriverプロトコルを実装してるので、Selenium Server無しでもリモート実行できるけど、それでもやはりSelenium Serverを介したほうが、ドライバを簡単に切り替えられそうでよさそう。&lt;/p&gt;
+
+&lt;p&gt;Selenium ServerとかChromeDriverのようにWebDriverプロトコルのサーバ機能を実装したものは&lt;a href=&#34;https://github.com/SeleniumHQ/selenium/wiki/RemoteWebDriverServer&#34;&gt;RemoteWebDriverServer&lt;/a&gt;と呼ばれることもある。
+それにアクセスするクライアントは&lt;a href=&#34;https://github.com/SeleniumHQ/selenium/wiki/RemoteWebDriver&#34;&gt;RemoteWebDriver&lt;/a&gt;とかRemoteWebDriverクライアントとか呼ばれる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ということで、色々ややこしい(公式も自分でややこしいと言ってる)が、結局WebDriverは何かと言えば、普通は上記ドライバそのものを指す。
+ので、以下においても、WebDriverと書いたらそれを指すこととする。&lt;/p&gt;
+
+&lt;h1 id=&#34;ヘッドレス&#34;&gt;ヘッドレス&lt;/h1&gt;
+
+&lt;p&gt;もう一つブラウザテストの文脈で重要なのが、&lt;a href=&#34;https://en.wikipedia.org/wiki/Headless_software&#34;&gt;ヘッドレス&lt;/a&gt;という概念なので、ここでちょっと触れる。&lt;/p&gt;
+
+&lt;p&gt;ヘッドレスとは、ソフトウェアがGUIなしで動く性質とか機能のこと。&lt;/p&gt;
+
+&lt;p&gt;ブラウザテストは、テスト実行時にブラウザを起動するわけだが、ブラウザってのは普通GUIが付いていて、Windowsだったらログインしてないと動かせないし、LinuxだったらXの起動も必要だ。
+これだと、テストを定期的に自動実行したり、CIしたりするのが難しい。
+また、GUIは動作が遅く、テストに時間がかかる。&lt;/p&gt;
+
+&lt;h3 id=&#34;ヘッドレスブラウザ&#34;&gt;ヘッドレスブラウザ&lt;/h3&gt;
+
+&lt;p&gt;こうした問題を解決するため、ヘッドレスブラウザというものが開発された。
+ヘッドレスブラウザには以下のようなものがある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;http://phantomjs.org/&#34;&gt;PhantomJS&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;多分一番有名なヘッドレスブラウザ。
+JavaScriptとC++などで書かれていて、JavaScriptから操作できる。
+2011年にリリースされ、まだ開発が続いている。
+レンダリングエンジンはWebKitで、JavaScriptエンジンはWebKitに組み込みの&lt;a href=&#34;https://trac.webkit.org/wiki/JavaScriptCore&#34;&gt;JavaScriptCore&lt;/a&gt;で、
+Windows、OS X、Linuxなどで動く。
+WebDriver有り。(&lt;a href=&#34;https://github.com/detro/ghostdriver&#34;&gt;Ghost Driver&lt;/a&gt;)&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;http://htmlunit.sourceforge.net/&#34;&gt;HtmlUnit&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Chrome、Firefox、IEをシミュレートできるJava製のツールで、
+JavaのAPIで操作できる。
+2002年にリリースされ、まだ開発が続いている。
+レンダリングエンジンは(多分)自前で、JavaScriptエンジンはRhino。
+WebDriver有り。(&lt;a href=&#34;https://github.com/SeleniumHQ/htmlunit-driver&#34;&gt;HtmlUnitDriver&lt;/a&gt;)&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://scrapinghub.com/splash/&#34;&gt;Splash&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Python製。2013年に開発がスタートし、現在も鋭意開発中。
+LinuxとOS Xをサポートしてて、Windowsでは(多分)動かない。
+HTTP APIにJSONをPOSTして操作するもので、&lt;a href=&#34;https://www.lua.org/&#34;&gt;Lua&lt;/a&gt;のクライアントライブラリが提供されている。
+レンダリングエンジンはWebKitで、JavaScriptエンジンはWebKitに組み込みのJavaScriptCore。
+WebDriverなさげ。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;http://triflejs.org/&#34;&gt;TrifleJS&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;JavaScriptとC#(.NET 4.0)で書かれていて、Windowsでしか動かない。
+ レンダリングエンジンはTridentで、IEをエミュレートする。
+ JavaScriptエンジンはV8。PhantomJSと同じAPIを実装していて、JavaScriptから操作できる。
+ 2013年に開発がスタートし、ベータ版のまま開発中断してしまった模様。
+ WebDriverは、ロードマップにはあるけどまだ実装されてない。&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;あと、似たようなものに&lt;a href=&#34;https://slimerjs.org/index.html&#34;&gt;SlimerJS&lt;/a&gt;と&lt;a href=&#34;https://electron.atom.io/&#34;&gt;Electron&lt;/a&gt;と&lt;a href=&#34;https://github.com/tmpvar/jsdom&#34;&gt;jsdom&lt;/a&gt;がある。&lt;/p&gt;
+
+&lt;p&gt;SlimerJSは、GeckoとSpiderMonkeyの上に開発された、スクリプトから操作できるテスト用途向けブラウザだけど、ヘッドレスではない。&lt;/p&gt;
+
+&lt;p&gt;ElectronはJavaScriptでデスクトップアプリケーションを開発するためのフレームワーク。
+&lt;a href=&#34;https://www.chromium.org/Home&#34;&gt;Chromium&lt;/a&gt;というブラウザを積んでいて、それをElectron APIでプログラマティックに操作できるらしく、ブラウザテストにも使われる。
+(&lt;a href=&#34;http://qiita.com/hiroshitoda/items/288706978cd4c6df0f5f&#34;&gt;Seleniumでも操作できる&lt;/a&gt;。)
+けどこれもヘッドレスではない。&lt;/p&gt;
+
+&lt;p&gt;jsdomはDOMツリーとそれに対する操作をエミュレートするツールで、そもそもブラウザではないはずなんだけど、HTTPでWebコンテンツダウンロードして解析もできるし、すごくヘッドレスブラウザっぽい。
+けどちゃんとブラウザしてるかが怪しく、UIテストには使われてもブラウザテストにはあまり使われないっぽい。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ヘッドレスブラウザにも色々あるが結局、テスト用に作られたブラウザであって、実際に多くのエンドユーザに使われて揉まれているGUI有りブラウザに比べて、品質が悪かったり動きが違ったりする(らしい)。
+JavaScriptのバージョンのキャッチアップが遅かったりも。&lt;/p&gt;
+
+&lt;h3 id=&#34;xvfb&#34;&gt;Xvfb&lt;/h3&gt;
+
+&lt;p&gt;ヘッドレスブラウザの問題は、実際のブラウザではないということに尽きる。
+実際のブラウザをヘッドレスで使えたら万事が上手くいくわけだが、実はこれがLinuxでなら出来る。
+&lt;a href=&#34;https://www.x.org/releases/X11R7.7/doc/man/man1/Xvfb.1.xhtml&#34;&gt;Xvfb&lt;/a&gt;というツールを使って。
+(Xvfbはあまりメンテされてなくて&lt;a href=&#34;https://xpra.org/trac/wiki/Xdummy&#34;&gt;Xdummy&lt;/a&gt;が代わりに最近熱いみたいだけど。)&lt;/p&gt;
+
+&lt;p&gt;Xvfbはフレームバッファをエミュレートし、ディスプレイが無い環境でも動くヘッドレスXサーバ。
+これを使うと、GUIのある普通のブラウザでもヘッドレス環境で動かせる。&lt;/p&gt;
+
+&lt;p&gt;Xvfbについては&lt;a href=&#34;http://blog.amedama.jp/entry/2016/01/03/115602&#34;&gt;この記事&lt;/a&gt;が分かりやすい。&lt;/p&gt;
+
+&lt;h3 id=&#34;chrome-59&#34;&gt;Chrome 59&lt;/h3&gt;
+
+&lt;p&gt;Xvfbを使えば大分幸せになりそうだが、ブラウザ以外のツールを起動しなければいけなかったり、Windowsで使えなかったり、まだちょっと不満が残る。&lt;/p&gt;
+
+&lt;p&gt;そんななか、2017年6月、Chrome 59がリリースされ、ヘッドレスモードを搭載した。
+Windowsは現時点で未対応だけど、すぐに対応されるはずだ。
+ほかの実ブラウザもこの流れに乗ってヘッドレスモードを実装したら、最高に幸せな世界になるではないか。&lt;/p&gt;
+
+&lt;p&gt;Chromeのヘッドレスモード搭載を受け、&lt;a href=&#34;https://www.infoq.com/jp/news/2017/04/Phantomjs-future-uncertain&#34;&gt;PhantomJSは開発停止&lt;/a&gt;した。
+もうヘッドレスブラウザはその役目を終えつつあるということなのだろう。&lt;/p&gt;
+
+&lt;p&gt;Chrome 59のヘッドレスモードの使い方は&lt;a href=&#34;https://developers.google.com/web/updates/2017/04/headless-chrome?hl=ja&#34;&gt;この記事&lt;/a&gt;が分かりやすい。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;
+&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;以上のような感じのことが調べて分かって、SeleniumとChromeのヘッドレスモードを使いたいと思ったところで、
+続きはまた別の記事。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -9526,173 +9730,6 @@ Check it out at https://atom.io/packages/japanese-word-selection
 
 &lt;p&gt;後日もう一つパッケージを作り、&lt;a href=&#34;https://www.kaitoy.xyz/2015/09/06/disturb-me/&#34;&gt;それに関する記事&lt;/a&gt;を書いた。
 こちらはjapanese-word-selectionでやらなかったコマンドなどの実装をやっている。&lt;/p&gt;
-</description>
-        </item>
-      
-    
-      
-        <item>
-          <title>GitHub Pagesでブログ立ち上げ - GitHub PagesとJekyll</title>
-          <link>https://www.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/</link>
-          <pubDate>Sat, 15 Aug 2015 10:48:49 -0600</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/</guid>
-          <description>
-
-&lt;p&gt;このブログを立ち上げたときの作業を、主に備忘録としていくつかのエントリに分けて書く。
-このエントリでは主に&lt;a href=&#34;https://pages.github.com/&#34;&gt;&lt;strong&gt;GitHub Pages&lt;/strong&gt;&lt;/a&gt;と&lt;a href=&#34;http://jekyllrb.com/docs/home/&#34;&gt;&lt;strong&gt;Jekyll&lt;/strong&gt;&lt;/a&gt;について書く。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-7852181473528684&#34;
-     data-ad-slot=&#34;3938339651&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h2 id=&#34;今の構成&#34;&gt;今の構成&lt;/h2&gt;
-
-&lt;p&gt;このブログは、&lt;a href=&#34;https://gohugo.io/&#34;&gt;&lt;strong&gt;Hugo&lt;/strong&gt;&lt;/a&gt;で作って、GitHub Pagesで公開している。&lt;/p&gt;
-
-&lt;p&gt;Hugoについては別のエントリで書くとして、GitHub Pagesは、GitHubが提供しているウェブページのホスティングサービスで、GitHubに特定の名前のリポジトリ、または任意のリポジトリに特定の名前のブランチを作ってウェブサイトのソースを置くと、公開してくれるというサービス。&lt;a href=&#34;https://ja.wikipedia.org/wiki/Platform_as_a_Service&#34;&gt;PaaS&lt;/a&gt;にあたるのかな。
-&lt;a href=&#34;https://pages.github.com/&#34;&gt;GitHub Pagesのサイト&lt;/a&gt;に利用方法が載っている。&lt;/p&gt;
-
-&lt;p&gt;以下、このブログ立ち上げに向けてやった作業について書く。&lt;/p&gt;
-
-&lt;h2 id=&#34;github-pages味見&#34;&gt;GitHub Pages味見&lt;/h2&gt;
-
-&lt;p&gt;GitHub Pagesを利用するには、&lt;strong&gt;GitHubユーザ名.github.io&lt;/strong&gt; という名前のリポジトリを作るか、任意のリポジトリに&lt;strong&gt;gh-pages&lt;/strong&gt; という名前のブランチを作って、そこにサイトのソースを置けばいい。そのサイトには、前者の場合は&lt;code&gt;http://GitHubユーザ名.github.io&lt;/code&gt;で、後者の場合は&lt;code&gt;http://GitHubユーザ名.github.io/リポジトリ名&lt;/code&gt;でアクセスできる。
-(2016/8/18追記: &lt;a href=&#34;https://www.kaitoy.xyz/2016/08/18/simpler-github-pages-publishing/&#34;&gt;今はgh-pagesブランチは不要。&lt;/a&gt;)&lt;/p&gt;
-
-&lt;p&gt;とりあえず前者をやってみる。&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;&lt;strong&gt;kaitoy.github.io&lt;/strong&gt; という名前の&lt;a href=&#34;https://github.com/kaitoy/kaitoy.github.io&#34;&gt;リポジトリ&lt;/a&gt;を作って、そのルートに「Hello World」とだけ書いた &lt;strong&gt;index.html&lt;/strong&gt; を置く。&lt;/li&gt;
-&lt;li&gt;ブラウザで&lt;code&gt;http://kaitoy.github.io&lt;/code&gt;にアクセスすると、「Hello World」と表示された。&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;これだけ。&lt;/p&gt;
-
-&lt;h2 id=&#34;github-pagesとjekyll&#34;&gt;GitHub PagesとJekyll&lt;/h2&gt;
-
-&lt;p&gt;GitHub Pagesには、普通にHTML/CSS/Javascriptのソースを置いてもいいけど、Jekyllを利用することもできる。&lt;/p&gt;
-
-&lt;p&gt;Jekyllは、ブログ用の静的サイトジェネレータなるもので、&lt;a href=&#34;https://ja.wikipedia.org/wiki/Markdown&#34;&gt;&lt;strong&gt;Markdown&lt;/strong&gt;&lt;/a&gt;で書いた記事を元にブログサイトのソースを生成するツール。GitHub Pages用のリポジトリにJekyllのソースをアップロードすると、Jekyllでビルドされ、その結果が公開される。&lt;/p&gt;
-
-&lt;p&gt;これはうれしい。  Jekyllのソースとビルド結果を別々に管理しなくてよくて楽だし、公開されるサイトが最新のソースに基づいていることが保証される。&lt;/p&gt;
-
-&lt;p&gt;結論から言うと、以下のような理由で結局Jekyllは使わなかったんだけど、Jekyllとの格闘の記録を残しておく。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Windowsを正式サポートしていない。&lt;/li&gt;
-&lt;li&gt;Rubyで書かれてるため、ビルドが遅い。ブログエントリが数百とかになると辛くなってくるらしい。&lt;/li&gt;
-&lt;li&gt;Jekyllを使っても、かっこいいサイトを手軽に作ろうと思ったら、結局ビルド成果物もGitHubに上げないといけなくなる。&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;jekyllセットアップ&#34;&gt;Jekyllセットアップ&lt;/h2&gt;
-
-&lt;p&gt;GitHub PagesでJekyll使う場合は、GitHub Pagesと同じJekyll環境を手元に作ってプレビューできるようにしておくべきとのこと。なので、&lt;a href=&#34;https://help.github.com/articles/using-jekyll-with-pages/&#34;&gt;これ&lt;/a&gt;に従って自分のPC (Windows 7) にJekyllをセットアップする。&lt;/p&gt;
-
-&lt;h4 id=&#34;１-rubyインストール&#34;&gt;１．Rubyインストール&lt;/h4&gt;
-
-&lt;p&gt;Jekyllは &lt;strong&gt;Ruby&lt;/strong&gt; で書かれてるので、まずはRubyをインストールする。
-Windowsなので&lt;a href=&#34;http://rubyinstaller.org/&#34;&gt;&lt;strong&gt;RubyInstaller&lt;/strong&gt;&lt;/a&gt; (ver. 2.2.2)をダウンロードしてインストール。
-&lt;a href=&#34;http://bundler.io/&#34;&gt;&lt;strong&gt;Bundler&lt;/strong&gt;&lt;/a&gt; (RubyのパッケージであるGemの依存をアプリケーションごとに管理するツール) もあるといいらしいので、&lt;code&gt;gem install bundler&lt;/code&gt;を実行してインストール。&lt;/p&gt;
-
-&lt;h4 id=&#34;2-jekyllインストール&#34;&gt;2.  Jekyllインストール&lt;/h4&gt;
-
-&lt;p&gt;さっき作ったリポジトリ　&lt;strong&gt;kaitoy.github.io&lt;/strong&gt; (の手元のクローン)のルートに、Bundlerの定義ファイルを &lt;strong&gt;Gemfile&lt;/strong&gt; という名前で作り、以下の内容を書く。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;source &#39;https://rubygems.org&#39;
-gem &#39;github-pages&#39;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;依存するGemは &lt;strong&gt;jekyll&lt;/strong&gt; じゃなくて &lt;strong&gt;github-pages&lt;/strong&gt;。これはGitHub Pages環境のJekyllということだろう。&lt;/p&gt;
-
-&lt;p&gt;で、&lt;strong&gt;kaitoy.github.io&lt;/strong&gt; のルートで&lt;code&gt;bundle install&lt;/code&gt;を実行する。ここでエラー発生。
-エラーメッセージによると、native gemをビルドするために &lt;strong&gt;DevKit&lt;/strong&gt; なるものが要るとのこと。&lt;/p&gt;
-
-&lt;p&gt;再びRubyInstallerのページに行ってDevKitをダウンロードして、&lt;a href=&#34;http://github.com/oneclick/rubyinstaller/wiki/Development-Kit&#34;&gt;wiki&lt;/a&gt;に従ってインストール。&lt;/p&gt;
-
-&lt;p&gt;再度&lt;code&gt;bundle install&lt;/code&gt;したらJekyllのインストールに成功。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;github-pages: ver. 35&lt;/li&gt;
-&lt;li&gt;jekyll: ver. 2.4.0&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;これで、ちょくちょく&lt;code&gt;bundle update&lt;/code&gt;を実行すれば、最新のGitHub Pages環境に追随できる。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;bundle exec jekyll serve&lt;/code&gt;すると、カレントディレクトリのJekyllソースがビルドされ、Webサーバが起動し、&lt;code&gt;http://localhost:4000&lt;/code&gt;でそのビルド結果を見れるらしい。&lt;/p&gt;
-
-&lt;h4 id=&#34;3-jekyll味見&#34;&gt;3.  Jekyll味見&lt;/h4&gt;
-
-&lt;p&gt;試しに、適当な場所で&lt;code&gt;jekyll new hoge&lt;/code&gt;を実行し、新規サイトフォルダ &lt;strong&gt;hoge&lt;/strong&gt; を作り、その中で&lt;code&gt;jekyll build&lt;/code&gt;してみる。以下のエラー。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;c:/Ruby22-x64/lib/ruby/gems/2.2.0/gems/posix-spawn-0.3.11/lib/posix/spawn.rb:164: warning: cannot close fd before spawn
-&#39;which&#39; は、内部コマンドまたは外部コマンド、
-操作可能なプログラムまたはバッチ ファイルとして認識されていません。
-[31m  Liquid Exception: No such file or directory - python c:/Ruby22-x64/lib/ruby/gems/2.2.0/gems/pygments.rb-0.6.1/lib/pygments/mentos.py in jekyll/_posts/2015-05-29-welcome-to-jekyll.markdown[0m
-                    done.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Jekyllのサイトを見直したらWindowsはサポートされていないとのこと。
-けど、Windowsにセットアップする方法は検索したらたくさん出てきた。
-Jekyllのサイトでも紹介されている&lt;a href=&#34;http://jekyll-windows.juthilo.com/&#34;&gt;&lt;strong&gt;Run Jekyll on Windows&lt;/strong&gt;&lt;/a&gt;というサイトの手順に従うとか、&lt;a href=&#34;https://github.com/madhur/PortableJekyll&#34;&gt;&lt;strong&gt;Portable Jekyll&lt;/strong&gt;&lt;/a&gt;という、WindowsでJekyllを動かすためのツールを集めたものを使うとか。&lt;/p&gt;
-
-&lt;p&gt;後者は、Jekyllのインスタンスを含んでいて、将来にわたるJekyllのアップデートについていってくれるか怪しいので、前者を見てみる。&lt;/p&gt;
-
-&lt;h4 id=&#34;4-run-jekyll-on-windowsを試す&#34;&gt;4. Run Jekyll on Windowsを試す&lt;/h4&gt;
-
-&lt;p&gt;Run Jekyll on Windowsによると、Jekyllはデフォルトでsyntax highlighterの &lt;strong&gt;pygments.rb&lt;/strong&gt; なるものに依存していて、pygments.rbをWindowsで使うには &lt;strong&gt;Python&lt;/strong&gt; とそのモジュールである &lt;strong&gt;Pygments&lt;/strong&gt; などをインストールする必要があるのこと。&lt;/p&gt;
-
-&lt;p&gt;とりあえずPythonを&lt;a href=&#34;https://www.python.org/downloads/windows/&#34;&gt;ここ&lt;/a&gt;からダウンロードしてインストール。バージョンは、3系はPygmentsがサポートしていないようなので2.7.10。
-&lt;strong&gt;pip&lt;/strong&gt; なるPythonパッケージ管理ツールが要るとRun Jekyll on Windowsに書いてあるが、2.7.10にはデフォルトで入っていた。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;python -m pip install Pygments&lt;/code&gt;を実行してPygmentsをインストール。これはどうもpygments.rbがラップしているものらしい。&lt;/p&gt;
-
-&lt;p&gt;また、Jekyllにはauto-regenerationなる、ファイル変更を検知して自動ビルドする機能があって、Windowsでこれを使うには &lt;strong&gt;wdm&lt;/strong&gt; というgemが必要らしい。
-以下をGemfileに追加して、&lt;code&gt;bundle install&lt;/code&gt;する。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;gem &#39;wdm&#39;, &#39;~&amp;gt; 0.1.0&#39; if Gem.win_platform?
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;したら以下のエラー。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;c:\Ruby22-x64\lib\ruby\gems\2.2.0\gems\wdm-0.1.0\ext\wdm/rb_monitor.c:508: undefined reference to `rb_thread_blocking_region&#39;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;どうも、&lt;a href=&#34;https://github.com/Maher4Ever/wdm/issues/18&#34;&gt;ここ&lt;/a&gt;によると、エラーメッセージにある &lt;strong&gt;rb_thread_blocking_region&lt;/strong&gt; というメソッドは、Ruby 2.0で非推奨になり2.2で消されたものらしい。&lt;/p&gt;
-
-&lt;p&gt;wdmはもう数年更新されておらず、修正の見込みはなさそう。(後日見たら開発再開されてて、この問題も修正されていた。)&lt;/p&gt;
-
-&lt;p&gt;Rubyをダウングレードするの面倒なので、試しにそのまま&lt;code&gt;jekyll serve&lt;/code&gt;したら以下のメッセージが出たけど動いた。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;  Please add the following to your Gemfile to avoid polling for changes:
-    gem &#39;wdm&#39;, &#39;&amp;gt;= 0.1.0&#39; if Gem.win_platform?
- Auto-regeneration: enabled for &#39;c:/Users/Kaito/mirrored_data/pleiades/workspace/kaitoy.github.io/hoge&#39;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;auto-regenerationも動いている模様。実際ソースをいじったら自動で反映された。
-よくわからないが、よしとする。&lt;/p&gt;
-
-&lt;p&gt;実は、以下のエラー(上でも出てたやつ)はまだ出ている。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;c:/Ruby22-x64/lib/ruby/gems/2.2.0/gems/posix-spawn-0.3.11/lib/posix/spawn.rb:164: warning: cannot close fd before spawn
-&#39;which&#39; は、内部コマンドまたは外部コマンド、
-操作可能なプログラムまたはバッチ ファイルとして認識されていません。
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;このwarningについてはRun Jekyll on Windowsには載っていないが、pygments.rbを0.5.0にダウングレードすればいいとの情報が&lt;a href=&#34;https://github.com/jekyll/jekyll/issues/2052&#34;&gt;ここ&lt;/a&gt;とかにある。&lt;/p&gt;
-
-&lt;h2 id=&#34;5-jekyllとの決別&#34;&gt;5. Jekyllとの決別&lt;/h2&gt;
-
-&lt;p&gt;この辺りまでJekyllをセットアップした後、JekyllのWindowsとの相性の悪さに嫌気がさしつつ、Jekyllで簡単にかっこいいサイトを作るためのツールなどを調べているうちに、Jekyllを使うのをやめた。それについては&lt;a href=&#34;https://www.kaitoy.xyz/2015/08/25/tools-for-jekyll/&#34;&gt;別のエントリ&lt;/a&gt;で書く。&lt;/p&gt;
 </description>
         </item>
       

@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>To Be Decided </title>
+    <link>https://www.kaitoy.xyz/tags/selenium/</link>
+    <language>en-us</language>
+    <author>Kaito Yamada</author>
+    <rights>(C) 2017</rights>
+    <updated>2017-07-12 22:36:22 &#43;0900 JST</updated>
+
+    
+      
+        <item>
+          <title>2017年夏、Selenium、ヘッドレスブラウザ</title>
+          <link>https://www.kaitoy.xyz/2017/07/12/2017-selenium-headless-browsers/</link>
+          <pubDate>Wed, 12 Jul 2017 22:36:22 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2017/07/12/2017-selenium-headless-browsers/</guid>
+          <description>
+
+&lt;p&gt;現在仕事で&lt;a href=&#34;https://www.servicenow.com/ja&#34;&gt;ServiceNow&lt;/a&gt;上で動くアプリケーションを開発していて、それのブラウザテストをどうやろうかというのを少し考えたので、書き残しておく。&lt;/p&gt;
+
+&lt;p&gt;&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-7852181473528684&#34;
+     data-ad-slot=&#34;3938339651&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h1 id=&#34;servicenowとは&#34;&gt;ServiceNowとは&lt;/h1&gt;
+
+&lt;p&gt;本題とほとんど関係ないけど、一応ServiceNowに簡単に触れる。&lt;/p&gt;
+
+&lt;p&gt;ServiceNowはITサービス管理のSaaS。
+世界的にはITサービス管理のデファクトスタンダードとなっているが、日本ではこれから盛り上がりそうといった感じ。&lt;/p&gt;
+
+&lt;p&gt;アプリケーションを開発するプラットフォームとしての側面もあり、JavaScript(ブラウザ側とサーバ側両方)でServiceNowの機能を拡張し、他システムと連携させたり処理を自動化したりできる。&lt;/p&gt;
+
+&lt;p&gt;アプリケーションがServiceNowプラットフォームで動くので、テスト方法が悩ましい。
+&lt;a href=&#34;https://docs.servicenow.com/bundle/istanbul-release-notes/page/release-notes/servicenow-platform/automated-test-framework-rn.html&#34;&gt;Automated Test Framework&lt;/a&gt;というテストフレームワークが提供されてはいるが、2017年1月にリリースされたばかりということもあるのか、機能がしょぼく、大したことはできない。
+これが自前でブラウザテスト環境を作ろうと思った理由。&lt;/p&gt;
+
+&lt;p&gt;アプリケーションがJavaScriptなので、テストもJavaScriptで書きたい。&lt;/p&gt;
+
+&lt;h1 id=&#34;ブラウザテストとは&#34;&gt;ブラウザテストとは&lt;/h1&gt;
+
+&lt;p&gt;ここでブラウザテストとは、稼働しているWebアプリケーションに、HTTPクライアントで接続して、レンダリングされたWebページを操作して実行する自動E2Eテストのこととする。
+HTTPでWebコンテンツを取得して、HTML・CSSをパースしてレンダリングして、JavaScriptを実行するツール、つまりWebブラウザを何にするかというのと、それを自動で操作するのをどうするかというのと、テストどう書くのかということと、書いたテストをどう実行するかということと、テスト結果をどう集計してレポートするかといった辺りを考える必要がある。&lt;/p&gt;
+
+&lt;p&gt;Qiitaの記事「&lt;a href=&#34;http://qiita.com/cognitom/items/6cce719b57341769c14d&#34;&gt;ブラウザテストツール総まとめ・2016年夏版&lt;/a&gt;」にブラウザテストのためのツールが色々載っている。
+レイヤや目的が異なるツールがちょっとごっちゃになってる気がするけど。&lt;/p&gt;
+
+&lt;h1 id=&#34;seleniumとかwebdriverとか&#34;&gt;SeleniumとかWebDriverとか&lt;/h1&gt;
+
+&lt;p&gt;ブラウザテストはWebDriver抜きでは語れないので、とりあえずそれについて書く。
+それにはまず&lt;a href=&#34;http://www.seleniumhq.org/&#34;&gt;Selenium&lt;/a&gt;について語らなければなるまい。&lt;/p&gt;
+
+&lt;p&gt;ブラウザテスト創世記にはこうある。&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;神は「光あれ」と言われた。
+するとSeleniumがあった。&lt;/p&gt;
+
+&lt;p&gt;神はその光を見て、良しとされた。
+神はその光と闇とを分けられた。&lt;/p&gt;
+
+&lt;p&gt;神は光を&lt;a href=&#34;http://www.seleniumhq.org/projects/remote-control/&#34;&gt;Selenium RC&lt;/a&gt; (aka Selenium 1)と名づけ、
+闇 を&lt;a href=&#34;http://www.seleniumhq.org/projects/webdriver/&#34;&gt;Selenium WebDriver&lt;/a&gt; (aka Selenium 2)と名づけられた。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;(Seleniumの歴史をもっとちゃんと知りたければ&lt;a href=&#34;http://blog.trident-qa.com/2013/05/so-many-seleniums/&#34;&gt;この記事&lt;/a&gt;を読むべし。)&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;要は、今ブラウザテストと言ったらSelenium、Seleniumと言ったらSelenium WebDriverというわけだ。&lt;/p&gt;
+
+&lt;p&gt;Selenium WebDriverは、WebDriver APIでブラウザやDOMエレメントを操作するツール。
+このAPIを実装したクライアントライブラリが各言語(Java、Ruby、Python、JavaScriptなど)で提供されていて、テストコードから利用できる。&lt;/p&gt;
+
+&lt;p&gt;APIの裏ではドライバなるものが暗躍していて、OSやブラウザのネイティブAPIを使ってブラウザを操作している。
+このドライバはブラウザごと(Chrome、Firefox、IEなど)に用意されていて、その実装形式がドライバ毎に割と違っている。
+例えばFirefox用のやつ(&lt;a href=&#34;https://github.com/SeleniumHQ/selenium/wiki/FirefoxDriver&#34;&gt;Firefox Driver&lt;/a&gt;)はFirefox のアドオンを使うし、Chrome用のやつ(&lt;a href=&#34;https://github.com/SeleniumHQ/selenium/wiki/ChromeDriver&#34;&gt;ChromeDriver&lt;/a&gt;)は独立したネイティブアプリを介してブラウザを操作する。&lt;/p&gt;
+
+&lt;p&gt;ドライバは(基本的に)ブラウザと同じマシンにある必要があり、実行するテストコードとも(基本的に)同居している必要がある。
+テストを実行するマシンとは別のマシンのブラウザでテストしたければ&lt;a href=&#34;http://docs.seleniumhq.org/download/&#34;&gt;Selenium Server&lt;/a&gt; (aka Selenium Standalone Server)を使う。
+Selenium Serverはブラウザとドライバと同じマシンで動き、テストコードから送信されたブラウザ操作コマンドを受信してドライバに伝える、プロキシ的な働きをしてくれる。&lt;/p&gt;
+
+&lt;p&gt;Selenium Serverを使えば、クライアントライブラリが対応していないドライバでも利用できるというメリットもある。
+Selenium Serverを使うと、オーバーヘッドはあるけどメリットが多いので、とりあえず使うようにしておけば間違いなさそう。&lt;/p&gt;
+
+&lt;p&gt;Selenium Serverが受け取るブラウザ操作コマンドは、HTTPでJSONデータとして送信される。
+この辺りの通信は、もともと&lt;a href=&#34;https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol&#34;&gt;JsonWireProtocol&lt;/a&gt; (aka WebDriver Wire Protocol)で規定されていた。
+JsonWireProtocolを&lt;a href=&#34;https://en.wikipedia.org/wiki/World_Wide_Web_Consortium&#34;&gt;W3C&lt;/a&gt;が国際標準規格化したのが&lt;a href=&#34;https://www.w3.org/TR/webdriver/&#34;&gt;WebDriver&lt;/a&gt;というプロトコル。
+このWebDriverプロトコルは、ユーザエージェントとDOMエレメントをリモートコントロールするためのインターフェースを定めている。
+現在、JsonWireProtocolは廃止扱いで、Selenium WebDriverはWebDriverプロトコルを実装している。&lt;/p&gt;
+
+&lt;p&gt;この辺り、&lt;a href=&#34;https://app.codegrid.net/entry/selenium-1&#34;&gt;この記事&lt;/a&gt;が図解してて分かりやすい。&lt;/p&gt;
+
+&lt;p&gt;ChromeDriverはWebDriverプロトコルを実装してるので、Selenium Server無しでもリモート実行できるけど、それでもやはりSelenium Serverを介したほうが、ドライバを簡単に切り替えられそうでよさそう。&lt;/p&gt;
+
+&lt;p&gt;Selenium ServerとかChromeDriverのようにWebDriverプロトコルのサーバ機能を実装したものは&lt;a href=&#34;https://github.com/SeleniumHQ/selenium/wiki/RemoteWebDriverServer&#34;&gt;RemoteWebDriverServer&lt;/a&gt;と呼ばれることもある。
+それにアクセスするクライアントは&lt;a href=&#34;https://github.com/SeleniumHQ/selenium/wiki/RemoteWebDriver&#34;&gt;RemoteWebDriver&lt;/a&gt;とかRemoteWebDriverクライアントとか呼ばれる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ということで、色々ややこしい(公式も自分でややこしいと言ってる)が、結局WebDriverは何かと言えば、普通は上記ドライバそのものを指す。
+ので、以下においても、WebDriverと書いたらそれを指すこととする。&lt;/p&gt;
+
+&lt;h1 id=&#34;ヘッドレス&#34;&gt;ヘッドレス&lt;/h1&gt;
+
+&lt;p&gt;もう一つブラウザテストの文脈で重要なのが、&lt;a href=&#34;https://en.wikipedia.org/wiki/Headless_software&#34;&gt;ヘッドレス&lt;/a&gt;という概念なので、ここでちょっと触れる。&lt;/p&gt;
+
+&lt;p&gt;ヘッドレスとは、ソフトウェアがGUIなしで動く性質とか機能のこと。&lt;/p&gt;
+
+&lt;p&gt;ブラウザテストは、テスト実行時にブラウザを起動するわけだが、ブラウザってのは普通GUIが付いていて、Windowsだったらログインしてないと動かせないし、LinuxだったらXの起動も必要だ。
+これだと、テストを定期的に自動実行したり、CIしたりするのが難しい。
+また、GUIは動作が遅く、テストに時間がかかる。&lt;/p&gt;
+
+&lt;h3 id=&#34;ヘッドレスブラウザ&#34;&gt;ヘッドレスブラウザ&lt;/h3&gt;
+
+&lt;p&gt;こうした問題を解決するため、ヘッドレスブラウザというものが開発された。
+ヘッドレスブラウザには以下のようなものがある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;http://phantomjs.org/&#34;&gt;PhantomJS&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;多分一番有名なヘッドレスブラウザ。
+JavaScriptとC++などで書かれていて、JavaScriptから操作できる。
+2011年にリリースされ、まだ開発が続いている。
+レンダリングエンジンはWebKitで、JavaScriptエンジンはWebKitに組み込みの&lt;a href=&#34;https://trac.webkit.org/wiki/JavaScriptCore&#34;&gt;JavaScriptCore&lt;/a&gt;で、
+Windows、OS X、Linuxなどで動く。
+WebDriver有り。(&lt;a href=&#34;https://github.com/detro/ghostdriver&#34;&gt;Ghost Driver&lt;/a&gt;)&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;http://htmlunit.sourceforge.net/&#34;&gt;HtmlUnit&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Chrome、Firefox、IEをシミュレートできるJava製のツールで、
+JavaのAPIで操作できる。
+2002年にリリースされ、まだ開発が続いている。
+レンダリングエンジンは(多分)自前で、JavaScriptエンジンはRhino。
+WebDriver有り。(&lt;a href=&#34;https://github.com/SeleniumHQ/htmlunit-driver&#34;&gt;HtmlUnitDriver&lt;/a&gt;)&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://scrapinghub.com/splash/&#34;&gt;Splash&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Python製。2013年に開発がスタートし、現在も鋭意開発中。
+LinuxとOS Xをサポートしてて、Windowsでは(多分)動かない。
+HTTP APIにJSONをPOSTして操作するもので、&lt;a href=&#34;https://www.lua.org/&#34;&gt;Lua&lt;/a&gt;のクライアントライブラリが提供されている。
+レンダリングエンジンはWebKitで、JavaScriptエンジンはWebKitに組み込みのJavaScriptCore。
+WebDriverなさげ。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;http://triflejs.org/&#34;&gt;TrifleJS&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;JavaScriptとC#(.NET 4.0)で書かれていて、Windowsでしか動かない。
+ レンダリングエンジンはTridentで、IEをエミュレートする。
+ JavaScriptエンジンはV8。PhantomJSと同じAPIを実装していて、JavaScriptから操作できる。
+ 2013年に開発がスタートし、ベータ版のまま開発中断してしまった模様。
+ WebDriverは、ロードマップにはあるけどまだ実装されてない。&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;あと、似たようなものに&lt;a href=&#34;https://slimerjs.org/index.html&#34;&gt;SlimerJS&lt;/a&gt;と&lt;a href=&#34;https://electron.atom.io/&#34;&gt;Electron&lt;/a&gt;と&lt;a href=&#34;https://github.com/tmpvar/jsdom&#34;&gt;jsdom&lt;/a&gt;がある。&lt;/p&gt;
+
+&lt;p&gt;SlimerJSは、GeckoとSpiderMonkeyの上に開発された、スクリプトから操作できるテスト用途向けブラウザだけど、ヘッドレスではない。&lt;/p&gt;
+
+&lt;p&gt;ElectronはJavaScriptでデスクトップアプリケーションを開発するためのフレームワーク。
+&lt;a href=&#34;https://www.chromium.org/Home&#34;&gt;Chromium&lt;/a&gt;というブラウザを積んでいて、それをElectron APIでプログラマティックに操作できるらしく、ブラウザテストにも使われる。
+(&lt;a href=&#34;http://qiita.com/hiroshitoda/items/288706978cd4c6df0f5f&#34;&gt;Seleniumでも操作できる&lt;/a&gt;。)
+けどこれもヘッドレスではない。&lt;/p&gt;
+
+&lt;p&gt;jsdomはDOMツリーとそれに対する操作をエミュレートするツールで、そもそもブラウザではないはずなんだけど、HTTPでWebコンテンツダウンロードして解析もできるし、すごくヘッドレスブラウザっぽい。
+けどちゃんとブラウザしてるかが怪しく、UIテストには使われてもブラウザテストにはあまり使われないっぽい。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ヘッドレスブラウザにも色々あるが結局、テスト用に作られたブラウザであって、実際に多くのエンドユーザに使われて揉まれているGUI有りブラウザに比べて、品質が悪かったり動きが違ったりする(らしい)。
+JavaScriptのバージョンのキャッチアップが遅かったりも。&lt;/p&gt;
+
+&lt;h3 id=&#34;xvfb&#34;&gt;Xvfb&lt;/h3&gt;
+
+&lt;p&gt;ヘッドレスブラウザの問題は、実際のブラウザではないということに尽きる。
+実際のブラウザをヘッドレスで使えたら万事が上手くいくわけだが、実はこれがLinuxでなら出来る。
+&lt;a href=&#34;https://www.x.org/releases/X11R7.7/doc/man/man1/Xvfb.1.xhtml&#34;&gt;Xvfb&lt;/a&gt;というツールを使って。
+(Xvfbはあまりメンテされてなくて&lt;a href=&#34;https://xpra.org/trac/wiki/Xdummy&#34;&gt;Xdummy&lt;/a&gt;が代わりに最近熱いみたいだけど。)&lt;/p&gt;
+
+&lt;p&gt;Xvfbはフレームバッファをエミュレートし、ディスプレイが無い環境でも動くヘッドレスXサーバ。
+これを使うと、GUIのある普通のブラウザでもヘッドレス環境で動かせる。&lt;/p&gt;
+
+&lt;p&gt;Xvfbについては&lt;a href=&#34;http://blog.amedama.jp/entry/2016/01/03/115602&#34;&gt;この記事&lt;/a&gt;が分かりやすい。&lt;/p&gt;
+
+&lt;h3 id=&#34;chrome-59&#34;&gt;Chrome 59&lt;/h3&gt;
+
+&lt;p&gt;Xvfbを使えば大分幸せになりそうだが、ブラウザ以外のツールを起動しなければいけなかったり、Windowsで使えなかったり、まだちょっと不満が残る。&lt;/p&gt;
+
+&lt;p&gt;そんななか、2017年6月、Chrome 59がリリースされ、ヘッドレスモードを搭載した。
+Windowsは現時点で未対応だけど、すぐに対応されるはずだ。
+ほかの実ブラウザもこの流れに乗ってヘッドレスモードを実装したら、最高に幸せな世界になるではないか。&lt;/p&gt;
+
+&lt;p&gt;Chromeのヘッドレスモード搭載を受け、&lt;a href=&#34;https://www.infoq.com/jp/news/2017/04/Phantomjs-future-uncertain&#34;&gt;PhantomJSは開発停止&lt;/a&gt;した。
+もうヘッドレスブラウザはその役目を終えつつあるということなのだろう。&lt;/p&gt;
+
+&lt;p&gt;Chrome 59のヘッドレスモードの使い方は&lt;a href=&#34;https://developers.google.com/web/updates/2017/04/headless-chrome?hl=ja&#34;&gt;この記事&lt;/a&gt;が分かりやすい。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;
+&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;以上のような感じのことが調べて分かって、SeleniumとChromeのヘッドレスモードを使いたいと思ったところで、
+続きはまた別の記事。&lt;/p&gt;
+</description>
+        </item>
+      
+    
+
+  </channel>
+</rss>
