@@ -2,9 +2,9 @@
 categories = [ "Programing" ]
 date = "2017-07-12T22:36:22+09:00"
 draft = false
-eyecatch = "Seleniumlogo.png"
+eyecatch = "servicenow-selenium.png"
 slug = "2017-selenium-headless-browsers"
-tags = [ "selenium", "headless-browser" ]
+tags = [ "servicenow", "selenium", "headless-browser" ]
 title = "2017年夏、Selenium、ヘッドレスブラウザ"
 
 +++
