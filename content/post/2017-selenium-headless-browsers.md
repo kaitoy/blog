@@ -179,4 +179,4 @@ Chrome 59のヘッドレスモードの使い方は[この記事](https://develo
 <br>
 
 以上のような感じのことが調べて分かって、SeleniumとChromeのヘッドレスモードを使いたいと思ったところで、
-続きはまた別の記事。
+続きはまた[別の記事](https://www.kaitoy.xyz/2017/08/04/browser-test-framework/)。
