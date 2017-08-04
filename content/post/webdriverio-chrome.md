@@ -9,19 +9,15 @@ title = "webdriverio chrome"
 
 +++
 
-とりあえずは、[WebdriverIO](http://webdriver.io/)、[WDIO](http://webdriver.io/guide/testrunner/gettingstarted.html)、[selenium-webdriver](https://github.com/vvo/selenium-standalone)、[Jasmine](https://jasmine.github.io/)と、Chromeのヘッドレスモードを使って、Dockerコンテナ([Alpine Linux](https://alpinelinux.org/))上でテストスクリプトを実行してServiceNowのログイン画面のスクリーンショットが取れるところまでできた。
+今回、最終的には、[WebdriverIO](http://webdriver.io/)、[WDIO](http://webdriver.io/guide/testrunner/gettingstarted.html)、[selenium-webdriver](https://github.com/vvo/selenium-standalone)、[Jasmine](https://jasmine.github.io/)と、Chromeのヘッドレスモードを使って、Dockerコンテナ([Alpine Linux](https://alpinelinux.org/))上でテストスクリプトを実行して、ServiceNowのログイン画面のスクリーンショットが取れるところまでできた。
 
-ServiceNowは[Chrome、Firefox、IE、Edge、Safariをサポートしている](https://docs.servicenow.com/bundle/istanbul-release-notes/page/release-notes/servicenow-platform/generally-supported-browsers-rn.html)。
-これらに対応するWebDriverはそろっているので、どれもSeleniumで操作できる。
+{{< google-adsense >}}
 
 
 テストフレームワークは[QUnit](https://qunitjs.com/)、Jasmine、[Mocha]()、[AVA]()、[Tape]()、[Jest]
 
 [selenium-standalone](https://www.npmjs.com/package/selenium-standalone)
 
-https://en.wikipedia.org/wiki/Capybara_(software)
-
-[Chromy](http://qiita.com/devneko/items/9ac978965717d5513aa5)
 
 [chromeOptions](https://stackoverflow.com/questions/42303119/selenium-webdriverio-chrome-headless)
 
@@ -29,4 +25,4 @@ https://en.wikipedia.org/wiki/Capybara_(software)
 
 [DockerでChrome Headless Browser](https://github.com/yukinying/chrome-headless-browser-docker)
 [--no-sandbox](http://bufferings.hatenablog.com/entry/2017/05/03/181713)
-[WebDriverIOサンプルコード](http://blog.asial.co.jp/1484)
+[WebdriverIOサンプルコード](http://blog.asial.co.jp/1484)
