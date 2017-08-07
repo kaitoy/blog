@@ -214,16 +214,16 @@ __dependencies__ には依存するnpmパッケージを定義できるが、jap
 
 #### 6. 動作確認
 作成したパッケージは、Package Generatorに生成された時点でAtomから使えるようになっている。
-ソースを変更したら、`Ctrl+Alt+r`でウィンドウをリロードして反映して動作確認できる。
+ソースを変更したら、`Ctrl+Shift+F5`(昔は`Ctrl+Alt+r`だったような…)でウィンドウをリロードして反映して動作確認できる。
 
-ログを見たい時など、`Ctrl+Atl+i`でディベロッパツールを開いておくと便利。
+ログを見たい時など、`Ctrl+Shift+i`でディベロッパツールを開いておくと便利。
 
 #### 7. テスト
 上記の通り、パッケージのテストはJasmineを使って書いて、__<パッケージルート>/spec/__に入れる。テストファイル名の拡張子を除いた部分は__-spec__というポストフィックスを付けなければいけない。
 
 テストの書き方については、[Atomのマニュアル](https://atom.io/docs/latest/hacking-atom-writing-specs)とか、[Atomのテスト](https://github.com/atom/atom/tree/master/spec)とか、Jasmineのマニュアルとかを参照ということで、ここでは割愛する。テスト書くのは必須ではないし。
 
-テストは`Ctrl+Alt+p`で実行できる。
+テストは`Ctrl+Shift+y`(昔は`Ctrl+Alt+p`だったような…)で実行できる。
 
 #### 8. その他ファイルの編集
 README.md、LICENSE.md、CHANGELOG.mdを修正。詳細は割愛。
