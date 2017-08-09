@@ -277,6 +277,17 @@ https://atom.io/packages/japanese-word-selection に行ったらちゃんとjapa
 因みに、`apm unpublish パッケージ名@バージョン`で[パブリッシュを取り消す](https://www.kaitoy.xyz/2015/12/02/unpublish-atom-package/)ことができる。
 
 #### 11. パッケージのアップデートの開発
+Package Generatorでパッケージを生成すると、そのフォルダへのリンクが`%userprofile%\.atom\packages\`に生成される。
+このフォルダは`apm link`コマンドでリンクを張るフォルダであり、普通にインストールしたパッケージが入る場所だ。
+ここに入っているパッケージが、AtomのGUIのInstalled Packagesに表示される。
+
+`apm publish`しても、パブリッシュしたパッケージは`%userprofile%\.atom\packages\`にリンクのまま残る。
+ので、アップデートバージョンも、初バージョンの開発とまったく同じように開発してパブリッシュできる。
+
+昔はこの↓ような面倒なことが必要だったはずなんだけど。
+
+------ 以下昔話 ------
+
 `apm publish`をすると、パブリッシュしたバージョンがインストールされた状態になる。
 具体的には、`%userprofile%\.atom\packages\`にそのパッケージが入っている状態になる。
 
@@ -287,7 +298,9 @@ https://atom.io/packages/japanese-word-selection に行ったらちゃんとjapa
 1. <パッケージルート>に`cd`して、`apm link --dev`を実行する。これでそのフォルダへのリンクが`.atom\dev\packages\`に作成される。
 2. Atomのメニューの __View > Developer > Open In Dev Mode__ からdev modeのAtomウィンドウを開く。
 
-因みに、Package Generatorは、作成したパッケージフォルダへのリンクを`.atom\packages\`に作成する。リンクの一覧は`apm links`で参照でき、`apm unlink`で削除できる。
+因みに、Package Generatorは、作成したパッケージフォルダへのリンクを`%userprofile%\.atom\packages\`に作成する。リンクの一覧は`apm links`で参照でき、`apm unlink`で削除できる。
+
+------ 以上昔話 ------
 
 ## 関連エントリ
 後日もう一つパッケージを作り、[それに関する記事](https://www.kaitoy.xyz/2015/09/06/disturb-me/)を書いた。
