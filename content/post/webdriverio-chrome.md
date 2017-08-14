@@ -3,7 +3,7 @@ categories = [ "Programing" ]
 date = "2017-08-14T10:53:17+09:00"
 draft = false
 eyecatch = "servicenow-webdriverio.png"
-slug = ""
+slug = "webdriverio-chrome"
 tags = [ "servicenow", "selenium", "webdriverio", "docker" ]
 title = "WebdriverIOとChromeのヘッドレスモードで自動ブラウザテストするDockerイメージ: webdriverio-chrome"
 +++
