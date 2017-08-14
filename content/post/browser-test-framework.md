@@ -174,3 +174,7 @@ Nightwatch.jsは、全部メソッドチェーンでつなげる形で書くの�
 ということで残ったのがWebdriverIO。
 ややドキュメントが少なそうなのと、★が比較的少ないのが懸念。
 ProtractorかNightwatch.jsにしとけばよかったってなりそうではある。
+
+<br>
+
+[WebdriverIOの環境を構築した記事](https://www.kaitoy.xyz/2017/08/14/webdriverio-chrome/)を書いた。
