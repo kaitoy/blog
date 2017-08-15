@@ -13,7 +13,7 @@
     <meta property="og:title" content="ORMは不快なアンチパターン | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2015/09/13/orm-is-offensive-anti-pattern/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2015/09/13/orm-is-offensive-anti-pattern/">
-    <meta property="og:description" content="このエントリでは、Yegor Bugayenkoによる記事、ORM Is an Offensive Anti-Patternを紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 (adsbygoogle = window.adsbygoogle || []).push({}); 結論から言えば、ORMはオブジェクト指向プログラミングの原則の全てに違反するひどいアンチパターンだ。オブジェクトをバラバラに引き裂き、もの言わぬ受身なデータ入れに変えてしまう。 小さいWebアプリケーションから、数千のテーブルをCRUD操作するエンタープライズシステムまで、どんなアプリケーションにもORMが存在することはゆるせない。 代わりになるものは? SQLを話すオブジェクトだ。 ORMの仕組み オブジェクト関係マッピング (Object-relatinal mapping、ORM)は、オブジェクト指向言語(例えばJava)からリレーショナルデータベースにアクセスする技術(またはデザインパターン)だ。 ほとんどの言語で複数のORM実装がある。 例えば、JavaのHibernate、Ruby on RalsのActiveRecord、PHPのDoctrine、PythonのSQLAlchemy。 Javaでは、ORMデザインはJPAとして標準化されてさえいる。 最初に、ORMがどう動くかを見てみよう。JavaとPostgreSQLとHibernateを使い、データベースにpost (訳注: ブログポスト、ブログの記事)という単一のテーブルがあるとする。 &#43;-----&#43;------------&#43;--------------------------&#43; | id | date | title | &#43;-----&#43;------------&#43;--------------------------&#43; | 9 | 10/24/2014 | How to cook a sandwich | | 13 | 11/03/2014 | My favorite movies | | 27 | 11/17/2014 | How much I love my job | &#43;-----&#43;------------&#43;--------------------------&#43; で、このテーブルをJavaアプリケーションからCRUD操作したい。(CRUDはcreate、read、update、deleteの略。) まず、Postクラスを書く。(長くてごめん。けどなるべく短くしたんだ。) @Entity @Table(name = &quot;post&quot;) public class Post { private int id; private Date date; private String title; @Id @GeneratedValue public int getId() { return this.id; } @Temporal(TemporalType.TIMESTAMP) public Date getDate() { return this.date; } public Title getTitle() { return this.title; } public void setDate(Date when) { this.date = when; } public void setTitle(String txt) { this.title = txt; } } Hibernateでの処理をする前に、セッションファクトリを作らないといけない。 SessionFactory factory = new AnnotationConfiguration() .configure() .addAnnotatedClass(Post.class) .buildSessionFactory(); このファクトリはPostオブジェクトを操作したいときに「セッション」を作ってくれる。 セッションを使う全ての操作は以下のようなコードブロックで囲わないといけない。 Session session = factory.openSession(); try { Transaction txn = session.beginTransaction(); // your manipulations with the ORM, see below txn.commit(); } catch (HibernateException ex) { txn.rollback(); } finally { session.close(); } セッションが準備できたら、以下のようにしてデータベーステーブルから全てのpostのリストを取得する。 List posts = session.createQuery(&quot;FROM Post&quot;).list(); for (Post post : (List&lt;Post&gt;) posts){ System.out.println(&quot;Title: &quot; &#43; post.getTitle()); } ここで何が起こっているかは明確だと思う。 Hibernateという巨大で強力なエンジンが、データベースへの接続、SQLのSELECTリクエスト発行、及びデータの取得をする。 そして、Postクラスのインスタンスを作り、データをつめる。 そのオブジェクトが我々に渡されるとき、それにはデータが詰まっていて、getterでデータを取り出すことができる。上記getTitle()でやっているように。 逆の処理をしてオブジェクトをデータベースに送りたい場合は、同じことを逆の手順でやればいい。 Postのインスタンスを作り、データを入れ、Hibernateに保存するよう頼む。 Post post = new Post(); post.setDate(new Date()); post.setTitle(&quot;How to cook an omelette&quot;); session.save(post); これがほぼ全てのORMの仕組みだ。 基本的な原則はいつも同じで、ORMオブジェクトは無気力なデータの包みだ。 我々はORMフレームワークと話して、ORMフレームワークはデータベースと話す。 オブジェクトは我々のリクエストをORMフレームワークに送り、そのレスポンスを読むのを助けてくれるだけだ。 こうしたオブジェクトは、getterやsetterのほかに何のメソッドも持たない。どのデータベースから来たのかすら知らない。 これがオブジェクト関係マッピングの仕組みだ。 これの何が間違ってるかって?">
+    <meta property="og:description" content="このエントリでは、Yegor Bugayenkoによる記事、ORM Is an Offensive Anti-Patternを紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 結論から言えば、ORMはオブジェクト指向プログラミングの原則の全てに違反するひどいアンチパターンだ。オブジェクトをバラバラに引き裂き、もの言わぬ受身なデータ入れに変えてしまう。 小さいWebアプリケーションから、数千のテーブルをCRUD操作するエンタープライズシステムまで、どんなアプリケーションにもORMが存在することはゆるせない。 代わりになるものは? SQLを話すオブジェクトだ。 ORMの仕組み オブジェクト関係マッピング (Object-relatinal mapping、ORM)は、オブジェクト指向言語(例えばJava)からリレーショナルデータベースにアクセスする技術(またはデザインパターン)だ。 ほとんどの言語で複数のORM実装がある。 例えば、JavaのHibernate、Ruby on RalsのActiveRecord、PHPのDoctrine、PythonのSQLAlchemy。 Javaでは、ORMデザインはJPAとして標準化されてさえいる。 最初に、ORMがどう動くかを見てみよう。JavaとPostgreSQLとHibernateを使い、データベースにpost (訳注: ブログポスト、ブログの記事)という単一のテーブルがあるとする。 &#43;-----&#43;------------&#43;--------------------------&#43; | id | date | title | &#43;-----&#43;------------&#43;--------------------------&#43; | 9 | 10/24/2014 | How to cook a sandwich | | 13 | 11/03/2014 | My favorite movies | | 27 | 11/17/2014 | How much I love my job | &#43;-----&#43;------------&#43;--------------------------&#43; で、このテーブルをJavaアプリケーションからCRUD操作したい。(CRUDはcreate、read、update、deleteの略。) まず、Postクラスを書く。(長くてごめん。けどなるべく短くしたんだ。) @Entity @Table(name = &quot;post&quot;) public class Post { private int id; private Date date; private String title; @Id @GeneratedValue public int getId() { return this.id; } @Temporal(TemporalType.TIMESTAMP) public Date getDate() { return this.date; } public Title getTitle() { return this.title; } public void setDate(Date when) { this.date = when; } public void setTitle(String txt) { this.title = txt; } } Hibernateでの処理をする前に、セッションファクトリを作らないといけない。 SessionFactory factory = new AnnotationConfiguration() .configure() .addAnnotatedClass(Post.class) .buildSessionFactory(); このファクトリはPostオブジェクトを操作したいときに「セッション」を作ってくれる。 セッションを使う全ての操作は以下のようなコードブロックで囲わないといけない。 Session session = factory.openSession(); try { Transaction txn = session.beginTransaction(); // your manipulations with the ORM, see below txn.commit(); } catch (HibernateException ex) { txn.rollback(); } finally { session.close(); } セッションが準備できたら、以下のようにしてデータベーステーブルから全てのpostのリストを取得する。 List posts = session.createQuery(&quot;FROM Post&quot;).list(); for (Post post : (List&lt;Post&gt;) posts){ System.out.println(&quot;Title: &quot; &#43; post.getTitle()); } ここで何が起こっているかは明確だと思う。 Hibernateという巨大で強力なエンジンが、データベースへの接続、SQLのSELECTリクエスト発行、及びデータの取得をする。 そして、Postクラスのインスタンスを作り、データをつめる。 そのオブジェクトが我々に渡されるとき、それにはデータが詰まっていて、getterでデータを取り出すことができる。上記getTitle()でやっているように。 逆の処理をしてオブジェクトをデータベースに送りたい場合は、同じことを逆の手順でやればいい。 Postのインスタンスを作り、データを入れ、Hibernateに保存するよう頼む。 Post post = new Post(); post.setDate(new Date()); post.setTitle(&quot;How to cook an omelette&quot;); session.save(post); これがほぼ全てのORMの仕組みだ。 基本的な原則はいつも同じで、ORMオブジェクトは無気力なデータの包みだ。 我々はORMフレームワークと話して、ORMフレームワークはデータベースと話す。 オブジェクトは我々のリクエストをORMフレームワークに送り、そのレスポンスを読むのを助けてくれるだけだ。 こうしたオブジェクトは、getterやsetterのほかに何のメソッドも持たない。どのデータベースから来たのかすら知らない。 これがオブジェクト関係マッピングの仕組みだ。 これの何が間違ってるかって?">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/teamedio_logo.svg">
     
@@ -43,10 +43,13 @@
     <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
 
     
+    
+
+    
     <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
     <script>
       (adsbygoogle = window.adsbygoogle || []).push({
-        google_ad_client: "ca-pub-7852181473528684",
+        google_ad_client: "ca-pub-6244473643910448",
         enable_page_level_ads: true
       });
     </script>
@@ -87,15 +90,8 @@
 
 <p><br></p>
 
-<p><script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-7852181473528684"
-     data-ad-slot="3938339651"
-     data-ad-format="auto"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+<p>
+
 </p>
 
 <hr />
@@ -563,15 +559,7 @@ Yegor自身が前半で書いているORMを使ったコードより、後半の
 
       <aside>
         
-        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-client="ca-pub-7852181473528684"
-             data-ad-slot="3938339651"
-             data-ad-format="auto"></ins>
-        <script>
-        (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
+        
       </aside>
 
       <aside>
@@ -1117,15 +1105,7 @@ Yegor自身が前半で書いているORMを使ったコードより、後半の
 </div>
 
 
-<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-7852181473528684"
-     data-ad-slot="3938339651"
-     data-ad-format="auto"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+
 
 <div class="col-md-12 col-sm-6 col-xs-12">
   <div class="text-center custom-partial">

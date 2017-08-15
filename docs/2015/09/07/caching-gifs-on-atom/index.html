@@ -13,7 +13,7 @@
     <meta property="og:title" content="AtomにおけるGIF画像のキャッシュ | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2015/09/07/caching-gifs-on-atom/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2015/09/07/caching-gifs-on-atom/">
-    <meta property="og:description" content="以前、disturb-meというAtomパッケージを作ったというエントリを書いた。 このエントリでは、disturb-meに見つけたバグの修正のなかで、AtomがGIF画像をキャッシュする問題に対応したという話を書く。 (adsbygoogle = window.adsbygoogle || []).push({}); disturb-meのバグ 以前のエントリの最後にも書いた通り、disturb-me 1.0.0には、ループしないGIFアニメーション画像を設定で指定した場合、そのアニメーションが画像の初回表示時にしか再生されないというバグがある。 disturb-meは、Ctrl&#43;Alt&#43;d Ctrl&#43;Alt&#43;mと入力すると画像を表示し、もう一度それを入力すると画像を消す。 デフォルトで表示する画像はAtomのロゴで、表示を始める時と消す時にGIF画像でループしないアニメーションを再生する。 このデフォルトの状態で、一度Atomロゴを表示して消して、再度表示して消すと、消すときのアニメーションが再生されない。(表示を始める時のアニメーションはなぜか再生される。) バグの原因 disturb-meは、imgタグをAtomウィンドウ内に追加した後、そのsrc属性に画像へのパスをセットして画像を表示させるが、どうもAtom(のChromium)が画像をキャッシュしてくれるせいで、一度表示し終わったGIFアニメーションは二度と再生されない模様。 なぜ表示開始時のアニメーションが再生されるかは不明。 バグ修正 外部リソースをロードするときにブラウザによるキャッシュを回避するには、URLにランダムな値をもつクエリストリングを付けるのが常套手段。 今回のバグも、srcにセットするGIF画像のパス(URL)にそのようなクエリストリングをつければよい。 例えば、C:\images\hoge.gifを表示したいなら、&lt;img src=&quot;C:\images\hoge.gif?time=1441559906660&quot;&gt;&lt;img&gt;という風にする。 ここでtimeの値にはDate.now()とかで毎回違う値を生成して使う。 Atomプロトコルの問題 ここで一つ問題が。disturb-meがデフォルトで使うAtomロゴの画像はパッケージに含まれていて、そういうリソースのURLにはAtomプロトコルを使うのが普通。 Atomプロトコルを使うと、atom://disturb-me/assets/atom/white/atom_born.gifみたいに書いて、パッケージ内の相対パスでリソースを指定できる。 このAtomプロトコルが、今の時点(Atom v1.0.11)でクエリストリングに対応していない。困った。 Atomプロトコルの問題への対応 いい機会なので、Atomのソースをfork、cloneして、Atomプロトコルを(簡易的に)クエリストリングに対応させ、ビルドして確認し、プルリクエストを送ってみた。これについてはまた別のエントリで書くかもしれない。 このプルリクエストが取り込まれるまでの暫定対策として、Atomプロトコルハンドラのソースを見て、AtomプロトコルのURLからリソースのファイルシステム上での絶対パスを導いている部分をdisturb-me内にパクって、srcにセットする値としてatom://を使わないようにした。 これでちゃんと動いた。">
+    <meta property="og:description" content="以前、disturb-meというAtomパッケージを作ったというエントリを書いた。 このエントリでは、disturb-meに見つけたバグの修正のなかで、AtomがGIF画像をキャッシュする問題に対応したという話を書く。 disturb-meのバグ 以前のエントリの最後にも書いた通り、disturb-me 1.0.0には、ループしないGIFアニメーション画像を設定で指定した場合、そのアニメーションが画像の初回表示時にしか再生されないというバグがある。 disturb-meは、Ctrl&#43;Alt&#43;d Ctrl&#43;Alt&#43;mと入力すると画像を表示し、もう一度それを入力すると画像を消す。 デフォルトで表示する画像はAtomのロゴで、表示を始める時と消す時にGIF画像でループしないアニメーションを再生する。 このデフォルトの状態で、一度Atomロゴを表示して消して、再度表示して消すと、消すときのアニメーションが再生されない。(表示を始める時のアニメーションはなぜか再生される。) バグの原因 disturb-meは、imgタグをAtomウィンドウ内に追加した後、そのsrc属性に画像へのパスをセットして画像を表示させるが、どうもAtom(のChromium)が画像をキャッシュしてくれるせいで、一度表示し終わったGIFアニメーションは二度と再生されない模様。 なぜ表示開始時のアニメーションが再生されるかは不明。 バグ修正 外部リソースをロードするときにブラウザによるキャッシュを回避するには、URLにランダムな値をもつクエリストリングを付けるのが常套手段。 今回のバグも、srcにセットするGIF画像のパス(URL)にそのようなクエリストリングをつければよい。 例えば、C:\images\hoge.gifを表示したいなら、&lt;img src=&quot;C:\images\hoge.gif?time=1441559906660&quot;&gt;&lt;img&gt;という風にする。 ここでtimeの値にはDate.now()とかで毎回違う値を生成して使う。 Atomプロトコルの問題 ここで一つ問題が。disturb-meがデフォルトで使うAtomロゴの画像はパッケージに含まれていて、そういうリソースのURLにはAtomプロトコルを使うのが普通。 Atomプロトコルを使うと、atom://disturb-me/assets/atom/white/atom_born.gifみたいに書いて、パッケージ内の相対パスでリソースを指定できる。 このAtomプロトコルが、今の時点(Atom v1.0.11)でクエリストリングに対応していない。困った。 Atomプロトコルの問題への対応 いい機会なので、Atomのソースをfork、cloneして、Atomプロトコルを(簡易的に)クエリストリングに対応させ、ビルドして確認し、プルリクエストを送ってみた。これについてはまた別のエントリで書くかもしれない。 このプルリクエストが取り込まれるまでの暫定対策として、Atomプロトコルハンドラのソースを見て、AtomプロトコルのURLからリソースのファイルシステム上での絶対パスを導いている部分をdisturb-me内にパクって、srcにセットする値としてatom://を使わないようにした。 これでちゃんと動いた。">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/atom_editor_logo.svg.png">
     
@@ -43,10 +43,13 @@
     <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
 
     
+    
+
+    
     <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
     <script>
       (adsbygoogle = window.adsbygoogle || []).push({
-        google_ad_client: "ca-pub-7852181473528684",
+        google_ad_client: "ca-pub-6244473643910448",
         enable_page_level_ads: true
       });
     </script>
@@ -86,15 +89,8 @@
 
 <p><br></p>
 
-<p><script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-7852181473528684"
-     data-ad-slot="3938339651"
-     data-ad-format="auto"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+<p>
+
 </p>
 
 <h2 id="disturb-meのバグ">disturb-meのバグ</h2>
@@ -147,15 +143,7 @@ Atomプロトコルを使うと、<code>atom://disturb-me/assets/atom/white/atom
 
       <aside>
         
-        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-client="ca-pub-7852181473528684"
-             data-ad-slot="3938339651"
-             data-ad-format="auto"></ins>
-        <script>
-        (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
+        
       </aside>
 
       <aside>
@@ -691,15 +679,7 @@ Atomプロトコルを使うと、<code>atom://disturb-me/assets/atom/white/atom
 </div>
 
 
-<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-7852181473528684"
-     data-ad-slot="3938339651"
-     data-ad-format="auto"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+
 
 <div class="col-md-12 col-sm-6 col-xs-12">
   <div class="text-center custom-partial">

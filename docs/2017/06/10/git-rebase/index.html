@@ -13,7 +13,7 @@
     <meta property="og:title" content="git rebaseを図解する | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2017/06/10/git-rebase/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2017/06/10/git-rebase/">
-    <meta property="og:description" content="この記事を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、Gitの git rebase というコマンドについて説明する。 このコマンドは、コミット履歴を改変できるGit特有のコマンドで、分かり辛いGitコマンドの中でも最も分かり辛い部類のものだ。 Gitの最後の関門と言えよう。 けど、それだけに使いこなせばとても便利なものでもある。 (adsbygoogle = window.adsbygoogle || []).push({}); git rebaseがもつたった一つの機能 git rebaseにはいろんなオプションがあって、ちょっと調べただけだと、コミットを移動する機能とコミットを修正する機能の二つがあるように見えるかもしれないが、実際は単一の機能しかないシンプルなコマンドだ。 その機能とは、指定した範囲のコミットが含む変更を、別に指定したコミットのコードベースに適用するというもの。 コマンドの基本形は次のようなものだ。 $ git rebase --onto master dev bugfix このコマンドは、bugfixから辿れるコミット群から、devから辿れるコミット群を除いたコミット群が含む変更を、masterのコードベースに適用する。 と書いても分からないので図解する。 このスライドを見ると、git rebaseに指定した3つのブランチのそれぞれの使われ方が分かるはず。 git rebase --onto master dev bugfixが実行する処理をもっと正確に言うと、 bugfixをcheckoutして(i.e. HEADをbugfixにして)、 dev..HEADのコミット群が含む変更を、それぞれ仮領域にパッチとして保存して、 git reset --hard masterして、 仮領域に保存した変更を、HEADが指すコミットのコードベースにひとつひとつ順番に適用する。 上記コマンドでbugfixのところを省略すると、ステップ1のcheckoutが省略される。 言い換えると、上記コマンドは次の二つのコマンドに分解できる。 $ git checkout bugfix $ git rebase --onto master dev さらに、--onto masterを省略すると、ステップ3のreset先が変わり、devになる。 このときのコマンドの形は、 $ git rebase dev という見慣れたものになるが、これが最初に挙げた基本形の省略形だと認識しておくと応用が利く。 以下にgit rebase devの動きを細かめに図解する。 インタラクティブモード 前節のスライドに書いたパッチの適用をカスタマイズできるのがインタラクティブモードで、これは-iオプションで有効にできる。 インタラクティブモードを使うと、パッチをスキップしたり、順番を変えたり、まとめたり、分割したり、編集したりでき、またパッチとパッチの間に任意のコマンドを実行でき、例えばパッチごとにユニットテストを実行できたりする。 インタラクティブモードの使い方についてはググればたくさん出てくるのでここには書かない。">
+    <meta property="og:description" content="この記事を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、Gitの git rebase というコマンドについて説明する。 このコマンドは、コミット履歴を改変できるGit特有のコマンドで、分かり辛いGitコマンドの中でも最も分かり辛い部類のものだ。 Gitの最後の関門と言えよう。 けど、それだけに使いこなせばとても便利なものでもある。 git rebaseがもつたった一つの機能 git rebaseにはいろんなオプションがあって、ちょっと調べただけだと、コミットを移動する機能とコミットを修正する機能の二つがあるように見えるかもしれないが、実際は単一の機能しかないシンプルなコマンドだ。 その機能とは、指定した範囲のコミットが含む変更を、別に指定したコミットのコードベースに適用するというもの。 コマンドの基本形は次のようなものだ。 $ git rebase --onto master dev bugfix このコマンドは、bugfixから辿れるコミット群から、devから辿れるコミット群を除いたコミット群が含む変更を、masterのコードベースに適用する。 と書いても分からないので図解する。 このスライドを見ると、git rebaseに指定した3つのブランチのそれぞれの使われ方が分かるはず。 git rebase --onto master dev bugfixが実行する処理をもっと正確に言うと、 bugfixをcheckoutして(i.e. HEADをbugfixにして)、 dev..HEADのコミット群が含む変更を、それぞれ仮領域にパッチとして保存して、 git reset --hard masterして、 仮領域に保存した変更を、HEADが指すコミットのコードベースにひとつひとつ順番に適用する。 上記コマンドでbugfixのところを省略すると、ステップ1のcheckoutが省略される。 言い換えると、上記コマンドは次の二つのコマンドに分解できる。 $ git checkout bugfix $ git rebase --onto master dev さらに、--onto masterを省略すると、ステップ3のreset先が変わり、devになる。 このときのコマンドの形は、 $ git rebase dev という見慣れたものになるが、これが最初に挙げた基本形の省略形だと認識しておくと応用が利く。 以下にgit rebase devの動きを細かめに図解する。 インタラクティブモード 前節のスライドに書いたパッチの適用をカスタマイズできるのがインタラクティブモードで、これは-iオプションで有効にできる。 インタラクティブモードを使うと、パッチをスキップしたり、順番を変えたり、まとめたり、分割したり、編集したりでき、またパッチとパッチの間に任意のコマンドを実行でき、例えばパッチごとにユニットテストを実行できたりする。 インタラクティブモードの使い方についてはググればたくさん出てくるのでここには書かない。 この記事辺りがわかりやすい。 インタラクティブモードのユースケースとしてよく紹介されるのが、git rebase -i HEAD^^で直近の二つのコミットを変更するといったものだが、これを図解すると以下のようになる。">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/git.png">
     
@@ -43,10 +43,13 @@
     <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
 
     
+    
+
+    
     <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
     <script>
       (adsbygoogle = window.adsbygoogle || []).push({
-        google_ad_client: "ca-pub-7852181473528684",
+        google_ad_client: "ca-pub-6244473643910448",
         enable_page_level_ads: true
       });
     </script>
@@ -89,15 +92,8 @@ Gitの最後の関門と言えよう。
 
 <p><br></p>
 
-<p><script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-7852181473528684"
-     data-ad-slot="3938339651"
-     data-ad-format="auto"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+<p>
+
 </p>
 
 <h1 id="git-rebaseがもつたった一つの機能">git rebaseがもつたった一つの機能</h1>
@@ -211,15 +207,7 @@ $ git rebase --onto master dev
 
       <aside>
         
-        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-client="ca-pub-7852181473528684"
-             data-ad-slot="3938339651"
-             data-ad-format="auto"></ins>
-        <script>
-        (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
+        
       </aside>
 
       <aside>
@@ -755,15 +743,7 @@ $ git rebase --onto master dev
 </div>
 
 
-<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-7852181473528684"
-     data-ad-slot="3938339651"
-     data-ad-format="auto"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+
 
 <div class="col-md-12 col-sm-6 col-xs-12">
   <div class="text-center custom-partial">
