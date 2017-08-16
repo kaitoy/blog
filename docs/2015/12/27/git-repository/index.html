@@ -13,7 +13,7 @@
     <meta property="og:title" content="Gitのリポジトリの中身をなるべく正確に理解する | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2015/12/27/git-repository/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2015/12/27/git-repository/">
-    <meta property="og:description" content="このエントリでは、Gitの基本的な使い方は理解している前提で、そのリポジトリの構造をなるべく正確に説明する。 ここに書いてあることは概ね、筆者がO&rsquo;Reillyの蝙蝠本を読んで得た知識に基づく。 リポジトリの構造というとコアで上級者向けの知識のように聞こえるが、これをまず理解しておくことで強力で複雑なGitの機能を習得するのが非常に楽になる。 具体的には、Gitにおけるブランチの概念などの理解が深まったり、git resetなどのGit特有で分かり辛いコマンドを自信をもって使えるようになったり、なにより、Gitを使う上での最大のハードルである インデックス や HEAD の概念を完璧に理解できるというメリットがある。 チュートリアルを終えたくらいの初心者にこそ読んでほしいエントリである。 Gitリポジトリの中身 Gitのリポジトリは、プロジェクトをクローンしたときとかにできる.gitディレクトリ内に詰まっている。 このディレクトリには、オブジェクト格納領域 と インデックス というデータ構造が入っている。 また、参照 (ref) や シンボリック参照 (symref) というものも入っている。 以下、それぞれについて説明する。 オブジェクト格納領域 オブジェクト格納領域は、ファイルシステム上では.git/objects/以下にあたる。 ここには、バージョン管理されているファイルの情報やそのコミット履歴などが保存されていて、具体的には以下の4種類のオブジェクトが置かれている。 ブロブ 一つのファイルを表すオブジェクト。 バージョン管理対象のファイルの内容(だけ)を保持する。 ツリー 一つのディレクトリを表すオブジェクト。ブロブや別のツリーを指すポインタを持ち、またそれらが表すファイル/ディレクトリの名前や属性を保持する。 つまり、これとブロブを組み合わせると、ファイルシステム上のディレクトリツリーを表すことができる。 コミット 一つのコミットを表すオブジェクト。コミット日時やログメッセージなどの情報と、一つ前のコミット(親コミット)を指すポインタと、一つのツリーを指すポインタを持つ。 このツリーはプロジェクトのルートディレクトリを表す。 つまり、一つのコミットは、プロジェクトのある時点でのディレクトリツリー全体を表してもいる。 タグ 一つの注釈付きタグ(git tag -aで作るタグ)を表すオブジェクト。 タグ名やタグにつけたコメントなどの情報と、一つのオブジェクト(普通はコミット)へのポインタを持つ。 因みに軽量タグ(git tagで作るタグ)はオブジェクトにならない。 ファイルシステム上で、一つのオブジェクトは一つのファイルに書き込まれ、zlibで圧縮され、.git/objects/以下に配置される。 そのファイルへのパスには、オブジェクトのコンテンツから計算されたSHA1ハッシュの値(i.e. オブジェクトの名前)が使われる。 例えば.git/objects/16/cacde1ddabe1698b0e41e091e4697313e2b7e5というファイルがあったら、これは 16cacde1ddabe1698b0e41e091e4697313e2b7e5 という名のオブジェクトの実体。 git cat-file -p &lt;SHA1ハッシュ&gt;でオブジェクトのコンテンツを見れるので、いくつか見てみると面白い。 たとえばコミットオブジェクトは以下の様になっている。 $ git cat-file -p d444447526f91a97f2edeefc65d4f58e8e006d78 tree 5d43dfbb8dd89018b9a383d6b9f663166e3cf9f9 parent adcf8b197c6c156860dc8aa66ccb9a0c0a3bebb6 author kaitoy &lt;kaitoy@pcap4j.org&gt; 1480004891 -0700 committer kaitoy &lt;kaitoy@pcap4j.org&gt; 1480004891 -0700 [#76] Rmove unneeded makePacketForInvokingPacketField call from IcmpV4InvokingPacketPacket.">
+    <meta property="og:description" content="このエントリでは、Gitの基本的な使い方は理解している前提で、そのリポジトリの構造をなるべく正確に説明する。 ここに書いてあることは概ね、筆者がO&rsquo;Reillyの蝙蝠本を読んで得た知識に基づく。 リポジトリの構造というとコアで上級者向けの知識のように聞こえるが、これをまず理解しておくことで強力で複雑なGitの機能を習得するのが非常に楽になる。 具体的には、Gitにおけるブランチの概念などの理解が深まったり、git resetなどのGit特有で分かり辛いコマンドを自信をもって使えるようになったり、なにより、Gitを使う上での最大のハードルである インデックス や HEAD の概念を完璧に理解できるというメリットがある。 チュートリアルを終えたくらいの初心者にこそ読んでほしいエントリである。 (adsbygoogle = window.adsbygoogle || []).push({}); Gitリポジトリの中身 Gitのリポジトリは、プロジェクトをクローンしたときとかにできる.gitディレクトリ内に詰まっている。 このディレクトリには、オブジェクト格納領域 と インデックス というデータ構造が入っている。 また、参照 (ref) や シンボリック参照 (symref) というものも入っている。 以下、それぞれについて説明する。 オブジェクト格納領域 オブジェクト格納領域は、ファイルシステム上では.git/objects/以下にあたる。 ここには、バージョン管理されているファイルの情報やそのコミット履歴などが保存されていて、具体的には以下の4種類のオブジェクトが置かれている。 ブロブ 一つのファイルを表すオブジェクト。 バージョン管理対象のファイルの内容(だけ)を保持する。 ツリー 一つのディレクトリを表すオブジェクト。ブロブや別のツリーを指すポインタを持ち、またそれらが表すファイル/ディレクトリの名前や属性を保持する。 つまり、これとブロブを組み合わせると、ファイルシステム上のディレクトリツリーを表すことができる。 コミット 一つのコミットを表すオブジェクト。コミット日時やログメッセージなどの情報と、一つ前のコミット(親コミット)を指すポインタと、一つのツリーを指すポインタを持つ。 このツリーはプロジェクトのルートディレクトリを表す。 つまり、一つのコミットは、プロジェクトのある時点でのディレクトリツリー全体を表してもいる。 タグ 一つの注釈付きタグ(git tag -aで作るタグ)を表すオブジェクト。 タグ名やタグにつけたコメントなどの情報と、一つのオブジェクト(普通はコミット)へのポインタを持つ。 因みに軽量タグ(git tagで作るタグ)はオブジェクトにならない。 ファイルシステム上で、一つのオブジェクトは一つのファイルに書き込まれ、zlibで圧縮され、.git/objects/以下に配置される。 そのファイルへのパスには、オブジェクトのコンテンツから計算されたSHA1ハッシュの値(i.e. オブジェクトの名前)が使われる。 例えば.git/objects/16/cacde1ddabe1698b0e41e091e4697313e2b7e5というファイルがあったら、これは 16cacde1ddabe1698b0e41e091e4697313e2b7e5 という名のオブジェクトの実体。 git cat-file -p &lt;SHA1ハッシュ&gt;でオブジェクトのコンテンツを見れるので、いくつか見てみると面白い。 たとえばコミットオブジェクトは以下の様になっている。 $ git cat-file -p d444447526f91a97f2edeefc65d4f58e8e006d78 tree 5d43dfbb8dd89018b9a383d6b9f663166e3cf9f9 parent adcf8b197c6c156860dc8aa66ccb9a0c0a3bebb6 author kaitoy &lt;kaitoy@pcap4j.org&gt; 1480004891 -0700 committer kaitoy &lt;kaitoy@pcap4j.org&gt; 1480004891 -0700 [#76] Rmove unneeded makePacketForInvokingPacketField call from IcmpV4InvokingPacketPacket.">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/git.png">
     
@@ -96,6 +96,17 @@
 
 <p>
 
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
 </p>
 
 <h1 id="gitリポジトリの中身">Gitリポジトリの中身</h1>
@@ -318,6 +329,17 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
       <aside>
         
         
+
+        
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-6244473643910448"
+             data-ad-slot="1845600530"
+             data-ad-format="auto"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
       </aside>
 
       <aside>
@@ -854,6 +876,17 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
 
 
 
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-6244473643910448"
+    data-ad-slot="1845600530"
+    data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
 
 <div class="col-md-12 col-sm-6 col-xs-12">
   <div class="text-center custom-partial">

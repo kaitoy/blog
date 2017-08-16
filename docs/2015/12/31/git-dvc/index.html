@@ -13,7 +13,7 @@
     <meta property="og:title" content="Gitの分散バージョン管理の仕組み | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2015/12/31/git-dvc/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2015/12/31/git-dvc/">
-    <meta property="og:description" content="このエントリでは、この記事を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、Gitの分散バージョン管理の仕組みについて説明する。 Gitの分散バージョン管理 分散バージョン管理とは、分散したリポジトリでのバージョン管理ということ。 ここでリポジトリが分散しているとは、同じプロジェクトの履歴を管理する完全で独立したリポジトリが複数あるということ。 これにより一つのプロジェクトの開発を地理的に分散して並行して進めることができる。 Gitは分散バージョン管理のために、リポジトリのクローン(≒コピー)を作る機能と、リポジトリ間でコミットグラフを同期する機能を提供している。 リポジトリのクローンを作ると言うと、オリジナルとクローンの間に格差があるような気がするが、 実際にはGitは全てのリポジトリが対等であるという思想のもとで実装されている。 このため、リポジトリをクローンする時には(デフォルトで)クローン元の完全なコミットグラフがクローンにコピーされるし、任意のリポジトリ間のデータのやり取りをpeer-to-peerでできる。 クローンからクローンを作ることももちろん可能。 git pushでデータを送る先をアップストリームと呼ぶことはあるし、次節でローカルリポジトリとリモートリポジトリという関係が出てくるが、これはあくまでその時点でそういう設定になっているというだけ。 アップストリームはいつでもいくつでもgit remoteコマンドで追加したり削除したりできる。 このような実装により、Gitの分散バージョン管理ではリポジトリ間で柔軟なデータのやり取りができる。 例えば以下の様な複雑なリポジトリネットワークを組むこともできる。 ローカルリポジトリとリモートリポジトリ 一人の開発者から見て、手元にあるリポジトリを ローカルリポジトリ と呼ぶのに対して、git pushやgit pullやgit fetchでデータをやり取りする相手のリポジトリを リモートリポジトリ と呼ぶ。 リモートリポジトリとのやり取りは、リモート追跡ブランチ と リモート というものを使って実装されている。 リモート追跡ブランチ リモート追跡ブランチは、ローカルリポジトリの.git/refs/remotes/に格納される参照で、リモートリポジトリ内のローカルブランチのコミットグラフを取得してローカルリポジトリ内に保持するために使われる。 git branch -rでその一覧が見れる。 「追跡」ブランチというだけあって、リモートリポジトリ内でコミットグラフが成長した場合、この変更に追随することができる。 このためのコマンドがgit fetch。 因みにgit pullは、git fetchでリモート追跡ブランチを更新した後、git merge(オプションによってはgit rebase)でそのリモート追跡ブランチをローカルブランチにマージするのと同じ。 リモート リモートとは、リモートリポジトリのこと、またはリモートリポジトリに接続するための定義のこと。 この定義は、ローカルリポジトリの.git/configにremoteセクションとして書かれている。 以下がその例。 [remote &quot;origin&quot;] fetch = &#43;refs/heads/*:refs/remotes/origin/* url = git@github.com:kaitoy/blog.git セクション名のところに&quot;origin&quot;とあるがこれは、この定義で接続するリモートリポジトリをGitコマンドなどでoriginと指定できるということ。 ここで定義されているのはurlとfetchで、それぞれ以下を意味する。 url リモートリポジトリのURL。 つまり、リモートリポジトリがどのサーバのどのディレクトリにあって、それとのデータのやり取りをどのプロトコルでやるかという定義。 このURLには以下の書式が使える。 ファイルパス /path/to/repo.gitとかC:\\Users\\Kaito\\Desktop\\pcap4jといった、普通のファイルパスの書式。 NFSなどでリモートリポジトリが共有されている場合などに使われる。 シンボリックリンクがサポートされているOS上では、クローンはリモートリポジトリをハードリンクで参照する。 このシンボリック参照でのファイル共有がトラブルの元なため、この書式は非推奨。 ファイルURL file:///path/to/repo.gitとかfile://C:/Users/Kaito/Desktop/pcap4jといった、ローカルホスト上のパスを示すファイルURLの書式。 用途はファイルパスと同様だが、ハードリンクを作る代わりにコピーするのでより安全。 HTTP(S) https://github.com/kaitoy/pcap4j.gitといったHTTPSやHTTPのURL。 リポジトリへのアクセス制御にHTTPの認証機能やHTTPSのクライアント証明書などが使えるほか、HTTPSなら通信の暗号化もできる。 使用するポートがファイアウォールにブロックされていることが少ないのも使いやすい。 Gitプロトコル git://example.com/path/to/repo.gitといった書式で、GitデーモンによるGitネイティブプロトコルを使うURL。 HTTPよりも高速な通信ができるが、認証機能も暗号化機能もない。 SSH &#43; Gitプロトコル ssh://git@github.com/kaitoy/pcap4j.gitのようなSSHのURLで、これを使うとSSHトンネルを通してGitプロトコルで通信できる。 Gitプロトコル単体を使うのに比べ、SSHの認証機能と暗号化機能を利用できるが、やや遅くなるはず。 このプロトコルには、git@github.com:kaitoy/pcap4j.gitのようなSCP書式も使える。 Git自体はGitデーモンを含めリポジトリへのアクセス制御の機能を一切持たないので、認証などが必要な場合はHTTPなどその機能を持つプロトコルのURLを使う必要がある。 fetch リモートリポジトリ内のローカルブランチとローカルリポジトリ内の追跡ブランチとがどう対応するかを定義する。 この定義はrefspecと呼ばれる。 上の例のfetch = &#43;refs/heads/*:refs/remotes/origin/*だと、リモートリポジトリの.git/refs/heads/にある全てのブランチをそれぞれ、ローカルリポジトリの.git/refs/remotes/origin/にある同名のブランチで追跡する、という意味。 クローン時の挙動 クローン時のデフォルトの挙動は以下の様なもの。 オブジェクト格納領域内のオブジェクトが全てクローンにコピーされる。 (多分。参照からたどれないオブジェクトもコピーされることを確認した。) つまり、元のリポジトリ(i.e.">
+    <meta property="og:description" content="このエントリでは、この記事を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、Gitの分散バージョン管理の仕組みについて説明する。 (adsbygoogle = window.adsbygoogle || []).push({}); Gitの分散バージョン管理 分散バージョン管理とは、分散したリポジトリでのバージョン管理ということ。 ここでリポジトリが分散しているとは、同じプロジェクトの履歴を管理する完全で独立したリポジトリが複数あるということ。 これにより一つのプロジェクトの開発を地理的に分散して並行して進めることができる。 Gitは分散バージョン管理のために、リポジトリのクローン(≒コピー)を作る機能と、リポジトリ間でコミットグラフを同期する機能を提供している。 リポジトリのクローンを作ると言うと、オリジナルとクローンの間に格差があるような気がするが、 実際にはGitは全てのリポジトリが対等であるという思想のもとで実装されている。 このため、リポジトリをクローンする時には(デフォルトで)クローン元の完全なコミットグラフがクローンにコピーされるし、任意のリポジトリ間のデータのやり取りをpeer-to-peerでできる。 クローンからクローンを作ることももちろん可能。 git pushでデータを送る先をアップストリームと呼ぶことはあるし、次節でローカルリポジトリとリモートリポジトリという関係が出てくるが、これはあくまでその時点でそういう設定になっているというだけ。 アップストリームはいつでもいくつでもgit remoteコマンドで追加したり削除したりできる。 このような実装により、Gitの分散バージョン管理ではリポジトリ間で柔軟なデータのやり取りができる。 例えば以下の様な複雑なリポジトリネットワークを組むこともできる。 ローカルリポジトリとリモートリポジトリ 一人の開発者から見て、手元にあるリポジトリを ローカルリポジトリ と呼ぶのに対して、git pushやgit pullやgit fetchでデータをやり取りする相手のリポジトリを リモートリポジトリ と呼ぶ。 リモートリポジトリとのやり取りは、リモート追跡ブランチ と リモート というものを使って実装されている。 リモート追跡ブランチ リモート追跡ブランチは、ローカルリポジトリの.git/refs/remotes/に格納される参照で、リモートリポジトリ内のローカルブランチのコミットグラフを取得してローカルリポジトリ内に保持するために使われる。 git branch -rでその一覧が見れる。 「追跡」ブランチというだけあって、リモートリポジトリ内でコミットグラフが成長した場合、この変更に追随することができる。 このためのコマンドがgit fetch。 因みにgit pullは、git fetchでリモート追跡ブランチを更新した後、git merge(オプションによってはgit rebase)でそのリモート追跡ブランチをローカルブランチにマージするのと同じ。 リモート リモートとは、リモートリポジトリのこと、またはリモートリポジトリに接続するための定義のこと。 この定義は、ローカルリポジトリの.git/configにremoteセクションとして書かれている。 以下がその例。 [remote &quot;origin&quot;] fetch = &#43;refs/heads/*:refs/remotes/origin/* url = git@github.com:kaitoy/blog.git セクション名のところに&quot;origin&quot;とあるがこれは、この定義で接続するリモートリポジトリをGitコマンドなどでoriginと指定できるということ。 ここで定義されているのはurlとfetchで、それぞれ以下を意味する。 url リモートリポジトリのURL。 つまり、リモートリポジトリがどのサーバのどのディレクトリにあって、それとのデータのやり取りをどのプロトコルでやるかという定義。 このURLには以下の書式が使える。 ファイルパス /path/to/repo.gitとかC:\\Users\\Kaito\\Desktop\\pcap4jといった、普通のファイルパスの書式。 NFSなどでリモートリポジトリが共有されている場合などに使われる。 シンボリックリンクがサポートされているOS上では、クローンはリモートリポジトリをハードリンクで参照する。 このシンボリック参照でのファイル共有がトラブルの元なため、この書式は非推奨。 ファイルURL file:///path/to/repo.gitとかfile://C:/Users/Kaito/Desktop/pcap4jといった、ローカルホスト上のパスを示すファイルURLの書式。 用途はファイルパスと同様だが、ハードリンクを作る代わりにコピーするのでより安全。 HTTP(S) https://github.com/kaitoy/pcap4j.gitといったHTTPSやHTTPのURL。 リポジトリへのアクセス制御にHTTPの認証機能やHTTPSのクライアント証明書などが使えるほか、HTTPSなら通信の暗号化もできる。 使用するポートがファイアウォールにブロックされていることが少ないのも使いやすい。 Gitプロトコル git://example.com/path/to/repo.gitといった書式で、GitデーモンによるGitネイティブプロトコルを使うURL。 HTTPよりも高速な通信ができるが、認証機能も暗号化機能もない。 SSH &#43; Gitプロトコル ssh://git@github.com/kaitoy/pcap4j.gitのようなSSHのURLで、これを使うとSSHトンネルを通してGitプロトコルで通信できる。 Gitプロトコル単体を使うのに比べ、SSHの認証機能と暗号化機能を利用できるが、やや遅くなるはず。 このプロトコルには、git@github.com:kaitoy/pcap4j.gitのようなSCP書式も使える。 Git自体はGitデーモンを含めリポジトリへのアクセス制御の機能を一切持たないので、認証などが必要な場合はHTTPなどその機能を持つプロトコルのURLを使う必要がある。 fetch リモートリポジトリ内のローカルブランチとローカルリポジトリ内の追跡ブランチとがどう対応するかを定義する。 この定義はrefspecと呼ばれる。 上の例のfetch = &#43;refs/heads/*:refs/remotes/origin/*だと、リモートリポジトリの.git/refs/heads/にある全てのブランチをそれぞれ、ローカルリポジトリの.git/refs/remotes/origin/にある同名のブランチで追跡する、という意味。 クローン時の挙動 クローン時のデフォルトの挙動は以下の様なもの。 オブジェクト格納領域内のオブジェクトが全てクローンにコピーされる。 (多分。参照からたどれないオブジェクトもコピーされることを確認した。) つまり、元のリポジトリ(i.e.">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/git.png">
     
@@ -90,6 +90,17 @@
 
 <p>
 
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
 </p>
 
 <h2 id="gitの分散バージョン管理">Gitの分散バージョン管理</h2>
@@ -305,6 +316,17 @@ error: failed to push some refs to 'file://C:/Users/Kaito/Desktop/master'
       <aside>
         
         
+
+        
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-6244473643910448"
+             data-ad-slot="1845600530"
+             data-ad-format="auto"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
       </aside>
 
       <aside>
@@ -841,6 +863,17 @@ error: failed to push some refs to 'file://C:/Users/Kaito/Desktop/master'
 
 
 
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-6244473643910448"
+    data-ad-slot="1845600530"
+    data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
 
 <div class="col-md-12 col-sm-6 col-xs-12">
   <div class="text-center custom-partial">

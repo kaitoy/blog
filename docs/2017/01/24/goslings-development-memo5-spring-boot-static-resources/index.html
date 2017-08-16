@@ -13,7 +13,7 @@
     <meta property="og:title" content="Goslings開発メモ - その5: Spring Boot最終編 (静的リソース処理) | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2017/01/24/goslings-development-memo5-spring-boot-static-resources/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2017/01/24/goslings-development-memo5-spring-boot-static-resources/">
-    <meta property="og:description" content="「Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)」の続き。 Spring Boot最終編で、静的リソース処理について。 Spring Boot(Spring MVC)での静的リソース処理 この時点でのGoslingsは単なるREST APIサーバで、アクセスしてもJSONを返すだけだ。 アプリとしての体を成すためには、そのAPIを利用するクライアントコード、つまりHTMLドキュメントやCSSファイルやJavaScriptファイル(静的リソース)も返すようにしないといけない。 HTMLドキュメントを返す場合、普通はなんらかのテンプレートエンジンを使うものだが、Goslingsは本当に単純なGUIなので、サーバに置いたHTMLファイルをそのまま返したい。 「Getting Started Guides」にはServing Web Content with Spring MVCというのが乗っているが、これはThymeleafというテンプレートエンジンを使うものなのでちょっと違う。 Spring Bootリファレンスガイドによると、クラスパス(またはServletContextのルート)の/static/、/public/、/resources/、/META-INF/resources/のいずれかに静的リソースを置けば、特にコードを書かなくてもクライアントからアクセスできるらしい。 (逆に、一般的に静的リソースを置く場所である、プロジェクトのsrc/main/webapp/には置くべきでないとのこと。これは、jarにパッケージングするときにビルドツールに無視されることが多いため。) この仕組みについて、この記事を参考にちょろっとソースを見た感じでは、これらのパスはResourcePropertiesのCLASSPATH_RESOURCE_LOCATIONSに定義されていて、これをWebMvcAutoConfigurationがResourceHandlerRegistryでリソースロケーションとして登録することで静的リソース置き場たらしめている模様。 (このResourceHandlerRegistryはResourceHttpRequestHandlerを設定するファサード的なものっぽい。) で、@SpringBootApplication(その1参照)が付いているクラスがあって、spring-webmvc.jarがクラスパスにあると、@EnableWebMvcがSpring Bootによって付けられ、そこからごにょごにょして上記WebMvcAutoConfigurationが実行される。 spring-webmvc.jarはspring-boot-starter-web.jar(その1参照)が引っ張ってくる。 なお、Spring MVCの静的リソース処理の全体の流れについては 、ちょっと古いけど「handling static web resources」という記事が分かりやすい。 要は、URLに指定されたパスからサーバ上のリソースを探し当てるResourceResolverというものが優先度順に連なっているリゾルバチェイン(ResourceResolverChain)があって、まずこいつがリソースを取得する。 次に、そのリソースを加工するトランスフォーマチェイン(ResourceTransformerChain)というものに通し、その結果をクライアントに返す。 トランスフォーマチェインはResourceTransformerが連なったもの。 リゾルバチェインとトランスフォーマチェインは上記ResourceHttpRequestHandlerに設定される。 リゾルバには以下の様なものがある。 PathResourceResolver: ResourceHttpRequestHandlerに設定されたリソースロケーションからリソースを単純に検索するリゾルバ。 CachingResourceResolver: キャッシュからリソースを検索するリゾルバ。テンプレートエンジンの処理結果のキャッシュとかが返るのは多分ここから。 GzipResourceResolver: gzipで圧縮されたリソース、つまりURLで指定されたパスに.gzという拡張子を付けたリソースを検索するリゾルバ。 VersionResourceResolver: リソースバージョニングを実現するためのリゾルバ。 WebJarsResourceResolver: WebJarsのjarファイル内のリソースを検索するリゾルバ。 リゾルバの設定などについてはQiitaのこの記事ががよくまとまっている。 凝ったことをしたいときは参照しよう。 トランスフォーマには以下の様なものがある。 CssLinkResourceTransformer: CSSファイル内のリンクをクライアントがアクセスできるURLに変換する。 CachingResourceTransformer: 変換したリソースをキャッシュする。 AppCacheManifestTransformer: HTML5のAppCacheマニフェスト内のリソースを扱うトランスフォーマ。 デフォルトでResourceHttpRequestHandlerにはPathResourceResolverだけが設定されている。 以上をまとめると、クライアントからGetリクエストが来ると、WebMvcAutoConfigurationが設定したリソースロケーション(e.g. /static/)をPathResourceResolverが検索して、そこに置いてあるHTMLファイルとかをクライアントに返してくれる、ということであろう。 Javaのコードを全く書かなくていいので楽。 Javaのコードを書いて静的リソースファイルを明示することもできる。 Qiitaの記事によれば、@Controllerを付けたクラスのリクエストハンドラで以下の様にファイルへのパスを返せばいいらしい。 @RequestMapping(&quot;/hoge&quot;) public String hoge() { return &quot;/hoge.html&quot;; } 単純な静的リソースに対してこれをやるユースケースはあまりなさそう。 テンプレートエンジンを使っていてパラメータを渡したいときにはこういうリクエストハンドラを書くことになる。 Spring Bootのウェルカムページとファビコン Spring Bootはindex.htmlとfavicon.icoという名のファイルを特別扱いする。 前者がウェルカムページで後者がファビコン。 ウェルカムページ Spring Bootのリファレンスガイドにもちらっとかいてあるけど、リソースロケーションにindex.htmlというファイルを置いておくと、それがウェルカムページとして設定され、URLのパスにルート(e.g.">
+    <meta property="og:description" content="「Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)」の続き。 Spring Boot最終編で、静的リソース処理について。 (adsbygoogle = window.adsbygoogle || []).push({}); Spring Boot(Spring MVC)での静的リソース処理 この時点でのGoslingsは単なるREST APIサーバで、アクセスしてもJSONを返すだけだ。 アプリとしての体を成すためには、そのAPIを利用するクライアントコード、つまりHTMLドキュメントやCSSファイルやJavaScriptファイル(静的リソース)も返すようにしないといけない。 HTMLドキュメントを返す場合、普通はなんらかのテンプレートエンジンを使うものだが、Goslingsは本当に単純なGUIなので、サーバに置いたHTMLファイルをそのまま返したい。 「Getting Started Guides」にはServing Web Content with Spring MVCというのが乗っているが、これはThymeleafというテンプレートエンジンを使うものなのでちょっと違う。 Spring Bootリファレンスガイドによると、クラスパス(またはServletContextのルート)の/static/、/public/、/resources/、/META-INF/resources/のいずれかに静的リソースを置けば、特にコードを書かなくてもクライアントからアクセスできるらしい。 (逆に、一般的に静的リソースを置く場所である、プロジェクトのsrc/main/webapp/には置くべきでないとのこと。これは、jarにパッケージングするときにビルドツールに無視されることが多いため。) この仕組みについて、この記事を参考にちょろっとソースを見た感じでは、これらのパスはResourcePropertiesのCLASSPATH_RESOURCE_LOCATIONSに定義されていて、これをWebMvcAutoConfigurationがResourceHandlerRegistryでリソースロケーションとして登録することで静的リソース置き場たらしめている模様。 (このResourceHandlerRegistryはResourceHttpRequestHandlerを設定するファサード的なものっぽい。) で、@SpringBootApplication(その1参照)が付いているクラスがあって、spring-webmvc.jarがクラスパスにあると、@EnableWebMvcがSpring Bootによって付けられ、そこからごにょごにょして上記WebMvcAutoConfigurationが実行される。 spring-webmvc.jarはspring-boot-starter-web.jar(その1参照)が引っ張ってくる。 なお、Spring MVCの静的リソース処理の全体の流れについては 、ちょっと古いけど「handling static web resources」という記事が分かりやすい。 要は、URLに指定されたパスからサーバ上のリソースを探し当てるResourceResolverというものが優先度順に連なっているリゾルバチェイン(ResourceResolverChain)があって、まずこいつがリソースを取得する。 次に、そのリソースを加工するトランスフォーマチェイン(ResourceTransformerChain)というものに通し、その結果をクライアントに返す。 トランスフォーマチェインはResourceTransformerが連なったもの。 リゾルバチェインとトランスフォーマチェインは上記ResourceHttpRequestHandlerに設定される。 リゾルバには以下の様なものがある。 PathResourceResolver: ResourceHttpRequestHandlerに設定されたリソースロケーションからリソースを単純に検索するリゾルバ。 CachingResourceResolver: キャッシュからリソースを検索するリゾルバ。テンプレートエンジンの処理結果のキャッシュとかが返るのは多分ここから。 GzipResourceResolver: gzipで圧縮されたリソース、つまりURLで指定されたパスに.gzという拡張子を付けたリソースを検索するリゾルバ。 VersionResourceResolver: リソースバージョニングを実現するためのリゾルバ。 WebJarsResourceResolver: WebJarsのjarファイル内のリソースを検索するリゾルバ。 リゾルバの設定などについてはQiitaのこの記事ががよくまとまっている。 凝ったことをしたいときは参照しよう。 トランスフォーマには以下の様なものがある。 CssLinkResourceTransformer: CSSファイル内のリンクをクライアントがアクセスできるURLに変換する。 CachingResourceTransformer: 変換したリソースをキャッシュする。 AppCacheManifestTransformer: HTML5のAppCacheマニフェスト内のリソースを扱うトランスフォーマ。 デフォルトでResourceHttpRequestHandlerにはPathResourceResolverだけが設定されている。 以上をまとめると、クライアントからGetリクエストが来ると、WebMvcAutoConfigurationが設定したリソースロケーション(e.g. /static/)をPathResourceResolverが検索して、そこに置いてあるHTMLファイルとかをクライアントに返してくれる、ということであろう。 Javaのコードを全く書かなくていいので楽。 Javaのコードを書いて静的リソースファイルを明示することもできる。 Qiitaの記事によれば、@Controllerを付けたクラスのリクエストハンドラで以下の様にファイルへのパスを返せばいいらしい。 @RequestMapping(&quot;/hoge&quot;) public String hoge() { return &quot;/hoge.html&quot;; } 単純な静的リソースに対してこれをやるユースケースはあまりなさそう。 テンプレートエンジンを使っていてパラメータを渡したいときにはこういうリクエストハンドラを書くことになる。 Spring Bootのウェルカムページとファビコン Spring Bootはindex.htmlとfavicon.icoという名のファイルを特別扱いする。 前者がウェルカムページで後者がファビコン。 ウェルカムページ Spring Bootのリファレンスガイドにもちらっとかいてあるけど、リソースロケーションにindex.htmlというファイルを置いておくと、それがウェルカムページとして設定され、URLのパスにルート(e.g.">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/goslings-spring.png">
     
@@ -92,6 +92,17 @@
 
 <p>
 
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
 </p>
 
 <h1 id="spring-boot-spring-mvc-での静的リソース処理">Spring Boot(Spring MVC)での静的リソース処理</h1>
@@ -221,6 +232,17 @@ public String hoge() {
       <aside>
         
         
+
+        
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-6244473643910448"
+             data-ad-slot="1845600530"
+             data-ad-format="auto"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
       </aside>
 
       <aside>
@@ -759,6 +781,17 @@ public String hoge() {
 
 
 
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-6244473643910448"
+    data-ad-slot="1845600530"
+    data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
 
 <div class="col-md-12 col-sm-6 col-xs-12">
   <div class="text-center custom-partial">

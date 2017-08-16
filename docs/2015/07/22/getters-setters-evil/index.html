@@ -13,7 +13,7 @@
     <meta property="og:title" content="Getter/Setterは悪だ。以上。 | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2015/07/22/getters-setters-evil/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2015/07/22/getters-setters-evil/">
-    <meta property="og:description" content="このエントリでは、Yegor Bugayenkoによる記事、Getters/Setters. Evil. Period.を紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 2003年にAllen Holubが書いたWhy getter and setter methods are evilという有名な記事に端を発する古い議論がある。それは、getter/setterはアンチパターンで避けるべきものなのか、 もしくはオブジェクト指向プログラミングに必須なものなのかというもの。 この議論に少しだけ私の意見を加えたいと思う。 上記記事の要旨はこうだ。 getterやsetterはひどい慣習で、これらを使うやつらはゆるせん。誤解の無いようもう一度言うが、 私はget/setを可能な限り避けるべきだと言っているのではない。それらは君のコードに決して現れてはいけないのだ。 横柄で目につく物言いだろう? 君は15年来get/setパターンを使い続けている尊敬を集めるJavaアーキテクトなんだろう? どこぞの馬の骨にこんなデタラメを言われたくはないだろう? ああ、その気持ちはわかる。私がDavid WestのObject Thinkingという本に出会ったとき、 私もほとんど同じことを感じた。 Object Thinkingは、私が今まで読んだオブジェクト指向プログラミングについての本の中で最高のものだ。 だからお願いだ。ひとまず落ち着いて。私に説明させてほしい。 既存の論拠 オブジェクト指向の世界で、アクセッサ(getterやsetterの別名)に反対する論拠はいくつかあるが、 私にはそれら全てが十分に有力であるとは思えない。ひとつひとつ簡単に見ていこう。 頼め、尋ねるな Allen Holub曰く、「ある処理をする際、その処理のために君が欲しい情報をオブジェクトに尋ねてはいけない。 その情報を持ったオブジェクトにその処理をするよう頼みなさい。」 カプセル化原則違反 setterを通してどんな新たなデータも入力できるので、 一つのオブジェクトをその他の様々なオブジェクトが様々に扱うことができてしまう。 また、だれでもオブジェクトを変更できるので、 オブジェクトが単純に自身の状態を安全にカプセル化できない。 実装の詳細の暴露 あるオブジェクトから他のオブジェクトを取得できる場合、前者のオブジェクトの実装の詳細に過度に依存してしまう。 もし明日その実装、例えば返すオブジェクトの型が変わったら、周辺のコードも書き換えないといけない。 これらの全ての論拠は正当だが、重要なポイントが抜けている。 根本的な誤解 ほとんどのプログラマはオブジェクトはメソッドを持ったデータ構造だと考えている。 ここでBozhidar Bozhanovによる記事、Getters and Setters Are Not Evilから引用する。 しかし、人々がgetterやsetterをつけるオブジェクトのほとんどが、単純なデータホルダだ。 この思い違いが巨大な誤解の結果だ! オブジェクトは単純なデータホルダではない。オブジェクトはメソッド付きのデータ構造ではない。 このデータホルダというコンセプトは、CやCOBOLといった手続き型言語からオブジェクト指向プログラミングに持ち込まれたものだ。 もう一度言う。オブジェクトはデータとそれを操作する関数をセットにしたものではない。 オブジェクトはデータエンティティではない。では何か? ボールと犬 真のオブジェクト指向プログラミングでは、 オブジェクトは生きている生物だ。私や君と同じように。 オブジェクトは生きている有機体で、それ自身の挙動や、特性や、ライフサイクルを持っている。 生きている有機体はsetterを持てるだろうか? 犬にボールを&rdquo;set&rdquo;できるだろうか? 無理だろう。 だが、以下のコードはまさにそれをしている。 Dog dog = new Dog(); dog.setBall(new Ball()); これをどう感じる?">
+    <meta property="og:description" content="このエントリでは、Yegor Bugayenkoによる記事、Getters/Setters. Evil. Period.を紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 (adsbygoogle = window.adsbygoogle || []).push({}); 2003年にAllen Holubが書いたWhy getter and setter methods are evilという有名な記事に端を発する古い議論がある。それは、getter/setterはアンチパターンで避けるべきものなのか、 もしくはオブジェクト指向プログラミングに必須なものなのかというもの。 この議論に少しだけ私の意見を加えたいと思う。 上記記事の要旨はこうだ。 getterやsetterはひどい慣習で、これらを使うやつらはゆるせん。誤解の無いようもう一度言うが、 私はget/setを可能な限り避けるべきだと言っているのではない。それらは君のコードに決して現れてはいけないのだ。 横柄で目につく物言いだろう? 君は15年来get/setパターンを使い続けている尊敬を集めるJavaアーキテクトなんだろう? どこぞの馬の骨にこんなデタラメを言われたくはないだろう? ああ、その気持ちはわかる。私がDavid WestのObject Thinkingという本に出会ったとき、 私もほとんど同じことを感じた。 Object Thinkingは、私が今まで読んだオブジェクト指向プログラミングについての本の中で最高のものだ。 だからお願いだ。ひとまず落ち着いて。私に説明させてほしい。 既存の論拠 オブジェクト指向の世界で、アクセッサ(getterやsetterの別名)に反対する論拠はいくつかあるが、 私にはそれら全てが十分に有力であるとは思えない。ひとつひとつ簡単に見ていこう。 頼め、尋ねるな Allen Holub曰く、「ある処理をする際、その処理のために君が欲しい情報をオブジェクトに尋ねてはいけない。 その情報を持ったオブジェクトにその処理をするよう頼みなさい。」 カプセル化原則違反 setterを通してどんな新たなデータも入力できるので、 一つのオブジェクトをその他の様々なオブジェクトが様々に扱うことができてしまう。 また、だれでもオブジェクトを変更できるので、 オブジェクトが単純に自身の状態を安全にカプセル化できない。 実装の詳細の暴露 あるオブジェクトから他のオブジェクトを取得できる場合、前者のオブジェクトの実装の詳細に過度に依存してしまう。 もし明日その実装、例えば返すオブジェクトの型が変わったら、周辺のコードも書き換えないといけない。 これらの全ての論拠は正当だが、重要なポイントが抜けている。 根本的な誤解 ほとんどのプログラマはオブジェクトはメソッドを持ったデータ構造だと考えている。 ここでBozhidar Bozhanovによる記事、Getters and Setters Are Not Evilから引用する。 しかし、人々がgetterやsetterをつけるオブジェクトのほとんどが、単純なデータホルダだ。 この思い違いが巨大な誤解の結果だ! オブジェクトは単純なデータホルダではない。オブジェクトはメソッド付きのデータ構造ではない。 このデータホルダというコンセプトは、CやCOBOLといった手続き型言語からオブジェクト指向プログラミングに持ち込まれたものだ。 もう一度言う。オブジェクトはデータとそれを操作する関数をセットにしたものではない。 オブジェクトはデータエンティティではない。では何か? ボールと犬 真のオブジェクト指向プログラミングでは、 オブジェクトは生きている生物だ。私や君と同じように。 オブジェクトは生きている有機体で、それ自身の挙動や、特性や、ライフサイクルを持っている。 生きている有機体はsetterを持てるだろうか? 犬にボールを&rdquo;set&rdquo;できるだろうか?">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/teamedio_logo.svg">
     
@@ -92,6 +92,17 @@
 
 <p>
 
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
 </p>
 
 <hr />
@@ -292,6 +303,17 @@ APIと分離させることを図るデザインパターンの技術的役割�
       <aside>
         
         
+
+        
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-6244473643910448"
+             data-ad-slot="1845600530"
+             data-ad-format="auto"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
       </aside>
 
       <aside>
@@ -834,6 +856,17 @@ APIと分離させることを図るデザインパターンの技術的役割�
 
 
 
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-6244473643910448"
+    data-ad-slot="1845600530"
+    data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
 
 <div class="col-md-12 col-sm-6 col-xs-12">
   <div class="text-center custom-partial">
