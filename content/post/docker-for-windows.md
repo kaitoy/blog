@@ -47,6 +47,8 @@ KitematicはDocker for Windowsには付属しないが、別途ダウンロー�
 私は勝手にDocker for Windowsは[Hyper-V Containers](https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containersとは)のデスクトップOS版のようなものかと勘違いしていて、Windowsのコンテナが使えるようになったのかと期待したが違った。
 Docker for Windowsは単にDocker ToolboxのVirtualBoxがHyper-Vになっただけのもので、結局Linux VMの中でDockerを使うだけのものだということにセットアップ中に気付いた。
 
+(2017/9/12追記: [これ](https://blogs.msdn.microsoft.com/webdev/2017/09/07/getting-started-with-windows-containers/)とか[これ](https://docs.docker.com/docker-for-windows/install/#about-windows-containers-and-windows-server-2016)とかを見るに、いまではDocker for Winodwsは、Hyper-V ContainersやWindows Server Containersのフロントエンドでもあるようだ。)
+
 コレジャナイ感がすごかった。
 
 ともあれ、やった作業を以下に記す。
