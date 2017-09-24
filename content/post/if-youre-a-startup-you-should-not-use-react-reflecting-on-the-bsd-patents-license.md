@@ -232,9 +232,10 @@ Facebookの、みんなもそうすべきだという思惑に反し、今のと
 この主張は、[Robert Pierceによる記事](https://www.elcaminolegal.com/single-post/2016/10/04/Facebook-Reactjs-License)が多分発端で、OSDの第一条「再頒布の自由」で、ソフトウェアの再配布に関して報酬(fee)を要求してはいけないとしている部分に、BSD + patentsライセンスが違反しているというもの。
 すなわち、Facebookを訴えないという報酬を要求しているという主張だが、この解釈は法律家によって[否定されている](http://lu.is/blog/2016/10/31/reacts-license-necessary-and-open/)。
 
-また、OSDの第五条「個人やグループに対する差別の禁止」に違反しているからという主張もあるが、これも間違い。
+また、OSDの第五条「個人やグループに対する差別の禁止」に違反しているからという主張もあるが、これも微妙。
 この主張はつまり、Facebookを訴えていないグループと比較して、訴えたグループを差別しているという主張だろうが、Apache License 2.0、EPL、MPL 2.0といったメジャーなライセンスでも、そのような「差別」をする(i.e. 訴えたら特許使用権を剥奪する)条項がある。
-これらのライセンスは、OSDをメンテしている組織であるOSIに[承認されている](https://opensource.org/licenses/alphabetical)ので、そうした差別がOSDに違反することではないことは明らか。
+これらのライセンスは、OSDをメンテしている組織であるOSIに[承認されている](https://opensource.org/licenses/alphabetical)ので、そうした差別がOSDに決定的に違反することではないことは明らか。
+([この議論](https://lists.opensource.org/pipermail/license-discuss/2016-December/thread.html)を見るに、厳密には違反しているけど、原理主義よりも現実主義であるべきなので、受け入れるべきといった雰囲気。)
 BSD + patentsライセンスによる「差別」のような条項が、特別なものでも新しいものでもないことは[OSI自身も言及している](https://opensource.org/node/862)。
 
 FacebookのBSD + patentsライセンスが特別なのは、その「差別」の範囲が広いことだ。
