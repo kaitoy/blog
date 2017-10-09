@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:title" content="To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz">
+    <link rel="canonical" href="https://www.kaitoy.xyz">
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      kubernetes | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+    
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-6244473643910448",
+        enable_page_level_ads: true
+      });
+    </script>
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+
+<div class="row">
+  <div class="col-md-9">
+    <div id="posts">
+      <div class="row">
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="/images/kubernetes_goslings.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Tue, Oct 10, 2017</span>
+              </div>
+              <h2 class="title">Kubernetes 1.8が出たので、Minikubeを触ってみる</h2>
+              <div class="summary">
+                Kubernetes1.8のリリースが話題になっていたので、ちょっと触って見たという話。 (1.8を触ったとは言っていない。) 具体的には、Kubernetes Basicsというチュートリアルをやりながら、MinikubeにGoslingsをデプロイしたんだけど、この記事ではMinikubeをセットアップしたところまで。 (adsbygoogle = window.adsbygoogle || []).push({}); Kubernetesとは KubernetesはOSSのコンテナ管理ツール。 英語だとクーバネティスみたいに発音する。 Googleが自身のコンテナ技術であるBorgの運用で培ったノウハウを活かして開発したもの。 2014年ころに開発が始まり、2015年夏にv1がリリースされたということで、かなり新しいツール。 よく比べられるものにはDockerのSwarmモードやApache Mesosがあるが、何が違うのかは調べてないので知らない。 ただ、Dockerコンテナ管理ツールとしてはKubernetesが一番勢いがある雰囲気を感じる。 Kubernetesを使うと、複数の物理マシンからなるHAクラスタ(Kubernetesクラスタ)を構成し、その上にコンテナをデプロイして管理できる。 Kubernetesクラスタは、一つのMaster(a.k.a. Kubernetes Control Plane)と一つ以上のNode(昔はMinionと呼ばれてたもの)で構成される。 (MasterとNodeは同一マシンに同居もできる。) Masterはクラスタを管理し、コンテナのスケジューリング、状態管理、スケーリング、アップデートなどを担う。 Node上では実際にコンテナが実行される。 Kubernetesのアーキテクチャを図にすると以下の感じ。 矢印の向きとかはちょっと間違ってるかも。 Master上ではkube-apiserverが動き、Kubernetes APIというREST APIを公開する。 このAPIを通してKubernetesオブジェクトを定義したりすることで、宣言的にコンテナの管理ができる仕組み。 ユーザは普通、kubectlというコマンドでkube-apiserverとやり取りする。 KubernetesオブジェクトはMaster上のetcdによって分散キーバリューストアに永続化され、そのストアをkube-controller-managerとkube-schedulerがwatchしてて、変更に応じた処理をする。 kube-controller-managerはオブジェクトのライフサイクルの管理や、コンテナのスケーリングなど、クラスタレベルの機能を実行する。 (よくわからない。) kube-schedulerは、コンテナを実行するホストを選出し、コンテナのスケジューリングをする。 一方、各Nodeでは、kubeletというMasterのエージェントになるプロセスが動く。 kubeletはkube-apiserverからの指示で、コンテナイメージを取得してコンテナを起動したり監視したり止めたりする。 kubeletがコンテナを扱うためのコンテナランタイムは、普通はDockerだけど、rktとかcri-oとかfraktiとかも使える。runcやRailCarはどうなんだろう。 コンテナはデフォルトではクラスタ内のプライベートネットワークにつながるので、そこで動いているアプリにユーザからアクセスするには、何らかの形でトラフィックを中継してやる必要がある。 これをするのがkube-proxy。 ロードバランシングもしてくれる。 Kubernetesオブジェクトとは Kubernetesオブジェクトは、Kubernetesクラスタ上で機能する構成要素を表現するもの。 以下のようなものがある。 Pod デプロイの最小単位。 一つ(またはリソースを共有する複数)のコンテナと、ストレージ、ネットワークなどを内包する。 一つのPodには一つのIPアドレスが付く。 kubeletはPodの定義に従ってコンテナを起動する。 Service Podの論理グループ。 PodのIPアドレスは外部に公開されないので、外とのやり取りをするためにServiceがある。 kube-proxyはこいつの定義に従って働く。 Serviceには複数のEndpoint(i.e. Pod等)が紐づき、外部からのトラフィックをラウンドロビンでルーティングするので、冗長化やロードバランサ的な働きもする。 ServiceはPodを抽象化するので、Podが死んだり入れ替わったりしても外に影響が見えにくくなる。 Serviceには以下のtypeがある。 ClusterIP (デフォルト): Kubernetesクラスタ内からだけアクセスできる内部IPアドレスだけをもつ。 NodePort: ClusterIPの拡張。内部IPアドレスに加え、クラスタ外からアクセスできるポートを一つ持つ。 LoadBalancer: NodePortの拡張。外部ロードバランサを作って、固定の外部IPアドレスを付けて、内部IPアドレスへルーティングする。 ExternalName: 抽象名をもつサービス。Kubernetes DNS serverで名前解決する。詳細は読んでないので知らない。 Volume 永続化やPod内でのファイル共有のためのオブジェクト。 Podとともに作られ、Podとともに破棄される。 実態はファイルシステム上のディレクトリ。 hostPathとか、nfsとか、awsElasticBlockStoreとかの種類があるらしい。 Namespace 仮想クラスタを表すオブジェクト。 これを定義すると、ひとつの物理クラスタを複数の仮想クラスタに分割できる。 大規模ユーザ・プロジェクト向け機能。 Controller Podを管理するオブジェクト。レプリケーションしたり、スケーリングや自動再起動したり。 以下のようなものがある。 Deployment Podのデプロイを管理するオブジェクト。 PodとReplicaSetの宣言的な生成・更新を実現する。 ReplicaSet 指定した数のPodのレプリカを維持してくれる。 基本はDeploymentから作られて、Podの作成・削除・更新をオーケストレイトする。 ReplicationControllerというのもあるけど、今はReplicaSetが推奨。 StatefulSet ステートフルなアプリを管理するオブジェクト。 現時点でのKubernetes最新版の1.8でまだベータ。 DaemonSet 全てのノードで動くアプリを実現するオブジェクト。 Job ジョブを表すオブジェクト。 指定された回数、Podを成功で完了させる。 オブジェクトにはラベルというキーバリューな属性を付けることができ、PodとServiceの紐づけや、オブジェクト検索時のフィルタとかに使える。 今回Goslingsを動かすのに使ったのは、Pod、Deployment、ReplicaSet、Service (NodePort)。 Minikubeとは Kubernetesクラスタを構築する方法はいくつかあるが、中でももっとも簡単な方法がMinikube。 Minikubeは、KubernetesのMasterとNodeを一つずつを詰め込んだVMをダウンロードして起動して、ローカルのkubectlから使えるようにしてくれるツール。 開発やテスト用途のKubernetes環境として使われる。 ちょっとVagrantっぽい感じ。Kubernetes専用の。 Minikubeインストール Kubernetesのドキュメントにしたがって、Minikubeをインストールする。 環境はWindows 10 Home x64。 まず、MinikubeのVMを動かすツールを入れる。 今のところMinikubeがサポートしてるのは、WindowsだとVirtualBoxかHyper-V。 Windows 10 HomeだとHyper-Vが使えないので、VirtualBox一択。 VirtualBoxは、適当にVT-xを有効にして(してあった)、インストーラダウンロードしてインストールしただけ。 バージョンは5.1.28。 次に、minikubeコマンドを入れる。 このコマンドはGoで書かれていて、各プラットフォーム用にビルドされたバイナリがGitHubのプロジェクトページのReleasesに上がってるので、ダウンロードしてPathの通ったとこに置くだけ。 今回ダウンロードしたのはv0.22.2のminikube-windows-amd64で、これをminikube.exeにリネームして配置した。 で、minikubeがサポートしているKubernetesのバージョンを調べると、 C:\Users\kaitoy&gt;minikube get-k8s-versions The following Kubernetes versions are available: - v1.7.5 - v1.7.4 - v1.7.3 - v1.7.2 - v1.7.0 (snip) 1.8はまだサポートされていない… 1.7.5が最新なのでそれでやることにする。 ということで、kubectlの1.7.5をインストールする。 kubectlもGoで書かれているので、以下のアドレスからWindowsバイナリをダウンロードしてPathの通ったところに置くだけ。 https://storage.googleapis.com/kubernetes-release/release/v1.7.5/bin/windows/amd64/kubectl.exe 以上でMinikubeの環境ができた。 簡単。 Minikube起動 Minikubeは、minikube startで起動することができ、Minikubeが起動したらすぐにKubernetesをいじれるようになる。 C:\Users\kaitoy&gt;minikube start --vm-driver virtualbox --kubernetes-version v1.7.5 Starting local Kubernetes v1.7.5 cluster...
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/headless-browser">headless-browser</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/license">license</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/selenium">selenium</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/servicenow">servicenow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/test-framework">test-framework</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/webdriverio">webdriverio</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-6244473643910448"
+    data-ad-slot="1845600530"
+    data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2017  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

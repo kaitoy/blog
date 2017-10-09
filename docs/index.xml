@@ -6,8 +6,390 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2017</rights>
-    <updated>2017-08-25 00:29:39 &#43;0900 JST</updated>
+    <updated>2017-10-10 00:10:59 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>Kubernetes 1.8が出たので、Minikubeを触ってみる</title>
+          <link>https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/</link>
+          <pubDate>Tue, 10 Oct 2017 00:10:59 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/&#34;&gt;Kubernetes&lt;/a&gt;1.8のリリースが話題になっていたので、ちょっと触って見たという話。
+(1.8を触ったとは言っていない。)&lt;/p&gt;
+
+&lt;p&gt;具体的には、&lt;a href=&#34;https://kubernetes.io/docs/tutorials/kubernetes-basics/&#34;&gt;Kubernetes Basics&lt;/a&gt;というチュートリアルをやりながら、&lt;a href=&#34;https://github.com/kubernetes/minikube&#34;&gt;Minikube&lt;/a&gt;に&lt;a href=&#34;https://kaitoy.github.io/goslings/&#34;&gt;Goslings&lt;/a&gt;をデプロイしたんだけど、この記事ではMinikubeをセットアップしたところまで。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;kubernetesとは&#34;&gt;Kubernetesとは&lt;/h2&gt;
+
+&lt;p&gt;KubernetesはOSSのコンテナ管理ツール。
+英語だとクーバネティスみたいに発音する。
+Googleが自身のコンテナ技術である&lt;a href=&#34;https://research.google.com/pubs/pub43438.html&#34;&gt;Borg&lt;/a&gt;の運用で培ったノウハウを活かして開発したもの。
+2014年ころに開発が始まり、2015年夏にv1がリリースされたということで、かなり新しいツール。
+よく比べられるものには&lt;a href=&#34;https://docs.docker.com/engine/swarm/&#34;&gt;DockerのSwarmモード&lt;/a&gt;や&lt;a href=&#34;http://mesos.apache.org/&#34;&gt;Apache Mesos&lt;/a&gt;があるが、何が違うのかは調べてないので知らない。
+ただ、Dockerコンテナ管理ツールとしてはKubernetesが一番勢いがある雰囲気を感じる。&lt;/p&gt;
+
+&lt;p&gt;Kubernetesを使うと、複数の物理マシンからなるHAクラスタ(Kubernetesクラスタ)を構成し、その上にコンテナをデプロイして管理できる。
+Kubernetesクラスタは、一つのMaster(a.k.a. Kubernetes Control Plane)と一つ以上のNode(昔はMinionと呼ばれてたもの)で構成される。
+(MasterとNodeは同一マシンに同居もできる。)
+Masterはクラスタを管理し、コンテナのスケジューリング、状態管理、スケーリング、アップデートなどを担う。
+Node上では実際にコンテナが実行される。&lt;/p&gt;
+
+&lt;p&gt;Kubernetesの&lt;a href=&#34;https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture/architecture.md&#34;&gt;アーキテクチャ&lt;/a&gt;を図にすると以下の感じ。
+矢印の向きとかはちょっと間違ってるかも。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/goslings-on-kubernetes/architecture.png&#34; alt=&#34;architecture&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Master上では&lt;a href=&#34;https://kubernetes.io/docs/admin/kube-apiserver/&#34;&gt;kube-apiserver&lt;/a&gt;が動き、&lt;a href=&#34;https://kubernetes.io/docs/concepts/overview/kubernetes-api/&#34;&gt;Kubernetes API&lt;/a&gt;というREST APIを公開する。
+このAPIを通して&lt;a href=&#34;https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/&#34;&gt;Kubernetesオブジェクト&lt;/a&gt;を定義したりすることで、宣言的にコンテナの管理ができる仕組み。
+ユーザは普通、&lt;a href=&#34;https://kubernetes.io/docs/user-guide/kubectl/&#34;&gt;kubectl&lt;/a&gt;というコマンドでkube-apiserverとやり取りする。&lt;/p&gt;
+
+&lt;p&gt;KubernetesオブジェクトはMaster上の&lt;a href=&#34;https://github.com/coreos/etcd&#34;&gt;etcd&lt;/a&gt;によって分散キーバリューストアに永続化され、そのストアを&lt;a href=&#34;https://kubernetes.io/docs/admin/kube-controller-manager/&#34;&gt;kube-controller-manager&lt;/a&gt;と&lt;a href=&#34;https://kubernetes.io/docs/admin/kube-scheduler/&#34;&gt;kube-scheduler&lt;/a&gt;がwatchしてて、変更に応じた処理をする。&lt;/p&gt;
+
+&lt;p&gt;kube-controller-managerはオブジェクトのライフサイクルの管理や、コンテナのスケーリングなど、クラスタレベルの機能を実行する。
+(よくわからない。)&lt;/p&gt;
+
+&lt;p&gt;kube-schedulerは、コンテナを実行するホストを選出し、コンテナのスケジューリングをする。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;一方、各Nodeでは、&lt;a href=&#34;https://kubernetes.io/docs/admin/kubelet/&#34;&gt;kubelet&lt;/a&gt;というMasterのエージェントになるプロセスが動く。&lt;/p&gt;
+
+&lt;p&gt;kubeletはkube-apiserverからの指示で、コンテナイメージを取得してコンテナを起動したり監視したり止めたりする。&lt;/p&gt;
+
+&lt;p&gt;kubeletがコンテナを扱うためのコンテナランタイムは、普通は&lt;a href=&#34;https://www.docker.com/&#34;&gt;Docker&lt;/a&gt;だけど、&lt;a href=&#34;https://coreos.com/rkt/&#34;&gt;rkt&lt;/a&gt;とか&lt;a href=&#34;https://github.com/kubernetes-incubator/cri-o&#34;&gt;cri-o&lt;/a&gt;とか&lt;a href=&#34;https://github.com/kubernetes/frakti&#34;&gt;frakti&lt;/a&gt;とかも使える。&lt;a href=&#34;https://github.com/opencontainers/runc&#34;&gt;runc&lt;/a&gt;や&lt;a href=&#34;https://github.com/oracle/railcar&#34;&gt;RailCar&lt;/a&gt;はどうなんだろう。&lt;/p&gt;
+
+&lt;p&gt;コンテナはデフォルトではクラスタ内のプライベートネットワークにつながるので、そこで動いているアプリにユーザからアクセスするには、何らかの形でトラフィックを中継してやる必要がある。
+これをするのが&lt;a href=&#34;https://kubernetes.io/docs/admin/kube-proxy/&#34;&gt;kube-proxy&lt;/a&gt;。
+ロードバランシングもしてくれる。&lt;/p&gt;
+
+&lt;h2 id=&#34;kubernetesオブジェクトとは&#34;&gt;Kubernetesオブジェクトとは&lt;/h2&gt;
+
+&lt;p&gt;Kubernetesオブジェクトは、Kubernetesクラスタ上で機能する構成要素を表現するもの。
+以下のようなものがある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/pods/pod-overview/&#34;&gt;Pod&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;デプロイの最小単位。
+一つ(またはリソースを共有する複数)のコンテナと、ストレージ、ネットワークなどを内包する。
+一つのPodには一つのIPアドレスが付く。&lt;/p&gt;
+
+&lt;p&gt;kubeletはPodの定義に従ってコンテナを起動する。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/services-networking/service/&#34;&gt;Service&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Podの論理グループ。
+PodのIPアドレスは外部に公開されないので、外とのやり取りをするためにServiceがある。
+kube-proxyはこいつの定義に従って働く。&lt;/p&gt;
+
+&lt;p&gt;Serviceには複数のEndpoint(i.e. Pod等)が紐づき、外部からのトラフィックをラウンドロビンでルーティングするので、冗長化やロードバランサ的な働きもする。
+ServiceはPodを抽象化するので、Podが死んだり入れ替わったりしても外に影響が見えにくくなる。&lt;/p&gt;
+
+&lt;p&gt;Serviceには以下のtypeがある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;ClusterIP (デフォルト): Kubernetesクラスタ内からだけアクセスできる内部IPアドレスだけをもつ。&lt;/li&gt;
+&lt;li&gt;NodePort: ClusterIPの拡張。内部IPアドレスに加え、クラスタ外からアクセスできるポートを一つ持つ。&lt;/li&gt;
+&lt;li&gt;LoadBalancer: NodePortの拡張。外部ロードバランサを作って、固定の外部IPアドレスを付けて、内部IPアドレスへルーティングする。&lt;/li&gt;
+&lt;li&gt;ExternalName: 抽象名をもつサービス。Kubernetes DNS serverで名前解決する。&lt;a href=&#34;https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/&#34;&gt;詳細&lt;/a&gt;は読んでないので知らない。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/storage/volumes/&#34;&gt;Volume&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;永続化やPod内でのファイル共有のためのオブジェクト。
+Podとともに作られ、Podとともに破棄される。
+実態はファイルシステム上のディレクトリ。
+hostPathとか、nfsとか、awsElasticBlockStoreとかの種類があるらしい。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/&#34;&gt;Namespace&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;仮想クラスタを表すオブジェクト。
+これを定義すると、ひとつの物理クラスタを複数の仮想クラスタに分割できる。
+大規模ユーザ・プロジェクト向け機能。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Controller&lt;/p&gt;
+
+&lt;p&gt;Podを管理するオブジェクト。レプリケーションしたり、スケーリングや自動再起動したり。&lt;/p&gt;
+
+&lt;p&gt;以下のようなものがある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/controllers/deployment/&#34;&gt;Deployment&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Podのデプロイを管理するオブジェクト。
+PodとReplicaSetの宣言的な生成・更新を実現する。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/&#34;&gt;ReplicaSet&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;指定した数のPodのレプリカを維持してくれる。
+基本はDeploymentから作られて、Podの作成・削除・更新をオーケストレイトする。
+&lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller/&#34;&gt;ReplicationController&lt;/a&gt;というのもあるけど、今はReplicaSetが推奨。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/&#34;&gt;StatefulSet&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;ステートフルなアプリを管理するオブジェクト。
+現時点でのKubernetes最新版の1.8でまだベータ。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/&#34;&gt;DaemonSet&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;全てのノードで動くアプリを実現するオブジェクト。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/&#34;&gt;Job&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;ジョブを表すオブジェクト。
+指定された回数、Podを成功で完了させる。&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;オブジェクトには&lt;a href=&#34;https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/&#34;&gt;ラベル&lt;/a&gt;というキーバリューな属性を付けることができ、PodとServiceの紐づけや、オブジェクト検索時のフィルタとかに使える。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;今回Goslingsを動かすのに使ったのは、Pod、Deployment、ReplicaSet、Service (NodePort)。&lt;/p&gt;
+
+&lt;h2 id=&#34;minikubeとは&#34;&gt;Minikubeとは&lt;/h2&gt;
+
+&lt;p&gt;Kubernetesクラスタを構築する方法は&lt;a href=&#34;https://kubernetes.io/docs/setup/pick-right-solution/&#34;&gt;いくつかある&lt;/a&gt;が、中でももっとも簡単な方法がMinikube。&lt;/p&gt;
+
+&lt;p&gt;Minikubeは、KubernetesのMasterとNodeを一つずつを詰め込んだVMをダウンロードして起動して、ローカルのkubectlから使えるようにしてくれるツール。
+開発やテスト用途のKubernetes環境として使われる。&lt;/p&gt;
+
+&lt;p&gt;ちょっと&lt;a href=&#34;https://www.vagrantup.com/&#34;&gt;Vagrant&lt;/a&gt;っぽい感じ。Kubernetes専用の。&lt;/p&gt;
+
+&lt;h2 id=&#34;minikubeインストール&#34;&gt;Minikubeインストール&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/tasks/tools/install-minikube/&#34;&gt;Kubernetesのドキュメント&lt;/a&gt;にしたがって、Minikubeをインストールする。
+環境はWindows 10 Home x64。&lt;/p&gt;
+
+&lt;p&gt;まず、MinikubeのVMを動かすツールを入れる。
+今のところMinikubeがサポートしてるのは、Windowsだと&lt;a href=&#34;https://www.virtualbox.org/&#34;&gt;VirtualBox&lt;/a&gt;か&lt;a href=&#34;https://docs.microsoft.com/ja-jp/virtualization/hyper-v-on-windows/quick-start/enable-hyper-v&#34;&gt;Hyper-V&lt;/a&gt;。
+Windows 10 HomeだとHyper-Vが使えないので、VirtualBox一択。
+VirtualBoxは、適当にVT-xを有効にして(してあった)、インストーラダウンロードしてインストールしただけ。
+バージョンは5.1.28。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;次に、minikubeコマンドを入れる。
+このコマンドはGoで書かれていて、各プラットフォーム用にビルドされたバイナリがGitHubのプロジェクトページの&lt;a href=&#34;https://github.com/kubernetes/minikube/releases&#34;&gt;Releases&lt;/a&gt;に上がってるので、ダウンロードしてPathの通ったとこに置くだけ。
+今回ダウンロードしたのはv0.22.2のminikube-windows-amd64で、これをminikube.exeにリネームして配置した。&lt;/p&gt;
+
+&lt;p&gt;で、minikubeがサポートしているKubernetesのバージョンを調べると、&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;minikube get-k8s-versions
+The following Kubernetes versions are available:
+        - v1.7.5
+        - v1.7.4
+        - v1.7.3
+        - v1.7.2
+        - v1.7.0
+        (snip)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;1.8はまだサポートされていない…&lt;/p&gt;
+
+&lt;p&gt;1.7.5が最新なのでそれでやることにする。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ということで、kubectlの1.7.5をインストールする。
+kubectlもGoで書かれているので、以下のアドレスからWindowsバイナリをダウンロードしてPathの通ったところに置くだけ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.7.5/bin/windows/amd64/kubectl.exe
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;以上でMinikubeの環境ができた。
+簡単。&lt;/p&gt;
+
+&lt;h2 id=&#34;minikube起動&#34;&gt;Minikube起動&lt;/h2&gt;
+
+&lt;p&gt;Minikubeは、&lt;code&gt;minikube start&lt;/code&gt;で起動することができ、Minikubeが起動したらすぐにKubernetesをいじれるようになる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;minikube start --vm-driver virtualbox --kubernetes-version v1.7.5
+Starting local Kubernetes v1.7.5 cluster...
+Starting VM...
+Downloading Minikube ISO
+ 106.37 MB / 106.37 MB [============================================] 100.00% 0s
+Getting VM IP address...
+Moving files into cluster...
+Setting up certs...
+Connecting to cluster...
+Setting up kubeconfig...
+Starting cluster components...
+Kubectl is now configured to use the cluster.
+
+C:\Users\kaitoy&amp;gt;minikube status
+minikube: Running
+cluster: Running
+kubectl: Correctly Configured: pointing to minikube-vm at 192.168.99.100
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;起動した。
+VirtualBoxのGUIを見ると、minikubeというVMが起動しているのが分かる。
+この中でMasterとNodeが動いているはずだ。&lt;/p&gt;
+
+&lt;p&gt;このVMには、&lt;code&gt;minikube ssh&lt;/code&gt;でログインできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;minikube ssh
+                         _             _
+            _         _ ( )           ( )
+  ___ ___  (_)  ___  (_)| |/&#39;)  _   _ | |_      __
+/&#39; _ ` _ `\| |/&#39; _ `\| || , &amp;lt;  ( ) ( )| &#39;_`\  /&#39;__`\
+| ( ) ( ) || || ( ) || || |\`\ | (_) || |_) )(  ___/
+(_) (_) (_)(_)(_) (_)(_)(_) (_)`\___/&#39;(_,__/&#39;`\____)
+
+$ uname -a
+Linux minikube 4.9.13 #1 SMP Fri Sep 15 23:35:16 UTC 2017 x86_64 GNU/Linux
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;すごくVagrantっぽい。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Minikubeを起動すると、kubectlのコンテキストがminikubeというものに設定され、kubectlコマンドの接続先がMinikubeのKubernetesになる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl config current-context
+minikube
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;で、kubectlでクラスタの状態とかを見てみようと思ったら、なんか様子が変。
+なしのつぶて。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl get nodes
+Unable to connect to the server: dial tcp 192.168.99.100:8443: connectex: No connection could be made because the target machine actively refused it.
+
+C:\Users\kaitoy&amp;gt;kubectl cluster-info dump
+Unable to connect to the server: dial tcp 192.168.99.100:8443: connectex: No connection could be made because the target machine actively refused it.
+
+C:\Users\kaitoy&amp;gt;minikube dashboard
+Could not find finalized endpoint being pointed to by kubernetes-dashboard: Error validating service: Error getting service kubernetes-dashboard: Get https://192.168.99.100:8443/api/v1/namespaces/kube-system/services/kubernetes-dashboard: dial tcp 192.168.99.100:8443: connectex: No connection could be made because the target machine actively refused it.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;再度&lt;code&gt;minikube status&lt;/code&gt;してみたら、クラスタが落ちていた。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;minikube status
+minikube: Running
+cluster: Stopped
+kubectl: Correctly Configured: pointing to minikube-vm at 192.168.99.100
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;minikube logs&lt;/code&gt;でログを見てみると、エラーがたくさん出ていた。
+以下のようなログが最初のほうに出てたので、認証系がだめで、サービス間でやり取りができなかったんじゃないかという感じ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;Oct 04 23:08:43 minikube localkube[2783]: W1004 23:08:43.599396    2783 authentication.go:368] AnonymousAuth is not allowed with the AllowAll authorizer.  Resetting AnonymousAuth to false. You should use a different authorizer
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;エラーの原因はよくわからないので、Kubernetesのバージョンをちょっと古いの(1.7.0)変えてみる。&lt;/p&gt;
+
+&lt;p&gt;kubectlの1.7.0をPathに置いて、Minikubeを1.7.0で再起動する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;minikube stop
+Stopping local Kubernetes cluster...
+Machine stopped.
+
+C:\Users\kaitoy&amp;gt;minikube start --vm-driver virtualbox --kubernetes-version v1.7.0
+Starting local Kubernetes v1.7.0 cluster...
+Starting VM...
+Getting VM IP address...
+Kubernetes version downgrade is not supported. Using version: v1.7.5
+Moving files into cluster...
+Setting up certs...
+Connecting to cluster...
+Setting up kubeconfig...
+Starting cluster components...
+Kubectl is now configured to use the cluster.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Kubernetesのダウングレードはサポートされてないと言われた。
+ので一回VMを消してからやりなおす。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;minikube stop
+Stopping local Kubernetes cluster...
+Machine stopped.
+
+C:\Users\kaitoy&amp;gt;minikube delete
+Deleting local Kubernetes cluster...
+Machine deleted.
+
+C:\Users\kaitoy&amp;gt;minikube start --vm-driver virtualbox --kubernetes-version v1.7.0
+Starting local Kubernetes v1.7.0 cluster...
+Starting VM...
+Getting VM IP address...
+Moving files into cluster...
+Setting up certs...
+Connecting to cluster...
+Setting up kubeconfig...
+Starting cluster components...
+Kubectl is now configured to use the cluster.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;1.7.0で動いた。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;様子はどうか。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy\Desktop\bin\pleiades\workspace\blog&amp;gt;minikube status
+minikube: Running
+cluster: Running
+kubectl: Correctly Configured: pointing to minikube-vm at 192.168.99.100
+
+C:\Users\kaitoy\Desktop\bin\pleiades\workspace\blog&amp;gt;kubectl get nodes
+NAME       STATUS    AGE       VERSION
+minikube   Ready     22s       v1.7.0
+
+C:\Users\kaitoy\Desktop\bin\pleiades\workspace\blog&amp;gt;kubectl version
+Client Version: version.Info{Major:&amp;quot;1&amp;quot;, Minor:&amp;quot;7&amp;quot;, GitVersion:&amp;quot;v1.7.0&amp;quot;, GitCommit:&amp;quot;d3ada0119e776222f11ec7945e6d860061339aad&amp;quot;, GitTreeState:&amp;quot;clean&amp;quot;, BuildDate:&amp;quot;2017-06-29T23:15:59Z&amp;quot;, GoVersion:&amp;quot;go1.8.3&amp;quot;, Compiler:&amp;quot;gc&amp;quot;, Platform:&amp;quot;windows/amd64&amp;quot;}
+Server Version: version.Info{Major:&amp;quot;1&amp;quot;, Minor:&amp;quot;7&amp;quot;, GitVersion:&amp;quot;v1.7.0&amp;quot;, GitCommit:&amp;quot;d3ada0119e776222f11ec7945e6d860061339aad&amp;quot;, GitTreeState:&amp;quot;dirty&amp;quot;, BuildDate:&amp;quot;2017-10-04T09:25:40Z&amp;quot;, GoVersion:&amp;quot;go1.8.3&amp;quot;, Compiler:&amp;quot;gc&amp;quot;, Platform:&amp;quot;linux/amd64&amp;quot;}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ちゃんと動いているっぽい。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ダッシュボードだけはなぜか相変わらず開けないけどまあいいか。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;minikube dashboard
+Could not find finalized endpoint being pointed to by kubernetes-dashboard: Error validating service: Error getting service kubernetes-dashboard: services &amp;quot;kubernetes-dashboard&amp;quot; not found
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;続きはまた別の記事に書く。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -10113,204 +10495,6 @@ Atomプロトコルを使うと、&lt;code&gt;atom://disturb-me/assets/atom/whit
 &lt;p&gt;このプルリクエストが取り込まれるまでの暫定対策として、&lt;a href=&#34;https://github.com/atom/atom/blob/master/src/browser/atom-protocol-handler.coffee&#34;&gt;Atomプロトコルハンドラのソース&lt;/a&gt;を見て、AtomプロトコルのURLからリソースのファイルシステム上での絶対パスを導いている部分をdisturb-me内にパクって、&lt;code&gt;src&lt;/code&gt;にセットする値として&lt;code&gt;atom://&lt;/code&gt;を使わないようにした。&lt;/p&gt;
 
 &lt;p&gt;これでちゃんと動いた。&lt;/p&gt;
-</description>
-        </item>
-      
-    
-      
-        <item>
-          <title>Atomウィンドウ内で画像を動かすパッケージ - disturb-me</title>
-          <link>https://www.kaitoy.xyz/2015/09/06/disturb-me/</link>
-          <pubDate>Sun, 06 Sep 2015 20:18:14 -0600</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2015/09/06/disturb-me/</guid>
-          <description>
-
-&lt;p&gt;&lt;a href=&#34;https://atom.io/&#34;&gt;&lt;strong&gt;Atom&lt;/strong&gt;&lt;/a&gt;のパッケージを見ていて、便利なパッケージが沢山あるなぁと思いつつ、真面目なパッケージばかりでもつまらないので、たまには不真面目で役に立たないパッケージがあってもいいかと思って作ったパッケージの話。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h2 id=&#34;disturb-me&#34;&gt;disturb-me&lt;/h2&gt;
-
-&lt;p&gt;作ったのは&lt;a href=&#34;https://atom.io/packages/disturb-me&#34;&gt;&lt;strong&gt;disturb-me&lt;/strong&gt;&lt;/a&gt;というパッケージ。
-&lt;code&gt;Ctrl+Alt&lt;/code&gt;を押しながら&lt;code&gt;d&lt;/code&gt;と&lt;code&gt;m&lt;/code&gt;を押すとAtomウィンドウ内に画像が表示され、その画像がランダムに動き回り作業の邪魔をするというもの。&lt;/p&gt;
-
-&lt;p&gt;画像はパッケージの設定から指定できる。デフォルトではAtomのロゴ。&lt;/p&gt;
-
-&lt;p&gt;最初は&lt;strong&gt;pac-m●n&lt;/strong&gt;というパッケージ名にして、ゲーム界のミッキーことパ●クマンが動き回るパッケージにしようと思ってたけど、バンダイナムコからダメだと言われてしまった。
-この構想はいつか&lt;a href=&#34;https://open.channel.or.jp/user.php&#34;&gt;カタログIPオープン化プロジェクト&lt;/a&gt;を利用して実現しようと思う。&lt;/p&gt;
-
-&lt;h2 id=&#34;disturb-meの作り方&#34;&gt;disturb-meの作り方&lt;/h2&gt;
-
-&lt;p&gt;以前&lt;a href=&#34;https://www.kaitoy.xyz/2015/08/21/japanese-word-selection/&#34;&gt;別のエントリ&lt;/a&gt;でAtomパッケージの作り方の基本について書いたので、ここではそこで書かなかったことを書く。&lt;/p&gt;
-
-&lt;h4 id=&#34;1-メインスクリプト-コマンド&#34;&gt;1. メインスクリプト - コマンド&lt;/h4&gt;
-
-&lt;p&gt;今回はコマンドを追加するので&lt;a href=&#34;https://atom.io/docs/api/latest/CommandRegistry&#34;&gt;&lt;strong&gt;CommandRegistry&lt;/strong&gt;&lt;/a&gt;を使う。
-CommandRegistryのインスタンスには&lt;strong&gt;atom.commands&lt;/strong&gt;でアクセスでき、その&lt;strong&gt;add&lt;/strong&gt;メソッドでコマンドを追加できる。&lt;/p&gt;
-
-&lt;p&gt;addメソッドの引数は、第一引数から順に、&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;target: コマンドを有効にするDOM要素か、それを示すCSSセレクタ。&lt;/li&gt;
-&lt;li&gt;commandName: コマンドパレットに表示するコマンド名。全部小文字で、単語をハイフンでつないで、パッケージ名を先頭につけるのがルール。&lt;/li&gt;
-&lt;li&gt;callback(event): コマンドを実行したときに呼ばれるメソッド。&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;disturb-meのコマンドはAtomウィンドウ内のどこでも有効にしたいので、第一引数にはAtomウィンドウを表すカスタムタグである&lt;strong&gt;atom-workspace&lt;/strong&gt;を指定する。
-コードは以下の感じ。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-coffeescript&#34;&gt;  activate: (state) -&amp;gt;
-    @subscriptions = new CompositeDisposable
-    @subscriptions.add atom.commands.add &#39;atom-workspace&#39;, &#39;disturb-me:toggle&#39;: =&amp;gt; @toggle()
-
-  toggle: -&amp;gt;
-    # 画像を挿入したり削除したりするコード。
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;toggle&lt;/strong&gt;の中では画像を挿入したり削除したりするわけだけど、この処理は、その画像を表す別のクラスにまかせることにする。
-のでtoggleは以下のように書く。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-coffeescript&#34;&gt;  @disturber: null
-
-  toggle: -&amp;gt;
-    if @disturber?
-      @disturber.stop()
-      @disturber = null
-    else
-      @disturber = new Disturber()
-      document.body.appendChild(@disturber.getElement())
-      @disturber.start()
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;strong&gt;Disturber&lt;/strong&gt;が画像を表すクラス。別のファイル(&lt;strong&gt;lib/disturber.coffee&lt;/strong&gt;)の中で定義して、スクリプトの先頭辺りで&lt;code&gt;Disturber = require &#39;./disturber&#39;&lt;/code&gt;のようにインポートする。&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;document.body.appendChild&lt;/strong&gt;しているところは、何かAtomのAPI(&lt;a href=&#34;https://atom.io/docs/api/latest/ViewRegistry&#34;&gt;&lt;strong&gt;ViewRegistry&lt;/strong&gt;&lt;/a&gt;とか)を使うべきなのかも。&lt;/p&gt;
-
-&lt;h4 id=&#34;2-disturber&#34;&gt;2. Disturber&lt;/h4&gt;
-
-&lt;p&gt;Disturberは以下のように書く。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-coffeescript&#34;&gt;module.exports =
-class Disturber
-
-  element: null
-
-  constructor: -&amp;gt;
-    # &amp;lt;img&amp;gt;を作って@elementに入れる。
-
-  destroy: -&amp;gt;
-    # @elementをDOMツリーから削除する。
-
-  getElement: -&amp;gt;
-    # @element返す。
-
-  start: -&amp;gt;
-    # @elementのsrcを設定して、ランダムに動かし始める。
-
-  stop: -&amp;gt;
-    # @elementを止める。
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;あまり取り立てて書くことないな…。&lt;/p&gt;
-
-&lt;p&gt;因みに画像を動かすのには&lt;a href=&#34;https://www.npmjs.com/package/velocity-animate&#34;&gt;&lt;strong&gt;Velocity&lt;/strong&gt;&lt;/a&gt;を使い、DOMの操作とかにちょっと&lt;a href=&#34;https://www.npmjs.com/package/jquery&#34;&gt;&lt;strong&gt;jQuery&lt;/strong&gt;&lt;/a&gt;を使う。&lt;/p&gt;
-
-&lt;h4 id=&#34;3-パッケージ設定&#34;&gt;3. パッケージ設定&lt;/h4&gt;
-
-&lt;p&gt;動かす画像や動かす速度はユーザが設定できるようにする。
-設定はメインスクリプトで定義でき、その値には&lt;a href=&#34;https://atom.io/docs/api/latest/Config&#34;&gt;&lt;strong&gt;Config&lt;/strong&gt;&lt;/a&gt;クラスでアクセスできる。&lt;/p&gt;
-
-&lt;p&gt;メインスクリプトでの定義は以下のように書く。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-coffeescript&#34;&gt;module.exports = DisturbMe =
-  disturber: null
-  subscriptions: null
-
-  config:
-    bornImage:
-      title: &#39;Born-Image&#39;
-      type: &#39;string&#39;
-      default: &#39;atom://disturb-me/assets/atom/white/atom_born.gif&#39;
-    bornDuration:
-      title: &#39;Born-Duration&#39;
-      type: &#39;integer&#39;
-      default: 2000
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;するとパッケージ設定画面が以下のようになる。&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/disturb-me/settings.jpg&#34; alt=&#34;settings&#34; /&gt;
-&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;各設定の定義に最低限必要な属性は&lt;strong&gt;type&lt;/strong&gt;と&lt;strong&gt;default&lt;/strong&gt;。オプショナルなものに&lt;strong&gt;title&lt;/strong&gt;、&lt;strong&gt;description&lt;/strong&gt;などがある。
-typeには、&lt;strong&gt;string&lt;/strong&gt;、&lt;strong&gt;integer&lt;/strong&gt;、&lt;strong&gt;number&lt;/strong&gt;、&lt;strong&gt;boolean&lt;/strong&gt;、&lt;strong&gt;array&lt;/strong&gt;、&lt;strong&gt;object&lt;/strong&gt;、&lt;strong&gt;color&lt;/strong&gt;を指定できる。
-詳しくは&lt;a href=&#34;https://atom.io/docs/api/latest/Config&#34;&gt;&lt;strong&gt;Config&lt;/strong&gt;&lt;/a&gt;クラスの説明に載ってる。&lt;/p&gt;
-
-&lt;p&gt;Configクラスのインスタンスには&lt;strong&gt;atom.config&lt;/strong&gt;でアクセスでき、上で定義した設定を以下のように操作できる。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-coffeescript&#34;&gt;imagePath = atom.config.get(&#39;disturb-me.bornImage&#39;)
-atom.config.set(&#39;disturb-me.bornDuration&#39;, &#39;1000&#39;)
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h4 id=&#34;4-キーバインディング&#34;&gt;4. キーバインディング&lt;/h4&gt;
-
-&lt;p&gt;メインスクリプト内でコマンドパレットに表示するコマンドを定義したが、これにキーボードショートカット(キーバインディング)を設定する。&lt;/p&gt;
-
-&lt;p&gt;キーバインディングは&lt;strong&gt;keymaps&lt;/strong&gt;フォルダの中の&lt;strong&gt;cson&lt;/strong&gt;ファイルで以下のように定義する。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cson&#34;&gt;&#39;atom-workspace&#39;:
-  &#39;ctrl-alt-d ctrl-alt-m&#39;: &#39;disturb-me:toggle&#39;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;これ見ればだいたい書き方はわかるはず。(詳細は&lt;a href=&#34;https://atom.io/docs/latest/behind-atom-keymaps-in-depth&#34;&gt;Atom Flight Manual&lt;/a&gt;に。)&lt;/p&gt;
-
-&lt;p&gt;特殊キーは&lt;strong&gt;cmd&lt;/strong&gt;、&lt;strong&gt;ctrl&lt;/strong&gt;、&lt;strong&gt;alt&lt;/strong&gt;、&lt;strong&gt;shift&lt;/strong&gt;、&lt;strong&gt;enter&lt;/strong&gt;、&lt;strong&gt;escape&lt;/strong&gt;、&lt;strong&gt;backspace&lt;/strong&gt;、&lt;strong&gt;delete&lt;/strong&gt;、&lt;strong&gt;tab&lt;/strong&gt;、&lt;strong&gt;home&lt;/strong&gt;、&lt;strong&gt;end&lt;/strong&gt;、&lt;strong&gt;pageup&lt;/strong&gt;、&lt;strong&gt;pagedown&lt;/strong&gt;、&lt;strong&gt;left&lt;/strong&gt;、&lt;strong&gt;right&lt;/strong&gt;、&lt;strong&gt;up&lt;/strong&gt;、&lt;strong&gt;down&lt;/strong&gt;が使える。&lt;/p&gt;
-
-&lt;p&gt;同時に押すキーはハイフンでつなぎ、連続して押すキーはスペースで区切るので、上記&lt;code&gt;ctrl-alt-d ctrl-alt-m&lt;/code&gt;は、&lt;code&gt;Ctrl+Alt&lt;/code&gt;を押しながら&lt;code&gt;d&lt;/code&gt;と&lt;code&gt;m&lt;/code&gt;を連続して押す、という意味。&lt;/p&gt;
-
-&lt;h4 id=&#34;5-package-json&#34;&gt;5. package.json&lt;/h4&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2015/08/21/japanese-word-selection/#5-package-json%E7%B7%A8%E9%9B%86&#34;&gt;前回&lt;/a&gt;と同様の編集に加えて、今回は二つのnpmパッケージに依存するので、&lt;strong&gt;dependencies&lt;/strong&gt;を以下のように書く。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;  &amp;quot;dependencies&amp;quot;: {
-    &amp;quot;velocity-animate&amp;quot;: &amp;quot;&amp;gt;=1.2.0&amp;quot;,
-    &amp;quot;jquery&amp;quot;: &amp;quot;&amp;gt;=2.0.0&amp;quot;
-  }
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;これを書いて、プロジェクトルートフォルダで&lt;code&gt;apm install&lt;/code&gt;すると、ルート直下の&lt;strong&gt;node_modules&lt;/strong&gt;フォルダに依存モジュールがインストールされる。&lt;/p&gt;
-
-&lt;p&gt;node_modulesは&lt;strong&gt;Package Generator&lt;/strong&gt;が生成する&lt;strong&gt;.gitignore&lt;/strong&gt;に入っているので、リポジトリには入らない。&lt;/p&gt;
-
-&lt;h4 id=&#34;6-リリースなど&#34;&gt;6. リリースなど&lt;/h4&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2015/08/21/japanese-word-selection/&#34;&gt;前回&lt;/a&gt;と同様にリリースする。
-めんどいのでテストは書かない。&lt;/p&gt;
-
-&lt;p&gt;リリース後、ループしないgifアニメーション画像をdisturb-meに使った場合、そのアニメーションが再生されない場合があるバグに気付いた。
-これについては&lt;a href=&#34;https://www.kaitoy.xyz/2015/09/07/caching-gifs-on-atom/&#34;&gt;別のエントリ&lt;/a&gt;で書いた。&lt;/p&gt;
 </description>
         </item>
       

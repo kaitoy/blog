@@ -14,9 +14,9 @@
     <link rel="canonical" href="https://www.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="このエントリでは、Raúl Kripalaniによる記事、If you’re a startup, you should not use React (reflecting on the BSD &#43; patents license)を紹介する。 (Raúlから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 2017/9/23追記: React、Jest、Flow、Immutable.jsがMITにリライセンスされるというアナウンスがFacebookからあった。 コミュニティの大勝利だ。 (adsbygoogle = window.adsbygoogle || []).push({}); 現在オープンソースコミュニティで起こっていることには落胆させられる。 特に、オープンソースのおかげで多くのスタートアップやビジネスが存在することを認識したときは。 独占的なソフトウェアのために法外なライセンス料を払わなければならないとしたら、それらは存続できない。 オープンソースとは、より良いソフトウェアをみんなで構築するためのコミュニティをつくることだ。 それを、— Facebookが意図しているような — 人々の権利を交換するための市場として決して使用すべきではない。 Facebookは「BSD &#43; patents」というライセンスモデルを推進している。 広く人気のあるReactを含む、すべてのプロジェクトで。 基本的に、「BSD &#43; patents」はコードが(誰でも参照し利用できるように)公開されていることを意味するが、しかしそれは常にFacebookの著作物でもある。 そして彼らは、君がFacebookを特許侵害で訴えないで 仲良くやっている限り、君に特許ライセンスを与える。 Facebookを訴えた瞬間、Reactの他、君の使っているあらゆるFacebookの「オープンソース」技術の特許権は自動的に取り消されてしまう。 アディオス、バイバイ、どこかへ行ってしまう。 (https://github.com/facebook/react/blob/b8ba8c83f318b84e42933f6928f231dc0918f864/PATENTS) この問題は、Apache Software Foundationによって衆目にさらされることとなった。 この制限は広大で、残忍だ。 ・・・ その知的財産がReactを使用しているドメインと関連しているかどうかは関係ない。 君がReactを使うなら、Facebookが保持する特許に逆らうことはできない。 いつまでも。 言い換えれば、代償。 Facebook、それが君らの考えるオープンソースなのか? ・・・ Fridgebook Inc. 例として、君の会社「Fridgebook Inc.」はインテリジェントな冷蔵庫を販売しているとしよう。 君の冷蔵庫にはスクリーンが付いていて、独自のアプリケーションを実行していて、そのUIにはReactが使われている。 突然、Facebookは冷蔵庫業界への進出を決め、新製品「FBfridge」をわずか1週間後に世界中でローンチすると発表した。 仮に、Facebookがあなたの特許の一部を「FBfridge」で露骨に侵害していた場合、どうすればいい? そう、君は即座に彼らを訴えることはできない。 君は顧客が使うアプリにReactを使っている、だろ? もし他のもの(vue.jsとか)に移行せずに訴えたら、Reactのために与えられたライセンスを即座に失い、思いがけず君自身が違反している状態になり、ソフトウェア不正使用の訴訟を約5000億ドルの会社から起こされる可能性と戦うことになる。 君だけで。 もちろん、君は顧客サービスを中断したくはない。 だから、もし彼らを訴えたい、もしくは少なくともそれをするための効力を保持したいのであれば、記録的な期間でReactから移行できる解決策を見つける必要がある。 それが君の陥るひどい窮地だ。そうだろ?">
+    <meta property="og:description" content="Kubernetes1.8のリリースが話題になっていたので、ちょっと触って見たという話。 (1.8を触ったとは言っていない。) 具体的には、Kubernetes Basicsというチュートリアルをやりながら、MinikubeにGoslingsをデプロイしたんだけど、この記事ではMinikubeをセットアップしたところまで。 (adsbygoogle = window.adsbygoogle || []).push({}); Kubernetesとは KubernetesはOSSのコンテナ管理ツール。 英語だとクーバネティスみたいに発音する。 Googleが自身のコンテナ技術であるBorgの運用で培ったノウハウを活かして開発したもの。 2014年ころに開発が始まり、2015年夏にv1がリリースされたということで、かなり新しいツール。 よく比べられるものにはDockerのSwarmモードやApache Mesosがあるが、何が違うのかは調べてないので知らない。 ただ、Dockerコンテナ管理ツールとしてはKubernetesが一番勢いがある雰囲気を感じる。 Kubernetesを使うと、複数の物理マシンからなるHAクラスタ(Kubernetesクラスタ)を構成し、その上にコンテナをデプロイして管理できる。 Kubernetesクラスタは、一つのMaster(a.k.a. Kubernetes Control Plane)と一つ以上のNode(昔はMinionと呼ばれてたもの)で構成される。 (MasterとNodeは同一マシンに同居もできる。) Masterはクラスタを管理し、コンテナのスケジューリング、状態管理、スケーリング、アップデートなどを担う。 Node上では実際にコンテナが実行される。 Kubernetesのアーキテクチャを図にすると以下の感じ。 矢印の向きとかはちょっと間違ってるかも。 Master上ではkube-apiserverが動き、Kubernetes APIというREST APIを公開する。 このAPIを通してKubernetesオブジェクトを定義したりすることで、宣言的にコンテナの管理ができる仕組み。 ユーザは普通、kubectlというコマンドでkube-apiserverとやり取りする。 KubernetesオブジェクトはMaster上のetcdによって分散キーバリューストアに永続化され、そのストアをkube-controller-managerとkube-schedulerがwatchしてて、変更に応じた処理をする。 kube-controller-managerはオブジェクトのライフサイクルの管理や、コンテナのスケーリングなど、クラスタレベルの機能を実行する。 (よくわからない。) kube-schedulerは、コンテナを実行するホストを選出し、コンテナのスケジューリングをする。 一方、各Nodeでは、kubeletというMasterのエージェントになるプロセスが動く。 kubeletはkube-apiserverからの指示で、コンテナイメージを取得してコンテナを起動したり監視したり止めたりする。 kubeletがコンテナを扱うためのコンテナランタイムは、普通はDockerだけど、rktとかcri-oとかfraktiとかも使える。runcやRailCarはどうなんだろう。 コンテナはデフォルトではクラスタ内のプライベートネットワークにつながるので、そこで動いているアプリにユーザからアクセスするには、何らかの形でトラフィックを中継してやる必要がある。 これをするのがkube-proxy。 ロードバランシングもしてくれる。 Kubernetesオブジェクトとは Kubernetesオブジェクトは、Kubernetesクラスタ上で機能する構成要素を表現するもの。 以下のようなものがある。 Pod デプロイの最小単位。 一つ(またはリソースを共有する複数)のコンテナと、ストレージ、ネットワークなどを内包する。 一つのPodには一つのIPアドレスが付く。 kubeletはPodの定義に従ってコンテナを起動する。 Service Podの論理グループ。 PodのIPアドレスは外部に公開されないので、外とのやり取りをするためにServiceがある。 kube-proxyはこいつの定義に従って働く。 Serviceには複数のEndpoint(i.e. Pod等)が紐づき、外部からのトラフィックをラウンドロビンでルーティングするので、冗長化やロードバランサ的な働きもする。 ServiceはPodを抽象化するので、Podが死んだり入れ替わったりしても外に影響が見えにくくなる。 Serviceには以下のtypeがある。 ClusterIP (デフォルト): Kubernetesクラスタ内からだけアクセスできる内部IPアドレスだけをもつ。 NodePort: ClusterIPの拡張。内部IPアドレスに加え、クラスタ外からアクセスできるポートを一つ持つ。 LoadBalancer: NodePortの拡張。外部ロードバランサを作って、固定の外部IPアドレスを付けて、内部IPアドレスへルーティングする。 ExternalName: 抽象名をもつサービス。Kubernetes DNS serverで名前解決する。詳細は読んでないので知らない。 Volume 永続化やPod内でのファイル共有のためのオブジェクト。 Podとともに作られ、Podとともに破棄される。 実態はファイルシステム上のディレクトリ。 hostPathとか、nfsとか、awsElasticBlockStoreとかの種類があるらしい。 Namespace 仮想クラスタを表すオブジェクト。 これを定義すると、ひとつの物理クラスタを複数の仮想クラスタに分割できる。 大規模ユーザ・プロジェクト向け機能。 Controller Podを管理するオブジェクト。レプリケーションしたり、スケーリングや自動再起動したり。 以下のようなものがある。 Deployment Podのデプロイを管理するオブジェクト。 PodとReplicaSetの宣言的な生成・更新を実現する。 ReplicaSet 指定した数のPodのレプリカを維持してくれる。 基本はDeploymentから作られて、Podの作成・削除・更新をオーケストレイトする。 ReplicationControllerというのもあるけど、今はReplicaSetが推奨。 StatefulSet ステートフルなアプリを管理するオブジェクト。 現時点でのKubernetes最新版の1.8でまだベータ。 DaemonSet 全てのノードで動くアプリを実現するオブジェクト。 Job ジョブを表すオブジェクト。 指定された回数、Podを成功で完了させる。 オブジェクトにはラベルというキーバリューな属性を付けることができ、PodとServiceの紐づけや、オブジェクト検索時のフィルタとかに使える。 今回Goslingsを動かすのに使ったのは、Pod、Deployment、ReplicaSet、Service (NodePort)。 Minikubeとは Kubernetesクラスタを構築する方法はいくつかあるが、中でももっとも簡単な方法がMinikube。 Minikubeは、KubernetesのMasterとNodeを一つずつを詰め込んだVMをダウンロードして起動して、ローカルのkubectlから使えるようにしてくれるツール。 開発やテスト用途のKubernetes環境として使われる。 ちょっとVagrantっぽい感じ。Kubernetes専用の。 Minikubeインストール Kubernetesのドキュメントにしたがって、Minikubeをインストールする。 環境はWindows 10 Home x64。 まず、MinikubeのVMを動かすツールを入れる。 今のところMinikubeがサポートしてるのは、WindowsだとVirtualBoxかHyper-V。 Windows 10 HomeだとHyper-Vが使えないので、VirtualBox一択。 VirtualBoxは、適当にVT-xを有効にして(してあった)、インストーラダウンロードしてインストールしただけ。 バージョンは5.1.28。 次に、minikubeコマンドを入れる。 このコマンドはGoで書かれていて、各プラットフォーム用にビルドされたバイナリがGitHubのプロジェクトページのReleasesに上がってるので、ダウンロードしてPathの通ったとこに置くだけ。 今回ダウンロードしたのはv0.22.2のminikube-windows-amd64で、これをminikube.exeにリネームして配置した。 で、minikubeがサポートしているKubernetesのバージョンを調べると、 C:\Users\kaitoy&gt;minikube get-k8s-versions The following Kubernetes versions are available: - v1.7.5 - v1.7.4 - v1.7.3 - v1.7.2 - v1.7.0 (snip) 1.8はまだサポートされていない… 1.7.5が最新なのでそれでやることにする。 ということで、kubectlの1.7.5をインストールする。 kubectlもGoで書かれているので、以下のアドレスからWindowsバイナリをダウンロードしてPathの通ったところに置くだけ。 https://storage.googleapis.com/kubernetes-release/release/v1.7.5/bin/windows/amd64/kubectl.exe 以上でMinikubeの環境ができた。 簡単。 Minikube起動 Minikubeは、minikube startで起動することができ、Minikubeが起動したらすぐにKubernetesをいじれるようになる。 C:\Users\kaitoy&gt;minikube start --vm-driver virtualbox --kubernetes-version v1.7.5 Starting local Kubernetes v1.7.5 cluster...">
     
-    <meta property="og:image" content="https://www.kaitoy.xyz/images/react.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes_goslings.png">
     
     
     
@@ -82,6 +82,28 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/kubernetes_goslings.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Tue, Oct 10, 2017</span>
+              </div>
+              <h2 class="title">Kubernetes 1.8が出たので、Minikubeを触ってみる</h2>
+              <div class="summary">
+                Kubernetes1.8のリリースが話題になっていたので、ちょっと触って見たという話。 (1.8を触ったとは言っていない。) 具体的には、Kubernetes Basicsというチュートリアルをやりながら、MinikubeにGoslingsをデプロイしたんだけど、この記事ではMinikubeをセットアップしたところまで。 (adsbygoogle = window.adsbygoogle || []).push({}); Kubernetesとは KubernetesはOSSのコンテナ管理ツール。 英語だとクーバネティスみたいに発音する。 Googleが自身のコンテナ技術であるBorgの運用で培ったノウハウを活かして開発したもの。 2014年ころに開発が始まり、2015年夏にv1がリリースされたということで、かなり新しいツール。 よく比べられるものにはDockerのSwarmモードやApache Mesosがあるが、何が違うのかは調べてないので知らない。 ただ、Dockerコンテナ管理ツールとしてはKubernetesが一番勢いがある雰囲気を感じる。 Kubernetesを使うと、複数の物理マシンからなるHAクラスタ(Kubernetesクラスタ)を構成し、その上にコンテナをデプロイして管理できる。 Kubernetesクラスタは、一つのMaster(a.k.a. Kubernetes Control Plane)と一つ以上のNode(昔はMinionと呼ばれてたもの)で構成される。 (MasterとNodeは同一マシンに同居もできる。) Masterはクラスタを管理し、コンテナのスケジューリング、状態管理、スケーリング、アップデートなどを担う。 Node上では実際にコンテナが実行される。 Kubernetesのアーキテクチャを図にすると以下の感じ。 矢印の向きとかはちょっと間違ってるかも。 Master上ではkube-apiserverが動き、Kubernetes APIというREST APIを公開する。 このAPIを通してKubernetesオブジェクトを定義したりすることで、宣言的にコンテナの管理ができる仕組み。 ユーザは普通、kubectlというコマンドでkube-apiserverとやり取りする。 KubernetesオブジェクトはMaster上のetcdによって分散キーバリューストアに永続化され、そのストアをkube-controller-managerとkube-schedulerがwatchしてて、変更に応じた処理をする。 kube-controller-managerはオブジェクトのライフサイクルの管理や、コンテナのスケーリングなど、クラスタレベルの機能を実行する。 (よくわからない。) kube-schedulerは、コンテナを実行するホストを選出し、コンテナのスケジューリングをする。 一方、各Nodeでは、kubeletというMasterのエージェントになるプロセスが動く。 kubeletはkube-apiserverからの指示で、コンテナイメージを取得してコンテナを起動したり監視したり止めたりする。 kubeletがコンテナを扱うためのコンテナランタイムは、普通はDockerだけど、rktとかcri-oとかfraktiとかも使える。runcやRailCarはどうなんだろう。 コンテナはデフォルトではクラスタ内のプライベートネットワークにつながるので、そこで動いているアプリにユーザからアクセスするには、何らかの形でトラフィックを中継してやる必要がある。 これをするのがkube-proxy。 ロードバランシングもしてくれる。 Kubernetesオブジェクトとは Kubernetesオブジェクトは、Kubernetesクラスタ上で機能する構成要素を表現するもの。 以下のようなものがある。 Pod デプロイの最小単位。 一つ(またはリソースを共有する複数)のコンテナと、ストレージ、ネットワークなどを内包する。 一つのPodには一つのIPアドレスが付く。 kubeletはPodの定義に従ってコンテナを起動する。 Service Podの論理グループ。 PodのIPアドレスは外部に公開されないので、外とのやり取りをするためにServiceがある。 kube-proxyはこいつの定義に従って働く。 Serviceには複数のEndpoint(i.e. Pod等)が紐づき、外部からのトラフィックをラウンドロビンでルーティングするので、冗長化やロードバランサ的な働きもする。 ServiceはPodを抽象化するので、Podが死んだり入れ替わったりしても外に影響が見えにくくなる。 Serviceには以下のtypeがある。 ClusterIP (デフォルト): Kubernetesクラスタ内からだけアクセスできる内部IPアドレスだけをもつ。 NodePort: ClusterIPの拡張。内部IPアドレスに加え、クラスタ外からアクセスできるポートを一つ持つ。 LoadBalancer: NodePortの拡張。外部ロードバランサを作って、固定の外部IPアドレスを付けて、内部IPアドレスへルーティングする。 ExternalName: 抽象名をもつサービス。Kubernetes DNS serverで名前解決する。詳細は読んでないので知らない。 Volume 永続化やPod内でのファイル共有のためのオブジェクト。 Podとともに作られ、Podとともに破棄される。 実態はファイルシステム上のディレクトリ。 hostPathとか、nfsとか、awsElasticBlockStoreとかの種類があるらしい。 Namespace 仮想クラスタを表すオブジェクト。 これを定義すると、ひとつの物理クラスタを複数の仮想クラスタに分割できる。 大規模ユーザ・プロジェクト向け機能。 Controller Podを管理するオブジェクト。レプリケーションしたり、スケーリングや自動再起動したり。 以下のようなものがある。 Deployment Podのデプロイを管理するオブジェクト。 PodとReplicaSetの宣言的な生成・更新を実現する。 ReplicaSet 指定した数のPodのレプリカを維持してくれる。 基本はDeploymentから作られて、Podの作成・削除・更新をオーケストレイトする。 ReplicationControllerというのもあるけど、今はReplicaSetが推奨。 StatefulSet ステートフルなアプリを管理するオブジェクト。 現時点でのKubernetes最新版の1.8でまだベータ。 DaemonSet 全てのノードで動くアプリを実現するオブジェクト。 Job ジョブを表すオブジェクト。 指定された回数、Podを成功で完了させる。 オブジェクトにはラベルというキーバリューな属性を付けることができ、PodとServiceの紐づけや、オブジェクト検索時のフィルタとかに使える。 今回Goslingsを動かすのに使ったのは、Pod、Deployment、ReplicaSet、Service (NodePort)。 Minikubeとは Kubernetesクラスタを構築する方法はいくつかあるが、中でももっとも簡単な方法がMinikube。 Minikubeは、KubernetesのMasterとNodeを一つずつを詰め込んだVMをダウンロードして起動して、ローカルのkubectlから使えるようにしてくれるツール。 開発やテスト用途のKubernetes環境として使われる。 ちょっとVagrantっぽい感じ。Kubernetes専用の。 Minikubeインストール Kubernetesのドキュメントにしたがって、Minikubeをインストールする。 環境はWindows 10 Home x64。 まず、MinikubeのVMを動かすツールを入れる。 今のところMinikubeがサポートしてるのは、WindowsだとVirtualBoxかHyper-V。 Windows 10 HomeだとHyper-Vが使えないので、VirtualBox一択。 VirtualBoxは、適当にVT-xを有効にして(してあった)、インストーラダウンロードしてインストールしただけ。 バージョンは5.1.28。 次に、minikubeコマンドを入れる。 このコマンドはGoで書かれていて、各プラットフォーム用にビルドされたバイナリがGitHubのプロジェクトページのReleasesに上がってるので、ダウンロードしてPathの通ったとこに置くだけ。 今回ダウンロードしたのはv0.22.2のminikube-windows-amd64で、これをminikube.exeにリネームして配置した。 で、minikubeがサポートしているKubernetesのバージョンを調べると、 C:\Users\kaitoy&gt;minikube get-k8s-versions The following Kubernetes versions are available: - v1.7.5 - v1.7.4 - v1.7.3 - v1.7.2 - v1.7.0 (snip) 1.8はまだサポートされていない… 1.7.5が最新なのでそれでやることにする。 ということで、kubectlの1.7.5をインストールする。 kubectlもGoで書かれているので、以下のアドレスからWindowsバイナリをダウンロードしてPathの通ったところに置くだけ。 https://storage.googleapis.com/kubernetes-release/release/v1.7.5/bin/windows/amd64/kubectl.exe 以上でMinikubeの環境ができた。 簡単。 Minikube起動 Minikubeは、minikube startで起動することができ、Minikubeが起動したらすぐにKubernetesをいじれるようになる。 C:\Users\kaitoy&gt;minikube start --vm-driver virtualbox --kubernetes-version v1.7.5 Starting local Kubernetes v1.7.5 cluster...
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2017/08/25/if-youre-a-startup-you-should-not-use-react-reflecting-on-the-bsd-patents-license/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/react.png" alt="eyecatch">
@@ -142,33 +164,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2017/07/12/2017-selenium-headless-browsers/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2017/07/12/2017-selenium-headless-browsers/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/servicenow-selenium.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Wed, Jul 12, 2017</span>
               </div>
-              <h2 class="title">2017年夏、Selenium、ヘッドレスブラウザ</h2>
-              <div class="summary">
-                現在仕事でServiceNow上で動くアプリケーションを開発していて、それのブラウザテストをどうやろうかというのを少し考えたので、書き残しておく。 (adsbygoogle = window.adsbygoogle || []).push({}); ServiceNowとは 本題とほとんど関係ないけど、一応ServiceNowに簡単に触れる。 ServiceNowはITサービス管理のSaaS。 世界的にはITサービス管理のデファクトスタンダードとなっているが、日本ではこれから盛り上がりそうといった感じ。 アプリケーションを開発するプラットフォームとしての側面もあり、JavaScript(ブラウザ側とサーバ側両方)でServiceNowの機能を拡張し、他システムと連携させたり処理を自動化したりできる。 アプリケーションがServiceNowプラットフォームで動くので、テスト方法が悩ましい。 Automated Test Frameworkというテストフレームワークが提供されてはいるが、2017年1月にリリースされたばかりということもあるのか、機能がしょぼく、大したことはできない。 これが自前でブラウザテスト環境を作ろうと思った理由。 アプリケーションがJavaScriptなので、テストもJavaScriptで書きたい。 ブラウザテストとは ここでブラウザテストとは、稼働しているWebアプリケーションに、HTTPクライアントで接続して、レンダリングされたWebページを操作して実行する自動E2Eテストのこととする。 HTTPでWebコンテンツを取得して、HTML・CSSをパースしてレンダリングして、JavaScriptを実行するツール、つまりWebブラウザを何にするかというのと、それを自動で操作するのをどうするかというのと、テストどう書くのかということと、書いたテストをどう実行するかということと、テスト結果をどう集計してレポートするかといった辺りを考える必要がある。 Qiitaの記事「ブラウザテストツール総まとめ・2016年夏版」にブラウザテストのためのツールが色々載っている。 レイヤや目的が異なるツールがちょっとごっちゃになってる気がするけど。 SeleniumとかWebDriverとか ブラウザテストはWebDriver抜きでは語れないので、とりあえずそれについて書く。 それにはまずSeleniumについて語らなければなるまい。 ブラウザテスト創世記にはこうある。 神は「光あれ」と言われた。 するとSeleniumがあった。 神はその光を見て、良しとされた。 神はその光と闇とを分けられた。 神は光をSelenium RC (aka Selenium 1)と名づけ、 闇 をSelenium WebDriver (aka Selenium 2)と名づけられた。 (Seleniumの歴史をもっとちゃんと知りたければこの記事を読むべし。) 要は、今ブラウザテストと言ったらSelenium、Seleniumと言ったらSelenium WebDriverというわけだ。 Selenium WebDriverは、WebDriver APIでブラウザやDOMエレメントを操作するツール。 このAPIを実装したクライアントライブラリが各言語(Java、Ruby、Python、JavaScriptなど)で提供されていて、テストコードから利用できる。 APIの裏ではドライバなるものが暗躍していて、OSやブラウザのネイティブAPIを使ってブラウザを操作している。 このドライバはブラウザごと(Chrome、Firefox、IEなど)に用意されていて、その実装形式がドライバ毎に割と違っている。 例えばFirefox用のやつ(Firefox Driver)はFirefox のアドオンを使うし、Chrome用のやつ(ChromeDriver)は独立したネイティブアプリを介してブラウザを操作する。 ドライバは(基本的に)ブラウザと同じマシンにある必要があり、実行するテストコードとも(基本的に)同居している必要がある。 テストを実行するマシンとは別のマシンのブラウザでテストしたければSelenium Server (aka Selenium Standalone Server)を使う。 Selenium Serverはブラウザとドライバと同じマシンで動き、テストコードから送信されたブラウザ操作コマンドを受信してドライバに伝える、プロキシ的な働きをしてくれる。 Selenium Serverを使えば、クライアントライブラリが対応していないドライバでも利用できるというメリットもある。 Selenium Serverを使うと、オーバーヘッドはあるけどメリットが多いので、とりあえず使うようにしておけば間違いなさそう。 Selenium Serverが受け取るブラウザ操作コマンドは、HTTPでJSONデータとして送信される。 この辺りの通信は、もともとJsonWireProtocol (aka
-              </div>
+              <h3 class="title">2017年夏、Selenium、ヘッドレスブラウザ</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         
@@ -1398,6 +1417,9 @@
       <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
       
       
+      <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
+      
+      
       <a href="https://www.kaitoy.xyz/tags/license">license</a>
       
       
@@ -1405,6 +1427,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>

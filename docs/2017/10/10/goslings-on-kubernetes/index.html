@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Kubernetes 1.8が出たので、Minikubeを触ってみる | To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/">
+    <link rel="canonical" href="https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/">
+    <meta property="og:description" content="Kubernetes1.8のリリースが話題になっていたので、ちょっと触って見たという話。 (1.8を触ったとは言っていない。) 具体的には、Kubernetes Basicsというチュートリアルをやりながら、MinikubeにGoslingsをデプロイしたんだけど、この記事ではMinikubeをセットアップしたところまで。 (adsbygoogle = window.adsbygoogle || []).push({}); Kubernetesとは KubernetesはOSSのコンテナ管理ツール。 英語だとクーバネティスみたいに発音する。 Googleが自身のコンテナ技術であるBorgの運用で培ったノウハウを活かして開発したもの。 2014年ころに開発が始まり、2015年夏にv1がリリースされたということで、かなり新しいツール。 よく比べられるものにはDockerのSwarmモードやApache Mesosがあるが、何が違うのかは調べてないので知らない。 ただ、Dockerコンテナ管理ツールとしてはKubernetesが一番勢いがある雰囲気を感じる。 Kubernetesを使うと、複数の物理マシンからなるHAクラスタ(Kubernetesクラスタ)を構成し、その上にコンテナをデプロイして管理できる。 Kubernetesクラスタは、一つのMaster(a.k.a. Kubernetes Control Plane)と一つ以上のNode(昔はMinionと呼ばれてたもの)で構成される。 (MasterとNodeは同一マシンに同居もできる。) Masterはクラスタを管理し、コンテナのスケジューリング、状態管理、スケーリング、アップデートなどを担う。 Node上では実際にコンテナが実行される。 Kubernetesのアーキテクチャを図にすると以下の感じ。 矢印の向きとかはちょっと間違ってるかも。 Master上ではkube-apiserverが動き、Kubernetes APIというREST APIを公開する。 このAPIを通してKubernetesオブジェクトを定義したりすることで、宣言的にコンテナの管理ができる仕組み。 ユーザは普通、kubectlというコマンドでkube-apiserverとやり取りする。 KubernetesオブジェクトはMaster上のetcdによって分散キーバリューストアに永続化され、そのストアをkube-controller-managerとkube-schedulerがwatchしてて、変更に応じた処理をする。 kube-controller-managerはオブジェクトのライフサイクルの管理や、コンテナのスケーリングなど、クラスタレベルの機能を実行する。 (よくわからない。) kube-schedulerは、コンテナを実行するホストを選出し、コンテナのスケジューリングをする。 一方、各Nodeでは、kubeletというMasterのエージェントになるプロセスが動く。 kubeletはkube-apiserverからの指示で、コンテナイメージを取得してコンテナを起動したり監視したり止めたりする。 kubeletがコンテナを扱うためのコンテナランタイムは、普通はDockerだけど、rktとかcri-oとかfraktiとかも使える。runcやRailCarはどうなんだろう。 コンテナはデフォルトではクラスタ内のプライベートネットワークにつながるので、そこで動いているアプリにユーザからアクセスするには、何らかの形でトラフィックを中継してやる必要がある。 これをするのがkube-proxy。 ロードバランシングもしてくれる。 Kubernetesオブジェクトとは Kubernetesオブジェクトは、Kubernetesクラスタ上で機能する構成要素を表現するもの。 以下のようなものがある。 Pod デプロイの最小単位。 一つ(またはリソースを共有する複数)のコンテナと、ストレージ、ネットワークなどを内包する。 一つのPodには一つのIPアドレスが付く。 kubeletはPodの定義に従ってコンテナを起動する。 Service Podの論理グループ。 PodのIPアドレスは外部に公開されないので、外とのやり取りをするためにServiceがある。 kube-proxyはこいつの定義に従って働く。 Serviceには複数のEndpoint(i.e. Pod等)が紐づき、外部からのトラフィックをラウンドロビンでルーティングするので、冗長化やロードバランサ的な働きもする。 ServiceはPodを抽象化するので、Podが死んだり入れ替わったりしても外に影響が見えにくくなる。 Serviceには以下のtypeがある。 ClusterIP (デフォルト): Kubernetesクラスタ内からだけアクセスできる内部IPアドレスだけをもつ。 NodePort: ClusterIPの拡張。内部IPアドレスに加え、クラスタ外からアクセスできるポートを一つ持つ。 LoadBalancer: NodePortの拡張。外部ロードバランサを作って、固定の外部IPアドレスを付けて、内部IPアドレスへルーティングする。 ExternalName: 抽象名をもつサービス。Kubernetes DNS serverで名前解決する。詳細は読んでないので知らない。 Volume 永続化やPod内でのファイル共有のためのオブジェクト。 Podとともに作られ、Podとともに破棄される。 実態はファイルシステム上のディレクトリ。 hostPathとか、nfsとか、awsElasticBlockStoreとかの種類があるらしい。 Namespace 仮想クラスタを表すオブジェクト。 これを定義すると、ひとつの物理クラスタを複数の仮想クラスタに分割できる。 大規模ユーザ・プロジェクト向け機能。 Controller Podを管理するオブジェクト。レプリケーションしたり、スケーリングや自動再起動したり。 以下のようなものがある。 Deployment Podのデプロイを管理するオブジェクト。 PodとReplicaSetの宣言的な生成・更新を実現する。 ReplicaSet 指定した数のPodのレプリカを維持してくれる。 基本はDeploymentから作られて、Podの作成・削除・更新をオーケストレイトする。 ReplicationControllerというのもあるけど、今はReplicaSetが推奨。 StatefulSet ステートフルなアプリを管理するオブジェクト。 現時点でのKubernetes最新版の1.8でまだベータ。 DaemonSet 全てのノードで動くアプリを実現するオブジェクト。 Job ジョブを表すオブジェクト。 指定された回数、Podを成功で完了させる。 オブジェクトにはラベルというキーバリューな属性を付けることができ、PodとServiceの紐づけや、オブジェクト検索時のフィルタとかに使える。 今回Goslingsを動かすのに使ったのは、Pod、Deployment、ReplicaSet、Service (NodePort)。 Minikubeとは Kubernetesクラスタを構築する方法はいくつかあるが、中でももっとも簡単な方法がMinikube。 Minikubeは、KubernetesのMasterとNodeを一つずつを詰め込んだVMをダウンロードして起動して、ローカルのkubectlから使えるようにしてくれるツール。 開発やテスト用途のKubernetes環境として使われる。 ちょっとVagrantっぽい感じ。Kubernetes専用の。 Minikubeインストール Kubernetesのドキュメントにしたがって、Minikubeをインストールする。 環境はWindows 10 Home x64。 まず、MinikubeのVMを動かすツールを入れる。 今のところMinikubeがサポートしてるのは、WindowsだとVirtualBoxかHyper-V。 Windows 10 HomeだとHyper-Vが使えないので、VirtualBox一択。 VirtualBoxは、適当にVT-xを有効にして(してあった)、インストーラダウンロードしてインストールしただけ。 バージョンは5.1.28。 次に、minikubeコマンドを入れる。 このコマンドはGoで書かれていて、各プラットフォーム用にビルドされたバイナリがGitHubのプロジェクトページのReleasesに上がってるので、ダウンロードしてPathの通ったとこに置くだけ。 今回ダウンロードしたのはv0.22.2のminikube-windows-amd64で、これをminikube.exeにリネームして配置した。 で、minikubeがサポートしているKubernetesのバージョンを調べると、 C:\Users\kaitoy&gt;minikube get-k8s-versions The following Kubernetes versions are available: - v1.7.5 - v1.7.4 - v1.7.3 - v1.7.2 - v1.7.0 (snip) 1.8はまだサポートされていない… 1.7.5が最新なのでそれでやることにする。 ということで、kubectlの1.7.5をインストールする。 kubectlもGoで書かれているので、以下のアドレスからWindowsバイナリをダウンロードしてPathの通ったところに置くだけ。 https://storage.googleapis.com/kubernetes-release/release/v1.7.5/bin/windows/amd64/kubectl.exe 以上でMinikubeの環境ができた。 簡単。 Minikube起動 Minikubeは、minikube startで起動することができ、Minikubeが起動したらすぐにKubernetesをいじれるようになる。 C:\Users\kaitoy&gt;minikube start --vm-driver virtualbox --kubernetes-version v1.7.5 Starting local Kubernetes v1.7.5 cluster...">
+    
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes_goslings.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      Kubernetes 1.8が出たので、Minikubeを触ってみる | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+    
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-6244473643910448",
+        enable_page_level_ads: true
+      });
+    </script>
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Tue, Oct 10, 2017</span>
+      <h2 class="title">Kubernetes 1.8が出たので、Minikubeを触ってみる</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://www.kaitoy.xyz/images/kubernetes_goslings.png" alt="Kubernetes 1.8が出たので、Minikubeを触ってみる">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p><a href="https://kubernetes.io/">Kubernetes</a>1.8のリリースが話題になっていたので、ちょっと触って見たという話。
+(1.8を触ったとは言っていない。)</p>
+
+<p>具体的には、<a href="https://kubernetes.io/docs/tutorials/kubernetes-basics/">Kubernetes Basics</a>というチュートリアルをやりながら、<a href="https://github.com/kubernetes/minikube">Minikube</a>に<a href="https://kaitoy.github.io/goslings/">Goslings</a>をデプロイしたんだけど、この記事ではMinikubeをセットアップしたところまで。</p>
+
+<p>
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</p>
+
+<h2 id="kubernetesとは">Kubernetesとは</h2>
+
+<p>KubernetesはOSSのコンテナ管理ツール。
+英語だとクーバネティスみたいに発音する。
+Googleが自身のコンテナ技術である<a href="https://research.google.com/pubs/pub43438.html">Borg</a>の運用で培ったノウハウを活かして開発したもの。
+2014年ころに開発が始まり、2015年夏にv1がリリースされたということで、かなり新しいツール。
+よく比べられるものには<a href="https://docs.docker.com/engine/swarm/">DockerのSwarmモード</a>や<a href="http://mesos.apache.org/">Apache Mesos</a>があるが、何が違うのかは調べてないので知らない。
+ただ、Dockerコンテナ管理ツールとしてはKubernetesが一番勢いがある雰囲気を感じる。</p>
+
+<p>Kubernetesを使うと、複数の物理マシンからなるHAクラスタ(Kubernetesクラスタ)を構成し、その上にコンテナをデプロイして管理できる。
+Kubernetesクラスタは、一つのMaster(a.k.a. Kubernetes Control Plane)と一つ以上のNode(昔はMinionと呼ばれてたもの)で構成される。
+(MasterとNodeは同一マシンに同居もできる。)
+Masterはクラスタを管理し、コンテナのスケジューリング、状態管理、スケーリング、アップデートなどを担う。
+Node上では実際にコンテナが実行される。</p>
+
+<p>Kubernetesの<a href="https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture/architecture.md">アーキテクチャ</a>を図にすると以下の感じ。
+矢印の向きとかはちょっと間違ってるかも。</p>
+
+<p><img src="/images/goslings-on-kubernetes/architecture.png" alt="architecture" />
+</p>
+
+<p><br></p>
+
+<p>Master上では<a href="https://kubernetes.io/docs/admin/kube-apiserver/">kube-apiserver</a>が動き、<a href="https://kubernetes.io/docs/concepts/overview/kubernetes-api/">Kubernetes API</a>というREST APIを公開する。
+このAPIを通して<a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/">Kubernetesオブジェクト</a>を定義したりすることで、宣言的にコンテナの管理ができる仕組み。
+ユーザは普通、<a href="https://kubernetes.io/docs/user-guide/kubectl/">kubectl</a>というコマンドでkube-apiserverとやり取りする。</p>
+
+<p>KubernetesオブジェクトはMaster上の<a href="https://github.com/coreos/etcd">etcd</a>によって分散キーバリューストアに永続化され、そのストアを<a href="https://kubernetes.io/docs/admin/kube-controller-manager/">kube-controller-manager</a>と<a href="https://kubernetes.io/docs/admin/kube-scheduler/">kube-scheduler</a>がwatchしてて、変更に応じた処理をする。</p>
+
+<p>kube-controller-managerはオブジェクトのライフサイクルの管理や、コンテナのスケーリングなど、クラスタレベルの機能を実行する。
+(よくわからない。)</p>
+
+<p>kube-schedulerは、コンテナを実行するホストを選出し、コンテナのスケジューリングをする。</p>
+
+<p><br></p>
+
+<p>一方、各Nodeでは、<a href="https://kubernetes.io/docs/admin/kubelet/">kubelet</a>というMasterのエージェントになるプロセスが動く。</p>
+
+<p>kubeletはkube-apiserverからの指示で、コンテナイメージを取得してコンテナを起動したり監視したり止めたりする。</p>
+
+<p>kubeletがコンテナを扱うためのコンテナランタイムは、普通は<a href="https://www.docker.com/">Docker</a>だけど、<a href="https://coreos.com/rkt/">rkt</a>とか<a href="https://github.com/kubernetes-incubator/cri-o">cri-o</a>とか<a href="https://github.com/kubernetes/frakti">frakti</a>とかも使える。<a href="https://github.com/opencontainers/runc">runc</a>や<a href="https://github.com/oracle/railcar">RailCar</a>はどうなんだろう。</p>
+
+<p>コンテナはデフォルトではクラスタ内のプライベートネットワークにつながるので、そこで動いているアプリにユーザからアクセスするには、何らかの形でトラフィックを中継してやる必要がある。
+これをするのが<a href="https://kubernetes.io/docs/admin/kube-proxy/">kube-proxy</a>。
+ロードバランシングもしてくれる。</p>
+
+<h2 id="kubernetesオブジェクトとは">Kubernetesオブジェクトとは</h2>
+
+<p>Kubernetesオブジェクトは、Kubernetesクラスタ上で機能する構成要素を表現するもの。
+以下のようなものがある。</p>
+
+<ul>
+<li><p><a href="https://kubernetes.io/docs/concepts/workloads/pods/pod-overview/">Pod</a></p>
+
+<p>デプロイの最小単位。
+一つ(またはリソースを共有する複数)のコンテナと、ストレージ、ネットワークなどを内包する。
+一つのPodには一つのIPアドレスが付く。</p>
+
+<p>kubeletはPodの定義に従ってコンテナを起動する。</p></li>
+
+<li><p><a href="https://kubernetes.io/docs/concepts/services-networking/service/">Service</a></p>
+
+<p>Podの論理グループ。
+PodのIPアドレスは外部に公開されないので、外とのやり取りをするためにServiceがある。
+kube-proxyはこいつの定義に従って働く。</p>
+
+<p>Serviceには複数のEndpoint(i.e. Pod等)が紐づき、外部からのトラフィックをラウンドロビンでルーティングするので、冗長化やロードバランサ的な働きもする。
+ServiceはPodを抽象化するので、Podが死んだり入れ替わったりしても外に影響が見えにくくなる。</p>
+
+<p>Serviceには以下のtypeがある。</p>
+
+<ul>
+<li>ClusterIP (デフォルト): Kubernetesクラスタ内からだけアクセスできる内部IPアドレスだけをもつ。</li>
+<li>NodePort: ClusterIPの拡張。内部IPアドレスに加え、クラスタ外からアクセスできるポートを一つ持つ。</li>
+<li>LoadBalancer: NodePortの拡張。外部ロードバランサを作って、固定の外部IPアドレスを付けて、内部IPアドレスへルーティングする。</li>
+<li>ExternalName: 抽象名をもつサービス。Kubernetes DNS serverで名前解決する。<a href="https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/">詳細</a>は読んでないので知らない。</li>
+</ul></li>
+
+<li><p><a href="https://kubernetes.io/docs/concepts/storage/volumes/">Volume</a></p>
+
+<p>永続化やPod内でのファイル共有のためのオブジェクト。
+Podとともに作られ、Podとともに破棄される。
+実態はファイルシステム上のディレクトリ。
+hostPathとか、nfsとか、awsElasticBlockStoreとかの種類があるらしい。</p></li>
+
+<li><p><a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/">Namespace</a></p>
+
+<p>仮想クラスタを表すオブジェクト。
+これを定義すると、ひとつの物理クラスタを複数の仮想クラスタに分割できる。
+大規模ユーザ・プロジェクト向け機能。</p></li>
+
+<li><p>Controller</p>
+
+<p>Podを管理するオブジェクト。レプリケーションしたり、スケーリングや自動再起動したり。</p>
+
+<p>以下のようなものがある。</p>
+
+<ul>
+<li><p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/">Deployment</a></p>
+
+<p>Podのデプロイを管理するオブジェクト。
+PodとReplicaSetの宣言的な生成・更新を実現する。</p></li>
+
+<li><p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/">ReplicaSet</a></p>
+
+<p>指定した数のPodのレプリカを維持してくれる。
+基本はDeploymentから作られて、Podの作成・削除・更新をオーケストレイトする。
+<a href="https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller/">ReplicationController</a>というのもあるけど、今はReplicaSetが推奨。</p></li>
+
+<li><p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/">StatefulSet</a></p>
+
+<p>ステートフルなアプリを管理するオブジェクト。
+現時点でのKubernetes最新版の1.8でまだベータ。</p></li>
+
+<li><p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/">DaemonSet</a></p>
+
+<p>全てのノードで動くアプリを実現するオブジェクト。</p></li>
+
+<li><p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/">Job</a></p>
+
+<p>ジョブを表すオブジェクト。
+指定された回数、Podを成功で完了させる。</p></li>
+</ul></li>
+</ul>
+
+<p><br></p>
+
+<p>オブジェクトには<a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/">ラベル</a>というキーバリューな属性を付けることができ、PodとServiceの紐づけや、オブジェクト検索時のフィルタとかに使える。</p>
+
+<p><br></p>
+
+<p>今回Goslingsを動かすのに使ったのは、Pod、Deployment、ReplicaSet、Service (NodePort)。</p>
+
+<h2 id="minikubeとは">Minikubeとは</h2>
+
+<p>Kubernetesクラスタを構築する方法は<a href="https://kubernetes.io/docs/setup/pick-right-solution/">いくつかある</a>が、中でももっとも簡単な方法がMinikube。</p>
+
+<p>Minikubeは、KubernetesのMasterとNodeを一つずつを詰め込んだVMをダウンロードして起動して、ローカルのkubectlから使えるようにしてくれるツール。
+開発やテスト用途のKubernetes環境として使われる。</p>
+
+<p>ちょっと<a href="https://www.vagrantup.com/">Vagrant</a>っぽい感じ。Kubernetes専用の。</p>
+
+<h2 id="minikubeインストール">Minikubeインストール</h2>
+
+<p><a href="https://kubernetes.io/docs/tasks/tools/install-minikube/">Kubernetesのドキュメント</a>にしたがって、Minikubeをインストールする。
+環境はWindows 10 Home x64。</p>
+
+<p>まず、MinikubeのVMを動かすツールを入れる。
+今のところMinikubeがサポートしてるのは、Windowsだと<a href="https://www.virtualbox.org/">VirtualBox</a>か<a href="https://docs.microsoft.com/ja-jp/virtualization/hyper-v-on-windows/quick-start/enable-hyper-v">Hyper-V</a>。
+Windows 10 HomeだとHyper-Vが使えないので、VirtualBox一択。
+VirtualBoxは、適当にVT-xを有効にして(してあった)、インストーラダウンロードしてインストールしただけ。
+バージョンは5.1.28。</p>
+
+<p><br></p>
+
+<p>次に、minikubeコマンドを入れる。
+このコマンドはGoで書かれていて、各プラットフォーム用にビルドされたバイナリがGitHubのプロジェクトページの<a href="https://github.com/kubernetes/minikube/releases">Releases</a>に上がってるので、ダウンロードしてPathの通ったとこに置くだけ。
+今回ダウンロードしたのはv0.22.2のminikube-windows-amd64で、これをminikube.exeにリネームして配置した。</p>
+
+<p>で、minikubeがサポートしているKubernetesのバージョンを調べると、</p>
+
+<pre><code class="language-cmd">C:\Users\kaitoy&gt;minikube get-k8s-versions
+The following Kubernetes versions are available:
+        - v1.7.5
+        - v1.7.4
+        - v1.7.3
+        - v1.7.2
+        - v1.7.0
+        (snip)
+</code></pre>
+
+<p>1.8はまだサポートされていない…</p>
+
+<p>1.7.5が最新なのでそれでやることにする。</p>
+
+<p><br></p>
+
+<p>ということで、kubectlの1.7.5をインストールする。
+kubectlもGoで書かれているので、以下のアドレスからWindowsバイナリをダウンロードしてPathの通ったところに置くだけ。</p>
+
+<pre><code class="language-text">https://storage.googleapis.com/kubernetes-release/release/v1.7.5/bin/windows/amd64/kubectl.exe
+</code></pre>
+
+<p><br></p>
+
+<p>以上でMinikubeの環境ができた。
+簡単。</p>
+
+<h2 id="minikube起動">Minikube起動</h2>
+
+<p>Minikubeは、<code>minikube start</code>で起動することができ、Minikubeが起動したらすぐにKubernetesをいじれるようになる。</p>
+
+<pre><code class="language-cmd">C:\Users\kaitoy&gt;minikube start --vm-driver virtualbox --kubernetes-version v1.7.5
+Starting local Kubernetes v1.7.5 cluster...
+Starting VM...
+Downloading Minikube ISO
+ 106.37 MB / 106.37 MB [============================================] 100.00% 0s
+Getting VM IP address...
+Moving files into cluster...
+Setting up certs...
+Connecting to cluster...
+Setting up kubeconfig...
+Starting cluster components...
+Kubectl is now configured to use the cluster.
+
+C:\Users\kaitoy&gt;minikube status
+minikube: Running
+cluster: Running
+kubectl: Correctly Configured: pointing to minikube-vm at 192.168.99.100
+</code></pre>
+
+<p>起動した。
+VirtualBoxのGUIを見ると、minikubeというVMが起動しているのが分かる。
+この中でMasterとNodeが動いているはずだ。</p>
+
+<p>このVMには、<code>minikube ssh</code>でログインできる。</p>
+
+<pre><code class="language-cmd">C:\Users\kaitoy&gt;minikube ssh
+                         _             _
+            _         _ ( )           ( )
+  ___ ___  (_)  ___  (_)| |/')  _   _ | |_      __
+/' _ ` _ `\| |/' _ `\| || , &lt;  ( ) ( )| '_`\  /'__`\
+| ( ) ( ) || || ( ) || || |\`\ | (_) || |_) )(  ___/
+(_) (_) (_)(_)(_) (_)(_)(_) (_)`\___/'(_,__/'`\____)
+
+$ uname -a
+Linux minikube 4.9.13 #1 SMP Fri Sep 15 23:35:16 UTC 2017 x86_64 GNU/Linux
+</code></pre>
+
+<p>すごくVagrantっぽい。</p>
+
+<p><br></p>
+
+<p>Minikubeを起動すると、kubectlのコンテキストがminikubeというものに設定され、kubectlコマンドの接続先がMinikubeのKubernetesになる。</p>
+
+<pre><code class="language-cmd">C:\Users\kaitoy&gt;kubectl config current-context
+minikube
+</code></pre>
+
+<p><br></p>
+
+<p>で、kubectlでクラスタの状態とかを見てみようと思ったら、なんか様子が変。
+なしのつぶて。</p>
+
+<pre><code class="language-cmd">C:\Users\kaitoy&gt;kubectl get nodes
+Unable to connect to the server: dial tcp 192.168.99.100:8443: connectex: No connection could be made because the target machine actively refused it.
+
+C:\Users\kaitoy&gt;kubectl cluster-info dump
+Unable to connect to the server: dial tcp 192.168.99.100:8443: connectex: No connection could be made because the target machine actively refused it.
+
+C:\Users\kaitoy&gt;minikube dashboard
+Could not find finalized endpoint being pointed to by kubernetes-dashboard: Error validating service: Error getting service kubernetes-dashboard: Get https://192.168.99.100:8443/api/v1/namespaces/kube-system/services/kubernetes-dashboard: dial tcp 192.168.99.100:8443: connectex: No connection could be made because the target machine actively refused it.
+</code></pre>
+
+<p>再度<code>minikube status</code>してみたら、クラスタが落ちていた。</p>
+
+<pre><code class="language-cmd">C:\Users\kaitoy&gt;minikube status
+minikube: Running
+cluster: Stopped
+kubectl: Correctly Configured: pointing to minikube-vm at 192.168.99.100
+</code></pre>
+
+<p><br></p>
+
+<p><code>minikube logs</code>でログを見てみると、エラーがたくさん出ていた。
+以下のようなログが最初のほうに出てたので、認証系がだめで、サービス間でやり取りができなかったんじゃないかという感じ。</p>
+
+<pre><code class="language-text">Oct 04 23:08:43 minikube localkube[2783]: W1004 23:08:43.599396    2783 authentication.go:368] AnonymousAuth is not allowed with the AllowAll authorizer.  Resetting AnonymousAuth to false. You should use a different authorizer
+</code></pre>
+
+<p><br></p>
+
+<p>エラーの原因はよくわからないので、Kubernetesのバージョンをちょっと古いの(1.7.0)変えてみる。</p>
+
+<p>kubectlの1.7.0をPathに置いて、Minikubeを1.7.0で再起動する。</p>
+
+<pre><code class="language-cmd">C:\Users\kaitoy&gt;minikube stop
+Stopping local Kubernetes cluster...
+Machine stopped.
+
+C:\Users\kaitoy&gt;minikube start --vm-driver virtualbox --kubernetes-version v1.7.0
+Starting local Kubernetes v1.7.0 cluster...
+Starting VM...
+Getting VM IP address...
+Kubernetes version downgrade is not supported. Using version: v1.7.5
+Moving files into cluster...
+Setting up certs...
+Connecting to cluster...
+Setting up kubeconfig...
+Starting cluster components...
+Kubectl is now configured to use the cluster.
+</code></pre>
+
+<p>Kubernetesのダウングレードはサポートされてないと言われた。
+ので一回VMを消してからやりなおす。</p>
+
+<pre><code class="language-cmd">C:\Users\kaitoy&gt;minikube stop
+Stopping local Kubernetes cluster...
+Machine stopped.
+
+C:\Users\kaitoy&gt;minikube delete
+Deleting local Kubernetes cluster...
+Machine deleted.
+
+C:\Users\kaitoy&gt;minikube start --vm-driver virtualbox --kubernetes-version v1.7.0
+Starting local Kubernetes v1.7.0 cluster...
+Starting VM...
+Getting VM IP address...
+Moving files into cluster...
+Setting up certs...
+Connecting to cluster...
+Setting up kubeconfig...
+Starting cluster components...
+Kubectl is now configured to use the cluster.
+</code></pre>
+
+<p>1.7.0で動いた。</p>
+
+<p><br></p>
+
+<p>様子はどうか。</p>
+
+<pre><code class="language-cmd">C:\Users\kaitoy\Desktop\bin\pleiades\workspace\blog&gt;minikube status
+minikube: Running
+cluster: Running
+kubectl: Correctly Configured: pointing to minikube-vm at 192.168.99.100
+
+C:\Users\kaitoy\Desktop\bin\pleiades\workspace\blog&gt;kubectl get nodes
+NAME       STATUS    AGE       VERSION
+minikube   Ready     22s       v1.7.0
+
+C:\Users\kaitoy\Desktop\bin\pleiades\workspace\blog&gt;kubectl version
+Client Version: version.Info{Major:&quot;1&quot;, Minor:&quot;7&quot;, GitVersion:&quot;v1.7.0&quot;, GitCommit:&quot;d3ada0119e776222f11ec7945e6d860061339aad&quot;, GitTreeState:&quot;clean&quot;, BuildDate:&quot;2017-06-29T23:15:59Z&quot;, GoVersion:&quot;go1.8.3&quot;, Compiler:&quot;gc&quot;, Platform:&quot;windows/amd64&quot;}
+Server Version: version.Info{Major:&quot;1&quot;, Minor:&quot;7&quot;, GitVersion:&quot;v1.7.0&quot;, GitCommit:&quot;d3ada0119e776222f11ec7945e6d860061339aad&quot;, GitTreeState:&quot;dirty&quot;, BuildDate:&quot;2017-10-04T09:25:40Z&quot;, GoVersion:&quot;go1.8.3&quot;, Compiler:&quot;gc&quot;, Platform:&quot;linux/amd64&quot;}
+</code></pre>
+
+<p>ちゃんと動いているっぽい。</p>
+
+<p><br></p>
+
+<p>ダッシュボードだけはなぜか相変わらず開けないけどまあいいか。</p>
+
+<pre><code class="language-cmd">C:\Users\kaitoy&gt;minikube dashboard
+Could not find finalized endpoint being pointed to by kubernetes-dashboard: Error validating service: Error getting service kubernetes-dashboard: services &quot;kubernetes-dashboard&quot; not found
+</code></pre>
+
+<p><br></p>
+
+<p>続きはまた別の記事に書く。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        
+        
+
+        
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-6244473643910448"
+             data-ad-slot="1845600530"
+             data-ad-format="auto"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </aside>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f10%2f10%2fgoslings-on-kubernetes%2f&t=Kubernetes%201.8%e3%81%8c%e5%87%ba%e3%81%9f%e3%81%ae%e3%81%a7%e3%80%81Minikube%e3%82%92%e8%a7%a6%e3%81%a3%e3%81%a6%e3%81%bf%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f10%2f10%2fgoslings-on-kubernetes%2f&text=Kubernetes%201.8%e3%81%8c%e5%87%ba%e3%81%9f%e3%81%ae%e3%81%a7%e3%80%81Minikube%e3%82%92%e8%a7%a6%e3%81%a3%e3%81%a6%e3%81%bf%e3%82%8b&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f10%2f10%2fgoslings-on-kubernetes%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f10%2f10%2fgoslings-on-kubernetes%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f10%2f10%2fgoslings-on-kubernetes%2f&title=Kubernetes%201.8%e3%81%8c%e5%87%ba%e3%81%9f%e3%81%ae%e3%81%a7%e3%80%81Minikube%e3%82%92%e8%a7%a6%e3%81%a3%e3%81%a6%e3%81%bf%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://www.kaitoy.xyz/tags/goslings"><i class="fa fa-tags"></i> goslings </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/kubernetes"><i class="fa fa-tags"></i> kubernetes </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/minikube"><i class="fa fa-tags"></i> minikube </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/docker"><i class="fa fa-tags"></i> docker </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/08/14/webdriverio-chrome/">WebdriverIOとChromeのヘッドレスモードで自動ブラウザテストするDockerイメージ: webdriverio-chrome</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/03/05/firedrop-private-beta/">Firedrop(プライベートベータ)が全く期待外れだった件</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/01/24/goslings-development-memo5-spring-boot-static-resources/">Goslings開発メモ - その5: Spring Boot最終編 (静的リソース処理)</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/01/17/goslings-development-memo4-spring-boot-logging/">Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/01/13/goslings-development-memo3-spring-boot-exception/">Goslings開発メモ - その3: Spring Boot続続編 (例外処理)</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/01/10/goslings-development-memo2-spring-boot-di/">Goslings開発メモ - その2: Spring Boot続編 (DI)</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/">Goslings開発メモ - その1: Spring Boot編</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/">Goslings開発メモ - その0: 紹介と概要と設計編</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/07/31/docker-for-windows/">Docker for Windowsがコレジャナかった</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/">Windows Server 2016 TP5でWindows Containersにリトライ</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">Pcap4J Meets Windows Containers</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></li>
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://www.kaitoy.xyz/2017/08/25/if-youre-a-startup-you-should-not-use-react-reflecting-on-the-bsd-patents-license/">
+                  スタートアップはReactを使うべきではない (BSD &#43; patentsライセンスを考慮して) — もし、いつか大企業に買収されたいと望むなら
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/headless-browser">headless-browser</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/license">license</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/selenium">selenium</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/servicenow">servicenow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/test-framework">test-framework</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/webdriverio">webdriverio</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-6244473643910448"
+    data-ad-slot="1845600530"
+    data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2017  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

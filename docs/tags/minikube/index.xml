@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>To Be Decided </title>
+    <link>https://www.kaitoy.xyz/tags/minikube/</link>
+    <language>en-us</language>
+    <author>Kaito Yamada</author>
+    <rights>(C) 2017</rights>
+    <updated>2017-10-10 00:10:59 &#43;0900 JST</updated>
+
+    
+      
+        <item>
+          <title>Kubernetes 1.8が出たので、Minikubeを触ってみる</title>
+          <link>https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/</link>
+          <pubDate>Tue, 10 Oct 2017 00:10:59 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/&#34;&gt;Kubernetes&lt;/a&gt;1.8のリリースが話題になっていたので、ちょっと触って見たという話。
+(1.8を触ったとは言っていない。)&lt;/p&gt;
+
+&lt;p&gt;具体的には、&lt;a href=&#34;https://kubernetes.io/docs/tutorials/kubernetes-basics/&#34;&gt;Kubernetes Basics&lt;/a&gt;というチュートリアルをやりながら、&lt;a href=&#34;https://github.com/kubernetes/minikube&#34;&gt;Minikube&lt;/a&gt;に&lt;a href=&#34;https://kaitoy.github.io/goslings/&#34;&gt;Goslings&lt;/a&gt;をデプロイしたんだけど、この記事ではMinikubeをセットアップしたところまで。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;kubernetesとは&#34;&gt;Kubernetesとは&lt;/h2&gt;
+
+&lt;p&gt;KubernetesはOSSのコンテナ管理ツール。
+英語だとクーバネティスみたいに発音する。
+Googleが自身のコンテナ技術である&lt;a href=&#34;https://research.google.com/pubs/pub43438.html&#34;&gt;Borg&lt;/a&gt;の運用で培ったノウハウを活かして開発したもの。
+2014年ころに開発が始まり、2015年夏にv1がリリースされたということで、かなり新しいツール。
+よく比べられるものには&lt;a href=&#34;https://docs.docker.com/engine/swarm/&#34;&gt;DockerのSwarmモード&lt;/a&gt;や&lt;a href=&#34;http://mesos.apache.org/&#34;&gt;Apache Mesos&lt;/a&gt;があるが、何が違うのかは調べてないので知らない。
+ただ、Dockerコンテナ管理ツールとしてはKubernetesが一番勢いがある雰囲気を感じる。&lt;/p&gt;
+
+&lt;p&gt;Kubernetesを使うと、複数の物理マシンからなるHAクラスタ(Kubernetesクラスタ)を構成し、その上にコンテナをデプロイして管理できる。
+Kubernetesクラスタは、一つのMaster(a.k.a. Kubernetes Control Plane)と一つ以上のNode(昔はMinionと呼ばれてたもの)で構成される。
+(MasterとNodeは同一マシンに同居もできる。)
+Masterはクラスタを管理し、コンテナのスケジューリング、状態管理、スケーリング、アップデートなどを担う。
+Node上では実際にコンテナが実行される。&lt;/p&gt;
+
+&lt;p&gt;Kubernetesの&lt;a href=&#34;https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture/architecture.md&#34;&gt;アーキテクチャ&lt;/a&gt;を図にすると以下の感じ。
+矢印の向きとかはちょっと間違ってるかも。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/goslings-on-kubernetes/architecture.png&#34; alt=&#34;architecture&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Master上では&lt;a href=&#34;https://kubernetes.io/docs/admin/kube-apiserver/&#34;&gt;kube-apiserver&lt;/a&gt;が動き、&lt;a href=&#34;https://kubernetes.io/docs/concepts/overview/kubernetes-api/&#34;&gt;Kubernetes API&lt;/a&gt;というREST APIを公開する。
+このAPIを通して&lt;a href=&#34;https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/&#34;&gt;Kubernetesオブジェクト&lt;/a&gt;を定義したりすることで、宣言的にコンテナの管理ができる仕組み。
+ユーザは普通、&lt;a href=&#34;https://kubernetes.io/docs/user-guide/kubectl/&#34;&gt;kubectl&lt;/a&gt;というコマンドでkube-apiserverとやり取りする。&lt;/p&gt;
+
+&lt;p&gt;KubernetesオブジェクトはMaster上の&lt;a href=&#34;https://github.com/coreos/etcd&#34;&gt;etcd&lt;/a&gt;によって分散キーバリューストアに永続化され、そのストアを&lt;a href=&#34;https://kubernetes.io/docs/admin/kube-controller-manager/&#34;&gt;kube-controller-manager&lt;/a&gt;と&lt;a href=&#34;https://kubernetes.io/docs/admin/kube-scheduler/&#34;&gt;kube-scheduler&lt;/a&gt;がwatchしてて、変更に応じた処理をする。&lt;/p&gt;
+
+&lt;p&gt;kube-controller-managerはオブジェクトのライフサイクルの管理や、コンテナのスケーリングなど、クラスタレベルの機能を実行する。
+(よくわからない。)&lt;/p&gt;
+
+&lt;p&gt;kube-schedulerは、コンテナを実行するホストを選出し、コンテナのスケジューリングをする。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;一方、各Nodeでは、&lt;a href=&#34;https://kubernetes.io/docs/admin/kubelet/&#34;&gt;kubelet&lt;/a&gt;というMasterのエージェントになるプロセスが動く。&lt;/p&gt;
+
+&lt;p&gt;kubeletはkube-apiserverからの指示で、コンテナイメージを取得してコンテナを起動したり監視したり止めたりする。&lt;/p&gt;
+
+&lt;p&gt;kubeletがコンテナを扱うためのコンテナランタイムは、普通は&lt;a href=&#34;https://www.docker.com/&#34;&gt;Docker&lt;/a&gt;だけど、&lt;a href=&#34;https://coreos.com/rkt/&#34;&gt;rkt&lt;/a&gt;とか&lt;a href=&#34;https://github.com/kubernetes-incubator/cri-o&#34;&gt;cri-o&lt;/a&gt;とか&lt;a href=&#34;https://github.com/kubernetes/frakti&#34;&gt;frakti&lt;/a&gt;とかも使える。&lt;a href=&#34;https://github.com/opencontainers/runc&#34;&gt;runc&lt;/a&gt;や&lt;a href=&#34;https://github.com/oracle/railcar&#34;&gt;RailCar&lt;/a&gt;はどうなんだろう。&lt;/p&gt;
+
+&lt;p&gt;コンテナはデフォルトではクラスタ内のプライベートネットワークにつながるので、そこで動いているアプリにユーザからアクセスするには、何らかの形でトラフィックを中継してやる必要がある。
+これをするのが&lt;a href=&#34;https://kubernetes.io/docs/admin/kube-proxy/&#34;&gt;kube-proxy&lt;/a&gt;。
+ロードバランシングもしてくれる。&lt;/p&gt;
+
+&lt;h2 id=&#34;kubernetesオブジェクトとは&#34;&gt;Kubernetesオブジェクトとは&lt;/h2&gt;
+
+&lt;p&gt;Kubernetesオブジェクトは、Kubernetesクラスタ上で機能する構成要素を表現するもの。
+以下のようなものがある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/pods/pod-overview/&#34;&gt;Pod&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;デプロイの最小単位。
+一つ(またはリソースを共有する複数)のコンテナと、ストレージ、ネットワークなどを内包する。
+一つのPodには一つのIPアドレスが付く。&lt;/p&gt;
+
+&lt;p&gt;kubeletはPodの定義に従ってコンテナを起動する。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/services-networking/service/&#34;&gt;Service&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Podの論理グループ。
+PodのIPアドレスは外部に公開されないので、外とのやり取りをするためにServiceがある。
+kube-proxyはこいつの定義に従って働く。&lt;/p&gt;
+
+&lt;p&gt;Serviceには複数のEndpoint(i.e. Pod等)が紐づき、外部からのトラフィックをラウンドロビンでルーティングするので、冗長化やロードバランサ的な働きもする。
+ServiceはPodを抽象化するので、Podが死んだり入れ替わったりしても外に影響が見えにくくなる。&lt;/p&gt;
+
+&lt;p&gt;Serviceには以下のtypeがある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;ClusterIP (デフォルト): Kubernetesクラスタ内からだけアクセスできる内部IPアドレスだけをもつ。&lt;/li&gt;
+&lt;li&gt;NodePort: ClusterIPの拡張。内部IPアドレスに加え、クラスタ外からアクセスできるポートを一つ持つ。&lt;/li&gt;
+&lt;li&gt;LoadBalancer: NodePortの拡張。外部ロードバランサを作って、固定の外部IPアドレスを付けて、内部IPアドレスへルーティングする。&lt;/li&gt;
+&lt;li&gt;ExternalName: 抽象名をもつサービス。Kubernetes DNS serverで名前解決する。&lt;a href=&#34;https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/&#34;&gt;詳細&lt;/a&gt;は読んでないので知らない。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/storage/volumes/&#34;&gt;Volume&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;永続化やPod内でのファイル共有のためのオブジェクト。
+Podとともに作られ、Podとともに破棄される。
+実態はファイルシステム上のディレクトリ。
+hostPathとか、nfsとか、awsElasticBlockStoreとかの種類があるらしい。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/&#34;&gt;Namespace&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;仮想クラスタを表すオブジェクト。
+これを定義すると、ひとつの物理クラスタを複数の仮想クラスタに分割できる。
+大規模ユーザ・プロジェクト向け機能。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Controller&lt;/p&gt;
+
+&lt;p&gt;Podを管理するオブジェクト。レプリケーションしたり、スケーリングや自動再起動したり。&lt;/p&gt;
+
+&lt;p&gt;以下のようなものがある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/controllers/deployment/&#34;&gt;Deployment&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Podのデプロイを管理するオブジェクト。
+PodとReplicaSetの宣言的な生成・更新を実現する。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/&#34;&gt;ReplicaSet&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;指定した数のPodのレプリカを維持してくれる。
+基本はDeploymentから作られて、Podの作成・削除・更新をオーケストレイトする。
+&lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller/&#34;&gt;ReplicationController&lt;/a&gt;というのもあるけど、今はReplicaSetが推奨。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/&#34;&gt;StatefulSet&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;ステートフルなアプリを管理するオブジェクト。
+現時点でのKubernetes最新版の1.8でまだベータ。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/&#34;&gt;DaemonSet&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;全てのノードで動くアプリを実現するオブジェクト。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/&#34;&gt;Job&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;ジョブを表すオブジェクト。
+指定された回数、Podを成功で完了させる。&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;オブジェクトには&lt;a href=&#34;https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/&#34;&gt;ラベル&lt;/a&gt;というキーバリューな属性を付けることができ、PodとServiceの紐づけや、オブジェクト検索時のフィルタとかに使える。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;今回Goslingsを動かすのに使ったのは、Pod、Deployment、ReplicaSet、Service (NodePort)。&lt;/p&gt;
+
+&lt;h2 id=&#34;minikubeとは&#34;&gt;Minikubeとは&lt;/h2&gt;
+
+&lt;p&gt;Kubernetesクラスタを構築する方法は&lt;a href=&#34;https://kubernetes.io/docs/setup/pick-right-solution/&#34;&gt;いくつかある&lt;/a&gt;が、中でももっとも簡単な方法がMinikube。&lt;/p&gt;
+
+&lt;p&gt;Minikubeは、KubernetesのMasterとNodeを一つずつを詰め込んだVMをダウンロードして起動して、ローカルのkubectlから使えるようにしてくれるツール。
+開発やテスト用途のKubernetes環境として使われる。&lt;/p&gt;
+
+&lt;p&gt;ちょっと&lt;a href=&#34;https://www.vagrantup.com/&#34;&gt;Vagrant&lt;/a&gt;っぽい感じ。Kubernetes専用の。&lt;/p&gt;
+
+&lt;h2 id=&#34;minikubeインストール&#34;&gt;Minikubeインストール&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/tasks/tools/install-minikube/&#34;&gt;Kubernetesのドキュメント&lt;/a&gt;にしたがって、Minikubeをインストールする。
+環境はWindows 10 Home x64。&lt;/p&gt;
+
+&lt;p&gt;まず、MinikubeのVMを動かすツールを入れる。
+今のところMinikubeがサポートしてるのは、Windowsだと&lt;a href=&#34;https://www.virtualbox.org/&#34;&gt;VirtualBox&lt;/a&gt;か&lt;a href=&#34;https://docs.microsoft.com/ja-jp/virtualization/hyper-v-on-windows/quick-start/enable-hyper-v&#34;&gt;Hyper-V&lt;/a&gt;。
+Windows 10 HomeだとHyper-Vが使えないので、VirtualBox一択。
+VirtualBoxは、適当にVT-xを有効にして(してあった)、インストーラダウンロードしてインストールしただけ。
+バージョンは5.1.28。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;次に、minikubeコマンドを入れる。
+このコマンドはGoで書かれていて、各プラットフォーム用にビルドされたバイナリがGitHubのプロジェクトページの&lt;a href=&#34;https://github.com/kubernetes/minikube/releases&#34;&gt;Releases&lt;/a&gt;に上がってるので、ダウンロードしてPathの通ったとこに置くだけ。
+今回ダウンロードしたのはv0.22.2のminikube-windows-amd64で、これをminikube.exeにリネームして配置した。&lt;/p&gt;
+
+&lt;p&gt;で、minikubeがサポートしているKubernetesのバージョンを調べると、&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;minikube get-k8s-versions
+The following Kubernetes versions are available:
+        - v1.7.5
+        - v1.7.4
+        - v1.7.3
+        - v1.7.2
+        - v1.7.0
+        (snip)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;1.8はまだサポートされていない…&lt;/p&gt;
+
+&lt;p&gt;1.7.5が最新なのでそれでやることにする。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ということで、kubectlの1.7.5をインストールする。
+kubectlもGoで書かれているので、以下のアドレスからWindowsバイナリをダウンロードしてPathの通ったところに置くだけ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.7.5/bin/windows/amd64/kubectl.exe
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;以上でMinikubeの環境ができた。
+簡単。&lt;/p&gt;
+
+&lt;h2 id=&#34;minikube起動&#34;&gt;Minikube起動&lt;/h2&gt;
+
+&lt;p&gt;Minikubeは、&lt;code&gt;minikube start&lt;/code&gt;で起動することができ、Minikubeが起動したらすぐにKubernetesをいじれるようになる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;minikube start --vm-driver virtualbox --kubernetes-version v1.7.5
+Starting local Kubernetes v1.7.5 cluster...
+Starting VM...
+Downloading Minikube ISO
+ 106.37 MB / 106.37 MB [============================================] 100.00% 0s
+Getting VM IP address...
+Moving files into cluster...
+Setting up certs...
+Connecting to cluster...
+Setting up kubeconfig...
+Starting cluster components...
+Kubectl is now configured to use the cluster.
+
+C:\Users\kaitoy&amp;gt;minikube status
+minikube: Running
+cluster: Running
+kubectl: Correctly Configured: pointing to minikube-vm at 192.168.99.100
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;起動した。
+VirtualBoxのGUIを見ると、minikubeというVMが起動しているのが分かる。
+この中でMasterとNodeが動いているはずだ。&lt;/p&gt;
+
+&lt;p&gt;このVMには、&lt;code&gt;minikube ssh&lt;/code&gt;でログインできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;minikube ssh
+                         _             _
+            _         _ ( )           ( )
+  ___ ___  (_)  ___  (_)| |/&#39;)  _   _ | |_      __
+/&#39; _ ` _ `\| |/&#39; _ `\| || , &amp;lt;  ( ) ( )| &#39;_`\  /&#39;__`\
+| ( ) ( ) || || ( ) || || |\`\ | (_) || |_) )(  ___/
+(_) (_) (_)(_)(_) (_)(_)(_) (_)`\___/&#39;(_,__/&#39;`\____)
+
+$ uname -a
+Linux minikube 4.9.13 #1 SMP Fri Sep 15 23:35:16 UTC 2017 x86_64 GNU/Linux
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;すごくVagrantっぽい。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Minikubeを起動すると、kubectlのコンテキストがminikubeというものに設定され、kubectlコマンドの接続先がMinikubeのKubernetesになる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl config current-context
+minikube
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;で、kubectlでクラスタの状態とかを見てみようと思ったら、なんか様子が変。
+なしのつぶて。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl get nodes
+Unable to connect to the server: dial tcp 192.168.99.100:8443: connectex: No connection could be made because the target machine actively refused it.
+
+C:\Users\kaitoy&amp;gt;kubectl cluster-info dump
+Unable to connect to the server: dial tcp 192.168.99.100:8443: connectex: No connection could be made because the target machine actively refused it.
+
+C:\Users\kaitoy&amp;gt;minikube dashboard
+Could not find finalized endpoint being pointed to by kubernetes-dashboard: Error validating service: Error getting service kubernetes-dashboard: Get https://192.168.99.100:8443/api/v1/namespaces/kube-system/services/kubernetes-dashboard: dial tcp 192.168.99.100:8443: connectex: No connection could be made because the target machine actively refused it.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;再度&lt;code&gt;minikube status&lt;/code&gt;してみたら、クラスタが落ちていた。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;minikube status
+minikube: Running
+cluster: Stopped
+kubectl: Correctly Configured: pointing to minikube-vm at 192.168.99.100
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;minikube logs&lt;/code&gt;でログを見てみると、エラーがたくさん出ていた。
+以下のようなログが最初のほうに出てたので、認証系がだめで、サービス間でやり取りができなかったんじゃないかという感じ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;Oct 04 23:08:43 minikube localkube[2783]: W1004 23:08:43.599396    2783 authentication.go:368] AnonymousAuth is not allowed with the AllowAll authorizer.  Resetting AnonymousAuth to false. You should use a different authorizer
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;エラーの原因はよくわからないので、Kubernetesのバージョンをちょっと古いの(1.7.0)変えてみる。&lt;/p&gt;
+
+&lt;p&gt;kubectlの1.7.0をPathに置いて、Minikubeを1.7.0で再起動する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;minikube stop
+Stopping local Kubernetes cluster...
+Machine stopped.
+
+C:\Users\kaitoy&amp;gt;minikube start --vm-driver virtualbox --kubernetes-version v1.7.0
+Starting local Kubernetes v1.7.0 cluster...
+Starting VM...
+Getting VM IP address...
+Kubernetes version downgrade is not supported. Using version: v1.7.5
+Moving files into cluster...
+Setting up certs...
+Connecting to cluster...
+Setting up kubeconfig...
+Starting cluster components...
+Kubectl is now configured to use the cluster.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Kubernetesのダウングレードはサポートされてないと言われた。
+ので一回VMを消してからやりなおす。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;minikube stop
+Stopping local Kubernetes cluster...
+Machine stopped.
+
+C:\Users\kaitoy&amp;gt;minikube delete
+Deleting local Kubernetes cluster...
+Machine deleted.
+
+C:\Users\kaitoy&amp;gt;minikube start --vm-driver virtualbox --kubernetes-version v1.7.0
+Starting local Kubernetes v1.7.0 cluster...
+Starting VM...
+Getting VM IP address...
+Moving files into cluster...
+Setting up certs...
+Connecting to cluster...
+Setting up kubeconfig...
+Starting cluster components...
+Kubectl is now configured to use the cluster.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;1.7.0で動いた。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;様子はどうか。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy\Desktop\bin\pleiades\workspace\blog&amp;gt;minikube status
+minikube: Running
+cluster: Running
+kubectl: Correctly Configured: pointing to minikube-vm at 192.168.99.100
+
+C:\Users\kaitoy\Desktop\bin\pleiades\workspace\blog&amp;gt;kubectl get nodes
+NAME       STATUS    AGE       VERSION
+minikube   Ready     22s       v1.7.0
+
+C:\Users\kaitoy\Desktop\bin\pleiades\workspace\blog&amp;gt;kubectl version
+Client Version: version.Info{Major:&amp;quot;1&amp;quot;, Minor:&amp;quot;7&amp;quot;, GitVersion:&amp;quot;v1.7.0&amp;quot;, GitCommit:&amp;quot;d3ada0119e776222f11ec7945e6d860061339aad&amp;quot;, GitTreeState:&amp;quot;clean&amp;quot;, BuildDate:&amp;quot;2017-06-29T23:15:59Z&amp;quot;, GoVersion:&amp;quot;go1.8.3&amp;quot;, Compiler:&amp;quot;gc&amp;quot;, Platform:&amp;quot;windows/amd64&amp;quot;}
+Server Version: version.Info{Major:&amp;quot;1&amp;quot;, Minor:&amp;quot;7&amp;quot;, GitVersion:&amp;quot;v1.7.0&amp;quot;, GitCommit:&amp;quot;d3ada0119e776222f11ec7945e6d860061339aad&amp;quot;, GitTreeState:&amp;quot;dirty&amp;quot;, BuildDate:&amp;quot;2017-10-04T09:25:40Z&amp;quot;, GoVersion:&amp;quot;go1.8.3&amp;quot;, Compiler:&amp;quot;gc&amp;quot;, Platform:&amp;quot;linux/amd64&amp;quot;}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ちゃんと動いているっぽい。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ダッシュボードだけはなぜか相変わらず開けないけどまあいいか。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;minikube dashboard
+Could not find finalized endpoint being pointed to by kubernetes-dashboard: Error validating service: Error getting service kubernetes-dashboard: services &amp;quot;kubernetes-dashboard&amp;quot; not found
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;続きはまた別の記事に書く。&lt;/p&gt;
+</description>
+        </item>
+      
+    
+
+  </channel>
+</rss>
