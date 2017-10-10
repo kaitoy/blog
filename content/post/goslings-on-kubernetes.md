@@ -149,7 +149,7 @@ Kubernetesオブジェクトは、Kubernetesクラスタ上で機能する構成
 Kubernetesクラスタを構築する方法は[いくつかある](https://kubernetes.io/docs/setup/pick-right-solution/)が、中でももっとも簡単な方法がMinikube。
 
 Minikubeは、KubernetesのMasterとNodeを一つずつを詰め込んだVMをダウンロードして起動して、ローカルのkubectlから使えるようにしてくれるツール。
-開発やテスト用途のKubernetes環境として使われる。
+Linux、Windows、OS Xで動き、開発やテスト用途のKubernetes環境として使われる。
 
 ちょっと[Vagrant](https://www.vagrantup.com/)っぽい感じ。Kubernetes専用の。
 
