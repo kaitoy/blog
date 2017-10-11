@@ -6,8 +6,647 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2017</rights>
-    <updated>2017-10-10 00:10:59 &#43;0900 JST</updated>
+    <updated>2017-10-11 23:48:40 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>Kubernetesのチュートリアルをやる</title>
+          <link>https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/</link>
+          <pubDate>Wed, 11 Oct 2017 23:48:40 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/</guid>
+          <description>
+
+&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/&#34;&gt;Kubernetes 1.8が出たので、Minikubeを触ってみる&lt;/a&gt;」の続き。
+Minikubeのセットアップまではできたので、&lt;a href=&#34;https://kubernetes.io/docs/tutorials/kubernetes-basics/&#34;&gt;Kubernetes Basics&lt;/a&gt;というチュートリアルをやりながら、&lt;a href=&#34;https://kaitoy.github.io/goslings/&#34;&gt;Goslings&lt;/a&gt;をデプロイする。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;kubernetes-basics-概要&#34;&gt;Kubernetes Basics - 概要&lt;/h2&gt;
+
+&lt;p&gt;Kubernetes Basicsは、公式のチュートリアルで、Kubernetesクラスタのオーケストレーションの基本を学ぶことができるもの。
+以下の6つのモジュールからなる。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Kubernetesクラスタを作る&lt;/li&gt;
+&lt;li&gt;アプリをデプロイする&lt;/li&gt;
+&lt;li&gt;アプリを調査する&lt;/li&gt;
+&lt;li&gt;アプリを公開する&lt;/li&gt;
+&lt;li&gt;アプリをスケールする&lt;/li&gt;
+&lt;li&gt;アプリをアップデートする&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;チュートリアルで使うのは&lt;a href=&#34;https://github.com/kubernetes/minikube&#34;&gt;Minikube&lt;/a&gt;だけど、自分でセットアップする必要はない。
+&lt;a href=&#34;https://www.katacoda.com/&#34;&gt;Katacoda&lt;/a&gt;という、ブラウザ上でIT技術を学べるプラットフォームがあり、Kubernetes Basicsはそれを利用して、ブラウザ上のターミナルからホステッドMinikubeを操作できるようにしている。&lt;/p&gt;
+
+&lt;p&gt;が、&lt;a href=&#34;https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/&#34;&gt;前回の記事&lt;/a&gt;で自PC上にMinikubeをセットアップしたので、そちらを使うことにする。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;kubernetes-basics-モジュール-1-kubernetesクラスタを作る&#34;&gt;Kubernetes Basics - モジュール 1: Kubernetesクラスタを作る&lt;/h2&gt;
+
+&lt;p&gt;Minikubeを起動してkubectlでクラスタの状態をみるだけのモジュール。&lt;/p&gt;
+
+&lt;p&gt;これは&lt;a href=&#34;https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/&#34;&gt;前回の記事&lt;/a&gt;でカバーしている。&lt;/p&gt;
+
+&lt;h2 id=&#34;kubernetes-basics-モジュール-2-アプリをデプロイする&#34;&gt;Kubernetes Basics - モジュール 2: アプリをデプロイする&lt;/h2&gt;
+
+&lt;p&gt;アプリ(i.e. コンテナ)をデプロイするにはDeploymentオブジェクトを作る。
+MasterはDeploymentのspecに従って各ノードにアプリのインスタンスをスケジューリングする。
+Deploymentは、アプリが落ちたら再起動してくれる、つまりself-healingも実現する。&lt;/p&gt;
+
+&lt;p&gt;Deploymentオブジェクトを作るコマンドは&lt;code&gt;kubectl run &amp;lt;オブジェクト名&amp;gt; --image=&amp;lt;Dockerイメージ名&amp;gt;&lt;/code&gt;。
+Goslingsをこれでデプロイする。&lt;/p&gt;
+
+&lt;p&gt;Goslingsコンテナは3つの引数を受け取り、指定したポートでWebサーバを起動する。
+&lt;code&gt;--port&lt;/code&gt;オプションでそのポートをexposeするようにして、&lt;code&gt;--&lt;/code&gt;の後にコンテナに渡す引数を記述する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl run goslings --image=kaitoy/goslings:latest --port 8080 -- 8080 /tmp https://github.com/kaitoy/
+deployment &amp;quot;goslings&amp;quot; created
+
+C:\Users\kaitoy&amp;gt;kubectl get deployment
+NAME       DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+goslings   1         1         1            1           27s
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;デプロイできた。
+裏でPodも作られていて、アプリが起動されている。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl get pods
+NAME                        READY     STATUS              RESTARTS   AGE
+goslings-1210510689-6w5tf   0/1       ContainerCreating   0          1m
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;(&lt;code&gt;kubectl get&lt;/code&gt;に指定するのは、省略形の&lt;code&gt;deploy&lt;/code&gt;とか&lt;code&gt;po&lt;/code&gt;でもいい。)&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Podは隔離されたネットワークで動くので、そのままではPod同士は通信できるけど、外からはアクセスできない。
+kubectlでプロキシを作ってやることで、外からアクセスできるようになる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl proxy
+Starting to serve on 127.0.0.1:8001
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これで、kube-apiserverへのプロキシがローカルホストで起動した。
+この状態で&lt;code&gt;http://localhost:8001&lt;/code&gt;を開くと、kube-apiserverのAPI一覧が見れる。
+例えば、&lt;code&gt;http://localhost:8001/version&lt;/code&gt;にアクセスすると、以下のJSONデータが返ってくる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{
+  &amp;quot;major&amp;quot;: &amp;quot;1&amp;quot;,
+  &amp;quot;minor&amp;quot;: &amp;quot;7&amp;quot;,
+  &amp;quot;gitVersion&amp;quot;: &amp;quot;v1.7.0&amp;quot;,
+  &amp;quot;gitCommit&amp;quot;: &amp;quot;d3ada0119e776222f11ec7945e6d860061339aad&amp;quot;,
+  &amp;quot;gitTreeState&amp;quot;: &amp;quot;dirty&amp;quot;,
+  &amp;quot;buildDate&amp;quot;: &amp;quot;2017-10-04T09:25:40Z&amp;quot;,
+  &amp;quot;goVersion&amp;quot;: &amp;quot;go1.8.3&amp;quot;,
+  &amp;quot;compiler&amp;quot;: &amp;quot;gc&amp;quot;,
+  &amp;quot;platform&amp;quot;: &amp;quot;linux/amd64&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;各Podへも以下のURLでアクセスできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;http://localhost:8001/api/v1/proxy/namespaces/default/pods/&amp;lt;Pod名&amp;gt;/
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Pod名の部分は&lt;code&gt;kubectl get&lt;/code&gt;で確認できる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl get po
+NAME                        READY     STATUS    RESTARTS   AGE
+goslings-1210510689-6w5tf   1/1       Running   0          24m
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;実際に、&lt;code&gt;http://localhost:8001/api/v1/proxy/namespaces/default/pods/goslings-1210510689-6w5tf/&lt;/code&gt;をブラウザで開いたら、GoslingsのGUIが出た。
+ヒュー。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/goslings-on-kubernetes-cont/goslings-proxy.png&#34; alt=&#34;goslings-proxy&#34; /&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;kubernetes-basics-モジュール-3-アプリを調査する&#34;&gt;Kubernetes Basics - モジュール 3: アプリを調査する&lt;/h2&gt;
+
+&lt;p&gt;以下のコマンドで、アプリの状態を調査するモジュール。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;kubectl get: リソースをリスト表示する。&lt;/li&gt;
+&lt;li&gt;kubectl describe: リソースの詳細情報を表示する。&lt;/li&gt;
+&lt;li&gt;kubectl logs: コンテナのログを表示する。&lt;code&gt;docker logs&lt;/code&gt;的な。&lt;/li&gt;
+&lt;li&gt;kubectl exec: コンテナ内でコマンドを実行する。&lt;code&gt;docker exec&lt;/code&gt;的な。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;kubectl get&lt;/code&gt;はさんざんやったので飛ばして、&lt;code&gt;kubectl describe&lt;/code&gt;してみる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl describe po
+Name:           goslings-1210510689-6w5tf
+Namespace:      default
+Node:           minikube/192.168.99.100
+Start Time:     Tue, 10 Oct 2017 21:51:48 +0900
+Labels:         pod-template-hash=1210510689
+                run=goslings
+Annotations:    kubernetes.io/created-by={&amp;quot;kind&amp;quot;:&amp;quot;SerializedReference&amp;quot;,&amp;quot;apiVersion&amp;quot;:&amp;quot;v1&amp;quot;,&amp;quot;reference&amp;quot;:{&amp;quot;kind&amp;quot;:&amp;quot;ReplicaSet&amp;quot;,&amp;quot;namespace&amp;quot;:&amp;quot;default&amp;quot;,&amp;quot;name&amp;quot;:&amp;quot;goslings-1210510689&amp;quot;,&amp;quot;uid&amp;quot;:&amp;quot;c74b6518-adb9-11e7-88a0-08002798178d...
+Status:         Running
+IP:             172.17.0.2
+Created By:     ReplicaSet/goslings-1210510689
+Controlled By:  ReplicaSet/goslings-1210510689
+Containers:
+  goslings:
+    Container ID:       docker://ce90460886c9555f7748bf59e8d9892f05c05020e7841154ee85713d6d9b0c2d
+    Image:              kaitoy/goslings:latest
+    Image ID:           docker-pullable://kaitoy/goslings@sha256:a587e3c5f202cdaa6d4d5a9c4f6a01ba6f4782e00277c3a18c77dd034daa0109
+    Port:               8080/TCP
+    Args:
+      8080
+      C:/Users/kaitoy/AppData/Local/Temp
+    State:              Running
+      Started:          Tue, 10 Oct 2017 21:55:54 +0900
+    Ready:              True
+    Restart Count:      0
+    Environment:        &amp;lt;none&amp;gt;
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-cqq59 (ro)
+Conditions:
+  Type          Status
+  Initialized   True
+  Ready         True
+  PodScheduled  True
+Volumes:
+  default-token-cqq59:
+    Type:       Secret (a volume populated by a Secret)
+    SecretName: default-token-cqq59
+    Optional:   false
+QoS Class:      BestEffort
+Node-Selectors: &amp;lt;none&amp;gt;
+Tolerations:    &amp;lt;none&amp;gt;
+Events:
+  FirstSeen     LastSeen        Count   From                    SubObjectPath                   Type            Reason
+                Message
+  ---------     --------        -----   ----                    -------------                   --------        ------
+                -------
+  45m           45m             1       default-scheduler                                       Normal          Scheduled               Successfully assigned goslings-1210510689-6w5tf to minikube
+  45m           45m             1       kubelet, minikube                                       Normal          SuccessfulMountVolume   MountVolume.SetUp succeeded for volume &amp;quot;default-token-cqq59&amp;quot;
+  45m           45m             1       kubelet, minikube       spec.containers{goslings}       Normal          Pulling
+                pulling image &amp;quot;kaitoy/goslings:latest&amp;quot;
+  41m           41m             1       kubelet, minikube       spec.containers{goslings}       Normal          Pulled
+                Successfully pulled image &amp;quot;kaitoy/goslings:latest&amp;quot;
+  41m           41m             1       kubelet, minikube       spec.containers{goslings}       Normal          Created
+                Created container
+  41m           41m             1       kubelet, minikube       spec.containers{goslings}       Normal          Started
+                Started container
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Podの詳細な情報が出た。
+EventsのとこにKubernetesの頑張りが見えて面白い。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;次は&lt;code&gt;kubectl logs&lt;/code&gt;。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl logs goslings-1210510689-6w5tf
+
+  .   ____          _            __ _ _
+ /\\ / ___&#39;_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | &#39;_ | &#39;_| | &#39;_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  &#39;  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::        (v1.4.3.RELEASE)
+
+2017-10-10 12:56:02.498  INFO 6 --- [           main] c.g.kaitoy.goslings.server.Application   : Starting Application on goslings-1210510689-6w5tf with PID 6 (/usr/local/src/goslings/goslings-server/build/libs/goslings-server-0.0.1.jar started by root in /usr/local/src/goslings)
+(snip)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Goslingsは&lt;a href=&#34;https://projects.spring.io/spring-boot/&#34;&gt;Spring Boot&lt;/a&gt;でできてるので、そのログが出てる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;次は&lt;code&gt;kubectl exec&lt;/code&gt;を試す。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl exec goslings-1210510689-6w5tf env
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+HOSTNAME=goslings-1210510689-6w5tf
+KUBERNETES_PORT_443_TCP=tcp://10.0.0.1:443
+KUBERNETES_PORT_443_TCP_PROTO=tcp
+KUBERNETES_PORT_443_TCP_PORT=443
+KUBERNETES_PORT_443_TCP_ADDR=10.0.0.1
+KUBERNETES_SERVICE_HOST=10.0.0.1
+KUBERNETES_SERVICE_PORT=443
+KUBERNETES_SERVICE_PORT_HTTPS=443
+KUBERNETES_PORT=tcp://10.0.0.1:443
+LANG=C.UTF-8
+JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+JAVA_VERSION=8u111
+JAVA_DEBIAN_VERSION=8u111-b14-2~bpo8+1
+CA_CERTIFICATES_JAVA_VERSION=20140324
+HOME=/root
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;env&lt;/code&gt;コマンドを実行し、コンテナ内の環境変数一覧を出せた。
+Kubernetes関係の変数が定義されていることが分かる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;docker exec&lt;/code&gt;と同様に、&lt;code&gt;-it&lt;/code&gt;オプションを付ければ、コンテナ内に「入る」こともできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl exec -it goslings-1210510689-6w5tf sh
+# ls
+Dockerfile  _config.yml  build.log     goslings-server  gradle.properties  gradlew.bat
+# exit
+
+C:\Users\kaitoy&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;kubernetes-basics-モジュール-4-アプリを公開する&#34;&gt;Kubernetes Basics - モジュール 4: アプリを公開する&lt;/h2&gt;
+
+&lt;p&gt;Serviceオブジェクト扱うモジュール。&lt;/p&gt;
+
+&lt;p&gt;例えば、以下のような状況にあるとする。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;PodがあるNodeで動いていたんだけど、そのNodeが死んだので、Kubernetesが別のNodeにPodを起動しなおしてくれた。&lt;/li&gt;
+&lt;li&gt;同じコンテナイメージを3つのPodで動かして、負荷分散させたい。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;こういう場合、KubernetesはPod毎に固有のIPアドレスを割り当てるので、Podにアクセスするユーザはアクセス先が不安定でめんどいことになる。
+この問題を解決してくれるのがServiceで、こいつは、Podを抽象化して、安定したIPアドレスを公開してくれる。
+しかもそれはクラスタ外からアクセスできる。&lt;/p&gt;
+
+&lt;p&gt;PodとServiceの紐づけには、&lt;a href=&#34;https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/&#34;&gt;ラベルとセレクタ&lt;/a&gt;というものが使われる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Serviceの情報はDeploymentとかと同様に&lt;code&gt;kubectl get&lt;/code&gt;で見れる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl get svc
+NAME         CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   10.0.0.1     &amp;lt;none&amp;gt;        443/TCP   1d
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ここで出ているkubernetesというのは、Minikubeがデフォルトで作るService。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Serviceオブジェクトは、&lt;code&gt;kubectl expose&lt;/code&gt;で作ることができる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;goslings&lt;/code&gt;という名のDeploymentに対し、NodePortのServiceを作り、コンテナの8080ポートを公開するコマンドは以下のようになる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl expose deploy/goslings --type=NodePort --port 8080
+service &amp;quot;goslings&amp;quot; exposed
+
+C:\Users\kaitoy&amp;gt;kubectl get services
+NAME         CLUSTER-IP   EXTERNAL-IP   PORT(S)          AGE
+goslings     10.0.0.69    &amp;lt;nodes&amp;gt;       8080:32406/TCP   11s
+kubernetes   10.0.0.1     &amp;lt;none&amp;gt;        443/TCP          1d
+
+C:\Users\kaitoy&amp;gt;kubectl describe services/goslings
+Name:                   goslings
+Namespace:              default
+Labels:                 run=goslings
+Annotations:            &amp;lt;none&amp;gt;
+Selector:               run=goslings
+Type:                   NodePort
+IP:                     10.0.0.69
+Port:                   &amp;lt;unset&amp;gt; 8080/TCP
+NodePort:               &amp;lt;unset&amp;gt; 32406/TCP
+Endpoints:              172.17.0.2:8080
+Session Affinity:       None
+Events:                 &amp;lt;none&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;goslingsという名前のServiceができた。
+上記&lt;code&gt;kubectl describe&lt;/code&gt;の出力のNodePortのとこに書いてあるのが外部にさらされたポート。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;minikube ip&lt;/code&gt;を実行すると、&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;minikube ip
+192.168.99.100
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;MinikubeのVMのIPアドレスも分かるので、NodePortのポートと合わせて、&lt;code&gt;http://192.168.99.100:32406&lt;/code&gt;にブラウザでアクセスしたら、GoslingsのGUI見れた。
+ヒュー。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/goslings-on-kubernetes-cont/goslings-service.png&#34; alt=&#34;goslings-service&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ところで、上記&lt;code&gt;kubectl describe&lt;/code&gt;の出力を見ると、特に指定はしなかったが、Podに&lt;code&gt;run=goslings&lt;/code&gt;というLabelが付いていることが分かる。
+Serviceのdescribeを見ると、&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl describe svc goslings
+Name:                   goslings
+Namespace:              default
+Labels:                 run=goslings
+Annotations:            &amp;lt;none&amp;gt;
+Selector:               run=goslings
+Type:                   NodePort
+IP:                     10.0.0.69
+Port:                   &amp;lt;unset&amp;gt; 8080/TCP
+NodePort:               &amp;lt;unset&amp;gt; 32406/TCP
+Endpoints:              172.17.0.2:8080
+Session Affinity:       None
+Events:                 &amp;lt;none&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;run=goslings&lt;/code&gt;というSelectorがServiceに紐づいている。
+つまり、ServiceとPodが、&lt;code&gt;run=goslings&lt;/code&gt;で紐づいているというわけだ。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Labelはクエリ時のフィルタとかにも使える。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl get po -l run=goslings
+NAME                        READY     STATUS    RESTARTS   AGE
+goslings-1210510689-6w5tf   1/1       Running   0          1h
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;後からラベル付けることもできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl label pod goslings-1210510689-6w5tf ver=1.2.3
+pod &amp;quot;goslings-1210510689-6w5tf&amp;quot; labeled
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;kubernetes-basics-モジュール-5-アプリをスケールする&#34;&gt;Kubernetes Basics - モジュール 5: アプリをスケールする&lt;/h2&gt;
+
+&lt;p&gt;アプリのスケールアウト・スケールインを学ぶモジュール。&lt;/p&gt;
+
+&lt;p&gt;Deploymentの定義でPodのレプリカ数を変えると、その数に合わせてKubernetesがPodを起動したり止めたりしてくれてスケールできる仕組み。
+レプリカを作っておくとローリングアップデートできるのも利点。
+&lt;a href=&#34;http://kubernetes.io/docs/user-guide/horizontal-pod-autoscaling/&#34;&gt;オートスケール機能&lt;/a&gt;もあるけど、それはチュートリアルでは扱われない。&lt;/p&gt;
+
+&lt;p&gt;複数のPodで負荷分散するということなので、Serviceでロードバランシングするのが前提。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;現在のDeploymentの状態をみる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl get deploy
+NAME       DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+goslings   1         1         1            1           1h
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Podのレプリカ数は、期待してる(DESIRED)のが1で、今(CURRENT)も1。&lt;/p&gt;
+
+&lt;p&gt;スケールアウトするには、&lt;code&gt;kubectl scale&lt;/code&gt;コマンドでレプリカ数を増やしてやる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl scale deploy/goslings --replicas=3
+deployment &amp;quot;goslings&amp;quot; scaled
+
+C:\Users\kaitoy&amp;gt;kubectl get deploy
+NAME       DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+goslings   3         3         3            3           1h
+
+C:\Users\kaitoy&amp;gt;kubectl get po -o wide
+NAME                       READY     STATUS    RESTARTS   AGE       IP           NODE
+goslings-442066424-jn1lw   1/1       Running   0          1h        172.17.0.2   minikube
+goslings-442066424-rdw4k   1/1       Running   0          1m        172.17.0.3   minikube
+goslings-442066424-rwwjw   1/1       Running   0          1m        172.17.0.4   minikube
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;レプリカが3個になった。&lt;/p&gt;
+
+&lt;p&gt;スケールインするには、&lt;code&gt;kubectl scale&lt;/code&gt;コマンドでレプリカ数を減らす。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl scale deploy/goslings --replicas=2
+deployment &amp;quot;goslings&amp;quot; scaled
+
+C:\Users\kaitoy&amp;gt;kubectl get po
+NAME                       READY     STATUS        RESTARTS   AGE
+goslings-442066424-0mv4x   1/1       Terminating   0          1m
+goslings-442066424-34h1f   1/1       Running       0          1m
+goslings-442066424-kmn3p   1/1       Running       0          17m
+
+C:\Users\kaitoy&amp;gt;kubectl get po
+NAME                       READY     STATUS    RESTARTS   AGE
+goslings-442066424-34h1f   1/1       Running   0          1m
+goslings-442066424-kmn3p   1/1       Running   0          17m
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;kubectl scale&lt;/code&gt;直後の&lt;code&gt;kubectl get po&lt;/code&gt;では、一つのPodを停止している最中の様子が見えていて、再度の&lt;code&gt;kubectl get po&lt;/code&gt;ではレプリカが2個になったのが確認できた。&lt;/p&gt;
+
+&lt;p&gt;この状態がKubernetes Basicsで作るクラスタの最終形で、図にすると以下の感じ。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/goslings-on-kubernetes-cont/objects.png&#34; alt=&#34;objects&#34; /&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;kubernetes-basics-モジュール-6-アプリをアップデートする&#34;&gt;Kubernetes Basics - モジュール 6: アプリをアップデートする&lt;/h2&gt;
+
+&lt;p&gt;デプロイしたアプリのアップデート(i.e. コンテナイメージの変更)を学ぶモジュール。&lt;/p&gt;
+
+&lt;p&gt;Deploymentの定義をいじってコンテナイメージを変えてやると、その中のPodを新しいイメージで順次(デフォルトだと一つ一つ)起動しなおしてくれる。&lt;/p&gt;
+
+&lt;p&gt;アプリのアップデートはバージョン管理もされて、ロールバックもできる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;コンテナイメージを変更するには、&lt;code&gt;kubectl set image&lt;/code&gt;コマンドを使う。
+&lt;code&gt;goslings&lt;/code&gt;という名のDeployment内の、&lt;code&gt;goslings&lt;/code&gt;という名のContainerのイメージを&lt;code&gt;kaitoy/goslings:hoge&lt;/code&gt;に変更するコマンドは以下。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl set image deploy/goslings goslings=kaitoy/goslings:hoge
+deployment &amp;quot;goslings&amp;quot; image updated
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;実際には&lt;code&gt;kaitoy/goslings:hoge&lt;/code&gt;というイメージはないので、イメージのPullに失敗したというエラー(ErrImagePull)になる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl get po
+NAME                       READY     STATUS         RESTARTS   AGE
+goslings-274047280-jxmmh   0/1       ErrImagePull   0          9s
+goslings-274047280-rgg2v   0/1       ErrImagePull   0          8s
+goslings-442066424-34h1f   1/1       Terminating    0          1h
+goslings-442066424-kmn3p   1/1       Running        0          1h
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;イメージ変更前に戻すには、&lt;code&gt;kubectl rollout undo&lt;/code&gt;する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl rollout undo deploy/goslings
+deployment &amp;quot;goslings&amp;quot; rolled back
+
+C:\Users\kaitoy&amp;gt;kubectl rollout status deploy/goslings
+deployment &amp;quot;goslings&amp;quot; successfully rolled out
+
+C:\Users\kaitoy&amp;gt;kubectl get po
+NAME                       READY     STATUS    RESTARTS   AGE
+goslings-442066424-kmn3p   1/1       Running   0          1h
+goslings-442066424-m3873   1/1       Running   0          5s
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;無事に戻った。&lt;/p&gt;
+
+&lt;h2 id=&#34;番外編1-3つのオブジェクト管理手法&#34;&gt;番外編1 - 3つのオブジェクト管理手法&lt;/h2&gt;
+
+&lt;p&gt;Kubernetesオブジェクトを管理する手法は&lt;a href=&#34;https://kubernetes.io/docs/tutorials/object-management-kubectl/object-management/&#34;&gt;大きく3つある&lt;/a&gt;。&lt;/p&gt;
+
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;管理手法&lt;/th&gt;
+&lt;th&gt;いじる対象&lt;/th&gt;
+&lt;th&gt;難易度&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;命令的コマンド&lt;/td&gt;
+&lt;td&gt;生のオブジェクト&lt;/td&gt;
+&lt;td&gt;簡単&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;命令的オブジェクト設定&lt;/td&gt;
+&lt;td&gt;個々のファイル&lt;/td&gt;
+&lt;td&gt;普通&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;宣言的オブジェクト設定&lt;/td&gt;
+&lt;td&gt;ディレクトリに入ったファイル群&lt;/td&gt;
+&lt;td&gt;難しい&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Kubernetes Basicsでやってた手法は一番上の命令的コマンド。
+これは簡単で分かりやすい。
+けど、何度も同じようなデプロイするならコマンドを毎回打つのが面倒だし、作成されるオブジェクトは明示的じゃないし、変更管理もできない。
+この手法は主に開発中に使う。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;二つ目の手法の命令的オブジェクト設定では、YAML(かJSON)ファイルにオブジェクト定義を書いておいて、kubectlに渡す。
+この手法だと、定義ファイルをオブジェクトのテンプレートとして使えるし、Gitとかのリポジトリに入れることでバージョン管理・変更管理できる。
+けど、Kubernetesのオブジェクトモデルを理解しないと使えない。
+(オブジェクト定義の詳細は&lt;a href=&#34;https://kubernetes.io/docs/api-reference/v1.8/&#34;&gt;APIリファレンス&lt;/a&gt;を参照。)&lt;/p&gt;
+
+&lt;p&gt;命令的オブジェクト設定は以下のような形でやる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ kubectl create -f nginx.yaml
+$ kubectl delete -f nginx.yaml -f redis.yaml
+$ kubectl replace -f nginx.yaml
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;三つ目の手法の宣言的オブジェクト設定では、設定フォルダに定義ファイル群を置く。
+ユーザは明示的にcreateとかupdateとか指示する必要が無く、kubectlが勝手に判断してくれる。
+生のオブジェクトを直接いじった後、同じオブジェクトの設定を設定ファイルで変更しても、
+両者の変更が上手くマージされる。&lt;/p&gt;
+
+&lt;p&gt;なんかすごいけど、上手くいかなかったときのデバッグがむずい。&lt;/p&gt;
+
+&lt;p&gt;宣言的オブジェクト設定は以下のような形でやる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ kubectl apply -R -f configs/
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;番外編2-命令的オブジェクト設定&#34;&gt;番外編2 - 命令的オブジェクト設定&lt;/h2&gt;
+
+&lt;p&gt;3つの手法の内、命令的オブジェクト設定でGoslingsをMinikubeにデプロイしてみる。&lt;/p&gt;
+
+&lt;p&gt;まず、Kubernetes Basicsで作ったオブジェクトを消すため、MinikubeのVMを作り直す。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;minikube stop
+Stopping local Kubernetes cluster...
+Machine stopped.
+
+C:\Users\kaitoy&amp;gt;minikube delete
+Deleting local Kubernetes cluster...
+Machine deleted.
+
+C:\Users\kaitoy&amp;gt;minikube start --vm-driver virtualbox --kubernetes-version v1.7.0
+Starting local Kubernetes v1.7.0 cluster...
+Starting VM...
+Getting VM IP address...
+Moving files into cluster...
+Setting up certs...
+Connecting to cluster...
+Setting up kubeconfig...
+Starting cluster components...
+Kubectl is now configured to use the cluster.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;次に定義ファイルを書いていく。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://v1-7.docs.kubernetes.io/docs/api-reference/v1.7/#deployment-v1beta1-apps&#34;&gt;APIリファレンスのDeploymentのとこ&lt;/a&gt;をみると、Kubernetes Basicsの最終形と同じようなDeploymentを作る定義は以下のように書ける。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: goslings-sample
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: goslings
+        ver: latest
+    spec:
+      containers:
+        - name: goslings
+          image: kaitoy/goslings:latest
+          ports:
+            - name: http
+              containerPort: 8080
+          args:
+            - &#39;8080&#39;
+            - /tmp
+            - https://github.com/kaitoy/
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;同様に、Serviceは、&lt;a href=&#34;https://v1-7.docs.kubernetes.io/docs/api-reference/v1.7/#service-v1-core&#34;&gt;APIリファレンスのServiceのとこ&lt;/a&gt;みると以下のように書ける。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;kind: Service
+apiVersion: v1
+metadata:
+  name: goslings-sample
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: goslings
+  type: NodePort
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;で、それぞれのYAMLファイルを&lt;code&gt;kubectl create&lt;/code&gt;に渡してやると、Goslingsデプロイ完了。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy\kubeTest&amp;gt;kubectl create -f deploy_goslings.yml
+deployment &amp;quot;goslings-sample&amp;quot; created
+
+C:\Users\kaitoy\kubeTest&amp;gt;kubectl create -f service_goslings.yml
+service &amp;quot;goslings-sample&amp;quot; created
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;オブジェクトの種類もパラメータも大量にあるので、使いこなすのは難しそう。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -392,7 +1031,7 @@ Could not find finalized endpoint being pointed to by kubernetes-dashboard: Erro
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
-&lt;p&gt;続きはまた別の記事に書く。&lt;/p&gt;
+&lt;p&gt;続きはまた&lt;a href=&#34;https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/&#34;&gt;別の記事&lt;/a&gt;。&lt;/p&gt;
 </description>
         </item>
       

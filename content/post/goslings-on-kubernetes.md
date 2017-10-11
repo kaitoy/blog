@@ -370,4 +370,4 @@ Could not find finalized endpoint being pointed to by kubernetes-dashboard: Erro
 
 <br>
 
-続きはまた別の記事に書く。
+続きはまた[別の記事](https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/)。
