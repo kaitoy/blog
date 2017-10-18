@@ -16,12 +16,14 @@ title = "Kubernetes 1.8が出たので、Minikubeを触ってみる"
 {{< google-adsense >}}
 
 ## Kubernetesとは
-KubernetesはOSSのコンテナ管理ツール。
+KubernetesはOSSのコンテナオーケストレーションツール。
 英語だとクーバネティスみたいに発音する。
 Googleが自身のコンテナ技術である[Borg](https://research.google.com/pubs/pub43438.html)の運用で培ったノウハウを活かして開発したもの。
 2014年ころに開発が始まり、2015年夏にv1がリリースされたということで、かなり新しいツール。
 よく比べられるものには[DockerのSwarmモード](https://docs.docker.com/engine/swarm/)や[Apache Mesos](http://mesos.apache.org/)があるが、何が違うのかは調べてないので知らない。
 ただ、Dockerコンテナ管理ツールとしてはKubernetesが一番勢いがある雰囲気を感じる。
+
+(2017/10/18追記: [DockerがKubernetesとの統合を発表](http://www.publickey1.jp/blog/17/dockerkubernetesdockercon_eu_2017.html)した。KubernetesはDockerネイティブなツールになり、Dockerとともにインストールされ、Docker ComposeのConposeファイルでデプロイできるようになったりする。Kubernetesの大勝利っぽい。)
 
 Kubernetesを使うと、複数の物理マシンからなるHAクラスタ(Kubernetesクラスタ)を構成し、その上にコンテナをデプロイして管理できる。
 Kubernetesクラスタは、一つのMaster(a.k.a. Kubernetes Control Plane)と一つ以上のNode(昔はMinionと呼ばれてたもの)で構成される。
