@@ -818,6 +818,16 @@ PodとReplicaSetの宣言的な生成・更新を実現する。&lt;/p&gt;&lt;/l
 
 &lt;p&gt;今回Goslingsを動かすのに使ったのは、Pod、Deployment、ReplicaSet、Service (NodePort)。&lt;/p&gt;
 
+&lt;h2 id=&#34;podネットワーク&#34;&gt;Podネットワーク&lt;/h2&gt;
+
+&lt;p&gt;ちょっと細かい話だけど、Pod間の通信はどうなっているかという話についてちょっと調べたのでざっくり書いておく。&lt;/p&gt;
+
+&lt;p&gt;普通の&lt;a href=&#34;https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/#docker-network&#34;&gt;Dockerネットワーク&lt;/a&gt;だと、コンテナはdocker0という仮想ブリッジ上のプライベートネットワークで動くため、同じホスト上のコンテナ間は通信できるけど、別のホスト上のコンテナ通信させたい場合は、ホストのIPアドレスのポートを割り当ててやらなければいけない。&lt;/p&gt;
+
+&lt;p&gt;これはめんどいので、Kubernetesは、各Podに一意なIPアドレスを与え、Podがどのホストにいるかにかかわらず、NAT無しで相互に通信できる&lt;a href=&#34;https://kubernetes.io/docs/concepts/cluster-administration/networking/&#34;&gt;ネットワーク&lt;/a&gt;を提供する。
+これがPodネットワークとか呼ばれ、色んな実装があり、PodネットワークアドオンとしてKubernetesクラスタに適用できる。
+&lt;a href=&#34;https://docs.projectcalico.org/v2.6/getting-started/kubernetes/installation/hosted/kubeadm/&#34;&gt;Calico&lt;/a&gt;、&lt;a href=&#34;https://github.com/projectcalico/canal/tree/master/k8s-install&#34;&gt;Canal&lt;/a&gt;、&lt;a href=&#34;https://github.com/coreos/flannel&#34;&gt;Flannel&lt;/a&gt;、&lt;a href=&#34;https://github.com/cloudnativelabs/kube-router/blob/master/Documentation/kubeadm.md&#34;&gt;Kube-router&lt;/a&gt;、&lt;a href=&#34;https://github.com/romana/romana/tree/master/containerize#using-kubeadm&#34;&gt;Romana&lt;/a&gt;、&lt;a href=&#34;https://www.weave.works/docs/net/latest/kube-addon/&#34;&gt;Weave Net&lt;/a&gt;とか。&lt;/p&gt;
+
 &lt;h2 id=&#34;minikubeとは&#34;&gt;Minikubeとは&lt;/h2&gt;
 
 &lt;p&gt;Kubernetesクラスタを構築する方法は&lt;a href=&#34;https://kubernetes.io/docs/setup/pick-right-solution/&#34;&gt;いくつかある&lt;/a&gt;が、中でももっとも簡単な方法がMinikube。&lt;/p&gt;

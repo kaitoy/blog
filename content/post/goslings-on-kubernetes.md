@@ -147,6 +147,15 @@ Kubernetesオブジェクトは、Kubernetesクラスタ上で機能する構成
 
 今回Goslingsを動かすのに使ったのは、Pod、Deployment、ReplicaSet、Service (NodePort)。
 
+## Podネットワーク
+ちょっと細かい話だけど、Pod間の通信はどうなっているかという話についてちょっと調べたのでざっくり書いておく。
+
+普通の[Dockerネットワーク](https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/#docker-network)だと、コンテナはdocker0という仮想ブリッジ上のプライベートネットワークで動くため、同じホスト上のコンテナ間は通信できるけど、別のホスト上のコンテナ通信させたい場合は、ホストのIPアドレスのポートを割り当ててやらなければいけない。
+
+これはめんどいので、Kubernetesは、各Podに一意なIPアドレスを与え、Podがどのホストにいるかにかかわらず、NAT無しで相互に通信できる[ネットワーク](https://kubernetes.io/docs/concepts/cluster-administration/networking/)を提供する。
+これがPodネットワークとか呼ばれ、色んな実装があり、PodネットワークアドオンとしてKubernetesクラスタに適用できる。
+[Calico](https://docs.projectcalico.org/v2.6/getting-started/kubernetes/installation/hosted/kubeadm/)、[Canal](https://github.com/projectcalico/canal/tree/master/k8s-install)、[Flannel](https://github.com/coreos/flannel)、[Kube-router](https://github.com/cloudnativelabs/kube-router/blob/master/Documentation/kubeadm.md)、[Romana](https://github.com/romana/romana/tree/master/containerize#using-kubeadm)、[Weave Net](https://www.weave.works/docs/net/latest/kube-addon/)とか。
+
 ## Minikubeとは
 Kubernetesクラスタを構築する方法は[いくつかある](https://kubernetes.io/docs/setup/pick-right-solution/)が、中でももっとも簡単な方法がMinikube。
 
