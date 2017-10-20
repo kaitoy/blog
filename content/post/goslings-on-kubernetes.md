@@ -168,8 +168,7 @@ Linux、Windows、OS Xで動き、開発やテスト用途のKubernetes環境と
 [Kubernetesのドキュメント](https://kubernetes.io/docs/tasks/tools/install-minikube/)にしたがって、Minikubeをインストールする。
 環境はWindows 10 Home x64。
 
-
-まず、MinikubeのVMを動かすツールを入れる。
+まず、MinikubeのVMを動かす仮想化ツールを入れる。
 今のところMinikubeがサポートしてるのは、Windowsだと[VirtualBox](https://www.virtualbox.org/)か[Hyper-V](https://docs.microsoft.com/ja-jp/virtualization/hyper-v-on-windows/quick-start/enable-hyper-v)。
 Windows 10 HomeだとHyper-Vが使えないので、VirtualBox一択。
 VirtualBoxは、適当にVT-xを有効にして(してあった)、インストーラダウンロードしてインストールしただけ。
