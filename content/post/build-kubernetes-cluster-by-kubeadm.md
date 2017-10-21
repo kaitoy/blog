@@ -5,7 +5,7 @@ draft = false
 eyecatch = "kubernetes.png"
 slug = "build-kubernetes-cluster-by-kubeadm"
 tags = ["kubernetes", "docker", "kubeadm"]
-title = "Kubernetesクラスタを構築する。kubeadmで。"
+title = "Kubernetes1.8のクラスタを構築する。kubeadmで。"
 
 +++
 
