@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Kubernetesクラスタを構築する。kubeadmで。 | To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/">
+    <link rel="canonical" href="https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/">
+    <meta property="og:description" content="「Kubernetes 1.8が出たので、Minikubeを触ってみる」でMinikubeをやったんだけど、もう一歩ステップアップすべく、kubeadmでKubernetesクラスタを組んでみた話。 いまいち上手くいかなかった。 (adsbygoogle = window.adsbygoogle || []).push({}); kubeadmとは kubeadmはKubernetesに含まれるコマンドで、Kubernetesクラスタを簡単に構築するツール。 Kubernetes 1.8の時点でまだベータで、本番環境には使わないでとなっている。 Qiitaの「kubeadmが何をやっているのかみてみた」という記事が、中でどんな動作をしてるかを解説していて参考になる。 コマンドの使用感からすると、DockerのSwarmモードでのクラスタ構築の容易さをKubernetesに取り込むことを目指して開発されている気がした。 ネットで見かけた評判だと、確かに簡単にクラスタ構築できて素晴らしいけど、TLSの証明書生成など、細かく制御できなくて困るところがあって、やはり本番に使えるレベルではないとのこと。 まあとにかく試してみる価値はあろう。 kubeadmインストール Kubernetesのドキュメントに従ってkubeadmをインストールする。 バージョンは最新版の1.8.1。 VM作成 kubeadmのサポートOSは、Ubuntu 16.04&#43;、Debian 9、CentOS 7、RHEL 7、Fedora 25/26、HypriotOS v1.0.1&#43;となっている。 慣れているCentOS 7を使うことにする。 (HypriotOSってなんだろう?) 自前のノートPCのWindows 10 x64 Home Edition上のVMware Player 12のVMにCentOS 7を入れた。 メモリは1GB以上が要件なので、味を付けて1.4GBで。 VM間で通信できることって要件があったけど、インターネット接続も必要なはずなので、NICはNATのやつで。 このVMはMasterになる。 OS設定 Kubernetesが使うポートをいろいろ開けなければいけないんだけど、めんどいのでfirewalldを無効にする。 [root@localhost ~]# systemctl stop firewalld [root@localhost ~]# systemctl disable firewalld Removed symlink /etc/systemd/system/multi-user.target.wants/firewalld.service. Removed symlink /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service. なんとなくIPアドレスをDHCPから静的割り当てに。(192.168.171.200) [root@k8s-master ~]# nmcli c modify ens33 ipv4.method manual [root@k8s-master ~]# nmcli c modify ens33 ipv4.addresses 192.168.171.200/24 [root@k8s-master ~]# nmcli c modify ens33 ipv4.dns 192.168.171.2 [root@k8s-master ~]# nmcli c modify ens33 ipv4.gateway 192.168.171.2 [root@k8s-master ~]# systemctl restart network ホスト名をlocalhost.localdomainからk8s-masterに変更。 [root@localhost ~]# hostnamectl set-hostname k8s-master ログアウトログインで反映。 /etc/hostsを編集して、k8s-masterのエントリを追加。 あとで作るもう一つのVM、k8s-nodeのほうもエントリを追加。 クラスタを構成するノードは、一意のMACアドレスとproduct_uuidを持っていないといけない。 Kubernetesがそれらでクラスタ内のノードを区別してるので。 MACアドレスはip linkコマンドなどで確認できる。 [root@k8s-master ~]# ip link 1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT qlen 1 link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00 2: ens33: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP mode DEFAULT qlen 1000 link/ether 00:0c:29:38:de:ae brd ff:ff:ff:ff:ff:ff product_uuidは、SMBIOSという、PC固有のデータを保存・参照するための仕様があって、それに従って保存されたシステムの識別子らしい。 product_uuidはdmidecodeコマンドなどで確認できる。 [root@k8s-master ~]# dmidecode -s system-uuid 58114D56-A744-3610-C3C5-9B15A838DEAE kubeletがちゃんと動くためにはswapを無効にする必要がある。 [root@k8s-master ~]# swapoff -a (このコマンドはよくなかった。詳細は後述。) ebtablesとethtoolを入れる必要がある。 [root@k8s-master ~]# yum install -y ebtables ethtool Dockerも入れないと。 v1.12が推奨で、v1.11かv1.13でもいい。 適当に入れたらv1.12.6だった。 [root@k8s-master ~]# yum install -y docker [root@k8s-master ~]# systemctl enable docker &amp;&amp; systemctl start docker Podネットワークなどが機能する要件として、コンテナがホストファイルシステムにアクセスできる必要があるが、そのためには現状、SELinuxを無効化する必要がある。 [root@k8s-master ~]# setenforce 0 (このコマンドもよくなかった。詳細は後述。) RHEL系の場合、iptablesがバイパスされてトラフィックが変にルーティングされる問題があるため、net.bridge.bridge-nf-call-iptablesを1にセットしておく必要がある。 [root@k8s-master ~]# cat &lt;&lt;EOF &gt; /etc/sysctl.d/k8s.conf &gt; net.bridge.bridge-nf-call-ip6tables = 1 &gt; net.bridge.bridge-nf-call-iptables = 1 &gt; EOF [root@k8s-master ~]# sysctl --system * Applying /usr/lib/sysctl.d/00-system.conf ...">
+    
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      Kubernetesクラスタを構築する。kubeadmで。 | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+    
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-6244473643910448",
+        enable_page_level_ads: true
+      });
+    </script>
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Sat, Oct 21, 2017</span>
+      <h2 class="title">Kubernetesクラスタを構築する。kubeadmで。</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="Kubernetesクラスタを構築する。kubeadmで。">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>「<a href="https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a>」でMinikubeをやったんだけど、もう一歩ステップアップすべく、<a href="https://kubernetes.io/docs/admin/kubeadm/">kubeadm</a>でKubernetesクラスタを組んでみた話。</p>
+
+<p>いまいち上手くいかなかった。</p>
+
+<p>
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</p>
+
+<h2 id="kubeadmとは">kubeadmとは</h2>
+
+<p>kubeadmはKubernetesに含まれるコマンドで、Kubernetesクラスタを簡単に構築するツール。
+Kubernetes 1.8の時点でまだベータで、本番環境には使わないでとなっている。
+Qiitaの「<a href="https://qiita.com/helix_kaz/items/9c4a83532f949d8a94ef">kubeadmが何をやっているのかみてみた</a>」という記事が、中でどんな動作をしてるかを解説していて参考になる。</p>
+
+<p>コマンドの使用感からすると、<a href="https://docs.docker.com/engine/swarm/">DockerのSwarmモード</a>でのクラスタ構築の容易さをKubernetesに取り込むことを目指して開発されている気がした。</p>
+
+<p>ネットで見かけた評判だと、確かに簡単にクラスタ構築できて素晴らしいけど、TLSの証明書生成など、細かく制御できなくて困るところがあって、やはり本番に使えるレベルではないとのこと。</p>
+
+<p>まあとにかく試してみる価値はあろう。</p>
+
+<h2 id="kubeadmインストール">kubeadmインストール</h2>
+
+<p><a href="https://kubernetes.io/docs/setup/independent/install-kubeadm/">Kubernetesのドキュメント</a>に従ってkubeadmをインストールする。
+バージョンは最新版の1.8.1。</p>
+
+<h3 id="vm作成">VM作成</h3>
+
+<p>kubeadmのサポートOSは、Ubuntu 16.04+、Debian 9、CentOS 7、RHEL 7、Fedora 25/26、HypriotOS v1.0.1+となっている。
+慣れているCentOS 7を使うことにする。
+(HypriotOSってなんだろう?)</p>
+
+<p>自前のノートPCのWindows 10 x64 Home Edition上のVMware Player 12のVMにCentOS 7を入れた。
+メモリは1GB以上が要件なので、味を付けて1.4GBで。
+VM間で通信できることって要件があったけど、インターネット接続も必要なはずなので、NICはNATのやつで。</p>
+
+<p>このVMはMasterになる。</p>
+
+<h3 id="os設定">OS設定</h3>
+
+<p><a href="https://kubernetes.io/docs/setup/independent/install-kubeadm/#check-required-ports">Kubernetesが使うポート</a>をいろいろ開けなければいけないんだけど、めんどいのでfirewalldを無効にする。</p>
+
+<pre><code class="language-sh">[root@localhost ~]# systemctl stop firewalld
+[root@localhost ~]# systemctl disable firewalld
+Removed symlink /etc/systemd/system/multi-user.target.wants/firewalld.service.
+Removed symlink /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service.
+</code></pre>
+
+<p><br></p>
+
+<p>なんとなくIPアドレスをDHCPから静的割り当てに。(192.168.171.200)</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# nmcli c modify ens33 ipv4.method manual
+[root@k8s-master ~]# nmcli c modify ens33 ipv4.addresses 192.168.171.200/24
+[root@k8s-master ~]# nmcli c modify ens33 ipv4.dns 192.168.171.2
+[root@k8s-master ~]# nmcli c modify ens33 ipv4.gateway 192.168.171.2
+[root@k8s-master ~]# systemctl restart network
+</code></pre>
+
+<p><br></p>
+
+<p>ホスト名をlocalhost.localdomainからk8s-masterに変更。</p>
+
+<pre><code class="language-sh">[root@localhost ~]# hostnamectl set-hostname k8s-master
+</code></pre>
+
+<p>ログアウトログインで反映。</p>
+
+<p><br></p>
+
+<p><code>/etc/hosts</code>を編集して、k8s-masterのエントリを追加。
+あとで作るもう一つのVM、k8s-nodeのほうもエントリを追加。</p>
+
+<p><br></p>
+
+<p>クラスタを構成するノードは、一意のMACアドレスとproduct_uuidを持っていないといけない。
+Kubernetesがそれらでクラスタ内のノードを区別してるので。</p>
+
+<p>MACアドレスは<code>ip link</code>コマンドなどで確認できる。</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# ip link
+1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+2: ens33: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP mode DEFAULT qlen 1000
+    link/ether 00:0c:29:38:de:ae brd ff:ff:ff:ff:ff:ff
+</code></pre>
+
+<p>product_uuidは、<a href="https://ja.wikipedia.org/wiki/SMBIOS">SMBIOS</a>という、PC固有のデータを保存・参照するための仕様があって、それに従って保存されたシステムの識別子らしい。
+product_uuidは<code>dmidecode</code>コマンドなどで確認できる。</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# dmidecode -s system-uuid
+58114D56-A744-3610-C3C5-9B15A838DEAE
+</code></pre>
+
+<p><br></p>
+
+<p>kubeletがちゃんと動くためにはswapを無効にする必要がある。</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# swapoff -a
+</code></pre>
+
+<p>(このコマンドはよくなかった。詳細は後述。)</p>
+
+<p><br></p>
+
+<p>ebtablesとethtoolを入れる必要がある。</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# yum install -y ebtables ethtool
+</code></pre>
+
+<p><br></p>
+
+<p>Dockerも入れないと。
+v1.12が推奨で、v1.11かv1.13でもいい。
+適当に入れたらv1.12.6だった。</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# yum install -y docker
+[root@k8s-master ~]# systemctl enable docker &amp;&amp; systemctl start docker
+</code></pre>
+
+<p><br></p>
+
+<p>Podネットワークなどが機能する要件として、コンテナがホストファイルシステムにアクセスできる必要があるが、そのためには現状、SELinuxを無効化する必要がある。</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# setenforce 0
+</code></pre>
+
+<p>(このコマンドもよくなかった。詳細は後述。)</p>
+
+<p><br></p>
+
+<p>RHEL系の場合、iptablesがバイパスされてトラフィックが変にルーティングされる問題があるため、<code>net.bridge.bridge-nf-call-iptables</code>を1にセットしておく必要がある。</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# cat &lt;&lt;EOF &gt;  /etc/sysctl.d/k8s.conf
+&gt; net.bridge.bridge-nf-call-ip6tables = 1
+&gt; net.bridge.bridge-nf-call-iptables = 1
+&gt; EOF
+[root@k8s-master ~]# sysctl --system
+* Applying /usr/lib/sysctl.d/00-system.conf ...
+net.bridge.bridge-nf-call-ip6tables = 0
+net.bridge.bridge-nf-call-iptables = 0
+net.bridge.bridge-nf-call-arptables = 0
+* Applying /usr/lib/sysctl.d/10-default-yama-scope.conf ...
+kernel.yama.ptrace_scope = 0
+* Applying /usr/lib/sysctl.d/50-default.conf ...
+kernel.sysrq = 16
+kernel.core_uses_pid = 1
+net.ipv4.conf.default.rp_filter = 1
+net.ipv4.conf.all.rp_filter = 1
+net.ipv4.conf.default.accept_source_route = 0
+net.ipv4.conf.all.accept_source_route = 0
+net.ipv4.conf.default.promote_secondaries = 1
+net.ipv4.conf.all.promote_secondaries = 1
+fs.protected_hardlinks = 1
+fs.protected_symlinks = 1
+* Applying /usr/lib/sysctl.d/99-docker.conf ...
+fs.may_detach_mounts = 1
+* Applying /etc/sysctl.d/99-sysctl.conf ...
+* Applying /etc/sysctl.d/k8s.conf ...
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+* Applying /etc/sysctl.conf ...
+</code></pre>
+
+<p><br></p>
+
+<p>Cgroup Driverを、Dockerとkubeletとの間で一致させておく必要がある。
+以下のようにして確認できる。</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# cat /etc/systemd/system/kubelet.service.d/10-kubeadm.conf | grep KUBELET_CGROUP_ARGS
+Environment=&quot;KUBELET_CGROUP_ARGS=--cgroup-driver=systemd&quot;
+ExecStart=/usr/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_SYSTEM_PODS_ARGS $KUBELET_NETWORK_ARGS $KUBELET_DNS_ARGS $KUBELET_AUTHZ_ARGS $KUBELET_CADVISOR_ARGS $KUBELET_CGROUP_ARGS $KUBELET_CERTIFICATE_ARGS $KUBELET_EXTRA_ARGS
+[root@k8s-master ~]# docker info |grep -i cgroup
+ WARNING: Usage of loopback devices is strongly discouraged for production use. Use `--storage-opt dm.thinpooldev` to specify a custom block storage device.
+Cgroup Driver: systemd
+</code></pre>
+
+<p>どっちもsystemdだったので問題なし。
+(違ってたら<a href="https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/#troubleshooting"><code>KUBELET_CGROUP_ARGS</code>を変更する必要がある</a>。)</p>
+
+<h3 id="kubelet-kubeadm-kubectlインストール">kubelet、kubeadm、kubectlインストール</h3>
+
+<p>ここでやっとkubeadmのインストール。
+kubeletとkubectlも一緒にインストールする。
+(Masterにもkubelet要るのか…)</p>
+
+<p>まずYUMリポジトリを追加して、</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# cat &lt;&lt;EOF &gt; /etc/yum.repos.d/kubernetes.repo
+&gt; [kubernetes]
+&gt; name=Kubernetes
+&gt; baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+&gt; enabled=1
+&gt; gpgcheck=1
+&gt; repo_gpgcheck=1
+&gt; gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+&gt;         https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+&gt; EOF
+</code></pre>
+
+<p>インストール。</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# yum install kubelet kubeadm kubectl
+</code></pre>
+
+<p>で、kubeletをサービス登録。</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# systemctl enable kubelet &amp;&amp; systemctl start kubelet
+Created symlink from /etc/systemd/system/multi-user.target.wants/kubelet.service to /etc/systemd/system/kubelet.service.
+</code></pre>
+
+<p><br></p>
+
+<p>ここでVMのスナップショットをとっておいて、後でNode作るときに使う。</p>
+
+<h2 id="master構築">Master構築</h2>
+
+<p>Masterは<code>kubeadm init</code>で構築できる。
+<code>--apiserver-advertise-address</code>でkube-apiserverがlistenするIPアドレスを指定すべし。</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# kubeadm init --apiserver-advertise-address=192.168.171.200
+[kubeadm] WARNING: kubeadm is in beta, please do not use it for production clusters.
+[init] Using Kubernetes version: v1.8.1
+[init] Using Authorization modes: [Node RBAC]
+[preflight] Running pre-flight checks
+[preflight] WARNING: Running with swap on is not supported. Please disable swap or set kubelet's --fail-swap-on flag to false.
+[kubeadm] WARNING: starting in 1.8, tokens expire after 24 hours by default (if you require a non-expiring token use --token-ttl 0)
+[certificates] Generated ca certificate and key.
+[certificates] Generated apiserver certificate and key.
+[certificates] apiserver serving cert is signed for DNS names [k8s-master kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local] and IPs [10.96.0.1 192.168.171.200]
+[certificates] Generated apiserver-kubelet-client certificate and key.
+[certificates] Generated sa key and public key.
+[certificates] Generated front-proxy-ca certificate and key.
+[certificates] Generated front-proxy-client certificate and key.
+[certificates] Valid certificates and keys now exist in &quot;/etc/kubernetes/pki&quot;
+[kubeconfig] Wrote KubeConfig file to disk: &quot;admin.conf&quot;
+[kubeconfig] Wrote KubeConfig file to disk: &quot;kubelet.conf&quot;
+[kubeconfig] Wrote KubeConfig file to disk: &quot;controller-manager.conf&quot;
+[kubeconfig] Wrote KubeConfig file to disk: &quot;scheduler.conf&quot;
+[controlplane] Wrote Static Pod manifest for component kube-apiserver to &quot;/etc/kubernetes/manifests/kube-apiserver.yaml&quot;
+[controlplane] Wrote Static Pod manifest for component kube-controller-manager to &quot;/etc/kubernetes/manifests/kube-controller-manager.yaml&quot;
+[controlplane] Wrote Static Pod manifest for component kube-scheduler to &quot;/etc/kubernetes/manifests/kube-scheduler.yaml&quot;
+[etcd] Wrote Static Pod manifest for a local etcd instance to &quot;/etc/kubernetes/manifests/etcd.yaml&quot;
+[init] Waiting for the kubelet to boot up the control plane as Static Pods from directory &quot;/etc/kubernetes/manifests&quot;
+[init] This often takes around a minute; or longer if the control plane images have to be pulled.
+[kubelet-check] It seems like the kubelet isn't running or healthy.
+[kubelet-check] The HTTP call equal to 'curl -sSL http://localhost:10255/healthz' failed with error: Get http://localhost:10255/healthz: dial tcp [::1]:10255: getsockopt: connection refused.
+[kubelet-check] It seems like the kubelet isn't running or healthy.
+[kubelet-check] The HTTP call equal to 'curl -sSL http://localhost:10255/healthz' failed with error: Get http://localhost:10255/healthz: dial tcp [::1]:10255: getsockopt: connection refused.
+[kubelet-check] It seems like the kubelet isn't running or healthy.
+[kubelet-check] The HTTP call equal to 'curl -sSL http://localhost:10255/healthz' failed with error: Get http://localhost:10255/healthz: dial tcp [::1]:10255: getsockopt: connection refused.
+[kubelet-check] It seems like the kubelet isn't running or healthy.
+[kubelet-check] The HTTP call equal to 'curl -sSL http://localhost:10255/healthz/syncloop' failed with error: Get http://localhost:10255/healthz/syncloop: dial tcp [::1]:10255: getsockopt: connection refused.
+[kubelet-check] It seems like the kubelet isn't running or healthy.
+[kubelet-check] The HTTP call equal to 'curl -sSL http://localhost:10255/healthz/syncloop' failed with error: Get http://localhost:10255/healthz/syncloop: dial tcp [::1]:10255: getsockopt: connection refused.
+[kubelet-check] It seems like the kubelet isn't running or healthy.
+[kubelet-check] The HTTP call equal to 'curl -sSL http://localhost:10255/healthz/syncloop' failed with error: Get http://localhost:10255/healthz/syncloop: dial tcp [::1]:10255: getsockopt: connection refused.
+[kubelet-check] It seems like the kubelet isn't running or healthy.
+[kubelet-check] The HTTP call equal to 'curl -sSL http://localhost:10255/healthz' failed with error: Get http://localhost:10255/healthz: dial tcp [::1]:10255: getsockopt: connection refused.
+[kubelet-check] It seems like the kubelet isn't running or healthy.
+[kubelet-check] The HTTP call equal to 'curl -sSL http://localhost:10255/healthz/syncloop' failed with error: Get http://localhost:10255/healthz/syncloop: dial tcp [::1]:10255: getsockopt: connection refused.
+[kubelet-check] It seems like the kubelet isn't running or healthy.
+[kubelet-check] The HTTP call equal to 'curl -sSL http://localhost:10255/healthz' failed with error: Get http://localhost:10255/healthz: dial tcp [::1]:10255: getsockopt: connection refused.
+
+Unfortunately, an error has occurred:
+        timed out waiting for the condition
+
+This error is likely caused by that:
+        - The kubelet is not running
+        - The kubelet is unhealthy due to a misconfiguration of the node in some way (required cgroups disabled)
+        - There is no internet connection; so the kubelet can't pull the following control plane images:
+                - gcr.io/google_containers/kube-apiserver-amd64:v1.8.1
+                - gcr.io/google_containers/kube-controller-manager-amd64:v1.8.1
+                - gcr.io/google_containers/kube-scheduler-amd64:v1.8.1
+
+You can troubleshoot this for example with the following commands if you're on a systemd-powered system:
+        - 'systemctl status kubelet'
+        - 'journalctl -xeu kubelet'
+couldn't initialize a Kubernetes cluster
+</code></pre>
+
+<p>なんか失敗した。
+<code>getsockopt: connection refused.</code>ってのがたくさん出てる。
+ググると、swapがあやしい。
+確認してみたら、</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# swapon -s
+Filename                                Type            Size    Used    Priority
+/dev/dm-1                               partition       2097148 0       -1
+</code></pre>
+
+<p>無効になってない。
+<code>swapoff -a</code>でswap無効にしても、OS再起動したらもとに戻ってしまうのか。</p>
+
+<p>永続的に無効にするため、<code>/etc/fstab</code>を編集して、以下の行を削除した。</p>
+
+<pre><code class="language-text">/dev/mapper/centos-swap swap                    swap    defaults        0 0
+</code></pre>
+
+<p>で、OSリブート。</p>
+
+<p><br></p>
+
+<p>kubeadm initをやり直す前に、いったん<code>kubeadm reset</code>して初期化する。</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# kubeadm reset
+[preflight] Running pre-flight checks
+[reset] Stopping the kubelet service
+[reset] Unmounting mounted directories in &quot;/var/lib/kubelet&quot;
+[reset] Removing kubernetes-managed containers
+[reset] Deleting contents of stateful directories: [/var/lib/kubelet /etc/cni/net.d /var/lib/dockershim /var/run/kubernetes /var/lib/etcd]
+[reset] Deleting contents of config directories: [/etc/kubernetes/manifests /etc/kubernetes/pki]
+[reset] Deleting files: [/etc/kubernetes/admin.conf /etc/kubernetes/kubelet.conf /etc/kubernetes/controller-manager.conf /etc/kubernetes/scheduler.conf]
+</code></pre>
+
+<p><br></p>
+
+<p>2回目の<code>kubeadm init</code>。</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# kubeadm init --apiserver-advertise-address=192.168.171.200
+[kubeadm] WARNING: kubeadm is in beta, please do not use it for production clusters.
+[init] Using Kubernetes version: v1.8.1
+[init] Using Authorization modes: [Node RBAC]
+[preflight] Running pre-flight checks
+[preflight] Starting the kubelet service
+[kubeadm] WARNING: starting in 1.8, tokens expire after 24 hours by default (if you require a non-expiring token use --token-ttl 0)
+[certificates] Generated ca certificate and key.
+[certificates] Generated apiserver certificate and key.
+[certificates] apiserver serving cert is signed for DNS names [k8s-master kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local] and IPs [10.96.0.1 192.168.171.200]
+[certificates] Generated apiserver-kubelet-client certificate and key.
+[certificates] Generated sa key and public key.
+[certificates] Generated front-proxy-ca certificate and key.
+[certificates] Generated front-proxy-client certificate and key.
+[certificates] Valid certificates and keys now exist in &quot;/etc/kubernetes/pki&quot;
+[kubeconfig] Wrote KubeConfig file to disk: &quot;admin.conf&quot;
+[kubeconfig] Wrote KubeConfig file to disk: &quot;kubelet.conf&quot;
+[kubeconfig] Wrote KubeConfig file to disk: &quot;controller-manager.conf&quot;
+[kubeconfig] Wrote KubeConfig file to disk: &quot;scheduler.conf&quot;
+[controlplane] Wrote Static Pod manifest for component kube-apiserver to &quot;/etc/kubernetes/manifests/kube-apiserver.yaml&quot;
+[controlplane] Wrote Static Pod manifest for component kube-controller-manager to &quot;/etc/kubernetes/manifests/kube-controller-manager.yaml&quot;
+[controlplane] Wrote Static Pod manifest for component kube-scheduler to &quot;/etc/kubernetes/manifests/kube-scheduler.yaml&quot;
+[etcd] Wrote Static Pod manifest for a local etcd instance to &quot;/etc/kubernetes/manifests/etcd.yaml&quot;
+[init] Waiting for the kubelet to boot up the control plane as Static Pods from directory &quot;/etc/kubernetes/manifests&quot;
+[init] This often takes around a minute; or longer if the control plane images have to be pulled.
+
+Unfortunately, an error has occurred:
+        timed out waiting for the condition
+
+This error is likely caused by that:
+        - The kubelet is not running
+        - The kubelet is unhealthy due to a misconfiguration of the node in some way (required cgroups disabled)
+        - There is no internet connection; so the kubelet can't pull the following control plane images:
+                - gcr.io/google_containers/kube-apiserver-amd64:v1.8.1
+                - gcr.io/google_containers/kube-controller-manager-amd64:v1.8.1
+                - gcr.io/google_containers/kube-scheduler-amd64:v1.8.1
+
+You can troubleshoot this for example with the following commands if you're on a systemd-powered system:
+        - 'systemctl status kubelet'
+        - 'journalctl -xeu kubelet'
+couldn't initialize a Kubernetes cluster
+</code></pre>
+
+<p>また違う感じのエラー。
+エラーメッセージに従って、<code>journalctl -xeu kubelet</code>でログを見てみたら、以下のようなエラーが。</p>
+
+<pre><code class="language-text">Post https://192.168.171.200:6443/api/v1/nodes: dial tcp 192.168.171.200:6443: getsockopt: connection refused
+</code></pre>
+
+<p><a href="https://github.com/kubernetes/kubeadm/issues/228">kubeadmにIssue</a>にこのエラーが載っている。
+原因はいろいろあるっぽいけど、そのひとつにSELinuxがあったので確認してみたら、</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# getenforce
+Enforcing
+</code></pre>
+
+<p>SELinuxが有効になっていた。
+<code>setenforce 0</code>もOS再起動で元に戻ってしまった模様。</p>
+
+<p>永続的にSELinuxを無効にするため、<code>/etc/selinux/config</code>を編集して、<code>SELINUX</code>を<code>disabled</code>にして、OS再起動した。</p>
+
+<p><br></p>
+
+<p>で、<code>kubeadm reset</code>したら3回目の<code>kubeadm init</code>する。</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# kubeadm init --apiserver-advertise-address=192.168.171.200
+[kubeadm] WARNING: kubeadm is in beta, please do not use it for production clusters.
+[init] Using Kubernetes version: v1.8.1
+[init] Using Authorization modes: [Node RBAC]
+[preflight] Running pre-flight checks
+[kubeadm] WARNING: starting in 1.8, tokens expire after 24 hours by default (if you require a non-expiring token use --token-ttl 0)
+[certificates] Generated ca certificate and key.
+[certificates] Generated apiserver certificate and key.
+[certificates] apiserver serving cert is signed for DNS names [k8s-master kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local] and IPs [10.96.0.1 192.168.171.200]
+[certificates] Generated apiserver-kubelet-client certificate and key.
+[certificates] Generated sa key and public key.
+[certificates] Generated front-proxy-ca certificate and key.
+[certificates] Generated front-proxy-client certificate and key.
+[certificates] Valid certificates and keys now exist in &quot;/etc/kubernetes/pki&quot;
+[kubeconfig] Wrote KubeConfig file to disk: &quot;admin.conf&quot;
+[kubeconfig] Wrote KubeConfig file to disk: &quot;kubelet.conf&quot;
+[kubeconfig] Wrote KubeConfig file to disk: &quot;controller-manager.conf&quot;
+[kubeconfig] Wrote KubeConfig file to disk: &quot;scheduler.conf&quot;
+[controlplane] Wrote Static Pod manifest for component kube-apiserver to &quot;/etc/kubernetes/manifests/kube-apiserver.yaml&quot;
+[controlplane] Wrote Static Pod manifest for component kube-controller-manager to &quot;/etc/kubernetes/manifests/kube-controller-manager.yaml&quot;
+[controlplane] Wrote Static Pod manifest for component kube-scheduler to &quot;/etc/kubernetes/manifests/kube-scheduler.yaml&quot;
+[etcd] Wrote Static Pod manifest for a local etcd instance to &quot;/etc/kubernetes/manifests/etcd.yaml&quot;
+[init] Waiting for the kubelet to boot up the control plane as Static Pods from directory &quot;/etc/kubernetes/manifests&quot;
+[init] This often takes around a minute; or longer if the control plane images have to be pulled.
+[apiclient] All control plane components are healthy after 99.510003 seconds
+[uploadconfig]?Storing the configuration used in ConfigMap &quot;kubeadm-config&quot; in the &quot;kube-system&quot; Namespace
+[markmaster] Will mark node k8s-master as master by adding a label and a taint
+[markmaster] Master k8s-master tainted and labelled with key/value: node-role.kubernetes.io/master=&quot;&quot;
+[bootstraptoken] Using token: 957b7b.eaaf0cb656edba7b
+[bootstraptoken] Configured RBAC rules to allow Node Bootstrap tokens to post CSRs in order for nodes to get long term certificate credentials
+[bootstraptoken] Configured RBAC rules to allow the csrapprover controller automatically approve CSRs from a Node Bootstrap Token
+[bootstraptoken] Configured RBAC rules to allow certificate rotation for all node client certificates in the cluster
+[bootstraptoken] Creating the &quot;cluster-info&quot; ConfigMap in the &quot;kube-public&quot; namespace
+[addons] Applied essential addon: kube-dns
+[addons] Applied essential addon: kube-proxy
+
+Your Kubernetes master has initialized successfully!
+
+To start using your cluster, you need to run (as a regular user):
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+You should now deploy a pod network to the cluster.
+Run &quot;kubectl apply -f [podnetwork].yaml&quot; with one of the options listed at:
+  http://kubernetes.io/docs/admin/addons/
+
+You can now join any number of machines by running the following on each node
+as root:
+
+  kubeadm join --token 957b7b.eaaf0cb656edba7b 192.168.171.200:6443 --discovery-token-ca-cert-hash sha256:7d16ade2b651ebac573368b1b4db5c0f1236979584e61833efe90a96ff34ae2e
+</code></pre>
+
+<p>できた。
+このメッセージの最後に書かれたコマンドを、後でNodeをセットアップするときに使う。</p>
+
+<p><br></p>
+
+<p>kubectlがこのVM上のkube-apiserverと話せるように、コンテキストを設定する。</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# mkdir -p $HOME/.kube
+[root@k8s-master ~]# cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+[root@k8s-master ~]# chown $(id -u):$(id -g) $HOME/.kube/config
+[root@k8s-master ~]# kubectl get nodes
+NAME         STATUS     ROLES     AGE       VERSION
+k8s-master   NotReady   master    16m       v1.8.1
+</code></pre>
+
+<h3 id="podネットワークアドオンインストール">Podネットワークアドオンインストール</h3>
+
+<p>Podネットワークはアプリのデプロイの前にセットアップしておく必要がある。
+kubeadmは<a href="https://github.com/containernetworking/cni">CNI</a>ベースのネットワークだけサポートしている。</p>
+
+<p>多くの選択肢があるなか、有名な<a href="https://github.com/coreos/flannel">Flannel</a>にしようと思ったけど、Flannelを使うには
+<code>kubeadm init</code>時に<code>--pod-network-cidr=10.244.0.0/16</code>を渡さないといけなかった。
+やり直すのは面倒なので代わりに<a href="https://www.weave.works/docs/net/latest/kube-addon/">Weave Net</a>にする。</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# export kubever=$(kubectl version | base64 | tr -d '\n')
+[root@k8s-master ~]# kubectl apply -f &quot;https://cloud.weave.works/k8s/net?k8s-version=$kubever&quot;
+serviceaccount &quot;weave-net&quot; created
+clusterrole &quot;weave-net&quot; created
+clusterrolebinding &quot;weave-net&quot; created
+daemonset &quot;weave-net&quot; created
+</code></pre>
+
+<p>これでPodネットワークアドオンインストール完了。
+しばらくして、<code>kube-dns</code>のPodが起動していれば(i.e. STATUSがRunningになってれば)OK。</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# kubectl get pods --all-namespaces
+NAMESPACE     NAME                                 READY     STATUS    RESTARTS   AGE
+kube-system   etcd-k8s-master                      1/1       Running   0          1m
+kube-system   kube-apiserver-k8s-master            1/1       Running   0          1m
+kube-system   kube-controller-manager-k8s-master   1/1       Running   0          1m
+kube-system   kube-dns-545bc4bfd4-xtlnh            3/3       Running   0          6m
+kube-system   kube-proxy-922wk                     1/1       Running   0          6m
+kube-system   kube-scheduler-k8s-master            1/1       Running   0          1m
+kube-system   weave-net-s2kkw                      2/2       Running   0          2m
+</code></pre>
+
+<h3 id="masterにpodをデプロイさせる設定">MasterにPodをデプロイさせる設定</h3>
+
+<p>デフォルトでは、セキュリティの都合でMasterにはPodがデプロイされない。
+VM2個でNode2個にしたいので、この縛りを外しておく。</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# kubectl taint nodes --all node-role.kubernetes.io/master-
+node &quot;k8s-master&quot; untainted
+</code></pre>
+
+<p><br></p>
+
+<p>以上でMasterのセットアップは完了。</p>
+
+<h2 id="node構築">Node構築</h2>
+
+<p>次にNodeを構築する。</p>
+
+<p>MasterのVMで<code>kubeadm init</code>するまえに撮ったスナップショットをクローンして、ホスト名とIPアドレスを変更し、これをNodeのマシン(k8s-node)にする。
+クローンしたらMACアドレスもproduct_uuidも変わったので、問題なく使えそう。</p>
+
+<p>Nodeのセットアップは、このVM上で、<code>kubeadm init</code>成功時のメッセージの最後に表示されたコマンド(i.e. <code>kubeadm join</code>)を実行するだけ。</p>
+
+<pre><code class="language-sh">[root@k8s-node ~]# kubeadm join --token 957b7b.eaaf0cb656edba7b 192.168.171.200:6443 --discovery-token-ca-cert-hash sha256:7d16ade2b651ebac573368b1b4db5c0f1236979584e61833efe90a96ff34ae2e
+[kubeadm] WARNING: kubeadm is in beta, please do not use it for production clusters.
+[preflight] Running pre-flight checks
+[discovery] Trying to connect to API Server &quot;192.168.171.200:6443&quot;
+[discovery] Created cluster-info discovery client, requesting info from &quot;https://192.168.171.200:6443&quot;
+[discovery] Requesting info from &quot;https://192.168.171.200:6443&quot; again to validate TLS against the pinned public key
+[discovery] Cluster info signature and contents are valid and TLS certificate validates against pinned roots, will use API Server &quot;192.168.171.200:6443&quot;
+[discovery] Successfully established connection with API Server &quot;192.168.171.200:6443&quot;
+[bootstrap] Detected server version: v1.8.1
+[bootstrap] The server supports the Certificates API (certificates.k8s.io/v1beta1)
+
+Node join complete:
+* Certificate signing request sent to master and response
+  received.
+* Kubelet informed of new secure connection details.
+
+Run 'kubectl get nodes' on the master to see this machine join.
+</code></pre>
+
+<p>できた。
+MasterでNodeの状態を確認する。</p>
+
+<pre><code class="language-sh">[root@k8s-master ~]# kubectl get nodes
+NAME         STATUS    ROLES     AGE       VERSION
+k8s-master   Ready     master    42m       v1.8.1
+k8s-node     Ready     &lt;none&gt;    45s       v1.8.1
+</code></pre>
+
+<p>MasterもNodeもReady。</p>
+
+<h2 id="vmホストのkubectlの設定">VMホストのkubectlの設定</h2>
+
+<p>kubectlはkube-apiserverのWeb APIを呼ぶコマンドなので、接続先さえちゃんと設定すればMaster上でなくても使える。
+VMのホスト(i.e. Windows 10 PC)で使えるようにしたい。</p>
+
+<p>kubectlの接続先情報は、(多分)<code>kubeadm init</code>時に生成された<code>/etc/kubernetes/admin.conf</code>に書かれているので、これをホストに持ってきてkubectlに渡してやればいい。</p>
+
+<pre><code class="language-cmd">C:\Users\kaitoy\Desktop&gt;kubectl --kubeconfig admin.conf get nodes
+NAME         STATUS    ROLES     AGE       VERSION
+k8s-master   Ready     master    51m       v1.8.1
+k8s-node     Ready     &lt;none&gt;    10m       v1.8.1
+</code></pre>
+
+<p>できた。</p>
+
+<p>admin.confを<code>%UserProfile%\.kube\</code>の下に<code>config</code>という名前で置いてやると、<code>--kubeconfig</code>で指定しなくても読んでくれる。</p>
+
+<h2 id="goslingsデプロイ">Goslingsデプロイ</h2>
+
+<p><a href="https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/#%E7%95%AA%E5%A4%96%E7%B7%A82-%E5%91%BD%E4%BB%A4%E7%9A%84%E3%82%AA%E3%83%96%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88%E8%A8%AD%E5%AE%9A">「Kubernetesのチュートリアルをやる」の番外編</a>で作ったオブジェクト定義ファイルを使って、今回作ったクラスタに<a href="https://www.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/">Goslings</a>をデプロイしてみる。</p>
+
+<pre><code class="language-cmd">C:\Users\kaitoy\Desktop&gt;kubectl --kubeconfig admin.conf create -f deploy_goslings.yml
+deployment &quot;goslings-sample&quot; created
+
+C:\Users\kaitoy\Desktop&gt;kubectl --kubeconfig admin.conf create -f service_goslings.yml
+service &quot;goslings-sample&quot; created
+
+C:\Users\kaitoy\Desktop&gt;kubectl --kubeconfig admin.conf get po -o wide
+NAME                              READY     STATUS    RESTARTS   AGE       IP           NODE
+goslings-sample-dfd84c69c-4mgh9   1/1       Running   0          12m       10.244.1.3   k8s-node
+goslings-sample-dfd84c69c-cd5mm   1/1       Running   0          12m       10.244.0.3   k8s-master
+goslings-sample-dfd84c69c-nwwh7   1/1       Running   0          12m       10.244.1.2   k8s-node
+
+C:\Users\kaitoy\Desktop&gt;kubectl --kubeconfig admin.conf get svc
+NAME              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+goslings-sample   NodePort    10.109.174.204   &lt;none&gt;        8080:30004/TCP   7m
+kubernetes        ClusterIP   10.96.0.1        &lt;none&gt;        443/TCP          1h
+</code></pre>
+
+<p>普通にデプロイできた。
+レプリカ3つがちゃんと2つのNodeに分散されてる。</p>
+
+<p>k8s-masterのIPアドレス( <a href="http://192.168.171.200:30004/">http://192.168.171.200:30004/</a> )でもk8s-nodeのIPアドレス( <a href="http://192.168.171.201:30004/">http://192.168.171.201:30004/</a> )でもGoslingsにつなげた。
+普通はMasterのIPアドレスを使うらしい。
+そりゃそうか。</p>
+
+<p><img src="/images/build-kubernetes-cluster-by-kubeadm/goslings.png" alt="goslings" />
+</p>
+
+<p><br></p>
+
+<p>試しにk8s-nodeのVMを落としてみる。
+k8s-node上のPodがk8s-masterに移動してくれることを期待してたけど、</p>
+
+<pre><code class="language-cmd">C:\Users\kaitoy\Desktop&gt;kubectl --kubeconfig admin.conf get po -o wide
+NAME                              READY     STATUS    RESTARTS   AGE       IP           NODE
+goslings-sample-dfd84c69c-4mgh9   1/1       Running   0          55m       10.244.1.3   k8s-node
+goslings-sample-dfd84c69c-cd5mm   1/1       Running   0          55m       10.244.0.3   k8s-master
+goslings-sample-dfd84c69c-nwwh7   1/1       Running   0          55m       10.244.1.2   k8s-node
+</code></pre>
+
+<p>なんかk8s-nodeで動き続けていることになってる。</p>
+
+<p>クラスタうまく動いていないんだろうか…</p>
+
+<h2 id="ダッシュボードデプロイ">ダッシュボードデプロイ</h2>
+
+<p>Kubernetesクラスタの状態をWeb UIで確認できる、<a href="https://github.com/kubernetes/dashboard">Dashboard</a>をデプロイしてみる。</p>
+
+<pre><code class="language-cmd">C:\Users\kaitoy\Desktop&gt;kubectl --kubeconfig admin.conf apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
+secret &quot;kubernetes-dashboard-certs&quot; created
+serviceaccount &quot;kubernetes-dashboard&quot; created
+role &quot;kubernetes-dashboard-minimal&quot; created
+rolebinding &quot;kubernetes-dashboard-minimal&quot; created
+deployment &quot;kubernetes-dashboard&quot; created
+service &quot;kubernetes-dashboard&quot; created
+</code></pre>
+
+<p>できた。</p>
+
+<p>Dashboardが起動するまでしばらくまってから、<code>kubectl proxy</code>して、
+<code>http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/</code>にブラウザでつなげばGUIが開くはずなんだけど、タイムアウトしてつながらなかった。</p>
+
+<p>クラスタうまく動いていないんだろうか…</p>
+
+<p><br></p>
+
+<p>NICがNATなのがだめだったかもと思い、ブリッジにしてみたけど同じ結果だった。
+PodのフェールオーバーもしないしDashboardも開けない。</p>
+
+<p>ちゃんと一つ一つ自分で構築しないとよく分からないな。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        
+        
+
+        
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-6244473643910448"
+             data-ad-slot="1845600530"
+             data-ad-format="auto"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </aside>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f10%2f21%2fbuild-kubernetes-cluster-by-kubeadm%2f&t=Kubernetes%e3%82%af%e3%83%a9%e3%82%b9%e3%82%bf%e3%82%92%e6%a7%8b%e7%af%89%e3%81%99%e3%82%8b%e3%80%82kubeadm%e3%81%a7%e3%80%82" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f10%2f21%2fbuild-kubernetes-cluster-by-kubeadm%2f&text=Kubernetes%e3%82%af%e3%83%a9%e3%82%b9%e3%82%bf%e3%82%92%e6%a7%8b%e7%af%89%e3%81%99%e3%82%8b%e3%80%82kubeadm%e3%81%a7%e3%80%82&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f10%2f21%2fbuild-kubernetes-cluster-by-kubeadm%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f10%2f21%2fbuild-kubernetes-cluster-by-kubeadm%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f10%2f21%2fbuild-kubernetes-cluster-by-kubeadm%2f&title=Kubernetes%e3%82%af%e3%83%a9%e3%82%b9%e3%82%bf%e3%82%92%e6%a7%8b%e7%af%89%e3%81%99%e3%82%8b%e3%80%82kubeadm%e3%81%a7%e3%80%82" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://www.kaitoy.xyz/tags/kubernetes"><i class="fa fa-tags"></i> kubernetes </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/docker"><i class="fa fa-tags"></i> docker </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/kubeadm"><i class="fa fa-tags"></i> kubeadm </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/08/14/webdriverio-chrome/">WebdriverIOとChromeのヘッドレスモードで自動ブラウザテストするDockerイメージ: webdriverio-chrome</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/07/31/docker-for-windows/">Docker for Windowsがコレジャナかった</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/">Windows Server 2016 TP5でWindows Containersにリトライ</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">Pcap4J Meets Windows Containers</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></li>
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/">
+                  Kubernetesのチュートリアルをやる
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/headless-browser">headless-browser</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubeadm">kubeadm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/license">license</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/selenium">selenium</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/servicenow">servicenow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/test-framework">test-framework</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/webdriverio">webdriverio</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-6244473643910448"
+    data-ad-slot="1845600530"
+    data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2017  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

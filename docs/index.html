@@ -14,9 +14,9 @@
     <link rel="canonical" href="https://www.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="「Kubernetes 1.8が出たので、Minikubeを触ってみる」の続き。 Minikubeのセットアップまではできたので、Kubernetes Basicsというチュートリアルをやりながら、Goslingsをデプロイする。 (adsbygoogle = window.adsbygoogle || []).push({}); Kubernetes Basics - 概要 Kubernetes Basicsは、公式のチュートリアルで、Kubernetesクラスタのオーケストレーションの基本を学ぶことができるもの。 以下の6つのモジュールからなる。 Kubernetesクラスタを作る アプリをデプロイする アプリを調査する アプリを公開する アプリをスケールする アプリをアップデートする チュートリアルで使うのはMinikubeだけど、自分でセットアップする必要はない。 Katacodaという、ブラウザ上でIT技術を学べるプラットフォームがあり、Kubernetes Basicsはそれを利用して、ブラウザ上のターミナルからホステッドMinikubeを操作できるようにしている。 が、前回の記事で自PC上にMinikubeをセットアップしたので、そちらを使うことにする。 Kubernetes Basics - モジュール 1: Kubernetesクラスタを作る Minikubeを起動してkubectlでクラスタの状態をみるだけのモジュール。 これは前回の記事でカバーしている。 Kubernetes Basics - モジュール 2: アプリをデプロイする アプリ(i.e. コンテナ)をデプロイするにはDeploymentオブジェクトを作る。 MasterはDeploymentのspecに従って各ノードにアプリのインスタンスをスケジューリングする。 Deploymentは、アプリが落ちたら再起動してくれる、つまりself-healingも実現する。 Deploymentオブジェクトを作るコマンドはkubectl run &lt;オブジェクト名&gt; --image=&lt;Dockerイメージ名&gt;。 Goslingsをこれでデプロイする。 Goslingsコンテナは3つの引数を受け取り、指定したポートでWebサーバを起動する。 --portオプションでそのポートをexposeするようにして、--の後にコンテナに渡す引数を記述する。 C:\Users\kaitoy&gt;kubectl run goslings --image=kaitoy/goslings:latest --port 8080 -- 8080 /tmp https://github.com/kaitoy/ deployment &quot;goslings&quot; created C:\Users\kaitoy&gt;kubectl get deployment NAME DESIRED CURRENT UP-TO-DATE AVAILABLE AGE goslings 1 1 1 1 27s デプロイできた。 裏でPodも作られていて、アプリが起動されている。 C:\Users\kaitoy&gt;kubectl get pods NAME READY STATUS RESTARTS AGE goslings-1210510689-6w5tf 0/1 ContainerCreating 0 1m (kubectl getに指定するのは、省略形のdeployとかpoでもいい。) Podは隔離されたネットワークで動くので、そのままではPod同士は通信できるけど、外からはアクセスできない。 kubectlでプロキシを作ってやることで、外からアクセスできるようになる。 C:\Users\kaitoy&gt;kubectl proxy Starting to serve on 127.0.0.1:8001 これで、kube-apiserverへのプロキシがローカルホストで起動した。 この状態でhttp://localhost:8001を開くと、kube-apiserverのAPI一覧が見れる。 例えば、http://localhost:8001/versionにアクセスすると、以下のJSONデータが返ってくる。 { &quot;major&quot;: &quot;1&quot;, &quot;minor&quot;: &quot;7&quot;, &quot;gitVersion&quot;: &quot;v1.7.0&quot;, &quot;gitCommit&quot;: &quot;d3ada0119e776222f11ec7945e6d860061339aad&quot;, &quot;gitTreeState&quot;: &quot;dirty&quot;, &quot;buildDate&quot;: &quot;2017-10-04T09:25:40Z&quot;, &quot;goVersion&quot;: &quot;go1.8.3&quot;, &quot;compiler&quot;: &quot;gc&quot;, &quot;platform&quot;: &quot;linux/amd64&quot; } 各Podへも以下のURLでアクセスできる。 http://localhost:8001/api/v1/proxy/namespaces/default/pods/&lt;Pod名&gt;/ Pod名の部分はkubectl getで確認できる。 C:\Users\kaitoy&gt;kubectl get po NAME READY STATUS RESTARTS AGE goslings-1210510689-6w5tf 1/1 Running 0 24m 実際に、http://localhost:8001/api/v1/proxy/namespaces/default/pods/goslings-1210510689-6w5tf/をブラウザで開いたら、GoslingsのGUIが出た。 ヒュー。 Kubernetes Basics - モジュール 3: アプリを調査する 以下のコマンドで、アプリの状態を調査するモジュール。 kubectl get: リソースをリスト表示する。 kubectl describe: リソースの詳細情報を表示する。 kubectl logs: コンテナのログを表示する。docker logs的な。 kubectl exec: コンテナ内でコマンドを実行する。docker exec的な。 kubectl getはさんざんやったので飛ばして、kubectl describeしてみる。 C:\Users\kaitoy&gt;kubectl describe po Name: goslings-1210510689-6w5tf Namespace: default Node: minikube/192.168.99.100 Start Time: Tue, 10 Oct 2017 21:51:48 &#43;0900 Labels: pod-template-hash=1210510689 run=goslings Annotations: kubernetes.io/created-by={&quot;kind&quot;:&quot;SerializedReference&quot;,&quot;apiVersion&quot;:&quot;v1&quot;,&quot;reference&quot;:{&quot;kind&quot;:&quot;ReplicaSet&quot;,&quot;namespace&quot;:&quot;default&quot;,&quot;name&quot;:&quot;goslings-1210510689&quot;,&quot;uid&quot;:&quot;c74b6518-adb9-11e7-88a0-08002798178d...">
+    <meta property="og:description" content="「Kubernetes 1.8が出たので、Minikubeを触ってみる」でMinikubeをやったんだけど、もう一歩ステップアップすべく、kubeadmでKubernetesクラスタを組んでみた話。 いまいち上手くいかなかった。 (adsbygoogle = window.adsbygoogle || []).push({}); kubeadmとは kubeadmはKubernetesに含まれるコマンドで、Kubernetesクラスタを簡単に構築するツール。 Kubernetes 1.8の時点でまだベータで、本番環境には使わないでとなっている。 Qiitaの「kubeadmが何をやっているのかみてみた」という記事が、中でどんな動作をしてるかを解説していて参考になる。 コマンドの使用感からすると、DockerのSwarmモードでのクラスタ構築の容易さをKubernetesに取り込むことを目指して開発されている気がした。 ネットで見かけた評判だと、確かに簡単にクラスタ構築できて素晴らしいけど、TLSの証明書生成など、細かく制御できなくて困るところがあって、やはり本番に使えるレベルではないとのこと。 まあとにかく試してみる価値はあろう。 kubeadmインストール Kubernetesのドキュメントに従ってkubeadmをインストールする。 バージョンは最新版の1.8.1。 VM作成 kubeadmのサポートOSは、Ubuntu 16.04&#43;、Debian 9、CentOS 7、RHEL 7、Fedora 25/26、HypriotOS v1.0.1&#43;となっている。 慣れているCentOS 7を使うことにする。 (HypriotOSってなんだろう?) 自前のノートPCのWindows 10 x64 Home Edition上のVMware Player 12のVMにCentOS 7を入れた。 メモリは1GB以上が要件なので、味を付けて1.4GBで。 VM間で通信できることって要件があったけど、インターネット接続も必要なはずなので、NICはNATのやつで。 このVMはMasterになる。 OS設定 Kubernetesが使うポートをいろいろ開けなければいけないんだけど、めんどいのでfirewalldを無効にする。 [root@localhost ~]# systemctl stop firewalld [root@localhost ~]# systemctl disable firewalld Removed symlink /etc/systemd/system/multi-user.target.wants/firewalld.service. Removed symlink /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service. なんとなくIPアドレスをDHCPから静的割り当てに。(192.168.171.200) [root@k8s-master ~]# nmcli c modify ens33 ipv4.method manual [root@k8s-master ~]# nmcli c modify ens33 ipv4.addresses 192.168.171.200/24 [root@k8s-master ~]# nmcli c modify ens33 ipv4.dns 192.168.171.2 [root@k8s-master ~]# nmcli c modify ens33 ipv4.gateway 192.168.171.2 [root@k8s-master ~]# systemctl restart network ホスト名をlocalhost.localdomainからk8s-masterに変更。 [root@localhost ~]# hostnamectl set-hostname k8s-master ログアウトログインで反映。 /etc/hostsを編集して、k8s-masterのエントリを追加。 あとで作るもう一つのVM、k8s-nodeのほうもエントリを追加。 クラスタを構成するノードは、一意のMACアドレスとproduct_uuidを持っていないといけない。 Kubernetesがそれらでクラスタ内のノードを区別してるので。 MACアドレスはip linkコマンドなどで確認できる。 [root@k8s-master ~]# ip link 1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT qlen 1 link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00 2: ens33: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP mode DEFAULT qlen 1000 link/ether 00:0c:29:38:de:ae brd ff:ff:ff:ff:ff:ff product_uuidは、SMBIOSという、PC固有のデータを保存・参照するための仕様があって、それに従って保存されたシステムの識別子らしい。 product_uuidはdmidecodeコマンドなどで確認できる。 [root@k8s-master ~]# dmidecode -s system-uuid 58114D56-A744-3610-C3C5-9B15A838DEAE kubeletがちゃんと動くためにはswapを無効にする必要がある。 [root@k8s-master ~]# swapoff -a (このコマンドはよくなかった。詳細は後述。) ebtablesとethtoolを入れる必要がある。 [root@k8s-master ~]# yum install -y ebtables ethtool Dockerも入れないと。 v1.12が推奨で、v1.11かv1.13でもいい。 適当に入れたらv1.12.6だった。 [root@k8s-master ~]# yum install -y docker [root@k8s-master ~]# systemctl enable docker &amp;&amp; systemctl start docker Podネットワークなどが機能する要件として、コンテナがホストファイルシステムにアクセスできる必要があるが、そのためには現状、SELinuxを無効化する必要がある。 [root@k8s-master ~]# setenforce 0 (このコマンドもよくなかった。詳細は後述。) RHEL系の場合、iptablesがバイパスされてトラフィックが変にルーティングされる問題があるため、net.bridge.bridge-nf-call-iptablesを1にセットしておく必要がある。 [root@k8s-master ~]# cat &lt;&lt;EOF &gt; /etc/sysctl.d/k8s.conf &gt; net.bridge.bridge-nf-call-ip6tables = 1 &gt; net.bridge.bridge-nf-call-iptables = 1 &gt; EOF [root@k8s-master ~]# sysctl --system * Applying /usr/lib/sysctl.d/00-system.conf ...">
     
-    <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes_goslings.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
     
     
     
@@ -82,6 +82,28 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sat, Oct 21, 2017</span>
+              </div>
+              <h2 class="title">Kubernetesクラスタを構築する。kubeadmで。</h2>
+              <div class="summary">
+                「Kubernetes 1.8が出たので、Minikubeを触ってみる」でMinikubeをやったんだけど、もう一歩ステップアップすべく、kubeadmでKubernetesクラスタを組んでみた話。 いまいち上手くいかなかった。 (adsbygoogle = window.adsbygoogle || []).push({}); kubeadmとは kubeadmはKubernetesに含まれるコマンドで、Kubernetesクラスタを簡単に構築するツール。 Kubernetes 1.8の時点でまだベータで、本番環境には使わないでとなっている。 Qiitaの「kubeadmが何をやっているのかみてみた」という記事が、中でどんな動作をしてるかを解説していて参考になる。 コマンドの使用感からすると、DockerのSwarmモードでのクラスタ構築の容易さをKubernetesに取り込むことを目指して開発されている気がした。 ネットで見かけた評判だと、確かに簡単にクラスタ構築できて素晴らしいけど、TLSの証明書生成など、細かく制御できなくて困るところがあって、やはり本番に使えるレベルではないとのこと。 まあとにかく試してみる価値はあろう。 kubeadmインストール Kubernetesのドキュメントに従ってkubeadmをインストールする。 バージョンは最新版の1.8.1。 VM作成 kubeadmのサポートOSは、Ubuntu 16.04+、Debian 9、CentOS 7、RHEL 7、Fedora 25/26、HypriotOS v1.0.1+となっている。 慣れているCentOS 7を使うことにする。 (HypriotOSってなんだろう?) 自前のノートPCのWindows 10 x64 Home Edition上のVMware Player 12のVMにCentOS 7を入れた。 メモリは1GB以上が要件なので、味を付けて1.4GBで。 VM間で通信できることって要件があったけど、インターネット接続も必要なはずなので、NICはNATのやつで。 このVMはMasterになる。 OS設定 Kubernetesが使うポートをいろいろ開けなければいけないんだけど、めんどいのでfirewalldを無効にする。 [root@localhost ~]# systemctl stop firewalld [root@localhost ~]# systemctl disable firewalld Removed symlink /etc/systemd/system/multi-user.target.wants/firewalld.service. Removed symlink /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service. なんとなくIPアドレスをDHCPから静的割り当てに。(192.168.171.200) [root@k8s-master ~]# nmcli c modify ens33 ipv4.method manual [root@k8s-master ~]# nmcli c modify ens33 ipv4.addresses 192.168.171.200/24 [root@k8s-master ~]# nmcli c modify ens33 ipv4.dns 192.168.171.2 [root@k8s-master ~]# nmcli c modify ens33 ipv4.gateway 192.168.171.2 [root@k8s-master ~]# systemctl restart network ホスト名をlocalhost.localdomainからk8s-masterに変更。 [root@localhost ~]# hostnamectl set-hostname k8s-master ログアウトログインで反映。 /etc/hostsを編集して、k8s-masterのエントリを追加。 あとで作るもう一つのVM、k8s-nodeのほうもエントリを追加。 クラスタを構成するノードは、一意のMACアドレスとproduct_uuidを持っていないといけない。 Kubernetesがそれらでクラスタ内のノードを区別してるので。 MACアドレスはip linkコマンドなどで確認できる。 [root@k8s-master ~]# ip link 1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT qlen 1 link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00 2: ens33: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP mode DEFAULT qlen 1000 link/ether 00:0c:29:38:de:ae brd ff:ff:ff:ff:ff:ff product_uuidは、SMBIOSという、PC固有のデータを保存・参照するための仕様があって、それに従って保存されたシステムの識別子らしい。 product_uuidはdmidecodeコマンドなどで確認できる。 [root@k8s-master ~]# dmidecode -s system-uuid 58114D56-A744-3610-C3C5-9B15A838DEAE kubeletがちゃんと動くためにはswapを無効にする必要がある。 [root@k8s-master ~]# swapoff -a (このコマンドはよくなかった。詳細は後述。) ebtablesとethtoolを入れる必要がある。 [root@k8s-master ~]# yum install -y ebtables ethtool Dockerも入れないと。 v1.12が推奨で、v1.11かv1.13でもいい。 適当に入れたらv1.12.6だった。 [root@k8s-master ~]# yum install -y docker [root@k8s-master ~]# systemctl enable docker &amp;&amp; systemctl start docker Podネットワークなどが機能する要件として、コンテナがホストファイルシステムにアクセスできる必要があるが、そのためには現状、SELinuxを無効化する必要がある。 [root@k8s-master ~]# setenforce 0 (このコマンドもよくなかった。詳細は後述。) RHEL系の場合、iptablesがバイパスされてトラフィックが変にルーティングされる問題があるため、net.bridge.bridge-nf-call-iptablesを1にセットしておく必要がある。 [root@k8s-master ~]# cat &lt;&lt;EOF &gt; /etc/sysctl.d/k8s.conf &gt; net.bridge.bridge-nf-call-ip6tables = 1 &gt; net.bridge.bridge-nf-call-iptables = 1 &gt; EOF [root@k8s-master ~]# sysctl --system * Applying /usr/lib/sysctl.d/00-system.conf ...
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/kubernetes_goslings.png" alt="eyecatch">
@@ -142,33 +164,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2017/08/14/webdriverio-chrome/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2017/08/14/webdriverio-chrome/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/servicenow-webdriverio.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Mon, Aug 14, 2017</span>
               </div>
-              <h2 class="title">WebdriverIOとChromeのヘッドレスモードで自動ブラウザテストするDockerイメージ: webdriverio-chrome</h2>
-              <div class="summary">
-                「2017年夏、ブラウザテストフレームワーク」の続き。 ServiceNowアプリケーションのブラウザテストをしたくて色々調べている。 前回は、フレームワークにWebdriverIOを使うと決めたところまで書いた。 今回、最終的に、WebdriverIO、WDIO、selenium-standalone、Jasmineと、Chromeのヘッドレスモードを使って、Dockerコンテナ(Alpine Linux)上でテストスクリプトを実行して、ServiceNowのログイン画面のスクリーンショットが取れるところまでできた。 そのコンテナイメージのDockerfileはGitHubに置いた。 (adsbygoogle = window.adsbygoogle || []).push({}); とりあえずAlpine Linux テスト環境の作成は自宅でやってるけど、DockerイメージにしてDocker Hubとかに上げておけば、社内でダウンロードしてそのまま再現できる。 ダウンロードに係る社内手続きも、Dockerイメージだけに対してやればいいので、中に何を詰め込んでも、後でライブラリとか追加しても、一回こっきりで済む。 というわけでとりあえず、自PC(Windows 10 Home)に入ってるVMware Workstation Player 12.5.5でCentOS 7 x64のVMを作り、Dockerをインストールして、Alpine Linuxをpullした。 $ docker pull alpine:edge Alpine LinuxはBusyBoxとmusl libcで構成された軽量な Linuxディストリビューション。 2016年2月にすべてのオフィシャルDockerイメージがAlpine Linuxベースになるというアナウンスがあったし、他にそれっぽいものもなかったので、これをベースに環境を作ることにした。 glibcじゃないのがちょっと気になるけど、まあ問題ないか。 現在、Chrome 59のAlpine Linuxパッケージがedgeブランチで作られているので、Alpine Linuxはedge(i.e. 開発中のバージョン)をpullした。 (因みに現時点でAlpine Linuxのlatestは3.6。) で、起動。 $ docker run -it alpine:edge sh Chrome(Chromium)インストール まずはChrome(がAlpine Linuxパッケージにはないので、実際にはChromium)と、ついでにChromeDriverをインストールする。 Alpine Linux独自のパッケージマネージャーであるapkを使う。 / # apk add --update chromium chromium-chromedriver / # chromium-browser -version Chromium 59.0.3071.115 無事インストールできた。 この記事を参考にヘッドレスモードで実行してみる。 ヘッドレスモードにするために--headlessを付けて、一時的な制限事項で--disable-gpuを付ける必要があって、コンテナの権限不足を回避するために--no-sandboxを付ける。 (コンテナの権限不足回避には他に、docker runに--privilegedや--cap-add=SYS_ADMIN付ける方法がある。) / # chromium-browser --headless --no-sandbox --disable-gpu https://example.com/ [0811/145902.894023:WARNING:dns_config_service_posix.cc(326)] Failed to read DnsConfig.
-              </div>
+              <h3 class="title">WebdriverIOとChromeのヘッドレスモードで自動ブラウザテストするDockerイメージ: webdriverio-chrome</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         
@@ -1434,6 +1453,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubeadm">kubeadm</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
