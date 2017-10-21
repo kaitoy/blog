@@ -11,8 +11,6 @@ title = "Kubernetes1.8のクラスタを構築する。kubeadmで。"
 
 「[Kubernetes 1.8が出たので、Minikubeを触ってみる](https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/)」でMinikubeをやったんだけど、もう一歩ステップアップすべく、[kubeadm](https://kubernetes.io/docs/admin/kubeadm/)でKubernetesクラスタを組んでみた話。
 
-いまいち上手くいかなかった。
-
 {{< google-adsense >}}
 
 ## kubeadmとは
@@ -77,6 +75,7 @@ Removed symlink /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service.
 
 `/etc/hosts`を編集して、k8s-masterのエントリを追加。
 あとで作るもう一つのVM、k8s-nodeのほうもエントリを追加。
+(これはだめだったっぽい。詳細は後述。)
 
 <br>
 
@@ -654,3 +653,8 @@ NICがNATなのがだめだったかもと思い、ブリッジにしてみた�
 PodのフェールオーバーもしないしDashboardも開けない。
 
 ちゃんと一つ一つ自分で構築しないとよく分からないな。
+
+<br>
+
+あとでふと思い立って、`/etd/hosts`をいじったらDashboardは動いた。
+それについてはまた別の記事で。
