@@ -40,7 +40,7 @@ Kubernetesの[アーキテクチャ](https://github.com/kubernetes/community/blo
 
 Master上では[kube-apiserver](https://kubernetes.io/docs/admin/kube-apiserver/)が動き、[Kubernetes API](https://kubernetes.io/docs/concepts/overview/kubernetes-api/)というREST APIを公開する。
 このAPIを通して[Kubernetesオブジェクト](https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/)を定義したりすることで、宣言的にコンテナの管理ができる仕組み。
-ユーザは普通、[kubectl](https://kubernetes.io/docs/user-guide/kubectl/)というコマンドでkube-apiserverとやり取りする。
+ユーザは普通、[kubectl](https://kubernetes.io/docs/user-guide/kubectl/)(キューブシーティーエル)というコマンドでkube-apiserverとやり取りする。
 
 KubernetesオブジェクトはMaster上の[etcd](https://github.com/coreos/etcd)によって分散キーバリューストアに永続化され、そのストアを[kube-controller-manager](https://kubernetes.io/docs/admin/kube-controller-manager/)と[kube-scheduler](https://kubernetes.io/docs/admin/kube-scheduler/)がwatchしてて、変更に応じた処理をする。
 
@@ -54,7 +54,7 @@ kube-schedulerは、コンテナを実行するホストを選出し、コンテ
 
 <br>
 
-一方、各Nodeでは、[kubelet](https://kubernetes.io/docs/admin/kubelet/)というMasterのエージェントになるプロセスが動く。
+一方、各Nodeでは、[kubelet](https://kubernetes.io/docs/admin/kubelet/)(キューブレット)というMasterのエージェントになるプロセスが動く。
 
 kubeletはkube-apiserverからの指示で、コンテナイメージを取得してコンテナを起動したり監視したり止めたりする。
 
