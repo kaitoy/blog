@@ -16,8 +16,7 @@ title = "Kubernetes1.8のクラスタを構築する。kubeadmで。"
 {{< google-adsense >}}
 
 ## kubeadmとは
-kubeadmはKubernetesに含まれるコマンドで、Kubernetesクラスタを簡単に構築するツール。
-英語だとキューブアダムみたいに発音する。
+kubeadm(キューブアダム)はKubernetesに含まれるコマンドで、Kubernetesクラスタを簡単に構築するツール。
 Kubernetes 1.4で追加され、Kubernetes 1.8の時点でまだベータで、本番環境には使わないでとなっている。
 Qiitaの「[kubeadmが何をやっているのかみてみた](https://qiita.com/helix_kaz/items/9c4a83532f949d8a94ef)」という記事が、中でどんな動作をしてるかを解説していて参考になる。
 
