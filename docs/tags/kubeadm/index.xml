@@ -210,8 +210,7 @@ Cgroup Driver: systemd
 &lt;h3 id=&#34;kubelet-kubeadm-kubectlインストール&#34;&gt;kubelet、kubeadm、kubectlインストール&lt;/h3&gt;
 
 &lt;p&gt;ここでやっとkubeadmのインストール。
-kubeletとkubectlも一緒にインストールする。
-(Masterにもkubelet要るのか…)&lt;/p&gt;
+kubeletとkubectlも一緒にインストールする。&lt;/p&gt;
 
 &lt;p&gt;まずYUMリポジトリを追加して、&lt;/p&gt;
 
@@ -240,7 +239,7 @@ Created symlink from /etc/systemd/system/multi-user.target.wants/kubelet.service
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
-&lt;p&gt;ここでVMのスナップショットをとっておいて、後でNode作るときに使う。&lt;/p&gt;
+&lt;p&gt;ここでVMのスナップショットをとっておいて、後でNodeを追加するときに使う。&lt;/p&gt;
 
 &lt;h2 id=&#34;master構築&#34;&gt;Master構築&lt;/h2&gt;
 
@@ -466,7 +465,7 @@ as root:
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;できた。
-このメッセージの最後に書かれたコマンドを、後でNodeをセットアップするときに使う。&lt;/p&gt;
+このメッセージの最後に書かれたコマンドを、後でNodeを追加するときに使う。&lt;/p&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
@@ -482,8 +481,7 @@ k8s-master   NotReady   master    16m       v1.8.1
 
 &lt;h3 id=&#34;podネットワークアドオンインストール&#34;&gt;Podネットワークアドオンインストール&lt;/h3&gt;
 
-&lt;p&gt;Podネットワークはアプリのデプロイの前にセットアップしておく必要がある。
-kubeadmは&lt;a href=&#34;https://github.com/containernetworking/cni&#34;&gt;CNI&lt;/a&gt;ベースのネットワークだけサポートしている。&lt;/p&gt;
+&lt;p&gt;Podネットワークはアプリのデプロイの前にセットアップしておく必要がある。&lt;/p&gt;
 
 &lt;p&gt;多くの選択肢があるなか、有名な&lt;a href=&#34;https://github.com/coreos/flannel&#34;&gt;Flannel&lt;/a&gt;にしようと思ったけど、Flannelを使うには
 &lt;code&gt;kubeadm init&lt;/code&gt;時に&lt;code&gt;--pod-network-cidr=10.244.0.0/16&lt;/code&gt;を渡さないといけなかった。
@@ -513,8 +511,8 @@ kube-system   weave-net-s2kkw                      2/2       Running   0        
 
 &lt;h3 id=&#34;masterにpodをデプロイさせる設定&#34;&gt;MasterにPodをデプロイさせる設定&lt;/h3&gt;
 
-&lt;p&gt;デフォルトでは、セキュリティの都合でMasterにはPodがデプロイされない。
-VM2個でNode2個にしたいので、この縛りを外しておく。&lt;/p&gt;
+&lt;p&gt;デフォルトでは、セキュリティの都合でMasterコンポーネントが動くNodeにはPodがデプロイされない。
+けど、VM2個でPodを分散デプロイしてみたいので、この縛りを外しておく。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@k8s-master ~]# kubectl taint nodes --all node-role.kubernetes.io/master-
 node &amp;quot;k8s-master&amp;quot; untainted
@@ -524,14 +522,14 @@ node &amp;quot;k8s-master&amp;quot; untainted
 
 &lt;p&gt;以上でMasterのセットアップは完了。&lt;/p&gt;
 
-&lt;h2 id=&#34;node構築&#34;&gt;Node構築&lt;/h2&gt;
+&lt;h2 id=&#34;node追加&#34;&gt;Node追加&lt;/h2&gt;
 
-&lt;p&gt;次にNodeを構築する。&lt;/p&gt;
+&lt;p&gt;次にNodeをひとつ追加する。&lt;/p&gt;
 
-&lt;p&gt;MasterのVMで&lt;code&gt;kubeadm init&lt;/code&gt;するまえに撮ったスナップショットをクローンして、ホスト名とIPアドレスを変更し、これをNodeのマシン(k8s-node)にする。
+&lt;p&gt;k8s-masterで&lt;code&gt;kubeadm init&lt;/code&gt;するまえに撮ったスナップショットをクローンして、ホスト名とIPアドレスを変更し、これを追加するNodeのマシン(k8s-node)にする。
 クローンしたらMACアドレスもproduct_uuidも変わったので、問題なく使えそう。&lt;/p&gt;
 
-&lt;p&gt;Nodeのセットアップは、このVM上で、&lt;code&gt;kubeadm init&lt;/code&gt;成功時のメッセージの最後に表示されたコマンド(i.e. &lt;code&gt;kubeadm join&lt;/code&gt;)を実行するだけ。&lt;/p&gt;
+&lt;p&gt;k8s-nodeをクラスタに追加するには、このVM上で、&lt;code&gt;kubeadm init&lt;/code&gt;成功時のメッセージの最後に表示されたコマンド(i.e. &lt;code&gt;kubeadm join&lt;/code&gt;)を実行するだけ。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@k8s-node ~]# kubeadm join --token 957b7b.eaaf0cb656edba7b 192.168.171.200:6443 --discovery-token-ca-cert-hash sha256:7d16ade2b651ebac573368b1b4db5c0f1236979584e61833efe90a96ff34ae2e
 [kubeadm] WARNING: kubeadm is in beta, please do not use it for production clusters.
@@ -553,7 +551,7 @@ Run &#39;kubectl get nodes&#39; on the master to see this machine join.
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;できた。
-MasterでNodeの状態を確認する。&lt;/p&gt;
+k8s-masterでNodeの状態を確認する。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;[root@k8s-master ~]# kubectl get nodes
 NAME         STATUS    ROLES     AGE       VERSION
@@ -561,14 +559,14 @@ k8s-master   Ready     master    42m       v1.8.1
 k8s-node     Ready     &amp;lt;none&amp;gt;    45s       v1.8.1
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;MasterもNodeもReady。&lt;/p&gt;
+&lt;p&gt;k8s-masterもk8s-nodeもReady。&lt;/p&gt;
 
 &lt;h2 id=&#34;vmホストのkubectlの設定&#34;&gt;VMホストのkubectlの設定&lt;/h2&gt;
 
-&lt;p&gt;kubectlはkube-apiserverのWeb APIを呼ぶコマンドなので、接続先さえちゃんと設定すればMaster上でなくても使える。
+&lt;p&gt;kubectlはkube-apiserverのWeb APIを呼ぶコマンドなので、接続先さえちゃんと設定すればMasterのマシン上でなくても使える。
 VMのホスト(i.e. Windows 10 PC)で使えるようにしたい。&lt;/p&gt;
 
-&lt;p&gt;kubectlの接続先情報は、(多分)&lt;code&gt;kubeadm init&lt;/code&gt;時に生成された&lt;code&gt;/etc/kubernetes/admin.conf&lt;/code&gt;に書かれているので、これをホストに持ってきてkubectlに渡してやればいい。&lt;/p&gt;
+&lt;p&gt;kubectlの接続先情報は、&lt;code&gt;kubeadm init&lt;/code&gt;時に生成された&lt;code&gt;/etc/kubernetes/admin.conf&lt;/code&gt;に書かれているので、これをホストに持ってきてkubectlに渡してやればいい。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy\Desktop&amp;gt;kubectl --kubeconfig admin.conf get nodes
 NAME         STATUS    ROLES     AGE       VERSION

@@ -26,30 +26,31 @@ Googleが自身のコンテナ技術である[Borg](https://research.google.com/
 (2017/10/18追記: [DockerがKubernetesとの統合を発表](http://www.publickey1.jp/blog/17/dockerkubernetesdockercon_eu_2017.html)した。KubernetesはDockerネイティブなツールになり、Dockerとともにインストールされ、Docker ComposeのConposeファイルでデプロイできるようになったりする。Kubernetesの大勝利っぽい。)
 
 Kubernetesを使うと、複数の物理マシンからなるHAクラスタ(Kubernetesクラスタ)を構成し、その上にコンテナをデプロイして管理できる。
-Kubernetesクラスタは、一つのMaster(a.k.a. Kubernetes Control Plane)と一つ以上のNode(昔はMinionと呼ばれてたもの)で構成される。
-(MasterとNodeは同一マシンに同居もできる。)
-Masterはクラスタを管理し、コンテナのスケジューリング、状態管理、スケーリング、アップデートなどを担う。
-Node上では実際にコンテナが実行される。
+Kubernetesクラスタは、一組のMasterコンポーネント群(a.k.a. Kubernetes Control Plane、または単にMaster)と一つ以上のNode(昔はMinionと呼ばれてたもの)で構成される。
+Nodeは、Masterの管理下でコンテナを実行する機能を備えた、一台のVMや物理マシン。
+MasterはNode上で動き、クラスタを管理し、コンテナのスケジューリング、状態管理、スケーリング、アップデートなどを担う。
 
 Kubernetesの[アーキテクチャ](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture/architecture.md)を図にすると以下の感じ。
 矢印の向きとかはちょっと間違ってるかも。
 
 ![architecture](/images/goslings-on-kubernetes/architecture.png)
 
+ごちゃごちゃするので省いたけど、図の下部のNode内のコンポーネントは、他のNode内でも動いている。
+
 <br>
 
-Master上では[kube-apiserver](https://kubernetes.io/docs/admin/kube-apiserver/)が動き、[Kubernetes API](https://kubernetes.io/docs/concepts/overview/kubernetes-api/)というREST APIを公開する。
+Masterには[kube-apiserver](https://kubernetes.io/docs/admin/kube-apiserver/)が含まれていて、[Kubernetes API](https://kubernetes.io/docs/concepts/overview/kubernetes-api/)というREST APIを公開する。
 このAPIを通して[Kubernetesオブジェクト](https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/)を定義したりすることで、宣言的にコンテナの管理ができる仕組み。
 ユーザは普通、[kubectl](https://kubernetes.io/docs/user-guide/kubectl/)(キューブシーティーエル)というコマンドでkube-apiserverとやり取りする。
 
-KubernetesオブジェクトはMaster上の[etcd](https://github.com/coreos/etcd)によって分散キーバリューストアに永続化され、そのストアを[kube-controller-manager](https://kubernetes.io/docs/admin/kube-controller-manager/)と[kube-scheduler](https://kubernetes.io/docs/admin/kube-scheduler/)がwatchしてて、変更に応じた処理をする。
+KubernetesオブジェクトはMasterの[etcd](https://github.com/coreos/etcd)によって分散キーバリューストアに永続化され、そのストアを[kube-controller-manager](https://kubernetes.io/docs/admin/kube-controller-manager/)と[kube-scheduler](https://kubernetes.io/docs/admin/kube-scheduler/)がwatchしてて、変更に応じた処理をする。
 
 kube-controller-managerは、ノードの管理や、オブジェクトのライフサイクルの管理や、コンテナのスケーリングなど、クラスタレベルの機能を実行する。
 (よくわからない。)
 
 kube-schedulerは、コンテナを実行するホストを選出し、コンテナのスケジューリングをする。
 
-あと、図にはないけど、[cloud-controller-manager](https://kubernetes.io/docs/admin/cloud-controller-manager/)というのがMasterで動いていて、クラウドプラットフォームとやり取りしてクラウド固有の仕事をしているらしい。
+あと、図にはないけど、[cloud-controller-manager](https://kubernetes.io/docs/admin/cloud-controller-manager/)というのがMasterで動くこともあって、クラウドプラットフォームとやり取りしてクラウド固有の仕事をするらしい。
 クラウドベンダじゃなければ気にしなくて良さそう。
 
 <br>
@@ -78,6 +79,8 @@ Kubernetesオブジェクトは、Kubernetesクラスタ上で機能する構成
     一つのPodには一つのIPアドレスが付く。
 
     kubeletはPodの定義に従ってコンテナを起動する。
+
+    因みに、etcd以外のMasterコンポーネントもPodとしてデプロイされる。
 
 * [Service](https://kubernetes.io/docs/concepts/services-networking/service/)
 
@@ -153,13 +156,19 @@ Kubernetesオブジェクトは、Kubernetesクラスタ上で機能する構成
 普通の[Dockerネットワーク](https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/#docker-network)だと、コンテナはdocker0という仮想ブリッジ上のプライベートネットワークで動くため、同じホスト上のコンテナ間は通信できるけど、別のホスト上のコンテナ通信させたい場合は、ホストのIPアドレスのポートを割り当ててやらなければいけない。
 
 これはめんどいので、Kubernetesは、各Podに一意なIPアドレスを与え、Podがどのホストにいるかにかかわらず、NAT無しで相互に通信できる[ネットワーク](https://kubernetes.io/docs/concepts/cluster-administration/networking/)を提供する。
-これがPodネットワークとか呼ばれ、色んな実装があり、PodネットワークアドオンとしてKubernetesクラスタに適用できる。
-[Calico](https://docs.projectcalico.org/v2.6/getting-started/kubernetes/installation/hosted/kubeadm/)、[Canal](https://github.com/projectcalico/canal/tree/master/k8s-install)、[Flannel](https://github.com/coreos/flannel)、[Kube-router](https://github.com/cloudnativelabs/kube-router/blob/master/Documentation/kubeadm.md)、[Romana](https://github.com/romana/romana/tree/master/containerize#using-kubeadm)、[Weave Net](https://www.weave.works/docs/net/latest/kube-addon/)とか。
+これがPodネットワークとか呼ばれ、その仕様は[CNI](https://github.com/containernetworking/cni)でオープンに定められていて、以下のような実装がある。
+
+* [Calico](https://docs.projectcalico.org/v2.6/getting-started/kubernetes/installation/hosted/kubeadm/)
+* [Canal](https://github.com/projectcalico/canal/tree/master/k8s-install)
+* [Flannel](https://github.com/coreos/flannel)
+* [Kube-router](https://github.com/cloudnativelabs/kube-router/blob/master/Documentation/kubeadm.md)
+* [Romana](https://github.com/romana/romana/tree/master/containerize#using-kubeadm)
+* [Weave Net](https://www.weave.works/docs/net/latest/kube-addon/)
 
 ## Minikubeとは
 Kubernetesクラスタを構築する方法は[いくつかある](https://kubernetes.io/docs/setup/pick-right-solution/)が、中でももっとも簡単な方法がMinikube。
 
-Minikubeは、KubernetesのMasterとNodeを一つずつを詰め込んだVMをダウンロードして起動して、ローカルのkubectlから使えるようにしてくれるツール。
+Minikubeは、単一NodeのKubernetesクラスタを詰めたVMをダウンロードして起動して、ローカルのkubectlから使えるようにしてくれるツール。
 Linux、Windows、OS Xで動き、開発やテスト用途のKubernetes環境として使われる。
 
 ちょっと[Vagrant](https://www.vagrantup.com/)っぽい感じ。Kubernetes専用の。
@@ -236,7 +245,7 @@ kubectl: Correctly Configured: pointing to minikube-vm at 192.168.99.100
 
 起動した。
 VirtualBoxのGUIを見ると、minikubeというVMが起動しているのが分かる。
-この中でMasterとNodeが動いているはずだ。
+この中でKubernetesクラスタが動いているはずだ。
 
 このVMには、`minikube ssh`でログインできる。
 

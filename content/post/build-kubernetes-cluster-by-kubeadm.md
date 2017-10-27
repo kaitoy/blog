@@ -195,7 +195,6 @@ Cgroup Driver: systemd
 ### kubelet、kubeadm、kubectlインストール
 ここでやっとkubeadmのインストール。
 kubeletとkubectlも一緒にインストールする。
-(Masterにもkubelet要るのか…)
 
 まずYUMリポジトリを追加して、
 
@@ -227,7 +226,7 @@ Created symlink from /etc/systemd/system/multi-user.target.wants/kubelet.service
 
 <br>
 
-ここでVMのスナップショットをとっておいて、後でNode作るときに使う。
+ここでVMのスナップショットをとっておいて、後でNodeを追加するときに使う。
 
 ## Master構築
 
@@ -462,7 +461,7 @@ as root:
 ```
 
 できた。
-このメッセージの最後に書かれたコマンドを、後でNodeをセットアップするときに使う。
+このメッセージの最後に書かれたコマンドを、後でNodeを追加するときに使う。
 
 <br>
 
@@ -479,7 +478,6 @@ k8s-master   NotReady   master    16m       v1.8.1
 
 ### Podネットワークアドオンインストール
 Podネットワークはアプリのデプロイの前にセットアップしておく必要がある。
-kubeadmは[CNI](https://github.com/containernetworking/cni)ベースのネットワークだけサポートしている。
 
 多くの選択肢があるなか、有名な[Flannel](https://github.com/coreos/flannel)にしようと思ったけど、Flannelを使うには
 `kubeadm init`時に`--pod-network-cidr=10.244.0.0/16 `を渡さないといけなかった。
@@ -510,8 +508,8 @@ kube-system   weave-net-s2kkw                      2/2       Running   0        
 ```
 
 ### MasterにPodをデプロイさせる設定
-デフォルトでは、セキュリティの都合でMasterにはPodがデプロイされない。
-VM2個でNode2個にしたいので、この縛りを外しておく。
+デフォルトでは、セキュリティの都合でMasterコンポーネントが動くNodeにはPodがデプロイされない。
+けど、VM2個でPodを分散デプロイしてみたいので、この縛りを外しておく。
 
 ```sh
 [root@k8s-master ~]# kubectl taint nodes --all node-role.kubernetes.io/master-
@@ -522,13 +520,13 @@ node "k8s-master" untainted
 
 以上でMasterのセットアップは完了。
 
-## Node構築
-次にNodeを構築する。
+## Node追加
+次にNodeをひとつ追加する。
 
-MasterのVMで`kubeadm init`するまえに撮ったスナップショットをクローンして、ホスト名とIPアドレスを変更し、これをNodeのマシン(k8s-node)にする。
+k8s-masterで`kubeadm init`するまえに撮ったスナップショットをクローンして、ホスト名とIPアドレスを変更し、これを追加するNodeのマシン(k8s-node)にする。
 クローンしたらMACアドレスもproduct_uuidも変わったので、問題なく使えそう。
 
-Nodeのセットアップは、このVM上で、`kubeadm init`成功時のメッセージの最後に表示されたコマンド(i.e. `kubeadm join`)を実行するだけ。
+k8s-nodeをクラスタに追加するには、このVM上で、`kubeadm init`成功時のメッセージの最後に表示されたコマンド(i.e. `kubeadm join`)を実行するだけ。
 
 ```sh
 [root@k8s-node ~]# kubeadm join --token 957b7b.eaaf0cb656edba7b 192.168.171.200:6443 --discovery-token-ca-cert-hash sha256:7d16ade2b651ebac573368b1b4db5c0f1236979584e61833efe90a96ff34ae2e
@@ -551,7 +549,7 @@ Run 'kubectl get nodes' on the master to see this machine join.
 ```
 
 できた。
-MasterでNodeの状態を確認する。
+k8s-masterでNodeの状態を確認する。
 
 ```sh
 [root@k8s-master ~]# kubectl get nodes
@@ -560,13 +558,13 @@ k8s-master   Ready     master    42m       v1.8.1
 k8s-node     Ready     <none>    45s       v1.8.1
 ```
 
-MasterもNodeもReady。
+k8s-masterもk8s-nodeもReady。
 
 ## VMホストのkubectlの設定
-kubectlはkube-apiserverのWeb APIを呼ぶコマンドなので、接続先さえちゃんと設定すればMaster上でなくても使える。
+kubectlはkube-apiserverのWeb APIを呼ぶコマンドなので、接続先さえちゃんと設定すればMasterのマシン上でなくても使える。
 VMのホスト(i.e. Windows 10 PC)で使えるようにしたい。
 
-kubectlの接続先情報は、(多分)`kubeadm init`時に生成された`/etc/kubernetes/admin.conf`に書かれているので、これをホストに持ってきてkubectlに渡してやればいい。
+kubectlの接続先情報は、`kubeadm init`時に生成された`/etc/kubernetes/admin.conf`に書かれているので、これをホストに持ってきてkubectlに渡してやればいい。
 
 ```cmd
 C:\Users\kaitoy\Desktop>kubectl --kubeconfig admin.conf get nodes
