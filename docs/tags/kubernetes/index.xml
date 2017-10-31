@@ -6,8 +6,281 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2017</rights>
-    <updated>2017-10-21 10:42:46 &#43;0900 JST</updated>
+    <updated>2017-10-31 16:57:04 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>Kubernetes 1.8のアクセス制御について。あとDashboard。</title>
+          <link>https://www.kaitoy.xyz/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/</link>
+          <pubDate>Tue, 31 Oct 2017 16:57:04 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/</guid>
+          <description>
+
+&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/&#34;&gt;Kubernetes1.8のクラスタを構築する。kubeadmで。&lt;/a&gt;」で、Dashboardがうまく動かない問題が発生したんだけど、それを解決した話。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;問題の現象&#34;&gt;問題の現象&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/admin/kubeadm/&#34;&gt;kubeadm&lt;/a&gt;でKubernetesクラスタを組んで、自前のアプリ(&lt;a href=&#34;https://www.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/&#34;&gt;Goslings&lt;/a&gt;)のデプロイまではうまくできたんだけど、&lt;a href=&#34;https://github.com/kubernetes/dashboard&#34;&gt;Dashboard&lt;/a&gt;をデプロイしたら動かず、Web UIに&lt;code&gt;kubectl proxy&lt;/code&gt;経由でつないでもタイムアウトしてしまった。&lt;/p&gt;
+
+&lt;h2 id=&#34;対策&#34;&gt;対策&lt;/h2&gt;
+
+&lt;p&gt;なんとなく、クラスタ内部での名前解決には&lt;a href=&#34;https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/dns&#34;&gt;kube-dns&lt;/a&gt;によるDNSサービスが使われているっぽいので、&lt;code&gt;/etc/hosts&lt;/code&gt;に余計な事書いたのがいけなかったと思った。&lt;/p&gt;
+
+&lt;p&gt;ので、&lt;code&gt;/etc/hosts&lt;/code&gt;からk8s-masterとk8s-nodeのエントリを削除してから、&lt;code&gt;kubeadm init&lt;/code&gt;からやり直してみた。&lt;/p&gt;
+
+&lt;h2 id=&#34;結果&#34;&gt;結果&lt;/h2&gt;
+
+&lt;p&gt;したらちゃんと動いた。&lt;/p&gt;
+
+&lt;p&gt;VMのホストで&lt;code&gt;kubectl proxy&lt;/code&gt;して、&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy\Desktop&amp;gt;kubectl proxy
+Starting to serve on 127.0.0.1:8001
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/&lt;/code&gt;にブラウザでつないだらサインイン画面が表示された。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/retry-dashboard-on-k8s-cluster-by-kubeadm/dashboard.png&#34; alt=&#34;dashboard&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Dashboardのサインイン処理はKubernetes(というかkube-apiserver)のそれに移譲している。
+Dashboardはそこで認証されたユーザでクラスタのリソースにアクセスし、情報を取得して表示する。多分。&lt;/p&gt;
+
+&lt;p&gt;Dashboardへのサインイン方法は&lt;a href=&#34;https://github.com/kubernetes/dashboard/wiki/Access-control&#34;&gt;いくつかある&lt;/a&gt;が、それらを理解するにはKubernetesのアクセス制御について学ぶことを推奨とあったのでちょっと&lt;a href=&#34;https://kubernetes.io/docs/admin/accessing-the-api/&#34;&gt;Kubernetesのドキュメント&lt;/a&gt;を読んだ。&lt;/p&gt;
+
+&lt;h2 id=&#34;kubernetesのアクセス制御&#34;&gt;Kubernetesのアクセス制御&lt;/h2&gt;
+
+&lt;p&gt;Kubernetesクラスタのエンドポイントはkube-apiserverであり、クラスタのリソースへのアクセス制御もkube-apiserverがやる。
+クライアントとkube-apiserverとのTLSセッションが確立した後、HTTP層のデータを見てアクセス制御をするんだけど、その処理は&lt;a href=&#34;https://kubernetes.io/docs/admin/authentication/&#34;&gt;Authentication&lt;/a&gt;(認証)、&lt;a href=&#34;https://kubernetes.io/docs/admin/authorization/&#34;&gt;Authorization&lt;/a&gt;(認可)、&lt;a href=&#34;https://kubernetes.io/docs/admin/admission-controllers/&#34;&gt;Admission&lt;/a&gt;(許可)の三段階からなる。&lt;/p&gt;
+
+&lt;h3 id=&#34;authentication&#34;&gt;Authentication&lt;/h3&gt;
+
+&lt;p&gt;第一段階がAuthentication。
+ここでは、kube-apiserverに仕込まれたAuthenticatorモジュールがユーザ認証をする。&lt;/p&gt;
+
+&lt;p&gt;Kubernetesが認証するユーザには、Kubernetesが管理するService Accountと、クラスタ外部で管理される通常ユーザの二通りがある。
+Service AccountはPodがkube-apiserverと話すためのユーザで、通常ユーザは主に人がkubectlとかでkube-apiserverと話すためのユーザ。(匿名で話すこともできる。)
+前者はServiceAccountオブジェクトで定義されるけど、後者用のオブジェクトはない。&lt;/p&gt;
+
+&lt;p&gt;ServiceAccountはNamespaceと関連付き(つまりnamespace毎にユニーク)、Secretに紐づく。
+Secretオブジェクトはクレデンシャルのセットを定義し、Podにマウントされる。
+ServiceAccountとSecretは、ふつうは自動で作られ、Podに割り当てられる。&lt;/p&gt;
+
+&lt;p&gt;kube-apiserverには一つ以上のAuthenticatorモジュールを設定できて、どれかで認証できれば次の段階に進める。
+認証失敗するとHTTPステータスコード401が返る。&lt;/p&gt;
+
+&lt;p&gt;Authenticatorモジュールには以下のようなものがある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/admin/authentication/#x509-client-certs&#34;&gt;クライアント証明書&lt;/a&gt;: X.509のディジタル証明書を使うモジュール。kube-apiserver起動時に&lt;code&gt;--client-ca-file&lt;/code&gt;オプションで証明書ファイルを渡してやると有効になる。証明書のCommon Nameがユーザ名になり、Organizationがグループになる。クライアント側は、その証明書と対応する秘密鍵をクレデンシャルとして指定する。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/admin/authentication/#putting-a-bearer-token-in-a-request&#34;&gt;Bearer Token&lt;/a&gt;: 無記名トークンを使うモジュール。kube-apiserver起動時に&lt;code&gt;--token-auth-file&lt;/code&gt;オプションでトークン情報を渡してやると有効になる。トークン情報はCSVで、「&lt;code&gt;token,user,uid,&amp;quot;group1,group2,group3&amp;quot;&lt;/code&gt;」という形式で書く。クライアント側は、ユーザ名とトークン文字列をクレデンシャルとして指定する。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/admin/authentication/#static-password-file&#34;&gt;ベーシック認証&lt;/a&gt;: ユーザ名とパスワードで認証するモジュール。kube-apiserver起動時に&lt;code&gt;--basic-auth-file&lt;/code&gt;オプションでユーザ名とパスワードのリストを渡してやると有効になる。このリストはCSVで、「&lt;code&gt;password,user,uid,&amp;quot;group1,group2,group3&amp;quot;&lt;/code&gt;」という形式で書く。クライアント側は、ユーザ名とパスワードをクレデンシャルとして指定する。HTTPクライアントの時はAuthorizationヘッダが使える。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/admin/authentication/#service-account-tokens&#34;&gt;Service Account Token&lt;/a&gt;: Service Accountを署名付きBearer Tokenで認証するモジュール。デフォルトで有効になる。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;このあたり、Qiitaの「&lt;a href=&#34;https://qiita.com/hiyosi/items/43465d4fc501c2044d01#x509-client-certs&#34;&gt;kubernetesがサポートする認証方法の全パターンを動かす&lt;/a&gt;」という記事をみると理解が深まる。&lt;/p&gt;
+
+&lt;h3 id=&#34;authorization&#34;&gt;Authorization&lt;/h3&gt;
+
+&lt;p&gt;Authenticationをパスすると、クライアントのユーザ(とグループ)が認証され、第二段階のAuthorizationモジュールの処理に移る。
+ここでは、リクエストの内容(操作対象、操作種別(メソッド)等)を見て、それがユーザに許されたものなら認可する。
+何を許すかは事前にクラスタにポリシーを定義しておく。&lt;/p&gt;
+
+&lt;p&gt;kube-apiserver起動時に&lt;code&gt;--authorization-mode&lt;/code&gt;オプションで一つ以上のAuthenticatorモジュールを指定できて、どれかで認可されれば次の段階に進める。
+さもなくばHTTPステータスコード403が返る。&lt;/p&gt;
+
+&lt;p&gt;Authorizationモジュールには以下のようなものがある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/admin/authorization/node/&#34;&gt;Node&lt;/a&gt;: kubeletからのリクエストを認可する。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/admin/authorization/abac/&#34;&gt;ABAC Mode&lt;/a&gt;: Attribute-based Access Control。リクエストに含まれる属性とPolicyオブジェクトを比較して、マッチするものがあれば認可。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/admin/authorization/rbac/&#34;&gt;RBAC Mode&lt;/a&gt;: Role-Based Access Control。RoleオブジェクトやClusterRoleオブジェクトでロールを作成し、アクセスできるリソースや許可する操作を定義して、RoleBindingオブジェクトやClusterRoleBindingオブジェクトでユーザ名やグループと紐づける。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/admin/authorization/webhook/&#34;&gt;Webhook Mode&lt;/a&gt;: リクエストの内容を示すSubjectAccessReviewオブジェクトをシリアライズしたJSONデータをHTTPでPOSTして、そのレスポンスによって認可可否を決める。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;admission-control&#34;&gt;Admission Control&lt;/h3&gt;
+
+&lt;p&gt;Authorizationをパスすると、第三段階のAdmission Controlモジュールの処理に移る。
+ここでは、オブジェクトの作成、削除、更新などのリクエストをインターセプトして、オブジェクトの永続化前にそのオブジェクトを確認して、永続化を許可するかを決める。
+リクエストされたオブジェクトやそれに関連するオブジェクトを永続化前にいじって、デフォルト値を設定したりもできる。
+読み取りリクエストの場合は実行されない。&lt;/p&gt;
+
+&lt;p&gt;kube-apiserver起動時に&lt;code&gt;--admission-control&lt;/code&gt;オプションで複数のAdmission Controlモジュールを指定できて、全てが許可しないとリクエストが却下される。&lt;/p&gt;
+
+&lt;p&gt;Admission Controlモジュールは色々あるんだけど、Kubernetes 1.6以降では&lt;code&gt;--admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,ResourceQuota,DefaultTolerationSeconds&lt;/code&gt;と指定するのが強く推奨されている。
+ここで指定している&lt;a href=&#34;https://kubernetes.io/docs/admin/admission-controllers/#serviceaccount&#34;&gt;ServiceAccountモジュール&lt;/a&gt;は、kube-controller-managerに含まれるServiceAccountControllerとTokenControllerと協調し、Service Account周りの処理を&lt;a href=&#34;https://kubernetes.io/docs/admin/service-accounts-admin/#service-account-automation&#34;&gt;自動化&lt;/a&gt;してくれるもの。&lt;/p&gt;
+
+&lt;p&gt;ServiceAccountControllerは、各Namespaceに&lt;code&gt;default&lt;/code&gt;という名前のService Accountを作る。&lt;/p&gt;
+
+&lt;p&gt;ServiceAccountが作成されるとTokenControllerが動き、対応したSecretとトークンを生成して紐づける。&lt;/p&gt;
+
+&lt;p&gt;ServiceAccountモジュールは、Podの作成や更新時に動き、以下の処理をする。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;PodにServiceAccountが設定されていなければ、&lt;code&gt;default&lt;/code&gt;を設定する。&lt;/li&gt;
+&lt;li&gt;Podに設定されたServiceAccountが存在していることを確認し、存在していなければリクエストを却下する。&lt;/li&gt;
+&lt;li&gt;PodがImagePullSecretsを含んでいなければ、ServiceAccountのImagePullSecretsをPodに追加する。&lt;/li&gt;
+&lt;li&gt;トークンを含んだVolumeをPodに追加する。&lt;/li&gt;
+&lt;li&gt;Pod内の各コンテナの&lt;code&gt;/var/run/secrets/kubernetes.io/serviceaccount&lt;/code&gt;にそのVolumeをマウントさせる。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&#34;dashboardへbearer-tokenでサインイン&#34;&gt;DashboardへBearer Tokenでサインイン&lt;/h2&gt;
+
+&lt;p&gt;Dashboardの話に戻る。
+とりあえず&lt;a href=&#34;https://github.com/kubernetes/dashboard/wiki/Access-control#bearer-token&#34;&gt;Bearer Tokenでのサインイン&lt;/a&gt;を試す。&lt;/p&gt;
+
+&lt;p&gt;クラスタにはデフォルトで色んなService Accountが作られていて、異なる権限を持っている。
+そのいずれかのSecretのTokenを使ってDashboardへサインインできるらしい。&lt;/p&gt;
+
+&lt;p&gt;以下のコマンドで&lt;code&gt;kube-system&lt;/code&gt;というNamespaceのSecretを一覧できる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl -n kube-system get secret
+NAME                                     TYPE                                  DATA      AGE
+attachdetach-controller-token-skzmj      kubernetes.io/service-account-token   3         18m
+bootstrap-signer-token-mhqfh             kubernetes.io/service-account-token   3         18m
+bootstrap-token-2964e0                   bootstrap.kubernetes.io/token         7         18m
+certificate-controller-token-fvrgm       kubernetes.io/service-account-token   3         18m
+cronjob-controller-token-hmrdm           kubernetes.io/service-account-token   3         18m
+daemon-set-controller-token-vqz85        kubernetes.io/service-account-token   3         18m
+default-token-h987g                      kubernetes.io/service-account-token   3         18m
+deployment-controller-token-86bp9        kubernetes.io/service-account-token   3         18m
+disruption-controller-token-6mskg        kubernetes.io/service-account-token   3         18m
+endpoint-controller-token-d4wz6          kubernetes.io/service-account-token   3         18m
+generic-garbage-collector-token-smfgq    kubernetes.io/service-account-token   3         18m
+horizontal-pod-autoscaler-token-wsbn9    kubernetes.io/service-account-token   3         18m
+job-controller-token-fttt2               kubernetes.io/service-account-token   3         18m
+kube-dns-token-sn5qq                     kubernetes.io/service-account-token   3         18m
+kube-proxy-token-w96xd                   kubernetes.io/service-account-token   3         18m
+kubernetes-dashboard-certs               Opaque                                2         7m
+kubernetes-dashboard-key-holder          Opaque                                2         6m
+kubernetes-dashboard-token-gtppc         kubernetes.io/service-account-token   3         7m
+namespace-controller-token-5kksd         kubernetes.io/service-account-token   3         18m
+node-controller-token-chpwt              kubernetes.io/service-account-token   3         18m
+persistent-volume-binder-token-d5x49     kubernetes.io/service-account-token   3         18m
+pod-garbage-collector-token-l8sct        kubernetes.io/service-account-token   3         18m
+replicaset-controller-token-njjwr        kubernetes.io/service-account-token   3         18m
+replication-controller-token-qrr5h       kubernetes.io/service-account-token   3         18m
+resourcequota-controller-token-dznjm     kubernetes.io/service-account-token   3         18m
+service-account-controller-token-99nh8   kubernetes.io/service-account-token   3         18m
+service-controller-token-9cw7k           kubernetes.io/service-account-token   3         18m
+statefulset-controller-token-8z8w9       kubernetes.io/service-account-token   3         18m
+token-cleaner-token-cxbkc                kubernetes.io/service-account-token   3         18m
+ttl-controller-token-k7gh7               kubernetes.io/service-account-token   3         18m
+weave-net-token-lqdgm                    kubernetes.io/service-account-token   3         17m
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;で、適当にそれっぽいSecret、&lt;code&gt;deployment-controller-token-86bp9&lt;/code&gt;を選んで、&lt;code&gt;kubectl describe&lt;/code&gt;したらTokenが見れた。
+(Dataセクションの&lt;code&gt;token&lt;/code&gt;のとこ。)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy&amp;gt;kubectl -n kube-system describe secret deployment-controller-token-86bp9
+Name:         deployment-controller-token-86bp9
+Namespace:    kube-system
+Labels:       &amp;lt;none&amp;gt;
+Annotations:  kubernetes.io/service-account.name=deployment-controller
+              kubernetes.io/service-account.uid=17fc5207-b627-11e7-9867-000c2938deae
+
+Type:  kubernetes.io/service-account-token
+
+Data
+====
+ca.crt:     1025 bytes
+namespace:  11 bytes
+token:      eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJkZXBsb3ltZW50LWNvbnRyb2xsZXItdG9rZW4tODZicDkiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiZGVwbG95bWVudC1jb250cm9sbGVyIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQudWlkIjoiMTdmYzUyMDctYjYyNy0xMWU3LTk4NjctMDAwYzI5MzhkZWFlIiwic3ViIjoic3lzdGVtOnNlcnZpY2VhY2NvdW50Omt1YmUtc3lzdGVtOmRlcGxveW1lbnQtY29udHJvbGxlciJ9.ZGV9XDd-GQjAwRuLKpdsWL_dTeF0Mr_2gF117OW4BhEuLwPujnsfOuysAQ-DUtNOp1NHKGitlfxjh6fKo4tFsdwLVJWrRK6i4YH1Mm2No7Sheks7IQn1FnwSmr7yCuvjlHD2e4RpZH0wupOFoY7FHntilhOWbXTJzJzi7TozLX02EKbkVGAsvch3LZ6p8jmUH5hr8DdKc4jbmTRp86SOiFS4_-TJ3RtAHCxiioAuKzXm3-rAWdeGLLcKrM2pAFSAGaBNu8MO5BZlAi6h3Xt4x-8-1ZXs4mudtJiECvjB-XIwiwzhpq8wIPZvvQQ-f1khixOyk1RfIXRJhIE5Gqvi8g
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;サインイン画面でTokenを選択し、
+この、&lt;code&gt;eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJkZXBsb3ltZW50LWNvbnRyb2xsZXItdG9rZW4tODZicDkiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiZGVwbG95bWVudC1jb250cm9sbGVyIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQudWlkIjoiMTdmYzUyMDctYjYyNy0xMWU3LTk4NjctMDAwYzI5MzhkZWFlIiwic3ViIjoic3lzdGVtOnNlcnZpY2VhY2NvdW50Omt1YmUtc3lzdGVtOmRlcGxveW1lbnQtY29udHJvbGxlciJ9.ZGV9XDd-GQjAwRuLKpdsWL_dTeF0Mr_2gF117OW4BhEuLwPujnsfOuysAQ-DUtNOp1NHKGitlfxjh6fKo4tFsdwLVJWrRK6i4YH1Mm2No7Sheks7IQn1FnwSmr7yCuvjlHD2e4RpZH0wupOFoY7FHntilhOWbXTJzJzi7TozLX02EKbkVGAsvch3LZ6p8jmUH5hr8DdKc4jbmTRp86SOiFS4_-TJ3RtAHCxiioAuKzXm3-rAWdeGLLcKrM2pAFSAGaBNu8MO5BZlAi6h3Xt4x-8-1ZXs4mudtJiECvjB-XIwiwzhpq8wIPZvvQQ-f1khixOyk1RfIXRJhIE5Gqvi8g&lt;/code&gt;を入力したらサインインできて、GoslingsのDeploymentの情報が見れた。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/retry-dashboard-on-k8s-cluster-by-kubeadm/deploy.png&#34; alt=&#34;deploy&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Podも見れる。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/retry-dashboard-on-k8s-cluster-by-kubeadm/pods.png&#34; alt=&#34;pods&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;けどServiceは見れない。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/retry-dashboard-on-k8s-cluster-by-kubeadm/service.png&#34; alt=&#34;service&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;各画面でオレンジ色のワーニングも出ていて、&lt;code&gt;deployment-controller&lt;/code&gt;ユーザで見れる範囲はあまり広くないことが分かる。&lt;/p&gt;
+
+&lt;h2 id=&#34;dashboardへadmin権限でサインイン&#34;&gt;DashboardへAdmin権限でサインイン&lt;/h2&gt;
+
+&lt;p&gt;DashboardのPodのService Accountである&lt;code&gt;kubernetes-dashboard&lt;/code&gt;にAdmin権限を付けてやって、サインイン画面でSKIPを押すとなんでも見れるようになる。セキュリティリスクがあるので本番ではNG設定だけど。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;cluster-admin&lt;/code&gt;というClusterRoleがあって、これを&lt;code&gt;kubernetes-dashboard&lt;/code&gt;にバインドするClusterRoleBindingを作ってやればいい。&lt;/p&gt;
+
+&lt;p&gt;ので、以下のようなYAMLファイルを書いて、&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yml&#34;&gt;apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: kubernetes-dashboard
+  labels:
+    k8s-app: kubernetes-dashboard
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: kubernetes-dashboard
+  namespace: kube-system
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;kubectl&lt;/code&gt;で投げる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\kaitoy\Desktop&amp;gt;kubectl create -f dashboard-admin.yml
+clusterrolebinding &amp;quot;kubernetes-dashboard&amp;quot; created
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;したらServiceも見えるようになった。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/retry-dashboard-on-k8s-cluster-by-kubeadm/service-admin.png&#34; alt=&#34;service-admin&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ついでにHWリソース情報も見れた。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/retry-dashboard-on-k8s-cluster-by-kubeadm/resources.png&#34; alt=&#34;resources&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;満足した。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>

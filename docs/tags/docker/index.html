@@ -74,6 +74,27 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="/images/kubernetes.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Tue, Oct 31, 2017</span>
+              </div>
+              <h2 class="title">Kubernetes 1.8のアクセス制御について。あとDashboard。</h2>
+              <div class="summary">
+                「Kubernetes1.8のクラスタを構築する。kubeadmで。」で、Dashboardがうまく動かない問題が発生したんだけど、それを解決した話。 (adsbygoogle = window.adsbygoogle || []).push({}); 問題の現象 kubeadmでKubernetesクラスタを組んで、自前のアプリ(Goslings)のデプロイまではうまくできたんだけど、Dashboardをデプロイしたら動かず、Web UIにkubectl proxy経由でつないでもタイムアウトしてしまった。 対策 なんとなく、クラスタ内部での名前解決にはkube-dnsによるDNSサービスが使われているっぽいので、/etc/hostsに余計な事書いたのがいけなかったと思った。 ので、/etc/hostsからk8s-masterとk8s-nodeのエントリを削除してから、kubeadm initからやり直してみた。 結果 したらちゃんと動いた。 VMのホストでkubectl proxyして、 C:\Users\kaitoy\Desktop&gt;kubectl proxy Starting to serve on 127.0.0.1:8001 http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/にブラウザでつないだらサインイン画面が表示された。 Dashboardのサインイン処理はKubernetes(というかkube-apiserver)のそれに移譲している。 Dashboardはそこで認証されたユーザでクラスタのリソースにアクセスし、情報を取得して表示する。多分。 Dashboardへのサインイン方法はいくつかあるが、それらを理解するにはKubernetesのアクセス制御について学ぶことを推奨とあったのでちょっとKubernetesのドキュメントを読んだ。 Kubernetesのアクセス制御 Kubernetesクラスタのエンドポイントはkube-apiserverであり、クラスタのリソースへのアクセス制御もkube-apiserverがやる。 クライアントとkube-apiserverとのTLSセッションが確立した後、HTTP層のデータを見てアクセス制御をするんだけど、その処理はAuthentication(認証)、Authorization(認可)、Admission(許可)の三段階からなる。 Authentication 第一段階がAuthentication。 ここでは、kube-apiserverに仕込まれたAuthenticatorモジュールがユーザ認証をする。 Kubernetesが認証するユーザには、Kubernetesが管理するService Accountと、クラスタ外部で管理される通常ユーザの二通りがある。 Service AccountはPodがkube-apiserverと話すためのユーザで、通常ユーザは主に人がkubectlとかでkube-apiserverと話すためのユーザ。(匿名で話すこともできる。) 前者はServiceAccountオブジェクトで定義されるけど、後者用のオブジェクトはない。 ServiceAccountはNamespaceと関連付き(つまりnamespace毎にユニーク)、Secretに紐づく。 Secretオブジェクトはクレデンシャルのセットを定義し、Podにマウントされる。 ServiceAccountとSecretは、ふつうは自動で作られ、Podに割り当てられる。 kube-apiserverには一つ以上のAuthenticatorモジュールを設定できて、どれかで認証できれば次の段階に進める。 認証失敗するとHTTPステータスコード401が返る。 Authenticatorモジュールには以下のようなものがある。 クライアント証明書: X.509のディジタル証明書を使うモジュール。kube-apiserver起動時に--client-ca-fileオプションで証明書ファイルを渡してやると有効になる。証明書のCommon Nameがユーザ名になり、Organizationがグループになる。クライアント側は、その証明書と対応する秘密鍵をクレデンシャルとして指定する。 Bearer Token: 無記名トークンを使うモジュール。kube-apiserver起動時に--token-auth-fileオプションでトークン情報を渡してやると有効になる。トークン情報はCSVで、「token,user,uid,&quot;group1,group2,group3&quot;」という形式で書く。クライアント側は、ユーザ名とトークン文字列をクレデンシャルとして指定する。 ベーシック認証: ユーザ名とパスワードで認証するモジュール。kube-apiserver起動時に--basic-auth-fileオプションでユーザ名とパスワードのリストを渡してやると有効になる。このリストはCSVで、「password,user,uid,&quot;group1,group2,group3&quot;」という形式で書く。クライアント側は、ユーザ名とパスワードをクレデンシャルとして指定する。HTTPクライアントの時はAuthorizationヘッダが使える。 Service Account Token: Service Accountを署名付きBearer Tokenで認証するモジュール。デフォルトで有効になる。 このあたり、Qiitaの「kubernetesがサポートする認証方法の全パターンを動かす」という記事をみると理解が深まる。 Authorization Authenticationをパスすると、クライアントのユーザ(とグループ)が認証され、第二段階のAuthorizationモジュールの処理に移る。 ここでは、リクエストの内容(操作対象、操作種別(メソッド)等)を見て、それがユーザに許されたものなら認可する。 何を許すかは事前にクラスタにポリシーを定義しておく。 kube-apiserver起動時に--authorization-modeオプションで一つ以上のAuthenticatorモジュールを指定できて、どれかで認可されれば次の段階に進める。 さもなくばHTTPステータスコード403が返る。 Authorizationモジュールには以下のようなものがある。 Node: kubeletからのリクエストを認可する。
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="/images/kubernetes.png" alt="eyecatch">
@@ -135,19 +156,16 @@
         
         
         
-        <div class="col-sm-6">
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2017/08/14/webdriverio-chrome/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2017/08/14/webdriverio-chrome/" class="post">
               <header class="eyecatch text-center">
                 <img src="/images/servicenow-webdriverio.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Mon, Aug 14, 2017</span>
               </div>
-              <h2 class="title">WebdriverIOとChromeのヘッドレスモードで自動ブラウザテストするDockerイメージ: webdriverio-chrome</h2>
-              <div class="summary">
-                「2017年夏、ブラウザテストフレームワーク」の続き。 ServiceNowアプリケーションのブラウザテストをしたくて色々調べている。 前回は、フレームワークにWebdriverIOを使うと決めたところまで書いた。 今回、最終的に、WebdriverIO、WDIO、selenium-standalone、Jasmineと、Chromeのヘッドレスモードを使って、Dockerコンテナ(Alpine Linux)上でテストスクリプトを実行して、ServiceNowのログイン画面のスクリーンショットが取れるところまでできた。 そのコンテナイメージのDockerfileはGitHubに置いた。 (adsbygoogle = window.adsbygoogle || []).push({}); とりあえずAlpine Linux テスト環境の作成は自宅でやってるけど、DockerイメージにしてDocker Hubとかに上げておけば、社内でダウンロードしてそのまま再現できる。 ダウンロードに係る社内手続きも、Dockerイメージだけに対してやればいいので、中に何を詰め込んでも、後でライブラリとか追加しても、一回こっきりで済む。 というわけでとりあえず、自PC(Windows 10 Home)に入ってるVMware Workstation Player 12.5.5でCentOS 7 x64のVMを作り、Dockerをインストールして、Alpine Linuxをpullした。 $ docker pull alpine:edge Alpine LinuxはBusyBoxとmusl libcで構成された軽量な Linuxディストリビューション。 2016年2月にすべてのオフィシャルDockerイメージがAlpine Linuxベースになるというアナウンスがあったし、他にそれっぽいものもなかったので、これをベースに環境を作ることにした。 glibcじゃないのがちょっと気になるけど、まあ問題ないか。 現在、Chrome 59のAlpine Linuxパッケージがedgeブランチで作られているので、Alpine Linuxはedge(i.e. 開発中のバージョン)をpullした。 (因みに現時点でAlpine Linuxのlatestは3.6。) で、起動。 $ docker run -it alpine:edge sh Chrome(Chromium)インストール まずはChrome(がAlpine Linuxパッケージにはないので、実際にはChromium)と、ついでにChromeDriverをインストールする。 Alpine Linux独自のパッケージマネージャーであるapkを使う。 / # apk add --update chromium chromium-chromedriver / # chromium-browser -version Chromium 59.0.3071.115 無事インストールできた。 この記事を参考にヘッドレスモードで実行してみる。 ヘッドレスモードにするために--headlessを付けて、一時的な制限事項で--disable-gpuを付ける必要があって、コンテナの権限不足を回避するために--no-sandboxを付ける。 (コンテナの権限不足回避には他に、docker runに--privilegedや--cap-add=SYS_ADMIN付ける方法がある。) / # chromium-browser --headless --no-sandbox --disable-gpu https://example.com/ [0811/145902.894023:WARNING:dns_config_service_posix.cc(326)] Failed to read DnsConfig.
-              </div>
+              <h3 class="title">WebdriverIOとChromeのヘッドレスモードで自動ブラウザテストするDockerイメージ: webdriverio-chrome</h3>
             </a>
           </article>
         </div>

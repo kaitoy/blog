@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Kubernetes 1.8のアクセス制御について。あとDashboard。 | To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">
+    <link rel="canonical" href="https://www.kaitoy.xyz/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">
+    <meta property="og:description" content="「Kubernetes1.8のクラスタを構築する。kubeadmで。」で、Dashboardがうまく動かない問題が発生したんだけど、それを解決した話。 (adsbygoogle = window.adsbygoogle || []).push({}); 問題の現象 kubeadmでKubernetesクラスタを組んで、自前のアプリ(Goslings)のデプロイまではうまくできたんだけど、Dashboardをデプロイしたら動かず、Web UIにkubectl proxy経由でつないでもタイムアウトしてしまった。 対策 なんとなく、クラスタ内部での名前解決にはkube-dnsによるDNSサービスが使われているっぽいので、/etc/hostsに余計な事書いたのがいけなかったと思った。 ので、/etc/hostsからk8s-masterとk8s-nodeのエントリを削除してから、kubeadm initからやり直してみた。 結果 したらちゃんと動いた。 VMのホストでkubectl proxyして、 C:\Users\kaitoy\Desktop&gt;kubectl proxy Starting to serve on 127.0.0.1:8001 http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/にブラウザでつないだらサインイン画面が表示された。 Dashboardのサインイン処理はKubernetes(というかkube-apiserver)のそれに移譲している。 Dashboardはそこで認証されたユーザでクラスタのリソースにアクセスし、情報を取得して表示する。多分。 Dashboardへのサインイン方法はいくつかあるが、それらを理解するにはKubernetesのアクセス制御について学ぶことを推奨とあったのでちょっとKubernetesのドキュメントを読んだ。 Kubernetesのアクセス制御 Kubernetesクラスタのエンドポイントはkube-apiserverであり、クラスタのリソースへのアクセス制御もkube-apiserverがやる。 クライアントとkube-apiserverとのTLSセッションが確立した後、HTTP層のデータを見てアクセス制御をするんだけど、その処理はAuthentication(認証)、Authorization(認可)、Admission(許可)の三段階からなる。 Authentication 第一段階がAuthentication。 ここでは、kube-apiserverに仕込まれたAuthenticatorモジュールがユーザ認証をする。 Kubernetesが認証するユーザには、Kubernetesが管理するService Accountと、クラスタ外部で管理される通常ユーザの二通りがある。 Service AccountはPodがkube-apiserverと話すためのユーザで、通常ユーザは主に人がkubectlとかでkube-apiserverと話すためのユーザ。(匿名で話すこともできる。) 前者はServiceAccountオブジェクトで定義されるけど、後者用のオブジェクトはない。 ServiceAccountはNamespaceと関連付き(つまりnamespace毎にユニーク)、Secretに紐づく。 Secretオブジェクトはクレデンシャルのセットを定義し、Podにマウントされる。 ServiceAccountとSecretは、ふつうは自動で作られ、Podに割り当てられる。 kube-apiserverには一つ以上のAuthenticatorモジュールを設定できて、どれかで認証できれば次の段階に進める。 認証失敗するとHTTPステータスコード401が返る。 Authenticatorモジュールには以下のようなものがある。 クライアント証明書: X.509のディジタル証明書を使うモジュール。kube-apiserver起動時に--client-ca-fileオプションで証明書ファイルを渡してやると有効になる。証明書のCommon Nameがユーザ名になり、Organizationがグループになる。クライアント側は、その証明書と対応する秘密鍵をクレデンシャルとして指定する。 Bearer Token: 無記名トークンを使うモジュール。kube-apiserver起動時に--token-auth-fileオプションでトークン情報を渡してやると有効になる。トークン情報はCSVで、「token,user,uid,&quot;group1,group2,group3&quot;」という形式で書く。クライアント側は、ユーザ名とトークン文字列をクレデンシャルとして指定する。 ベーシック認証: ユーザ名とパスワードで認証するモジュール。kube-apiserver起動時に--basic-auth-fileオプションでユーザ名とパスワードのリストを渡してやると有効になる。このリストはCSVで、「password,user,uid,&quot;group1,group2,group3&quot;」という形式で書く。クライアント側は、ユーザ名とパスワードをクレデンシャルとして指定する。HTTPクライアントの時はAuthorizationヘッダが使える。 Service Account Token: Service Accountを署名付きBearer Tokenで認証するモジュール。デフォルトで有効になる。 このあたり、Qiitaの「kubernetesがサポートする認証方法の全パターンを動かす」という記事をみると理解が深まる。 Authorization Authenticationをパスすると、クライアントのユーザ(とグループ)が認証され、第二段階のAuthorizationモジュールの処理に移る。 ここでは、リクエストの内容(操作対象、操作種別(メソッド)等)を見て、それがユーザに許されたものなら認可する。 何を許すかは事前にクラスタにポリシーを定義しておく。 kube-apiserver起動時に--authorization-modeオプションで一つ以上のAuthenticatorモジュールを指定できて、どれかで認可されれば次の段階に進める。 さもなくばHTTPステータスコード403が返る。 Authorizationモジュールには以下のようなものがある。 Node: kubeletからのリクエストを認可する。">
+    
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      Kubernetes 1.8のアクセス制御について。あとDashboard。 | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+    
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-6244473643910448",
+        enable_page_level_ads: true
+      });
+    </script>
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Tue, Oct 31, 2017</span>
+      <h2 class="title">Kubernetes 1.8のアクセス制御について。あとDashboard。</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="Kubernetes 1.8のアクセス制御について。あとDashboard。">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>「<a href="https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a>」で、Dashboardがうまく動かない問題が発生したんだけど、それを解決した話。</p>
+
+<p>
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</p>
+
+<h2 id="問題の現象">問題の現象</h2>
+
+<p><a href="https://kubernetes.io/docs/admin/kubeadm/">kubeadm</a>でKubernetesクラスタを組んで、自前のアプリ(<a href="https://www.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/">Goslings</a>)のデプロイまではうまくできたんだけど、<a href="https://github.com/kubernetes/dashboard">Dashboard</a>をデプロイしたら動かず、Web UIに<code>kubectl proxy</code>経由でつないでもタイムアウトしてしまった。</p>
+
+<h2 id="対策">対策</h2>
+
+<p>なんとなく、クラスタ内部での名前解決には<a href="https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/dns">kube-dns</a>によるDNSサービスが使われているっぽいので、<code>/etc/hosts</code>に余計な事書いたのがいけなかったと思った。</p>
+
+<p>ので、<code>/etc/hosts</code>からk8s-masterとk8s-nodeのエントリを削除してから、<code>kubeadm init</code>からやり直してみた。</p>
+
+<h2 id="結果">結果</h2>
+
+<p>したらちゃんと動いた。</p>
+
+<p>VMのホストで<code>kubectl proxy</code>して、</p>
+
+<pre><code class="language-cmd">C:\Users\kaitoy\Desktop&gt;kubectl proxy
+Starting to serve on 127.0.0.1:8001
+</code></pre>
+
+<p><code>http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/</code>にブラウザでつないだらサインイン画面が表示された。</p>
+
+<p><img src="/images/retry-dashboard-on-k8s-cluster-by-kubeadm/dashboard.png" alt="dashboard" />
+</p>
+
+<p><br></p>
+
+<p>Dashboardのサインイン処理はKubernetes(というかkube-apiserver)のそれに移譲している。
+Dashboardはそこで認証されたユーザでクラスタのリソースにアクセスし、情報を取得して表示する。多分。</p>
+
+<p>Dashboardへのサインイン方法は<a href="https://github.com/kubernetes/dashboard/wiki/Access-control">いくつかある</a>が、それらを理解するにはKubernetesのアクセス制御について学ぶことを推奨とあったのでちょっと<a href="https://kubernetes.io/docs/admin/accessing-the-api/">Kubernetesのドキュメント</a>を読んだ。</p>
+
+<h2 id="kubernetesのアクセス制御">Kubernetesのアクセス制御</h2>
+
+<p>Kubernetesクラスタのエンドポイントはkube-apiserverであり、クラスタのリソースへのアクセス制御もkube-apiserverがやる。
+クライアントとkube-apiserverとのTLSセッションが確立した後、HTTP層のデータを見てアクセス制御をするんだけど、その処理は<a href="https://kubernetes.io/docs/admin/authentication/">Authentication</a>(認証)、<a href="https://kubernetes.io/docs/admin/authorization/">Authorization</a>(認可)、<a href="https://kubernetes.io/docs/admin/admission-controllers/">Admission</a>(許可)の三段階からなる。</p>
+
+<h3 id="authentication">Authentication</h3>
+
+<p>第一段階がAuthentication。
+ここでは、kube-apiserverに仕込まれたAuthenticatorモジュールがユーザ認証をする。</p>
+
+<p>Kubernetesが認証するユーザには、Kubernetesが管理するService Accountと、クラスタ外部で管理される通常ユーザの二通りがある。
+Service AccountはPodがkube-apiserverと話すためのユーザで、通常ユーザは主に人がkubectlとかでkube-apiserverと話すためのユーザ。(匿名で話すこともできる。)
+前者はServiceAccountオブジェクトで定義されるけど、後者用のオブジェクトはない。</p>
+
+<p>ServiceAccountはNamespaceと関連付き(つまりnamespace毎にユニーク)、Secretに紐づく。
+Secretオブジェクトはクレデンシャルのセットを定義し、Podにマウントされる。
+ServiceAccountとSecretは、ふつうは自動で作られ、Podに割り当てられる。</p>
+
+<p>kube-apiserverには一つ以上のAuthenticatorモジュールを設定できて、どれかで認証できれば次の段階に進める。
+認証失敗するとHTTPステータスコード401が返る。</p>
+
+<p>Authenticatorモジュールには以下のようなものがある。</p>
+
+<ul>
+<li><a href="https://kubernetes.io/docs/admin/authentication/#x509-client-certs">クライアント証明書</a>: X.509のディジタル証明書を使うモジュール。kube-apiserver起動時に<code>--client-ca-file</code>オプションで証明書ファイルを渡してやると有効になる。証明書のCommon Nameがユーザ名になり、Organizationがグループになる。クライアント側は、その証明書と対応する秘密鍵をクレデンシャルとして指定する。</li>
+<li><a href="https://kubernetes.io/docs/admin/authentication/#putting-a-bearer-token-in-a-request">Bearer Token</a>: 無記名トークンを使うモジュール。kube-apiserver起動時に<code>--token-auth-file</code>オプションでトークン情報を渡してやると有効になる。トークン情報はCSVで、「<code>token,user,uid,&quot;group1,group2,group3&quot;</code>」という形式で書く。クライアント側は、ユーザ名とトークン文字列をクレデンシャルとして指定する。</li>
+<li><a href="https://kubernetes.io/docs/admin/authentication/#static-password-file">ベーシック認証</a>: ユーザ名とパスワードで認証するモジュール。kube-apiserver起動時に<code>--basic-auth-file</code>オプションでユーザ名とパスワードのリストを渡してやると有効になる。このリストはCSVで、「<code>password,user,uid,&quot;group1,group2,group3&quot;</code>」という形式で書く。クライアント側は、ユーザ名とパスワードをクレデンシャルとして指定する。HTTPクライアントの時はAuthorizationヘッダが使える。</li>
+<li><a href="https://kubernetes.io/docs/admin/authentication/#service-account-tokens">Service Account Token</a>: Service Accountを署名付きBearer Tokenで認証するモジュール。デフォルトで有効になる。</li>
+</ul>
+
+<p>このあたり、Qiitaの「<a href="https://qiita.com/hiyosi/items/43465d4fc501c2044d01#x509-client-certs">kubernetesがサポートする認証方法の全パターンを動かす</a>」という記事をみると理解が深まる。</p>
+
+<h3 id="authorization">Authorization</h3>
+
+<p>Authenticationをパスすると、クライアントのユーザ(とグループ)が認証され、第二段階のAuthorizationモジュールの処理に移る。
+ここでは、リクエストの内容(操作対象、操作種別(メソッド)等)を見て、それがユーザに許されたものなら認可する。
+何を許すかは事前にクラスタにポリシーを定義しておく。</p>
+
+<p>kube-apiserver起動時に<code>--authorization-mode</code>オプションで一つ以上のAuthenticatorモジュールを指定できて、どれかで認可されれば次の段階に進める。
+さもなくばHTTPステータスコード403が返る。</p>
+
+<p>Authorizationモジュールには以下のようなものがある。</p>
+
+<ul>
+<li><a href="https://kubernetes.io/docs/admin/authorization/node/">Node</a>: kubeletからのリクエストを認可する。</li>
+<li><a href="https://kubernetes.io/docs/admin/authorization/abac/">ABAC Mode</a>: Attribute-based Access Control。リクエストに含まれる属性とPolicyオブジェクトを比較して、マッチするものがあれば認可。</li>
+<li><a href="https://kubernetes.io/docs/admin/authorization/rbac/">RBAC Mode</a>: Role-Based Access Control。RoleオブジェクトやClusterRoleオブジェクトでロールを作成し、アクセスできるリソースや許可する操作を定義して、RoleBindingオブジェクトやClusterRoleBindingオブジェクトでユーザ名やグループと紐づける。</li>
+<li><a href="https://kubernetes.io/docs/admin/authorization/webhook/">Webhook Mode</a>: リクエストの内容を示すSubjectAccessReviewオブジェクトをシリアライズしたJSONデータをHTTPでPOSTして、そのレスポンスによって認可可否を決める。</li>
+</ul>
+
+<h3 id="admission-control">Admission Control</h3>
+
+<p>Authorizationをパスすると、第三段階のAdmission Controlモジュールの処理に移る。
+ここでは、オブジェクトの作成、削除、更新などのリクエストをインターセプトして、オブジェクトの永続化前にそのオブジェクトを確認して、永続化を許可するかを決める。
+リクエストされたオブジェクトやそれに関連するオブジェクトを永続化前にいじって、デフォルト値を設定したりもできる。
+読み取りリクエストの場合は実行されない。</p>
+
+<p>kube-apiserver起動時に<code>--admission-control</code>オプションで複数のAdmission Controlモジュールを指定できて、全てが許可しないとリクエストが却下される。</p>
+
+<p>Admission Controlモジュールは色々あるんだけど、Kubernetes 1.6以降では<code>--admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,ResourceQuota,DefaultTolerationSeconds</code>と指定するのが強く推奨されている。
+ここで指定している<a href="https://kubernetes.io/docs/admin/admission-controllers/#serviceaccount">ServiceAccountモジュール</a>は、kube-controller-managerに含まれるServiceAccountControllerとTokenControllerと協調し、Service Account周りの処理を<a href="https://kubernetes.io/docs/admin/service-accounts-admin/#service-account-automation">自動化</a>してくれるもの。</p>
+
+<p>ServiceAccountControllerは、各Namespaceに<code>default</code>という名前のService Accountを作る。</p>
+
+<p>ServiceAccountが作成されるとTokenControllerが動き、対応したSecretとトークンを生成して紐づける。</p>
+
+<p>ServiceAccountモジュールは、Podの作成や更新時に動き、以下の処理をする。</p>
+
+<ol>
+<li>PodにServiceAccountが設定されていなければ、<code>default</code>を設定する。</li>
+<li>Podに設定されたServiceAccountが存在していることを確認し、存在していなければリクエストを却下する。</li>
+<li>PodがImagePullSecretsを含んでいなければ、ServiceAccountのImagePullSecretsをPodに追加する。</li>
+<li>トークンを含んだVolumeをPodに追加する。</li>
+<li>Pod内の各コンテナの<code>/var/run/secrets/kubernetes.io/serviceaccount</code>にそのVolumeをマウントさせる。</li>
+</ol>
+
+<h2 id="dashboardへbearer-tokenでサインイン">DashboardへBearer Tokenでサインイン</h2>
+
+<p>Dashboardの話に戻る。
+とりあえず<a href="https://github.com/kubernetes/dashboard/wiki/Access-control#bearer-token">Bearer Tokenでのサインイン</a>を試す。</p>
+
+<p>クラスタにはデフォルトで色んなService Accountが作られていて、異なる権限を持っている。
+そのいずれかのSecretのTokenを使ってDashboardへサインインできるらしい。</p>
+
+<p>以下のコマンドで<code>kube-system</code>というNamespaceのSecretを一覧できる。</p>
+
+<pre><code class="language-cmd">C:\Users\kaitoy&gt;kubectl -n kube-system get secret
+NAME                                     TYPE                                  DATA      AGE
+attachdetach-controller-token-skzmj      kubernetes.io/service-account-token   3         18m
+bootstrap-signer-token-mhqfh             kubernetes.io/service-account-token   3         18m
+bootstrap-token-2964e0                   bootstrap.kubernetes.io/token         7         18m
+certificate-controller-token-fvrgm       kubernetes.io/service-account-token   3         18m
+cronjob-controller-token-hmrdm           kubernetes.io/service-account-token   3         18m
+daemon-set-controller-token-vqz85        kubernetes.io/service-account-token   3         18m
+default-token-h987g                      kubernetes.io/service-account-token   3         18m
+deployment-controller-token-86bp9        kubernetes.io/service-account-token   3         18m
+disruption-controller-token-6mskg        kubernetes.io/service-account-token   3         18m
+endpoint-controller-token-d4wz6          kubernetes.io/service-account-token   3         18m
+generic-garbage-collector-token-smfgq    kubernetes.io/service-account-token   3         18m
+horizontal-pod-autoscaler-token-wsbn9    kubernetes.io/service-account-token   3         18m
+job-controller-token-fttt2               kubernetes.io/service-account-token   3         18m
+kube-dns-token-sn5qq                     kubernetes.io/service-account-token   3         18m
+kube-proxy-token-w96xd                   kubernetes.io/service-account-token   3         18m
+kubernetes-dashboard-certs               Opaque                                2         7m
+kubernetes-dashboard-key-holder          Opaque                                2         6m
+kubernetes-dashboard-token-gtppc         kubernetes.io/service-account-token   3         7m
+namespace-controller-token-5kksd         kubernetes.io/service-account-token   3         18m
+node-controller-token-chpwt              kubernetes.io/service-account-token   3         18m
+persistent-volume-binder-token-d5x49     kubernetes.io/service-account-token   3         18m
+pod-garbage-collector-token-l8sct        kubernetes.io/service-account-token   3         18m
+replicaset-controller-token-njjwr        kubernetes.io/service-account-token   3         18m
+replication-controller-token-qrr5h       kubernetes.io/service-account-token   3         18m
+resourcequota-controller-token-dznjm     kubernetes.io/service-account-token   3         18m
+service-account-controller-token-99nh8   kubernetes.io/service-account-token   3         18m
+service-controller-token-9cw7k           kubernetes.io/service-account-token   3         18m
+statefulset-controller-token-8z8w9       kubernetes.io/service-account-token   3         18m
+token-cleaner-token-cxbkc                kubernetes.io/service-account-token   3         18m
+ttl-controller-token-k7gh7               kubernetes.io/service-account-token   3         18m
+weave-net-token-lqdgm                    kubernetes.io/service-account-token   3         17m
+</code></pre>
+
+<p>で、適当にそれっぽいSecret、<code>deployment-controller-token-86bp9</code>を選んで、<code>kubectl describe</code>したらTokenが見れた。
+(Dataセクションの<code>token</code>のとこ。)</p>
+
+<pre><code class="language-cmd">C:\Users\kaitoy&gt;kubectl -n kube-system describe secret deployment-controller-token-86bp9
+Name:         deployment-controller-token-86bp9
+Namespace:    kube-system
+Labels:       &lt;none&gt;
+Annotations:  kubernetes.io/service-account.name=deployment-controller
+              kubernetes.io/service-account.uid=17fc5207-b627-11e7-9867-000c2938deae
+
+Type:  kubernetes.io/service-account-token
+
+Data
+====
+ca.crt:     1025 bytes
+namespace:  11 bytes
+token:      eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJkZXBsb3ltZW50LWNvbnRyb2xsZXItdG9rZW4tODZicDkiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiZGVwbG95bWVudC1jb250cm9sbGVyIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQudWlkIjoiMTdmYzUyMDctYjYyNy0xMWU3LTk4NjctMDAwYzI5MzhkZWFlIiwic3ViIjoic3lzdGVtOnNlcnZpY2VhY2NvdW50Omt1YmUtc3lzdGVtOmRlcGxveW1lbnQtY29udHJvbGxlciJ9.ZGV9XDd-GQjAwRuLKpdsWL_dTeF0Mr_2gF117OW4BhEuLwPujnsfOuysAQ-DUtNOp1NHKGitlfxjh6fKo4tFsdwLVJWrRK6i4YH1Mm2No7Sheks7IQn1FnwSmr7yCuvjlHD2e4RpZH0wupOFoY7FHntilhOWbXTJzJzi7TozLX02EKbkVGAsvch3LZ6p8jmUH5hr8DdKc4jbmTRp86SOiFS4_-TJ3RtAHCxiioAuKzXm3-rAWdeGLLcKrM2pAFSAGaBNu8MO5BZlAi6h3Xt4x-8-1ZXs4mudtJiECvjB-XIwiwzhpq8wIPZvvQQ-f1khixOyk1RfIXRJhIE5Gqvi8g
+</code></pre>
+
+<p>サインイン画面でTokenを選択し、
+この、<code>eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJkZXBsb3ltZW50LWNvbnRyb2xsZXItdG9rZW4tODZicDkiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiZGVwbG95bWVudC1jb250cm9sbGVyIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQudWlkIjoiMTdmYzUyMDctYjYyNy0xMWU3LTk4NjctMDAwYzI5MzhkZWFlIiwic3ViIjoic3lzdGVtOnNlcnZpY2VhY2NvdW50Omt1YmUtc3lzdGVtOmRlcGxveW1lbnQtY29udHJvbGxlciJ9.ZGV9XDd-GQjAwRuLKpdsWL_dTeF0Mr_2gF117OW4BhEuLwPujnsfOuysAQ-DUtNOp1NHKGitlfxjh6fKo4tFsdwLVJWrRK6i4YH1Mm2No7Sheks7IQn1FnwSmr7yCuvjlHD2e4RpZH0wupOFoY7FHntilhOWbXTJzJzi7TozLX02EKbkVGAsvch3LZ6p8jmUH5hr8DdKc4jbmTRp86SOiFS4_-TJ3RtAHCxiioAuKzXm3-rAWdeGLLcKrM2pAFSAGaBNu8MO5BZlAi6h3Xt4x-8-1ZXs4mudtJiECvjB-XIwiwzhpq8wIPZvvQQ-f1khixOyk1RfIXRJhIE5Gqvi8g</code>を入力したらサインインできて、GoslingsのDeploymentの情報が見れた。</p>
+
+<p><img src="/images/retry-dashboard-on-k8s-cluster-by-kubeadm/deploy.png" alt="deploy" />
+</p>
+
+<p><br></p>
+
+<p>Podも見れる。</p>
+
+<p><img src="/images/retry-dashboard-on-k8s-cluster-by-kubeadm/pods.png" alt="pods" />
+</p>
+
+<p><br></p>
+
+<p>けどServiceは見れない。</p>
+
+<p><img src="/images/retry-dashboard-on-k8s-cluster-by-kubeadm/service.png" alt="service" />
+</p>
+
+<p><br></p>
+
+<p>各画面でオレンジ色のワーニングも出ていて、<code>deployment-controller</code>ユーザで見れる範囲はあまり広くないことが分かる。</p>
+
+<h2 id="dashboardへadmin権限でサインイン">DashboardへAdmin権限でサインイン</h2>
+
+<p>DashboardのPodのService Accountである<code>kubernetes-dashboard</code>にAdmin権限を付けてやって、サインイン画面でSKIPを押すとなんでも見れるようになる。セキュリティリスクがあるので本番ではNG設定だけど。</p>
+
+<p><code>cluster-admin</code>というClusterRoleがあって、これを<code>kubernetes-dashboard</code>にバインドするClusterRoleBindingを作ってやればいい。</p>
+
+<p>ので、以下のようなYAMLファイルを書いて、</p>
+
+<pre><code class="language-yml">apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: kubernetes-dashboard
+  labels:
+    k8s-app: kubernetes-dashboard
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: kubernetes-dashboard
+  namespace: kube-system
+</code></pre>
+
+<p><code>kubectl</code>で投げる。</p>
+
+<pre><code class="language-cmd">C:\Users\kaitoy\Desktop&gt;kubectl create -f dashboard-admin.yml
+clusterrolebinding &quot;kubernetes-dashboard&quot; created
+</code></pre>
+
+<p><br></p>
+
+<p>したらServiceも見えるようになった。</p>
+
+<p><img src="/images/retry-dashboard-on-k8s-cluster-by-kubeadm/service-admin.png" alt="service-admin" />
+</p>
+
+<p><br></p>
+
+<p>ついでにHWリソース情報も見れた。</p>
+
+<p><img src="/images/retry-dashboard-on-k8s-cluster-by-kubeadm/resources.png" alt="resources" />
+</p>
+
+<p><br></p>
+
+<p>満足した。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        
+        
+
+        
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-6244473643910448"
+             data-ad-slot="1845600530"
+             data-ad-format="auto"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </aside>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f10%2f31%2fretry-dashboard-on-k8s-cluster-by-kubeadm%2f&t=Kubernetes%201.8%e3%81%ae%e3%82%a2%e3%82%af%e3%82%bb%e3%82%b9%e5%88%b6%e5%be%a1%e3%81%ab%e3%81%a4%e3%81%84%e3%81%a6%e3%80%82%e3%81%82%e3%81%a8Dashboard%e3%80%82" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f10%2f31%2fretry-dashboard-on-k8s-cluster-by-kubeadm%2f&text=Kubernetes%201.8%e3%81%ae%e3%82%a2%e3%82%af%e3%82%bb%e3%82%b9%e5%88%b6%e5%be%a1%e3%81%ab%e3%81%a4%e3%81%84%e3%81%a6%e3%80%82%e3%81%82%e3%81%a8Dashboard%e3%80%82&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f10%2f31%2fretry-dashboard-on-k8s-cluster-by-kubeadm%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f10%2f31%2fretry-dashboard-on-k8s-cluster-by-kubeadm%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2017%2f10%2f31%2fretry-dashboard-on-k8s-cluster-by-kubeadm%2f&title=Kubernetes%201.8%e3%81%ae%e3%82%a2%e3%82%af%e3%82%bb%e3%82%b9%e5%88%b6%e5%be%a1%e3%81%ab%e3%81%a4%e3%81%84%e3%81%a6%e3%80%82%e3%81%82%e3%81%a8Dashboard%e3%80%82" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://www.kaitoy.xyz/tags/kubernetes"><i class="fa fa-tags"></i> kubernetes </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/docker"><i class="fa fa-tags"></i> docker </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/08/14/webdriverio-chrome/">WebdriverIOとChromeのヘッドレスモードで自動ブラウザテストするDockerイメージ: webdriverio-chrome</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/07/31/docker-for-windows/">Docker for Windowsがコレジャナかった</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/">Windows Server 2016 TP5でWindows Containersにリトライ</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">Pcap4J Meets Windows Containers</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></li>
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/">
+                  Kubernetes1.8のクラスタを構築する。kubeadmで。
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/headless-browser">headless-browser</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubeadm">kubeadm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/license">license</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/selenium">selenium</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/servicenow">servicenow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/test-framework">test-framework</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/webdriverio">webdriverio</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-6244473643910448"
+    data-ad-slot="1845600530"
+    data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2017  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

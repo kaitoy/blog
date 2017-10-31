@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://www.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="「Kubernetes 1.8が出たので、Minikubeを触ってみる」でMinikubeをやったんだけど、もう一歩ステップアップすべく、kubeadmでKubernetesクラスタを組んでみた話。 (adsbygoogle = window.adsbygoogle || []).push({}); kubeadmとは kubeadm(キューブアダム)はKubernetesに含まれるコマンドで、Kubernetesクラスタを簡単に構築するツール。 Kubernetes 1.4で追加され、Kubernetes 1.8の時点でまだベータで、本番環境には使わないでとなっている。 Qiitaの「kubeadmが何をやっているのかみてみた」という記事が、中でどんな動作をしてるかを解説していて参考になる。 コマンドの使用感からすると、DockerのSwarmモードでのクラスタ構築の容易さをKubernetesに取り込むことを目指して開発されている気がした。 ネットで見かけた評判だと、確かに簡単にクラスタ構築できて素晴らしいけど、TLSの証明書生成など、細かく制御できなくて困るところがあって、やはり本番に使えるレベルではないとのこと。 まあとにかく試してみる価値はあろう。 kubeadmインストール Kubernetesのドキュメントに従ってkubeadmをインストールする。 バージョンは最新版の1.8.1。 VM作成 kubeadmのサポートOSは、Ubuntu 16.04&#43;、Debian 9、CentOS 7、RHEL 7、Fedora 25/26、HypriotOS v1.0.1&#43;となっている。 慣れているCentOS 7を使うことにする。 (HypriotOSってなんだろう?) 自前のノートPCのWindows 10 x64 Home Edition上のVMware Player 12のVMにCentOS 7を入れた。 メモリは1GB以上が要件なので、味を付けて1.4GBで。 VM間で通信できることって要件があったけど、インターネット接続も必要なはずなので、NICはNATのやつで。 このVMはMasterになる。 OS設定 Kubernetesが使うポートをいろいろ開けなければいけないんだけど、めんどいのでfirewalldを無効にする。 [root@localhost ~]# systemctl stop firewalld [root@localhost ~]# systemctl disable firewalld Removed symlink /etc/systemd/system/multi-user.target.wants/firewalld.service. Removed symlink /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service. なんとなくIPアドレスをDHCPから静的割り当てに。(192.168.171.200) [root@k8s-master ~]# nmcli c modify ens33 ipv4.method manual [root@k8s-master ~]# nmcli c modify ens33 ipv4.addresses 192.168.171.200/24 [root@k8s-master ~]# nmcli c modify ens33 ipv4.dns 192.168.171.2 [root@k8s-master ~]# nmcli c modify ens33 ipv4.gateway 192.168.171.2 [root@k8s-master ~]# systemctl restart network ホスト名をlocalhost.localdomainからk8s-masterに変更。 [root@localhost ~]# hostnamectl set-hostname k8s-master ログアウトログインで反映。 /etc/hostsを編集して、k8s-masterのエントリを追加。 あとで作るもう一つのVM、k8s-nodeのほうもエントリを追加。 (これはだめだったっぽい。詳細は後述。) クラスタを構成するノードは、一意のMACアドレスとproduct_uuidを持っていないといけない。 Kubernetesがそれらでクラスタ内のノードを区別してるので。 MACアドレスはip linkコマンドなどで確認できる。 [root@k8s-master ~]# ip link 1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT qlen 1 link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00 2: ens33: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP mode DEFAULT qlen 1000 link/ether 00:0c:29:38:de:ae brd ff:ff:ff:ff:ff:ff product_uuidは、SMBIOSという、PC固有のデータを保存・参照するための仕様があって、それに従って保存されたシステムの識別子らしい。 product_uuidはdmidecodeコマンドなどで確認できる。 [root@k8s-master ~]# dmidecode -s system-uuid 58114D56-A744-3610-C3C5-9B15A838DEAE kubeletがちゃんと動くためにはswapを無効にする必要がある。 [root@k8s-master ~]# swapoff -a (このコマンドはよくなかった。詳細は後述。) ebtablesとethtoolを入れる必要がある。 [root@k8s-master ~]# yum install -y ebtables ethtool Dockerも入れないと。 v1.12が推奨で、v1.11かv1.13でもいい。 適当に入れたらv1.12.6だった。 [root@k8s-master ~]# yum install -y docker [root@k8s-master ~]# systemctl enable docker &amp;&amp; systemctl start docker Podネットワークなどが機能する要件として、コンテナがホストファイルシステムにアクセスできる必要があるが、そのためには現状、SELinuxを無効化する必要がある。 [root@k8s-master ~]# setenforce 0 (このコマンドもよくなかった。詳細は後述。) RHEL系の場合、iptablesがバイパスされてトラフィックが変にルーティングされる問題があるため、net.bridge.bridge-nf-call-iptablesを1にセットしておく必要がある。 [root@k8s-master ~]# cat &lt;&lt;EOF &gt; /etc/sysctl.d/k8s.conf &gt; net.bridge.bridge-nf-call-ip6tables = 1 &gt; net.bridge.bridge-nf-call-iptables = 1 &gt; EOF [root@k8s-master ~]# sysctl --system * Applying /usr/lib/sysctl.d/00-system.conf ...">
+    <meta property="og:description" content="「Kubernetes1.8のクラスタを構築する。kubeadmで。」で、Dashboardがうまく動かない問題が発生したんだけど、それを解決した話。 (adsbygoogle = window.adsbygoogle || []).push({}); 問題の現象 kubeadmでKubernetesクラスタを組んで、自前のアプリ(Goslings)のデプロイまではうまくできたんだけど、Dashboardをデプロイしたら動かず、Web UIにkubectl proxy経由でつないでもタイムアウトしてしまった。 対策 なんとなく、クラスタ内部での名前解決にはkube-dnsによるDNSサービスが使われているっぽいので、/etc/hostsに余計な事書いたのがいけなかったと思った。 ので、/etc/hostsからk8s-masterとk8s-nodeのエントリを削除してから、kubeadm initからやり直してみた。 結果 したらちゃんと動いた。 VMのホストでkubectl proxyして、 C:\Users\kaitoy\Desktop&gt;kubectl proxy Starting to serve on 127.0.0.1:8001 http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/にブラウザでつないだらサインイン画面が表示された。 Dashboardのサインイン処理はKubernetes(というかkube-apiserver)のそれに移譲している。 Dashboardはそこで認証されたユーザでクラスタのリソースにアクセスし、情報を取得して表示する。多分。 Dashboardへのサインイン方法はいくつかあるが、それらを理解するにはKubernetesのアクセス制御について学ぶことを推奨とあったのでちょっとKubernetesのドキュメントを読んだ。 Kubernetesのアクセス制御 Kubernetesクラスタのエンドポイントはkube-apiserverであり、クラスタのリソースへのアクセス制御もkube-apiserverがやる。 クライアントとkube-apiserverとのTLSセッションが確立した後、HTTP層のデータを見てアクセス制御をするんだけど、その処理はAuthentication(認証)、Authorization(認可)、Admission(許可)の三段階からなる。 Authentication 第一段階がAuthentication。 ここでは、kube-apiserverに仕込まれたAuthenticatorモジュールがユーザ認証をする。 Kubernetesが認証するユーザには、Kubernetesが管理するService Accountと、クラスタ外部で管理される通常ユーザの二通りがある。 Service AccountはPodがkube-apiserverと話すためのユーザで、通常ユーザは主に人がkubectlとかでkube-apiserverと話すためのユーザ。(匿名で話すこともできる。) 前者はServiceAccountオブジェクトで定義されるけど、後者用のオブジェクトはない。 ServiceAccountはNamespaceと関連付き(つまりnamespace毎にユニーク)、Secretに紐づく。 Secretオブジェクトはクレデンシャルのセットを定義し、Podにマウントされる。 ServiceAccountとSecretは、ふつうは自動で作られ、Podに割り当てられる。 kube-apiserverには一つ以上のAuthenticatorモジュールを設定できて、どれかで認証できれば次の段階に進める。 認証失敗するとHTTPステータスコード401が返る。 Authenticatorモジュールには以下のようなものがある。 クライアント証明書: X.509のディジタル証明書を使うモジュール。kube-apiserver起動時に--client-ca-fileオプションで証明書ファイルを渡してやると有効になる。証明書のCommon Nameがユーザ名になり、Organizationがグループになる。クライアント側は、その証明書と対応する秘密鍵をクレデンシャルとして指定する。 Bearer Token: 無記名トークンを使うモジュール。kube-apiserver起動時に--token-auth-fileオプションでトークン情報を渡してやると有効になる。トークン情報はCSVで、「token,user,uid,&quot;group1,group2,group3&quot;」という形式で書く。クライアント側は、ユーザ名とトークン文字列をクレデンシャルとして指定する。 ベーシック認証: ユーザ名とパスワードで認証するモジュール。kube-apiserver起動時に--basic-auth-fileオプションでユーザ名とパスワードのリストを渡してやると有効になる。このリストはCSVで、「password,user,uid,&quot;group1,group2,group3&quot;」という形式で書く。クライアント側は、ユーザ名とパスワードをクレデンシャルとして指定する。HTTPクライアントの時はAuthorizationヘッダが使える。 Service Account Token: Service Accountを署名付きBearer Tokenで認証するモジュール。デフォルトで有効になる。 このあたり、Qiitaの「kubernetesがサポートする認証方法の全パターンを動かす」という記事をみると理解が深まる。 Authorization Authenticationをパスすると、クライアントのユーザ(とグループ)が認証され、第二段階のAuthorizationモジュールの処理に移る。 ここでは、リクエストの内容(操作対象、操作種別(メソッド)等)を見て、それがユーザに許されたものなら認可する。 何を許すかは事前にクラスタにポリシーを定義しておく。 kube-apiserver起動時に--authorization-modeオプションで一つ以上のAuthenticatorモジュールを指定できて、どれかで認可されれば次の段階に進める。 さもなくばHTTPステータスコード403が返る。 Authorizationモジュールには以下のようなものがある。 Node: kubeletからのリクエストを認可する。">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
     
@@ -82,6 +82,28 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Tue, Oct 31, 2017</span>
+              </div>
+              <h2 class="title">Kubernetes 1.8のアクセス制御について。あとDashboard。</h2>
+              <div class="summary">
+                「Kubernetes1.8のクラスタを構築する。kubeadmで。」で、Dashboardがうまく動かない問題が発生したんだけど、それを解決した話。 (adsbygoogle = window.adsbygoogle || []).push({}); 問題の現象 kubeadmでKubernetesクラスタを組んで、自前のアプリ(Goslings)のデプロイまではうまくできたんだけど、Dashboardをデプロイしたら動かず、Web UIにkubectl proxy経由でつないでもタイムアウトしてしまった。 対策 なんとなく、クラスタ内部での名前解決にはkube-dnsによるDNSサービスが使われているっぽいので、/etc/hostsに余計な事書いたのがいけなかったと思った。 ので、/etc/hostsからk8s-masterとk8s-nodeのエントリを削除してから、kubeadm initからやり直してみた。 結果 したらちゃんと動いた。 VMのホストでkubectl proxyして、 C:\Users\kaitoy\Desktop&gt;kubectl proxy Starting to serve on 127.0.0.1:8001 http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/にブラウザでつないだらサインイン画面が表示された。 Dashboardのサインイン処理はKubernetes(というかkube-apiserver)のそれに移譲している。 Dashboardはそこで認証されたユーザでクラスタのリソースにアクセスし、情報を取得して表示する。多分。 Dashboardへのサインイン方法はいくつかあるが、それらを理解するにはKubernetesのアクセス制御について学ぶことを推奨とあったのでちょっとKubernetesのドキュメントを読んだ。 Kubernetesのアクセス制御 Kubernetesクラスタのエンドポイントはkube-apiserverであり、クラスタのリソースへのアクセス制御もkube-apiserverがやる。 クライアントとkube-apiserverとのTLSセッションが確立した後、HTTP層のデータを見てアクセス制御をするんだけど、その処理はAuthentication(認証)、Authorization(認可)、Admission(許可)の三段階からなる。 Authentication 第一段階がAuthentication。 ここでは、kube-apiserverに仕込まれたAuthenticatorモジュールがユーザ認証をする。 Kubernetesが認証するユーザには、Kubernetesが管理するService Accountと、クラスタ外部で管理される通常ユーザの二通りがある。 Service AccountはPodがkube-apiserverと話すためのユーザで、通常ユーザは主に人がkubectlとかでkube-apiserverと話すためのユーザ。(匿名で話すこともできる。) 前者はServiceAccountオブジェクトで定義されるけど、後者用のオブジェクトはない。 ServiceAccountはNamespaceと関連付き(つまりnamespace毎にユニーク)、Secretに紐づく。 Secretオブジェクトはクレデンシャルのセットを定義し、Podにマウントされる。 ServiceAccountとSecretは、ふつうは自動で作られ、Podに割り当てられる。 kube-apiserverには一つ以上のAuthenticatorモジュールを設定できて、どれかで認証できれば次の段階に進める。 認証失敗するとHTTPステータスコード401が返る。 Authenticatorモジュールには以下のようなものがある。 クライアント証明書: X.509のディジタル証明書を使うモジュール。kube-apiserver起動時に--client-ca-fileオプションで証明書ファイルを渡してやると有効になる。証明書のCommon Nameがユーザ名になり、Organizationがグループになる。クライアント側は、その証明書と対応する秘密鍵をクレデンシャルとして指定する。 Bearer Token: 無記名トークンを使うモジュール。kube-apiserver起動時に--token-auth-fileオプションでトークン情報を渡してやると有効になる。トークン情報はCSVで、「token,user,uid,&quot;group1,group2,group3&quot;」という形式で書く。クライアント側は、ユーザ名とトークン文字列をクレデンシャルとして指定する。 ベーシック認証: ユーザ名とパスワードで認証するモジュール。kube-apiserver起動時に--basic-auth-fileオプションでユーザ名とパスワードのリストを渡してやると有効になる。このリストはCSVで、「password,user,uid,&quot;group1,group2,group3&quot;」という形式で書く。クライアント側は、ユーザ名とパスワードをクレデンシャルとして指定する。HTTPクライアントの時はAuthorizationヘッダが使える。 Service Account Token: Service Accountを署名付きBearer Tokenで認証するモジュール。デフォルトで有効になる。 このあたり、Qiitaの「kubernetesがサポートする認証方法の全パターンを動かす」という記事をみると理解が深まる。 Authorization Authenticationをパスすると、クライアントのユーザ(とグループ)が認証され、第二段階のAuthorizationモジュールの処理に移る。 ここでは、リクエストの内容(操作対象、操作種別(メソッド)等)を見て、それがユーザに許されたものなら認可する。 何を許すかは事前にクラスタにポリシーを定義しておく。 kube-apiserver起動時に--authorization-modeオプションで一つ以上のAuthenticatorモジュールを指定できて、どれかで認可されれば次の段階に進める。 さもなくばHTTPステータスコード403が返る。 Authorizationモジュールには以下のようなものがある。 Node: kubeletからのリクエストを認可する。
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="eyecatch">
@@ -142,33 +164,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2017/08/25/if-youre-a-startup-you-should-not-use-react-reflecting-on-the-bsd-patents-license/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2017/08/25/if-youre-a-startup-you-should-not-use-react-reflecting-on-the-bsd-patents-license/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/react.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Fri, Aug 25, 2017</span>
               </div>
-              <h2 class="title">スタートアップはReactを使うべきではない (BSD &#43; patentsライセンスを考慮して) — もし、いつか大企業に買収されたいと望むなら</h2>
-              <div class="summary">
-                このエントリでは、Raúl Kripalaniによる記事、If you’re a startup, you should not use React (reflecting on the BSD + patents license)を紹介する。 (Raúlから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。 2017/9/23追記: React、Jest、Flow、Immutable.jsがMITにリライセンスされるというアナウンスがFacebookからあった。 コミュニティの大勝利だ。 (adsbygoogle = window.adsbygoogle || []).push({}); 現在オープンソースコミュニティで起こっていることには落胆させられる。 特に、オープンソースのおかげで多くのスタートアップやビジネスが存在することを認識したときは。 独占的なソフトウェアのために法外なライセンス料を払わなければならないとしたら、それらは存続できない。 オープンソースとは、より良いソフトウェアをみんなで構築するためのコミュニティをつくることだ。 それを、— Facebookが意図しているような — 人々の権利を交換するための市場として決して使用すべきではない。 Facebookは「BSD + patents」というライセンスモデルを推進している。 広く人気のあるReactを含む、すべてのプロジェクトで。 基本的に、「BSD + patents」はコードが(誰でも参照し利用できるように)公開されていることを意味するが、しかしそれは常にFacebookの著作物でもある。 そして彼らは、君がFacebookを特許侵害で訴えないで 仲良くやっている限り、君に特許ライセンスを与える。 Facebookを訴えた瞬間、Reactの他、君の使っているあらゆるFacebookの「オープンソース」技術の特許権は自動的に取り消されてしまう。 アディオス、バイバイ、どこかへ行ってしまう。 (https://github.com/facebook/react/blob/b8ba8c83f318b84e42933f6928f231dc0918f864/PATENTS) この問題は、Apache Software Foundationによって衆目にさらされることとなった。 この制限は広大で、残忍だ。 ・・・ その知的財産がReactを使用しているドメインと関連しているかどうかは関係ない。 君がReactを使うなら、Facebookが保持する特許に逆らうことはできない。 いつまでも。 言い換えれば、代償。 Facebook、それが君らの考えるオープンソースなのか? ・・・ Fridgebook Inc. 例として、君の会社「Fridgebook Inc.」はインテリジェントな冷蔵庫を販売しているとしよう。 君の冷蔵庫にはスクリーンが付いていて、独自のアプリケーションを実行していて、そのUIにはReactが使われている。 突然、Facebookは冷蔵庫業界への進出を決め、新製品「FBfridge」をわずか1週間後に世界中でローンチすると発表した。 仮に、Facebookがあなたの特許の一部を「FBfridge」で露骨に侵害していた場合、どうすればいい? そう、君は即座に彼らを訴えることはできない。 君は顧客が使うアプリにReactを使っている、だろ? もし他のもの(vue.jsとか)に移行せずに訴えたら、Reactのために与えられたライセンスを即座に失い、思いがけず君自身が違反している状態になり、ソフトウェア不正使用の訴訟を約5000億ドルの会社から起こされる可能性と戦うことになる。 君だけで。 もちろん、君は顧客サービスを中断したくはない。 だから、もし彼らを訴えたい、もしくは少なくともそれをするための効力を保持したいのであれば、記録的な期間でReactから移行できる解決策を見つける必要がある。 それが君の陥るひどい窮地だ。そうだろ?
-              </div>
+              <h3 class="title">スタートアップはReactを使うべきではない (BSD &#43; patentsライセンスを考慮して) — もし、いつか大企業に買収されたいと望むなら</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         
