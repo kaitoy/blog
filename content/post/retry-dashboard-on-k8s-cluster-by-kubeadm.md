@@ -63,7 +63,7 @@ kube-apiserverには一つ以上のAuthenticatorモジュールを設定でき�
 Authenticatorモジュールには以下のようなものがある。
 
 * [クライアント証明書](https://kubernetes.io/docs/admin/authentication/#x509-client-certs): X.509のディジタル証明書を使うモジュール。kube-apiserver起動時に`--client-ca-file`オプションで証明書ファイルを渡してやると有効になる。証明書のCommon Nameがユーザ名になり、Organizationがグループになる。クライアント側は、その証明書と対応する秘密鍵をクレデンシャルとして指定する。
-* [Bearer Token](https://kubernetes.io/docs/admin/authentication/#putting-a-bearer-token-in-a-request): 無記名トークンを使うモジュール。kube-apiserver起動時に`--token-auth-file`オプションでトークン情報を渡してやると有効になる。トークン情報はCSVで、「`token,user,uid,"group1,group2,group3"`」という形式で書く。クライアント側は、ユーザ名とトークン文字列をクレデンシャルとして指定する。
+* [Bearer Token](https://kubernetes.io/docs/admin/authentication/#putting-a-bearer-token-in-a-request): 無記名トークンを使うモジュール。kube-apiserver起動時に`--token-auth-file`オプションでトークン情報を渡してやると有効になる。トークン情報はCSVで、「`token,user,uid,"group1,group2,group3"`」という形式で書く。クライアント側は、トークン文字列をクレデンシャルとして指定する。
 * [ベーシック認証](https://kubernetes.io/docs/admin/authentication/#static-password-file): ユーザ名とパスワードで認証するモジュール。kube-apiserver起動時に`--basic-auth-file`オプションでユーザ名とパスワードのリストを渡してやると有効になる。このリストはCSVで、「`password,user,uid,"group1,group2,group3"`」という形式で書く。クライアント側は、ユーザ名とパスワードをクレデンシャルとして指定する。HTTPクライアントの時はAuthorizationヘッダが使える。
 * [Service Account Token](https://kubernetes.io/docs/admin/authentication/#service-account-tokens): Service Accountを署名付きBearer Tokenで認証するモジュール。デフォルトで有効になる。
 
