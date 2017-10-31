@@ -655,4 +655,4 @@ PodのフェールオーバーもしないしDashboardも開けない。
 <br>
 
 あとでふと思い立って、`/etd/hosts`をいじったらDashboardは動いた。
-それについてはまた別の記事で。
+それについてはまた[別の記事](https://www.kaitoy.xyz/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/)で。
