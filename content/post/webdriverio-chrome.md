@@ -439,7 +439,7 @@ ChromeDriverはどうか。
 ~/webdriverio-chrome # /usr/bin/chromedriver
 ```
 
-これも起動する。
+これも起動する。はて。
 
 <br>
 
@@ -551,6 +551,8 @@ WORKDIR /root/webdriverio-chrome
 
 できるイメージを小さくするため、レイヤを減らしたり、ビルド用パッケージを消したりしてる。
 [Multi-Stage build](http://qiita.com/minamijoyo/items/711704e85b45ff5d6405)が[Docker Hub](https://hub.docker.com/)のAutomated Buildで[もうすぐサポートされる](https://github.com/docker/hub-feedback/issues/1039)ので、そしたらもう少しきれいに書き直せるはず。
+
+(後日書き直して[きれいになった](https://github.com/kaitoy/webdriverio-chrome/blob/master/Dockerfile)。)
 
 <br>
 
