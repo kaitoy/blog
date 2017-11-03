@@ -23,7 +23,10 @@ title = "WebdriverIOとChromeのヘッドレスモードで自動ブラウザテ
 テスト環境の作成は自宅でやってるけど、DockerイメージにしてDocker Hubとかに上げておけば、社内でダウンロードしてそのまま再現できる。
 ダウンロードに係る社内手続きも、Dockerイメージだけに対してやればいいので、中に何を詰め込んでも、後でライブラリとか追加しても、一回こっきりで済む。
 
-というわけでとりあえず、自PC(Windows 10 Home)に入ってるVMware Workstation Player 12.5.5でCentOS 7 x64のVMを作り、Dockerをインストールして、Alpine Linuxをpullした。
+というわけでWebdriverIO環境をDockerコンテナとしてつくることにする。
+とりあえず、自PC(Windows 10 Home x64)に入ってるVMware Workstation Player 12.5.5でCentOS 7 x64のVMを作り、そこにDockerをインストールした。
+
+次に、そのDockerを使って、WebdriverIO環境のベースにするAlpine Linuxをpullする。
 
 ```cmd
 $ docker pull alpine:edge
@@ -35,7 +38,8 @@ Alpine Linuxは[BusyBox](https://busybox.net/)と[musl libc](https://www.musl-li
 2016年2月に[すべてのオフィシャルDockerイメージがAlpine Linuxベースになる](https://www.brianchristner.io/docker-is-moving-to-alpine-linux/)というアナウンスがあったし、他にそれっぽいものもなかったので、これをベースに環境を作ることにした。
 [glibc](https://www.gnu.org/software/libc/)じゃないのがちょっと気になるけど、まあ問題ないか。
 
-現在、[Chrome 59](https://pkgs.alpinelinux.org/package/edge/community/x86_64/chromium)のAlpine Linuxパッケージがedgeブランチで作られているので、Alpine Linuxはedge(i.e. 開発中のバージョン)をpullした。
+現在、[Chrome 59](https://pkgs.alpinelinux.org/package/edge/community/x86_64/chromium)のAlpine Linuxパッケージはedgeブランチ(i.e. 開発ブランチ)でしか作られていない。
+pullするタグをedgeにしたのはそのため。
 (因みに現時点でAlpine Linuxのlatestは3.6。)
 
 で、起動。

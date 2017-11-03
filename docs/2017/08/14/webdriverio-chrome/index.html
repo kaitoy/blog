@@ -13,7 +13,7 @@
     <meta property="og:title" content="WebdriverIOとChromeのヘッドレスモードで自動ブラウザテストするDockerイメージ: webdriverio-chrome | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2017/08/14/webdriverio-chrome/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2017/08/14/webdriverio-chrome/">
-    <meta property="og:description" content="「2017年夏、ブラウザテストフレームワーク」の続き。 ServiceNowアプリケーションのブラウザテストをしたくて色々調べている。 前回は、フレームワークにWebdriverIOを使うと決めたところまで書いた。 今回、最終的に、WebdriverIO、WDIO、selenium-standalone、Jasmineと、Chromeのヘッドレスモードを使って、Dockerコンテナ(Alpine Linux)上でテストスクリプトを実行して、ServiceNowのログイン画面のスクリーンショットが取れるところまでできた。 そのコンテナイメージのDockerfileはGitHubに置いた。 (adsbygoogle = window.adsbygoogle || []).push({}); とりあえずAlpine Linux テスト環境の作成は自宅でやってるけど、DockerイメージにしてDocker Hubとかに上げておけば、社内でダウンロードしてそのまま再現できる。 ダウンロードに係る社内手続きも、Dockerイメージだけに対してやればいいので、中に何を詰め込んでも、後でライブラリとか追加しても、一回こっきりで済む。 というわけでとりあえず、自PC(Windows 10 Home)に入ってるVMware Workstation Player 12.5.5でCentOS 7 x64のVMを作り、Dockerをインストールして、Alpine Linuxをpullした。 $ docker pull alpine:edge Alpine LinuxはBusyBoxとmusl libcで構成された軽量な Linuxディストリビューション。 2016年2月にすべてのオフィシャルDockerイメージがAlpine Linuxベースになるというアナウンスがあったし、他にそれっぽいものもなかったので、これをベースに環境を作ることにした。 glibcじゃないのがちょっと気になるけど、まあ問題ないか。 現在、Chrome 59のAlpine Linuxパッケージがedgeブランチで作られているので、Alpine Linuxはedge(i.e. 開発中のバージョン)をpullした。 (因みに現時点でAlpine Linuxのlatestは3.6。) で、起動。 $ docker run -it alpine:edge sh Chrome(Chromium)インストール まずはChrome(がAlpine Linuxパッケージにはないので、実際にはChromium)と、ついでにChromeDriverをインストールする。 Alpine Linux独自のパッケージマネージャーであるapkを使う。 / # apk add --update chromium chromium-chromedriver / # chromium-browser -version Chromium 59.0.3071.115 無事インストールできた。 この記事を参考にヘッドレスモードで実行してみる。 ヘッドレスモードにするために--headlessを付けて、一時的な制限事項で--disable-gpuを付ける必要があって、コンテナの権限不足を回避するために--no-sandboxを付ける。 (コンテナの権限不足回避には他に、docker runに--privilegedや--cap-add=SYS_ADMIN付ける方法がある。) / # chromium-browser --headless --no-sandbox --disable-gpu https://example.com/ [0811/145902.894023:WARNING:dns_config_service_posix.cc(326)] Failed to read DnsConfig.">
+    <meta property="og:description" content="「2017年夏、ブラウザテストフレームワーク」の続き。 ServiceNowアプリケーションのブラウザテストをしたくて色々調べている。 前回は、フレームワークにWebdriverIOを使うと決めたところまで書いた。 今回、最終的に、WebdriverIO、WDIO、selenium-standalone、Jasmineと、Chromeのヘッドレスモードを使って、Dockerコンテナ(Alpine Linux)上でテストスクリプトを実行して、ServiceNowのログイン画面のスクリーンショットが取れるところまでできた。 そのコンテナイメージのDockerfileはGitHubに置いた。 (adsbygoogle = window.adsbygoogle || []).push({}); とりあえずAlpine Linux テスト環境の作成は自宅でやってるけど、DockerイメージにしてDocker Hubとかに上げておけば、社内でダウンロードしてそのまま再現できる。 ダウンロードに係る社内手続きも、Dockerイメージだけに対してやればいいので、中に何を詰め込んでも、後でライブラリとか追加しても、一回こっきりで済む。 というわけでWebdriverIO環境をDockerコンテナとしてつくることにする。 とりあえず、自PC(Windows 10 Home x64)に入ってるVMware Workstation Player 12.5.5でCentOS 7 x64のVMを作り、そこにDockerをインストールした。 次に、そのDockerを使って、WebdriverIO環境のベースにするAlpine Linuxをpullする。 $ docker pull alpine:edge Alpine LinuxはBusyBoxとmusl libcで構成された軽量な Linuxディストリビューション。 2016年2月にすべてのオフィシャルDockerイメージがAlpine Linuxベースになるというアナウンスがあったし、他にそれっぽいものもなかったので、これをベースに環境を作ることにした。 glibcじゃないのがちょっと気になるけど、まあ問題ないか。 現在、Chrome 59のAlpine Linuxパッケージはedgeブランチ(i.e. 開発ブランチ)でしか作られていない。 pullするタグをedgeにしたのはそのため。 (因みに現時点でAlpine Linuxのlatestは3.6。) で、起動。 $ docker run -it alpine:edge sh Chrome(Chromium)インストール まずはChrome(がAlpine Linuxパッケージにはないので、実際にはChromium)と、ついでにChromeDriverをインストールする。 Alpine Linux独自のパッケージマネージャーであるapkを使う。 / # apk add --update chromium chromium-chromedriver / # chromium-browser -version Chromium 59.0.3071.115 無事インストールできた。 この記事を参考にヘッドレスモードで実行してみる。 ヘッドレスモードにするために--headlessを付けて、一時的な制限事項で--disable-gpuを付ける必要があって、コンテナの権限不足を回避するために--no-sandboxを付ける。 (コンテナの権限不足回避には他に、docker runに--privilegedや--cap-add=SYS_ADMIN付ける方法がある。) / # chromium-browser --headless --no-sandbox --disable-gpu https://example.com/ [0811/145902.894023:WARNING:dns_config_service_posix.cc(326)] Failed to read DnsConfig.">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/servicenow-webdriverio.png">
     
@@ -112,7 +112,10 @@
 <p>テスト環境の作成は自宅でやってるけど、DockerイメージにしてDocker Hubとかに上げておけば、社内でダウンロードしてそのまま再現できる。
 ダウンロードに係る社内手続きも、Dockerイメージだけに対してやればいいので、中に何を詰め込んでも、後でライブラリとか追加しても、一回こっきりで済む。</p>
 
-<p>というわけでとりあえず、自PC(Windows 10 Home)に入ってるVMware Workstation Player 12.5.5でCentOS 7 x64のVMを作り、Dockerをインストールして、Alpine Linuxをpullした。</p>
+<p>というわけでWebdriverIO環境をDockerコンテナとしてつくることにする。
+とりあえず、自PC(Windows 10 Home x64)に入ってるVMware Workstation Player 12.5.5でCentOS 7 x64のVMを作り、そこにDockerをインストールした。</p>
+
+<p>次に、そのDockerを使って、WebdriverIO環境のベースにするAlpine Linuxをpullする。</p>
 
 <pre><code class="language-cmd">$ docker pull alpine:edge
 </code></pre>
@@ -123,7 +126,8 @@
 2016年2月に<a href="https://www.brianchristner.io/docker-is-moving-to-alpine-linux/">すべてのオフィシャルDockerイメージがAlpine Linuxベースになる</a>というアナウンスがあったし、他にそれっぽいものもなかったので、これをベースに環境を作ることにした。
 <a href="https://www.gnu.org/software/libc/">glibc</a>じゃないのがちょっと気になるけど、まあ問題ないか。</p>
 
-<p>現在、<a href="https://pkgs.alpinelinux.org/package/edge/community/x86_64/chromium">Chrome 59</a>のAlpine Linuxパッケージがedgeブランチで作られているので、Alpine Linuxはedge(i.e. 開発中のバージョン)をpullした。
+<p>現在、<a href="https://pkgs.alpinelinux.org/package/edge/community/x86_64/chromium">Chrome 59</a>のAlpine Linuxパッケージはedgeブランチ(i.e. 開発ブランチ)でしか作られていない。
+pullするタグをedgeにしたのはそのため。
 (因みに現時点でAlpine Linuxのlatestは3.6。)</p>
 
 <p>で、起動。</p>
