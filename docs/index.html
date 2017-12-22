@@ -14,9 +14,9 @@
     <link rel="canonical" href="https://www.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="「Kubernetes1.8のクラスタを構築する。kubeadmで。」で、Dashboardがうまく動かない問題が発生したんだけど、それを解決した話。 (adsbygoogle = window.adsbygoogle || []).push({}); 問題の現象 kubeadmでKubernetesクラスタを組んで、自前のアプリ(Goslings)のデプロイまではうまくできたんだけど、Dashboardをデプロイしたら動かず、Web UIにkubectl proxy経由でつないでもタイムアウトしてしまった。 対策 なんとなく、クラスタ内部での名前解決にはkube-dnsによるDNSサービスが使われているっぽいので、/etc/hostsに余計な事書いたのがいけなかったと思った。 ので、/etc/hostsからk8s-masterとk8s-nodeのエントリを削除してから、kubeadm initからやり直してみた。 結果 したらちゃんと動いた。 VMのホストでkubectl proxyして、 C:\Users\kaitoy\Desktop&gt;kubectl proxy Starting to serve on 127.0.0.1:8001 http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/にブラウザでつないだらサインイン画面が表示された。 Dashboardのサインイン処理はKubernetes(というかkube-apiserver)のそれに移譲している。 Dashboardはそこで認証されたユーザでクラスタのリソースにアクセスし、情報を取得して表示する。多分。 Dashboardへのサインイン方法はいくつかあるが、それらを理解するにはKubernetesのアクセス制御について学ぶことを推奨とあったのでちょっとKubernetesのドキュメントを読んだ。 Kubernetesのアクセス制御 Kubernetesクラスタのエンドポイントはkube-apiserverであり、クラスタのリソースへのアクセス制御もkube-apiserverがやる。 クライアントとkube-apiserverとのTLSセッションが確立した後、HTTP層のデータを見てアクセス制御をするんだけど、その処理はAuthentication(認証)、Authorization(認可)、Admission(許可)の三段階からなる。 Authentication 第一段階がAuthentication。 ここでは、kube-apiserverに仕込まれたAuthenticatorモジュールがユーザ認証をする。 Kubernetesが認証するユーザには、Kubernetesが管理するService Accountと、クラスタ外部で管理される通常ユーザの二通りがある。 Service AccountはPodがkube-apiserverと話すためのユーザで、通常ユーザは主に人がkubectlとかでkube-apiserverと話すためのユーザ。(匿名で話すこともできる。) 前者はServiceAccountオブジェクトで定義されるけど、後者用のオブジェクトはない。 ServiceAccountはNamespaceと関連付き(つまりnamespace毎にユニーク)、Secretに紐づく。 Secretオブジェクトはクレデンシャルのセットを定義し、Podにマウントされる。 ServiceAccountとSecretは、ふつうは自動で作られ、Podに割り当てられる。 kube-apiserverには一つ以上のAuthenticatorモジュールを設定できて、どれかで認証できれば次の段階に進める。 認証失敗するとHTTPステータスコード401が返る。 Authenticatorモジュールには以下のようなものがある。 クライアント証明書: X.509のディジタル証明書を使うモジュール。kube-apiserver起動時に--client-ca-fileオプションで証明書ファイルを渡してやると有効になる。証明書のCommon Nameがユーザ名になり、Organizationがグループになる。クライアント側は、その証明書と対応する秘密鍵をクレデンシャルとして指定する。 Bearer Token: 無記名トークンを使うモジュール。kube-apiserver起動時に--token-auth-fileオプションでトークン情報を渡してやると有効になる。トークン情報はCSVで、「token,user,uid,&quot;group1,group2,group3&quot;」という形式で書く。クライアント側は、トークン文字列をクレデンシャルとして指定する。 ベーシック認証: ユーザ名とパスワードで認証するモジュール。kube-apiserver起動時に--basic-auth-fileオプションでユーザ名とパスワードのリストを渡してやると有効になる。このリストはCSVで、「password,user,uid,&quot;group1,group2,group3&quot;」という形式で書く。クライアント側は、ユーザ名とパスワードをクレデンシャルとして指定する。HTTPクライアントの時はAuthorizationヘッダが使える。 Service Account Token: Service Accountを署名付きBearer Tokenで認証するモジュール。デフォルトで有効になる。 このあたり、Qiitaの「kubernetesがサポートする認証方法の全パターンを動かす」という記事をみると理解が深まる。 Authorization Authenticationをパスすると、クライアントのユーザ(とグループ)が認証され、第二段階のAuthorizationモジュールの処理に移る。 ここでは、リクエストの内容(操作対象、操作種別(メソッド)等)を見て、それがユーザに許されたものなら認可する。 何を許すかは事前にクラスタにポリシーを定義しておく。 kube-apiserver起動時に--authorization-modeオプションで一つ以上のAuthenticatorモジュールを指定できて、どれかで認可されれば次の段階に進める。 さもなくばHTTPステータスコード403が返る。 Authorizationモジュールには以下のようなものがある。 Node: kubeletからのリクエストを認可する。">
+    <meta property="og:description" content="機械学習の入門教材として有名なCourseraのMachine Learningコースを修了した記念日記。 (adsbygoogle = window.adsbygoogle || []).push({}); Courseraとは Courseraは、2012年にスタンフォード大学のコンピュータ工学科の2人の教授によって設立されたサービスで、世界トップクラスの大学の講座をオンラインで受けることができるもの。 東京大学とも提携している。 講座の一部は無料で受けることができる。 CourseraのMachine Learningコースとは Machine Learningコースは、Courseraの設立者の一人であるAndrew Ngによる、機械学習の基礎から実践まで浅く広く(?)学べる世界的に有名な講座。 Andrew先生は一時期Googleで働き、Google BrainというDeep Learningのプロジェクトをリードしていたこともある機械学習のエキスパートで、さらにスタンフォードの教授だっただけあって教え方が非常にうまくてわかりやすい。 この講座は主に、5分～15分くらいの動画による講義と、小テストと、プログラミング課題から構成されている。 1週間分の内容が、1.5時間分くらいの動画と、15分くらいでできる小テストと、2、3時間で終わるプログラミング課題で、全体で11週間分やれば修了できる。 1、10、11週目はプログラミング課題が無くてすぐ終わる一方、3～5週目辺りは結構ハード。 私は2017/10/30に始めて、2017/12/19に完了したので、ちょうど50日かかったことになる。 動画は当然英語だが、有志により英語や日本語の字幕が付けられてるので聞き取れなくても問題はあまりない。 ただ、1～4週目くらいまでは、日本語の字幕がずれている動画が少なくなく、それらは英語の字幕でみる必要がある。 1つだけ英語の字幕もダメなものがあって、それだけは字幕なしで見た。 プログラミング課題は、Octaveというオープンソースの数値解析言語で解く。 聞いたことない言語だったが、MATLABとの互換性維持を重視して開発されている言語なので、まあ覚えておいて損はない。 Octaveグラフ描画APIは、MATLABのグラフ描画APIをまねていて、MATLABのグラフ描画APIは、Pythonでよく使われるグラフ描画ライブラリであるMatplotlibがまねていて、つまりOctaveやってるとMatplotlibの勉強にもなる。 以下、11週間分の内容を、キーワードレベルで書いておく。 1週目 機械学習の概要 背景、歴史、活用例。 教師あり学習(Supervised learning) vs 教師なし(Unsupervised learning)。 線形単回帰(Linear regression with one variable) 仮説関数(Hypothesis)、目的関数(Cost function)、平均二乗誤差(Mean squared error)、最小二乗法(Least squares method)、最急降下法(Gradient descent)。 行列 行列(Matrix)とベクトル(Vector)。 行列演算。 逆行列(Inverse)、転置行列(Transpose) 2週目 線形重回帰(Linear regression with multiple variables) 特徴量のスケーリング(Feature scaling)、平均正則化(Mean normalization)。 学習率(Learning rate)。 多項式回帰(Polynomial regression)。 正規方程式(Normal equation)、特異行列(singular matrix)。">
     
-    <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/cml.png">
     
     
     
@@ -82,6 +82,28 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2017/12/22/coursera-machine-learning/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/cml.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Fri, Dec 22, 2017</span>
+              </div>
+              <h2 class="title">CourseraのMachine Learningコースを修了した</h2>
+              <div class="summary">
+                機械学習の入門教材として有名なCourseraのMachine Learningコースを修了した記念日記。 (adsbygoogle = window.adsbygoogle || []).push({}); Courseraとは Courseraは、2012年にスタンフォード大学のコンピュータ工学科の2人の教授によって設立されたサービスで、世界トップクラスの大学の講座をオンラインで受けることができるもの。 東京大学とも提携している。 講座の一部は無料で受けることができる。 CourseraのMachine Learningコースとは Machine Learningコースは、Courseraの設立者の一人であるAndrew Ngによる、機械学習の基礎から実践まで浅く広く(?)学べる世界的に有名な講座。 Andrew先生は一時期Googleで働き、Google BrainというDeep Learningのプロジェクトをリードしていたこともある機械学習のエキスパートで、さらにスタンフォードの教授だっただけあって教え方が非常にうまくてわかりやすい。 この講座は主に、5分～15分くらいの動画による講義と、小テストと、プログラミング課題から構成されている。 1週間分の内容が、1.5時間分くらいの動画と、15分くらいでできる小テストと、2、3時間で終わるプログラミング課題で、全体で11週間分やれば修了できる。 1、10、11週目はプログラミング課題が無くてすぐ終わる一方、3～5週目辺りは結構ハード。 私は2017/10/30に始めて、2017/12/19に完了したので、ちょうど50日かかったことになる。 動画は当然英語だが、有志により英語や日本語の字幕が付けられてるので聞き取れなくても問題はあまりない。 ただ、1～4週目くらいまでは、日本語の字幕がずれている動画が少なくなく、それらは英語の字幕でみる必要がある。 1つだけ英語の字幕もダメなものがあって、それだけは字幕なしで見た。 プログラミング課題は、Octaveというオープンソースの数値解析言語で解く。 聞いたことない言語だったが、MATLABとの互換性維持を重視して開発されている言語なので、まあ覚えておいて損はない。 Octaveグラフ描画APIは、MATLABのグラフ描画APIをまねていて、MATLABのグラフ描画APIは、Pythonでよく使われるグラフ描画ライブラリであるMatplotlibがまねていて、つまりOctaveやってるとMatplotlibの勉強にもなる。 以下、11週間分の内容を、キーワードレベルで書いておく。 1週目 機械学習の概要 背景、歴史、活用例。 教師あり学習(Supervised learning) vs 教師なし(Unsupervised learning)。 線形単回帰(Linear regression with one variable) 仮説関数(Hypothesis)、目的関数(Cost function)、平均二乗誤差(Mean squared error)、最小二乗法(Least squares method)、最急降下法(Gradient descent)。 行列 行列(Matrix)とベクトル(Vector)。 行列演算。 逆行列(Inverse)、転置行列(Transpose) 2週目 線形重回帰(Linear regression with multiple variables) 特徴量のスケーリング(Feature scaling)、平均正則化(Mean normalization)。 学習率(Learning rate)。 多項式回帰(Polynomial regression)。 正規方程式(Normal equation)、特異行列(singular matrix)。
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="eyecatch">
@@ -142,33 +164,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/kubernetes_goslings.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Tue, Oct 10, 2017</span>
               </div>
-              <h2 class="title">Kubernetes 1.8が出たので、Minikubeを触ってみる</h2>
-              <div class="summary">
-                Kubernetes1.8のリリースが話題になっていたので、ちょっと触って見たという話。 (1.8を触ったとは言っていない。) 具体的には、Kubernetes Basicsというチュートリアルをやりながら、MinikubeにGoslingsをデプロイしたんだけど、この記事ではMinikubeをセットアップしたところまで。 (adsbygoogle = window.adsbygoogle || []).push({}); Kubernetesとは KubernetesはOSSのコンテナオーケストレーションツール。 英語だとクーバネティスみたいに発音する。 Googleが自身のコンテナ技術であるBorgの運用で培ったノウハウを活かして開発したもの。 2014年ころに開発が始まり、2015年夏にv1がリリースされたということで、かなり新しいツール。 よく比べられるものにはDockerのSwarmモードやApache Mesosがあるが、何が違うのかは調べてないので知らない。 ただ、Dockerコンテナ管理ツールとしてはKubernetesが一番勢いがある雰囲気を感じる。 (2017/10/18追記: DockerがKubernetesとの統合を発表した。KubernetesはDockerネイティブなツールになり、Dockerとともにインストールされ、Docker ComposeのConposeファイルでデプロイできるようになったりする。Kubernetesの大勝利っぽい。) Kubernetesを使うと、複数の物理マシンからなるHAクラスタ(Kubernetesクラスタ)を構成し、その上にコンテナをデプロイして管理できる。 Kubernetesクラスタは、一組のMasterコンポーネント群(a.k.a. Kubernetes Control Plane、または単にMaster)と一つ以上のNode(昔はMinionと呼ばれてたもの)で構成される。 Nodeは、Masterの管理下でコンテナを実行する機能を備えた、一台のVMや物理マシン。 MasterはNode上で動き、クラスタを管理し、コンテナのスケジューリング、状態管理、スケーリング、アップデートなどを担う。 Kubernetesのアーキテクチャを図にすると以下の感じ。 矢印の向きとかはちょっと間違ってるかも。 ごちゃごちゃするので省いたけど、図の下部のNode内のコンポーネントは、他のNode内でも動いている。 Masterにはkube-apiserverが含まれていて、Kubernetes APIというREST APIを公開する。 このAPIを通してKubernetesオブジェクトを定義したりすることで、宣言的にコンテナの管理ができる仕組み。 ユーザは普通、kubectl(キューブシーティーエル)というコマンドでkube-apiserverとやり取りする。 KubernetesオブジェクトはMasterのetcdによって分散キーバリューストアに永続化され、そのストアをkube-controller-managerとkube-schedulerがwatchしてて、変更に応じた処理をする。 kube-controller-managerは、ノードの管理や、オブジェクトのライフサイクルの管理や、コンテナのスケーリングなど、クラスタレベルの機能を実行する。 (よくわからない。) kube-schedulerは、コンテナを実行するホストを選出し、コンテナのスケジューリングをする。 あと、図にはないけど、cloud-controller-managerというのがMasterで動くこともあって、クラウドプラットフォームとやり取りしてクラウド固有の仕事をするらしい。 クラウドベンダじゃなければ気にしなくて良さそう。 一方、各Nodeでは、kubelet(キューブレット)というMasterのエージェントになるプロセスが動く。 kubeletはkube-apiserverからの指示で、コンテナイメージを取得してコンテナを起動したり監視したり止めたりする。 kubeletがコンテナを扱うためのコンテナランタイムは、普通はDockerだけど、rktとかcri-oとかfraktiとかも使える。runcやRailCarはどうなんだろう。 コンテナはデフォルトではクラスタ内のプライベートネットワークにつながるので、そこで動いているアプリにユーザからアクセスするには、何らかの形でトラフィックを中継してやる必要がある。 これをするのがkube-proxy。 ロードバランシングもしてくれる。 Kubernetesオブジェクトとは Kubernetesオブジェクトは、Kubernetesクラスタ上で機能する構成要素を表現するもの。 オブジェクトはspecとstatusを持ち、オブジェクトに期待する状態やふるまい(spec)を定義しておくと、Kubernetesが実際の状態(status)をそれに合わせてくれる。 宣言的。 オブジェクトには以下のようなものがある。 Pod デプロイの最小単位。 一つ(またはリソースを共有する複数)のコンテナと、ストレージ、ネットワークなどを内包する。 一つのPodには一つのIPアドレスが付く。 kubeletはPodの定義に従ってコンテナを起動する。 因みに、etcd以外のMasterコンポーネントもPodとしてデプロイされる。 Service Podの論理グループ。 PodのIPアドレスは外部に公開されないので、外とのやり取りをするためにServiceがある。 kube-proxyはこいつの定義に従って働く。 Serviceには複数のEndpoint(i.e. Pod等)が紐づき、外部からのトラフィックをラウンドロビンでルーティングするので、冗長化やロードバランサ的な働きもする。 ServiceはPodを抽象化するので、Podが死んだり入れ替わったりしても外に影響が見えにくくなる。 Serviceには以下のtypeがある。 ClusterIP (デフォルト): Kubernetesクラスタ内からだけアクセスできる内部IPアドレスだけをもつ。 NodePort: ClusterIPの拡張。内部IPアドレスに加え、クラスタ外からアクセスできるポートを一つ持つ。 LoadBalancer: NodePortの拡張。外部ロードバランサを作って、固定の外部IPアドレスを付けて、内部IPアドレスへルーティングする。 ExternalName: 抽象名をもつサービス。Kubernetes DNS serverで名前解決する。詳細は読んでないので知らない。 Volume 永続化やPod内でのファイル共有のためのオブジェクト。 Podとともに作られ、Podとともに破棄される。 実態はファイルシステム上のディレクトリ。 hostPathとか、nfsとか、awsElasticBlockStoreとかの種類があるらしい。 Namespace 仮想クラスタを表すオブジェクト。 これを定義すると、ひとつの物理クラスタを複数の仮想クラスタに分割できる。 大規模ユーザ・プロジェクト向け機能。 Controller Podを管理するオブジェクト。レプリケーションしたり、スケーリングや自動再起動したり。 以下のようなものがある。 Deployment Podのデプロイを管理するオブジェクト。 PodとReplicaSetの宣言的な生成・更新を実現する。 ReplicaSet 指定した数のPodのレプリカを維持してくれる。 基本はDeploymentから作られて、Podの作成・削除・更新をオーケストレイトする。 ReplicationControllerというのもあるけど、今はReplicaSetが推奨。 StatefulSet ステートフルなアプリを管理するオブジェクト。 現時点でのKubernetes最新版の1.8でまだベータ。 DaemonSet 全てのノードで動くアプリを実現するオブジェクト。 Job ジョブを表すオブジェクト。 指定された回数、Podを成功で完了させる。 オブジェクトにはラベルというキーバリューな属性を付けることができ、PodとServiceの紐づけや、オブジェクト検索時のフィルタとかに使える。 今回Goslingsを動かすのに使ったのは、Pod、Deployment、ReplicaSet、Service (NodePort)。 Podネットワーク ちょっと細かい話だけど、Pod間の通信はどうなっているかという話についてちょっと調べたのでざっくり書いておく。 普通のDockerネットワークだと、コンテナはdocker0という仮想ブリッジ上のプライベートネットワークで動くため、同じホスト上のコンテナ間は通信できるけど、別のホスト上のコンテナ通信させたい場合は、ホストのIPアドレスのポートを割り当ててやらなければいけない。 これはめんどいので、Kubernetesは、各Podに一意なIPアドレスを与え、Podがどのホストにいるかにかかわらず、NAT無しで相互に通信できるネットワークを提供する。 これがPodネットワークとか呼ばれ、その仕様はCNIでオープンに定められていて、以下のような実装がある。 Calico Canal Flannel Kube-router Romana Weave Net Minikubeとは Kubernetesクラスタを構築する方法はいくつかあるが、中でももっとも簡単な方法がMinikube。 Minikubeは、単一NodeのKubernetesクラスタを詰めたVMをダウンロードして起動して、ローカルのkubectlから使えるようにしてくれるツール。 Linux、Windows、OS Xで動き、開発やテスト用途のKubernetes環境として使われる。 ちょっとVagrantっぽい感じ。Kubernetes専用の。 Minikubeインストール Kubernetesのドキュメントにしたがって、Minikubeをインストールする。 環境はWindows 10 Home x64。 まず、MinikubeのVMを動かす仮想化ツールを入れる。 今のところMinikubeがサポートしてるのは、WindowsだとVirtualBoxかHyper-V。 Windows 10 HomeだとHyper-Vが使えないので、VirtualBox一択。 VirtualBoxは、適当にVT-xを有効にして(してあった)、インストーラダウンロードしてインストールしただけ。 バージョンは5.1.28。 次に、minikubeコマンドを入れる。 このコマンドはGoで書かれていて、各プラットフォーム用にビルドされたバイナリがGitHubのプロジェクトページのReleasesに上がってるので、ダウンロードしてPathの通ったとこに置くだけ。 今回ダウンロードしたのはv0.22.2のminikube-windows-amd64で、これをminikube.exeにリネームして配置した。 で、minikubeがサポートしているKubernetesのバージョンを調べると、 C:\Users\kaitoy&gt;minikube get-k8s-versions The following Kubernetes versions are available: - v1.7.5 - v1.7.4 - v1.7.3 - v1.7.2 - v1.7.0 (snip) 1.8はまだサポートされていない… 1.7.5が最新なのでそれでやることにする。 ということで、kubectlの1.7.5をインストールする。 kubectlもGoで書かれているので、以下のアドレスからWindowsバイナリをダウンロードしてPathの通ったところに置くだけ。 https://storage.googleapis.com/kubernetes-release/release/v1.7.5/bin/windows/amd64/kubectl.exe 以上でMinikubeの環境ができた。 簡単。 Minikube起動 Minikubeは、minikube startで起動することができ、Minikubeが起動したらすぐにKubernetesをいじれるようになる。 C:\Users\kaitoy&gt;minikube start --vm-driver virtualbox --kubernetes-version v1.7.5 Starting local Kubernetes v1.7.5 cluster...
-              </div>
+              <h3 class="title">Kubernetes 1.8が出たので、Minikubeを触ってみる</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         
@@ -1417,6 +1436,9 @@
       <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
       
       
+      <a href="https://www.kaitoy.xyz/tags/coursera">coursera</a>
+      
+      
       <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
       
       
@@ -1484,6 +1506,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/machine-learning">machine-learning</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/management">management</a>

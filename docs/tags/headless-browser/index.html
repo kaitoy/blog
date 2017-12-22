@@ -158,6 +158,9 @@
       <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
       
       
+      <a href="https://www.kaitoy.xyz/tags/coursera">coursera</a>
+      
+      
       <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
       
       
@@ -225,6 +228,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/machine-learning">machine-learning</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/management">management</a>
