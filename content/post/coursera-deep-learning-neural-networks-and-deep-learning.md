@@ -44,7 +44,7 @@ Machine Learningコースと被っている内容が少なくなく、かなり�
 
 2018/1/1に始めて、1/5に完了。
 5日間かかった。
-修了したら[Certifacate](https://www.coursera.org/account/accomplishments/verify/G77XMU9TNEKX)もらえた。
+修了したら[Certifacate](https://www.coursera.org/account/accomplishments/certificate/G77XMU9TNEKX)もらえた。
 
 以下、4週分の内容をキーワードレベルで書いておく。
 
