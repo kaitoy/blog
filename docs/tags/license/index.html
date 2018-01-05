@@ -161,6 +161,9 @@
       <a href="https://www.kaitoy.xyz/tags/coursera">coursera</a>
       
       
+      <a href="https://www.kaitoy.xyz/tags/deep-learning">deep-learning</a>
+      
+      
       <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
       
       
@@ -240,6 +243,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/neural-network">neural-network</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
@@ -329,7 +335,7 @@
     </main>
 
     <footer id="site-footer" class="text-center font-logo">
-      <p>&copy;  2015 -  2017  Kaito Yamada </p>
+      <p>&copy;  2015 -  2018  Kaito Yamada </p>
       <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
       <p>
         Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
