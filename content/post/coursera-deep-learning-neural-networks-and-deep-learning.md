@@ -26,8 +26,10 @@ title = "CourseraのDeep Learning SpecializationのNeural Networks and Deep Lear
 Deep Learning Specializationは[Coursera Specialization](https://learner.coursera.help/hc/en-us/articles/208280296)のひとつ。
 Coursera Specializationはサブスクリプションモデルで、つまりあるSpecializationのサブスクリプションを購入すると、受講完了するまで毎月定額の料金を支払うことになる。
 
-Deep Learning Specializationは月$49で、5コース合わせて13週分の内容。
+Deep Learning Specializationは月$49で、5コース合わせて13週+α分の内容。
+(Sequence Modelsが2018年1月に公開予定となっていて、現時点でまだ公開されていないので内容が不明。)
 最初の7日間はトライアルで無料なので、この間に全部終わらせられればタダ。
+無理だけど。
 
 Deep Learning Specializationでは、PythonとTensorFlowでディープニューラルネットワーク、CNN、RNN、LSTM、Adam、Dropout、バッチ正規化、Xavier/He initializationなどを学べる。
 Machine Learningコースと同じく、5分～15分くらいの動画による講義と、小テストと、プログラミング課題から構成されている。
