@@ -85,7 +85,7 @@ Machine Learningコースと被っている内容が少なくなく、かなり�
         ロジスティック回帰の微分を逆伝播で計算する。
 
         * 二値分類(Binary classification)、ロジスティック回帰(Logistic regression)。
-        * 損失関数(Loss function)、目的関数(Cost function)。
+        * 損失関数(Loss function)、交差エントロピー(Cross entropy)、目的関数(Cost function)。
         * 最急降下法(Gradient descent)。
         * 微分(Derivatives)。
         * 逆伝播(Backpropagation)、計算グラフ(Computation graph)、連鎖律(Chain rule)。
