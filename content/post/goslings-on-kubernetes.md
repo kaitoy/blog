@@ -390,3 +390,18 @@ Could not find finalized endpoint being pointed to by kubernetes-dashboard: Erro
 <br>
 
 続きはまた[別の記事](https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/)。
+
+<br>
+
+因みに、ベーシック認証ありのプロキシ環境でMinikube on Windowsする場合は、まず以下の環境変数を設定:
+
+* `NO_PROXY`: 192.168.99.100
+* `http_proxy`: username:password@domain.com:port
+* `https_proxy`: username:password@domain.com:port
+
+`NO_PROXY`の値は`minikube ip`の値。
+で、
+
+`minikube start --docker-env HTTP_PROXY=http://%http_proxy% \ --docker-env HTTPS_PROXY=https://%https_proxy% --docker-env NO_PROXY=%NO_PROXY%`みたいにすればできる。
+
+はず。(参考: https://github.com/kubernetes/minikube/issues/530)
