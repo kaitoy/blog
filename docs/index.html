@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://www.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="CourseraのDeep Learning SpecializationのImproving Deep Neural Networks: Hyperparameter tuning, Regularization and Optimizationコースを修了したのに続き、Structuring Machine Learning Projectsコースを修了した。 (adsbygoogle = window.adsbygoogle || []).push({}); このコースは、深層学習プロジェクトの進め方のコツや問題への対処方法などについて学べる2週間のコース。 今回はプログラミング課題がない。 動画は今のところ全部英語。 ちょっと動画編集ミスが多かった。 同じことを二回言ったり、無音無絵の時間があったり、マイクテストしてたり。 2018/1/13に始めて、1/15に完了。 3日間かかった。 修了したらまたCertifacateもらえた。 以下、2週分の内容をメモ程度に書いておく。 1週目 モデルの改善をするのに、データを増やしたりハイパーパラメータを変えたり色々な手法がある。 一つを試すのに下手すると数か月とかかかるので、効率よく手法の取捨選択し、モデルを改善していくための戦略について学ぶ。 動画 直交化(Orthogonalization) 一つの要素で複数の制御をしようとすると難しいので、一つの制御だけするようにする。 具体的には、以下のことを別々に扱う。 訓練データに目標の精度までフィットさせる。 devデータに目標の精度までフィットさせる。 テストデータに目標の精度までフィットさせる。 現実のデータでうまく動くようにする。 それぞれの目的について、チューニングすべき要素は別々になる。 早期終了は直行化の原則に反しているので、ほかの方法があるならそっちをやったほうがいい。 指標(Goal)の設定 モデルの改善はイテレーティブなプロセスなので、サイクルを速く回したい。 そのため、モデルを評価する単一の数値があるといい。 F1スコアとか。平均とか 単一の指標にまとめるのがむずいときもある。 精度と速さとか。 そんなときは一つ以外の指標を足切りだけに使う。 ある閾値以上の速さが出てるもののなかで精度をくらべるなど。 データの分け方 devデータとテストデータの分布(と評価指標)は同じ感じにしないといけない。 そのために、いったん全データをシャッフルしてから分割する。 訓練データの分布は異なってても問題ない。 訓練:テスト = 70:30とか、訓練:dev:テスト = 60:20:20とかいう比率は、1万くらいのデータなら適当。 けど100万くらいなら、98:1:1くらいが妥当。 テストデータはモデルの最終評価をするためのものなので、どれだけ評価したいかによってサイズを変える。 0もありがちだけど、非推奨。 猫の画像のなかにエロ画像が混じっちゃうようなモデルはだめ。 猫判定率が多少下がっても、エロ画像が含まれないほうがまし。 こういう場合は評価指標を変える必要がある。 エロ画像を猫と判定した場合にペナルティを大きくするなど。 直行化の観点で言うと、指標を決めるのと、その指標に従って最適化するのは、別のタスクとして扱うべき。 人並性能(Human-level performance)との比較 人並性能とは、人が手動で達成できる精度。そのエラー率、つまり人並誤差(Human-level error)はベイズ誤差(Bayes">
+    <meta property="og:description" content="CourseraのDeep Learning SpecializationのStructuring Machine Learning Projectsコースを修了したのに続き、Convolutional Neural Networksコースを修了した。 (adsbygoogle = window.adsbygoogle || []).push({}); このコースは、CNNの原理、代表的なアーキテクチャ、応用などについて学べる4週間のコース。 動画は今のところ全部英語。 プログラミング課題は初のKeras。 このコースは結構難しくて、特に3週目と4週目は理解に苦しんだ。 というか理解しきれなかったような。 けどNST面白かった。 2018/1/16に始めて、2/6に完了。 22日間かかった。 修了したらまたCertifacateもらえた。 以下、4週分の内容をメモ程度に書いておく。 1週目 畳み込みニューラルネットワーク(CNN: Convolutional neural network)の基本。 動画 畳み込み計算 画像認識でよく使われるNNのアーキテクチャ。 低層ではエッジを検出し、層が進むにつれて複雑な特徴を学習する。 画像を特定の行列(普通は奇数の正方行列。3×3が多い。)で畳み込むことで、特定の方向のエッジを検出できる。 この行列をフィルタ(filter)という。カーネルと呼ばれることもある。 例えば縦なら以下。 [[1, 0, -1], [1, 0, -1], [1, 0, -1]] 縦でもいろいろフィルタはあって、以下はSobelフィルタというもの。 [[1, 0, -1], [2, 0, -2], [1, 0, -1]] 以下はScharrフィルタ。 [[ 3, 0, -3], [10, 0, -10], [ 3, 0, -3]] 縦のフィルタを90度回転すると横のフィルタになる。 深層学習では、フィルタもパラメータとして学習させる。 パディング(Padding) n×nの行列をf×fのフィルタで畳み込むとn-f&#43;1×n-f&#43;1の行列になる。 つまり畳み込めば畳み込むほど画像が小さくなってしまう。 また、画像の端のほうはフィルタにかかる割合が小さいので、情報量が小さくなってしまう。 これらを解決するテクニックがパディング(Padding)。 行列の周囲を0でパディングして、サイズを大きくしてから畳み込む。 パディングがないのをValidな畳み込み、出力が入力と同じサイズになるようにパディングするのをSameな畳み込みという。 Strided畳み込み 畳み込むときにフィルタをずらす幅を1より大きくする。 パディングサイズがpでストライドがsのとき、n×nの行列をf×fのフィルタで畳み込むと(n&#43;2p-f)/s&#43;1×(n&#43;2p-f)/s&#43;1の行列になる。 3次元(カラー画像)の畳み込み カラー画像は3次元の行列、つまりn×n×cの行列で、それを畳み込むのはf×f×cのフィルタで、出力はn-f&#43;1×n-f&#43;1の行列になる。 チャネルごとにフィルタを設定して、色ごとにエッジ検出できる。 フィルタごとの出力は全部スタックして、最終的な出力は3次元になる。 畳み込み層はフィルタの要素数がパラメータ数になる。 入力画像の大きさに依存しないので、パラメータ数が少なくて済み、過学習しにくい。 入力を複数の畳み込み層に通したら、最終的に3次元の出力をなべてベクトルにして、後ろの層に渡す。 プーリング層(Pooling layer) 計算量を減らすため、また特徴の抽出のために、畳み込み層のあとに使われる層。 基本Max poolingが使われるけど、Average poolingというのもある。 Max pooling: フィルタをかけた部分を畳み込む代わりに、最大値を出力とする。大きな値が特徴が大きく出ているところだから、特徴を凝縮するイメージだけど、経験的にこれで上手くいくことが分かっているだけで、なぜ上手くいくかは判明していない。この層はパラメータを持たない。 Average pooling: フィルタをかけた部分を畳み込む代わりに、平均を出力とする。 プーリング層のフィルタは大抵、サイズが2×2でパディングが0でストライドは2。 普通、畳み込み層とプーリング層とセットで1層と数える。 全結合層(Fully connected layer) 全ノードがメッシュ状につながった普通の層。 畳み込み層とプーリング層のセットがいくつかあって、その出力をベクトルになべて、全結合層につなぐ。 一般的なCNN 畳み込み層は、普通nhとnwを縮め、ncを増やす。 また、全体として、層が浅くなるほど出力が減るのが多い。 CNNはハイパーパラメータが多すぎるので、アーキテクチャは自分で考えるんではなく、論文呼んで自分の問題に合いそうなのを探すべし。 畳み込み層は全結合層に比べてパラメータ数がかなり少なくて済むのがいいところ。 これはパラメーター共有(Parameter sharing)という、画像のある個所で上手く動いたフィルタ(e.g.">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/deeplearning.ai.png">
     
@@ -82,6 +82,28 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2018/02/06/coursera-deep-learning-convolutional-neural-networks/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/deeplearning.ai.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Tue, Feb 6, 2018</span>
+              </div>
+              <h2 class="title">CourseraのDeep Learning SpecializationのConvolutional Neural Networksコースを修了した</h2>
+              <div class="summary">
+                CourseraのDeep Learning SpecializationのStructuring Machine Learning Projectsコースを修了したのに続き、Convolutional Neural Networksコースを修了した。 (adsbygoogle = window.adsbygoogle || []).push({}); このコースは、CNNの原理、代表的なアーキテクチャ、応用などについて学べる4週間のコース。 動画は今のところ全部英語。 プログラミング課題は初のKeras。 このコースは結構難しくて、特に3週目と4週目は理解に苦しんだ。 というか理解しきれなかったような。 けどNST面白かった。 2018/1/16に始めて、2/6に完了。 22日間かかった。 修了したらまたCertifacateもらえた。 以下、4週分の内容をメモ程度に書いておく。 1週目 畳み込みニューラルネットワーク(CNN: Convolutional neural network)の基本。 動画 畳み込み計算 画像認識でよく使われるNNのアーキテクチャ。 低層ではエッジを検出し、層が進むにつれて複雑な特徴を学習する。 画像を特定の行列(普通は奇数の正方行列。3×3が多い。)で畳み込むことで、特定の方向のエッジを検出できる。 この行列をフィルタ(filter)という。カーネルと呼ばれることもある。 例えば縦なら以下。 [[1, 0, -1], [1, 0, -1], [1, 0, -1]] 縦でもいろいろフィルタはあって、以下はSobelフィルタというもの。 [[1, 0, -1], [2, 0, -2], [1, 0, -1]] 以下はScharrフィルタ。 [[ 3, 0, -3], [10, 0, -10], [ 3, 0, -3]] 縦のフィルタを90度回転すると横のフィルタになる。 深層学習では、フィルタもパラメータとして学習させる。 パディング(Padding) n×nの行列をf×fのフィルタで畳み込むとn-f+1×n-f+1の行列になる。 つまり畳み込めば畳み込むほど画像が小さくなってしまう。 また、画像の端のほうはフィルタにかかる割合が小さいので、情報量が小さくなってしまう。 これらを解決するテクニックがパディング(Padding)。 行列の周囲を0でパディングして、サイズを大きくしてから畳み込む。 パディングがないのをValidな畳み込み、出力が入力と同じサイズになるようにパディングするのをSameな畳み込みという。 Strided畳み込み 畳み込むときにフィルタをずらす幅を1より大きくする。 パディングサイズがpでストライドがsのとき、n×nの行列をf×fのフィルタで畳み込むと(n+2p-f)/s+1×(n+2p-f)/s+1の行列になる。 3次元(カラー画像)の畳み込み カラー画像は3次元の行列、つまりn×n×cの行列で、それを畳み込むのはf×f×cのフィルタで、出力はn-f+1×n-f+1の行列になる。 チャネルごとにフィルタを設定して、色ごとにエッジ検出できる。 フィルタごとの出力は全部スタックして、最終的な出力は3次元になる。 畳み込み層はフィルタの要素数がパラメータ数になる。 入力画像の大きさに依存しないので、パラメータ数が少なくて済み、過学習しにくい。 入力を複数の畳み込み層に通したら、最終的に3次元の出力をなべてベクトルにして、後ろの層に渡す。 プーリング層(Pooling layer) 計算量を減らすため、また特徴の抽出のために、畳み込み層のあとに使われる層。 基本Max poolingが使われるけど、Average poolingというのもある。 Max pooling: フィルタをかけた部分を畳み込む代わりに、最大値を出力とする。大きな値が特徴が大きく出ているところだから、特徴を凝縮するイメージだけど、経験的にこれで上手くいくことが分かっているだけで、なぜ上手くいくかは判明していない。この層はパラメータを持たない。 Average pooling: フィルタをかけた部分を畳み込む代わりに、平均を出力とする。 プーリング層のフィルタは大抵、サイズが2×2でパディングが0でストライドは2。 普通、畳み込み層とプーリング層とセットで1層と数える。 全結合層(Fully connected layer) 全ノードがメッシュ状につながった普通の層。 畳み込み層とプーリング層のセットがいくつかあって、その出力をベクトルになべて、全結合層につなぐ。 一般的なCNN 畳み込み層は、普通nhとnwを縮め、ncを増やす。 また、全体として、層が浅くなるほど出力が減るのが多い。 CNNはハイパーパラメータが多すぎるので、アーキテクチャは自分で考えるんではなく、論文呼んで自分の問題に合いそうなのを探すべし。 畳み込み層は全結合層に比べてパラメータ数がかなり少なくて済むのがいいところ。 これはパラメーター共有(Parameter sharing)という、画像のある個所で上手く動いたフィルタ(e.g.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2018/01/16/coursera-deep-learning-ml-strategy/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/deeplearning.ai.png" alt="eyecatch">
@@ -142,33 +164,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2017/12/22/coursera-machine-learning/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2017/12/22/coursera-machine-learning/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/cml.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Fri, Dec 22, 2017</span>
               </div>
-              <h2 class="title">CourseraのMachine Learningコースを修了した</h2>
-              <div class="summary">
-                機械学習の入門教材として有名なCourseraのMachine Learningコースを修了した記念日記。 (adsbygoogle = window.adsbygoogle || []).push({}); Courseraとは Courseraは、2012年にスタンフォード大学のコンピュータ工学科の2人の教授によって設立されたサービスで、世界トップクラスの大学の講座をオンラインで受けることができるもの。 東京大学とも提携している。 講座の一部は無料で受けることができる。 CourseraのMachine Learningコースとは Machine Learningコースは、Courseraの設立者の一人であるAndrew Ngによる、機械学習の基礎から実践まで浅く広く(?)学べる世界的に有名な講座。 Andrew先生は一時期Googleで働き、Google BrainというDeep Learningのプロジェクトをリードしていたこともある機械学習のエキスパートで、さらにスタンフォードの教授だっただけあって教え方が非常にうまくてわかりやすい。 この講座は主に、5分～15分くらいの動画による講義と、小テストと、プログラミング課題から構成されている。 1週間分の内容が、1.5時間分くらいの動画と、15分くらいでできる小テストと、2、3時間で終わるプログラミング課題で、全体で11週間分やれば修了できる。 1、10、11週目はプログラミング課題が無くてすぐ終わる一方、3～5週目辺りは結構ハード。 私は2017/10/30に始めて、2017/12/19に完了したので、ちょうど50日かかったことになる。 動画は当然英語だが、有志により英語や日本語の字幕が付けられてるので聞き取れなくても問題はあまりない。 ただ、1～4週目くらいまでは、日本語の字幕がずれている動画が少なくなく、それらは英語の字幕でみる必要がある。 1つだけ英語の字幕もダメなものがあって、それだけは字幕なしで見た。 プログラミング課題は、Octaveというオープンソースの数値解析言語で解く。 聞いたことない言語だったが、MATLABとの互換性維持を重視して開発されている言語なので、まあ覚えておいて損はない。 Octaveグラフ描画APIは、MATLABのグラフ描画APIをまねていて、MATLABのグラフ描画APIは、Pythonでよく使われるグラフ描画ライブラリであるMatplotlibがまねていて、つまりOctaveやってるとMatplotlibの勉強にもなる。 以下、11週間分の内容を、キーワードレベルで書いておく。 1週目 機械学習の概要 背景、歴史、活用例。 教師あり学習(Supervised learning) vs 教師なし(Unsupervised learning)。 線形単回帰(Linear regression with one variable) 仮説関数(Hypothesis)、目的関数(Cost function)、平均二乗誤差(Mean squared error)、最小二乗法(Least squares method)、最急降下法(Gradient descent)。 行列 行列(Matrix)とベクトル(Vector)。 行列演算。 逆行列(Inverse)、転置行列(Transpose) 2週目 線形重回帰(Linear regression with multiple variables) 特徴量のスケーリング(Feature scaling)、平均正則化(Mean normalization)。 学習率(Learning rate)。 多項式回帰(Polynomial regression)。 正規方程式(Normal equation)、特異行列(singular matrix)。
-              </div>
+              <h3 class="title">CourseraのMachine Learningコースを修了した</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         
@@ -1491,6 +1510,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cnn">cnn</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/coursera">coursera</a>

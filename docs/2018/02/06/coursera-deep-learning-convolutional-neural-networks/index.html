@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="CourseraのDeep Learning SpecializationのConvolutional Neural Networksコースを修了した | To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2018/02/06/coursera-deep-learning-convolutional-neural-networks/">
+    <link rel="canonical" href="https://www.kaitoy.xyz/2018/02/06/coursera-deep-learning-convolutional-neural-networks/">
+    <meta property="og:description" content="CourseraのDeep Learning SpecializationのStructuring Machine Learning Projectsコースを修了したのに続き、Convolutional Neural Networksコースを修了した。 (adsbygoogle = window.adsbygoogle || []).push({}); このコースは、CNNの原理、代表的なアーキテクチャ、応用などについて学べる4週間のコース。 動画は今のところ全部英語。 プログラミング課題は初のKeras。 このコースは結構難しくて、特に3週目と4週目は理解に苦しんだ。 というか理解しきれなかったような。 けどNST面白かった。 2018/1/16に始めて、2/6に完了。 22日間かかった。 修了したらまたCertifacateもらえた。 以下、4週分の内容をメモ程度に書いておく。 1週目 畳み込みニューラルネットワーク(CNN: Convolutional neural network)の基本。 動画 畳み込み計算 画像認識でよく使われるNNのアーキテクチャ。 低層ではエッジを検出し、層が進むにつれて複雑な特徴を学習する。 画像を特定の行列(普通は奇数の正方行列。3×3が多い。)で畳み込むことで、特定の方向のエッジを検出できる。 この行列をフィルタ(filter)という。カーネルと呼ばれることもある。 例えば縦なら以下。 [[1, 0, -1], [1, 0, -1], [1, 0, -1]] 縦でもいろいろフィルタはあって、以下はSobelフィルタというもの。 [[1, 0, -1], [2, 0, -2], [1, 0, -1]] 以下はScharrフィルタ。 [[ 3, 0, -3], [10, 0, -10], [ 3, 0, -3]] 縦のフィルタを90度回転すると横のフィルタになる。 深層学習では、フィルタもパラメータとして学習させる。 パディング(Padding) n×nの行列をf×fのフィルタで畳み込むとn-f&#43;1×n-f&#43;1の行列になる。 つまり畳み込めば畳み込むほど画像が小さくなってしまう。 また、画像の端のほうはフィルタにかかる割合が小さいので、情報量が小さくなってしまう。 これらを解決するテクニックがパディング(Padding)。 行列の周囲を0でパディングして、サイズを大きくしてから畳み込む。 パディングがないのをValidな畳み込み、出力が入力と同じサイズになるようにパディングするのをSameな畳み込みという。 Strided畳み込み 畳み込むときにフィルタをずらす幅を1より大きくする。 パディングサイズがpでストライドがsのとき、n×nの行列をf×fのフィルタで畳み込むと(n&#43;2p-f)/s&#43;1×(n&#43;2p-f)/s&#43;1の行列になる。 3次元(カラー画像)の畳み込み カラー画像は3次元の行列、つまりn×n×cの行列で、それを畳み込むのはf×f×cのフィルタで、出力はn-f&#43;1×n-f&#43;1の行列になる。 チャネルごとにフィルタを設定して、色ごとにエッジ検出できる。 フィルタごとの出力は全部スタックして、最終的な出力は3次元になる。 畳み込み層はフィルタの要素数がパラメータ数になる。 入力画像の大きさに依存しないので、パラメータ数が少なくて済み、過学習しにくい。 入力を複数の畳み込み層に通したら、最終的に3次元の出力をなべてベクトルにして、後ろの層に渡す。 プーリング層(Pooling layer) 計算量を減らすため、また特徴の抽出のために、畳み込み層のあとに使われる層。 基本Max poolingが使われるけど、Average poolingというのもある。 Max pooling: フィルタをかけた部分を畳み込む代わりに、最大値を出力とする。大きな値が特徴が大きく出ているところだから、特徴を凝縮するイメージだけど、経験的にこれで上手くいくことが分かっているだけで、なぜ上手くいくかは判明していない。この層はパラメータを持たない。 Average pooling: フィルタをかけた部分を畳み込む代わりに、平均を出力とする。 プーリング層のフィルタは大抵、サイズが2×2でパディングが0でストライドは2。 普通、畳み込み層とプーリング層とセットで1層と数える。 全結合層(Fully connected layer) 全ノードがメッシュ状につながった普通の層。 畳み込み層とプーリング層のセットがいくつかあって、その出力をベクトルになべて、全結合層につなぐ。 一般的なCNN 畳み込み層は、普通nhとnwを縮め、ncを増やす。 また、全体として、層が浅くなるほど出力が減るのが多い。 CNNはハイパーパラメータが多すぎるので、アーキテクチャは自分で考えるんではなく、論文呼んで自分の問題に合いそうなのを探すべし。 畳み込み層は全結合層に比べてパラメータ数がかなり少なくて済むのがいいところ。 これはパラメーター共有(Parameter sharing)という、画像のある個所で上手く動いたフィルタ(e.g.">
+    
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/deeplearning.ai.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      CourseraのDeep Learning SpecializationのConvolutional Neural Networksコースを修了した | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+    
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-6244473643910448",
+        enable_page_level_ads: true
+      });
+    </script>
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Tue, Feb 6, 2018</span>
+      <h2 class="title">CourseraのDeep Learning SpecializationのConvolutional Neural Networksコースを修了した</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://www.kaitoy.xyz/images/deeplearning.ai.png" alt="CourseraのDeep Learning SpecializationのConvolutional Neural Networksコースを修了した">
+        
+      </div>
+
+      <div class="content">
+        <p><a href="https://www.kaitoy.xyz/2018/01/16/coursera-deep-learning-ml-strategy/">CourseraのDeep Learning SpecializationのStructuring Machine Learning Projectsコースを修了した</a>のに続き、<a href="https://www.coursera.org/learn/convolutional-neural-networks">Convolutional Neural Networksコース</a>を修了した。</p>
+
+<p>
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</p>
+
+<p>このコースは、CNNの原理、代表的なアーキテクチャ、応用などについて学べる4週間のコース。
+動画は今のところ全部英語。
+プログラミング課題は初のKeras。</p>
+
+<p>このコースは結構難しくて、特に3週目と4週目は理解に苦しんだ。
+というか理解しきれなかったような。
+けどNST面白かった。</p>
+
+<p>2018/1/16に始めて、2/6に完了。
+22日間かかった。
+修了したらまた<a href="https://www.coursera.org/account/accomplishments/certificate/MVNK5ZA5CDKA">Certifacate</a>もらえた。</p>
+
+<p>以下、4週分の内容をメモ程度に書いておく。</p>
+
+<ul>
+<li><p>1週目</p>
+
+<p>畳み込みニューラルネットワーク(CNN: Convolutional neural network)の基本。</p>
+
+<ul>
+<li><p>動画</p>
+
+<ul>
+<li><p>畳み込み計算</p>
+
+<p>画像認識でよく使われるNNのアーキテクチャ。</p>
+
+<p>低層ではエッジを検出し、層が進むにつれて複雑な特徴を学習する。</p>
+
+<p>画像を特定の行列(普通は奇数の正方行列。3×3が多い。)で畳み込むことで、特定の方向のエッジを検出できる。
+この行列をフィルタ(filter)という。カーネルと呼ばれることもある。
+例えば縦なら以下。</p>
+
+<pre><code>[[1, 0, -1],
+ [1, 0, -1],
+ [1, 0, -1]]
+</code></pre>
+
+<p>縦でもいろいろフィルタはあって、以下はSobelフィルタというもの。</p>
+
+<pre><code>[[1, 0, -1],
+ [2, 0, -2],
+ [1, 0, -1]]
+</code></pre>
+
+<p>以下はScharrフィルタ。</p>
+
+<pre><code>[[ 3, 0,  -3],
+ [10, 0, -10],
+ [ 3, 0,  -3]]
+</code></pre>
+
+<p>縦のフィルタを90度回転すると横のフィルタになる。</p>
+
+<p>深層学習では、フィルタもパラメータとして学習させる。</p></li>
+
+<li><p>パディング(Padding)</p>
+
+<p><code>n×n</code>の行列を<code>f×f</code>のフィルタで畳み込むと<code>n-f+1×n-f+1</code>の行列になる。
+つまり畳み込めば畳み込むほど画像が小さくなってしまう。
+また、画像の端のほうはフィルタにかかる割合が小さいので、情報量が小さくなってしまう。
+これらを解決するテクニックがパディング(Padding)。
+行列の周囲を0でパディングして、サイズを大きくしてから畳み込む。
+パディングがないのをValidな畳み込み、出力が入力と同じサイズになるようにパディングするのをSameな畳み込みという。</p></li>
+
+<li><p>Strided畳み込み</p>
+
+<p>畳み込むときにフィルタをずらす幅を1より大きくする。
+パディングサイズがpでストライドがsのとき、<code>n×n</code>の行列を<code>f×f</code>のフィルタで畳み込むと<code>(n+2p-f)/s+1×(n+2p-f)/s+1</code>の行列になる。</p></li>
+
+<li><p>3次元(カラー画像)の畳み込み</p>
+
+<p>カラー画像は3次元の行列、つまり<code>n×n×c</code>の行列で、それを畳み込むのは<code>f×f×c</code>のフィルタで、出力は<code>n-f+1×n-f+1</code>の行列になる。
+チャネルごとにフィルタを設定して、色ごとにエッジ検出できる。
+フィルタごとの出力は全部スタックして、最終的な出力は3次元になる。</p>
+
+<p>畳み込み層はフィルタの要素数がパラメータ数になる。
+入力画像の大きさに依存しないので、パラメータ数が少なくて済み、過学習しにくい。</p>
+
+<p>入力を複数の畳み込み層に通したら、最終的に3次元の出力をなべてベクトルにして、後ろの層に渡す。</p></li>
+
+<li><p>プーリング層(Pooling layer)</p>
+
+<p>計算量を減らすため、また特徴の抽出のために、畳み込み層のあとに使われる層。
+基本Max poolingが使われるけど、Average poolingというのもある。</p>
+
+<ul>
+<li><p>Max pooling: フィルタをかけた部分を畳み込む代わりに、最大値を出力とする。大きな値が特徴が大きく出ているところだから、特徴を凝縮するイメージだけど、経験的にこれで上手くいくことが分かっているだけで、なぜ上手くいくかは判明していない。この層はパラメータを持たない。</p></li>
+
+<li><p>Average pooling: フィルタをかけた部分を畳み込む代わりに、平均を出力とする。</p></li>
+</ul>
+
+<p>プーリング層のフィルタは大抵、サイズが<code>2×2</code>でパディングが0でストライドは2。</p>
+
+<p>普通、畳み込み層とプーリング層とセットで1層と数える。</p></li>
+
+<li><p>全結合層(Fully connected layer)</p>
+
+<p>全ノードがメッシュ状につながった普通の層。
+畳み込み層とプーリング層のセットがいくつかあって、その出力をベクトルになべて、全結合層につなぐ。</p></li>
+
+<li><p>一般的なCNN</p>
+
+<p>畳み込み層は、普通nhとnwを縮め、ncを増やす。
+また、全体として、層が浅くなるほど出力が減るのが多い。</p>
+
+<p>CNNはハイパーパラメータが多すぎるので、アーキテクチャは自分で考えるんではなく、論文呼んで自分の問題に合いそうなのを探すべし。</p>
+
+<p>畳み込み層は全結合層に比べてパラメータ数がかなり少なくて済むのがいいところ。
+これはパラメーター共有(Parameter sharing)という、画像のある個所で上手く動いたフィルタ(e.g. 縦エッジ検出器)は、その画像の他の箇所でも上手く働くという考え方がベース。</p>
+
+<p>また、層間の接続がまばらなのもパラメータを減らす要因。
+つまり出力のあるピクセルは、入力のうちフィルタ分のサイズのピクセルとしか関連していない。</p>
+
+<p>CNNは空間変化の不変性(Translation invariance)に強い。
+つまり画像の中の物体の位置が変わってもよく検出できる。
+これは同じフィルタを画像全体に適用するから。</p></li>
+</ul></li>
+
+<li><p>プログラミング課題</p>
+
+<p>CNNの順伝播をNumPyで実装。</p>
+
+<p>CNNによる画像の分類をTensorFlowで実装。</p></li>
+</ul></li>
+
+<li><p>2週目</p>
+
+<ul>
+<li><p>動画</p>
+
+<ul>
+<li><p>ケーススタディ</p>
+
+<p>畳み込み層とかプーリング層をどう組み合わせるといいかは、事例を見ていくことで雰囲気をつかめる。</p>
+
+<ul>
+<li><p>古いやつ</p>
+
+<ul>
+<li><p>LeNet-5</p>
+
+<p>1980年代にできたふるいやつ。
+モノクロ画像(32×32)の手書き数字認識。</p>
+
+<p>当時はソフトマックスもReLUもなかった。
+けど、畳み込み層とプーリング層のセットを繰り返して入力をチャネル方向に引き伸ばし、全結合層に流し込むアーキテクチャは、モダンなCNNにも通じる。</p>
+
+<p>5層(内2層が全結合層)の浅いネットワークで、比較的パラメータが少なく、6万個くらい。
+モダンなのだとこの1000倍くらいあるのが普通。</p>
+
+<p>LeNet-5は、チャネルごとに違うフィルタを使っているが、今日では普通同じのを使う。</p>
+
+<p>また、プーリング層のあとに活性化関数(シグモイド)かけてるのも特殊。
+(モダンなアーキテクチャではプーリング層の前にかける?)</p></li>
+
+<li><p>AlexNet</p>
+
+<p>227×227×3のカラー画像
+8層(内3層が全結合層)でパラメータは6千万個くらい。
+活性化関数にReLU。</p>
+
+<p>Local Response Normalizationという正規化層がある。
+昨今ではあまり使われない。</p>
+
+<p>論文が比較的読みやすい。</p></li>
+
+<li><p>VGG-16</p>
+
+<p>2014年に発表。</p>
+
+<p>各層に同じフィルタを使い、フィルタ数も線形増加させるシンプルなアーキテクチャ。
+16層(内2層が全結合層)で、1億3800万個のパラメータ。</p></li>
+</ul></li>
+
+<li><p>モダンなやつ</p>
+
+<p>理論的にはネットワークを深くすると精度が高くなるけど、現実的にそうはいかない。
+深いネットワークは勾配消失や勾配爆発で訓練しにくいので。
+モダンなアーキテクチャはこの問題に対応。</p>
+
+<ul>
+<li><p>ResNet(Residual Network)</p>
+
+<p>残差ブロック(Residual block)を持つ。
+このブロックでは、深い層からの出力を浅い層のReLUの入力に足し合わせる。
+この深い層からの依存はショートカット(short cut)とかskip connectionとか呼ばれる。</p>
+
+<p>ショートカットのおかげで深い層の学習が効率的になり、層を152まで深くできた。</p></li>
+
+<li><p>Network in Network</p>
+
+<p>畳み込み層に1×1のフィルタを使う。
+1×1畳み込み(one by one convolution)、またはNetwork in Networkと呼ばれる。</p>
+
+<p>これを使うと、入力のhとwを変えずに、チャネル数を減らして計算量を減らしたり、非線形性を追加することができる。</p></li>
+
+<li><p>Inception Network (GoogleNet)</p>
+
+<p>フィルタのサイズや畳み込みかプーリングかを考えるのが難しいので、1層内で複数のフィルタサイズで畳み込みやプーリングして、スタックしたものを出力する手法がある。
+これをする部分をInception moduleという。
+計算コストが大きくなるので、最初に1×1畳み込みで圧縮してからその後の畳み込みをする。
+1×1畳み込みの部分でデータがいったん小さくなるので、そこをボトルネック層(Bottleneck layer)と呼ぶ。</p>
+
+<p>ボトルネック層によって、精度に影響が出ることはない。</p>
+
+<p>Inception moduleを組み合わせたネットワークをInception Networkという。
+Inception Networkの例の一つがGoogLeNet。
+GoogLeNetは中間層から全結合層・ソフトマックス層につなげる支流をもっていて、中間層まででうまく学習できているかを見れて、過学習を防げるようになっている。</p>
+
+<p>因みにInceptionという名前は映画のInceptionから来ている。</p></li>
+</ul></li>
+</ul></li>
+
+<li><p>実践</p>
+
+<ul>
+<li><p>既存の実装の利用</p>
+
+<p>モダンなCNNは複雑すぎて、エキスパートが論文を読み込んでも再現することが難しい。
+が、普通は論文の著者がOSSで実装を公開するのでそれを使ったりベースにしたりすべし。</p>
+
+<p>学習済みのモデルもあることがあるので、転移学習にも使える。
+ソフトマックス層だけ入れ替えて、そこのWだけ学習させて自分の問題に使うなど。
+色んな深層学習フレームワークが転移学習をサポートしてる。</p></li>
+
+<li><p>データ合成(Data augmentation)</p>
+
+<p>画像認識の分野では基本的にデータが沢山要るけどデータが手に入りにくい。
+ので合成するのが効果的。</p>
+
+<p>左右判定とか、切り抜きとか、回したり、歪めたりとかは、有効だけどあんまりやられない。
+若干編集が複雑なので。</p>
+
+<p>色相を変える(Color shifting)のがよくやられる。赤味を増やしたり。
+色を選ぶときには主成分分析(PCA)が使える。(PCA Color Augmentation)</p>
+
+<p>一つのCPUスレッドに元画像のロードと合成をやらせて、別のスレッドで並列に学習を処理するのが一般的な実装。</p>
+
+<p>データ合成するにも、どの程度変化させるかというハイパーパラメータが付きまとうので、既存の実装やアイデアを使うのがいい。</p></li>
+
+<li><p>画像認識の現状</p>
+
+<ul>
+<li><p>データ vs hand engineering</p>
+
+<p>データが沢山ある分野の問題だと、でかいネットワークを適当に組んで学習させれば上手く解ける。
+データがあんまりないと、色々工夫(hand engineering)が必要になってくる。
+特徴量を選んだり、アーキテクチャを工夫したり。
+例えば物体検知は画像認識よりかなりデータが少ない。</p></li>
+
+<li><p>ベンチマークやコンペで上手くやるコツ</p>
+
+<p>研究者は、論文を通しやすくするため、ベンチマークやコンペのデータに対して頑張る。
+ベンチマークに対して上手くやるコツ:</p>
+
+<ul>
+<li><p>アンサンブル(Ensembling)</p>
+
+<p>複数のNNを独立に訓練して、それらの出力の平均を使う。
+1,2%の性能向上が見込める。
+けど計算コストが高いので、普通プロダクションでは使わない。</p></li>
+
+<li><p>Multi-crop at test time</p>
+
+<p>テスト時にテストデータを色んな感じに切り抜いて、それらに対する予測値を平均する。
+10-crop。
+アンサンブルに比べ、訓練時の計算コストが少ないし、予測時に1つのモデルを保持すればいいのでメモリ使用量が少ない。
+若干の性能向上が見込め、プロダクションでも使われることがある。</p></li>
+</ul></li>
+
+<li><p>オープンソースコードの利用</p>
+
+<p>だれかが考えたアーキテクチャを使え。</p>
+
+<p>OSS実装を使え。</p>
+
+<p>なんなら訓練済みモデルを使え。</p></li>
+</ul></li>
+</ul></li>
+</ul></li>
+
+<li><p>プログラミング課題</p>
+
+<ul>
+<li><p>Kerasのチュートリアル</p>
+
+<p>というほど解説してくれるわけではないけど。</p></li>
+
+<li><p>Kerasで50層のResNetを実装</p></li>
+</ul></li>
+</ul></li>
+
+<li><p>3週目</p>
+
+<p>物体認識(Object detection)。</p>
+
+<ul>
+<li><p>動画</p>
+
+<ul>
+<li><p>位置特定(Localization)</p>
+
+<p>画像を与えられて単にラベルを付けるのは分類。
+ラベルの物体の位置を示すのが位置特定。
+分類したあとさらに位置特定したい。</p>
+
+<p>分類する画像は、普通一つの画像の中に一つの物体が大きく映っている。
+一方、物体認識は、一つの画像の中に複数の物体があったりする、もう少し複雑な問題。</p>
+
+<p>位置特定するには、ソフトマックス層に、クラス以外に4つの出力をさせる。
+すなわち物体の中心点のx座標、y座標、それと物体を囲む枠の高さ、幅。
+それぞれ0～1の値で、画像全体に対する割合を示す。</p>
+
+<p>また、物体があるかないかという予測値Pcも出力する。
+この予測値が0のときは、損失関数でそれいがいの出力を計算に入れない。</p>
+
+<p>より一般的には、物体の位置を示す任意の数のランドマーク(Landmark)の座標を出力させる。</p></li>
+
+<li><p>物体認識</p>
+
+<p>スライディングウィンドウ認識(Sliding windows detection)する。
+すなわち、小さい枠をずらしながら画像の切り抜きをたくさん作って、それぞれ分類する。
+ウィンドウサイズを変えてもやる。
+計算コストがかかる。</p>
+
+<p>のでCNNでやる。</p>
+
+<p>まず、全結合層は、数学的に等価な畳み込み層で置き換えられる。
+5×5×16の入力を受け取って、5×5の400個のフィルタで畳み込むと、
+1×1×400の出力が得られ、これは400ノードの全結合層と一緒。
+最後に1×1の4個のフィルタで畳み込むと、4つの出力をするソフトマックス層みたいになる。
+こういう、全部畳み込み層のNNをFCN(Fully Convolutional Networks)という。</p>
+
+<p>で、入力のサイズ(高さと幅)を広げてやると、中間層と出力もちょっと広がる。
+このCNNは、入力の一部を5×5のウィンドウで切り抜いた部分の分類結果が、出力の1ピクセルに対応するようなものになる。
+なので一回CNNに通せば、一回の計算でスライディングウィンドウできる。</p>
+
+<p>けどこれは、物体を囲む枠が正確でないという欠点がある。
+実際は長方形であるべきだったりするので。
+これを解決するのがYOLO(You Only Look Once)アルゴリズム。</p>
+
+<p>YOLOでは、まず入力画像をグリッド状に分割して、それぞれについて分類と位置特定する。
+複数のセルに物体がまたがっている場合は、物体の中心があるセルだけにあるものとする。
+それぞれのセルの出力をスタックして、3次元の出力にする。
+つまり、グリッドが3×3なら、3×3×(もとのyベクトルの次元)とする。
+(普通はもっと細かいグリッドにする。)
+で、CNNをこういう形の出力をするように組む。</p>
+
+<p>YOLOの論文はかなりむずい。</p>
+
+<p>位置特定の評価をするのに、IoU(Intersection over Union)という指標がある。
+これは、2つの領域の重なり具合を示すもので、2つの領域が重なった部分の面積を、2つの領域全体の面積で割った値。
+モデルが特定した枠と期待する枠とで、IoUが0.5以上だとよしとすることが多い。</p>
+
+<p>YOLOを使うと、複数のセルで同じ物体を認識してしまうことが多い。
+これを一つに絞るのがNMS(Non-max suppression)。
+ざっくり言うと、それぞれのセルの確度(Pc)を見て、一番でかいの以外を無効化する。</p>
+
+<p>詳しく言うとまず、Pcがある閾値(e.g.0.6)以下のものを無効化する。
+で、残ったものの中から、最大のPcを選び、それとおおきくかぶっている枠(IoUが0.5以上など)を無効化する。
+で、また残ったのものの中から最大のPcを選び、同じことを繰り返していく。
+クラスが複数あったら、これをクラスごとにやる。</p>
+
+<p>一つのセルに複数の物体があったらどうか。
+境界ボックス(Anchor box)を使う。
+事前に複数の形の枠(境界ボックス)を用意しておいて、それぞれについての予測を出力ベクトルに並べる。
+で、一番IoUが高い境界ボックスを採用する。</p>
+
+<p>境界ボックスは手動で作ったり、k平均法で作ったりする。</p>
+
+<p>スライディングウィンドウは、明らかに何もない部分の計算もしちゃうのでちょっと無駄。
+なので、そういう部分はスキップしようというのがR-CNN(Regions with CNN)。
+これはRegion proposalsとCNNを組み合わせたもの。
+Region proposalsは、セグメンテーション(Segmentation)アルゴリズムで画像をざっくり区分けして、それっぽい部分を処理対象にするもの。</p>
+
+<p>R-CNNはすごく遅いので、あまり使われていないし、Andrew先生も好んで使わない。
+Fast R-CNN、Faster R-CNNってのもあるけど、まだ遅い。</p></li>
+</ul></li>
+
+<li><p>プログラミング課題</p>
+
+<ul>
+<li><p>KerasでYOLOv2モデルを実装。</p>
+
+<p>CNN部分は訓練済みのモデルを使って、出力をフィルタリングする部分を作る。</p></li>
+</ul></li>
+</ul></li>
+
+<li><p>4週目</p>
+
+<p>顔認識(Face recognition)とNeural style transfer。</p>
+
+<ul>
+<li><p>動画</p>
+
+<ul>
+<li><p>顔認識</p>
+
+<p>顔認証(Face authentication)には、顔認識と、生きた人間かの判定(Liveness detection)が要るけど、前者を主に学ぶ。</p>
+
+<p>顔認識は顔検証(Face verification)の難しい版。
+後者は顔画像と名前を与えて、正しい組み合わせかを判定する。
+前者は顔画像を与えて、DBからその人を探す。</p>
+
+<p>顔認識は一般的に、One-shot learning問題に対応する必要がある。
+つまり一つの訓練データから学習しないといけない。
+DBに一人のひとについて何個も画像があるというケースは少ない。</p>
+
+<p>CNNに顔画像を入力して、ソフトマックス層で分類するのは、訓練データが少なすぎるのでうまくいかない。
+代わりに類似関数(Similarity function)を学習する。
+つまり、二つの画像を入力として、異なる度合いを出力するもの。
+で、その出力が閾値以下だったら同一人物と判定する。
+これをDBに入っている画像それぞれについてやる。</p>
+
+<p>類似関数にはシャム(Siamese)ネットワークをつかう。</p>
+
+<p>CNNの最後の全結合層の出力ベクトルは、入力画像をエンコードしたものだと考えられる。
+二つの画像を、別々に同じCNNにいれて、二つの出力ベクトルを得たら、それらのユークリッド距離の二乗を差として出力する。
+これがシャムネットワーク。
+二つの画像が同一人物ならユークリッド距離が小さくなるように、違うなら大きくなるように訓練する。</p>
+
+<p>損失関数にはTriplet loss関数を使う。
+同一人物を比較するとき、Anchor画像とPositive画像の比較、違う人物の比較はAnchor画像とNegative画像の比較と呼ぶ。
+AnchorとPositiveのユークリッド距離がAnchorとNegativeのユークリッド距離以下になってほしい。
+つまり前者マイナス後者がゼロ以下になって欲しい。
+ただこれだと、CNNが全ての画像について同じ出力をするように学習してしまうかもしれないので、<code>0-α</code>以下になるように訓練する。
+αはマージンと呼ばれるハイパーパラメータ。</p>
+
+<p>AnchorとPositiveとNegativeの一組をTripletと呼ぶ。
+Negativeをランダムに選ぶと、全然違う顔の組み合わせが多くなって、類似関数があまり学習しない。
+ので、似てるひとを組み合わせたTripletを多く作ってやると効率よく学習する。</p>
+
+<p>シャムネットワークの二つの出力ベクトルをロジスティック回帰ユニットに入れて、同一人物か否かの二値分類する方法もある。
+ベクトル間の距離も、ユークリッド距離の他、カイ二乗値(χ square similarity)ってのもある。</p>
+
+<p>DBには、顔画像そのものよりも、エンコードしたベクトルを入れておくと計算量を省けるし、DBサイズも抑えられる。</p></li>
+
+<li><p>ニューラル画風変換(NST: Neural style transfer)</p>
+
+<p>Content画像&copy;とStyle画像(S)から、あらたな画像(G)を生成するCNN。
+(CNNは別途訓練済みのものを使うので、転移学習の一種。)</p>
+
+<p>CNNの可視化ができる。
+画像の一部を入力して、ある層の一つのユニットの出力が最大になるものを選んで集めると、そのユニットがどのような特徴を抽出しているかがわかる。
+深い層ほど広い範囲を見て、複雑なパターンを学ぶ。</p>
+
+<p>コスト関数<code>J(G)</code>を最小化する。
+<code>J(G)</code>はコンテントコスト<code>Jcontent(C, G)×α</code>とスタイルコスト<code>Jstyle(S, G)×β</code>の和。
+前者はCとGの類似関数で、後者はSとGの類似関数。
+αとβはハイパーパラメータ。
+Gをランダムに初期化して、最急降下法でGを調整していく。</p>
+
+<p>訓練済みのCNN(VGGなど)を使って、中間層lを選ぶ。
+Cを入力してlから出てきた値と、Gを入力してlから出てきた値が似てたら、CとGを似ているとする。
+つまりそれらをベクトルにアンロールしたものの二乗誤差が<code>Jcontent(C, G)</code>。
+lが浅ければ浅いほど、CとGは似たものになる。</p>
+
+<p>スタイルは、ある層lの出力のx座標とy座標の各点について、チャネル間で値の関連性を見る。
+あるチャネルのあるニューロンが縦縞を検出していて、ほかのチャネルのあるニューロンがオレンジ色を検出していたとしたら、画像にオレンジの縦縞がよく現れるなら両者は関連が高く、そうでなければ低い。
+SとGとの間でこの関連性が似てれば、スタイルが似ていると言える。</p>
+
+<p>スタイル行列(Style matrix)で表す。
+ある層のスタイル行列は<code>nc×nc</code>で、チャネル間の関連度を表す。
+行列の一つの値は、二つのチャネルの各アクティベーションの掛け合わせものの合計。
+関連性が強いとこの掛け合わせは大きくなる。
+(対角成分は同じチャネル同士の積になって、そのスタイルがどれだけ全体的に出ているかを示す。)
+この行列は代数学ではグラム行列(Gram matrix)と呼ばれる。</p>
+
+<p>このスタイル行列をSとGで計算して、それらの二乗誤差をl層のスタイルコストとする。
+で、これにハイパーパラメータλlをかけたものを層ごとに計算して、足し合わせたものを全体のスタイルコストとする。</p></li>
+
+<li><p>2D以外の画像の処理</p>
+
+<p>心電図のデータとかの1Dデータや、CTスキャンみたいな3Dデータでも、それに合わせた次元のフィルタを使えば畳み込める。
+1DデータはRNNでもできるけど、CNNでもできて、それぞれメリットデメリットがある。</p></li>
+</ul></li>
+
+<li><p>プログラミング課題</p>
+
+<ul>
+<li><p>TensorFlowでニューラル画風変換を実装</p>
+
+<p>VGG-19をImageNetのデータで訓練したものを使う。
+ルーブル美術館の写真をContent画像に、モネの絵をStyle画像に使って画像を生成。</p></li>
+
+<li><p>Kerasで顔認識モデルを実装</p>
+
+<p>現時点でtriplet_lossの採点にバグがある。
+対策はフォーラム参照。</p></li>
+</ul></li>
+</ul></li>
+</ul>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        
+        
+
+        
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-6244473643910448"
+             data-ad-slot="1845600530"
+             data-ad-format="auto"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </aside>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f02%2f06%2fcoursera-deep-learning-convolutional-neural-networks%2f&t=Coursera%e3%81%aeDeep%20Learning%20Specialization%e3%81%aeConvolutional%20Neural%20Networks%e3%82%b3%e3%83%bc%e3%82%b9%e3%82%92%e4%bf%ae%e4%ba%86%e3%81%97%e3%81%9f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f02%2f06%2fcoursera-deep-learning-convolutional-neural-networks%2f&text=Coursera%e3%81%aeDeep%20Learning%20Specialization%e3%81%aeConvolutional%20Neural%20Networks%e3%82%b3%e3%83%bc%e3%82%b9%e3%82%92%e4%bf%ae%e4%ba%86%e3%81%97%e3%81%9f&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f02%2f06%2fcoursera-deep-learning-convolutional-neural-networks%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f02%2f06%2fcoursera-deep-learning-convolutional-neural-networks%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f02%2f06%2fcoursera-deep-learning-convolutional-neural-networks%2f&title=Coursera%e3%81%aeDeep%20Learning%20Specialization%e3%81%aeConvolutional%20Neural%20Networks%e3%82%b3%e3%83%bc%e3%82%b9%e3%82%92%e4%bf%ae%e4%ba%86%e3%81%97%e3%81%9f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://www.kaitoy.xyz/tags/coursera"><i class="fa fa-tags"></i> coursera </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/machine-learning"><i class="fa fa-tags"></i> machine learning </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/deep-learning"><i class="fa fa-tags"></i> deep learning </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/neural-network"><i class="fa fa-tags"></i> neural network </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/cnn"><i class="fa fa-tags"></i> cnn </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/01/16/coursera-deep-learning-ml-strategy/">CourseraのDeep Learning SpecializationのStructuring Machine Learning Projectsコースを修了した</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/01/12/coursera-deep-learning-improving-deep-neural-networks/">CourseraのDeep Learning SpecializationのImproving Deep Neural Networks: Hyperparameter tuning, Regularization and Optimizationコースを修了した</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/01/05/coursera-deep-learning-neural-networks-and-deep-learning/">CourseraのDeep Learning SpecializationのNeural Networks and Deep Learningコースを修了した</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/12/22/coursera-machine-learning/">CourseraのMachine Learningコースを修了した</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://www.kaitoy.xyz/2018/01/16/coursera-deep-learning-ml-strategy/">
+                  CourseraのDeep Learning SpecializationのStructuring Machine Learning Projectsコースを修了した
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cnn">cnn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/coursera">coursera</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/deep-learning">deep-learning</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/headless-browser">headless-browser</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubeadm">kubeadm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/license">license</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/machine-learning">machine-learning</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/neural-network">neural-network</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/selenium">selenium</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/servicenow">servicenow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/tensorflow">tensorflow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/test-framework">test-framework</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/webdriverio">webdriverio</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-6244473643910448"
+    data-ad-slot="1845600530"
+    data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2018  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+
