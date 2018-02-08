@@ -187,7 +187,7 @@ title = "CourseraのDeep Learning SpecializationのConvolutional Neural Networks
                 * ResNet(Residual Network)
 
                     残差ブロック(Residual block)を持つ。
-                    このブロックでは、深い層からの出力を浅い層のReLUの入力に足し合わせる。
+                    このブロックでは、浅い層からの出力を深い層のReLUの入力に足し合わせる。
                     この深い層からの依存はショートカット(short cut)とかskip connectionとか呼ばれる。
 
                     ショートカットのおかげで深い層の学習が効率的になり、層を152まで深くできた。
