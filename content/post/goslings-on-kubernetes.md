@@ -402,6 +402,6 @@ Could not find finalized endpoint being pointed to by kubernetes-dashboard: Erro
 `NO_PROXY`の値は`minikube ip`の値。
 で、
 
-`minikube start --docker-env HTTP_PROXY=http://%http_proxy% \ --docker-env HTTPS_PROXY=https://%https_proxy% --docker-env NO_PROXY=%NO_PROXY%`みたいにすればできる。
+`minikube start --docker-env HTTP_PROXY=http://%http_proxy% --docker-env HTTPS_PROXY=https://%https_proxy% --docker-env NO_PROXY=%NO_PROXY%`みたいにすればできる。
 
 はず。(参考: https://github.com/kubernetes/minikube/issues/530)
