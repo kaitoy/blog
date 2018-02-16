@@ -188,7 +188,7 @@ Gitは基本的にテキストファイルを扱うよう作られていて、�
 
 SVNはファイルそのものに注目しているので、その内容がどんなに劇的に変わっても見失うことはない。
 
-Gitでバイナリファイル、特にサイズが大きかったり頻繁に修正されるものを扱う必要があるときは、[git-annex](https://git-annex.branchable.com/)の利用を検討すべし。
+Gitでバイナリファイル、特にサイズが大きかったり頻繁に修正されるものを扱う必要があるときは、[git-annex](https://git-annex.branchable.com/)や[Git Large File Storage (LFS)](https://git-lfs.github.com/)の利用を検討すべし。
 
 #### 5. アクセスコントロール機能がない
 Git自身にはアクセスコントロール機能が全く実装されていない(多分)。
