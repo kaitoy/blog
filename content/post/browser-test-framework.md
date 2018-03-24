@@ -109,6 +109,16 @@ Seleniumは低レベルなブラウザ操作APIを提供するので、単純に
 
     WebDriverは使ってないはず。
 
+* [Puppeteer](https://github.com/GoogleChrome/puppeteer)
+
+    GitHubの★は29068。
+
+    Chromeを[DevToolsプロトコル](https://chromedevtools.github.io/devtools-protocol/)で操作するJavaScript(Node)ライブラリ。
+
+    Chrome開発チームが開発している。
+
+    WebDriverは使ってない。
+
 * [Chromy](https://github.com/OnetapInc/chromy)
 
     GitHubの★は294。
@@ -162,7 +172,7 @@ ServiceNowアプリの開発がJavaScriptなので、テストもJavaScriptで�
 のでCodeceptionとCapybaraとGebとSelenideは無し。
 
 テストのリモート実行やクロスブラウザテストを見据えてWebDriver使ってたほうがよさそうなので、
-NightmareとCasper.jsとZombie.jsとChromyも無し。
+NightmareとCasper.jsとZombie.jsとPuppeteerとChromyも無し。
 
 TestCafeはWebDriverにこだわらなければよさそうだけど、今回はWebDriverで行きたい気分なのでパス。
 
@@ -174,6 +184,8 @@ Nightwatch.jsは、全部メソッドチェーンでつなげる形で書くの�
 ということで残ったのがWebdriverIO。
 ややドキュメントが少なそうなのと、★が比較的少ないのが懸念。
 ProtractorかNightwatch.jsにしとけばよかったってなりそうではある。
+
+むしろクロスブラウザを捨ててPuppeteerでもよかったかな…
 
 <br>
 
