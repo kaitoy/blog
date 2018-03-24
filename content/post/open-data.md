@@ -33,4 +33,5 @@ title = "オープンデータメモ"
 * 単語ベクトル
     * [HR領域の単語ベクトル](https://github.com/bizreach/ai/tree/master/word2vec): 約9.95億個の日本語のHR系の単語からWord2Vecで学習した単語ベクトル。ベクトル長は100か200。
 * 学習済みモデル
+    * [Caffe Model Zoo](http://caffe.berkeleyvision.org/model_zoo.html): Caffe用のモデル集。
     * [Detectron Model Zoo](https://github.com/facebookresearch/Detectron/blob/master/MODEL_ZOO.md): Facebookが開発した物体検知モデルの学習済みモデル。Caffe2。
