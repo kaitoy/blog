@@ -29,6 +29,7 @@ title = "オープンデータメモ"
     * [AudioSet](https://research.google.com/audioset/): 200万個の10秒音声データで、527クラスでラベル付けされてる。ライセンスはCreative Commons BY 4.0。
 * データカタログサイト
     * [DATA GO JP](http://www.data.go.jp/): 日本政府が公開してる公共データ集。
+    * [UCI Machine Learning Repository](http://archive.ics.uci.edu/ml/index.php): 現時点で426のデータセットが配布されている。有名なアヤメのデータセットのソースはここ。
 * 単語ベクトル
     * [HR領域の単語ベクトル](https://github.com/bizreach/ai/tree/master/word2vec): 約9.95億個の日本語のHR系の単語からWord2Vecで学習した単語ベクトル。ベクトル長は100か200。
 * 学習済みモデル
