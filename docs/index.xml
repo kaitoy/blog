@@ -6,8 +6,381 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2018</rights>
-    <updated>2018-03-04 16:22:46 &#43;0900 JST</updated>
+    <updated>2018-03-25 22:43:27 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>機械学習のHello World: MNISTの分類モデルをKerasで作ってみた</title>
+          <link>https://www.kaitoy.xyz/2018/03/25/hello-world-to-ml-with-keras/</link>
+          <pubDate>Sun, 25 Mar 2018 22:43:27 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2018/03/25/hello-world-to-ml-with-keras/</guid>
+          <description>
+
+&lt;p&gt;機械学習のHello Worldとしてよくやられる&lt;a href=&#34;http://yann.lecun.com/exdb/mnist/&#34;&gt;MNIST&lt;/a&gt;の分類モデルを&lt;a href=&#34;https://keras.io/ja/&#34;&gt;Keras&lt;/a&gt; on &lt;a href=&#34;https://www.tensorflow.org/&#34;&gt;TensorFlow&lt;/a&gt;で作ってみた話。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;mnistとは&#34;&gt;MNISTとは&lt;/h2&gt;
+
+&lt;p&gt;手書き数字画像のラベル付きデータセット。
+6万個の訓練データと1万個のテストデータからなる。
+&lt;a href=&#34;https://creativecommons.org/licenses/by-sa/3.0/&#34;&gt;CC BY-SA 3.0&lt;/a&gt;で&lt;a href=&#34;http://www.pymvpa.org/datadb/mnist.html&#34;&gt;配布されているっぽい&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;一つの画像は28×28ピクセルの白黒画像で、0から9のアラビア数字が書かれている。&lt;/p&gt;
+
+&lt;p&gt;画像とラベルがそれぞれ独特な形式でアーカイブされていて、画像一つ、ラベル一つ取り出すのも一苦労する。&lt;/p&gt;
+
+&lt;h2 id=&#34;kerasとは&#34;&gt;Kerasとは&lt;/h2&gt;
+
+&lt;p&gt;Pythonのニューラルネットワークライブラリ。
+バックエンドとしてTensorFlowかCNTKかTheanoを使う。
+今回はTensorFlowを使った。&lt;/p&gt;
+
+&lt;h2 id=&#34;やったこと&#34;&gt;やったこと&lt;/h2&gt;
+
+&lt;p&gt;KerasのMNISTの&lt;a href=&#34;https://keras.io/ja/datasets/#mnist&#34;&gt;API&lt;/a&gt;とか&lt;a href=&#34;https://github.com/keras-team/keras/blob/master/examples/mnist_cnn.py&#34;&gt;コードサンプル&lt;/a&gt;とかがあけどこれらはスルー。&lt;/p&gt;
+
+&lt;p&gt;MNISTのサイトにあるデータセットをダウンロードしてきて、サイトに書いてあるデータ形式の説明を見ながらサンプルを取り出すコードを書いた。
+で、KerasでVGGっぽいCNNを書いて、学習させてモデルをダンプして、ダンプしたモデルをロードしてテストデータで評価するコードを書いた。
+コードは&lt;a href=&#34;https://github.com/kaitoy/ml-mnist&#34;&gt;GitHub&lt;/a&gt;に。&lt;/p&gt;
+
+&lt;h2 id=&#34;ネットワークアーキテクチャ&#34;&gt;ネットワークアーキテクチャ&lt;/h2&gt;
+
+&lt;p&gt;入力画像のサイズに合わせてVGGを小さくした感じのCNNを作った。&lt;/p&gt;
+
+&lt;p&gt;VGGは2014年に発表されたアーキテクチャで、各層に同じフィルタを使い、フィルタ数を線形増加させるシンプルな構造でありながら、性能がよく、今でもよく使われるっぽい。&lt;/p&gt;
+
+&lt;p&gt;VGGを図にすると以下の構造。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/hello-world-to-ml-with-keras/vgg16.png&#34; alt=&#34;vgg16.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;実際はバッチ正規化とかDropoutもやるのかも。
+プーリング層は数えないで16層なので、VGG-16とも呼ばれる。
+パラメータ数は1億3800万個くらいで、結構深めなアーキテクチャ。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;VGG-16は244×244×3の画像を入力して1000クラスに分類するのに対し、MNISTは28×28×1を入れて10クラスに分類するので、以下のような7層版を作った。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/hello-world-to-ml-with-keras/vgg7.png&#34; alt=&#34;vgg7.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;これでパラメータ数は27万個くらい。
+訓練データのサンプル数が6万個なので、パラメータ数が大分多い感じではある。&lt;/p&gt;
+
+&lt;p&gt;コードは以下。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;inputs: Tensor = Input(shape=(IMAGE_NUM_ROWS, IMAGE_NUM_COLS, 1))
+
+x: Tensor = Conv2D(filters=8, kernel_size=(2, 2), padding=&#39;same&#39;, activation=&#39;relu&#39;)(inputs)
+x = Conv2D(filters=8, kernel_size=(2, 2), padding=&#39;same&#39;, activation=&#39;relu&#39;)(x)
+x = MaxPooling2D(pool_size=(2, 2))(x)
+
+x = Conv2D(filters=16, kernel_size=(2, 2), padding=&#39;same&#39;, activation=&#39;relu&#39;)(x)
+x = Conv2D(filters=16, kernel_size=(2, 2), padding=&#39;same&#39;, activation=&#39;relu&#39;)(x)
+x = Conv2D(filters=16, kernel_size=(2, 2), padding=&#39;same&#39;, activation=&#39;relu&#39;)(x)
+x = MaxPooling2D(pool_size=(2, 2))(x)
+
+x = Flatten()(x)
+x = Dense(units=256, activation=&#39;relu&#39;)(x)
+x = Dense(units=256, activation=&#39;relu&#39;)(x)
+predictions: Tensor = Dense(NUM_CLASSES, activation=&#39;softmax&#39;)(x)
+
+model: Model = Model(inputs=inputs, outputs=predictions)
+model.compile(optimizer=&#39;adam&#39;, loss=&#39;categorical_crossentropy&#39;, metrics=[&#39;accuracy&#39;])
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;訓練-評価&#34;&gt;訓練・評価&lt;/h2&gt;
+
+&lt;p&gt;上記モデルを6万個のサンプルでバッチサイズ512で一周(1エポック)学習させると、Intel Core i5-6300HQプロセッサー、メモリ16GBのノートPCで28秒前後かかる。&lt;/p&gt;
+
+&lt;p&gt;とりあえず3エポック学習させてみる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;(ml-mnist) C:\workspace\ml-mnist&amp;gt;python bin\ml_mnist.py train
+Using TensorFlow backend.
+Epoch 1/3
+60000/60000 [==============================] - 28s 465us/step - loss: 0.7813 - acc: 0.7702
+Epoch 2/3
+60000/60000 [==============================] - 27s 453us/step - loss: 0.1607 - acc: 0.9496
+Epoch 3/3
+60000/60000 [==============================] - 27s 448us/step - loss: 0.1041 - acc: 0.9681
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ロスが0.1041で正答率が96.81%という結果になった。&lt;/p&gt;
+
+&lt;p&gt;このモデルをテストデータで評価する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;(ml-mnist) C:\workspace\ml-mnist&amp;gt;python bin\ml_mnist.py eval
+Using TensorFlow backend.
+10000/10000 [==============================] - 2s 165us/step
+loss: 0.08780829641819, acc: 0.9717000002861023
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;正答率97.17%。
+そんなに良くないけど、過学習はしていない模様。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;次に10エポック学習させて評価してみる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;(ml-mnist) C:\workspace\ml-mnist&amp;gt;python bin\ml_mnist.py train
+Using TensorFlow backend.
+Epoch 1/10
+60000/60000 [==============================] - 29s 486us/step - loss: 0.5814 - acc: 0.8297
+Epoch 2/10
+60000/60000 [==============================] - 28s 470us/step - loss: 0.1130 - acc: 0.9651
+Epoch 3/10
+60000/60000 [==============================] - 28s 469us/step - loss: 0.0711 - acc: 0.9777
+Epoch 4/10
+60000/60000 [==============================] - 28s 468us/step - loss: 0.0561 - acc: 0.9821
+Epoch 5/10
+60000/60000 [==============================] - 28s 469us/step - loss: 0.0476 - acc: 0.9852
+Epoch 6/10
+60000/60000 [==============================] - 28s 473us/step - loss: 0.0399 - acc: 0.9879
+Epoch 7/10
+60000/60000 [==============================] - 28s 467us/step - loss: 0.0338 - acc: 0.9892
+Epoch 8/10
+60000/60000 [==============================] - 28s 467us/step - loss: 0.0283 - acc: 0.9909
+Epoch 9/10
+60000/60000 [==============================] - 29s 490us/step - loss: 0.0230 - acc: 0.9925
+Epoch 10/10
+60000/60000 [==============================] - 28s 471us/step - loss: 0.0223 - acc: 0.9928
+
+(ml-mnist) C:\workspace\ml-mnist&amp;gt;python bin\ml_mnist.py eval
+Using TensorFlow backend.
+10000/10000 [==============================] - 2s 171us/step
+loss: 0.040611953073740006, acc: 0.9866999998092651
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;テストデータでの正答率98.67%。
+ちょっと改善した。&lt;/p&gt;
+
+&lt;h2 id=&#34;モデル改善&#34;&gt;モデル改善&lt;/h2&gt;
+
+&lt;p&gt;試しにバッチ正規化層を入れてみる。
+ReLUの前に入れるべきという情報があったけど、それだとちょっと修正が面倒なので、単にプーリング層の後に入れてみた。&lt;/p&gt;
+
+&lt;p&gt;3エポックで学習・評価。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;(ml-mnist) C:\workspace\ml-mnist&amp;gt;python bin\ml_mnist.py train
+Using TensorFlow backend.
+Epoch 1/3
+60000/60000 [==============================] - 45s 746us/step - loss: 0.2157 - acc: 0.9336
+Epoch 2/3
+60000/60000 [==============================] - 44s 737us/step - loss: 0.0513 - acc: 0.9838
+Epoch 3/3
+60000/60000 [==============================] - 47s 777us/step - loss: 0.0340 - acc: 0.9896
+
+(ml-mnist) C:\workspace\ml-mnist&amp;gt;python bin\ml_mnist.py eval
+Using TensorFlow backend.
+10000/10000 [==============================] - 2s 246us/step
+loss: 0.051704482543468475, acc: 0.9844999995231628
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;98.45%。
+1エポックの学習時間は45秒前後に伸びたけど、速く学習できるようにはなった。&lt;/p&gt;
+
+&lt;p&gt;10エポックではどうか。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;(ml-mnist) C:\workspace\ml-mnist&amp;gt;python bin\ml_mnist.py train
+Using TensorFlow backend.
+Epoch 1/10
+60000/60000 [==============================] - 47s 776us/step - loss: 0.2318 - acc: 0.9265
+Epoch 2/10
+60000/60000 [==============================] - 47s 790us/step - loss: 0.0596 - acc: 0.9811
+Epoch 3/10
+60000/60000 [==============================] - 47s 778us/step - loss: 0.0370 - acc: 0.9884
+Epoch 4/10
+60000/60000 [==============================] - 48s 801us/step - loss: 0.0259 - acc: 0.9917
+Epoch 5/10
+60000/60000 [==============================] - 47s 785us/step - loss: 0.0182 - acc: 0.9942
+Epoch 6/10
+60000/60000 [==============================] - 48s 794us/step - loss: 0.0132 - acc: 0.9961
+Epoch 7/10
+60000/60000 [==============================] - 46s 765us/step - loss: 0.0108 - acc: 0.9965
+Epoch 8/10
+60000/60000 [==============================] - 45s 751us/step - loss: 0.0107 - acc: 0.9965
+Epoch 9/10
+60000/60000 [==============================] - 45s 749us/step - loss: 0.0055 - acc: 0.9984
+Epoch 10/10
+60000/60000 [==============================] - 45s 754us/step - loss: 0.0035 - acc: 0.9991
+
+(ml-mnist) C:\workspace\ml-mnist&amp;gt;python bin\ml_mnist.py eval
+Using TensorFlow backend.
+10000/10000 [==============================] - 2s 243us/step
+loss: 0.034382903814315795, acc: 0.9893999994277954
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;98.94%。
+バッチ正規化無し版よりも0.27%改善してるけど、誤差の範囲かも。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;MNISTのサイトに載ってるので一番いいのが99.77%。
+どうしたらそんなによくなるのか。&lt;/p&gt;
+
+&lt;h2 id=&#34;エラー分析&#34;&gt;エラー分析&lt;/h2&gt;
+
+&lt;p&gt;一番正答率が高かったモデルについて、エラー分析をしてみた。&lt;/p&gt;
+
+&lt;p&gt;まず、エラーが多かった数字を調べる。
+数字をエラー数順に並べると、&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-txt&#34;&gt;ラベル: エラー数
+9: 18
+7: 18
+5: 15
+4: 14
+6: 14
+3: 8
+8: 8
+2: 7
+1: 2
+0: 2
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;9と7が一番分類むずくて、4、5、6がそれらに次いでむずいことがわかる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;次にエラーのパターンを見てみる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-txt&#34;&gt;(予測した数字, ラベル): 出現数
+(9, 4): 10
+(3, 5): 9
+(1, 7): 7
+(2, 7): 6
+(7, 9): 6
+(9, 7): 5
+(7, 2): 4
+(8, 5): 4
+(1, 6): 4
+(1, 9): 4
+(0, 6): 4
+(8, 9): 3
+(9, 3): 3
+(4, 9): 3
+(8, 3): 2
+(2, 4): 2
+(2, 8): 2
+(1, 2): 2
+(8, 4): 2
+(5, 3): 2
+(5, 9): 2
+(8, 6): 2
+(2, 6): 2
+(5, 6): 1
+(1, 8): 1
+(6, 8): 1
+(0, 8): 1
+(2, 3): 1
+(4, 6): 1
+(2, 1): 1
+(3, 8): 1
+(8, 1): 1
+(7, 0): 1
+(4, 8): 1
+(6, 0): 1
+(5, 8): 1
+(6, 5): 1
+(9, 2): 1
+(0, 5): 1
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;4を9と、5を3と、7を1か2と、9を7と間違えたパターンが多い。
+特に4と7がむずい模様。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;次に、実際に間違えた画像を見てみる。
+多かったパターンについて見てみる。&lt;/p&gt;
+
+&lt;p&gt;4を9と間違えたパターン:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/hello-world-to-ml-with-keras/9-4.png&#34; alt=&#34;9-4.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;なんだこれは。
+これはかなり9にも見える。
+ちょっと角ばってるとこと、線が右にはみ出しているとこで判断するのか。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;5を3と間違えたパターン:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/hello-world-to-ml-with-keras/3-5.png&#34; alt=&#34;3-5.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;これはもうちょっとモデルに頑張ってほしい。
+これを3としてしまうのは残念。
+なにがだめだったのかは分からないけど。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;7を1と間違えたパターン:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/hello-world-to-ml-with-keras/1-7.png&#34; alt=&#34;1-7.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;これは1でもいいような…&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;7を2と間違えたパターン:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/hello-world-to-ml-with-keras/2-7.png&#34; alt=&#34;2-7.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;これはちょっと面白い。
+7の真ん中に線をいれるパターンを訓練データに足せば対応できそう。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;9を7と間違えたパターン:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/hello-world-to-ml-with-keras/7-9.png&#34; alt=&#34;7-9.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;これもモデルに頑張ってほしかったパターン。
+左上のごみが悪さしたんだろうか。
+ごみがあるパターンを訓練データに増やすと対応できるかも。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;あと、ちょっと噴いたやつ:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/hello-world-to-ml-with-keras/2-4.png&#34; alt=&#34;2-4.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;これは4。
+モデルは2と間違えた。
+むずい。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/hello-world-to-ml-with-keras/2-8.png&#34; alt=&#34;2-8.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;これは8。
+モデルは2と間違えた。
+こんなのテストデータにいれないで…&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -11738,144 +12111,6 @@ error: failed to push some refs to &#39;file://C:/Users/Kaito/Desktop/master&#39
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;)&lt;/p&gt;
-</description>
-        </item>
-      
-    
-      
-        <item>
-          <title>Gitのマージを図解する</title>
-          <link>https://www.kaitoy.xyz/2015/12/28/git-merge/</link>
-          <pubDate>Mon, 28 Dec 2015 01:05:29 -0700</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2015/12/28/git-merge/</guid>
-          <description>
-
-&lt;p&gt;このエントリでは、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;が提供するマージのための機能の内、主なもの4つ、&lt;strong&gt;真のマージ&lt;/strong&gt;、&lt;strong&gt;リベース&lt;/strong&gt;、&lt;strong&gt;ファストフォワードマージ&lt;/strong&gt;、&lt;strong&gt;チェリーピック&lt;/strong&gt; について図解する。
-ここでマージとは、とあるブランチのコミットが入れた修正を別のブランチに取り込むこととする。&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を事前に読んでGitのオブジェクトモデルを理解しておくと分かりやすいかもしれない。&lt;/p&gt;
-
-&lt;p&gt;ここで説明するマージは全てローカルリポジトリ内のブランチを操作対象とする。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h2 id=&#34;真のマージ&#34;&gt;真のマージ&lt;/h2&gt;
-
-&lt;p&gt;真のマージは、複数のブランチでそれぞれ開発が進んでいて、つまりそれぞれのコミットグラフが伸びている場合に、それらの修正を統合するときに実行する。
-マージするブランチはいくつでも指定できる。&lt;/p&gt;
-
-&lt;p&gt;基本的なコマンドは&lt;code&gt;git merge &amp;lt;ブランチ(複数可)&amp;gt;&lt;/code&gt;。&lt;/p&gt;
-
-&lt;p&gt;操作に成功すると、マージ後のプロジェクトの状態を表すコミット(マージコミット)が作られ、カレントブランチの先頭に追加される。
-マージコミットは、マージした全てのブランチが指していたコミットを親として持つ。&lt;/p&gt;
-
-&lt;p&gt;このマージはマージコミットを追加するだけであり、既存のコミットを一切変更しないことを認識しておくべし。&lt;/p&gt;
-
-&lt;p&gt;以下、真のマージの実行例を図示する。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_merge/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_merge/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_merge/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_merge/スライド4.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;リベース&#34;&gt;リベース&lt;/h2&gt;
-
-&lt;p&gt;リベースは、あるブランチで作った一連のコミットの起点(ベース)を移動したいときに実行する。
-この操作は一般的にはマージとは呼ばれないが、冒頭に書いたマージの定義からするとマージと見なせないこともないのでここに挙げる。&lt;/p&gt;
-
-&lt;p&gt;基本的なコマンドは&lt;code&gt;git rebase &amp;lt;ブランチ&amp;gt;&lt;/code&gt;。
-このコマンドは、カレントブランチの起点を指定したブランチが指すコミットに移動する。&lt;/p&gt;
-
-&lt;p&gt;この操作に成功すると、カレントブランチで作ったコミットは(実質)消え、それと同等の修正をもたらす別のコミットが移動先のコミットを起点として作成される。(※1)&lt;/p&gt;
-
-&lt;p&gt;リベースは既存のコミットを消し、コミットグラフを変更してしまうということを認識しておくべし。&lt;/p&gt;
-
-&lt;p&gt;以下、リベースの簡単な実行例を図示する。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_rebase/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_rebase/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;上のスライドのように単純なコミットグラフならいいが、リベースするブランチが分岐していたりするとややこしいことが起き得る。
-そういうケースには&lt;a href=&#34;https://www.oreilly.co.jp/books/9784873114408/&#34;&gt;O&amp;rsquo;Reillyの蝙蝠本&lt;/a&gt;などでよく勉強してから臨むべし。&lt;/p&gt;
-
-&lt;p&gt;(※1: より正確には&lt;code&gt;git rebase &amp;lt;ブランチ&amp;gt;&lt;/code&gt;は、&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;カレントブランチで作った各コミットが入れた変更をパッチにして、&lt;/li&gt;
-&lt;li&gt;それを古い順に一つずつ、指定したブランチが指すコミットに適用しながら新しいコミットを作り、&lt;/li&gt;
-&lt;li&gt;カレントブランチが指しているコミットを&lt;code&gt;ORIG_HEAD&lt;/code&gt;で指し、&lt;/li&gt;
-&lt;li&gt;カレントブランチを最新のコミットを指すよう更新する。&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;2で、指定したブランチが既にチェリーピック(後述)などでカレントブランチのとあるコミットの変更を取り込んでいた場合、そのコミットのパッチの適用はスキップされ、そのパッチによるコミットも作られない。&lt;/p&gt;
-
-&lt;p&gt;また、上でカレントブランチのコミットは実質消えると書いたが、当面はオブジェクトが本当に消えるわけではないし、&lt;code&gt;ORIG_HEAD&lt;/code&gt;とかが指しているのでもどることもできる。)&lt;/p&gt;
-
-&lt;h2 id=&#34;ファストフォワードマージ&#34;&gt;ファストフォワードマージ&lt;/h2&gt;
-
-&lt;p&gt;ファストフォワードマージは、マージ先のコミットが全てマージ元に含まれているときに使えるマージ。
-この操作は既存のコミットグラフをいじらないしマージコミットも作らない特殊なマージ。
-(実のところマージじゃないと言ってもいい。)
-このマージを実行した後は、コミットグラフは一直線になり、ブランチを作らずにコミットを作った場合と同様になる。&lt;/p&gt;
-
-&lt;p&gt;このマージは、&lt;code&gt;git merge &amp;lt;ブランチ&amp;gt;&lt;/code&gt;を実行したときに可能であれば実行される。
-(でなければ真のマージが実行される。オプションで選択することもできる。)&lt;/p&gt;
-
-&lt;p&gt;以下にファストフォワードマージの例を図示する。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_ff/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_ff/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;ファストフォワードマージはよくリベースとともに実行される。
-リベースのスライドの最後のページの図は、ここのスライドの最初のページの図と同じになっている。&lt;/p&gt;
-
-&lt;p&gt;リベース + ファストフォワードは、トピックブランチで入れた修正を、そのブランチを作ったという履歴を残さずに別のブランチに取り入れたいときなどに使う手法。
-マージコミットを作る手法よりもコミットグラフをシンプルに保てる。&lt;/p&gt;
-
-&lt;h2 id=&#34;チェリーピック&#34;&gt;チェリーピック&lt;/h2&gt;
-
-&lt;p&gt;チェリーピックは、あるブランチの任意のコミットによる修正を別のブランチに取り込みたいときに実行する。
-他の3つのマージに比べて分かりやすい操作であり、また操作対象にするブランチやコミットの自由度が高いので使いやすい。
-その反面、コミットログなどに明記しないとどこのコミットをマージしたのかが分からなくなる。&lt;/p&gt;
-
-&lt;p&gt;基本的なコマンドは&lt;code&gt;git cherry-pick &amp;lt;コミット&amp;gt;&lt;/code&gt;。&lt;/p&gt;
-
-&lt;p&gt;操作に成功すると、指定したコミットと同等の修正をもたらす新しいコミットが作成され、&lt;code&gt;HEAD&lt;/code&gt;に追加される。&lt;/p&gt;
-
-&lt;p&gt;この操作はコミットを追加するだけであり、既存のコミットは変更しない。&lt;/p&gt;
-
-&lt;p&gt;以下にチェリーピックの例を図示する。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_cherry-pick/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_cherry-pick/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
 </description>
         </item>
       

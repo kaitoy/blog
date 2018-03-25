@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="機械学習のHello World: MNISTの分類モデルをKerasで作ってみた | To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2018/03/25/hello-world-to-ml-with-keras/">
+    <link rel="canonical" href="https://www.kaitoy.xyz/2018/03/25/hello-world-to-ml-with-keras/">
+    <meta property="og:description" content="機械学習のHello WorldとしてよくやられるMNISTの分類モデルをKeras on TensorFlowで作ってみた話。 (adsbygoogle = window.adsbygoogle || []).push({}); MNISTとは 手書き数字画像のラベル付きデータセット。 6万個の訓練データと1万個のテストデータからなる。 CC BY-SA 3.0で配布されているっぽい。 一つの画像は28×28ピクセルの白黒画像で、0から9のアラビア数字が書かれている。 画像とラベルがそれぞれ独特な形式でアーカイブされていて、画像一つ、ラベル一つ取り出すのも一苦労する。 Kerasとは Pythonのニューラルネットワークライブラリ。 バックエンドとしてTensorFlowかCNTKかTheanoを使う。 今回はTensorFlowを使った。 やったこと KerasのMNISTのAPIとかコードサンプルとかがあけどこれらはスルー。 MNISTのサイトにあるデータセットをダウンロードしてきて、サイトに書いてあるデータ形式の説明を見ながらサンプルを取り出すコードを書いた。 で、KerasでVGGっぽいCNNを書いて、学習させてモデルをダンプして、ダンプしたモデルをロードしてテストデータで評価するコードを書いた。 コードはGitHubに。 ネットワークアーキテクチャ 入力画像のサイズに合わせてVGGを小さくした感じのCNNを作った。 VGGは2014年に発表されたアーキテクチャで、各層に同じフィルタを使い、フィルタ数を線形増加させるシンプルな構造でありながら、性能がよく、今でもよく使われるっぽい。 VGGを図にすると以下の構造。 実際はバッチ正規化とかDropoutもやるのかも。 プーリング層は数えないで16層なので、VGG-16とも呼ばれる。 パラメータ数は1億3800万個くらいで、結構深めなアーキテクチャ。 VGG-16は244×244×3の画像を入力して1000クラスに分類するのに対し、MNISTは28×28×1を入れて10クラスに分類するので、以下のような7層版を作った。 これでパラメータ数は27万個くらい。 訓練データのサンプル数が6万個なので、パラメータ数が大分多い感じではある。 コードは以下。 inputs: Tensor = Input(shape=(IMAGE_NUM_ROWS, IMAGE_NUM_COLS, 1)) x: Tensor = Conv2D(filters=8, kernel_size=(2, 2), padding=&#39;same&#39;, activation=&#39;relu&#39;)(inputs) x = Conv2D(filters=8, kernel_size=(2, 2), padding=&#39;same&#39;, activation=&#39;relu&#39;)(x) x = MaxPooling2D(pool_size=(2, 2))(x) x = Conv2D(filters=16, kernel_size=(2, 2), padding=&#39;same&#39;, activation=&#39;relu&#39;)(x) x = Conv2D(filters=16, kernel_size=(2, 2), padding=&#39;same&#39;, activation=&#39;relu&#39;)(x) x = Conv2D(filters=16, kernel_size=(2, 2), padding=&#39;same&#39;, activation=&#39;relu&#39;)(x) x = MaxPooling2D(pool_size=(2, 2))(x) x = Flatten()(x) x = Dense(units=256, activation=&#39;relu&#39;)(x) x = Dense(units=256, activation=&#39;relu&#39;)(x) predictions: Tensor = Dense(NUM_CLASSES, activation=&#39;softmax&#39;)(x) model: Model = Model(inputs=inputs, outputs=predictions) model.compile(optimizer=&#39;adam&#39;, loss=&#39;categorical_crossentropy&#39;, metrics=[&#39;accuracy&#39;]) 訓練・評価 上記モデルを6万個のサンプルでバッチサイズ512で一周(1エポック)学習させると、Intel Core i5-6300HQプロセッサー、メモリ16GBのノートPCで28秒前後かかる。 とりあえず3エポック学習させてみる。 (ml-mnist) C:\workspace\ml-mnist&gt;python bin\ml_mnist.py train Using TensorFlow backend.">
+    
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/keras.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      機械学習のHello World: MNISTの分類モデルをKerasで作ってみた | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+    
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-6244473643910448",
+        enable_page_level_ads: true
+      });
+    </script>
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Sun, Mar 25, 2018</span>
+      <h2 class="title">機械学習のHello World: MNISTの分類モデルをKerasで作ってみた</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://www.kaitoy.xyz/images/keras.png" alt="機械学習のHello World: MNISTの分類モデルをKerasで作ってみた">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>機械学習のHello Worldとしてよくやられる<a href="http://yann.lecun.com/exdb/mnist/">MNIST</a>の分類モデルを<a href="https://keras.io/ja/">Keras</a> on <a href="https://www.tensorflow.org/">TensorFlow</a>で作ってみた話。</p>
+
+<p>
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</p>
+
+<h2 id="mnistとは">MNISTとは</h2>
+
+<p>手書き数字画像のラベル付きデータセット。
+6万個の訓練データと1万個のテストデータからなる。
+<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>で<a href="http://www.pymvpa.org/datadb/mnist.html">配布されているっぽい</a>。</p>
+
+<p>一つの画像は28×28ピクセルの白黒画像で、0から9のアラビア数字が書かれている。</p>
+
+<p>画像とラベルがそれぞれ独特な形式でアーカイブされていて、画像一つ、ラベル一つ取り出すのも一苦労する。</p>
+
+<h2 id="kerasとは">Kerasとは</h2>
+
+<p>Pythonのニューラルネットワークライブラリ。
+バックエンドとしてTensorFlowかCNTKかTheanoを使う。
+今回はTensorFlowを使った。</p>
+
+<h2 id="やったこと">やったこと</h2>
+
+<p>KerasのMNISTの<a href="https://keras.io/ja/datasets/#mnist">API</a>とか<a href="https://github.com/keras-team/keras/blob/master/examples/mnist_cnn.py">コードサンプル</a>とかがあけどこれらはスルー。</p>
+
+<p>MNISTのサイトにあるデータセットをダウンロードしてきて、サイトに書いてあるデータ形式の説明を見ながらサンプルを取り出すコードを書いた。
+で、KerasでVGGっぽいCNNを書いて、学習させてモデルをダンプして、ダンプしたモデルをロードしてテストデータで評価するコードを書いた。
+コードは<a href="https://github.com/kaitoy/ml-mnist">GitHub</a>に。</p>
+
+<h2 id="ネットワークアーキテクチャ">ネットワークアーキテクチャ</h2>
+
+<p>入力画像のサイズに合わせてVGGを小さくした感じのCNNを作った。</p>
+
+<p>VGGは2014年に発表されたアーキテクチャで、各層に同じフィルタを使い、フィルタ数を線形増加させるシンプルな構造でありながら、性能がよく、今でもよく使われるっぽい。</p>
+
+<p>VGGを図にすると以下の構造。</p>
+
+<p><img src="/images/hello-world-to-ml-with-keras/vgg16.png" alt="vgg16.png" />
+</p>
+
+<p>実際はバッチ正規化とかDropoutもやるのかも。
+プーリング層は数えないで16層なので、VGG-16とも呼ばれる。
+パラメータ数は1億3800万個くらいで、結構深めなアーキテクチャ。</p>
+
+<p><br></p>
+
+<p>VGG-16は244×244×3の画像を入力して1000クラスに分類するのに対し、MNISTは28×28×1を入れて10クラスに分類するので、以下のような7層版を作った。</p>
+
+<p><img src="/images/hello-world-to-ml-with-keras/vgg7.png" alt="vgg7.png" />
+</p>
+
+<p>これでパラメータ数は27万個くらい。
+訓練データのサンプル数が6万個なので、パラメータ数が大分多い感じではある。</p>
+
+<p>コードは以下。</p>
+
+<pre><code class="language-python">inputs: Tensor = Input(shape=(IMAGE_NUM_ROWS, IMAGE_NUM_COLS, 1))
+
+x: Tensor = Conv2D(filters=8, kernel_size=(2, 2), padding='same', activation='relu')(inputs)
+x = Conv2D(filters=8, kernel_size=(2, 2), padding='same', activation='relu')(x)
+x = MaxPooling2D(pool_size=(2, 2))(x)
+
+x = Conv2D(filters=16, kernel_size=(2, 2), padding='same', activation='relu')(x)
+x = Conv2D(filters=16, kernel_size=(2, 2), padding='same', activation='relu')(x)
+x = Conv2D(filters=16, kernel_size=(2, 2), padding='same', activation='relu')(x)
+x = MaxPooling2D(pool_size=(2, 2))(x)
+
+x = Flatten()(x)
+x = Dense(units=256, activation='relu')(x)
+x = Dense(units=256, activation='relu')(x)
+predictions: Tensor = Dense(NUM_CLASSES, activation='softmax')(x)
+
+model: Model = Model(inputs=inputs, outputs=predictions)
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+</code></pre>
+
+<h2 id="訓練-評価">訓練・評価</h2>
+
+<p>上記モデルを6万個のサンプルでバッチサイズ512で一周(1エポック)学習させると、Intel Core i5-6300HQプロセッサー、メモリ16GBのノートPCで28秒前後かかる。</p>
+
+<p>とりあえず3エポック学習させてみる。</p>
+
+<pre><code class="language-cmd">(ml-mnist) C:\workspace\ml-mnist&gt;python bin\ml_mnist.py train
+Using TensorFlow backend.
+Epoch 1/3
+60000/60000 [==============================] - 28s 465us/step - loss: 0.7813 - acc: 0.7702
+Epoch 2/3
+60000/60000 [==============================] - 27s 453us/step - loss: 0.1607 - acc: 0.9496
+Epoch 3/3
+60000/60000 [==============================] - 27s 448us/step - loss: 0.1041 - acc: 0.9681
+</code></pre>
+
+<p>ロスが0.1041で正答率が96.81%という結果になった。</p>
+
+<p>このモデルをテストデータで評価する。</p>
+
+<pre><code class="language-cmd">(ml-mnist) C:\workspace\ml-mnist&gt;python bin\ml_mnist.py eval
+Using TensorFlow backend.
+10000/10000 [==============================] - 2s 165us/step
+loss: 0.08780829641819, acc: 0.9717000002861023
+</code></pre>
+
+<p>正答率97.17%。
+そんなに良くないけど、過学習はしていない模様。</p>
+
+<p><br></p>
+
+<p>次に10エポック学習させて評価してみる。</p>
+
+<pre><code class="language-cmd">(ml-mnist) C:\workspace\ml-mnist&gt;python bin\ml_mnist.py train
+Using TensorFlow backend.
+Epoch 1/10
+60000/60000 [==============================] - 29s 486us/step - loss: 0.5814 - acc: 0.8297
+Epoch 2/10
+60000/60000 [==============================] - 28s 470us/step - loss: 0.1130 - acc: 0.9651
+Epoch 3/10
+60000/60000 [==============================] - 28s 469us/step - loss: 0.0711 - acc: 0.9777
+Epoch 4/10
+60000/60000 [==============================] - 28s 468us/step - loss: 0.0561 - acc: 0.9821
+Epoch 5/10
+60000/60000 [==============================] - 28s 469us/step - loss: 0.0476 - acc: 0.9852
+Epoch 6/10
+60000/60000 [==============================] - 28s 473us/step - loss: 0.0399 - acc: 0.9879
+Epoch 7/10
+60000/60000 [==============================] - 28s 467us/step - loss: 0.0338 - acc: 0.9892
+Epoch 8/10
+60000/60000 [==============================] - 28s 467us/step - loss: 0.0283 - acc: 0.9909
+Epoch 9/10
+60000/60000 [==============================] - 29s 490us/step - loss: 0.0230 - acc: 0.9925
+Epoch 10/10
+60000/60000 [==============================] - 28s 471us/step - loss: 0.0223 - acc: 0.9928
+
+(ml-mnist) C:\workspace\ml-mnist&gt;python bin\ml_mnist.py eval
+Using TensorFlow backend.
+10000/10000 [==============================] - 2s 171us/step
+loss: 0.040611953073740006, acc: 0.9866999998092651
+</code></pre>
+
+<p>テストデータでの正答率98.67%。
+ちょっと改善した。</p>
+
+<h2 id="モデル改善">モデル改善</h2>
+
+<p>試しにバッチ正規化層を入れてみる。
+ReLUの前に入れるべきという情報があったけど、それだとちょっと修正が面倒なので、単にプーリング層の後に入れてみた。</p>
+
+<p>3エポックで学習・評価。</p>
+
+<pre><code class="language-cmd">(ml-mnist) C:\workspace\ml-mnist&gt;python bin\ml_mnist.py train
+Using TensorFlow backend.
+Epoch 1/3
+60000/60000 [==============================] - 45s 746us/step - loss: 0.2157 - acc: 0.9336
+Epoch 2/3
+60000/60000 [==============================] - 44s 737us/step - loss: 0.0513 - acc: 0.9838
+Epoch 3/3
+60000/60000 [==============================] - 47s 777us/step - loss: 0.0340 - acc: 0.9896
+
+(ml-mnist) C:\workspace\ml-mnist&gt;python bin\ml_mnist.py eval
+Using TensorFlow backend.
+10000/10000 [==============================] - 2s 246us/step
+loss: 0.051704482543468475, acc: 0.9844999995231628
+</code></pre>
+
+<p>98.45%。
+1エポックの学習時間は45秒前後に伸びたけど、速く学習できるようにはなった。</p>
+
+<p>10エポックではどうか。</p>
+
+<pre><code class="language-cmd">(ml-mnist) C:\workspace\ml-mnist&gt;python bin\ml_mnist.py train
+Using TensorFlow backend.
+Epoch 1/10
+60000/60000 [==============================] - 47s 776us/step - loss: 0.2318 - acc: 0.9265
+Epoch 2/10
+60000/60000 [==============================] - 47s 790us/step - loss: 0.0596 - acc: 0.9811
+Epoch 3/10
+60000/60000 [==============================] - 47s 778us/step - loss: 0.0370 - acc: 0.9884
+Epoch 4/10
+60000/60000 [==============================] - 48s 801us/step - loss: 0.0259 - acc: 0.9917
+Epoch 5/10
+60000/60000 [==============================] - 47s 785us/step - loss: 0.0182 - acc: 0.9942
+Epoch 6/10
+60000/60000 [==============================] - 48s 794us/step - loss: 0.0132 - acc: 0.9961
+Epoch 7/10
+60000/60000 [==============================] - 46s 765us/step - loss: 0.0108 - acc: 0.9965
+Epoch 8/10
+60000/60000 [==============================] - 45s 751us/step - loss: 0.0107 - acc: 0.9965
+Epoch 9/10
+60000/60000 [==============================] - 45s 749us/step - loss: 0.0055 - acc: 0.9984
+Epoch 10/10
+60000/60000 [==============================] - 45s 754us/step - loss: 0.0035 - acc: 0.9991
+
+(ml-mnist) C:\workspace\ml-mnist&gt;python bin\ml_mnist.py eval
+Using TensorFlow backend.
+10000/10000 [==============================] - 2s 243us/step
+loss: 0.034382903814315795, acc: 0.9893999994277954
+</code></pre>
+
+<p>98.94%。
+バッチ正規化無し版よりも0.27%改善してるけど、誤差の範囲かも。</p>
+
+<p><br></p>
+
+<p>MNISTのサイトに載ってるので一番いいのが99.77%。
+どうしたらそんなによくなるのか。</p>
+
+<h2 id="エラー分析">エラー分析</h2>
+
+<p>一番正答率が高かったモデルについて、エラー分析をしてみた。</p>
+
+<p>まず、エラーが多かった数字を調べる。
+数字をエラー数順に並べると、</p>
+
+<pre><code class="language-txt">ラベル: エラー数
+9: 18
+7: 18
+5: 15
+4: 14
+6: 14
+3: 8
+8: 8
+2: 7
+1: 2
+0: 2
+</code></pre>
+
+<p>9と7が一番分類むずくて、4、5、6がそれらに次いでむずいことがわかる。</p>
+
+<p><br></p>
+
+<p>次にエラーのパターンを見てみる。</p>
+
+<pre><code class="language-txt">(予測した数字, ラベル): 出現数
+(9, 4): 10
+(3, 5): 9
+(1, 7): 7
+(2, 7): 6
+(7, 9): 6
+(9, 7): 5
+(7, 2): 4
+(8, 5): 4
+(1, 6): 4
+(1, 9): 4
+(0, 6): 4
+(8, 9): 3
+(9, 3): 3
+(4, 9): 3
+(8, 3): 2
+(2, 4): 2
+(2, 8): 2
+(1, 2): 2
+(8, 4): 2
+(5, 3): 2
+(5, 9): 2
+(8, 6): 2
+(2, 6): 2
+(5, 6): 1
+(1, 8): 1
+(6, 8): 1
+(0, 8): 1
+(2, 3): 1
+(4, 6): 1
+(2, 1): 1
+(3, 8): 1
+(8, 1): 1
+(7, 0): 1
+(4, 8): 1
+(6, 0): 1
+(5, 8): 1
+(6, 5): 1
+(9, 2): 1
+(0, 5): 1
+</code></pre>
+
+<p>4を9と、5を3と、7を1か2と、9を7と間違えたパターンが多い。
+特に4と7がむずい模様。</p>
+
+<p><br></p>
+
+<p>次に、実際に間違えた画像を見てみる。
+多かったパターンについて見てみる。</p>
+
+<p>4を9と間違えたパターン:</p>
+
+<p><img src="/images/hello-world-to-ml-with-keras/9-4.png" alt="9-4.png" />
+</p>
+
+<p>なんだこれは。
+これはかなり9にも見える。
+ちょっと角ばってるとこと、線が右にはみ出しているとこで判断するのか。</p>
+
+<p><br></p>
+
+<p>5を3と間違えたパターン:</p>
+
+<p><img src="/images/hello-world-to-ml-with-keras/3-5.png" alt="3-5.png" />
+</p>
+
+<p>これはもうちょっとモデルに頑張ってほしい。
+これを3としてしまうのは残念。
+なにがだめだったのかは分からないけど。</p>
+
+<p><br></p>
+
+<p>7を1と間違えたパターン:</p>
+
+<p><img src="/images/hello-world-to-ml-with-keras/1-7.png" alt="1-7.png" />
+</p>
+
+<p>これは1でもいいような…</p>
+
+<p><br></p>
+
+<p>7を2と間違えたパターン:</p>
+
+<p><img src="/images/hello-world-to-ml-with-keras/2-7.png" alt="2-7.png" />
+</p>
+
+<p>これはちょっと面白い。
+7の真ん中に線をいれるパターンを訓練データに足せば対応できそう。</p>
+
+<p><br></p>
+
+<p>9を7と間違えたパターン:</p>
+
+<p><img src="/images/hello-world-to-ml-with-keras/7-9.png" alt="7-9.png" />
+</p>
+
+<p>これもモデルに頑張ってほしかったパターン。
+左上のごみが悪さしたんだろうか。
+ごみがあるパターンを訓練データに増やすと対応できるかも。</p>
+
+<p><br></p>
+
+<p>あと、ちょっと噴いたやつ:</p>
+
+<p><img src="/images/hello-world-to-ml-with-keras/2-4.png" alt="2-4.png" />
+</p>
+
+<p>これは4。
+モデルは2と間違えた。
+むずい。</p>
+
+<p><img src="/images/hello-world-to-ml-with-keras/2-8.png" alt="2-8.png" />
+</p>
+
+<p>これは8。
+モデルは2と間違えた。
+こんなのテストデータにいれないで…</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        
+        
+
+        
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-6244473643910448"
+             data-ad-slot="1845600530"
+             data-ad-format="auto"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </aside>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f03%2f25%2fhello-world-to-ml-with-keras%2f&t=%e6%a9%9f%e6%a2%b0%e5%ad%a6%e7%bf%92%e3%81%aeHello%20World%3a%20MNIST%e3%81%ae%e5%88%86%e9%a1%9e%e3%83%a2%e3%83%87%e3%83%ab%e3%82%92Keras%e3%81%a7%e4%bd%9c%e3%81%a3%e3%81%a6%e3%81%bf%e3%81%9f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f03%2f25%2fhello-world-to-ml-with-keras%2f&text=%e6%a9%9f%e6%a2%b0%e5%ad%a6%e7%bf%92%e3%81%aeHello%20World%3a%20MNIST%e3%81%ae%e5%88%86%e9%a1%9e%e3%83%a2%e3%83%87%e3%83%ab%e3%82%92Keras%e3%81%a7%e4%bd%9c%e3%81%a3%e3%81%a6%e3%81%bf%e3%81%9f&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f03%2f25%2fhello-world-to-ml-with-keras%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f03%2f25%2fhello-world-to-ml-with-keras%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f03%2f25%2fhello-world-to-ml-with-keras%2f&title=%e6%a9%9f%e6%a2%b0%e5%ad%a6%e7%bf%92%e3%81%aeHello%20World%3a%20MNIST%e3%81%ae%e5%88%86%e9%a1%9e%e3%83%a2%e3%83%87%e3%83%ab%e3%82%92Keras%e3%81%a7%e4%bd%9c%e3%81%a3%e3%81%a6%e3%81%bf%e3%81%9f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://www.kaitoy.xyz/tags/machine-learning"><i class="fa fa-tags"></i> machine learning </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/deep-learning"><i class="fa fa-tags"></i> deep learning </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/neural-network"><i class="fa fa-tags"></i> neural network </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/tensorflow"><i class="fa fa-tags"></i> tensorflow </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/keras"><i class="fa fa-tags"></i> keras </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/03/04/open-data/">オープンデータメモ</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/02/27/coursera-deep-learning-sequence-models/">CourseraのDeep Learning SpecializationのSequence Modelsコースを修了した</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/02/06/coursera-deep-learning-convolutional-neural-networks/">CourseraのDeep Learning SpecializationのConvolutional Neural Networksコースを修了した</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/01/16/coursera-deep-learning-ml-strategy/">CourseraのDeep Learning SpecializationのStructuring Machine Learning Projectsコースを修了した</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/01/12/coursera-deep-learning-improving-deep-neural-networks/">CourseraのDeep Learning SpecializationのImproving Deep Neural Networks: Hyperparameter tuning, Regularization and Optimizationコースを修了した</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/01/05/coursera-deep-learning-neural-networks-and-deep-learning/">CourseraのDeep Learning SpecializationのNeural Networks and Deep Learningコースを修了した</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/12/22/coursera-machine-learning/">CourseraのMachine Learningコースを修了した</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://www.kaitoy.xyz/2018/03/04/open-data/">
+                  オープンデータメモ
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cnn">cnn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/coursera">coursera</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/deep-learning">deep-learning</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/headless-browser">headless-browser</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/keras">keras</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubeadm">kubeadm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/license">license</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/machine-learning">machine-learning</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/neural-network">neural-network</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nlp">nlp</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/rnn">rnn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/selenium">selenium</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/servicenow">servicenow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/tensorflow">tensorflow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/test-framework">test-framework</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/webdriverio">webdriverio</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-6244473643910448"
+    data-ad-slot="1845600530"
+    data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2018  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+
