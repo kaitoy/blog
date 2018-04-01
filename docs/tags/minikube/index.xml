@@ -6,8 +6,200 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2018</rights>
-    <updated>2017-10-11 23:48:40 &#43;0900 JST</updated>
+    <updated>2018-04-01 09:59:43 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>Skaffoldを触ってみた</title>
+          <link>https://www.kaitoy.xyz/2018/04/01/hello-skaffold/</link>
+          <pubDate>Sun, 01 Apr 2018 09:59:43 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2018/04/01/hello-skaffold/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/GoogleCloudPlatform/skaffold#run-a-deployment-pipeline-once&#34;&gt;Skaffold&lt;/a&gt;を試してみた話。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;skaffoldとは&#34;&gt;Skaffoldとは&lt;/h2&gt;
+
+&lt;p&gt;Googleが開発している、Kubernetesアプリケーションを快適に開発するためのツール。
+アプリケーションのソースを監視し、変更が入ると、自動的にコンテナイメージをビルドしてKubernetesクラスタにデプロイしてくれる。&lt;/p&gt;
+
+&lt;p&gt;2018/3/16に&lt;a href=&#34;https://cloudplatform.googleblog.com/2018/03/introducing-Skaffold-Easy-and-repeatable-Kubernetes-development.html&#34;&gt;発表&lt;/a&gt;された新しいツールで、触った感じではまだこれからといった感じだった。&lt;/p&gt;
+
+&lt;p&gt;Goで書かれていて、Linux、OS X、Windows用のバイナリが提供されている。&lt;/p&gt;
+
+&lt;h2 id=&#34;windows版を試す&#34;&gt;Windows版を試す&lt;/h2&gt;
+
+&lt;p&gt;自PCがWindowsなのでWindows版を試す。
+会社で使ってるのもWindowsだし。&lt;/p&gt;
+
+&lt;p&gt;Skaffoldを使うには、Skaffoldの実行バイナリ、Kubernetesクラスタ、そのクラスタをコンテクストに設定したkubectl、Dockerが必要。&lt;/p&gt;
+
+&lt;p&gt;まずWindows版Skaffoldをインストールする。
+&lt;a href=&#34;https://github.com/GoogleCloudPlatform/skaffold/releases&#34;&gt;GitHubのリリースページ&lt;/a&gt;からWindowsバイナリをダウンロードして、skaffold.exeにリネームしてPATHの通ったところに置くだけ。
+Skaffoldのバージョンは0.3.0。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Kubernetesクラスタは、Windows 10 Home上にminikube 0.22.2で作ったKubernetes 1.7.0のクラスタ。
+minikubeは&lt;a href=&#34;https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/&#34;&gt;以前&lt;/a&gt;インストールしたものを使う。&lt;/p&gt;
+
+&lt;p&gt;minikubeを起動。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;&amp;gt; minikube start --kubernetes-version v1.7.0
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;kubectlもminikubeと一緒にインストール済み。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Dockerについては、デーモンはminikube上のを使えばいいとして、クライアント(Docker Client)はskaffoldコマンドから実行するのでWindows上にないとだめはなず。&lt;/p&gt;
+
+&lt;p&gt;WindowsでDockerと言えば今なら&lt;a href=&#34;https://www.docker.com/docker-windows&#34;&gt;Docker for Windows&lt;/a&gt;だけど、これはWindows 10 Proじゃないと使えなかったはずなので、&lt;a href=&#34;https://docs.docker.com/toolbox/&#34;&gt;Docker Toolbox&lt;/a&gt;でクライアントをいれた。&lt;/p&gt;
+
+&lt;p&gt;このクライアントはデフォルトではローカルのデーモンを見てるので、minikubeのデーモンを見させる。
+そのための設定はminikubeのコマンドで分かるようになっている。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;&amp;gt;minikube docker-env
+SET DOCKER_TLS_VERIFY=1
+SET DOCKER_HOST=tcp://192.168.99.100:2376
+SET DOCKER_CERT_PATH=C:\Users\kaitoy\.minikube\certs
+SET DOCKER_API_VERSION=1.23
+REM Run this command to configure your shell:
+REM @FOR /f &amp;quot;tokens=*&amp;quot; %i IN (&#39;minikube docker-env&#39;) DO @%i
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これに従って以下のコマンドを実行するとクライアントの設定完了。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;&amp;gt; @FOR /f &amp;quot;tokens=*&amp;quot; %i IN (&#39;minikube docker-env&#39;) DO @%i
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;これで準備完了。&lt;/p&gt;
+
+&lt;p&gt;Skaffoldの&lt;a href=&#34;https://github.com/GoogleCloudPlatform/skaffold/tree/10d56cf0fd3c253b0716a084419b5833e53d9870#getting-started-with-local-tooling&#34;&gt;Getting Started&lt;/a&gt;をやってみる。&lt;/p&gt;
+
+&lt;p&gt;Skaffoldのリポジトリをcloneして、コマンドプロンプト開いて、&lt;code&gt;examples/getting-started&lt;/code&gt;にcdして、以下のコマンドを実行。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;&amp;gt; skaffold dev
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;エラーで終わった。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-txt&#34;&gt;[31mERRO[0m[0047] run: running skaffold steps: starting watch on file C:\Users\kaitoy\Desktop\skaffold\examples\getting-started\Dockerfile: adding watch for C:\Users\kaitoy\Desktop\skaffold\examples\getting-started\Dockerfile: The parameter is incorrect.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;MinGW(Git Bash)でやっても同じ結果。
+&lt;a href=&#34;https://github.com/GoogleCloudPlatform/skaffold/issues/287&#34;&gt;Issuesに登録されているやつ&lt;/a&gt;と同じ問題っぽい。&lt;/p&gt;
+
+&lt;p&gt;対応を待つしかない。&lt;/p&gt;
+
+&lt;h2 id=&#34;linux版を試す&#34;&gt;Linux版を試す&lt;/h2&gt;
+
+&lt;p&gt;Linux版も試してみる。
+minikubeのVMがLinux(Boot2Docker)なので、そこで動かす。
+&lt;a href=&#34;https://ja.wikipedia.org/wiki/Windows_Subsystem_for_Linux&#34;&gt;WSL&lt;/a&gt;は試さない。
+会社のPCがWindows 7で使えないので。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;SkaffoldのLinux版バイナリをダウンロードしてskaffoldにリネームして、minikubeのBoot2DockerにSSHでログインして、PATHの通ったところに置く。
+因みにminikubeのBoot2Dockerは、ユーザdockerパスワードtcuserでログインできる。&lt;/p&gt;
+
+&lt;p&gt;kubectlのLinux版バイナリもダウンロードしてPATHに入れたら準備完了。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;examples/getting-started&lt;/code&gt;にcdして&lt;code&gt;skaffold dev&lt;/code&gt;したらエラー。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ ERRO[0001] run: getting skaffold config: getting k8s client: Error creating kubeConfig: invalid configuration: no configuration has been provided
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ちょっと調べたら、kubectlのコンテクストが設定されていないのがだめっぽい。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ kubectl config current-context
+error: current-context is not set
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Windows上のkubectlに設定されたコンテクストを参考に、以下の内容を&lt;code&gt;~/.kube/config&lt;/code&gt;に。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority: /c/Users/kaitoy/.minikube/ca.crt
+    server: https://localhost:8443
+  name: minikube
+contexts:
+- context:
+    cluster: minikube
+    user: minikube
+  name: minikube
+current-context: minikube
+kind: Config
+preferences: {}
+users:
+- name: minikube
+  user:
+    client-certificate: /c/Users/kaitoy/.minikube/client.crt
+    client-key: /c/Users/kaitoy/.minikube/client.key
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;再度&lt;code&gt;skaffold dev&lt;/code&gt;したら違うエラー。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;WARN[0002] run: build: build step: running build: read auth configs: docker config: opening docker config: open /home/docker/.docker/config.json: no such file or directory
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;.docker/config.json&lt;/code&gt;は&lt;code&gt;docker login&lt;/code&gt;すると生成されるものらしい。
+SkaffoldのREADME.mdにはminikube使うならDocker image registry要らないって書いてあるんだけど…&lt;/p&gt;
+
+&lt;p&gt;色々あって、ファイルがあればいいだけっぽいので、以下で良し。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ echo {} &amp;gt; ~/.docker/config.json
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;再度&lt;code&gt;skaffold dev&lt;/code&gt;したら動いた。
+Dockerビルドが走り、minikubeにPodがデプロイされた。&lt;/p&gt;
+
+&lt;p&gt;Getting Startedのサンプルは、一秒ごとに「[getting-started] Hello world!」というメッセージをコンソールに表示する。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;examples/getting-started/main.go&lt;/code&gt;の&lt;code&gt;fmt.Println(&amp;quot;Hello world!&amp;quot;)&lt;/code&gt;のとこをいじってメッセージを変えたら、自動で再Dockerビルドしてデプロイされて、新しいメッセージを表示し始めた。
+便利。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;examples/getting-started/skaffold.yaml&lt;/code&gt;がSkaffoldの設定ファイルで、ここに定義されたKubernetesマニフェストをデプロイしてくれるっぽい。
+watchするファイルはどう決めているんだろうか。
+Dockerfileとmain.goはwatchしてるけど、新しいファイルを作ってもDockerビルド走らなかった。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ひとつ問題は、Linuxファイルシステム上で編集しないと変更を検知してくれない。&lt;/p&gt;
+
+&lt;p&gt;minikubeのVMには&lt;code&gt;C:\Users&lt;/code&gt;がマウントされてるので、最初はWindows上にcloneしたサンプルをSkaffoldで実行しつつ、Windows上でmain.goを編集してみたんだけど、それだとダメだった。&lt;/p&gt;
+
+&lt;p&gt;やはりWindows版Skaffoldの修正が待たれる。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>

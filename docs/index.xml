@@ -6,8 +6,200 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2018</rights>
-    <updated>2018-03-25 22:43:27 &#43;0900 JST</updated>
+    <updated>2018-04-01 09:59:43 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>Skaffoldを触ってみた</title>
+          <link>https://www.kaitoy.xyz/2018/04/01/hello-skaffold/</link>
+          <pubDate>Sun, 01 Apr 2018 09:59:43 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2018/04/01/hello-skaffold/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/GoogleCloudPlatform/skaffold#run-a-deployment-pipeline-once&#34;&gt;Skaffold&lt;/a&gt;を試してみた話。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;skaffoldとは&#34;&gt;Skaffoldとは&lt;/h2&gt;
+
+&lt;p&gt;Googleが開発している、Kubernetesアプリケーションを快適に開発するためのツール。
+アプリケーションのソースを監視し、変更が入ると、自動的にコンテナイメージをビルドしてKubernetesクラスタにデプロイしてくれる。&lt;/p&gt;
+
+&lt;p&gt;2018/3/16に&lt;a href=&#34;https://cloudplatform.googleblog.com/2018/03/introducing-Skaffold-Easy-and-repeatable-Kubernetes-development.html&#34;&gt;発表&lt;/a&gt;された新しいツールで、触った感じではまだこれからといった感じだった。&lt;/p&gt;
+
+&lt;p&gt;Goで書かれていて、Linux、OS X、Windows用のバイナリが提供されている。&lt;/p&gt;
+
+&lt;h2 id=&#34;windows版を試す&#34;&gt;Windows版を試す&lt;/h2&gt;
+
+&lt;p&gt;自PCがWindowsなのでWindows版を試す。
+会社で使ってるのもWindowsだし。&lt;/p&gt;
+
+&lt;p&gt;Skaffoldを使うには、Skaffoldの実行バイナリ、Kubernetesクラスタ、そのクラスタをコンテクストに設定したkubectl、Dockerが必要。&lt;/p&gt;
+
+&lt;p&gt;まずWindows版Skaffoldをインストールする。
+&lt;a href=&#34;https://github.com/GoogleCloudPlatform/skaffold/releases&#34;&gt;GitHubのリリースページ&lt;/a&gt;からWindowsバイナリをダウンロードして、skaffold.exeにリネームしてPATHの通ったところに置くだけ。
+Skaffoldのバージョンは0.3.0。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Kubernetesクラスタは、Windows 10 Home上にminikube 0.22.2で作ったKubernetes 1.7.0のクラスタ。
+minikubeは&lt;a href=&#34;https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/&#34;&gt;以前&lt;/a&gt;インストールしたものを使う。&lt;/p&gt;
+
+&lt;p&gt;minikubeを起動。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;&amp;gt; minikube start --kubernetes-version v1.7.0
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;kubectlもminikubeと一緒にインストール済み。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Dockerについては、デーモンはminikube上のを使えばいいとして、クライアント(Docker Client)はskaffoldコマンドから実行するのでWindows上にないとだめはなず。&lt;/p&gt;
+
+&lt;p&gt;WindowsでDockerと言えば今なら&lt;a href=&#34;https://www.docker.com/docker-windows&#34;&gt;Docker for Windows&lt;/a&gt;だけど、これはWindows 10 Proじゃないと使えなかったはずなので、&lt;a href=&#34;https://docs.docker.com/toolbox/&#34;&gt;Docker Toolbox&lt;/a&gt;でクライアントをいれた。&lt;/p&gt;
+
+&lt;p&gt;このクライアントはデフォルトではローカルのデーモンを見てるので、minikubeのデーモンを見させる。
+そのための設定はminikubeのコマンドで分かるようになっている。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;&amp;gt;minikube docker-env
+SET DOCKER_TLS_VERIFY=1
+SET DOCKER_HOST=tcp://192.168.99.100:2376
+SET DOCKER_CERT_PATH=C:\Users\kaitoy\.minikube\certs
+SET DOCKER_API_VERSION=1.23
+REM Run this command to configure your shell:
+REM @FOR /f &amp;quot;tokens=*&amp;quot; %i IN (&#39;minikube docker-env&#39;) DO @%i
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これに従って以下のコマンドを実行するとクライアントの設定完了。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;&amp;gt; @FOR /f &amp;quot;tokens=*&amp;quot; %i IN (&#39;minikube docker-env&#39;) DO @%i
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;これで準備完了。&lt;/p&gt;
+
+&lt;p&gt;Skaffoldの&lt;a href=&#34;https://github.com/GoogleCloudPlatform/skaffold/tree/10d56cf0fd3c253b0716a084419b5833e53d9870#getting-started-with-local-tooling&#34;&gt;Getting Started&lt;/a&gt;をやってみる。&lt;/p&gt;
+
+&lt;p&gt;Skaffoldのリポジトリをcloneして、コマンドプロンプト開いて、&lt;code&gt;examples/getting-started&lt;/code&gt;にcdして、以下のコマンドを実行。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;&amp;gt; skaffold dev
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;エラーで終わった。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-txt&#34;&gt;[31mERRO[0m[0047] run: running skaffold steps: starting watch on file C:\Users\kaitoy\Desktop\skaffold\examples\getting-started\Dockerfile: adding watch for C:\Users\kaitoy\Desktop\skaffold\examples\getting-started\Dockerfile: The parameter is incorrect.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;MinGW(Git Bash)でやっても同じ結果。
+&lt;a href=&#34;https://github.com/GoogleCloudPlatform/skaffold/issues/287&#34;&gt;Issuesに登録されているやつ&lt;/a&gt;と同じ問題っぽい。&lt;/p&gt;
+
+&lt;p&gt;対応を待つしかない。&lt;/p&gt;
+
+&lt;h2 id=&#34;linux版を試す&#34;&gt;Linux版を試す&lt;/h2&gt;
+
+&lt;p&gt;Linux版も試してみる。
+minikubeのVMがLinux(Boot2Docker)なので、そこで動かす。
+&lt;a href=&#34;https://ja.wikipedia.org/wiki/Windows_Subsystem_for_Linux&#34;&gt;WSL&lt;/a&gt;は試さない。
+会社のPCがWindows 7で使えないので。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;SkaffoldのLinux版バイナリをダウンロードしてskaffoldにリネームして、minikubeのBoot2DockerにSSHでログインして、PATHの通ったところに置く。
+因みにminikubeのBoot2Dockerは、ユーザdockerパスワードtcuserでログインできる。&lt;/p&gt;
+
+&lt;p&gt;kubectlのLinux版バイナリもダウンロードしてPATHに入れたら準備完了。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;examples/getting-started&lt;/code&gt;にcdして&lt;code&gt;skaffold dev&lt;/code&gt;したらエラー。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ ERRO[0001] run: getting skaffold config: getting k8s client: Error creating kubeConfig: invalid configuration: no configuration has been provided
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ちょっと調べたら、kubectlのコンテクストが設定されていないのがだめっぽい。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ kubectl config current-context
+error: current-context is not set
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Windows上のkubectlに設定されたコンテクストを参考に、以下の内容を&lt;code&gt;~/.kube/config&lt;/code&gt;に。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority: /c/Users/kaitoy/.minikube/ca.crt
+    server: https://localhost:8443
+  name: minikube
+contexts:
+- context:
+    cluster: minikube
+    user: minikube
+  name: minikube
+current-context: minikube
+kind: Config
+preferences: {}
+users:
+- name: minikube
+  user:
+    client-certificate: /c/Users/kaitoy/.minikube/client.crt
+    client-key: /c/Users/kaitoy/.minikube/client.key
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;再度&lt;code&gt;skaffold dev&lt;/code&gt;したら違うエラー。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;WARN[0002] run: build: build step: running build: read auth configs: docker config: opening docker config: open /home/docker/.docker/config.json: no such file or directory
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;.docker/config.json&lt;/code&gt;は&lt;code&gt;docker login&lt;/code&gt;すると生成されるものらしい。
+SkaffoldのREADME.mdにはminikube使うならDocker image registry要らないって書いてあるんだけど…&lt;/p&gt;
+
+&lt;p&gt;色々あって、ファイルがあればいいだけっぽいので、以下で良し。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ echo {} &amp;gt; ~/.docker/config.json
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;再度&lt;code&gt;skaffold dev&lt;/code&gt;したら動いた。
+Dockerビルドが走り、minikubeにPodがデプロイされた。&lt;/p&gt;
+
+&lt;p&gt;Getting Startedのサンプルは、一秒ごとに「[getting-started] Hello world!」というメッセージをコンソールに表示する。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;examples/getting-started/main.go&lt;/code&gt;の&lt;code&gt;fmt.Println(&amp;quot;Hello world!&amp;quot;)&lt;/code&gt;のとこをいじってメッセージを変えたら、自動で再Dockerビルドしてデプロイされて、新しいメッセージを表示し始めた。
+便利。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;examples/getting-started/skaffold.yaml&lt;/code&gt;がSkaffoldの設定ファイルで、ここに定義されたKubernetesマニフェストをデプロイしてくれるっぽい。
+watchするファイルはどう決めているんだろうか。
+Dockerfileとmain.goはwatchしてるけど、新しいファイルを作ってもDockerビルド走らなかった。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ひとつ問題は、Linuxファイルシステム上で編集しないと変更を検知してくれない。&lt;/p&gt;
+
+&lt;p&gt;minikubeのVMには&lt;code&gt;C:\Users&lt;/code&gt;がマウントされてるので、最初はWindows上にcloneしたサンプルをSkaffoldで実行しつつ、Windows上でmain.goを編集してみたんだけど、それだとダメだった。&lt;/p&gt;
+
+&lt;p&gt;やはりWindows版Skaffoldの修正が待たれる。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -11876,241 +12068,6 @@ I/Oエラーで開けなかったら触られすらしない。
 使われはするが、このコマンド自体がコミットを削除するわけではなくて、あくまで&lt;code&gt;HEAD&lt;/code&gt;を付け替えるコマンドであることを覚えていた方がいざというときに助かる。&lt;/p&gt;
 
 &lt;p&gt;因みに上のスライドでやった操作は、&lt;code&gt;git commit --amend&lt;/code&gt;がやることとほぼ同じ。&lt;/p&gt;
-</description>
-        </item>
-      
-    
-      
-        <item>
-          <title>Gitの分散バージョン管理の仕組み</title>
-          <link>https://www.kaitoy.xyz/2015/12/31/git-dvc/</link>
-          <pubDate>Thu, 31 Dec 2015 01:02:59 -0700</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2015/12/31/git-dvc/</guid>
-          <description>
-
-&lt;p&gt;このエントリでは、&lt;a href=&#34;https://www.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;の分散バージョン管理の仕組みについて説明する。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h2 id=&#34;gitの分散バージョン管理&#34;&gt;Gitの分散バージョン管理&lt;/h2&gt;
-
-&lt;p&gt;分散バージョン管理とは、分散したリポジトリでのバージョン管理ということ。
-ここでリポジトリが分散しているとは、同じプロジェクトの履歴を管理する完全で独立したリポジトリが複数あるということ。
-これにより一つのプロジェクトの開発を地理的に分散して並行して進めることができる。&lt;/p&gt;
-
-&lt;p&gt;Gitは分散バージョン管理のために、リポジトリのクローン(≒コピー)を作る機能と、リポジトリ間でコミットグラフを同期する機能を提供している。&lt;/p&gt;
-
-&lt;p&gt;リポジトリのクローンを作ると言うと、オリジナルとクローンの間に格差があるような気がするが、
-実際にはGitは全てのリポジトリが対等であるという思想のもとで実装されている。
-このため、リポジトリをクローンする時には(デフォルトで)クローン元の完全なコミットグラフがクローンにコピーされるし、任意のリポジトリ間のデータのやり取りをpeer-to-peerでできる。
-クローンからクローンを作ることももちろん可能。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;git push&lt;/code&gt;でデータを送る先をアップストリームと呼ぶことはあるし、次節でローカルリポジトリとリモートリポジトリという関係が出てくるが、これはあくまでその時点でそういう設定になっているというだけ。
-アップストリームはいつでもいくつでも&lt;code&gt;git remote&lt;/code&gt;コマンドで追加したり削除したりできる。&lt;/p&gt;
-
-&lt;p&gt;このような実装により、Gitの分散バージョン管理ではリポジトリ間で柔軟なデータのやり取りができる。
-例えば以下の様な複雑なリポジトリネットワークを組むこともできる。&lt;/p&gt;
-
-&lt;p&gt;&lt;img alt=&#34;good-object-2.png&#34; src=&#34;https://www.kaitoy.xyz/images/git-dvc/repo_net.png&#34; style=&#34;width: 100%; max-width: 400px; margin: 0px auto; display: block;&#34;&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;ローカルリポジトリとリモートリポジトリ&#34;&gt;ローカルリポジトリとリモートリポジトリ&lt;/h2&gt;
-
-&lt;p&gt;一人の開発者から見て、手元にあるリポジトリを &lt;strong&gt;ローカルリポジトリ&lt;/strong&gt; と呼ぶのに対して、&lt;code&gt;git push&lt;/code&gt;や&lt;code&gt;git pull&lt;/code&gt;や&lt;code&gt;git fetch&lt;/code&gt;でデータをやり取りする相手のリポジトリを &lt;strong&gt;リモートリポジトリ&lt;/strong&gt; と呼ぶ。
-リモートリポジトリとのやり取りは、&lt;strong&gt;リモート追跡ブランチ&lt;/strong&gt; と &lt;strong&gt;リモート&lt;/strong&gt; というものを使って実装されている。&lt;/p&gt;
-
-&lt;h4 id=&#34;リモート追跡ブランチ&#34;&gt;リモート追跡ブランチ&lt;/h4&gt;
-
-&lt;p&gt;リモート追跡ブランチは、ローカルリポジトリの&lt;code&gt;.git/refs/remotes/&lt;/code&gt;に格納される参照で、リモートリポジトリ内のローカルブランチのコミットグラフを取得してローカルリポジトリ内に保持するために使われる。
-&lt;code&gt;git branch -r&lt;/code&gt;でその一覧が見れる。&lt;/p&gt;
-
-&lt;p&gt;「追跡」ブランチというだけあって、リモートリポジトリ内でコミットグラフが成長した場合、この変更に追随することができる。
-このためのコマンドが&lt;code&gt;git fetch&lt;/code&gt;。
-因みに&lt;code&gt;git pull&lt;/code&gt;は、&lt;code&gt;git fetch&lt;/code&gt;でリモート追跡ブランチを更新した後、&lt;code&gt;git merge&lt;/code&gt;(オプションによっては&lt;code&gt;git rebase&lt;/code&gt;)でそのリモート追跡ブランチをローカルブランチにマージするのと同じ。&lt;/p&gt;
-
-&lt;h4 id=&#34;リモート&#34;&gt;リモート&lt;/h4&gt;
-
-&lt;p&gt;リモートとは、リモートリポジトリのこと、またはリモートリポジトリに接続するための定義のこと。
-この定義は、ローカルリポジトリの&lt;code&gt;.git/config&lt;/code&gt;に&lt;code&gt;remote&lt;/code&gt;セクションとして書かれている。
-以下がその例。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;[remote &amp;quot;origin&amp;quot;]
-        fetch = +refs/heads/*:refs/remotes/origin/*
-        url = git@github.com:kaitoy/blog.git
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;セクション名のところに&lt;code&gt;&amp;quot;origin&amp;quot;&lt;/code&gt;とあるがこれは、この定義で接続するリモートリポジトリをGitコマンドなどで&lt;code&gt;origin&lt;/code&gt;と指定できるということ。
-ここで定義されているのは&lt;code&gt;url&lt;/code&gt;と&lt;code&gt;fetch&lt;/code&gt;で、それぞれ以下を意味する。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;url&lt;/p&gt;
-
-&lt;p&gt;リモートリポジトリのURL。
-つまり、リモートリポジトリがどのサーバのどのディレクトリにあって、それとのデータのやり取りをどのプロトコルでやるかという定義。
-このURLには以下の書式が使える。&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;ファイルパス&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;/path/to/repo.git&lt;/code&gt;とか&lt;code&gt;C:\\Users\\Kaito\\Desktop\\pcap4j&lt;/code&gt;といった、普通のファイルパスの書式。
-&lt;a href=&#34;https://ja.wikipedia.org/wiki/Network_File_System&#34;&gt;NFS&lt;/a&gt;などでリモートリポジトリが共有されている場合などに使われる。&lt;/p&gt;
-
-&lt;p&gt;シンボリックリンクがサポートされているOS上では、クローンはリモートリポジトリをハードリンクで参照する。
-このシンボリック参照でのファイル共有がトラブルの元なため、この書式は非推奨。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;ファイルURL&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;file:///path/to/repo.git&lt;/code&gt;とか&lt;code&gt;file://C:/Users/Kaito/Desktop/pcap4j&lt;/code&gt;といった、ローカルホスト上のパスを示すファイルURLの書式。
-用途はファイルパスと同様だが、ハードリンクを作る代わりにコピーするのでより安全。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;HTTP(S)&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;https://github.com/kaitoy/pcap4j.git&lt;/code&gt;といったHTTPSやHTTPのURL。
-リポジトリへのアクセス制御にHTTPの認証機能やHTTPSのクライアント証明書などが使えるほか、HTTPSなら通信の暗号化もできる。&lt;/p&gt;
-
-&lt;p&gt;使用するポートがファイアウォールにブロックされていることが少ないのも使いやすい。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Gitプロトコル&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;git://example.com/path/to/repo.git&lt;/code&gt;といった書式で、&lt;a href=&#34;https://git-scm.com/book/ja/v1/Git-%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC-Git-%E3%83%87%E3%83%BC%E3%83%A2%E3%83%B3&#34;&gt;Gitデーモン&lt;/a&gt;によるGitネイティブプロトコルを使うURL。
-HTTPよりも高速な通信ができるが、認証機能も暗号化機能もない。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;SSH + Gitプロトコル&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;ssh://git@github.com/kaitoy/pcap4j.git&lt;/code&gt;のような&lt;a href=&#34;https://ja.wikipedia.org/wiki/Secure_Shell&#34;&gt;SSH&lt;/a&gt;のURLで、これを使うとSSHトンネルを通してGitプロトコルで通信できる。
-Gitプロトコル単体を使うのに比べ、SSHの認証機能と暗号化機能を利用できるが、やや遅くなるはず。&lt;/p&gt;
-
-&lt;p&gt;このプロトコルには、&lt;code&gt;git@github.com:kaitoy/pcap4j.git&lt;/code&gt;のような&lt;a href=&#34;https://ja.wikipedia.org/wiki/Secure_copy&#34;&gt;SCP&lt;/a&gt;書式も使える。&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;Git自体はGitデーモンを含めリポジトリへのアクセス制御の機能を一切持たないので、認証などが必要な場合はHTTPなどその機能を持つプロトコルのURLを使う必要がある。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;fetch&lt;/p&gt;
-
-&lt;p&gt;リモートリポジトリ内のローカルブランチとローカルリポジトリ内の追跡ブランチとがどう対応するかを定義する。
-この定義は&lt;code&gt;refspec&lt;/code&gt;と呼ばれる。&lt;/p&gt;
-
-&lt;p&gt;上の例の&lt;code&gt;fetch = +refs/heads/*:refs/remotes/origin/*&lt;/code&gt;だと、リモートリポジトリの&lt;code&gt;.git/refs/heads/&lt;/code&gt;にある全てのブランチをそれぞれ、ローカルリポジトリの&lt;code&gt;.git/refs/remotes/origin/&lt;/code&gt;にある同名のブランチで追跡する、という意味。&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;クローン時の挙動&#34;&gt;クローン時の挙動&lt;/h2&gt;
-
-&lt;p&gt;クローン時のデフォルトの挙動は以下の様なもの。&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;&lt;p&gt;オブジェクト格納領域内のオブジェクトが全てクローンにコピーされる。
-(多分。参照からたどれないオブジェクトもコピーされることを確認した。)
-つまり、元のリポジトリ(i.e. リモートリポジトリ)と同じコミットグラフ(とタグオブジェクト)がクローンのリポジトリに入る。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;リモートリポジトリ内の全てのローカルブランチに対応する同名のリモート追跡ブランチがクローンのリポジトリ内に作成される。
-これに対応するリモートも作成され、これの&lt;code&gt;fetch&lt;/code&gt;に(前節の例と同様に)&lt;code&gt;+refs/heads/*:refs/remotes/origin/*&lt;/code&gt;が設定される。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;リモートリポジトリのカレントブランチがローカルリポジトリにコピーされ、チェックアウトされる。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;リモートリポジトリの全てのタグがクローンにコピーされる。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;ローカルリポジトリで&lt;code&gt;git fetch&lt;/code&gt;が実行され、全てのリモート追跡ブランチが更新される。&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;インデックスはリポジトリ毎に固有の一時的なデータなので、クローンにはコピーされない。&lt;/p&gt;
-
-&lt;p&gt;リモート追跡ブランチもクローンにコピーされない。&lt;/p&gt;
-
-&lt;p&gt;シンボリック参照もクローンにコピーされない。
-クローンにはカレントブランチを指す&lt;code&gt;HEAD&lt;/code&gt;だけが作成される。&lt;/p&gt;
-
-&lt;h2 id=&#34;リモートリポジトリとのやり取りの図解&#34;&gt;リモートリポジトリとのやり取りの図解&lt;/h2&gt;
-
-&lt;p&gt;リモートリポジトリをクローンして、変更をプルしたりプッシュしたりする様子を以下に図示する。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_merge/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_merge/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_merge/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_merge/スライド4.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_merge/スライド5.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_merge/スライド6.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;これはこれで完全に正しい手順だが、最終的にできるコミットグラフが無駄に分岐していて美しくない。
-普通は以下の様に、リベースを挟んで一直線の履歴に保つ方が一般にいいと思う。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_ff/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_ff/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_ff/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_ff/スライド4.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;このフェッチ + リベースを一度にやってくれるのが、&lt;code&gt;git pull --rebase&lt;/code&gt;。&lt;/p&gt;
-
-&lt;h2 id=&#34;gitで分散バージョン管理する際の注意点&#34;&gt;Gitで分散バージョン管理する際の注意点&lt;/h2&gt;
-
-&lt;p&gt;Gitで分散バージョン管理する際の注意点を二つ挙げる。&lt;/p&gt;
-
-&lt;h4 id=&#34;他のリポジトリにもあるコミットを変更してはいけない&#34;&gt;他のリポジトリにもあるコミットを変更してはいけない&lt;/h4&gt;
-
-&lt;p&gt;Gitには、&lt;code&gt;git commit --amend&lt;/code&gt;、&lt;a href=&#34;https://www.kaitoy.xyz/2015/12/28/git-merge/#%E3%83%AA%E3%83%99%E3%83%BC%E3%82%B9&#34;&gt;&lt;code&gt;git rebase&lt;/code&gt;&lt;/a&gt;といったコミットを変更するコマンドや、&lt;a href=&#34;https://www.kaitoy.xyz/2016/01/01/git-revert-reset/#git-reset&#34;&gt;&lt;code&gt;git reset&lt;/code&gt;&lt;/a&gt;というコミットの削除につながるコマンドがある。
-こういうコマンドで他のリポジトリにもあるコミットを変更してはいけない。&lt;/p&gt;
-
-&lt;p&gt;他のリポジトリにもあるコミットとは、クローン時にコピーしてきたコミット、プルしたコミット、プッシュしたコミットなどのこと。&lt;/p&gt;
-
-&lt;p&gt;もしやると、プッシュもプルも簡単にはできなくなり非常に面倒なことになる。&lt;/p&gt;
-
-&lt;h4 id=&#34;開発リポジトリには-基本的に-プッシュしてはいけない&#34;&gt;開発リポジトリには(基本的に)プッシュしてはいけない&lt;/h4&gt;
-
-&lt;p&gt;リポジトリには、&lt;strong&gt;ベアリポジトリ&lt;/strong&gt; と、&lt;strong&gt;開発リポジトリ&lt;/strong&gt; がある。
-開発リポジトリは普段使っている普通のリポジトリ。
-ベアリポジトリは、簡単に言うとワーキングディレクトリやカレントブランチやリモートを持たないリポジトリで、開発リポジトリのリモートリポジトリとして使われ、&lt;code&gt;git init&lt;/code&gt;や&lt;code&gt;git clone&lt;/code&gt;に&lt;code&gt;--bare&lt;/code&gt;オプションを付けて実行すると作れる。&lt;/p&gt;
-
-&lt;p&gt;ベアリポジトリにはプッシュしていい。
-むしろプッシュしないベアリポジトリに意味はない。&lt;/p&gt;
-
-&lt;p&gt;一方、開発リポジトリには(基本的に)プッシュしてはいけない。
-これは、プッシュがリモートリポジトリのオブジェクトと参照だけ更新してワーキングディレクトリやインデックスは更新せず、開発者がプッシュされたことに気付けないため(※1)。
-気付かないまま開発を進めてコミットを作ると、プッシュによって&lt;code&gt;HEAD&lt;/code&gt;が変わっていたりするため、コミットグラフが変な状態になってしまう。&lt;/p&gt;
-
-&lt;p&gt;お互い示し合わせたうえでプッシュをしたりプッシュするブランチを工夫したりすれば問題が起きないようにできるはできる。&lt;/p&gt;
-
-&lt;p&gt;(※1: と&lt;a href=&#34;https://www.oreilly.co.jp/books/9784873114408/&#34;&gt;O&amp;rsquo;Reillyの蝙蝠本&lt;/a&gt;には書いてあったが、これは&lt;a href=&#34;https://github.com/git/git/blob/master/Documentation/RelNotes/1.7.0.txt&#34;&gt;Git 1.6.xまでの話らしい&lt;/a&gt;。
-今はチェックアウトされたブランチにはデフォルトでプッシュできないので、この節に書いた問題は基本的に起きない。
-2.6.3で試したら以下のエラーになった。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;remote: error: refusing to update checked out branch: refs/heads/master
-remote: error: By default, updating the current branch in a non-bare repository
-remote: error: is denied, because it will make the index and work tree inconsistent
-remote: error: with what you pushed, and will require &#39;git reset --hard&#39; to match
-remote: error: the work tree to HEAD.
-remote: error:
-remote: error: You can set &#39;receive.denyCurrentBranch&#39; configuration variable t
-remote: error: &#39;ignore&#39; or &#39;warn&#39; in the remote repository to allow pushing int
-remote: error: its current branch; however, this is not recommended unless you
-remote: error: arranged to update its work tree to match what you pushed in som
-remote: error: other way.
-remote: error:
-remote: error: To squelch this message and still keep the default behaviour, se
-remote: error: &#39;receive.denyCurrentBranch&#39; configuration variable to &#39;refuse&#39;.
-To file://C:/Users/Kaito/Desktop/master
- ! [remote rejected] master -&amp;gt; master (branch is currently checked out)
-error: failed to push some refs to &#39;file://C:/Users/Kaito/Desktop/master&#39;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;)&lt;/p&gt;
 </description>
         </item>
       
