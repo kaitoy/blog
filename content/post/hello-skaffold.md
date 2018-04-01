@@ -22,6 +22,10 @@ Googleが開発している、Kubernetesアプリケーションを快適に開�
 
 Goで書かれていて、Linux、OS X、Windows用のバイナリが提供されている。
 
+似たツールにはMicrosoftの[Draft](https://draft.sh/)がある。
+
+また、Gitのコミットを自動デプロイしてくれるものに、[Gitkube](https://gitkube.sh/)、[Jenkins X (エックス)](http://jenkins-x.io/)がある。
+
 ## Windows版を試す
 
 自PCがWindowsなのでWindows版を試す。
