@@ -173,7 +173,7 @@ JavaScript + JSXで書かないといけない。
 ## Minified exception
 React周りでバグを作りこんでエラーが発生した場合、コンソールに以下のようなエラーメッセージが出ることがある。
 
-```text
+```
 Uncaught Error: Minified exception occured; use the non-minified dev environment for the full error message and additional helpful warnings.
 ```
 

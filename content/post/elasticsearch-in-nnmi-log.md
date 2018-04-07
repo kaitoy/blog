@@ -148,7 +148,7 @@ output.logstash:
 
 Logstashの設定は、展開したディレクトリのトップに`pipeline.conf`というファイルを作ってそこに以下を書いた。
 
-```text
+```
 input {
     beats {
         port => "5043"
@@ -216,7 +216,7 @@ bin\elasticsearch.bat
 しばらく待つと起動完了し、`localhost:9200`でHTTPリクエストを待ち始める。
 試しにブラウザで`http://localhost:9200/_cluster/health`にアクセスすると、以下の様にElasticsearchクラスタのステータスがJSONで返ってきた。
 
-```text
+```
 {"cluster_name":"elasticsearch","status":"yellow","timed_out":false,"number_of_nodes":1,"number_of_data_nodes":1,"active_primary_shards":5,"active_shards":5,"relocating_shards":0,"initializing_shards":0,"unassigned_shards":5,"delayed_unassigned_shards":0,"number_of_pending_tasks":0,"number_of_in_flight_fetch":0,"task_max_waiting_in_queue_millis":0,"active_shards_percent_as_number":50.0}
 ```
 

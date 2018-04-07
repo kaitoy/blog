@@ -31,7 +31,7 @@ title = "Atomパッケージをアンパブリッシュする"
 ## 注意すべき点 1: Git Bashでアンパブリッシュするとエラー
 [Git for Windows](https://git-for-windows.github.io/)のGit Bash上で、Windows版Atomに付属するapmで`apm unpublish`を実行すると以下のエラーが出る。
 
-```text
+```
 Error: EINVAL, invalid argument
     at new Socket (net.js:157:18)
     at process.stdin (node.js:693:19)

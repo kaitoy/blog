@@ -104,7 +104,7 @@ microsoft/sqlite     SQLite installed in a Windows Server Core ...   1          
 ## Pcap4J on Windows Container
 結論から言うと、以下の `Dockerfile` を書いて `docker build` してPcap4Jをコンテナ上でビルドするところまではできたが、それを実行してもNIFが全く検出できず、よってパケットキャプチャも実行できなかった。
 
-```text
+```
 #
 # Dockerfile for Pcap4J on Windows
 #
@@ -171,7 +171,7 @@ Nmapはサイレントインストールできて、インストール処理中�
 * `WORKDIR` や `COPY` のコンテナ内のパスに絶対パスを指定したい場合、`C:\hoge`、`C:/hoge`、`C:\\hoge`、いずれもダメ。
   以下の様なエラーが出る。
 
-      ```text
+      ```
       GetFileAttributesEx \\?\Volume{67df3c84-a0ef-11e5-9a63-000c2976fbc3}\C:: The filename, directory name, or volume label syntax is incorrect.
       ```
   UNIX式に `/hoge` とするといける。C以外のドライブを指定したいときはどうするんだろう。
@@ -183,13 +183,13 @@ Nmapはサイレントインストールできて、インストール処理中�
 これらのバグを乗り越えて頑張って `Dockerfile` 書いたのに、NIFの検出すらできなかったという哀しい結果。
 `pcap_lookupdev` が以下のエラーを吐いて `NULL` を返してきてたので、なんとなくコンテナのNIFに長すぎる名前がついていて検出失敗しているんじゃないかと。
 
-```text
+```
 PacketGetAdapterNames: The data area passed to a system call is too small. (122)
 ```
 
 因みにコンテナ内から見えるNIFは一つで、以下の構成。
 
-```text
+```
 Ethernet adapter vEthernet (Virtual Switch-d206475ce13256766b9a16383540a740fe31da8d20499349fe98693393a8490f-0):
 
    Connection-specific DNS Suffix  . : localdomain
@@ -206,7 +206,7 @@ Ethernet adapter vEthernet (Virtual Switch-d206475ce13256766b9a16383540a740fe31d
 
 後日上記 `Dockerfile` でビルドしてみたら、`RUN powershell .\install.ps1` で以下のエラーが出るようになった。
 
-```text
+```
 The request was aborted: Could not create SSL/TLS secure channel.
 ```
 

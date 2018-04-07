@@ -311,7 +311,7 @@ Filename                                Type            Size    Used    Priority
 
 永続的に無効にするため、`/etc/fstab`を編集して、以下の行を削除した。
 
-```text
+```
 /dev/mapper/centos-swap swap                    swap    defaults        0 0
 ```
 
@@ -384,7 +384,7 @@ couldn't initialize a Kubernetes cluster
 また違う感じのエラー。
 エラーメッセージに従って、`journalctl -xeu kubelet`でログを見てみたら、以下のようなエラーが。
 
-```text
+```
 Post https://192.168.171.200:6443/api/v1/nodes: dial tcp 192.168.171.200:6443: getsockopt: connection refused
 ```
 

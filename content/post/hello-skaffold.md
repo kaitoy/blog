@@ -60,7 +60,7 @@ WindowsでDockerと言えば今なら[Docker for Windows](https://www.docker.com
 そのための設定はminikubeのコマンドで分かるようになっている。
 
 ```cmd
->minikube docker-env
+> minikube docker-env
 SET DOCKER_TLS_VERIFY=1
 SET DOCKER_HOST=tcp://192.168.99.100:2376
 SET DOCKER_CERT_PATH=C:\Users\kaitoy\.minikube\certs
@@ -89,7 +89,7 @@ Skaffoldのリポジトリをcloneして、コマンドプロンプト開いて�
 
 エラーで終わった。
 
-```txt
+```
 [31mERRO[0m[0047] run: running skaffold steps: starting watch on file C:\Users\kaitoy\Desktop\skaffold\examples\getting-started\Dockerfile: adding watch for C:\Users\kaitoy\Desktop\skaffold\examples\getting-started\Dockerfile: The parameter is incorrect.
 ```
 
@@ -122,7 +122,7 @@ ERRO[0001] run: getting skaffold config: getting k8s client: Error creating kube
 
 ちょっと調べたら、kubectlのコンテクストが設定されていないのがだめっぽい。
 
-```
+```sh
 # kubectl config current-context
 error: current-context is not set
 ```
@@ -155,7 +155,7 @@ users:
 
 再度`skaffold dev`したら違うエラー。
 
-```text
+```
 WARN[0002] run: build: build step: running build: read auth configs: docker config: opening docker config: open /home/docker/.docker/config.json: no such file or directory
 ```
 

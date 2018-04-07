@@ -99,7 +99,7 @@ Starting to serve on 127.0.0.1:8001
 
 各Podへも以下のURLでアクセスできる。
 
-```text
+```
 http://localhost:8001/api/v1/proxy/namespaces/default/pods/<Pod名>/
 ```
 

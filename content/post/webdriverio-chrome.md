@@ -311,7 +311,7 @@ WDIO Configuration Helperの`Shall I install …`でnoした分は自分でイ�
 
 したらエラー。
 
-```text
+```
 error /root/webdriverio-chrome/node_modules/fibers: Command failed.
 Exit code: 127
 Command: sh

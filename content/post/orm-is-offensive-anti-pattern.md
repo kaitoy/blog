@@ -30,7 +30,7 @@ Javaでは、ORMデザインは[JPA](https://ja.wikipedia.org/wiki/Java_Persiste
 
 最初に、ORMがどう動くかを見てみよう。JavaとPostgreSQLとHibernateを使い、データベースに`post` (訳注: ブログポスト、ブログの記事)という単一のテーブルがあるとする。
 
-```text
+```
 +-----+------------+--------------------------+
 | id  | date       | title                    |
 +-----+------------+--------------------------+

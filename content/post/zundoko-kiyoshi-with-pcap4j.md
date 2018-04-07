@@ -31,7 +31,7 @@ ZUNDOKOプロトコル
 
 クライアント/サーバ間でやり取りするメッセージ(Zundokoパケット)のフォーマットは下図。
 
-```text
+```
  0                            15                              31
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |             zundoko (null-terminated string)                  |
@@ -52,7 +52,7 @@ EtherTypeは[IANA](http://www.iana.org/assignments/ieee-802-numbers/ieee-802-num
 
 因みに、Ethernetヘッダを加えた、クライアント/サーバ間でやり取りする完全なパケットは以下の様になる。(プリアンブルとかは除く。)
 
-```text
+```
  0                            15
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |    Dst Hardware Address       |

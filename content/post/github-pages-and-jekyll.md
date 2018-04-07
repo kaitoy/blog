@@ -82,7 +82,7 @@ gem 'github-pages'
 #### 3.  Jekyll味見
 試しに、適当な場所で`jekyll new hoge`を実行し、新規サイトフォルダ __hoge__ を作り、その中で`jekyll build`してみる。以下のエラー。
 
-```text
+```
 c:/Ruby22-x64/lib/ruby/gems/2.2.0/gems/posix-spawn-0.3.11/lib/posix/spawn.rb:164: warning: cannot close fd before spawn
 'which' は、内部コマンドまたは外部コマンド、
 操作可能なプログラムまたはバッチ ファイルとして認識されていません。
@@ -113,7 +113,7 @@ gem 'wdm', '~> 0.1.0' if Gem.win_platform?
 
 したら以下のエラー。
 
-```text
+```
 c:\Ruby22-x64\lib\ruby\gems\2.2.0\gems\wdm-0.1.0\ext\wdm/rb_monitor.c:508: undefined reference to `rb_thread_blocking_region'
 ```
 
@@ -123,7 +123,7 @@ wdmはもう数年更新されておらず、修正の見込みはなさそう�
 
 Rubyをダウングレードするの面倒なので、試しにそのまま`jekyll serve`したら以下のメッセージが出たけど動いた。
 
-```text
+```
   Please add the following to your Gemfile to avoid polling for changes:
     gem 'wdm', '>= 0.1.0' if Gem.win_platform?
  Auto-regeneration: enabled for 'c:/Users/Kaito/mirrored_data/pleiades/workspace/kaitoy.github.io/hoge'
@@ -134,7 +134,7 @@ auto-regenerationも動いている模様。実際ソースをいじったら自
 
 実は、以下のエラー(上でも出てたやつ)はまだ出ている。
 
-```text
+```
 c:/Ruby22-x64/lib/ruby/gems/2.2.0/gems/posix-spawn-0.3.11/lib/posix/spawn.rb:164: warning: cannot close fd before spawn
 'which' は、内部コマンドまたは外部コマンド、
 操作可能なプログラムまたはバッチ ファイルとして認識されていません。
