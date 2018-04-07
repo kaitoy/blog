@@ -116,14 +116,14 @@ kubectlのLinux版バイナリもダウンロードしてPATHに入れたら準�
 
 `examples/getting-started`にcdして`skaffold dev`したらエラー。
 
-```sh
-$ ERRO[0001] run: getting skaffold config: getting k8s client: Error creating kubeConfig: invalid configuration: no configuration has been provided
+```
+ERRO[0001] run: getting skaffold config: getting k8s client: Error creating kubeConfig: invalid configuration: no configuration has been provided
 ```
 
 ちょっと調べたら、kubectlのコンテクストが設定されていないのがだめっぽい。
 
-```sh
-$ kubectl config current-context
+```
+# kubectl config current-context
 error: current-context is not set
 ```
 
@@ -164,8 +164,8 @@ SkaffoldのREADME.mdにはminikube使うならDocker image registry要らない�
 
 色々あって、ファイルがあればいいだけっぽいので、以下で良し。
 
-```sh
-$ echo {} > ~/.docker/config.json
+```
+# echo {} > ~/.docker/config.json
 ```
 
 <br>

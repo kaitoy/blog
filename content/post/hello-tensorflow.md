@@ -32,8 +32,15 @@ API|抽象化レベル
 [Go](https://godoc.org/github.com/tensorflow/tensorflow/tensorflow/go)|Low
 
 ## Low Level API (TensorFlow Core)
-計算グラフ([tf.Graph]())とTensorFlowランタイム([tf.Session]())を自力で管理する。
+tensorが単位データ。
+tensorはn次元の配列で、次元数をrank、各次元の要素数をタプルで表したものをshapeという。
+(スカラはrank 0、ベクトルはrank 1、マトリックスはrank 2。)
 
+tensorの値はNumPyのarrayで表される。
+
+TensorFlowコアのプログラミングは、計算グラフ([tf.Graph](https://www.tensorflow.org/api_docs/python/tf/Graph))を構築して、セッションで([tf.Session](https://www.tensorflow.org/api_docs/python/tf/Session))実行する、という流れが基本。
+
+計算グラフは一連のTensorFlowオペレーションを会わらすもので、[tf.Operation](https://www.tensorflow.org/api_docs/python/tf/Operation)と[tf.Tensor](https://www.tensorflow.org/api_docs/python/tf/Tensor)で構築される。
 
 ## High Level API
 
