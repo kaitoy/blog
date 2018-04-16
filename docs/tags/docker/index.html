@@ -74,6 +74,27 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="/images/kubernetes.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Tue, Apr 17, 2018</span>
+              </div>
+              <h2 class="title">Kubernetes 1.10をスクラッチから手動で構築</h2>
+              <div class="summary">
+                CentOS 7のVMでKubernetes1.10の単一ノードクラスタをスクラッチから作った。 参考にしたのは主に以下。 https://nixaid.com/deploying-kubernetes-cluster-from-scratch/ https://kubernetes.io/docs/getting-started-guides/scratch/ https://ulam.io/blog/kubernetes-scratch/ https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master とりあえず作業メモだけ残す。 あとで整理する。 (adsbygoogle = window.adsbygoogle || []).push({}); 作業メモ 単一ノードのクラスタ。 おおむね、k8sコンポーネント間の通信の暗号化に使う証明書の生成、kubeconfigの生成、etcdのデプロイ、k8sコンポーネントのデプロイ、Fannelデプロイ、CoreDNSデプロイ、という流れ。 とりあえずOracle Linux 7.4のMinimalでVMを作って固定IP(192.168.171.200)にして、ホスト名をk8s-masterにして、swapをoffに。 firewalldとSELinuxもとりあえず無効に。 /etc/hostsには192.168.171.200 k8s-masterを追加。 Configure bridge netfilter and the IP forwarding # modprobe br_netfilter /etc/sysconfig/modules/br_netfilter.modulesを以下の内容で作る。 #!/bin/sh /sbin/modprobe br_netfilter &gt; /dev/null 2&gt;&amp;1 chmod 755 /etc/sysconfig/modules/br_netfilter.modules /etc/sysctl.d/kubernetes.confを以下の内容で作る。 net.bridge.bridge-nf-call-iptables = 1 net.bridge.bridge-nf-call-ip6tables = 1 net.ipv4.ip_forward = 1 で、sysctl -p /etc/sysctl.d/kubernetes.conf 確認。 # lsmod |grep br_netfilter # sysctl -a | grep -E &quot;net.bridge.bridge-nf-call-|net.ipv4.ip_forward&quot; Generate x509 certs openssl configuration file # mkdir -p /etc/kubernetes/pki # cd /etc/kubernetes/pki # K8S_SERVICE_IP=10.0.0.1 # MASTER_IP=192.168.171.200 # cat &gt; openssl.cnf &lt;&lt; EOF [ req ] distinguished_name = req_distinguished_name [req_distinguished_name] [ v3_ca ] basicConstraints = critical, CA:TRUE keyUsage = critical, digitalSignature, keyEncipherment, keyCertSign [ v3_req_server ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth [ v3_req_client ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = clientAuth [ v3_req_apiserver ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth subjectAltName = @alt_names_cluster [ v3_req_etcd ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth, clientAuth subjectAltName = @alt_names_etcd [ alt_names_cluster ] DNS.1 = kubernetes DNS.2 = kubernetes.default DNS.3 = kubernetes.default.svc DNS.4 = kubernetes.default.svc.cluster.local DNS.5 = k8s-controller IP.1 = ${MASTER_IP} IP.2 = ${K8S_SERVICE_IP} [ alt_names_etcd ] DNS.1 = k8s-controller IP.1 = ${MASTER_IP} EOF Kubernetes CA cert used to sign the rest of K8s certs.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2018/04/01/hello-skaffold/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="/images/kubernetes.png" alt="eyecatch">
@@ -135,19 +156,16 @@
         
         
         
-        <div class="col-sm-6">
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/" class="post">
               <header class="eyecatch text-center">
                 <img src="/images/kubernetes_goslings.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Wed, Oct 11, 2017</span>
               </div>
-              <h2 class="title">Kubernetesのチュートリアルをやる</h2>
-              <div class="summary">
-                「Kubernetes 1.8が出たので、Minikubeを触ってみる」の続き。 Minikubeのセットアップまではできたので、Kubernetes Basicsというチュートリアルをやりながら、Goslingsをデプロイする。 (adsbygoogle = window.adsbygoogle || []).push({}); Kubernetes Basics - 概要 Kubernetes Basicsは、公式のチュートリアルで、Kubernetesクラスタのオーケストレーションの基本を学ぶことができるもの。 以下の6つのモジュールからなる。 Kubernetesクラスタを作る アプリをデプロイする アプリを調査する アプリを公開する アプリをスケールする アプリをアップデートする チュートリアルで使うのはMinikubeだけど、自分でセットアップする必要はない。 Katacodaという、ブラウザ上でIT技術を学べるプラットフォームがあり、Kubernetes Basicsはそれを利用して、ブラウザ上のターミナルからホステッドMinikubeを操作できるようにしている。 が、前回の記事で自PC上にMinikubeをセットアップしたので、そちらを使うことにする。 Kubernetes Basics - モジュール 1: Kubernetesクラスタを作る Minikubeを起動してkubectlでクラスタの状態をみるだけのモジュール。 これは前回の記事でカバーしている。 Kubernetes Basics - モジュール 2: アプリをデプロイする アプリ(i.e. コンテナ)をデプロイするにはDeploymentオブジェクトを作る。 MasterはDeploymentのspecに従って各ノードにアプリのインスタンスをスケジューリングする。 Deploymentは、アプリが落ちたら再起動してくれる、つまりself-healingも実現する。 Deploymentオブジェクトを作るコマンドはkubectl run &lt;オブジェクト名&gt; --image=&lt;Dockerイメージ名&gt;。 Goslingsをこれでデプロイする。 Goslingsコンテナは3つの引数を受け取り、指定したポートでWebサーバを起動する。 --portオプションでそのポートをexposeするようにして、--の後にコンテナに渡す引数を記述する。 C:\Users\kaitoy&gt;kubectl run goslings --image=kaitoy/goslings:latest --port 8080 -- 8080 /tmp https://github.com/kaitoy/ deployment &quot;goslings&quot; created C:\Users\kaitoy&gt;kubectl get deployment NAME DESIRED CURRENT UP-TO-DATE AVAILABLE AGE goslings 1 1 1 1 27s デプロイできた。 裏でPodも作られていて、アプリが起動されている。 C:\Users\kaitoy&gt;kubectl get pods NAME READY STATUS RESTARTS AGE goslings-1210510689-6w5tf 0/1 ContainerCreating 0 1m (kubectl getに指定するのは、省略形のdeployとかpoでもいい。) Podは隔離されたネットワークで動くので、そのままではPod同士は通信できるけど、外からはアクセスできない。 kubectlでプロキシを作ってやることで、外からアクセスできるようになる。 C:\Users\kaitoy&gt;kubectl proxy Starting to serve on 127.0.0.1:8001 これで、kube-apiserverへのプロキシがローカルホストで起動した。 この状態でhttp://localhost:8001を開くと、kube-apiserverのAPI一覧が見れる。 例えば、http://localhost:8001/versionにアクセスすると、以下のJSONデータが返ってくる。 { &quot;major&quot;: &quot;1&quot;, &quot;minor&quot;: &quot;7&quot;, &quot;gitVersion&quot;: &quot;v1.7.0&quot;, &quot;gitCommit&quot;: &quot;d3ada0119e776222f11ec7945e6d860061339aad&quot;, &quot;gitTreeState&quot;: &quot;dirty&quot;, &quot;buildDate&quot;: &quot;2017-10-04T09:25:40Z&quot;, &quot;goVersion&quot;: &quot;go1.8.3&quot;, &quot;compiler&quot;: &quot;gc&quot;, &quot;platform&quot;: &quot;linux/amd64&quot; } 各Podへも以下のURLでアクセスできる。 http://localhost:8001/api/v1/proxy/namespaces/default/pods/&lt;Pod名&gt;/ Pod名の部分はkubectl getで確認できる。 C:\Users\kaitoy&gt;kubectl get po NAME READY STATUS RESTARTS AGE goslings-1210510689-6w5tf 1/1 Running 0 24m 実際に、http://localhost:8001/api/v1/proxy/namespaces/default/pods/goslings-1210510689-6w5tf/をブラウザで開いたら、GoslingsのGUIが出た。 ヒュー。 Kubernetes Basics - モジュール 3: アプリを調査する 以下のコマンドで、アプリの状態を調査するモジュール。 kubectl get: リソースをリスト表示する。 kubectl describe: リソースの詳細情報を表示する。 kubectl logs: コンテナのログを表示する。docker logs的な。 kubectl exec: コンテナ内でコマンドを実行する。docker exec的な。 kubectl getはさんざんやったので飛ばして、kubectl describeしてみる。 C:\Users\kaitoy&gt;kubectl describe po Name: goslings-1210510689-6w5tf Namespace: default Node: minikube/192.168.99.100 Start Time: Tue, 10 Oct 2017 21:51:48 +0900 Labels: pod-template-hash=1210510689 run=goslings Annotations: kubernetes.io/created-by={&quot;kind&quot;:&quot;SerializedReference&quot;,&quot;apiVersion&quot;:&quot;v1&quot;,&quot;reference&quot;:{&quot;kind&quot;:&quot;ReplicaSet&quot;,&quot;namespace&quot;:&quot;default&quot;,&quot;name&quot;:&quot;goslings-1210510689&quot;,&quot;uid&quot;:&quot;c74b6518-adb9-11e7-88a0-08002798178d...
-              </div>
+              <h3 class="title">Kubernetesのチュートリアルをやる</h3>
             </a>
           </article>
         </div>

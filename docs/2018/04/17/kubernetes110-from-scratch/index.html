@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Kubernetes 1.10をスクラッチから手動で構築 | To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">
+    <link rel="canonical" href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">
+    <meta property="og:description" content="CentOS 7のVMでKubernetes1.10の単一ノードクラスタをスクラッチから作った。 参考にしたのは主に以下。 https://nixaid.com/deploying-kubernetes-cluster-from-scratch/ https://kubernetes.io/docs/getting-started-guides/scratch/ https://ulam.io/blog/kubernetes-scratch/ https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master とりあえず作業メモだけ残す。 あとで整理する。 (adsbygoogle = window.adsbygoogle || []).push({}); 作業メモ 単一ノードのクラスタ。 おおむね、k8sコンポーネント間の通信の暗号化に使う証明書の生成、kubeconfigの生成、etcdのデプロイ、k8sコンポーネントのデプロイ、Fannelデプロイ、CoreDNSデプロイ、という流れ。 とりあえずOracle Linux 7.4のMinimalでVMを作って固定IP(192.168.171.200)にして、ホスト名をk8s-masterにして、swapをoffに。 firewalldとSELinuxもとりあえず無効に。 /etc/hostsには192.168.171.200 k8s-masterを追加。 Configure bridge netfilter and the IP forwarding # modprobe br_netfilter /etc/sysconfig/modules/br_netfilter.modulesを以下の内容で作る。 #!/bin/sh /sbin/modprobe br_netfilter &gt; /dev/null 2&gt;&amp;1 chmod 755 /etc/sysconfig/modules/br_netfilter.modules /etc/sysctl.d/kubernetes.confを以下の内容で作る。 net.bridge.bridge-nf-call-iptables = 1 net.bridge.bridge-nf-call-ip6tables = 1 net.ipv4.ip_forward = 1 で、sysctl -p /etc/sysctl.d/kubernetes.conf 確認。 # lsmod |grep br_netfilter # sysctl -a | grep -E &quot;net.bridge.bridge-nf-call-|net.ipv4.ip_forward&quot; Generate x509 certs openssl configuration file # mkdir -p /etc/kubernetes/pki # cd /etc/kubernetes/pki # K8S_SERVICE_IP=10.0.0.1 # MASTER_IP=192.168.171.200 # cat &gt; openssl.cnf &lt;&lt; EOF [ req ] distinguished_name = req_distinguished_name [req_distinguished_name] [ v3_ca ] basicConstraints = critical, CA:TRUE keyUsage = critical, digitalSignature, keyEncipherment, keyCertSign [ v3_req_server ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth [ v3_req_client ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = clientAuth [ v3_req_apiserver ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth subjectAltName = @alt_names_cluster [ v3_req_etcd ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth, clientAuth subjectAltName = @alt_names_etcd [ alt_names_cluster ] DNS.1 = kubernetes DNS.2 = kubernetes.default DNS.3 = kubernetes.default.svc DNS.4 = kubernetes.default.svc.cluster.local DNS.5 = k8s-controller IP.1 = ${MASTER_IP} IP.2 = ${K8S_SERVICE_IP} [ alt_names_etcd ] DNS.1 = k8s-controller IP.1 = ${MASTER_IP} EOF Kubernetes CA cert used to sign the rest of K8s certs.">
+    
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      Kubernetes 1.10をスクラッチから手動で構築 | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+    
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-6244473643910448",
+        enable_page_level_ads: true
+      });
+    </script>
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Tue, Apr 17, 2018</span>
+      <h2 class="title">Kubernetes 1.10をスクラッチから手動で構築</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="Kubernetes 1.10をスクラッチから手動で構築">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>CentOS 7のVMでKubernetes1.10の単一ノードクラスタをスクラッチから作った。
+参考にしたのは主に以下。</p>
+
+<p><a href="https://nixaid.com/deploying-kubernetes-cluster-from-scratch/">https://nixaid.com/deploying-kubernetes-cluster-from-scratch/</a>
+<a href="https://kubernetes.io/docs/getting-started-guides/scratch/">https://kubernetes.io/docs/getting-started-guides/scratch/</a>
+<a href="https://ulam.io/blog/kubernetes-scratch/">https://ulam.io/blog/kubernetes-scratch/</a>
+<a href="https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master">https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master</a></p>
+
+<p>とりあえず作業メモだけ残す。
+あとで整理する。</p>
+
+<p>
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</p>
+
+<h2 id="作業メモ">作業メモ</h2>
+
+<p>単一ノードのクラスタ。</p>
+
+<p>おおむね、k8sコンポーネント間の通信の暗号化に使う証明書の生成、kubeconfigの生成、etcdのデプロイ、k8sコンポーネントのデプロイ、Fannelデプロイ、CoreDNSデプロイ、という流れ。</p>
+
+<p>とりあえずOracle Linux 7.4のMinimalでVMを作って固定IP(192.168.171.200)にして、ホスト名をk8s-masterにして、swapをoffに。
+firewalldとSELinuxもとりあえず無効に。</p>
+
+<p><code>/etc/hosts</code>には<code>192.168.171.200 k8s-master</code>を追加。</p>
+
+<ol>
+<li><p>Configure bridge netfilter and the IP forwarding</p>
+
+<pre><code class="language-sh"># modprobe br_netfilter
+</code></pre>
+
+<p><code>/etc/sysconfig/modules/br_netfilter.modules</code>を以下の内容で作る。</p>
+
+<pre><code class="language-sh">#!/bin/sh
+/sbin/modprobe br_netfilter &gt; /dev/null 2&gt;&amp;1
+</code></pre>
+
+<p><code>chmod 755 /etc/sysconfig/modules/br_netfilter.modules</code></p>
+
+<p><code>/etc/sysctl.d/kubernetes.conf</code>を以下の内容で作る。</p>
+
+<pre><code>net.bridge.bridge-nf-call-iptables = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward = 1
+</code></pre>
+
+<p>で、<code>sysctl -p /etc/sysctl.d/kubernetes.conf</code></p>
+
+<p>確認。</p>
+
+<pre><code class="language-sh"># lsmod |grep br_netfilter
+# sysctl -a | grep -E &quot;net.bridge.bridge-nf-call-|net.ipv4.ip_forward&quot;
+</code></pre></li>
+
+<li><p>Generate x509 certs</p>
+
+<ol>
+<li><p>openssl configuration file</p>
+
+<pre><code class="language-sh"># mkdir -p /etc/kubernetes/pki
+# cd /etc/kubernetes/pki
+# K8S_SERVICE_IP=10.0.0.1
+# MASTER_IP=192.168.171.200
+</code></pre>
+
+<pre><code class="language-sh"># cat &gt; openssl.cnf &lt;&lt; EOF
+[ req ]
+distinguished_name = req_distinguished_name
+[req_distinguished_name]
+[ v3_ca ]
+basicConstraints = critical, CA:TRUE
+keyUsage = critical, digitalSignature, keyEncipherment, keyCertSign
+[ v3_req_server ]
+basicConstraints = CA:FALSE
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+[ v3_req_client ]
+basicConstraints = CA:FALSE
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = clientAuth
+[ v3_req_apiserver ]
+basicConstraints = CA:FALSE
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = @alt_names_cluster
+[ v3_req_etcd ]
+basicConstraints = CA:FALSE
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth, clientAuth
+subjectAltName = @alt_names_etcd
+[ alt_names_cluster ]
+DNS.1 = kubernetes
+DNS.2 = kubernetes.default
+DNS.3 = kubernetes.default.svc
+DNS.4 = kubernetes.default.svc.cluster.local
+DNS.5 = k8s-controller
+IP.1 = ${MASTER_IP}
+IP.2 = ${K8S_SERVICE_IP}
+[ alt_names_etcd ]
+DNS.1 = k8s-controller
+IP.1 = ${MASTER_IP}
+EOF
+</code></pre></li>
+
+<li><p>Kubernetes CA cert</p>
+
+<p>used to sign the rest of K8s certs.</p>
+
+<pre><code class="language-sh"># cd /etc/kubernetes/pki
+# CA_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out ca.key
+# chmod 0600 ca.key
+# openssl req -x509 -new -sha256 -nodes -key ca.key -days $CA_DAYS -out ca.crt -subj &quot;/CN=kubernetes-ca&quot;  -extensions v3_ca -config ./openssl.cnf
+</code></pre></li>
+
+<li><p>kube apiserver cert</p>
+
+<p>used as default x509 apiserver cert.</p>
+
+<pre><code class="language-sh"># cd /etc/kubernetes/pki
+# APISERVER_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out kube-apiserver.key
+# chmod 0600 kube-apiserver.key
+# openssl req -new -sha256 -key kube-apiserver.key -subj &quot;/CN=kube-apiserver&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-apiserver.crt -days $APISERVER_DAYS -extensions v3_req_apiserver -extfile ./openssl.cnf
+</code></pre></li>
+
+<li><p>apiserver kubelet client cert</p>
+
+<p>used for x509 client authentication to the kubelet&rsquo;s HTTPS endpoint.</p>
+
+<pre><code class="language-sh"># cd /etc/kubernetes/pki
+# APISERVER_KUBELET_CLIENT_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out apiserver-kubelet-client.key
+# chmod 0600 apiserver-kubelet-client.key
+# openssl req -new -key apiserver-kubelet-client.key -subj &quot;/CN=kube-apiserver-kubelet-client/O=system:masters&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out apiserver-kubelet-client.crt -days $APISERVER_KUBELET_CLIENT_DAYS -extensions v3_req_client -extfile ./openssl.cnf
+</code></pre></li>
+
+<li><p>admin client cert</p>
+
+<p>used by a human to administrate the cluster.</p>
+
+<pre><code class="language-sh"># cd /etc/kubernetes/pki
+# ADMIN_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out admin.key
+# chmod 0600 admin.key
+# openssl req -new -key admin.key -subj &quot;/CN=kubernetes-admin/O=system:masters&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out admin.crt -days $ADMIN_DAYS -extensions v3_req_client -extfile ./openssl.cnf
+</code></pre></li>
+
+<li><p>Service Account key</p>
+
+<p>The service account token private key (sa.key) given only to the controller manager, is used to sign the tokens.
+The masters only need the public key portion (sa.pub) in order to verify the tokens signed by the controller manager.</p>
+
+<pre><code class="language-sh"># cd /etc/kubernetes/pki
+# CONTROLLER_MANAGER_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out sa.key
+# openssl ec -in sa.key -outform PEM -pubout -out sa.pub
+# chmod 0600 sa.key
+# openssl req -new -sha256 -key sa.key -subj &quot;/CN=system:kube-controller-manager&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out sa.crt -days $CONTROLLER_MANAGER_DAYS -extensions v3_req_client -extfile ./openssl.cnf
+</code></pre></li>
+
+<li><p>kube-scheduler cert</p>
+
+<p>used to allow access to the resources required by the kube-scheduler component.</p>
+
+<pre><code class="language-sh"># cd /etc/kubernetes/pki
+# SCHEDULER_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out kube-scheduler.key
+# chmod 0600 kube-scheduler.key
+# openssl req -new -sha256 -key kube-scheduler.key -subj &quot;/CN=system:kube-scheduler&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-scheduler.crt -days $SCHEDULER_DAYS -extensions v3_req_client -extfile ./openssl.cnf
+</code></pre></li>
+
+<li><p>front proxy CA cert</p>
+
+<p>used to sign front proxy client cert.</p>
+
+<pre><code class="language-sh"># cd /etc/kubernetes/pki
+# FRONT_PROXY_CA_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out front-proxy-ca.key
+# chmod 0600 front-proxy-ca.key
+# openssl req -x509 -new -sha256 -nodes -key front-proxy-ca.key -days $FRONT_PROXY_CA_DAYS -out front-proxy-ca.crt -subj &quot;/CN=front-proxy-ca&quot; -extensions v3_ca -config ./openssl.cnf
+</code></pre></li>
+
+<li><p>front proxy client cert</p>
+
+<p>used to verify client certificates on incoming requests before trusting usernames in headers specified by &ndash;requestheader-username-headers</p>
+
+<pre><code class="language-sh"># cd /etc/kubernetes/pki
+# FRONT_PROXY_CLIENT_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out front-proxy-client.key
+# chmod 0600 front-proxy-client.key
+# openssl req -new -sha256 -key front-proxy-client.key -subj &quot;/CN=front-proxy-client&quot; | openssl x509 -req -sha256 -CA front-proxy-ca.crt -CAkey front-proxy-ca.key -CAcreateserial -out front-proxy-client.crt -days $FRONT_PROXY_CLIENT_DAYS -extensions v3_req_client -extfile ./openssl.cnf
+</code></pre></li>
+
+<li><p>kube-proxy cert</p>
+
+<p>Create kube-proxy x509 cert only if you want to use a kube-proxy role instead of a kube-proxy service account with its JWT token (kubernetes secrets) for auhentication.</p>
+
+<pre><code class="language-sh"># cd /etc/kubernetes/pki
+# KUBE_PROXY_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out kube-proxy.key
+# chmod 0600 kube-proxy.key
+# openssl req -new -key kube-proxy.key -subj &quot;/CN=kube-proxy/O=system:node-proxier&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-proxy.crt -days $KUBE_PROXY_DAYS -extensions v3_req_client -extfile ./openssl.cnf
+</code></pre></li>
+
+<li><p>etcd CA cert</p>
+
+<p>etcd CA cert used to sign the rest of etcd certs.</p>
+
+<pre><code class="language-sh"># cd /etc/kubernetes/pki
+# ETCD_CA_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out etcd-ca.key
+# chmod 0600 etcd-ca.key
+# openssl req -x509 -new -sha256 -nodes -key etcd-ca.key -days $ETCD_CA_DAYS -out etcd-ca.crt -subj &quot;/CN=etcd-ca&quot; -extensions v3_ca -config ./openssl.cnf
+</code></pre></li>
+
+<li><p>etcd cert</p>
+
+<p>etcd cert used for securing connections to etcd (client-to-server).</p>
+
+<pre><code class="language-sh"># cd /etc/kubernetes/pki
+# ETCD_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out etcd.key
+# chmod 0600 etcd.key
+# openssl req -new -sha256 -key etcd.key -subj &quot;/CN=etcd&quot; | openssl x509 -req -sha256 -CA etcd-ca.crt -CAkey etcd-ca.key -CAcreateserial -out etcd.crt -days $ETCD_DAYS -extensions v3_req_etcd -extfile ./openssl.cnf
+</code></pre></li>
+
+<li><p>etcd peer cert</p>
+
+<p>etcd peer cert used for securing connections between peers (server-to-server).</p>
+
+<pre><code class="language-sh"># cd /etc/kubernetes/pki
+# ETCD_PEER_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out etcd-peer.key
+# chmod 0600 etcd-peer.key
+# openssl req -new -sha256 -key etcd-peer.key -subj &quot;/CN=etcd-peer&quot; | openssl x509 -req -sha256 -CA etcd-ca.crt -CAkey etcd-ca.key -CAcreateserial -out etcd-peer.crt -days $ETCD_PEER_DAYS -extensions v3_req_etcd -extfile ./openssl.cnf
+</code></pre></li>
+
+<li><p>確認</p>
+
+<pre><code class="language-sh"># for i in *crt; do
+  echo $i:;
+  openssl x509 -subject -issuer -noout -in $i;
+  echo;
+done
+</code></pre></li>
+</ol></li>
+
+<li><p>Controller binaries</p>
+
+<p>公式ドキュメントによると、
+docker, kubelet, and kube-proxyはコンテナ外で。
+etcd, kube-apiserver, kube-controller-manager, and kube-schedulerはコンテナで動かすのが推奨。
+だけど全部コンテナ外でやる。</p>
+
+<p>Oracle Linux用には、各コンポのコンテナイメージ詰め合わせがOracle Container Services for use with Kubernetesという名前で配布されているけど、現時点で1.10がないので使わない。</p>
+
+<p>バイナリをダウンロードするURLは以下。</p>
+
+<p><a href="https://storage.googleapis.com/kubernetes-release/release/v1.10.0/kubernetes-server-linux-amd64.tar.gz">https://storage.googleapis.com/kubernetes-release/release/v1.10.0/kubernetes-server-linux-amd64.tar.gz</a></p>
+
+<p><a href="https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-apiserver">https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-apiserver</a>
+<a href="https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-controller-manager">https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-controller-manager</a>
+<a href="https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-scheduler">https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-scheduler</a>
+<a href="https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-proxy">https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-proxy</a>
+<a href="https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubelet">https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubelet</a>
+<a href="https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubectl">https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubectl</a></p>
+
+<p><a href="https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-apiserver.tar">https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-apiserver.tar</a>
+<a href="https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-controller-manager.tar">https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-controller-manager.tar</a>
+<a href="https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-scheduler.tar">https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-scheduler.tar</a>
+<a href="https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-proxy.tar">https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-proxy.tar</a></p>
+
+<p><a href="https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/hyperkube">https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/hyperkube</a></p>
+
+<p>hyperkubeとkubeadmを<code>/usr/bin/</code>に。
+hyperkubeより個別のバイナリ使ったほうがメモリ使用量は小さくなるんだろうか。</p>
+
+<pre><code class="language-sh"># ln -s /usr/bin/hyperkube /usr/bin/kube-apiserver
+# ln -s /usr/bin/hyperkube /usr/bin/kube-controller-manager
+# ln -s /usr/bin/hyperkube /usr/bin/kube-scheduler
+# ln -s /usr/bin/hyperkube /usr/bin/kube-proxy
+# ln -s /usr/bin/hyperkube /usr/bin/kubelet
+# ln -s /usr/bin/hyperkube /usr/bin/kubectl
+# chmod +x /usr/bin/kube*
+# mkdir -p /var/lib/{kubelet,kube-proxy}
+</code></pre></li>
+
+<li><p>Generate kube configs</p>
+
+<p>kubeconfig files are used by a service or a user to authenticate oneself.</p>
+
+<ol>
+<li><p>service account kubeconfig</p>
+
+<pre><code class="language-sh"># MASTER_IP=192.168.171.200
+# KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
+# CLUSTER_NAME=&quot;default&quot;
+# KCONFIG=controller-manager.kubeconfig
+# KUSER=&quot;system:kube-controller-manager&quot;
+# cd /etc/kubernetes/
+# kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
+# kubectl config set-credentials ${KUSER} --client-certificate=pki/sa.crt --client-key=pki/sa.key --embed-certs=true --kubeconfig=${KCONFIG}
+# kubectl config set-context ${KUSER}@${CLUSTER_NAME} --cluster=${CLUSTER_NAME} --user=${KUSER} --kubeconfig=${KCONFIG}
+# kubectl config use-context ${KUSER}@${CLUSTER_NAME} --kubeconfig=${KCONFIG}
+</code></pre>
+
+<p>設定確認。</p>
+
+<pre><code class="language-sh"># kubectl config view --kubeconfig=${KCONFIG}
+</code></pre></li>
+
+<li><p>kube-scheduler kubeconfig</p>
+
+<pre><code class="language-sh"># MASTER_IP=192.168.171.200
+# KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
+# CLUSTER_NAME=&quot;default&quot;
+# KCONFIG=scheduler.kubeconfig
+# KUSER=&quot;system:kube-scheduler&quot;
+# cd /etc/kubernetes/
+# kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
+# kubectl config set-credentials ${KUSER} --client-certificate=pki/kube-scheduler.crt --client-key=pki/kube-scheduler.key --embed-certs=true --kubeconfig=${KCONFIG}
+# kubectl config set-context ${KUSER}@${CLUSTER_NAME} --cluster=${CLUSTER_NAME} --user=${KUSER} --kubeconfig=${KCONFIG}
+# kubectl config use-context ${KUSER}@${CLUSTER_NAME} --kubeconfig=${KCONFIG}
+</code></pre>
+
+<p>設定確認。</p>
+
+<pre><code class="language-sh"># kubectl config view --kubeconfig=${KCONFIG}
+</code></pre></li>
+
+<li><p>admin kubeconfig</p>
+
+<pre><code class="language-sh"># MASTER_IP=192.168.171.200
+# KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
+# CLUSTER_NAME=&quot;default&quot;
+# KCONFIG=admin.kubeconfig
+# KUSER=&quot;kubernetes-admin&quot;
+# cd /etc/kubernetes/
+# kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
+# kubectl config set-credentials ${KUSER} --client-certificate=pki/admin.crt --client-key=pki/admin.key --embed-certs=true --kubeconfig=${KCONFIG}
+# kubectl config set-context ${KUSER}@${CLUSTER_NAME} --cluster=${CLUSTER_NAME} --user=${KUSER} --kubeconfig=${KCONFIG}
+# kubectl config use-context ${KUSER}@${CLUSTER_NAME} --kubeconfig=${KCONFIG}
+</code></pre>
+
+<p>設定確認。</p>
+
+<pre><code class="language-sh"># kubectl config view --kubeconfig=${KCONFIG}
+</code></pre></li>
+
+<li><p>kubelet kubeconfig</p>
+
+<pre><code class="language-sh"># MASTER_IP=192.168.171.200
+# KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
+# CLUSTER_NAME=&quot;default&quot;
+# KCONFIG=kubelet.kubeconfig
+# KUSER=&quot;system:node:k8s-master&quot;
+# cd /etc/kubernetes/
+# kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
+# kubectl config set-credentials ${KUSER} --client-certificate=pki/admin.crt --client-key=pki/admin.key --embed-certs=true --kubeconfig=${KCONFIG}
+# kubectl config set-context ${KUSER}@${CLUSTER_NAME} --cluster=${CLUSTER_NAME} --user=${KUSER} --kubeconfig=${KCONFIG}
+# kubectl config use-context ${KUSER}@${CLUSTER_NAME} --kubeconfig=${KCONFIG}
+</code></pre>
+
+<p>設定確認。</p>
+
+<pre><code class="language-sh"># kubectl config view --kubeconfig=${KCONFIG}
+</code></pre></li>
+</ol></li>
+
+<li><p>Deploy etcd</p>
+
+<p><a href="https://github.com/coreos/etcd/releases/download/v3.1.12/etcd-v3.1.12-linux-amd64.tar.gz">https://github.com/coreos/etcd/releases/download/v3.1.12/etcd-v3.1.12-linux-amd64.tar.gz</a></p>
+
+<p>etcdとetcdctlを<code>/usr/bin/</code>にいれて、</p>
+
+<pre><code class="language-sh"># chown root:root /usr/bin/etcd*
+# chmod 0755 /usr/bin/etcd*
+# mkdir -p /var/lib/etcd
+</code></pre>
+
+<pre><code class="language-sh"># MASTER_IP=192.168.171.200
+# CLUSTER_NAME=&quot;default&quot;
+# ETCD_TOKEN=$(openssl rand -hex 5)
+# ETCD_CLUSTER_TOKEN=$CLUSTER_NAME-$ETCD_TOKEN
+# cat &gt; /etc/systemd/system/etcd.service &lt;&lt; EOF
+[Unit]
+Description=etcd
+Documentation=https://coreos.com/etcd/docs/latest/
+After=network.target
+
+
+[Service]
+ExecStart=/usr/bin/etcd \\
+  --name default \\
+  --listen-client-urls https://${MASTER_IP}:2379,http://127.0.0.1:2379 \\
+  --advertise-client-urls https://${MASTER_IP}:2379 \\
+  --data-dir=/var/lib/etcd \\
+  --cert-file=/etc/kubernetes/pki/etcd.crt \\
+  --key-file=/etc/kubernetes/pki/etcd.key \\
+  --peer-cert-file=/etc/kubernetes/pki/etcd-peer.crt \\
+  --peer-key-file=/etc/kubernetes/pki/etcd-peer.key \\
+  --trusted-ca-file=/etc/kubernetes/pki/etcd-ca.crt \\
+  --peer-trusted-ca-file=/etc/kubernetes/pki/etcd-ca.crt \\
+  --peer-client-cert-auth \\
+  --client-cert-auth \\
+  --initial-advertise-peer-urls https://${MASTER_IP}:2380 \\
+  --listen-peer-urls https://${MASTER_IP}:2380 \\
+  --initial-cluster-token ${ETCD_CLUSTER_TOKEN} \\
+  --initial-cluster default=https://${MASTER_IP}:2380 \\
+  --initial-cluster-state new
+Restart=always
+RestartSec=10s
+
+
+[Install]
+WantedBy=multi-user.target
+EOF
+# systemctl daemon-reload
+# systemctl enable etcd
+# systemctl start etcd
+</code></pre>
+
+<p>確認。</p>
+
+<pre><code class="language-sh"># systemctl status etcd -l
+# etcdctl --ca-file=/etc/kubernetes/pki/etcd-ca.crt --cert-file=/etc/kubernetes/pki/etcd.crt --key-file=/etc/kubernetes/pki/etcd.key cluster-health
+# etcdctl --ca-file=/etc/kubernetes/pki/etcd-ca.crt --cert-file=/etc/kubernetes/pki/etcd.crt --key-file=/etc/kubernetes/pki/etcd.key member list
+</code></pre></li>
+
+<li><p>Control plane deployment</p>
+
+<ol>
+<li><p>kube-apiserver</p>
+
+<pre><code class="language-sh"># MASTER_IP=192.168.171.200
+# SERVICE_CLUSTER_IP_RANGE=&quot;10.0.0.0/16&quot;
+# cat &gt; /etc/systemd/system/kube-apiserver.service &lt;&lt; EOF
+[Unit]
+Description=Kubernetes API Server
+Documentation=https://github.com/kubernetes/kubernetes
+After=network.target
+
+
+[Service]
+ExecStart=/usr/bin/kube-apiserver \\
+  --apiserver-count=1 \\
+  --allow-privileged=true \\
+  --enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,ResourceQuota,DefaultTolerationSeconds \\
+  --authorization-mode=RBAC \\
+  --secure-port=6443 \\
+  --bind-address=0.0.0.0 \\
+  --advertise-address=${MASTER_IP} \\
+  --audit-log-maxage=30 \\
+  --audit-log-maxbackup=3 \\
+  --audit-log-maxsize=100 \\
+  --audit-log-path=/var/log/kube-audit.log \\
+  --client-ca-file=/etc/kubernetes/pki/ca.crt \\
+  --etcd-cafile=/etc/kubernetes/pki/etcd-ca.crt \\
+  --etcd-certfile=/etc/kubernetes/pki/etcd.crt \\
+  --etcd-keyfile=/etc/kubernetes/pki/etcd.key \\
+  --etcd-servers=https://${MASTER_IP}:2379 \\
+  --service-account-key-file=/etc/kubernetes/pki/sa.pub \\
+  --service-cluster-ip-range=${SERVICE_CLUSTER_IP_RANGE} \\
+  --service-node-port-range=30000-32767 \\
+  --tls-cert-file=/etc/kubernetes/pki/kube-apiserver.crt \\
+  --tls-private-key-file=/etc/kubernetes/pki/kube-apiserver.key \\
+  --enable-bootstrap-token-auth \\
+  --kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt \\
+  --kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key \\
+  --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname \\
+  --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt \\
+  --requestheader-username-headers=X-Remote-User \\
+  --requestheader-group-headers=X-Remote-Group \\
+  --requestheader-allowed-names=front-proxy-client \\
+  --requestheader-extra-headers-prefix=X-Remote-Extra- \\
+  --v=2 \\
+  --tls-min-version=VersionTLS10
+Restart=always
+RestartSec=10s
+
+
+[Install]
+WantedBy=multi-user.target
+EOF
+# systemctl daemon-reload
+# systemctl enable kube-apiserver
+# systemctl start kube-apiserver
+</code></pre>
+
+<p>&ndash;allow_privilegedはflannelに必要。</p>
+
+<p>確認。</p>
+
+<pre><code class="language-sh"># systemctl status kube-apiserver -l
+</code></pre></li>
+
+<li><p>kube-controller-manager</p>
+
+<pre><code class="language-sh"># CLUSTER_CIDR=&quot;10.244.0.0/16&quot;
+# SERVICE_CLUSTER_IP_RANGE=&quot;10.0.0.0/16&quot;
+# CLUSTER_NAME=&quot;default&quot;
+# cat &gt; /etc/systemd/system/kube-controller-manager.service &lt;&lt; EOF
+[Unit]
+Description=Kubernetes Controller Manager
+Documentation=https://github.com/kubernetes/kubernetes
+After=network.target
+
+
+[Service]
+ExecStart=/usr/bin/kube-controller-manager \\
+  --kubeconfig=/etc/kubernetes/controller-manager.kubeconfig \\
+  --bind-address=0.0.0.0 \\
+  --controllers=*,bootstrapsigner,tokencleaner \\
+  --service-account-private-key-file=/etc/kubernetes/pki/sa.key \\
+  --allocate-node-cidrs=true \\
+  --cluster-cidr=${CLUSTER_CIDR} \\
+  --cluster-name=${CLUSTER_NAME} \\
+  --service-cluster-ip-range=${SERVICE_CLUSTER_IP_RANGE} \\
+  --cluster-signing-cert-file=/etc/kubernetes/pki/ca.crt \\
+  --cluster-signing-key-file=/etc/kubernetes/pki/ca.key \\
+  --root-ca-file=/etc/kubernetes/pki/ca.crt \\
+  --use-service-account-credentials=true \\
+  --v=2 \\
+  --tls-min-version=VersionTLS10
+Restart=always
+RestartSec=10s
+
+
+[Install]
+WantedBy=multi-user.target
+EOF
+# systemctl daemon-reload
+# systemctl enable kube-controller-manager
+# systemctl start kube-controller-manager
+</code></pre>
+
+<p>確認。</p>
+
+<pre><code class="language-sh"># systemctl status kube-controller-manager -l
+</code></pre></li>
+
+<li><p>Kubernetes Scheduler</p>
+
+<pre><code class="language-sh"># cat &gt; /etc/systemd/system/kube-scheduler.service &lt;&lt; EOF
+[Unit]
+Description=Kubernetes Scheduler
+Documentation=https://github.com/kubernetes/kubernetes
+After=network.target
+
+
+[Service]
+ExecStart=/usr/bin/kube-scheduler \\
+  --kubeconfig=/etc/kubernetes/scheduler.kubeconfig \\
+  --address=0.0.0.0 \\
+  --v=2
+Restart=always
+RestartSec=10s
+
+
+[Install]
+WantedBy=multi-user.target
+EOF
+# systemctl daemon-reload
+# systemctl enable kube-scheduler
+# systemctl start kube-scheduler
+</code></pre>
+
+<p>確認。</p>
+
+<pre><code class="language-sh"># systemctl status kube-scheduler -l
+</code></pre></li>
+
+<li><p>Verify the control plane</p>
+
+<pre><code class="language-sh"># export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
+# kubectl config use-context kubernetes-admin@default
+# kubectl version
+# kubectl get componentstatuses
+</code></pre></li>
+</ol></li>
+
+<li><p>Prepare boostrapping part</p>
+
+<ol>
+<li><p>Generate bootstrap token</p>
+
+<p>Create the bootstrap token and kubeconfig which will be used by kubelets to join the Kubernetes cluster;</p>
+
+<pre><code class="language-sh"># TOKEN_PUB=$(openssl rand -hex 3)
+# TOKEN_SECRET=$(openssl rand -hex 8)
+# BOOTSTRAP_TOKEN=&quot;${TOKEN_PUB}.${TOKEN_SECRET}&quot;
+# kubectl -n kube-system create secret generic bootstrap-token-${TOKEN_PUB} --type 'bootstrap.kubernetes.io/token' --from-literal description=&quot;cluster bootstrap token&quot; --from-literal token-id=${TOKEN_PUB} --from-literal token-secret=${TOKEN_SECRET} --from-literal usage-bootstrap-authentication=true --from-literal usage-bootstrap-signing=true
+</code></pre>
+
+<p>ちょっと変わった?
+<a href="https://kubernetes.io/docs/admin/bootstrap-tokens/">https://kubernetes.io/docs/admin/bootstrap-tokens/</a></p>
+
+<pre><code class="language-sh"># TOKEN_PUB=$(openssl rand -hex 3)
+# TOKEN_SECRET=$(openssl rand -hex 8)
+# BOOTSTRAP_TOKEN=&quot;${TOKEN_PUB}.${TOKEN_SECRET}&quot;
+# kubectl -n kube-system create secret generic bootstrap-token-${TOKEN_PUB} --type 'bootstrap.kubernetes.io/token' --from-literal description=&quot;cluster bootstrap token&quot; --from-literal token-id=${TOKEN_PUB} --from-literal token-secret=${TOKEN_SECRET} --from-literal usage-bootstrap-authentication=true --from-literal usage-bootstrap-signing=true --from-literal auth-extra-groups=system:bootstrappers:worker,system:bootstrappers:ingress
+</code></pre>
+
+<p><code>kubeadm token create --kubeconfig /etc/kubernetes/admin.kubeconfig</code>
+みたいにも作れる。けどexpirationを指定できない…
+<a href="https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-token/#cmd-token-generate">https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-token/#cmd-token-generate</a></p>
+
+<p>確認。</p>
+
+<pre><code class="language-sh"># kubectl -n kube-system get secret/bootstrap-token-${TOKEN_PUB} -o yaml
+</code></pre></li>
+
+<li><p>Create bootstrap kubeconfig</p>
+
+<pre><code class="language-sh"># MASTER_IP=192.168.171.200
+# KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
+# CLUSTER_NAME=&quot;default&quot;
+# KCONFIG=&quot;bootstrap.kubeconfig&quot;
+# KUSER=&quot;kubelet-bootstrap&quot;
+# cd /etc/kubernetes
+# kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
+# kubectl config set-context ${KUSER}@${CLUSTER_NAME} --cluster=${CLUSTER_NAME} --user=${KUSER} --kubeconfig=${KCONFIG}
+# kubectl config use-context ${KUSER}@${CLUSTER_NAME} --kubeconfig=${KCONFIG}
+</code></pre>
+
+<p>確認。</p>
+
+<pre><code class="language-sh"># kubectl config view --kubeconfig=${KCONFIG}
+</code></pre></li>
+
+<li><p>Expose CA and bootstrap kubeconfig via configmap</p>
+
+<p>Expose the kubernetes CA file and the sanitized bootstrap kubeconfig to assist future clients joining the cluster;</p>
+
+<p>Make sure the bootstrap kubeconfig file does not contain the bootstrap token before you expose it via the cluster-info configmap.</p>
+
+<pre><code class="language-sh"># kubectl -n kube-public create configmap cluster-info --from-file /etc/kubernetes/pki/ca.crt --from-file /etc/kubernetes/bootstrap.kubeconfig
+</code></pre>
+
+<p>Allow anonymous user to acceess the cluster-info configmap:</p>
+
+<pre><code class="language-sh"># kubectl -n kube-public create role system:bootstrap-signer-clusterinfo --verb get --resource configmaps
+# kubectl -n kube-public create rolebinding kubeadm:bootstrap-signer-clusterinfo --role system:bootstrap-signer-clusterinfo --user system:anonymous
+</code></pre>
+
+<p>Allow a bootstrapping worker node join the cluster:</p>
+
+<pre><code class="language-sh"># kubectl create clusterrolebinding kubeadm:kubelet-bootstrap --clusterrole system:node-bootstrapper --group system:bootstrappers
+</code></pre></li>
+</ol></li>
+
+<li><p>Install Docker &amp; Kubelet</p>
+
+<ol>
+<li><p>Docker</p>
+
+<p><a href="https://docs.docker.com/install/linux/docker-ce/centos/#set-up-the-repository">https://docs.docker.com/install/linux/docker-ce/centos/#set-up-the-repository</a>
+に従ってDocker CEをインストール。
+ストレージドライバにはoverlay2をつかうので、device-mapper-persistent-dataとlvm2は入れない。</p>
+
+<pre><code class="language-sh"># yum install -y yum-utils
+# yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+# yum install -y docker-ce
+</code></pre>
+
+<p>18.03.0-ceが入った。</p>
+
+<p>よくみたらDocker CEはOracle Linuxをサポートしていないので、代わりに<a href="https://docs.oracle.com/cd/E77565_01/E87205/html/section_install_upgrade_yum_docker.html">Oracle Container Runtime for Docker</a>を入れる。</p>
+
+<p><code>/etc/yum.repos.d/public-yum-ol7.repo</code>の<code>ol7_addons</code>の<code>enabled</code>を1に。</p>
+
+<pre><code class="language-sh"># yum install -y docker-engine
+</code></pre>
+
+<p>docker-engine 17.06.2が入った。
+<code>/etc/systemd/system/docker.service.d/docker-sysconfig.conf</code></p>
+
+<p><code>/etc/sysconfig/docker</code>に以下を追記。</p>
+
+<pre><code>DOCKER_NOFILE=1000000
+DOCKER_OPT_BIP=&quot;&quot;
+DOCKER_OPT_IPMASQ=&quot;&quot;
+</code></pre>
+
+<p><code>/etc/sysconfig/docker</code>の<code>OPTIONS</code>に<code>--iptables=false</code>を追加。</p>
+
+<pre><code class="language-sh"># systemctl daemon-reload
+# systemctl enable docker
+# systemctl start docker
+</code></pre>
+
+<p>確認.</p>
+
+<pre><code class="language-sh"># cat /proc/$(pidof dockerd)/environ
+# systemctl status docker -l
+</code></pre></li>
+
+<li><p>CNI</p>
+
+<pre><code class="language-sh"># mkdir -p /etc/cni/net.d /opt/cni/bin/
+</code></pre>
+
+<p><a href="https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz">https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz</a>
+をダウンロード。</p>
+
+<p>なかのcnitoolとnoopを<code>/opt/cni/bin/</code>に配置。</p>
+
+<pre><code class="language-sh"># curl -OL https://github.com/containernetworking/plugins/releases/download/v0.7.1/cni-plugins-amd64-v0.7.1.tgz
+# tar zxf cni-plugins-amd64-v0.7.1.tgz
+# cp * /opt/cni/bin/
+# chmod +x /opt/cni/bin/*
+# cat &gt;/etc/cni/net.d/99-loopback.conf &lt;&lt;EOF
+{
+  &quot;type&quot;: &quot;loopback&quot;
+}
+EOF
+</code></pre></li>
+
+<li><p>Kubelet</p>
+
+<p>前提コマンド(conntrack)インストール。</p>
+
+<pre><code class="language-sh"># yum -y install conntrack-tools
+</code></pre>
+
+<pre><code class="language-sh"># DNS_SERVER_IP=10.0.0.10
+# PAUSE_IMAGE=k8s.gcr.io/pause-amd64:3.1
+# DNS_DOMAIN=&quot;cluster.local&quot;
+# mkdir -p /etc/kubernetes/manifests
+# cat &gt; /etc/systemd/system/kubelet.service &lt;&lt; EOF
+[Unit]
+Description=Kubernetes Kubelet
+Documentation=https://github.com/kubernetes/kubernetes
+After=docker.service
+Requires=docker.service
+
+
+[Service]
+ExecStart=/usr/bin/kubelet \\
+  --address=0.0.0.0 \\
+  --bootstrap-kubeconfig=/etc/kubernetes/bootstrap.kubeconfig \\
+  --kubeconfig=/etc/kubernetes/kubelet.kubeconfig \\
+  --pod-manifest-path=/etc/kubernetes/manifests \\
+  --network-plugin=cni \\
+  --cni-conf-dir=/etc/cni/net.d \\
+  --cni-bin-dir=/opt/cni/bin \\
+  --cluster-dns=${DNS_SERVER_IP} \\
+  --cluster-domain=${DNS_DOMAIN} \\
+  --authorization-mode=Webhook \\
+  --client-ca-file=/etc/kubernetes/pki/ca.crt \\
+  --cert-dir=/etc/kubernetes \\
+  --v=2 \\
+  --cgroup-driver=cgroupfs \\
+  --pod-infra-container-image=${PAUSE_IMAGE} \\
+  --tls-min-version=VersionTLS10 \\
+  --allow_privileged
+Restart=always
+RestartSec=10s
+
+
+[Install]
+WantedBy=multi-user.target
+EOF
+# systemctl daemon-reload
+# systemctl enable kubelet
+# systemctl start kubelet
+</code></pre>
+
+<p>&ndash;allow_privilegedはflannelに必要。</p>
+
+<p>本当は<a href="https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/">kubelet config file</a>を使ったほうがいい。</p>
+
+<p>確認。</p>
+
+<pre><code class="language-sh"># systemctl status kubelet -l
+</code></pre></li>
+</ol></li>
+
+<li><p>Deploy essential kubernetes components</p>
+
+<ol>
+<li><p>kube-proxy</p>
+
+<p>サービスアカウント作成。</p>
+
+<pre><code class="language-sh"># export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
+# kubectl -n kube-system create serviceaccount kube-proxy
+</code></pre>
+
+<p>kube-proxy kubeconfig作成</p>
+
+<pre><code class="language-sh"># MASTER_IP=192.168.171.200
+# KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
+# export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
+# SECRET=$(kubectl -n kube-system get sa/kube-proxy --output=jsonpath='{.secrets[0].name}')
+# JWT_TOKEN=$(kubectl -n kube-system get secret/$SECRET --output=jsonpath='{.data.token}' | base64 -d)
+# CLUSTER_NAME=&quot;default&quot;
+# KCONFIG=&quot;kube-proxy.kubeconfig&quot;
+# cd /etc/kubernetes
+# kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
+# kubectl config set-context ${CLUSTER_NAME} --cluster=${CLUSTER_NAME} --user=default --namespace=default --kubeconfig=${KCONFIG}
+# kubectl config set-credentials ${CLUSTER_NAME} --token=${JWT_TOKEN} --kubeconfig=${KCONFIG}
+# kubectl config use-context ${CLUSTER_NAME} --kubeconfig=${KCONFIG}
+</code></pre>
+
+<p>確認。</p>
+
+<pre><code class="language-sh"># kubectl config view --kubeconfig=${KCONFIG}
+</code></pre>
+
+<p>Bind a kube-proxy service account (from kube-system namespace) to a clusterrole system:node-proxier to allow RBAC</p>
+
+<pre><code class="language-sh"># kubectl create clusterrolebinding kubeadm:node-proxier --clusterrole system:node-proxier --serviceaccount kube-system:kube-proxy
+</code></pre>
+
+<p>Create a kube-proxy service file and run it:</p>
+
+<pre><code class="language-sh"># cat &gt; /etc/systemd/system/kube-proxy.service &lt;&lt; EOF
+[Unit]
+Description=Kubernetes Kube Proxy
+Documentation=https://github.com/kubernetes/kubernetes
+After=network.target
+
+
+[Service]
+ExecStart=/usr/bin/kube-proxy \\
+  --bind-address 0.0.0.0 \\
+  --kubeconfig=/etc/kubernetes/kube-proxy.kubeconfig \\
+  --v=2
+Restart=always
+RestartSec=10s
+
+
+[Install]
+WantedBy=multi-user.target
+EOF
+# systemctl daemon-reload
+# systemctl enable kube-proxy
+# systemctl start kube-proxy
+</code></pre>
+
+<p>確認。</p>
+
+<pre><code class="language-sh"># systemctl status kube-proxy -l
+</code></pre></li>
+
+<li><p>Flannel</p>
+
+<p><a href="https://github.com/coreos/flannel/blob/master/Documentation/kubernetes.md">https://github.com/coreos/flannel/blob/master/Documentation/kubernetes.md</a></p></li>
+
+<li><p>CoreDNS</p>
+
+<p><a href="https://kubernetes.io/docs/tasks/administer-cluster/coredns/">https://kubernetes.io/docs/tasks/administer-cluster/coredns/</a>
+<a href="https://coredns.io/2018/01/29/deploying-kubernetes-with-coredns-using-kubeadm/">https://coredns.io/2018/01/29/deploying-kubernetes-with-coredns-using-kubeadm/</a>
+<a href="https://github.com/coredns/deployment/tree/master/kubernetes">https://github.com/coredns/deployment/tree/master/kubernetes</a></p>
+
+<p><a href="https://github.com/coredns/deployment/archive/master.zip">https://github.com/coredns/deployment/archive/master.zip</a>
+をダウンロード。</p>
+
+<p>なかの<code>kubernetes/coredns.yaml.sed</code>と<code>kubernetes/deploy.sh</code>をVMにもってきて、</p>
+
+<pre><code class="language-sh"># DNS_SERVER_IP=&quot;10.0.0.10&quot;
+# SERVICE_CLUSTER_IP_RANGE=&quot;10.0.0.0/16&quot;
+# DNS_DOMAIN=&quot;cluster.local&quot;
+# chmod +x deploy.sh
+# ./deploy.sh -r $SERVICE_CLUSTER_IP_RANGE -i $DNS_SERVER_IP -d $DNS_DOMAIN &gt; /etc/kubernetes/manifests/coredns.yaml
+</code></pre>
+
+<pre><code class="language-sh"># export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
+# kubectl apply -f /etc/kubernetes/manifests/coredns.yaml
+</code></pre>
+
+<p>確認。</p>
+
+<pre><code class="language-sh"># kubectl -n kube-system get pods -o wide
+# kubectl -n kube-system get deployments
+</code></pre></li>
+</ol></li>
+
+<li><p>Additional apps</p>
+
+<ol>
+<li><p>Kubernetes Dashboard</p>
+
+<pre><code class="language-sh"># cd /etc/kubernetes/manifests/
+# curl -OL https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
+</code></pre>
+
+<pre><code class="language-sh"># export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
+# kubectl apply -f kubernetes-dashboard.yaml
+</code></pre></li>
+
+<li><p>Weave Scope</p>
+
+<pre><code class="language-sh"># curl -sSL -o scope.yaml https://cloud.weave.works/k8s/scope.yaml?k8s-service-type=NodePort
+# kubectl apply -f scope.yaml
+</code></pre>
+
+<p><code>kubectl -n weave get svc/weave-scope-app</code>でポート調べて、<code>http://k8s-master:&lt;ポート&gt;/</code>で開く。</p></li>
+</ol></li>
+</ol>
+
+<p>ダウンロードしたものまとめ:</p>
+
+<p><a href="https://storage.googleapis.com/kubernetes-release/release/v1.10.0/kubernetes-server-linux-amd64.tar.gz">https://storage.googleapis.com/kubernetes-release/release/v1.10.0/kubernetes-server-linux-amd64.tar.gz</a></p>
+
+<p><a href="https://github.com/coreos/etcd/releases/download/v3.1.12/etcd-v3.1.12-linux-amd64.tar.gz">https://github.com/coreos/etcd/releases/download/v3.1.12/etcd-v3.1.12-linux-amd64.tar.gz</a></p>
+
+<pre><code>================================================================================
+ Package                  Arch     Version                   Repository    Size
+================================================================================
+Installing:
+ docker-engine            x86_64   17.06.2.ol-1.0.1.el7      ol7_addons    21 M
+Installing for dependencies:
+ audit-libs-python        x86_64   2.7.6-3.el7               ol7_latest    73 k
+ checkpolicy              x86_64   2.5-4.el7                 ol7_latest   290 k
+ container-selinux        noarch   2:2.21-1.el7              ol7_addons    28 k
+ libcgroup                x86_64   0.41-13.el7               ol7_latest    64 k
+ libsemanage-python       x86_64   2.5-8.el7                 ol7_latest   104 k
+ policycoreutils-python   x86_64   2.5-17.1.0.1.el7          ol7_latest   445 k
+ python-IPy               noarch   0.75-6.el7                ol7_latest    32 k
+ setools-libs             x86_64   3.3.8-1.1.el7             ol7_latest   611 k
+</code></pre>
+
+<p><a href="https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz">https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz</a></p>
+
+<p><a href="https://github.com/containernetworking/plugins/releases/download/v0.7.1/cni-plugins-amd64-v0.7.1.tgz">https://github.com/containernetworking/plugins/releases/download/v0.7.1/cni-plugins-amd64-v0.7.1.tgz</a></p>
+
+<p>Oracle Container Services for use with Kubernetes 1.1.9.1.zip
+のpause-amd64.tar</p>
+
+<pre><code>=====================================================================================================================================================
+ Package                                     Arch                        Version                               Repository                       Size
+=====================================================================================================================================================
+Installing:
+ conntrack-tools                             x86_64                      1.4.4-3.el7_3                         ol7_latest                      186 k
+Installing for dependencies:
+ libnetfilter_cthelper                       x86_64                      1.0.0-9.el7                           ol7_latest                       17 k
+ libnetfilter_cttimeout                      x86_64                      1.0.0-6.el7                           ol7_latest                       17 k
+ libnetfilter_queue                          x86_64                      1.0.2-2.el7_2                         ol7_latest                       22 k
+</code></pre>
+
+<p><a href="https://github.com/coredns/deployment/archive/master.zip">https://github.com/coredns/deployment/archive/master.zip</a>
+docker image: coredns/coredns:1.1.1</p>
+
+<p><a href="https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml">https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml</a>
+quay.io/coreos/flannel:v0.10.0-amd64</p>
+
+<p>Oracle Container Services for use with Kubernetes 1.1.9.1.zip
+のflannel.tar</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        
+        
+
+        
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-6244473643910448"
+             data-ad-slot="1845600530"
+             data-ad-format="auto"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </aside>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f04%2f17%2fkubernetes110-from-scratch%2f&t=Kubernetes%201.10%e3%82%92%e3%82%b9%e3%82%af%e3%83%a9%e3%83%83%e3%83%81%e3%81%8b%e3%82%89%e6%89%8b%e5%8b%95%e3%81%a7%e6%a7%8b%e7%af%89" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f04%2f17%2fkubernetes110-from-scratch%2f&text=Kubernetes%201.10%e3%82%92%e3%82%b9%e3%82%af%e3%83%a9%e3%83%83%e3%83%81%e3%81%8b%e3%82%89%e6%89%8b%e5%8b%95%e3%81%a7%e6%a7%8b%e7%af%89&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f04%2f17%2fkubernetes110-from-scratch%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f04%2f17%2fkubernetes110-from-scratch%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f04%2f17%2fkubernetes110-from-scratch%2f&title=Kubernetes%201.10%e3%82%92%e3%82%b9%e3%82%af%e3%83%a9%e3%83%83%e3%83%81%e3%81%8b%e3%82%89%e6%89%8b%e5%8b%95%e3%81%a7%e6%a7%8b%e7%af%89" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://www.kaitoy.xyz/tags/kubernetes"><i class="fa fa-tags"></i> kubernetes </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/docker"><i class="fa fa-tags"></i> docker </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/04/01/hello-skaffold/">Skaffoldを触ってみた</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">Kubernetes 1.8のアクセス制御について。あとDashboard。</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/08/14/webdriverio-chrome/">WebdriverIOとChromeのヘッドレスモードで自動ブラウザテストするDockerイメージ: webdriverio-chrome</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/07/31/docker-for-windows/">Docker for Windowsがコレジャナかった</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/">Windows Server 2016 TP5でWindows Containersにリトライ</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">Pcap4J Meets Windows Containers</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></li>
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://www.kaitoy.xyz/2018/04/01/hello-skaffold/">
+                  Skaffoldを触ってみた
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cnn">cnn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/coursera">coursera</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/deep-learning">deep-learning</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/headless-browser">headless-browser</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/keras">keras</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubeadm">kubeadm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/license">license</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/machine-learning">machine-learning</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/neural-network">neural-network</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nlp">nlp</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/rnn">rnn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/selenium">selenium</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/servicenow">servicenow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/skaffold">skaffold</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/tensorflow">tensorflow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/test-framework">test-framework</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/webdriverio">webdriverio</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-6244473643910448"
+    data-ad-slot="1845600530"
+    data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2018  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/highlight.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dos.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/yaml.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dockerfile.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+
