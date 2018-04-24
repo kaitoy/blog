@@ -11,23 +11,22 @@
     
       
         <item>
-          <title>Kubernetes 1.10をスクラッチから手動で構築</title>
+          <title>Kubernetes 1.10をスクラッチから全手動で構築</title>
           <link>https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/</link>
           <pubDate>Tue, 17 Apr 2018 00:31:48 JST</pubDate>
           <author>Kaito Yamada</author>
           <guid>https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/</guid>
           <description>
 
-&lt;p&gt;CentOS 7のVMでKubernetes1.10の単一ノードクラスタをスクラッチから作った。
+&lt;p&gt;CentOS 7のVMでKubernetes1.10のクラスタをスクラッチから全手動で作った。
 参考にしたのは主に以下。&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://nixaid.com/deploying-kubernetes-cluster-from-scratch/&#34;&gt;https://nixaid.com/deploying-kubernetes-cluster-from-scratch/&lt;/a&gt;
-&lt;a href=&#34;https://kubernetes.io/docs/getting-started-guides/scratch/&#34;&gt;https://kubernetes.io/docs/getting-started-guides/scratch/&lt;/a&gt;
-&lt;a href=&#34;https://ulam.io/blog/kubernetes-scratch/&#34;&gt;https://ulam.io/blog/kubernetes-scratch/&lt;/a&gt;
-&lt;a href=&#34;https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master&#34;&gt;https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;とりあえず作業メモだけ残す。
-あとで整理する。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://nixaid.com/deploying-kubernetes-cluster-from-scratch/&#34;&gt;https://nixaid.com/deploying-kubernetes-cluster-from-scratch/&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/getting-started-guides/scratch/&#34;&gt;https://kubernetes.io/docs/getting-started-guides/scratch/&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://ulam.io/blog/kubernetes-scratch/&#34;&gt;https://ulam.io/blog/kubernetes-scratch/&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master&#34;&gt;https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
 
 &lt;p&gt;
 
@@ -44,58 +43,112 @@
 &lt;/script&gt;
 &lt;/p&gt;
 
-&lt;h2 id=&#34;作業メモ&#34;&gt;作業メモ&lt;/h2&gt;
+&lt;h2 id=&#34;構成&#34;&gt;構成&lt;/h2&gt;
 
-&lt;p&gt;単一ノードのクラスタ。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;マシン: Windows 10 Homeのラップトップの上のVMware PlayerのVM
 
-&lt;p&gt;おおむね、k8sコンポーネント間の通信の暗号化に使う証明書の生成、kubeconfigの生成、etcdのデプロイ、k8sコンポーネントのデプロイ、Fannelデプロイ、CoreDNSデプロイ、という流れ。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;CPU: 2コア&lt;/li&gt;
+&lt;li&gt;メモリ: 4GB&lt;/li&gt;
+&lt;li&gt;NIF: NATのを一つ&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;OS: Oracle Linux 7.4
 
-&lt;p&gt;とりあえずOracle Linux 7.4のMinimalでVMを作って固定IP(192.168.171.200)にして、ホスト名をk8s-masterにして、swapをoffに。
-firewalldとSELinuxもとりあえず無効に。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Minimalインストール&lt;/li&gt;
+&lt;li&gt;IPアドレス: 192.168.171.200、静的割り当て&lt;/li&gt;
+&lt;li&gt;ホスト名: k8s-master (hostsで解決)&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Kubernetes: バージョン1.10.0
 
-&lt;p&gt;&lt;code&gt;/etc/hosts&lt;/code&gt;には&lt;code&gt;192.168.171.200 k8s-master&lt;/code&gt;を追加。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;単一ノード&lt;/li&gt;
+&lt;li&gt;全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e. 非コンテナ)&lt;/li&gt;
+&lt;li&gt;コンポーネント間通信とkubectlの通信をTLSで暗号化&lt;/li&gt;
+&lt;li&gt;コンポーネント間通信とkubectlの通信の認証は&lt;a href=&#34;https://kubernetes.io/docs/admin/authentication/#x509-client-certs&#34;&gt;x509クライアント証明書&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;TLS bootstrappingはbootstrap token使用。&lt;/li&gt;
+&lt;li&gt;etcd 3.1.12&lt;/li&gt;
+&lt;li&gt;flannel 0.10.0&lt;/li&gt;
+&lt;li&gt;CoreDNS 1.1.1&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;kubeletの動作条件にあるので、swapをoffにする。
+Oracle Linuxにログインして、&lt;code&gt;/etc/fstab&lt;/code&gt;のswapの行を削除して、以下のコマンドを実行。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# swapoff -a
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面倒なのでとりあえず無効にする。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;/etc/selinux/config&lt;/code&gt;を編集して、&lt;code&gt;SELINUX&lt;/code&gt;を&lt;code&gt;permissive&lt;/code&gt;にして、以下のコマンドを実行。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# setenforce 0
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ファイアウォールもちゃんと設定すればいいんだけど面倒なのでとりあえず無効にする。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# systemctl stop firewalld
+# systemctl disable firewalld
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;これで準備完了。&lt;/p&gt;
+
+&lt;h2 id=&#34;クラスタ構築手順&#34;&gt;クラスタ構築手順&lt;/h2&gt;
+
+&lt;p&gt;おおむね、k8sコンポーネント間の通信の暗号化に使う鍵と証明書の生成、各コンポーネント用kubeconfigの生成、etcdのデプロイ、k8sコンポーネントのデプロイ、fannelデプロイ、CoreDNSデプロイ、という流れ。
+ついでに最後に&lt;a href=&#34;https://github.com/weaveworks/scope&#34;&gt;Weave Scope&lt;/a&gt;をデプロイしてみる。&lt;/p&gt;
 
 &lt;ol&gt;
-&lt;li&gt;&lt;p&gt;Configure bridge netfilter and the IP forwarding&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;Bridge netfilterとIP forwardingを設定&lt;/p&gt;
+
+&lt;p&gt;まず、Bridge netfilterモジュールをロードする。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# modprobe br_netfilter
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;code&gt;/etc/sysconfig/modules/br_netfilter.modules&lt;/code&gt;を以下の内容で作る。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;#!/bin/sh
+# cat &amp;gt; /etc/sysconfig/modules/br_netfilter.modules &amp;lt;&amp;lt; EOF
+#!/bin/sh
 /sbin/modprobe br_netfilter &amp;gt; /dev/null 2&amp;gt;&amp;amp;1
+EOF
+# chmod 755 /etc/sysconfig/modules/br_netfilter.modules
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;&lt;code&gt;chmod 755 /etc/sysconfig/modules/br_netfilter.modules&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;Bridge netfilterとIP forwardingを有効化する。&lt;/p&gt;
 
-&lt;p&gt;&lt;code&gt;/etc/sysctl.d/kubernetes.conf&lt;/code&gt;を以下の内容で作る。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;net.bridge.bridge-nf-call-iptables = 1
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cat &amp;gt; /etc/sysctl.d/kubernetes.conf &amp;lt;&amp;lt; EOF
+net.bridge.bridge-nf-call-iptables = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 net.ipv4.ip_forward = 1
+EOF
+# sysctl -p /etc/sysctl.d/kubernetes.conf
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;で、&lt;code&gt;sysctl -p /etc/sysctl.d/kubernetes.conf&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
-&lt;p&gt;確認。&lt;/p&gt;
+&lt;p&gt;設定確認。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# lsmod |grep br_netfilter
 # sysctl -a | grep -E &amp;quot;net.bridge.bridge-nf-call-|net.ipv4.ip_forward&amp;quot;
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Generate x509 certs&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;x509証明書生成&lt;/p&gt;
 
 &lt;ol&gt;
-&lt;li&gt;&lt;p&gt;openssl configuration file&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;opensslの設定作成&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# mkdir -p /etc/kubernetes/pki
 # cd /etc/kubernetes/pki
 # K8S_SERVICE_IP=10.0.0.1
 # MASTER_IP=192.168.171.200
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cat &amp;gt; openssl.cnf &amp;lt;&amp;lt; EOF
+# cat &amp;gt; openssl.cnf &amp;lt;&amp;lt; EOF
 [ req ]
 distinguished_name = req_distinguished_name
 [req_distinguished_name]
@@ -134,9 +187,9 @@ IP.1 = ${MASTER_IP}
 EOF
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Kubernetes CA cert&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;Kubernetes CA証明書生成&lt;/p&gt;
 
-&lt;p&gt;used to sign the rest of K8s certs.&lt;/p&gt;
+&lt;p&gt;以降で生成する証明書に署名するための証明書。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
 # CA_DAYS=5475
@@ -145,9 +198,9 @@ EOF
 # openssl req -x509 -new -sha256 -nodes -key ca.key -days $CA_DAYS -out ca.crt -subj &amp;quot;/CN=kubernetes-ca&amp;quot;  -extensions v3_ca -config ./openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;kube apiserver cert&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;kube-apiserver証明書生成&lt;/p&gt;
 
-&lt;p&gt;used as default x509 apiserver cert.&lt;/p&gt;
+&lt;p&gt;kube-apiserverのAPIをHTTPSにするためのサーバ証明書。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
 # APISERVER_DAYS=5475
@@ -156,9 +209,9 @@ EOF
 # openssl req -new -sha256 -key kube-apiserver.key -subj &amp;quot;/CN=kube-apiserver&amp;quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-apiserver.crt -days $APISERVER_DAYS -extensions v3_req_apiserver -extfile ./openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;apiserver kubelet client cert&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;kube-apiserver-kubelet証明書生成&lt;/p&gt;
 
-&lt;p&gt;used for x509 client authentication to the kubelet&amp;rsquo;s HTTPS endpoint.&lt;/p&gt;
+&lt;p&gt;kube-apiserverがkubeletのAPIにアクセスするときのクライアント証明書。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
 # APISERVER_KUBELET_CLIENT_DAYS=5475
@@ -167,9 +220,10 @@ EOF
 # openssl req -new -key apiserver-kubelet-client.key -subj &amp;quot;/CN=kube-apiserver-kubelet-client/O=system:masters&amp;quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out apiserver-kubelet-client.crt -days $APISERVER_KUBELET_CLIENT_DAYS -extensions v3_req_client -extfile ./openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;admin client cert&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;adminクライアント証明書生成&lt;/p&gt;
 
-&lt;p&gt;used by a human to administrate the cluster.&lt;/p&gt;
+&lt;p&gt;kubectlとkubeletがkube-apiserverのAPIにアクセスするときのクライアント証明書。
+本当はkubeletは別に作ったほうがよさそう。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
 # ADMIN_DAYS=5475
@@ -178,10 +232,12 @@ EOF
 # openssl req -new -key admin.key -subj &amp;quot;/CN=kubernetes-admin/O=system:masters&amp;quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out admin.crt -days $ADMIN_DAYS -extensions v3_req_client -extfile ./openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Service Account key&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;Service Accountキーとkube-controller-managerのクライアント証明書生成&lt;/p&gt;
 
-&lt;p&gt;The service account token private key (sa.key) given only to the controller manager, is used to sign the tokens.
-The masters only need the public key portion (sa.pub) in order to verify the tokens signed by the controller manager.&lt;/p&gt;
+&lt;p&gt;Service Accountトークンにkube-controller-managerが署名するときに使うキーを生成する。
+そのキーを使ってkube-controller-managerのクライアント証明書も生成する。&lt;/p&gt;
+
+&lt;p&gt;kube-apiserverがトークンの署名を確認するとき(?)に使う公開鍵も生成する。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
 # CONTROLLER_MANAGER_DAYS=5475
@@ -191,9 +247,10 @@ The masters only need the public key portion (sa.pub) in order to verify the tok
 # openssl req -new -sha256 -key sa.key -subj &amp;quot;/CN=system:kube-controller-manager&amp;quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out sa.crt -days $CONTROLLER_MANAGER_DAYS -extensions v3_req_client -extfile ./openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;kube-scheduler cert&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;kube-schedulerクライアント証明書生成&lt;/p&gt;
 
-&lt;p&gt;used to allow access to the resources required by the kube-scheduler component.&lt;/p&gt;
+&lt;p&gt;kube-schedulerがkube-apiserverにリクエストするときに使うクライアント証明書。
+多分。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
 # SCHEDULER_DAYS=5475
@@ -202,9 +259,11 @@ The masters only need the public key portion (sa.pub) in order to verify the tok
 # openssl req -new -sha256 -key kube-scheduler.key -subj &amp;quot;/CN=system:kube-scheduler&amp;quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-scheduler.crt -days $SCHEDULER_DAYS -extensions v3_req_client -extfile ./openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;front proxy CA cert&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;front proxy CA証明書生成&lt;/p&gt;
 
-&lt;p&gt;used to sign front proxy client cert.&lt;/p&gt;
+&lt;p&gt;front proxyのクライアント証明書に署名するのにつかう証明書。
+front proxyってなんだ?
+多分、kube-apiserverの前にいて、クラスタの外からの通信を受けるやつ(&lt;a href=&#34;https://kubernetes.io/docs/concepts/cluster-administration/proxies/&#34;&gt;apiserver proxy&lt;/a&gt;)か。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
 # FRONT_PROXY_CA_DAYS=5475
@@ -213,9 +272,10 @@ The masters only need the public key portion (sa.pub) in order to verify the tok
 # openssl req -x509 -new -sha256 -nodes -key front-proxy-ca.key -days $FRONT_PROXY_CA_DAYS -out front-proxy-ca.crt -subj &amp;quot;/CN=front-proxy-ca&amp;quot; -extensions v3_ca -config ./openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;front proxy client cert&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;front proxyクライアント証明書&lt;/p&gt;
 
-&lt;p&gt;used to verify client certificates on incoming requests before trusting usernames in headers specified by &amp;ndash;requestheader-username-headers&lt;/p&gt;
+&lt;p&gt;クラスタの外からくるHTTPリクエストの、&lt;code&gt;--requestheader-username-headers&lt;/code&gt;で指定されたヘッダに書いてあるユーザ名を認証するときに見るクライアント証明書。
+kubectlの証明書(adminクライアント証明書)とは違うんだろうか。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
 # FRONT_PROXY_CLIENT_DAYS=5475
@@ -224,9 +284,10 @@ The masters only need the public key portion (sa.pub) in order to verify the tok
 # openssl req -new -sha256 -key front-proxy-client.key -subj &amp;quot;/CN=front-proxy-client&amp;quot; | openssl x509 -req -sha256 -CA front-proxy-ca.crt -CAkey front-proxy-ca.key -CAcreateserial -out front-proxy-client.crt -days $FRONT_PROXY_CLIENT_DAYS -extensions v3_req_client -extfile ./openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;kube-proxy cert&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;kube-proxy証明書&lt;/p&gt;
 
-&lt;p&gt;Create kube-proxy x509 cert only if you want to use a kube-proxy role instead of a kube-proxy service account with its JWT token (kubernetes secrets) for auhentication.&lt;/p&gt;
+&lt;p&gt;認証に、Service AccountとSecretsの代わりにkube-proxyロールを使いたいときに生成する証明書。
+要らないような…&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
 # KUBE_PROXY_DAYS=5475
@@ -235,9 +296,9 @@ The masters only need the public key portion (sa.pub) in order to verify the tok
 # openssl req -new -key kube-proxy.key -subj &amp;quot;/CN=kube-proxy/O=system:node-proxier&amp;quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-proxy.crt -days $KUBE_PROXY_DAYS -extensions v3_req_client -extfile ./openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;etcd CA cert&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;etcd CA証明書&lt;/p&gt;
 
-&lt;p&gt;etcd CA cert used to sign the rest of etcd certs.&lt;/p&gt;
+&lt;p&gt;以降で生成するetcdの証明書に署名するための証明書。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
 # ETCD_CA_DAYS=5475
@@ -246,9 +307,10 @@ The masters only need the public key portion (sa.pub) in order to verify the tok
 # openssl req -x509 -new -sha256 -nodes -key etcd-ca.key -days $ETCD_CA_DAYS -out etcd-ca.crt -subj &amp;quot;/CN=etcd-ca&amp;quot; -extensions v3_ca -config ./openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;etcd cert&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;etcd証明書&lt;/p&gt;
 
-&lt;p&gt;etcd cert used for securing connections to etcd (client-to-server).&lt;/p&gt;
+&lt;p&gt;etcdサーバのサーバ証明書。
+多分。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
 # ETCD_DAYS=5475
@@ -257,9 +319,10 @@ The masters only need the public key portion (sa.pub) in order to verify the tok
 # openssl req -new -sha256 -key etcd.key -subj &amp;quot;/CN=etcd&amp;quot; | openssl x509 -req -sha256 -CA etcd-ca.crt -CAkey etcd-ca.key -CAcreateserial -out etcd.crt -days $ETCD_DAYS -extensions v3_req_etcd -extfile ./openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;etcd peer cert&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;etcd peer証明書&lt;/p&gt;
 
-&lt;p&gt;etcd peer cert used for securing connections between peers (server-to-server).&lt;/p&gt;
+&lt;p&gt;etcdサーバが冗長構成のとき、サーバ間の通信の暗号化に使う証明書。
+マスタが一つなら要らない?&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
 # ETCD_PEER_DAYS=5475
@@ -270,7 +333,10 @@ The masters only need the public key portion (sa.pub) in order to verify the tok
 
 &lt;li&gt;&lt;p&gt;確認&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# for i in *crt; do
+&lt;p&gt;以上で生成した証明書の内容を確認する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
+# for i in *crt; do
   echo $i:;
   openssl x509 -subject -issuer -noout -in $i;
   echo;
@@ -278,35 +344,51 @@ done
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 &lt;/ol&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Controller binaries&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;Kubernetesバイナリインストール&lt;/p&gt;
 
-&lt;p&gt;公式ドキュメントによると、
-docker, kubelet, and kube-proxyはコンテナ外で。
-etcd, kube-apiserver, kube-controller-manager, and kube-schedulerはコンテナで動かすのが推奨。
-だけど全部コンテナ外でやる。&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/getting-started-guides/scratch/#selecting-images&#34;&gt;公式ドキュメント&lt;/a&gt;によると、Docker、kubelet、kube-proxyはコンテナ外で動かして、etcd、kube-apiserver、kube-controller-manager、kube-schedulerはコンテナで動かすのが推奨されている。
+けど、とりあえずは簡単に全部コンテナ外でやる。&lt;/p&gt;
 
-&lt;p&gt;Oracle Linux用には、各コンポのコンテナイメージ詰め合わせがOracle Container Services for use with Kubernetesという名前で配布されているけど、現時点で1.10がないので使わない。&lt;/p&gt;
+&lt;p&gt;(Oracle Linux用には、各コンポのコンテナイメージ詰め合わせがOracle Container Services for use with Kubernetesという名前で配布されているけど、現時点で1.9までしかないので使わない。)&lt;/p&gt;
 
-&lt;p&gt;バイナリをダウンロードするURLは以下。&lt;/p&gt;
+&lt;p&gt;バイナリは以下URLからダウンロードできる。&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/kubernetes-server-linux-amd64.tar.gz&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/kubernetes-server-linux-amd64.tar.gz&lt;/a&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;全部入り: &lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/kubernetes-server-linux-amd64.tar.gz&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/kubernetes-server-linux-amd64.tar.gz&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;kube-apiserver
 
-&lt;p&gt;&lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-apiserver&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-apiserver&lt;/a&gt;
-&lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-controller-manager&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-controller-manager&lt;/a&gt;
-&lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-scheduler&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-scheduler&lt;/a&gt;
-&lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-proxy&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-proxy&lt;/a&gt;
-&lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubelet&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubelet&lt;/a&gt;
-&lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubectl&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubectl&lt;/a&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;バイナリ: &lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-apiserver&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-apiserver&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;コンテナ: &lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-apiserver.tar&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-apiserver.tar&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;kube-controller-manager
 
-&lt;p&gt;&lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-apiserver.tar&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-apiserver.tar&lt;/a&gt;
-&lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-controller-manager.tar&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-controller-manager.tar&lt;/a&gt;
-&lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-scheduler.tar&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-scheduler.tar&lt;/a&gt;
-&lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-proxy.tar&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-proxy.tar&lt;/a&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;バイナリ: &lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-controller-manager&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-controller-manager&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;コンテナ: &lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-controller-manager.tar&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-controller-manager.tar&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;kube-scheduler
 
-&lt;p&gt;&lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/hyperkube&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/hyperkube&lt;/a&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;バイナリ: &lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-scheduler&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-scheduler&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;コンテナ: &lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-scheduler.tar&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-scheduler.tar&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;kube-proxy
 
-&lt;p&gt;hyperkubeとkubeadmを&lt;code&gt;/usr/bin/&lt;/code&gt;に。
-hyperkubeより個別のバイナリ使ったほうがメモリ使用量は小さくなるんだろうか。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;バイナリ: &lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-proxy&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-proxy&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;コンテナ: &lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-proxy.tar&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-proxy.tar&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;kubelet: &lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubelet&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubelet&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;kubectl: &lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubectl&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubectl&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;hyperkube: &lt;a href=&#34;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/hyperkube&#34;&gt;https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/hyperkube&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;最後のhyperkubeは、各種Kubernetesバイナリのごった煮。
+ファイル名によって動作が変わる。
+簡単のためこれを使うけど、個別のバイナリ使ったほうがメモリ使用量などで有利そう。&lt;/p&gt;
+
+&lt;p&gt;hyperkubeとkubeadmのバイナリを&lt;code&gt;/usr/bin/&lt;/code&gt;において、以下のコマンドを実行。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# ln -s /usr/bin/hyperkube /usr/bin/kube-apiserver
 # ln -s /usr/bin/hyperkube /usr/bin/kube-controller-manager
@@ -318,12 +400,12 @@ hyperkubeより個別のバイナリ使ったほうがメモリ使用量は小�
 # mkdir -p /var/lib/{kubelet,kube-proxy}
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Generate kube configs&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;kubeconfigファイル生成&lt;/p&gt;
 
-&lt;p&gt;kubeconfig files are used by a service or a user to authenticate oneself.&lt;/p&gt;
+&lt;p&gt;kubectlやk8sコンポーネントがkube-apiserverと話すときに使うkubeconfigファイルを生成する。&lt;/p&gt;
 
 &lt;ol&gt;
-&lt;li&gt;&lt;p&gt;service account kubeconfig&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;kube-controller-managerのkubeconfig&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# MASTER_IP=192.168.171.200
 # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
@@ -342,7 +424,7 @@ hyperkubeより個別のバイナリ使ったほうがメモリ使用量は小�
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# kubectl config view --kubeconfig=${KCONFIG}
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;kube-scheduler kubeconfig&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;kube-schedulerのkubeconfig&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# MASTER_IP=192.168.171.200
 # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
@@ -361,7 +443,9 @@ hyperkubeより個別のバイナリ使ったほうがメモリ使用量は小�
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# kubectl config view --kubeconfig=${KCONFIG}
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;admin kubeconfig&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;adminのkubeconfig&lt;/p&gt;
+
+&lt;p&gt;kubectl用。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# MASTER_IP=192.168.171.200
 # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
@@ -380,7 +464,7 @@ hyperkubeより個別のバイナリ使ったほうがメモリ使用量は小�
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# kubectl config view --kubeconfig=${KCONFIG}
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;kubelet kubeconfig&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;kubeletのkubeconfig&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# MASTER_IP=192.168.171.200
 # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
@@ -400,16 +484,17 @@ hyperkubeより個別のバイナリ使ったほうがメモリ使用量は小�
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 &lt;/ol&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Deploy etcd&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;etcdデプロイ&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://github.com/coreos/etcd/releases/download/v3.1.12/etcd-v3.1.12-linux-amd64.tar.gz&#34;&gt;https://github.com/coreos/etcd/releases/download/v3.1.12/etcd-v3.1.12-linux-amd64.tar.gz&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;etcdとetcdctlを&lt;code&gt;/usr/bin/&lt;/code&gt;にいれて、&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://github.com/coreos/etcd/releases/download/v3.1.12/etcd-v3.1.12-linux-amd64.tar.gz&#34;&gt;https://github.com/coreos/etcd/releases/download/v3.1.12/etcd-v3.1.12-linux-amd64.tar.gz&lt;/a&gt;
+からアーカイブをダウンロードして、中のetcdとetcdctlを&lt;code&gt;/usr/bin/&lt;/code&gt;にいれて、以下のコマンドを実行。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# chown root:root /usr/bin/etcd*
 # chmod 0755 /usr/bin/etcd*
 # mkdir -p /var/lib/etcd
 &lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;で、systemdのユニットファイルを書いてサービス化。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# MASTER_IP=192.168.171.200
 # CLUSTER_NAME=&amp;quot;default&amp;quot;
@@ -460,10 +545,12 @@ EOF
 # etcdctl --ca-file=/etc/kubernetes/pki/etcd-ca.crt --cert-file=/etc/kubernetes/pki/etcd.crt --key-file=/etc/kubernetes/pki/etcd.key member list
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Control plane deployment&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;マスタコンポーネントデプロイ。&lt;/p&gt;
 
 &lt;ol&gt;
 &lt;li&gt;&lt;p&gt;kube-apiserver&lt;/p&gt;
+
+&lt;p&gt;systemdのユニットファイルを書いてサービス化。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# MASTER_IP=192.168.171.200
 # SERVICE_CLUSTER_IP_RANGE=&amp;quot;10.0.0.0/16&amp;quot;
@@ -520,7 +607,7 @@ EOF
 # systemctl start kube-apiserver
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;&amp;ndash;allow_privilegedはflannelに必要。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;--allow_privileged&lt;/code&gt;はflannelなどに必要。&lt;/p&gt;
 
 &lt;p&gt;確認。&lt;/p&gt;
 
@@ -528,6 +615,8 @@ EOF
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;kube-controller-manager&lt;/p&gt;
+
+&lt;p&gt;systemdのユニットファイルを書いてサービス化。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# CLUSTER_CIDR=&amp;quot;10.244.0.0/16&amp;quot;
 # SERVICE_CLUSTER_IP_RANGE=&amp;quot;10.0.0.0/16&amp;quot;
@@ -567,12 +656,19 @@ EOF
 # systemctl start kube-controller-manager
 &lt;/code&gt;&lt;/pre&gt;
 
+&lt;p&gt;期限の切れたbootstrap token(後述)を消すためにtokencleanerを有効にしている。&lt;/p&gt;
+
+&lt;p&gt;bootstrapsignerはネームスペース&lt;code&gt;kube-public&lt;/code&gt;の&lt;code&gt;cluster-info&lt;/code&gt;というConfigMapにbootstrap tokenで署名するためのコントローラ。
+(何それ…)&lt;/p&gt;
+
 &lt;p&gt;確認。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# systemctl status kube-controller-manager -l
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;Kubernetes Scheduler&lt;/p&gt;
+
+&lt;p&gt;systemdのユニットファイルを書いてサービス化。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cat &amp;gt; /etc/systemd/system/kube-scheduler.service &amp;lt;&amp;lt; EOF
 [Unit]
@@ -603,7 +699,7 @@ EOF
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# systemctl status kube-scheduler -l
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Verify the control plane&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;マスタコンポーネント状態確認&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
 # kubectl config use-context kubernetes-admin@default
@@ -612,21 +708,14 @@ EOF
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 &lt;/ol&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Prepare boostrapping part&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/admin/kubelet-tls-bootstrapping/&#34;&gt;Bootstrap&lt;/a&gt;の設定&lt;/p&gt;
+
+&lt;p&gt;kubeletが起動したとき、bootstrap kubeconfigを読んでkube-apiserverからクライアント証明書をもらって起動用kubeconfigを生成するようにする。&lt;/p&gt;
 
 &lt;ol&gt;
-&lt;li&gt;&lt;p&gt;Generate bootstrap token&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/admin/bootstrap-tokens/&#34;&gt;bootstrap token&lt;/a&gt;生成&lt;/p&gt;
 
-&lt;p&gt;Create the bootstrap token and kubeconfig which will be used by kubelets to join the Kubernetes cluster;&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# TOKEN_PUB=$(openssl rand -hex 3)
-# TOKEN_SECRET=$(openssl rand -hex 8)
-# BOOTSTRAP_TOKEN=&amp;quot;${TOKEN_PUB}.${TOKEN_SECRET}&amp;quot;
-# kubectl -n kube-system create secret generic bootstrap-token-${TOKEN_PUB} --type &#39;bootstrap.kubernetes.io/token&#39; --from-literal description=&amp;quot;cluster bootstrap token&amp;quot; --from-literal token-id=${TOKEN_PUB} --from-literal token-secret=${TOKEN_SECRET} --from-literal usage-bootstrap-authentication=true --from-literal usage-bootstrap-signing=true
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;ちょっと変わった?
-&lt;a href=&#34;https://kubernetes.io/docs/admin/bootstrap-tokens/&#34;&gt;https://kubernetes.io/docs/admin/bootstrap-tokens/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;以下のように生成できる。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# TOKEN_PUB=$(openssl rand -hex 3)
 # TOKEN_SECRET=$(openssl rand -hex 8)
@@ -634,16 +723,19 @@ EOF
 # kubectl -n kube-system create secret generic bootstrap-token-${TOKEN_PUB} --type &#39;bootstrap.kubernetes.io/token&#39; --from-literal description=&amp;quot;cluster bootstrap token&amp;quot; --from-literal token-id=${TOKEN_PUB} --from-literal token-secret=${TOKEN_SECRET} --from-literal usage-bootstrap-authentication=true --from-literal usage-bootstrap-signing=true --from-literal auth-extra-groups=system:bootstrappers:worker,system:bootstrappers:ingress
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;&lt;code&gt;kubeadm token create --kubeconfig /etc/kubernetes/admin.kubeconfig&lt;/code&gt;
-みたいにも作れる。けどexpirationを指定できない…
-&lt;a href=&#34;https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-token/#cmd-token-generate&#34;&gt;https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-token/#cmd-token-generate&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;けど、&lt;a href=&#34;https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-token/#cmd-token-generate&#34;&gt;kubeadm&lt;/a&gt;でも生成出来てこっちのほうが楽なので、それで。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# kubeadm token create --kubeconfig /etc/kubernetes/admin.kubeconfig
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;expirationは指定できなくて、1日で期限切れになっちゃうけど、まあいい。&lt;/p&gt;
 
 &lt;p&gt;確認。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# kubectl -n kube-system get secret/bootstrap-token-${TOKEN_PUB} -o yaml
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Create bootstrap kubeconfig&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;bootstrap kubeconfig作成&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# MASTER_IP=192.168.171.200
 # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
@@ -661,11 +753,9 @@ EOF
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# kubectl config view --kubeconfig=${KCONFIG}
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Expose CA and bootstrap kubeconfig via configmap&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;CA証明書とbootstrap kubeconfigをConfigMap(cluster-info)で公開&lt;/p&gt;
 
-&lt;p&gt;Expose the kubernetes CA file and the sanitized bootstrap kubeconfig to assist future clients joining the cluster;&lt;/p&gt;
-
-&lt;p&gt;Make sure the bootstrap kubeconfig file does not contain the bootstrap token before you expose it via the cluster-info configmap.&lt;/p&gt;
+&lt;p&gt;kubeletはこのConfigMapを見てクラスタに参加する。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# kubectl -n kube-public create configmap cluster-info --from-file /etc/kubernetes/pki/ca.crt --from-file /etc/kubernetes/bootstrap.kubeconfig
 &lt;/code&gt;&lt;/pre&gt;
@@ -781,7 +871,7 @@ ExecStart=/usr/bin/kubelet \\
   --cluster-domain=${DNS_DOMAIN} \\
   --authorization-mode=Webhook \\
   --client-ca-file=/etc/kubernetes/pki/ca.crt \\
-  --cert-dir=/etc/kubernetes \\
+  --cert-dir=/etc/kubernetes/pki \\
   --v=2 \\
   --cgroup-driver=cgroupfs \\
   --pod-infra-container-image=${PAUSE_IMAGE} \\
@@ -814,7 +904,7 @@ EOF
 &lt;ol&gt;
 &lt;li&gt;&lt;p&gt;kube-proxy&lt;/p&gt;
 
-&lt;p&gt;サービスアカウント作成。&lt;/p&gt;
+&lt;p&gt;Service Account作成。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
 # kubectl -n kube-system create serviceaccount kube-proxy

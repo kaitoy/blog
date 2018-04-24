@@ -26,6 +26,8 @@ Elasticsearchが管理するデータの最小単位はドキュメントと呼�
 テーブルのスキーマにあたるものはマッピングと呼ばれ、ドキュメントのフィールドの型情報(e.g. string, integer)などを含み、Elasticsearchが自動で生成してくれる。(指定もできる、というかすべきらしい。)
 インデックス内ではさらにタイプという属性でドキュメントをカテゴライズできる、が、マニュアルからはタイプはあまり[使ってほしくない](https://www.elastic.co/guide/en/elasticsearch/reference/5.2/general-recommendations.html#_avoid_types)雰囲気が感じられる。
 
+(2018/4/25追記: 6.0で、一つのインデックスに複数のタイプを作ることができなくなり、7.0では完全に[タイプが廃止される](https://www.elastic.co/guide/en/elasticsearch/reference/6.x/removal-of-types.html)ことになった。)
+
 因みに、インデックスがRDBのデータベースでタイプがRDBのテーブルと説明されることもあるが、これは古いたとえで、[公式が間違いだったとしている](https://www.elastic.co/blog/index-vs-type)ので忘れてあげたい。
 
 インデックスは分散処理のために分割でき、分割した各部分はシャードと呼ばれる。
