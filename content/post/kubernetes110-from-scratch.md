@@ -9,7 +9,7 @@ title = "Kubernetes 1.10をスクラッチから全手動で構築"
 
 +++
 
-CentOS 7のVMでKubernetes1.10のクラスタをスクラッチから全手動で作った。
+Oracle Linux 7.4.0のVMでKubernetes1.10.0のクラスタをスクラッチから全手動で作った。
 参考にしたのは主に以下。
 
 * https://nixaid.com/deploying-kubernetes-cluster-from-scratch/
@@ -25,19 +25,21 @@ CentOS 7のVMでKubernetes1.10のクラスタをスクラッチから全手動�
     * CPU: 2コア
     * メモリ: 4GB
     * NIF: NATのを一つ
-* OS: Oracle Linux 7.4
+* OS: Oracle Linux 7.4.0
     * Minimalインストール
     * IPアドレス: 192.168.171.200、静的割り当て
     * ホスト名: k8s-master (hostsで解決)
+* Docker: Oracle Container Runtime for Docker (docker-engine) 17.06.2
 * Kubernetes: バージョン1.10.0
     * 単一ノード
     * 全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e. 非コンテナ)
     * コンポーネント間通信とkubectlの通信をTLSで暗号化
     * コンポーネント間通信とkubectlの通信の認証は[x509クライアント証明書](https://kubernetes.io/docs/admin/authentication/#x509-client-certs)
-    * TLS bootstrappingはbootstrap token使用。
+    * TLS BootstrappingにはBootstrap token使用。
+    * [Certificate Rotation](https://kubernetes.io/docs/tasks/tls/certificate-rotation/)有効
     * etcd 3.1.12
-    * flannel 0.10.0
-    * CoreDNS 1.1.1
+    * [flannel](https://github.com/coreos/flannel) 0.10.0
+    * [CoreDNS](https://github.com/coredns/coredns) 1.1.1
 
 <br>
 
@@ -171,7 +173,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
     3. kube-apiserver証明書生成
 
-        kube-apiserverのAPIをHTTPSにするためのサーバ証明書。
+        kube-apiserverのサーバ証明書。
 
         ```sh
         # cd /etc/kubernetes/pki
@@ -195,8 +197,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
     5. adminクライアント証明書生成
 
-        kubectlとkubeletがkube-apiserverのAPIにアクセスするときのクライアント証明書。
-        本当はkubeletは別に作ったほうがよさそう。
+        kubectlがkube-apiserverのAPIにアクセスするときのクライアント証明書。
 
         ```sh
         # cd /etc/kubernetes/pki
@@ -263,20 +264,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # openssl req -new -sha256 -key front-proxy-client.key -subj "/CN=front-proxy-client" | openssl x509 -req -sha256 -CA front-proxy-ca.crt -CAkey front-proxy-ca.key -CAcreateserial -out front-proxy-client.crt -days $FRONT_PROXY_CLIENT_DAYS -extensions v3_req_client -extfile ./openssl.cnf
         ```
 
-    10. kube-proxy証明書
-
-        認証に、Service AccountとSecretsの代わりにkube-proxyロールを使いたいときに生成する証明書。
-        要らないような…
-
-        ```sh
-        # cd /etc/kubernetes/pki
-        # KUBE_PROXY_DAYS=5475
-        # openssl ecparam -name secp521r1 -genkey -noout -out kube-proxy.key
-        # chmod 0600 kube-proxy.key
-        # openssl req -new -key kube-proxy.key -subj "/CN=kube-proxy/O=system:node-proxier" | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-proxy.crt -days $KUBE_PROXY_DAYS -extensions v3_req_client -extfile ./openssl.cnf
-        ```
-
-    11. etcd CA証明書
+    10. etcd CA証明書
 
         以降で生成するetcdの証明書に署名するための証明書。
 
@@ -288,7 +276,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # openssl req -x509 -new -sha256 -nodes -key etcd-ca.key -days $ETCD_CA_DAYS -out etcd-ca.crt -subj "/CN=etcd-ca" -extensions v3_ca -config ./openssl.cnf
         ```
 
-    12. etcd証明書
+    11. etcd証明書
 
         etcdサーバのサーバ証明書。
         多分。
@@ -301,7 +289,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # openssl req -new -sha256 -key etcd.key -subj "/CN=etcd" | openssl x509 -req -sha256 -CA etcd-ca.crt -CAkey etcd-ca.key -CAcreateserial -out etcd.crt -days $ETCD_DAYS -extensions v3_req_etcd -extfile ./openssl.cnf
         ```
 
-    13. etcd peer証明書
+    12. etcd peer証明書
 
         etcdサーバが冗長構成のとき、サーバ間の通信の暗号化に使う証明書。
         マスタが一つなら要らない?
@@ -314,7 +302,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # openssl req -new -sha256 -key etcd-peer.key -subj "/CN=etcd-peer" | openssl x509 -req -sha256 -CA etcd-ca.crt -CAkey etcd-ca.key -CAcreateserial -out etcd-peer.crt -days $ETCD_PEER_DAYS -extensions v3_req_etcd -extfile ./openssl.cnf
         ```
 
-    14. 確認
+    13. 確認
 
         以上で生成した証明書の内容を確認する。
 
@@ -352,6 +340,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
     * kubelet: https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubelet
     * kubectl: https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubectl
     * hyperkube: https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/hyperkube
+    * kubeadm: https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubeadm
 
     最後のhyperkubeは、各種Kubernetesバイナリのごった煮。
     ファイル名によって動作が変わる。
@@ -372,7 +361,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
 4. kubeconfigファイル生成
 
-    kubectlやk8sコンポーネントがkube-apiserverと話すときに使うkubeconfigファイルを生成する。
+    kubectlとマスタコンポーネントがkube-apiserverと話すときに使うkubeconfigファイルを生成する。
 
     1. kube-controller-managerのkubeconfig
 
@@ -426,27 +415,6 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # CLUSTER_NAME="default"
         # KCONFIG=admin.kubeconfig
         # KUSER="kubernetes-admin"
-        # cd /etc/kubernetes/
-        # kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
-        # kubectl config set-credentials ${KUSER} --client-certificate=pki/admin.crt --client-key=pki/admin.key --embed-certs=true --kubeconfig=${KCONFIG}
-        # kubectl config set-context ${KUSER}@${CLUSTER_NAME} --cluster=${CLUSTER_NAME} --user=${KUSER} --kubeconfig=${KCONFIG}
-        # kubectl config use-context ${KUSER}@${CLUSTER_NAME} --kubeconfig=${KCONFIG}
-        ```
-
-        設定確認。
-
-        ```sh
-        # kubectl config view --kubeconfig=${KCONFIG}
-        ```
-
-    4. kubeletのkubeconfig
-
-        ```sh
-        # MASTER_IP=192.168.171.200
-        # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
-        # CLUSTER_NAME="default"
-        # KCONFIG=kubelet.kubeconfig
-        # KUSER="system:node:k8s-master"
         # cd /etc/kubernetes/
         # kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
         # kubectl config set-credentials ${KUSER} --client-certificate=pki/admin.crt --client-key=pki/admin.key --embed-certs=true --kubeconfig=${KCONFIG}
@@ -539,10 +507,11 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
         [Service]
         ExecStart=/usr/bin/kube-apiserver \\
+          --feature-gates=RotateKubeletServerCertificate=true \\
           --apiserver-count=1 \\
           --allow-privileged=true \\
-          --enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,ResourceQuota,DefaultTolerationSeconds \\
-          --authorization-mode=RBAC \\
+          --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,NodeRestriction,DenyEscalatingExec \\
+          --authorization-mode=Node,RBAC \\
           --secure-port=6443 \\
           --bind-address=0.0.0.0 \\
           --advertise-address=${MASTER_IP} \\
@@ -560,7 +529,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
           --service-node-port-range=30000-32767 \\
           --tls-cert-file=/etc/kubernetes/pki/kube-apiserver.crt \\
           --tls-private-key-file=/etc/kubernetes/pki/kube-apiserver.key \\
-          --enable-bootstrap-token-auth \\
+          --enable-bootstrap-token-auth=true \\
           --kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt \\
           --kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key \\
           --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname \\
@@ -582,12 +551,26 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # systemctl start kube-apiserver
         ```
 
-        `--allow_privileged`はflannelなどに必要。
+        `--allow-privileged`はflannelなどに必要。
+
+        `--admission-control`には[公式推奨のプラグイン](https://kubernetes.io/docs/admin/admission-controllers/#is-there-a-recommended-set-of-admission-controllers-to-use)に加えて、後述のTLS BootstrappingのためのNodeRestrictionを指定。
+        また、`--allow-privileged`の効果を軽減するため、DenyEscalatingExecも追加で指定。
+        因みに、プラグインを指定する順番はKubernetes 1.10からは気にしなくてよくなった。
+
+        `--authorization-mode`にはRBACを指定するのが標準。
+        後述のTLS Bootstrappingをするなら、Nodeも要る。
+
+        `--feature-gates`でRotateKubeletServerCertificateを有効にして、kubeletのサーバ証明書を自動更新するようにしている。
+        因みに、クライアント証明書を自動更新するRotateKubeletClientCertificateはデフォルトで有効。
+        これらがCertificate Rotationと呼ばれる機能。
+
+        `--feature-gates`は全Kubernetesコンポーネントで同じ値を指定するのがよさそう。
 
         確認。
 
         ```sh
         # systemctl status kube-apiserver -l
+        # journalctl -u kube-apiserver
         ```
 
     2. kube-controller-manager
@@ -606,6 +589,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
         [Service]
         ExecStart=/usr/bin/kube-controller-manager \\
+          --feature-gates=RotateKubeletServerCertificate=true \\
           --kubeconfig=/etc/kubernetes/controller-manager.kubeconfig \\
           --bind-address=0.0.0.0 \\
           --controllers=*,bootstrapsigner,tokencleaner \\
@@ -619,7 +603,8 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
           --root-ca-file=/etc/kubernetes/pki/ca.crt \\
           --use-service-account-credentials=true \\
           --v=2 \\
-          --tls-min-version=VersionTLS10
+          --tls-min-version=VersionTLS10 \\
+          --experimental-cluster-signing-duration=8760h0m0s
         Restart=always
         RestartSec=10s
 
@@ -631,10 +616,13 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # systemctl start kube-controller-manager
         ```
 
-        期限の切れたbootstrap token(後述)を消すためにtokencleanerを有効にしている。
+        期限の切れたBootstrap token(後述)を消すためにtokencleanerを有効にしている。
 
-        bootstrapsignerはネームスペース`kube-public`の`cluster-info`というConfigMapにbootstrap tokenで署名するためのコントローラ。
-        (何それ…)
+        bootstrapsignerは後述のcluster-infoにBootstrap tokenで署名するためのコントローラ。
+
+        [csrapproving](https://kubernetes.io/docs/admin/kubelet-tls-bootstrapping/#approval-controller)というコントローラがデフォルトで有効になっていて、後述のTLS BootstrapppingやCertificate Rotationの時に作られるCSRを自動で承認する。
+
+        `--experimental-cluster-signing-duration`は、Certificate Rotationのための設定で、自動発行する証明書の期限を1年に指定している。
 
         確認。
 
@@ -642,7 +630,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # systemctl status kube-controller-manager -l
         ```
 
-    3. Kubernetes Scheduler
+    3. kube-scheduler
 
         systemdのユニットファイルを書いてサービス化。
 
@@ -655,6 +643,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
         [Service]
         ExecStart=/usr/bin/kube-scheduler \\
+          --feature-gates=RotateKubeletServerCertificate=true \\
           --kubeconfig=/etc/kubernetes/scheduler.kubeconfig \\
           --address=0.0.0.0 \\
           --v=2
@@ -684,11 +673,18 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # kubectl get componentstatuses
         ```
 
-7. [Bootstrap](https://kubernetes.io/docs/admin/kubelet-tls-bootstrapping/)の設定
+7. [TLS Bootstrapping](https://kubernetes.io/docs/admin/kubelet-tls-bootstrapping/)の設定
 
-    kubeletが起動したとき、bootstrap kubeconfigを読んでkube-apiserverからクライアント証明書をもらって起動用kubeconfigを生成するようにする。
+    TLS Bootstrappingは、Kubernetesクラスタのコンポーネント間の通信がTLSで暗号化されている環境で、ノードが新たにクラスタに参加するとき、自動的にセキュアに[CSR](https://ja.wikipedia.org/wiki/%E8%A8%BC%E6%98%8E%E6%9B%B8%E7%BD%B2%E5%90%8D%E8%A6%81%E6%B1%82)を処理する仕組み。
 
-    1. [bootstrap token](https://kubernetes.io/docs/admin/bootstrap-tokens/)生成
+    TLS Bootstrappingでは、kubeletは起動時にBootstrap kubeconfigを読んで、kubeletとノード用のCSRを生成し、それらがkube-controller-managerに承認されると、kubelet用のクライアント証明書と秘密鍵を生成する。
+    その証明書と鍵を使ってkubeconfigを生成し、以降のクラスタへの接続に使う。
+
+    Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/bootstrap-tokens/)か[Token authentication file](https://kubernetes.io/docs/admin/kubelet-tls-bootstrapping/#token-authentication-file)を使うことが推奨されていて、今回は前者を使う。
+
+    (後者については[この記事](https://medium.com/@toddrosner/kubernetes-tls-bootstrapping-cf203776abc7)に詳しい。)
+
+    1. Bootstrap TokenのSecret生成
 
         以下のように生成できる。
 
@@ -702,18 +698,24 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         けど、[kubeadm](https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-token/#cmd-token-generate)でも生成出来てこっちのほうが楽なので、それで。
 
         ```sh
-        # kubeadm token create --kubeconfig /etc/kubernetes/admin.kubeconfig
+        # BOOTSTRAP_TOKEN=$(kubeadm token create --kubeconfig /etc/kubernetes/admin.kubeconfig)
         ```
 
-        expirationは指定できなくて、1日で期限切れになっちゃうけど、まあいい。
+        BOOTSTRAP_TOKENの値はあとで使う。
+
+        expirationは指定できなくて、1日で期限切れになっちゃうけど、クラスタにノードを追加するときに有効であればいいのでまあいい。
 
         確認。
 
         ```sh
+        # TOKEN_PUB=$(echo $BOOTSTRAP_TOKEN | sed -e s/\\..*//)
         # kubectl -n kube-system get secret/bootstrap-token-${TOKEN_PUB} -o yaml
         ```
 
-    2. bootstrap kubeconfig作成
+    2. Bootstrap kubeconfig作成
+
+        Bootstrap時は`kubelet-bootstrap`というユーザでkube-apiserverに接続する。
+        `kubelet-bootstrap`は`system:node-bootstrapper`ロールを持って`system:bootstrappers`に属しているユーザとして認証される必要がある。
 
         ```sh
         # MASTER_IP=192.168.171.200
@@ -741,20 +743,26 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # kubectl -n kube-public create configmap cluster-info --from-file /etc/kubernetes/pki/ca.crt --from-file /etc/kubernetes/bootstrap.kubeconfig
         ```
 
-        Allow anonymous user to acceess the cluster-info configmap:
+        anonymousユーザにcluster-infoへのアクセスを許可する。
 
         ```sh
         # kubectl -n kube-public create role system:bootstrap-signer-clusterinfo --verb get --resource configmaps
         # kubectl -n kube-public create rolebinding kubeadm:bootstrap-signer-clusterinfo --role system:bootstrap-signer-clusterinfo --user system:anonymous
         ```
 
-        Allow a bootstrapping worker node join the cluster:
+        kubelet-bootstrapユーザにロールとグループを紐づける。
 
         ```sh
         # kubectl create clusterrolebinding kubeadm:kubelet-bootstrap --clusterrole system:node-bootstrapper --group system:bootstrappers
         ```
 
-8. Install Docker & Kubelet
+    4. bootstrap.kubeconfigにトークンを追記
+
+        ```sh
+        # kubectl config set-credentials kubelet-bootstrap --token=${BOOTSTRAP_TOKEN} --kubeconfig=/etc/kubernetes/bootstrap.kubeconfig
+        ```
+
+8. Docker、CNI、kubeletインストール
 
     1. Docker
 
@@ -770,26 +778,23 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
         18.03.0-ceが入った。
 
-        よくみたらDocker CEはOracle Linuxをサポートしていないので、代わりに[Oracle Container Runtime for Docker](https://docs.oracle.com/cd/E77565_01/E87205/html/section_install_upgrade_yum_docker.html)を入れる。
+        が、よくみたらDocker CEはOracle Linuxをサポートしていないので、Docker CEはアンインストールして、代わりに[Oracle Container Runtime for Docker](https://docs.oracle.com/cd/E77565_01/E87205/html/section_install_upgrade_yum_docker.html) (aka docker-engine)を入れる。
 
-        `/etc/yum.repos.d/public-yum-ol7.repo`の`ol7_addons`の`enabled`を1に。
+        `/etc/yum.repos.d/public-yum-ol7.repo`の`ol7_addons`の`enabled`を1にして、以下のコマンドでdocker-engineをインストール。
 
         ```sh
         # yum install -y docker-engine
         ```
 
         docker-engine 17.06.2が入った。
-        `/etc/systemd/system/docker.service.d/docker-sysconfig.conf`
 
-        `/etc/sysconfig/docker`に以下を追記。
+        `/etc/sysconfig/docker`に以下を追記して、 Dockerがオープンできる最大ファイル数を増やす。
 
         ```
         DOCKER_NOFILE=1000000
-        DOCKER_OPT_BIP=""
-        DOCKER_OPT_IPMASQ=""
         ```
 
-        `/etc/sysconfig/docker`の`OPTIONS`に`--iptables=false`を追加。
+        Kubernetes環境ではiptablesはkube-proxyが操作するので、Dockerには操作させないようにするため、`/etc/sysconfig/docker`の`OPTIONS`に`--iptables=false`を追加。
 
         ```sh
         # systemctl daemon-reload
@@ -797,7 +802,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # systemctl start docker
         ```
 
-        確認.
+        確認。
 
         ```sh
         # cat /proc/$(pidof dockerd)/environ
@@ -808,17 +813,12 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
         ```sh
         # mkdir -p /etc/cni/net.d /opt/cni/bin/
-        ```
-
-        https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz
-        をダウンロード。
-
-        なかのcnitoolとnoopを`/opt/cni/bin/`に配置。
-
-        ```sh
+        # cd /tmp
+        # curl -OL https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz
         # curl -OL https://github.com/containernetworking/plugins/releases/download/v0.7.1/cni-plugins-amd64-v0.7.1.tgz
-        # tar zxf cni-plugins-amd64-v0.7.1.tgz
-        # cp * /opt/cni/bin/
+        # cd /opt/cni/bin
+        # tar zxf /tmp/cni-amd64-v0.6.0.tgz
+        # tar zxf /tmp/cni-plugins-amd64-v0.7.1.tgz
         # chmod +x /opt/cni/bin/*
         # cat >/etc/cni/net.d/99-loopback.conf <<EOF
         {
@@ -827,13 +827,15 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         EOF
         ```
 
-    3. Kubelet
+    3. kubelet
 
         前提コマンド(conntrack)インストール。
 
         ```sh
         # yum -y install conntrack-tools
         ```
+
+        systemdのユニットファイルを書いてサービス化。
 
         ```sh
         # DNS_SERVER_IP=10.0.0.10
@@ -849,6 +851,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
         [Service]
         ExecStart=/usr/bin/kubelet \\
+          --feature-gates=RotateKubeletServerCertificate=true \\
           --address=0.0.0.0 \\
           --bootstrap-kubeconfig=/etc/kubernetes/bootstrap.kubeconfig \\
           --kubeconfig=/etc/kubernetes/kubelet.kubeconfig \\
@@ -861,11 +864,12 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
           --authorization-mode=Webhook \\
           --client-ca-file=/etc/kubernetes/pki/ca.crt \\
           --cert-dir=/etc/kubernetes/pki \\
+          --rotate-certificates=true \\
           --v=2 \\
           --cgroup-driver=cgroupfs \\
           --pod-infra-container-image=${PAUSE_IMAGE} \\
           --tls-min-version=VersionTLS10 \\
-          --allow_privileged
+          --allow-privileged=true
         Restart=always
         RestartSec=10s
 
@@ -877,17 +881,136 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # systemctl start kubelet
         ```
 
-        --allow_privilegedはflannelに必要。
+        (実際は、systemctl start kubeletするまえに、後述のNode CSR自動承認設定をすべし。)
 
-        本当は[kubelet config file](https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/)を使ったほうがいい。
+        `--allow-privileged`はflannelなどに必要。
 
-        確認。
+        `--pod-infra-container-image`では[pause](https://github.com/kubernetes/kubernetes/tree/master/build/pause)コンテナイメージを指定する。
+        このコンテナはPod毎に起動され、Podネットワークの名前空間を保持するために使われるらしい。
+        今回使った`k8s.gcr.io/pause-amd64:3.1`はKubernetesチームが配布しているものだけど、Oracleが配布しているものもあり、そちらを使うには、Oracle Linux 7.4のダウンロード媒体リストに含まれるOracle Container Services for use with Kubernetes 1.1.9.1に入っているpause-amd64.tarを`docker load`しておいて、そのイメージ名を`--pod-infra-container-image`に渡せばいい。
+
+        `--bootstrap-kubeconfig`で指定したkubeconfigでTLS Bootstrapして、`--cert-dir`で指定したディレクトリに証明書と鍵を生成して、`--kubeconfig`で指定したパスに以降使うkubeconfigを生成する。
+        この証明書を自動更新(i.e. Certificate Rotation)するオプションが`--rotate-certificates`。
+
+        `--pod-manifest-path`で指定したディレクトリはkubeletに定期的にスキャンされ、そこに置いたKubernetesマニフェスト(ドットで始まるもの以外)が読まれる。
+        (参照: [Static Pods](https://kubernetes.io/docs/tasks/administer-cluster/static-pod/))
+
+        本当は[kubelet config file](https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/)を使ったほうがいいみたいなので、次回の記事でそれに対応する。
+
+        起動確認。
 
         ```sh
         # systemctl status kubelet -l
         ```
 
-9. Deploy essential kubernetes components
+    4. Node CSR手動承認
+
+        TLS Bootstrappingで生成されたCSRを手動で承認する。
+
+        CSRは以下のコマンドで見れる。
+
+        ```sh
+        # kubectl get csr
+        NAME                                                   AGE       REQUESTOR                 CONDITION
+        csr-cf9hm                                              24m       system:node:k8s-master  Pending
+        node-csr-Vcw_4HioW1CI96eDH29RMKPrOchEN133053wm6DCXUk   24m       system:bootstrap:itacbw   Pending
+        ```
+
+        `node-csr-…`がクライアント証明書のためのCSRで、`csr-…`がサーバ証明書の。
+        これらを承認する。
+
+        ```sh
+        # kubectl certificate approve node-csr-Vcw_4HioW1CI96eDH29RMKPrOchEN133053wm6DCXUk
+        # kubectl certificate approve csr-cf9hm
+        ```
+
+        (因みに否認するときは`kubectl certificate deny`)
+
+        これでクラスタにノードが追加されたはず。
+        確認。
+
+        ```sh
+        # kubectl get node
+        NAME         STATUS    ROLES     AGE       VERSION
+        k8s-master   Ready     <none>    36s       v1.10.0
+        ```
+
+    5. Node CSR自動承認設定
+
+        前節でやった手動承認はcsrapprovingが自動でやってくれる。
+
+        新規ノード参加時のCSRを承認するClusterRoleとして`system:certificates.k8s.io:certificatesigningrequests:nodeclient`が自動生成されているので、これを`system:bootstrappers`グループにバインドしてやると、自動承認が有効になる。
+
+        * s
+
+        ```sh
+        # cat <<EOF | kubectl create -f -
+        kind: ClusterRoleBinding
+        apiVersion: rbac.authorization.k8s.io/v1
+        metadata:
+          name: auto-approve-csrs-for-group
+        subjects:
+        - kind: Group
+          name: system:bootstrappers
+          apiGroup: rbac.authorization.k8s.io
+        roleRef:
+          kind: ClusterRole
+          name: system:certificates.k8s.io:certificatesigningrequests:nodeclient
+          apiGroup: rbac.authorization.k8s.io
+        EOF
+        ```
+
+        また、kubeletのクライアント証明書を自動更新(i.e. RotateKubeletClientCertificate)するときのCSRを承認するClusterRoleとして`system:certificates.k8s.io:certificatesigningrequests:selfnodeclient`が自動生成されていて、これをノード毎のユーザにバインドしてやると、自動承認が有効になる。
+
+        ```sh
+        # NODE_USER_NAME=k8s-master
+        # cat <<EOF | kubectl create -f -
+        kind: ClusterRoleBinding
+        apiVersion: rbac.authorization.k8s.io/v1
+        metadata:
+          name: ${NODE_USER_NAME}-node-client-cert-renewal
+        subjects:
+        - kind: User
+          name: system:node:${NODE_USER_NAME}
+          apiGroup: rbac.authorization.k8s.io
+        roleRef:
+          kind: ClusterRole
+          name: system:certificates.k8s.io:certificatesigningrequests:selfnodeclient
+          apiGroup: rbac.authorization.k8s.io
+        EOF
+        ```
+
+        kubeletのサーバ証明書を自動更新(i.e. RotateKubeletServerCertificate)するときのCSRを承認するClusterRoleは現時点で自動生成されないので、自分で作ってノード毎のユーザにバインドして、自動承認を有効にする。
+
+        ```sh
+        # cat <<EOF | kubectl create -f -
+        kind: ClusterRole
+        apiVersion: rbac.authorization.k8s.io/v1
+        metadata:
+          name: approve-node-server-renewal-csr
+        rules:
+        - apiGroups: ["certificates.k8s.io"]
+          resources: ["certificatesigningrequests/selfnodeserver"]
+          verbs: ["create"]
+        EOF
+        # NODE_USER_NAME=k8s-master
+        # cat <<EOF | kubectl create -f -
+        kind: ClusterRoleBinding
+        apiVersion: rbac.authorization.k8s.io/v1
+        metadata:
+          name: ${NODE_USER_NAME}-server-client-cert-renewal
+        subjects:
+        - kind: User
+          name: system:node:${NODE_USER_NAME}
+          apiGroup: rbac.authorization.k8s.io
+        roleRef:
+          kind: ClusterRole
+          name: approve-node-server-renewal-csr
+          apiGroup: rbac.authorization.k8s.io
+        EOF
+        ```
+
+9. kube-proxy、オーバレイネットワーク、DNSのデプロイ
 
     1. kube-proxy
 
@@ -898,7 +1021,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # kubectl -n kube-system create serviceaccount kube-proxy
         ```
 
-        kube-proxy kubeconfig作成
+        kube-proxyのkubeconfig作成
 
         ```sh
         # MASTER_IP=192.168.171.200
@@ -921,13 +1044,13 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # kubectl config view --kubeconfig=${KCONFIG}
         ```
 
-        Bind a kube-proxy service account (from kube-system namespace) to a clusterrole system:node-proxier to allow RBAC
+        Service Accountのkube-proxyに`system:node-proxier`というClusterRoleを付ける。
 
         ```sh
         # kubectl create clusterrolebinding kubeadm:node-proxier --clusterrole system:node-proxier --serviceaccount kube-system:kube-proxy
         ```
 
-        Create a kube-proxy service file and run it:
+        systemdのユニットファイルを書いてサービス化。
 
         ```sh
         # cat > /etc/systemd/system/kube-proxy.service << EOF
@@ -938,6 +1061,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
         [Service]
         ExecStart=/usr/bin/kube-proxy \\
+          --feature-gates=RotateKubeletServerCertificate=true \\
           --bind-address 0.0.0.0 \\
           --kubeconfig=/etc/kubernetes/kube-proxy.kubeconfig \\
           --v=2
@@ -958,111 +1082,95 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # systemctl status kube-proxy -l
         ```
 
-    2. Flannel
+    2. オーバレイネットワーク (flannel)
 
-        https://github.com/coreos/flannel/blob/master/Documentation/kubernetes.md
+        [flannelのドキュメント](https://github.com/coreos/flannel/blob/master/Documentation/kubernetes.md)を参考に。
+
+        flannelをデプロイするには、kube-apiserverとkube-controller-managerの起動オプションに`--allow-privileged`を付ける必要がある。
+
+        また、公式が配布しているKubernetesマニフェストを使う場合、kube-controller-managerの起動オプションの`--cluster-cidr`で`10.244.0.0/16`を指定する必要がある。
+
+        デプロイ自体は以下のコマンドを実行するだけ。
+
+        ```sh
+        # export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
+        # kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+        ```
+
+        このKubernetesマニフェストでは、quay.ioから`quay.io/coreos/flannel:v0.10.0-amd64`というコンテナイメージがpullされる。
+
+        Oracleもflannelのコンテナイメージを配布していて、そちらを使うには、Oracle Linux 7.4のダウンロード媒体リストに含まれるOracle Container Services for use with Kubernetes 1.1.9.1に入っているflannel.tarを`docker load`しておいて、そのイメージを使うようにマニフェストを書きかえればいい。
+
+        起動確認。
+
+        ```sh
+        # kubectl -n kube-system get po
+        NAME                    READY     STATUS    RESTARTS   AGE
+        kube-flannel-ds-gkcqd   1/1       Running   0          1m
+        ```
+
+        flannelは[Network Policy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)をサポートしていないので、[Calico](https://www.projectcalico.org/)か[Weave Net](https://www.weave.works/oss/net/)あたりにすればよかったかも。
 
     3. CoreDNS
 
-        https://kubernetes.io/docs/tasks/administer-cluster/coredns/
-        https://coredns.io/2018/01/29/deploying-kubernetes-with-coredns-using-kubeadm/
-        https://github.com/coredns/deployment/tree/master/kubernetes
+        Kubernetes 1.10からは、サービスディスカバリに(kube-dnsの代わりに)CoreDNSを使うのが標準になった。
 
-        https://github.com/coredns/deployment/archive/master.zip
-        をダウンロード。
+        以下を参考にCoreDNSをデプロイする:
 
-        なかの`kubernetes/coredns.yaml.sed`と`kubernetes/deploy.sh`をVMにもってきて、
+        * https://kubernetes.io/docs/tasks/administer-cluster/coredns/
+        * https://coredns.io/2018/01/29/deploying-kubernetes-with-coredns-using-kubeadm/
+        * https://github.com/coredns/deployment/tree/master/kubernetes
 
         ```sh
+        # cd /tmp
+        # curl -LO https://raw.githubusercontent.com/coredns/deployment/master/kubernetes/coredns.yaml.sed
+        # curl -LO https://raw.githubusercontent.com/coredns/deployment/master/kubernetes/deploy.sh
+        # chmod +x deploy.sh
         # DNS_SERVER_IP="10.0.0.10"
         # SERVICE_CLUSTER_IP_RANGE="10.0.0.0/16"
         # DNS_DOMAIN="cluster.local"
-        # chmod +x deploy.sh
         # ./deploy.sh -r $SERVICE_CLUSTER_IP_RANGE -i $DNS_SERVER_IP -d $DNS_DOMAIN > /etc/kubernetes/manifests/coredns.yaml
-        ```
-
-        ```sh
         # export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
         # kubectl apply -f /etc/kubernetes/manifests/coredns.yaml
         ```
 
-        確認。
+        このKubernetesマニフェストではDocker Hubから`coredns/coredns:1.1.1`というイメージがpullされる。
+
+        起動確認。
 
         ```sh
-        # kubectl -n kube-system get pods -o wide
-        # kubectl -n kube-system get deployments
+        # kubectl -n kube-system get pods -o wide | grep coredns
+        coredns-8459d9f654-b585f   1/1       Running   0          48s       10.244.0.3        k8s-master
+        coredns-8459d9f654-x7drc   1/1       Running   0          48s       10.244.0.2        k8s-master
         ```
 
-10. Additional apps
+        起動確認時にCoreDNSのIPアドレスを確認して、動作確認。
 
-    1. Kubernetes Dashboard
+        ```sh
+        # dig @10.244.0.3 kubernetes.default.svc.cluster.local +noall +answer
+
+        ; <<>> DiG 9.9.4-RedHat-9.9.4-61.el7 <<>> @10.244.0.3 kubernetes.default.svc.cluster.local +noall +answer
+        ; (1 server found)
+        ;; global options: +cmd
+        kubernetes.default.svc.cluster.local. 5 IN A    10.0.0.1
+        ```
+
+10. Kubernetesアプリデプロイ
+
+    前節まででKubernetesクラスタの構築は完了。
+    試しにKubernetesアプリをひとつデプロイしてみる。
+
+    1. [Weave Scope](https://github.com/weaveworks/scope)
+
+        [ドキュメント](https://www.weave.works/docs/scope/latest/installing/#k8s)を参考に。
 
         ```sh
         # cd /etc/kubernetes/manifests/
-        # curl -OL https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
-        ```
-
-        ```sh
         # export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
-        # kubectl apply -f kubernetes-dashboard.yaml
-        ```
-
-    2. Weave Scope
-
-        ```sh
         # curl -sSL -o scope.yaml https://cloud.weave.works/k8s/scope.yaml?k8s-service-type=NodePort
         # kubectl apply -f scope.yaml
         ```
 
-        `kubectl -n weave get svc/weave-scope-app`でポート調べて、`http://k8s-master:<ポート>/`で開く。
+        このKubernetesマニフェストではDocker Hubから`weaveworks/scope:1.8.0`というイメージがpullされる。
 
-
-ダウンロードしたものまとめ:
-
-https://storage.googleapis.com/kubernetes-release/release/v1.10.0/kubernetes-server-linux-amd64.tar.gz
-
-https://github.com/coreos/etcd/releases/download/v3.1.12/etcd-v3.1.12-linux-amd64.tar.gz
-
-```
-================================================================================
- Package                  Arch     Version                   Repository    Size
-================================================================================
-Installing:
- docker-engine            x86_64   17.06.2.ol-1.0.1.el7      ol7_addons    21 M
-Installing for dependencies:
- audit-libs-python        x86_64   2.7.6-3.el7               ol7_latest    73 k
- checkpolicy              x86_64   2.5-4.el7                 ol7_latest   290 k
- container-selinux        noarch   2:2.21-1.el7              ol7_addons    28 k
- libcgroup                x86_64   0.41-13.el7               ol7_latest    64 k
- libsemanage-python       x86_64   2.5-8.el7                 ol7_latest   104 k
- policycoreutils-python   x86_64   2.5-17.1.0.1.el7          ol7_latest   445 k
- python-IPy               noarch   0.75-6.el7                ol7_latest    32 k
- setools-libs             x86_64   3.3.8-1.1.el7             ol7_latest   611 k
-```
-
-https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz
-
-https://github.com/containernetworking/plugins/releases/download/v0.7.1/cni-plugins-amd64-v0.7.1.tgz
-
-Oracle Container Services for use with Kubernetes 1.1.9.1.zip
-のpause-amd64.tar
-```
-=====================================================================================================================================================
- Package                                     Arch                        Version                               Repository                       Size
-=====================================================================================================================================================
-Installing:
- conntrack-tools                             x86_64                      1.4.4-3.el7_3                         ol7_latest                      186 k
-Installing for dependencies:
- libnetfilter_cthelper                       x86_64                      1.0.0-9.el7                           ol7_latest                       17 k
- libnetfilter_cttimeout                      x86_64                      1.0.0-6.el7                           ol7_latest                       17 k
- libnetfilter_queue                          x86_64                      1.0.2-2.el7_2                         ol7_latest                       22 k
-```
-
-https://github.com/coredns/deployment/archive/master.zip
-docker image: coredns/coredns:1.1.1
-
-https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
-quay.io/coreos/flannel:v0.10.0-amd64
-
-Oracle Container Services for use with Kubernetes 1.1.9.1.zip
-のflannel.tar
+        `kubectl -n weave get svc/weave-scope-app`でポート調べて、`http://k8s-master:<ポート>/`をブラウザ開くとWeave ScopeのGUIが見れる。

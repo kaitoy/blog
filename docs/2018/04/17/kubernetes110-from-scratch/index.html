@@ -13,7 +13,7 @@
     <meta property="og:title" content="Kubernetes 1.10をスクラッチから全手動で構築 | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">
-    <meta property="og:description" content="CentOS 7のVMでKubernetes1.10のクラスタをスクラッチから全手動で作った。 参考にしたのは主に以下。 https://nixaid.com/deploying-kubernetes-cluster-from-scratch/ https://kubernetes.io/docs/getting-started-guides/scratch/ https://ulam.io/blog/kubernetes-scratch/ https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master (adsbygoogle = window.adsbygoogle || []).push({}); 構成 マシン: Windows 10 Homeのラップトップの上のVMware PlayerのVM CPU: 2コア メモリ: 4GB NIF: NATのを一つ OS: Oracle Linux 7.4 Minimalインストール IPアドレス: 192.168.171.200、静的割り当て ホスト名: k8s-master (hostsで解決) Kubernetes: バージョン1.10.0 単一ノード 全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e. 非コンテナ) コンポーネント間通信とkubectlの通信をTLSで暗号化 コンポーネント間通信とkubectlの通信の認証はx509クライアント証明書 TLS bootstrappingはbootstrap token使用。 etcd 3.1.12 flannel 0.10.0 CoreDNS 1.1.1 kubeletの動作条件にあるので、swapをoffにする。 Oracle Linuxにログインして、/etc/fstabのswapの行を削除して、以下のコマンドを実行。 # swapoff -a SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面倒なのでとりあえず無効にする。 /etc/selinux/configを編集して、SELINUXをpermissiveにして、以下のコマンドを実行。 # setenforce 0 ファイアウォールもちゃんと設定すればいいんだけど面倒なのでとりあえず無効にする。 # systemctl stop firewalld # systemctl disable firewalld これで準備完了。 クラスタ構築手順 おおむね、k8sコンポーネント間の通信の暗号化に使う鍵と証明書の生成、各コンポーネント用kubeconfigの生成、etcdのデプロイ、k8sコンポーネントのデプロイ、fannelデプロイ、CoreDNSデプロイ、という流れ。 ついでに最後にWeave Scopeをデプロイしてみる。 Bridge netfilterとIP forwardingを設定 まず、Bridge netfilterモジュールをロードする。 # modprobe br_netfilter # cat &gt; /etc/sysconfig/modules/br_netfilter.modules &lt;&lt; EOF #!/bin/sh /sbin/modprobe br_netfilter &gt; /dev/null 2&gt;&amp;1 EOF # chmod 755 /etc/sysconfig/modules/br_netfilter.modules Bridge netfilterとIP forwardingを有効化する。 # cat &gt; /etc/sysctl.d/kubernetes.conf &lt;&lt; EOF net.bridge.bridge-nf-call-iptables = 1 net.bridge.bridge-nf-call-ip6tables = 1 net.ipv4.ip_forward = 1 EOF # sysctl -p /etc/sysctl.d/kubernetes.conf 設定確認。 # lsmod |grep br_netfilter # sysctl -a | grep -E &quot;net.bridge.bridge-nf-call-|net.ipv4.ip_forward&quot; x509証明書生成 opensslの設定作成 # mkdir -p /etc/kubernetes/pki # cd /etc/kubernetes/pki # K8S_SERVICE_IP=10.0.0.1 # MASTER_IP=192.168.171.200 # cat &gt; openssl.cnf &lt;&lt; EOF [ req ] distinguished_name = req_distinguished_name [req_distinguished_name] [ v3_ca ] basicConstraints = critical, CA:TRUE keyUsage = critical, digitalSignature, keyEncipherment, keyCertSign [ v3_req_server ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth [ v3_req_client ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = clientAuth [ v3_req_apiserver ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth subjectAltName = @alt_names_cluster [ v3_req_etcd ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth, clientAuth subjectAltName = @alt_names_etcd [ alt_names_cluster ] DNS.1 = kubernetes DNS.2 = kubernetes.default DNS.3 = kubernetes.default.svc DNS.4 = kubernetes.default.svc.cluster.local DNS.5 = k8s-controller IP.1 = ${MASTER_IP} IP.2 = ${K8S_SERVICE_IP} [ alt_names_etcd ] DNS.1 = k8s-controller IP.1 = ${MASTER_IP} EOF Kubernetes CA証明書生成 以降で生成する証明書に署名するための証明書。 # cd /etc/kubernetes/pki # CA_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out ca.key # chmod 0600 ca.key # openssl req -x509 -new -sha256 -nodes -key ca.key -days $CA_DAYS -out ca.crt -subj &quot;/CN=kubernetes-ca&quot; -extensions v3_ca -config ./openssl.cnf kube-apiserver証明書生成 kube-apiserverのAPIをHTTPSにするためのサーバ証明書。 # cd /etc/kubernetes/pki # APISERVER_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out kube-apiserver.key # chmod 0600 kube-apiserver.key # openssl req -new -sha256 -key kube-apiserver.key -subj &quot;/CN=kube-apiserver&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-apiserver.crt -days $APISERVER_DAYS -extensions v3_req_apiserver -extfile ./openssl.cnf kube-apiserver-kubelet証明書生成 kube-apiserverがkubeletのAPIにアクセスするときのクライアント証明書。 # cd /etc/kubernetes/pki # APISERVER_KUBELET_CLIENT_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out apiserver-kubelet-client.key # chmod 0600 apiserver-kubelet-client.key # openssl req -new -key apiserver-kubelet-client.key -subj &quot;/CN=kube-apiserver-kubelet-client/O=system:masters&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out apiserver-kubelet-client.crt -days $APISERVER_KUBELET_CLIENT_DAYS -extensions v3_req_client -extfile ./openssl.cnf adminクライアント証明書生成 kubectlとkubeletがkube-apiserverのAPIにアクセスするときのクライアント証明書。 本当はkubeletは別に作ったほうがよさそう。 # cd /etc/kubernetes/pki # ADMIN_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out admin.key # chmod 0600 admin.key # openssl req -new -key admin.key -subj &quot;/CN=kubernetes-admin/O=system:masters&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out admin.crt -days $ADMIN_DAYS -extensions v3_req_client -extfile ./openssl.cnf Service Accountキーとkube-controller-managerのクライアント証明書生成 Service Accountトークンにkube-controller-managerが署名するときに使うキーを生成する。 そのキーを使ってkube-controller-managerのクライアント証明書も生成する。 kube-apiserverがトークンの署名を確認するとき(?)に使う公開鍵も生成する。 # cd /etc/kubernetes/pki # CONTROLLER_MANAGER_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out sa.key # openssl ec -in sa.key -outform PEM -pubout -out sa.pub # chmod 0600 sa.key # openssl req -new -sha256 -key sa.key -subj &quot;/CN=system:kube-controller-manager&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out sa.crt -days $CONTROLLER_MANAGER_DAYS -extensions v3_req_client -extfile ./openssl.cnf kube-schedulerクライアント証明書生成 kube-schedulerがkube-apiserverにリクエストするときに使うクライアント証明書。 多分。 # cd /etc/kubernetes/pki # SCHEDULER_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out kube-scheduler.key # chmod 0600 kube-scheduler.key # openssl req -new -sha256 -key kube-scheduler.key -subj &quot;/CN=system:kube-scheduler&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-scheduler.crt -days $SCHEDULER_DAYS -extensions v3_req_client -extfile ./openssl.cnf front proxy CA証明書生成 front proxyのクライアント証明書に署名するのにつかう証明書。 front proxyってなんだ?">
+    <meta property="og:description" content="Oracle Linux 7.4.0のVMでKubernetes1.10.0のクラスタをスクラッチから全手動で作った。 参考にしたのは主に以下。 https://nixaid.com/deploying-kubernetes-cluster-from-scratch/ https://kubernetes.io/docs/getting-started-guides/scratch/ https://ulam.io/blog/kubernetes-scratch/ https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master (adsbygoogle = window.adsbygoogle || []).push({}); 構成 マシン: Windows 10 Homeのラップトップの上のVMware PlayerのVM CPU: 2コア メモリ: 4GB NIF: NATのを一つ OS: Oracle Linux 7.4.0 Minimalインストール IPアドレス: 192.168.171.200、静的割り当て ホスト名: k8s-master (hostsで解決) Docker: Oracle Container Runtime for Docker (docker-engine) 17.06.2 Kubernetes: バージョン1.10.0 単一ノード 全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e. 非コンテナ) コンポーネント間通信とkubectlの通信をTLSで暗号化 コンポーネント間通信とkubectlの通信の認証はx509クライアント証明書 TLS BootstrappingにはBootstrap token使用。 Certificate Rotation有効 etcd 3.1.12 flannel 0.10.0 CoreDNS 1.1.1 kubeletの動作条件にあるので、swapをoffにする。 Oracle Linuxにログインして、/etc/fstabのswapの行を削除して、以下のコマンドを実行。 # swapoff -a SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面倒なのでとりあえず無効にする。 /etc/selinux/configを編集して、SELINUXをpermissiveにして、以下のコマンドを実行。 # setenforce 0 ファイアウォールもちゃんと設定すればいいんだけど面倒なのでとりあえず無効にする。 # systemctl stop firewalld # systemctl disable firewalld これで準備完了。 クラスタ構築手順 おおむね、k8sコンポーネント間の通信の暗号化に使う鍵と証明書の生成、各コンポーネント用kubeconfigの生成、etcdのデプロイ、k8sコンポーネントのデプロイ、fannelデプロイ、CoreDNSデプロイ、という流れ。 ついでに最後にWeave Scopeをデプロイしてみる。 Bridge netfilterとIP forwardingを設定 まず、Bridge netfilterモジュールをロードする。 # modprobe br_netfilter # cat &gt; /etc/sysconfig/modules/br_netfilter.modules &lt;&lt; EOF #!/bin/sh /sbin/modprobe br_netfilter &gt; /dev/null 2&gt;&amp;1 EOF # chmod 755 /etc/sysconfig/modules/br_netfilter.modules Bridge netfilterとIP forwardingを有効化する。 # cat &gt; /etc/sysctl.d/kubernetes.conf &lt;&lt; EOF net.bridge.bridge-nf-call-iptables = 1 net.bridge.bridge-nf-call-ip6tables = 1 net.ipv4.ip_forward = 1 EOF # sysctl -p /etc/sysctl.d/kubernetes.conf 設定確認。 # lsmod |grep br_netfilter # sysctl -a | grep -E &quot;net.bridge.bridge-nf-call-|net.ipv4.ip_forward&quot; x509証明書生成 opensslの設定作成 # mkdir -p /etc/kubernetes/pki # cd /etc/kubernetes/pki # K8S_SERVICE_IP=10.0.0.1 # MASTER_IP=192.168.171.200 # cat &gt; openssl.cnf &lt;&lt; EOF [ req ] distinguished_name = req_distinguished_name [req_distinguished_name] [ v3_ca ] basicConstraints = critical, CA:TRUE keyUsage = critical, digitalSignature, keyEncipherment, keyCertSign [ v3_req_server ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth [ v3_req_client ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = clientAuth [ v3_req_apiserver ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth subjectAltName = @alt_names_cluster [ v3_req_etcd ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth, clientAuth subjectAltName = @alt_names_etcd [ alt_names_cluster ] DNS.1 = kubernetes DNS.2 = kubernetes.default DNS.3 = kubernetes.default.svc DNS.4 = kubernetes.default.svc.cluster.local DNS.5 = k8s-controller IP.1 = ${MASTER_IP} IP.2 = ${K8S_SERVICE_IP} [ alt_names_etcd ] DNS.1 = k8s-controller IP.1 = ${MASTER_IP} EOF Kubernetes CA証明書生成 以降で生成する証明書に署名するための証明書。 # cd /etc/kubernetes/pki # CA_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out ca.key # chmod 0600 ca.key # openssl req -x509 -new -sha256 -nodes -key ca.key -days $CA_DAYS -out ca.crt -subj &quot;/CN=kubernetes-ca&quot; -extensions v3_ca -config ./openssl.cnf kube-apiserver証明書生成 kube-apiserverのサーバ証明書。 # cd /etc/kubernetes/pki # APISERVER_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out kube-apiserver.key # chmod 0600 kube-apiserver.key # openssl req -new -sha256 -key kube-apiserver.key -subj &quot;/CN=kube-apiserver&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-apiserver.crt -days $APISERVER_DAYS -extensions v3_req_apiserver -extfile ./openssl.cnf kube-apiserver-kubelet証明書生成 kube-apiserverがkubeletのAPIにアクセスするときのクライアント証明書。 # cd /etc/kubernetes/pki # APISERVER_KUBELET_CLIENT_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out apiserver-kubelet-client.key # chmod 0600 apiserver-kubelet-client.key # openssl req -new -key apiserver-kubelet-client.key -subj &quot;/CN=kube-apiserver-kubelet-client/O=system:masters&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out apiserver-kubelet-client.crt -days $APISERVER_KUBELET_CLIENT_DAYS -extensions v3_req_client -extfile ./openssl.cnf adminクライアント証明書生成 kubectlがkube-apiserverのAPIにアクセスするときのクライアント証明書。 # cd /etc/kubernetes/pki # ADMIN_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out admin.key # chmod 0600 admin.key # openssl req -new -key admin.key -subj &quot;/CN=kubernetes-admin/O=system:masters&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out admin.crt -days $ADMIN_DAYS -extensions v3_req_client -extfile ./openssl.cnf Service Accountキーとkube-controller-managerのクライアント証明書生成 Service Accountトークンにkube-controller-managerが署名するときに使うキーを生成する。 そのキーを使ってkube-controller-managerのクライアント証明書も生成する。 kube-apiserverがトークンの署名を確認するとき(?)に使う公開鍵も生成する。 # cd /etc/kubernetes/pki # CONTROLLER_MANAGER_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out sa.key # openssl ec -in sa.key -outform PEM -pubout -out sa.pub # chmod 0600 sa.key # openssl req -new -sha256 -key sa.key -subj &quot;/CN=system:kube-controller-manager&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out sa.crt -days $CONTROLLER_MANAGER_DAYS -extensions v3_req_client -extfile ./openssl.cnf kube-schedulerクライアント証明書生成 kube-schedulerがkube-apiserverにリクエストするときに使うクライアント証明書。 多分。 # cd /etc/kubernetes/pki # SCHEDULER_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out kube-scheduler.key # chmod 0600 kube-scheduler.key # openssl req -new -sha256 -key kube-scheduler.key -subj &quot;/CN=system:kube-scheduler&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-scheduler.crt -days $SCHEDULER_DAYS -extensions v3_req_client -extfile ./openssl.cnf front proxy CA証明書生成 front proxyのクライアント証明書に署名するのにつかう証明書。 front proxyってなんだ?">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
     
@@ -84,7 +84,7 @@
       <div class="content">
         
 
-<p>CentOS 7のVMでKubernetes1.10のクラスタをスクラッチから全手動で作った。
+<p>Oracle Linux 7.4.0のVMでKubernetes1.10.0のクラスタをスクラッチから全手動で作った。
 参考にしたのは主に以下。</p>
 
 <ul>
@@ -119,13 +119,14 @@
 <li>メモリ: 4GB</li>
 <li>NIF: NATのを一つ</li>
 </ul></li>
-<li>OS: Oracle Linux 7.4
+<li>OS: Oracle Linux 7.4.0
 
 <ul>
 <li>Minimalインストール</li>
 <li>IPアドレス: 192.168.171.200、静的割り当て</li>
 <li>ホスト名: k8s-master (hostsで解決)</li>
 </ul></li>
+<li>Docker: Oracle Container Runtime for Docker (docker-engine) 17.06.2</li>
 <li>Kubernetes: バージョン1.10.0
 
 <ul>
@@ -133,10 +134,11 @@
 <li>全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e. 非コンテナ)</li>
 <li>コンポーネント間通信とkubectlの通信をTLSで暗号化</li>
 <li>コンポーネント間通信とkubectlの通信の認証は<a href="https://kubernetes.io/docs/admin/authentication/#x509-client-certs">x509クライアント証明書</a></li>
-<li>TLS bootstrappingはbootstrap token使用。</li>
+<li>TLS BootstrappingにはBootstrap token使用。</li>
+<li><a href="https://kubernetes.io/docs/tasks/tls/certificate-rotation/">Certificate Rotation</a>有効</li>
 <li>etcd 3.1.12</li>
-<li>flannel 0.10.0</li>
-<li>CoreDNS 1.1.1</li>
+<li><a href="https://github.com/coreos/flannel">flannel</a> 0.10.0</li>
+<li><a href="https://github.com/coredns/coredns">CoreDNS</a> 1.1.1</li>
 </ul></li>
 </ul>
 
@@ -266,7 +268,7 @@ EOF
 
 <li><p>kube-apiserver証明書生成</p>
 
-<p>kube-apiserverのAPIをHTTPSにするためのサーバ証明書。</p>
+<p>kube-apiserverのサーバ証明書。</p>
 
 <pre><code class="language-sh"># cd /etc/kubernetes/pki
 # APISERVER_DAYS=5475
@@ -288,8 +290,7 @@ EOF
 
 <li><p>adminクライアント証明書生成</p>
 
-<p>kubectlとkubeletがkube-apiserverのAPIにアクセスするときのクライアント証明書。
-本当はkubeletは別に作ったほうがよさそう。</p>
+<p>kubectlがkube-apiserverのAPIにアクセスするときのクライアント証明書。</p>
 
 <pre><code class="language-sh"># cd /etc/kubernetes/pki
 # ADMIN_DAYS=5475
@@ -348,18 +349,6 @@ kubectlの証明書(adminクライアント証明書)とは違うんだろうか
 # openssl ecparam -name secp521r1 -genkey -noout -out front-proxy-client.key
 # chmod 0600 front-proxy-client.key
 # openssl req -new -sha256 -key front-proxy-client.key -subj &quot;/CN=front-proxy-client&quot; | openssl x509 -req -sha256 -CA front-proxy-ca.crt -CAkey front-proxy-ca.key -CAcreateserial -out front-proxy-client.crt -days $FRONT_PROXY_CLIENT_DAYS -extensions v3_req_client -extfile ./openssl.cnf
-</code></pre></li>
-
-<li><p>kube-proxy証明書</p>
-
-<p>認証に、Service AccountとSecretsの代わりにkube-proxyロールを使いたいときに生成する証明書。
-要らないような…</p>
-
-<pre><code class="language-sh"># cd /etc/kubernetes/pki
-# KUBE_PROXY_DAYS=5475
-# openssl ecparam -name secp521r1 -genkey -noout -out kube-proxy.key
-# chmod 0600 kube-proxy.key
-# openssl req -new -key kube-proxy.key -subj &quot;/CN=kube-proxy/O=system:node-proxier&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-proxy.crt -days $KUBE_PROXY_DAYS -extensions v3_req_client -extfile ./openssl.cnf
 </code></pre></li>
 
 <li><p>etcd CA証明書</p>
@@ -448,6 +437,7 @@ done
 <li>kubelet: <a href="https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubelet">https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubelet</a></li>
 <li>kubectl: <a href="https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubectl">https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubectl</a></li>
 <li>hyperkube: <a href="https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/hyperkube">https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/hyperkube</a></li>
+<li>kubeadm: <a href="https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubeadm">https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubeadm</a></li>
 </ul>
 
 <p>最後のhyperkubeは、各種Kubernetesバイナリのごった煮。
@@ -468,7 +458,7 @@ done
 
 <li><p>kubeconfigファイル生成</p>
 
-<p>kubectlやk8sコンポーネントがkube-apiserverと話すときに使うkubeconfigファイルを生成する。</p>
+<p>kubectlとマスタコンポーネントがkube-apiserverと話すときに使うkubeconfigファイルを生成する。</p>
 
 <ol>
 <li><p>kube-controller-managerのkubeconfig</p>
@@ -518,25 +508,6 @@ done
 # CLUSTER_NAME=&quot;default&quot;
 # KCONFIG=admin.kubeconfig
 # KUSER=&quot;kubernetes-admin&quot;
-# cd /etc/kubernetes/
-# kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
-# kubectl config set-credentials ${KUSER} --client-certificate=pki/admin.crt --client-key=pki/admin.key --embed-certs=true --kubeconfig=${KCONFIG}
-# kubectl config set-context ${KUSER}@${CLUSTER_NAME} --cluster=${CLUSTER_NAME} --user=${KUSER} --kubeconfig=${KCONFIG}
-# kubectl config use-context ${KUSER}@${CLUSTER_NAME} --kubeconfig=${KCONFIG}
-</code></pre>
-
-<p>設定確認。</p>
-
-<pre><code class="language-sh"># kubectl config view --kubeconfig=${KCONFIG}
-</code></pre></li>
-
-<li><p>kubeletのkubeconfig</p>
-
-<pre><code class="language-sh"># MASTER_IP=192.168.171.200
-# KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
-# CLUSTER_NAME=&quot;default&quot;
-# KCONFIG=kubelet.kubeconfig
-# KUSER=&quot;system:node:k8s-master&quot;
 # cd /etc/kubernetes/
 # kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
 # kubectl config set-credentials ${KUSER} --client-certificate=pki/admin.crt --client-key=pki/admin.key --embed-certs=true --kubeconfig=${KCONFIG}
@@ -629,10 +600,11 @@ After=network.target
 
 [Service]
 ExecStart=/usr/bin/kube-apiserver \\
+  --feature-gates=RotateKubeletServerCertificate=true \\
   --apiserver-count=1 \\
   --allow-privileged=true \\
-  --enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,ResourceQuota,DefaultTolerationSeconds \\
-  --authorization-mode=RBAC \\
+  --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,NodeRestriction,DenyEscalatingExec \\
+  --authorization-mode=Node,RBAC \\
   --secure-port=6443 \\
   --bind-address=0.0.0.0 \\
   --advertise-address=${MASTER_IP} \\
@@ -650,7 +622,7 @@ ExecStart=/usr/bin/kube-apiserver \\
   --service-node-port-range=30000-32767 \\
   --tls-cert-file=/etc/kubernetes/pki/kube-apiserver.crt \\
   --tls-private-key-file=/etc/kubernetes/pki/kube-apiserver.key \\
-  --enable-bootstrap-token-auth \\
+  --enable-bootstrap-token-auth=true \\
   --kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt \\
   --kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key \\
   --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname \\
@@ -673,11 +645,25 @@ EOF
 # systemctl start kube-apiserver
 </code></pre>
 
-<p><code>--allow_privileged</code>はflannelなどに必要。</p>
+<p><code>--allow-privileged</code>はflannelなどに必要。</p>
+
+<p><code>--admission-control</code>には<a href="https://kubernetes.io/docs/admin/admission-controllers/#is-there-a-recommended-set-of-admission-controllers-to-use">公式推奨のプラグイン</a>に加えて、後述のTLS BootstrappingのためのNodeRestrictionを指定。
+また、<code>--allow-privileged</code>の効果を軽減するため、DenyEscalatingExecも追加で指定。
+因みに、プラグインを指定する順番はKubernetes 1.10からは気にしなくてよくなった。</p>
+
+<p><code>--authorization-mode</code>にはRBACを指定するのが標準。
+後述のTLS Bootstrappingをするなら、Nodeも要る。</p>
+
+<p><code>--feature-gates</code>でRotateKubeletServerCertificateを有効にして、kubeletのサーバ証明書を自動更新するようにしている。
+因みに、クライアント証明書を自動更新するRotateKubeletClientCertificateはデフォルトで有効。
+これらがCertificate Rotationと呼ばれる機能。</p>
+
+<p><code>--feature-gates</code>は全Kubernetesコンポーネントで同じ値を指定するのがよさそう。</p>
 
 <p>確認。</p>
 
 <pre><code class="language-sh"># systemctl status kube-apiserver -l
+# journalctl -u kube-apiserver
 </code></pre></li>
 
 <li><p>kube-controller-manager</p>
@@ -696,6 +682,7 @@ After=network.target
 
 [Service]
 ExecStart=/usr/bin/kube-controller-manager \\
+  --feature-gates=RotateKubeletServerCertificate=true \\
   --kubeconfig=/etc/kubernetes/controller-manager.kubeconfig \\
   --bind-address=0.0.0.0 \\
   --controllers=*,bootstrapsigner,tokencleaner \\
@@ -709,7 +696,8 @@ ExecStart=/usr/bin/kube-controller-manager \\
   --root-ca-file=/etc/kubernetes/pki/ca.crt \\
   --use-service-account-credentials=true \\
   --v=2 \\
-  --tls-min-version=VersionTLS10
+  --tls-min-version=VersionTLS10 \\
+  --experimental-cluster-signing-duration=8760h0m0s
 Restart=always
 RestartSec=10s
 
@@ -722,17 +710,20 @@ EOF
 # systemctl start kube-controller-manager
 </code></pre>
 
-<p>期限の切れたbootstrap token(後述)を消すためにtokencleanerを有効にしている。</p>
+<p>期限の切れたBootstrap token(後述)を消すためにtokencleanerを有効にしている。</p>
 
-<p>bootstrapsignerはネームスペース<code>kube-public</code>の<code>cluster-info</code>というConfigMapにbootstrap tokenで署名するためのコントローラ。
-(何それ…)</p>
+<p>bootstrapsignerは後述のcluster-infoにBootstrap tokenで署名するためのコントローラ。</p>
+
+<p><a href="https://kubernetes.io/docs/admin/kubelet-tls-bootstrapping/#approval-controller">csrapproving</a>というコントローラがデフォルトで有効になっていて、後述のTLS BootstrapppingやCertificate Rotationの時に作られるCSRを自動で承認する。</p>
+
+<p><code>--experimental-cluster-signing-duration</code>は、Certificate Rotationのための設定で、自動発行する証明書の期限を1年に指定している。</p>
 
 <p>確認。</p>
 
 <pre><code class="language-sh"># systemctl status kube-controller-manager -l
 </code></pre></li>
 
-<li><p>Kubernetes Scheduler</p>
+<li><p>kube-scheduler</p>
 
 <p>systemdのユニットファイルを書いてサービス化。</p>
 
@@ -745,6 +736,7 @@ After=network.target
 
 [Service]
 ExecStart=/usr/bin/kube-scheduler \\
+  --feature-gates=RotateKubeletServerCertificate=true \\
   --kubeconfig=/etc/kubernetes/scheduler.kubeconfig \\
   --address=0.0.0.0 \\
   --v=2
@@ -774,12 +766,19 @@ EOF
 </code></pre></li>
 </ol></li>
 
-<li><p><a href="https://kubernetes.io/docs/admin/kubelet-tls-bootstrapping/">Bootstrap</a>の設定</p>
+<li><p><a href="https://kubernetes.io/docs/admin/kubelet-tls-bootstrapping/">TLS Bootstrapping</a>の設定</p>
 
-<p>kubeletが起動したとき、bootstrap kubeconfigを読んでkube-apiserverからクライアント証明書をもらって起動用kubeconfigを生成するようにする。</p>
+<p>TLS Bootstrappingは、Kubernetesクラスタのコンポーネント間の通信がTLSで暗号化されている環境で、ノードが新たにクラスタに参加するとき、自動的にセキュアに<a href="https://ja.wikipedia.org/wiki/%E8%A8%BC%E6%98%8E%E6%9B%B8%E7%BD%B2%E5%90%8D%E8%A6%81%E6%B1%82">CSR</a>を処理する仕組み。</p>
+
+<p>TLS Bootstrappingでは、kubeletは起動時にBootstrap kubeconfigを読んで、kubeletとノード用のCSRを生成し、それらがkube-controller-managerに承認されると、kubelet用のクライアント証明書と秘密鍵を生成する。
+その証明書と鍵を使ってkubeconfigを生成し、以降のクラスタへの接続に使う。</p>
+
+<p>Bootstrap時の認証には<a href="https://kubernetes.io/docs/admin/bootstrap-tokens/">Bootstrap Tokens</a>か<a href="https://kubernetes.io/docs/admin/kubelet-tls-bootstrapping/#token-authentication-file">Token authentication file</a>を使うことが推奨されていて、今回は前者を使う。</p>
+
+<p>(後者については<a href="https://medium.com/@toddrosner/kubernetes-tls-bootstrapping-cf203776abc7">この記事</a>に詳しい。)</p>
 
 <ol>
-<li><p><a href="https://kubernetes.io/docs/admin/bootstrap-tokens/">bootstrap token</a>生成</p>
+<li><p>Bootstrap TokenのSecret生成</p>
 
 <p>以下のように生成できる。</p>
 
@@ -791,17 +790,23 @@ EOF
 
 <p>けど、<a href="https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-token/#cmd-token-generate">kubeadm</a>でも生成出来てこっちのほうが楽なので、それで。</p>
 
-<pre><code class="language-sh"># kubeadm token create --kubeconfig /etc/kubernetes/admin.kubeconfig
+<pre><code class="language-sh"># BOOTSTRAP_TOKEN=$(kubeadm token create --kubeconfig /etc/kubernetes/admin.kubeconfig)
 </code></pre>
 
-<p>expirationは指定できなくて、1日で期限切れになっちゃうけど、まあいい。</p>
+<p>BOOTSTRAP_TOKENの値はあとで使う。</p>
+
+<p>expirationは指定できなくて、1日で期限切れになっちゃうけど、クラスタにノードを追加するときに有効であればいいのでまあいい。</p>
 
 <p>確認。</p>
 
-<pre><code class="language-sh"># kubectl -n kube-system get secret/bootstrap-token-${TOKEN_PUB} -o yaml
+<pre><code class="language-sh"># TOKEN_PUB=$(echo $BOOTSTRAP_TOKEN | sed -e s/\\..*//)
+# kubectl -n kube-system get secret/bootstrap-token-${TOKEN_PUB} -o yaml
 </code></pre></li>
 
-<li><p>bootstrap kubeconfig作成</p>
+<li><p>Bootstrap kubeconfig作成</p>
+
+<p>Bootstrap時は<code>kubelet-bootstrap</code>というユーザでkube-apiserverに接続する。
+<code>kubelet-bootstrap</code>は<code>system:node-bootstrapper</code>ロールを持って<code>system:bootstrappers</code>に属しているユーザとして認証される必要がある。</p>
 
 <pre><code class="language-sh"># MASTER_IP=192.168.171.200
 # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
@@ -826,19 +831,24 @@ EOF
 <pre><code class="language-sh"># kubectl -n kube-public create configmap cluster-info --from-file /etc/kubernetes/pki/ca.crt --from-file /etc/kubernetes/bootstrap.kubeconfig
 </code></pre>
 
-<p>Allow anonymous user to acceess the cluster-info configmap:</p>
+<p>anonymousユーザにcluster-infoへのアクセスを許可する。</p>
 
 <pre><code class="language-sh"># kubectl -n kube-public create role system:bootstrap-signer-clusterinfo --verb get --resource configmaps
 # kubectl -n kube-public create rolebinding kubeadm:bootstrap-signer-clusterinfo --role system:bootstrap-signer-clusterinfo --user system:anonymous
 </code></pre>
 
-<p>Allow a bootstrapping worker node join the cluster:</p>
+<p>kubelet-bootstrapユーザにロールとグループを紐づける。</p>
 
 <pre><code class="language-sh"># kubectl create clusterrolebinding kubeadm:kubelet-bootstrap --clusterrole system:node-bootstrapper --group system:bootstrappers
 </code></pre></li>
+
+<li><p>bootstrap.kubeconfigにトークンを追記</p>
+
+<pre><code class="language-sh"># kubectl config set-credentials kubelet-bootstrap --token=${BOOTSTRAP_TOKEN} --kubeconfig=/etc/kubernetes/bootstrap.kubeconfig
+</code></pre></li>
 </ol></li>
 
-<li><p>Install Docker &amp; Kubelet</p>
+<li><p>Docker、CNI、kubeletインストール</p>
 
 <ol>
 <li><p>Docker</p>
@@ -854,31 +864,28 @@ EOF
 
 <p>18.03.0-ceが入った。</p>
 
-<p>よくみたらDocker CEはOracle Linuxをサポートしていないので、代わりに<a href="https://docs.oracle.com/cd/E77565_01/E87205/html/section_install_upgrade_yum_docker.html">Oracle Container Runtime for Docker</a>を入れる。</p>
+<p>が、よくみたらDocker CEはOracle Linuxをサポートしていないので、Docker CEはアンインストールして、代わりに<a href="https://docs.oracle.com/cd/E77565_01/E87205/html/section_install_upgrade_yum_docker.html">Oracle Container Runtime for Docker</a> (aka docker-engine)を入れる。</p>
 
-<p><code>/etc/yum.repos.d/public-yum-ol7.repo</code>の<code>ol7_addons</code>の<code>enabled</code>を1に。</p>
+<p><code>/etc/yum.repos.d/public-yum-ol7.repo</code>の<code>ol7_addons</code>の<code>enabled</code>を1にして、以下のコマンドでdocker-engineをインストール。</p>
 
 <pre><code class="language-sh"># yum install -y docker-engine
 </code></pre>
 
-<p>docker-engine 17.06.2が入った。
-<code>/etc/systemd/system/docker.service.d/docker-sysconfig.conf</code></p>
+<p>docker-engine 17.06.2が入った。</p>
 
-<p><code>/etc/sysconfig/docker</code>に以下を追記。</p>
+<p><code>/etc/sysconfig/docker</code>に以下を追記して、 Dockerがオープンできる最大ファイル数を増やす。</p>
 
 <pre><code>DOCKER_NOFILE=1000000
-DOCKER_OPT_BIP=&quot;&quot;
-DOCKER_OPT_IPMASQ=&quot;&quot;
 </code></pre>
 
-<p><code>/etc/sysconfig/docker</code>の<code>OPTIONS</code>に<code>--iptables=false</code>を追加。</p>
+<p>Kubernetes環境ではiptablesはkube-proxyが操作するので、Dockerには操作させないようにするため、<code>/etc/sysconfig/docker</code>の<code>OPTIONS</code>に<code>--iptables=false</code>を追加。</p>
 
 <pre><code class="language-sh"># systemctl daemon-reload
 # systemctl enable docker
 # systemctl start docker
 </code></pre>
 
-<p>確認.</p>
+<p>確認。</p>
 
 <pre><code class="language-sh"># cat /proc/$(pidof dockerd)/environ
 # systemctl status docker -l
@@ -887,16 +894,12 @@ DOCKER_OPT_IPMASQ=&quot;&quot;
 <li><p>CNI</p>
 
 <pre><code class="language-sh"># mkdir -p /etc/cni/net.d /opt/cni/bin/
-</code></pre>
-
-<p><a href="https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz">https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz</a>
-をダウンロード。</p>
-
-<p>なかのcnitoolとnoopを<code>/opt/cni/bin/</code>に配置。</p>
-
-<pre><code class="language-sh"># curl -OL https://github.com/containernetworking/plugins/releases/download/v0.7.1/cni-plugins-amd64-v0.7.1.tgz
-# tar zxf cni-plugins-amd64-v0.7.1.tgz
-# cp * /opt/cni/bin/
+# cd /tmp
+# curl -OL https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz
+# curl -OL https://github.com/containernetworking/plugins/releases/download/v0.7.1/cni-plugins-amd64-v0.7.1.tgz
+# cd /opt/cni/bin
+# tar zxf /tmp/cni-amd64-v0.6.0.tgz
+# tar zxf /tmp/cni-plugins-amd64-v0.7.1.tgz
 # chmod +x /opt/cni/bin/*
 # cat &gt;/etc/cni/net.d/99-loopback.conf &lt;&lt;EOF
 {
@@ -905,12 +908,14 @@ DOCKER_OPT_IPMASQ=&quot;&quot;
 EOF
 </code></pre></li>
 
-<li><p>Kubelet</p>
+<li><p>kubelet</p>
 
 <p>前提コマンド(conntrack)インストール。</p>
 
 <pre><code class="language-sh"># yum -y install conntrack-tools
 </code></pre>
+
+<p>systemdのユニットファイルを書いてサービス化。</p>
 
 <pre><code class="language-sh"># DNS_SERVER_IP=10.0.0.10
 # PAUSE_IMAGE=k8s.gcr.io/pause-amd64:3.1
@@ -926,6 +931,7 @@ Requires=docker.service
 
 [Service]
 ExecStart=/usr/bin/kubelet \\
+  --feature-gates=RotateKubeletServerCertificate=true \\
   --address=0.0.0.0 \\
   --bootstrap-kubeconfig=/etc/kubernetes/bootstrap.kubeconfig \\
   --kubeconfig=/etc/kubernetes/kubelet.kubeconfig \\
@@ -938,11 +944,12 @@ ExecStart=/usr/bin/kubelet \\
   --authorization-mode=Webhook \\
   --client-ca-file=/etc/kubernetes/pki/ca.crt \\
   --cert-dir=/etc/kubernetes/pki \\
+  --rotate-certificates=true \\
   --v=2 \\
   --cgroup-driver=cgroupfs \\
   --pod-infra-container-image=${PAUSE_IMAGE} \\
   --tls-min-version=VersionTLS10 \\
-  --allow_privileged
+  --allow-privileged=true
 Restart=always
 RestartSec=10s
 
@@ -955,17 +962,132 @@ EOF
 # systemctl start kubelet
 </code></pre>
 
-<p>&ndash;allow_privilegedはflannelに必要。</p>
+<p>(実際は、systemctl start kubeletするまえに、後述のNode CSR自動承認設定をすべし。)</p>
 
-<p>本当は<a href="https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/">kubelet config file</a>を使ったほうがいい。</p>
+<p><code>--allow-privileged</code>はflannelなどに必要。</p>
 
-<p>確認。</p>
+<p><code>--pod-infra-container-image</code>では<a href="https://github.com/kubernetes/kubernetes/tree/master/build/pause">pause</a>コンテナイメージを指定する。
+このコンテナはPod毎に起動され、Podネットワークの名前空間を保持するために使われるらしい。
+今回使った<code>k8s.gcr.io/pause-amd64:3.1</code>はKubernetesチームが配布しているものだけど、Oracleが配布しているものもあり、そちらを使うには、Oracle Linux 7.4のダウンロード媒体リストに含まれるOracle Container Services for use with Kubernetes 1.1.9.1に入っているpause-amd64.tarを<code>docker load</code>しておいて、そのイメージ名を<code>--pod-infra-container-image</code>に渡せばいい。</p>
+
+<p><code>--bootstrap-kubeconfig</code>で指定したkubeconfigでTLS Bootstrapして、<code>--cert-dir</code>で指定したディレクトリに証明書と鍵を生成して、<code>--kubeconfig</code>で指定したパスに以降使うkubeconfigを生成する。
+この証明書を自動更新(i.e. Certificate Rotation)するオプションが<code>--rotate-certificates</code>。</p>
+
+<p><code>--pod-manifest-path</code>で指定したディレクトリはkubeletに定期的にスキャンされ、そこに置いたKubernetesマニフェスト(ドットで始まるもの以外)が読まれる。
+(参照: <a href="https://kubernetes.io/docs/tasks/administer-cluster/static-pod/">Static Pods</a>)</p>
+
+<p>本当は<a href="https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/">kubelet config file</a>を使ったほうがいいみたいなので、次回の記事でそれに対応する。</p>
+
+<p>起動確認。</p>
 
 <pre><code class="language-sh"># systemctl status kubelet -l
 </code></pre></li>
+
+<li><p>Node CSR手動承認</p>
+
+<p>TLS Bootstrappingで生成されたCSRを手動で承認する。</p>
+
+<p>CSRは以下のコマンドで見れる。</p>
+
+<pre><code class="language-sh"># kubectl get csr
+NAME                                                   AGE       REQUESTOR                 CONDITION
+csr-cf9hm                                              24m       system:node:k8s-master  Pending
+node-csr-Vcw_4HioW1CI96eDH29RMKPrOchEN133053wm6DCXUk   24m       system:bootstrap:itacbw   Pending
+</code></pre>
+
+<p><code>node-csr-…</code>がクライアント証明書のためのCSRで、<code>csr-…</code>がサーバ証明書の。
+これらを承認する。</p>
+
+<pre><code class="language-sh"># kubectl certificate approve node-csr-Vcw_4HioW1CI96eDH29RMKPrOchEN133053wm6DCXUk
+# kubectl certificate approve csr-cf9hm
+</code></pre>
+
+<p>(因みに否認するときは<code>kubectl certificate deny</code>)</p>
+
+<p>これでクラスタにノードが追加されたはず。
+確認。</p>
+
+<pre><code class="language-sh"># kubectl get node
+NAME         STATUS    ROLES     AGE       VERSION
+k8s-master   Ready     &lt;none&gt;    36s       v1.10.0
+</code></pre></li>
+
+<li><p>Node CSR自動承認設定</p>
+
+<p>前節でやった手動承認はcsrapprovingが自動でやってくれる。</p>
+
+<p>新規ノード参加時のCSRを承認するClusterRoleとして<code>system:certificates.k8s.io:certificatesigningrequests:nodeclient</code>が自動生成されているので、これを<code>system:bootstrappers</code>グループにバインドしてやると、自動承認が有効になる。</p>
+
+<ul>
+<li>s</li>
+</ul>
+
+<pre><code class="language-sh"># cat &lt;&lt;EOF | kubectl create -f -
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: auto-approve-csrs-for-group
+subjects:
+- kind: Group
+  name: system:bootstrappers
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: system:certificates.k8s.io:certificatesigningrequests:nodeclient
+  apiGroup: rbac.authorization.k8s.io
+EOF
+</code></pre>
+
+<p>また、kubeletのクライアント証明書を自動更新(i.e. RotateKubeletClientCertificate)するときのCSRを承認するClusterRoleとして<code>system:certificates.k8s.io:certificatesigningrequests:selfnodeclient</code>が自動生成されていて、これをノード毎のユーザにバインドしてやると、自動承認が有効になる。</p>
+
+<pre><code class="language-sh"># NODE_USER_NAME=k8s-master
+# cat &lt;&lt;EOF | kubectl create -f -
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ${NODE_USER_NAME}-node-client-cert-renewal
+subjects:
+- kind: User
+  name: system:node:${NODE_USER_NAME}
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: system:certificates.k8s.io:certificatesigningrequests:selfnodeclient
+  apiGroup: rbac.authorization.k8s.io
+EOF
+</code></pre>
+
+<p>kubeletのサーバ証明書を自動更新(i.e. RotateKubeletServerCertificate)するときのCSRを承認するClusterRoleは現時点で自動生成されないので、自分で作ってノード毎のユーザにバインドして、自動承認を有効にする。</p>
+
+<pre><code class="language-sh"># cat &lt;&lt;EOF | kubectl create -f -
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: approve-node-server-renewal-csr
+rules:
+- apiGroups: [&quot;certificates.k8s.io&quot;]
+  resources: [&quot;certificatesigningrequests/selfnodeserver&quot;]
+  verbs: [&quot;create&quot;]
+EOF
+# NODE_USER_NAME=k8s-master
+# cat &lt;&lt;EOF | kubectl create -f -
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ${NODE_USER_NAME}-server-client-cert-renewal
+subjects:
+- kind: User
+  name: system:node:${NODE_USER_NAME}
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: approve-node-server-renewal-csr
+  apiGroup: rbac.authorization.k8s.io
+EOF
+</code></pre></li>
 </ol></li>
 
-<li><p>Deploy essential kubernetes components</p>
+<li><p>kube-proxy、オーバレイネットワーク、DNSのデプロイ</p>
 
 <ol>
 <li><p>kube-proxy</p>
@@ -976,7 +1098,7 @@ EOF
 # kubectl -n kube-system create serviceaccount kube-proxy
 </code></pre>
 
-<p>kube-proxy kubeconfig作成</p>
+<p>kube-proxyのkubeconfig作成</p>
 
 <pre><code class="language-sh"># MASTER_IP=192.168.171.200
 # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
@@ -997,12 +1119,12 @@ EOF
 <pre><code class="language-sh"># kubectl config view --kubeconfig=${KCONFIG}
 </code></pre>
 
-<p>Bind a kube-proxy service account (from kube-system namespace) to a clusterrole system:node-proxier to allow RBAC</p>
+<p>Service Accountのkube-proxyに<code>system:node-proxier</code>というClusterRoleを付ける。</p>
 
 <pre><code class="language-sh"># kubectl create clusterrolebinding kubeadm:node-proxier --clusterrole system:node-proxier --serviceaccount kube-system:kube-proxy
 </code></pre>
 
-<p>Create a kube-proxy service file and run it:</p>
+<p>systemdのユニットファイルを書いてサービス化。</p>
 
 <pre><code class="language-sh"># cat &gt; /etc/systemd/system/kube-proxy.service &lt;&lt; EOF
 [Unit]
@@ -1013,6 +1135,7 @@ After=network.target
 
 [Service]
 ExecStart=/usr/bin/kube-proxy \\
+  --feature-gates=RotateKubeletServerCertificate=true \\
   --bind-address 0.0.0.0 \\
   --kubeconfig=/etc/kubernetes/kube-proxy.kubeconfig \\
   --v=2
@@ -1033,110 +1156,99 @@ EOF
 <pre><code class="language-sh"># systemctl status kube-proxy -l
 </code></pre></li>
 
-<li><p>Flannel</p>
+<li><p>オーバレイネットワーク (flannel)</p>
 
-<p><a href="https://github.com/coreos/flannel/blob/master/Documentation/kubernetes.md">https://github.com/coreos/flannel/blob/master/Documentation/kubernetes.md</a></p></li>
+<p><a href="https://github.com/coreos/flannel/blob/master/Documentation/kubernetes.md">flannelのドキュメント</a>を参考に。</p>
+
+<p>flannelをデプロイするには、kube-apiserverとkube-controller-managerの起動オプションに<code>--allow-privileged</code>を付ける必要がある。</p>
+
+<p>また、公式が配布しているKubernetesマニフェストを使う場合、kube-controller-managerの起動オプションの<code>--cluster-cidr</code>で<code>10.244.0.0/16</code>を指定する必要がある。</p>
+
+<p>デプロイ自体は以下のコマンドを実行するだけ。</p>
+
+<pre><code class="language-sh"># export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
+# kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+</code></pre>
+
+<p>このKubernetesマニフェストでは、quay.ioから<code>quay.io/coreos/flannel:v0.10.0-amd64</code>というコンテナイメージがpullされる。</p>
+
+<p>Oracleもflannelのコンテナイメージを配布していて、そちらを使うには、Oracle Linux 7.4のダウンロード媒体リストに含まれるOracle Container Services for use with Kubernetes 1.1.9.1に入っているflannel.tarを<code>docker load</code>しておいて、そのイメージを使うようにマニフェストを書きかえればいい。</p>
+
+<p>起動確認。</p>
+
+<pre><code class="language-sh"># kubectl -n kube-system get po
+NAME                    READY     STATUS    RESTARTS   AGE
+kube-flannel-ds-gkcqd   1/1       Running   0          1m
+</code></pre>
+
+<p>flannelは<a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/">Network Policy</a>をサポートしていないので、<a href="https://www.projectcalico.org/">Calico</a>か<a href="https://www.weave.works/oss/net/">Weave Net</a>あたりにすればよかったかも。</p></li>
 
 <li><p>CoreDNS</p>
 
-<p><a href="https://kubernetes.io/docs/tasks/administer-cluster/coredns/">https://kubernetes.io/docs/tasks/administer-cluster/coredns/</a>
-<a href="https://coredns.io/2018/01/29/deploying-kubernetes-with-coredns-using-kubeadm/">https://coredns.io/2018/01/29/deploying-kubernetes-with-coredns-using-kubeadm/</a>
-<a href="https://github.com/coredns/deployment/tree/master/kubernetes">https://github.com/coredns/deployment/tree/master/kubernetes</a></p>
+<p>Kubernetes 1.10からは、サービスディスカバリに(kube-dnsの代わりに)CoreDNSを使うのが標準になった。</p>
 
-<p><a href="https://github.com/coredns/deployment/archive/master.zip">https://github.com/coredns/deployment/archive/master.zip</a>
-をダウンロード。</p>
+<p>以下を参考にCoreDNSをデプロイする:</p>
 
-<p>なかの<code>kubernetes/coredns.yaml.sed</code>と<code>kubernetes/deploy.sh</code>をVMにもってきて、</p>
+<ul>
+<li><a href="https://kubernetes.io/docs/tasks/administer-cluster/coredns/">https://kubernetes.io/docs/tasks/administer-cluster/coredns/</a></li>
+<li><a href="https://coredns.io/2018/01/29/deploying-kubernetes-with-coredns-using-kubeadm/">https://coredns.io/2018/01/29/deploying-kubernetes-with-coredns-using-kubeadm/</a></li>
+<li><a href="https://github.com/coredns/deployment/tree/master/kubernetes">https://github.com/coredns/deployment/tree/master/kubernetes</a></li>
+</ul>
 
-<pre><code class="language-sh"># DNS_SERVER_IP=&quot;10.0.0.10&quot;
+<pre><code class="language-sh"># cd /tmp
+# curl -LO https://raw.githubusercontent.com/coredns/deployment/master/kubernetes/coredns.yaml.sed
+# curl -LO https://raw.githubusercontent.com/coredns/deployment/master/kubernetes/deploy.sh
+# chmod +x deploy.sh
+# DNS_SERVER_IP=&quot;10.0.0.10&quot;
 # SERVICE_CLUSTER_IP_RANGE=&quot;10.0.0.0/16&quot;
 # DNS_DOMAIN=&quot;cluster.local&quot;
-# chmod +x deploy.sh
 # ./deploy.sh -r $SERVICE_CLUSTER_IP_RANGE -i $DNS_SERVER_IP -d $DNS_DOMAIN &gt; /etc/kubernetes/manifests/coredns.yaml
-</code></pre>
-
-<pre><code class="language-sh"># export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
+# export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
 # kubectl apply -f /etc/kubernetes/manifests/coredns.yaml
 </code></pre>
 
-<p>確認。</p>
+<p>このKubernetesマニフェストではDocker Hubから<code>coredns/coredns:1.1.1</code>というイメージがpullされる。</p>
 
-<pre><code class="language-sh"># kubectl -n kube-system get pods -o wide
-# kubectl -n kube-system get deployments
+<p>起動確認。</p>
+
+<pre><code class="language-sh"># kubectl -n kube-system get pods -o wide | grep coredns
+coredns-8459d9f654-b585f   1/1       Running   0          48s       10.244.0.3        k8s-master
+coredns-8459d9f654-x7drc   1/1       Running   0          48s       10.244.0.2        k8s-master
+</code></pre>
+
+<p>起動確認時にCoreDNSのIPアドレスを確認して、動作確認。</p>
+
+<pre><code class="language-sh"># dig @10.244.0.3 kubernetes.default.svc.cluster.local +noall +answer
+
+
+; &lt;&lt;&gt;&gt; DiG 9.9.4-RedHat-9.9.4-61.el7 &lt;&lt;&gt;&gt; @10.244.0.3 kubernetes.default.svc.cluster.local +noall +answer
+; (1 server found)
+;; global options: +cmd
+kubernetes.default.svc.cluster.local. 5 IN A    10.0.0.1
 </code></pre></li>
 </ol></li>
 
-<li><p>Additional apps</p>
+<li><p>Kubernetesアプリデプロイ</p>
+
+<p>前節まででKubernetesクラスタの構築は完了。
+試しにKubernetesアプリをひとつデプロイしてみる。</p>
 
 <ol>
-<li><p>Kubernetes Dashboard</p>
+<li><p><a href="https://github.com/weaveworks/scope">Weave Scope</a></p>
+
+<p><a href="https://www.weave.works/docs/scope/latest/installing/#k8s">ドキュメント</a>を参考に。</p>
 
 <pre><code class="language-sh"># cd /etc/kubernetes/manifests/
-# curl -OL https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
-</code></pre>
-
-<pre><code class="language-sh"># export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
-# kubectl apply -f kubernetes-dashboard.yaml
-</code></pre></li>
-
-<li><p>Weave Scope</p>
-
-<pre><code class="language-sh"># curl -sSL -o scope.yaml https://cloud.weave.works/k8s/scope.yaml?k8s-service-type=NodePort
+# export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
+# curl -sSL -o scope.yaml https://cloud.weave.works/k8s/scope.yaml?k8s-service-type=NodePort
 # kubectl apply -f scope.yaml
 </code></pre>
 
-<p><code>kubectl -n weave get svc/weave-scope-app</code>でポート調べて、<code>http://k8s-master:&lt;ポート&gt;/</code>で開く。</p></li>
+<p>このKubernetesマニフェストではDocker Hubから<code>weaveworks/scope:1.8.0</code>というイメージがpullされる。</p>
+
+<p><code>kubectl -n weave get svc/weave-scope-app</code>でポート調べて、<code>http://k8s-master:&lt;ポート&gt;/</code>をブラウザ開くとWeave ScopeのGUIが見れる。</p></li>
 </ol></li>
 </ol>
-
-<p>ダウンロードしたものまとめ:</p>
-
-<p><a href="https://storage.googleapis.com/kubernetes-release/release/v1.10.0/kubernetes-server-linux-amd64.tar.gz">https://storage.googleapis.com/kubernetes-release/release/v1.10.0/kubernetes-server-linux-amd64.tar.gz</a></p>
-
-<p><a href="https://github.com/coreos/etcd/releases/download/v3.1.12/etcd-v3.1.12-linux-amd64.tar.gz">https://github.com/coreos/etcd/releases/download/v3.1.12/etcd-v3.1.12-linux-amd64.tar.gz</a></p>
-
-<pre><code>================================================================================
- Package                  Arch     Version                   Repository    Size
-================================================================================
-Installing:
- docker-engine            x86_64   17.06.2.ol-1.0.1.el7      ol7_addons    21 M
-Installing for dependencies:
- audit-libs-python        x86_64   2.7.6-3.el7               ol7_latest    73 k
- checkpolicy              x86_64   2.5-4.el7                 ol7_latest   290 k
- container-selinux        noarch   2:2.21-1.el7              ol7_addons    28 k
- libcgroup                x86_64   0.41-13.el7               ol7_latest    64 k
- libsemanage-python       x86_64   2.5-8.el7                 ol7_latest   104 k
- policycoreutils-python   x86_64   2.5-17.1.0.1.el7          ol7_latest   445 k
- python-IPy               noarch   0.75-6.el7                ol7_latest    32 k
- setools-libs             x86_64   3.3.8-1.1.el7             ol7_latest   611 k
-</code></pre>
-
-<p><a href="https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz">https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz</a></p>
-
-<p><a href="https://github.com/containernetworking/plugins/releases/download/v0.7.1/cni-plugins-amd64-v0.7.1.tgz">https://github.com/containernetworking/plugins/releases/download/v0.7.1/cni-plugins-amd64-v0.7.1.tgz</a></p>
-
-<p>Oracle Container Services for use with Kubernetes 1.1.9.1.zip
-のpause-amd64.tar</p>
-
-<pre><code>=====================================================================================================================================================
- Package                                     Arch                        Version                               Repository                       Size
-=====================================================================================================================================================
-Installing:
- conntrack-tools                             x86_64                      1.4.4-3.el7_3                         ol7_latest                      186 k
-Installing for dependencies:
- libnetfilter_cthelper                       x86_64                      1.0.0-9.el7                           ol7_latest                       17 k
- libnetfilter_cttimeout                      x86_64                      1.0.0-6.el7                           ol7_latest                       17 k
- libnetfilter_queue                          x86_64                      1.0.2-2.el7_2                         ol7_latest                       22 k
-</code></pre>
-
-<p><a href="https://github.com/coredns/deployment/archive/master.zip">https://github.com/coredns/deployment/archive/master.zip</a>
-docker image: coredns/coredns:1.1.1</p>
-
-<p><a href="https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml">https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml</a>
-quay.io/coreos/flannel:v0.10.0-amd64</p>
-
-<p>Oracle Container Services for use with Kubernetes 1.1.9.1.zip
-のflannel.tar</p>
 
       </div>
 
