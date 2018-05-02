@@ -20,6 +20,8 @@ GitHub Pages上のWebサイトはデフォルトでは`<GitHubユーザ名>.gith
 
 GitHub Pagesは2014年3月から非公式にHTTPSをサポートしていて、2016年6月8日に[正式サポートを表明](https://github.com/blog/2186-https-for-github-pages)したが、これは`<GitHubユーザ名>.github.io`ドメインだけが対象であり、カスタムドメインはHTTPSサポートされていない。
 
+(2018/5/3追記: 2018/5/1にGitHub PagesのカスタムドメインのHTTPSサポートが[発表された](https://blog.github.com/2018-05-01-github-pages-custom-domains-https/))
+
 要するにこのブログにはHTTP接続しかできない状態だった。
 これをなんとかHTTPSに対応させたかった。
 
