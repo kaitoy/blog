@@ -40,6 +40,12 @@ Oracle Linux 7.4.0のVMでKubernetes1.10.0のクラスタをスクラッチか�
     * etcd 3.1.12
     * [flannel](https://github.com/coreos/flannel) 0.10.0
     * [CoreDNS](https://github.com/coredns/coredns) 1.1.1
+    * SERVICE_CLUSTER_IP_RANGE (Serviceに割り当てるIPの範囲) は10.0.0.0/16
+        * kube-apiserverのIPはこの範囲の最初のIP(i.e. 10.0.0.1)になる。
+        * ホストネットワークや、CLUSTER_CIDRと範囲が被らないようにする必要がある。
+    * CLUSTER_CIDR (Podに割り当てるIPの範囲) は10.244.0.0/16
+        * flannelの要件に合わせている。
+        * ホストネットワークや、SERVICE_CLUSTER_IP_RANGEと範囲が被らないようにする必要がある。
 
 <br>
 
@@ -339,8 +345,8 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         * コンテナ: https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kube-proxy.tar
     * kubelet: https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubelet
     * kubectl: https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubectl
-    * hyperkube: https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/hyperkube
     * kubeadm: https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubeadm
+    * hyperkube: https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/hyperkube
 
     最後のhyperkubeは、各種Kubernetesバイナリのごった煮。
     ファイル名によって動作が変わる。
