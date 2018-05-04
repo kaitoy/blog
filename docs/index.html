@@ -14,9 +14,9 @@
     <link rel="canonical" href="https://www.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="Oracle Linux 7.4.0のVMでKubernetes1.10.0のクラスタをスクラッチから全手動で作った。 参考にしたのは主に以下。 https://nixaid.com/deploying-kubernetes-cluster-from-scratch/ https://kubernetes.io/docs/getting-started-guides/scratch/ https://ulam.io/blog/kubernetes-scratch/ https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master (adsbygoogle = window.adsbygoogle || []).push({}); 構成 マシン: Windows 10 Homeのラップトップの上のVMware PlayerのVM CPU: 2コア メモリ: 4GB NIF: NATのを一つ OS: Oracle Linux 7.4.0 Minimalインストール IPアドレス: 192.168.171.200、静的割り当て ホスト名: k8s-master (hostsで解決) Docker: Oracle Container Runtime for Docker (docker-engine) 17.06.2 Kubernetes: バージョン1.10.0 単一ノード 全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e. 非コンテナ) コンポーネント間通信とkubectlの通信をTLSで暗号化 コンポーネント間通信とkubectlの通信の認証はx509クライアント証明書 TLS BootstrappingにはBootstrap token使用。 Certificate Rotation有効 etcd 3.1.12 flannel 0.10.0 CoreDNS 1.1.1 SERVICE_CLUSTER_IP_RANGE (Serviceに割り当てるIPの範囲) は10.0.0.0/16 kube-apiserverのIPはこの範囲の最初のIP(i.e. 10.0.0.1)になる。 ホストネットワークや、CLUSTER_CIDRと範囲が被らないようにする必要がある。 CLUSTER_CIDR (Podに割り当てるIPの範囲) は10.244.0.0/16 flannelの要件に合わせている。 ホストネットワークや、SERVICE_CLUSTER_IP_RANGEと範囲が被らないようにする必要がある。 kubeletの動作条件にあるので、swapをoffにする。 Oracle Linuxにログインして、/etc/fstabのswapの行を削除して、以下のコマンドを実行。 # swapoff -a SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面倒なのでとりあえず無効にする。 /etc/selinux/configを編集して、SELINUXをpermissiveにして、以下のコマンドを実行。 # setenforce 0 ファイアウォールもちゃんと設定すればいいんだけど面倒なのでとりあえず無効にする。 # systemctl stop firewalld # systemctl disable firewalld これで準備完了。 クラスタ構築手順 おおむね、k8sコンポーネント間の通信の暗号化に使う鍵と証明書の生成、各コンポーネント用kubeconfigの生成、etcdのデプロイ、k8sコンポーネントのデプロイ、fannelデプロイ、CoreDNSデプロイ、という流れ。 ついでに最後にWeave Scopeをデプロイしてみる。 Bridge netfilterとIP forwardingを設定 まず、Bridge netfilterモジュールをロードする。 # modprobe br_netfilter # cat &gt; /etc/sysconfig/modules/br_netfilter.modules &lt;&lt; EOF #!/bin/sh /sbin/modprobe br_netfilter &gt; /dev/null 2&gt;&amp;1 EOF # chmod 755 /etc/sysconfig/modules/br_netfilter.modules Bridge netfilterとIP forwardingを有効化する。 # cat &gt; /etc/sysctl.d/kubernetes.conf &lt;&lt; EOF net.bridge.bridge-nf-call-iptables = 1 net.bridge.bridge-nf-call-ip6tables = 1 net.ipv4.ip_forward = 1 EOF # sysctl -p /etc/sysctl.d/kubernetes.conf 設定確認。 # lsmod |grep br_netfilter # sysctl -a | grep -E &quot;net.bridge.bridge-nf-call-|net.ipv4.ip_forward&quot; x509証明書生成 opensslの設定作成 # mkdir -p /etc/kubernetes/pki # cd /etc/kubernetes/pki # K8S_SERVICE_IP=10.0.0.1 # MASTER_IP=192.168.171.200 # cat &gt; openssl.cnf &lt;&lt; EOF [ req ] distinguished_name = req_distinguished_name [req_distinguished_name] [ v3_ca ] basicConstraints = critical, CA:TRUE keyUsage = critical, digitalSignature, keyEncipherment, keyCertSign [ v3_req_server ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth [ v3_req_client ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = clientAuth [ v3_req_apiserver ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth subjectAltName = @alt_names_cluster [ v3_req_etcd ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth, clientAuth subjectAltName = @alt_names_etcd [ alt_names_cluster ] DNS.1 = kubernetes DNS.2 = kubernetes.default DNS.3 = kubernetes.default.svc DNS.4 = kubernetes.default.svc.cluster.local DNS.5 = k8s-controller IP.1 = ${MASTER_IP} IP.2 = ${K8S_SERVICE_IP} [ alt_names_etcd ] DNS.1 = k8s-controller IP.1 = ${MASTER_IP} EOF Kubernetes CA証明書生成 以降で生成する証明書に署名するための証明書。 # cd /etc/kubernetes/pki # CA_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out ca.key # chmod 0600 ca.key # openssl req -x509 -new -sha256 -nodes -key ca.key -days $CA_DAYS -out ca.crt -subj &quot;/CN=kubernetes-ca&quot; -extensions v3_ca -config ./openssl.cnf kube-apiserver証明書生成 kube-apiserverのサーバ証明書。 # cd /etc/kubernetes/pki # APISERVER_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out kube-apiserver.key # chmod 0600 kube-apiserver.key # openssl req -new -sha256 -key kube-apiserver.key -subj &quot;/CN=kube-apiserver&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-apiserver.crt -days $APISERVER_DAYS -extensions v3_req_apiserver -extfile ./openssl.cnf kube-apiserver-kubelet証明書生成 kube-apiserverがkubeletのAPIにアクセスするときのクライアント証明書。 # cd /etc/kubernetes/pki # APISERVER_KUBELET_CLIENT_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out apiserver-kubelet-client.key # chmod 0600 apiserver-kubelet-client.key # openssl req -new -key apiserver-kubelet-client.key -subj &quot;/CN=kube-apiserver-kubelet-client/O=system:masters&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out apiserver-kubelet-client.crt -days $APISERVER_KUBELET_CLIENT_DAYS -extensions v3_req_client -extfile ./openssl.cnf adminクライアント証明書生成 kubectlがkube-apiserverのAPIにアクセスするときのクライアント証明書。 # cd /etc/kubernetes/pki # ADMIN_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out admin.key # chmod 0600 admin.key # openssl req -new -key admin.key -subj &quot;/CN=kubernetes-admin/O=system:masters&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out admin.crt -days $ADMIN_DAYS -extensions v3_req_client -extfile ./openssl.cnf Service Accountキーとkube-controller-managerのクライアント証明書生成 Service Accountトークンにkube-controller-managerが署名するときに使うキーを生成する。 そのキーを使ってkube-controller-managerのクライアント証明書も生成する。 kube-apiserverがトークンの署名を確認するとき(?)に使う公開鍵も生成する。 # cd /etc/kubernetes/pki # CONTROLLER_MANAGER_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out sa.key # openssl ec -in sa.key -outform PEM -pubout -out sa.pub # chmod 0600 sa.key # openssl req -new -sha256 -key sa.key -subj &quot;/CN=system:kube-controller-manager&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out sa.crt -days $CONTROLLER_MANAGER_DAYS -extensions v3_req_client -extfile ./openssl.cnf kube-schedulerクライアント証明書生成 kube-schedulerがkube-apiserverにリクエストするときに使うクライアント証明書。 多分。 # cd /etc/kubernetes/pki # SCHEDULER_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out kube-scheduler.key # chmod 0600 kube-scheduler.key # openssl req -new -sha256 -key kube-scheduler.key -subj &quot;/CN=system:kube-scheduler&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-scheduler.crt -days $SCHEDULER_DAYS -extensions v3_req_client -extfile ./openssl.cnf front proxy CA証明書生成 front proxyのクライアント証明書に署名するのにつかう証明書。 front proxyってなんだ?">
+    <meta property="og:description" content="「Kubernetes 1.10をスクラッチから全手動で構築」で、Kubernetes 1.10のクラスタに、ネットワークプロバイダとしてflannelをデプロイしたけど、flannelはNetwork Policyをサポートしていないので、代わりにWeave Netをデプロイしてみた話。 (adsbygoogle = window.adsbygoogle || []).push({}); Weave Netにした理由 Network Policyをサポートしているネットワークプロバイダには現時点で以下のものがある。 Calico Cilium Kube-router Romana Weave Net このなかで、よく名前を聞くのがCalicoとWeave Net。 GitHubのスター数が圧倒的に多いのがWeave Net。 性能が比較的いいのがWeave Net。 ということでWeave Netにした。 Weave Netデプロイ 以下を参考に設定してデプロイする。 https://www.weave.works/docs/net/latest/kubernetes/kube-addon/ https://www.weave.works/docs/net/latest/install/installing-weave/ https://github.com/weaveworks/weave/blob/master/prog/weave-kube/launch.sh Kubernetesマニフェスト Weave NetをKubernetesクラスタにデプロイするためのマニフェストは、GitHub Releasesかhttps://cloud.weave.worksからダウンロードできる。 今回は後者にする。 https://cloud.weave.worksを使う場合、Kubernetesのバージョンなどのパラメータはクエリストリングで指定できる。 主なパラメータは以下。 k8s-version: Kubernetesのバージョン。指定しないとlatest。 password-secret: ノード間のWeave Net通信の暗号化に使うパスワードを保持するSecret名。指定しないと平文。(参考: https://www.weave.works/docs/net/latest/tasks/manage/security-untrusted-networks/) IPALLOC_RANGE: Podに割り当てるIPアドレスの範囲。指定しないと10.32.0.0/12。 CHECKPOINT_DISABLE: Weave Netのアップデートを定期的にチェックする機能の無効化オプション。 WEAVE_MTU: MTUを指定するオプション。デフォルトで1376バイト。 WEAVE_MTUはとりあえずデフォルトにしておいて、IPALLOC_RANGEもデフォルトにして、通信暗号化して、CHECKPOINT_DISABLEをtrueにするとすると、マニフェストは以下のようにダウンロードできる。 # curl -fsSLo weave-daemonset.yaml &quot;https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d &#39;\n&#39;)&amp;env.CHECKPOINT_DISABLE=1&amp;password-secret=weave-passwd&quot; (通信暗号化は単一ノードなら不要だと思うけどとりあえず設定しておく。) Kubernetesコンポーネントの起動オプション kube-controller-managerの起動オプションの--cluster-cidrはIPALLOC_RANGEと同じにする必要がある。">
     
-    <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/weave-k8s.png">
     
     
     
@@ -82,6 +82,28 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/weave-k8s.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Fri, May 4, 2018</span>
+              </div>
+              <h2 class="title">Kubernetes 1.10のクラスタにWeave Netをデプロイする</h2>
+              <div class="summary">
+                「Kubernetes 1.10をスクラッチから全手動で構築」で、Kubernetes 1.10のクラスタに、ネットワークプロバイダとしてflannelをデプロイしたけど、flannelはNetwork Policyをサポートしていないので、代わりにWeave Netをデプロイしてみた話。 (adsbygoogle = window.adsbygoogle || []).push({}); Weave Netにした理由 Network Policyをサポートしているネットワークプロバイダには現時点で以下のものがある。 Calico Cilium Kube-router Romana Weave Net このなかで、よく名前を聞くのがCalicoとWeave Net。 GitHubのスター数が圧倒的に多いのがWeave Net。 性能が比較的いいのがWeave Net。 ということでWeave Netにした。 Weave Netデプロイ 以下を参考に設定してデプロイする。 https://www.weave.works/docs/net/latest/kubernetes/kube-addon/ https://www.weave.works/docs/net/latest/install/installing-weave/ https://github.com/weaveworks/weave/blob/master/prog/weave-kube/launch.sh Kubernetesマニフェスト Weave NetをKubernetesクラスタにデプロイするためのマニフェストは、GitHub Releasesかhttps://cloud.weave.worksからダウンロードできる。 今回は後者にする。 https://cloud.weave.worksを使う場合、Kubernetesのバージョンなどのパラメータはクエリストリングで指定できる。 主なパラメータは以下。 k8s-version: Kubernetesのバージョン。指定しないとlatest。 password-secret: ノード間のWeave Net通信の暗号化に使うパスワードを保持するSecret名。指定しないと平文。(参考: https://www.weave.works/docs/net/latest/tasks/manage/security-untrusted-networks/) IPALLOC_RANGE: Podに割り当てるIPアドレスの範囲。指定しないと10.32.0.0/12。 CHECKPOINT_DISABLE: Weave Netのアップデートを定期的にチェックする機能の無効化オプション。 WEAVE_MTU: MTUを指定するオプション。デフォルトで1376バイト。 WEAVE_MTUはとりあえずデフォルトにしておいて、IPALLOC_RANGEもデフォルトにして、通信暗号化して、CHECKPOINT_DISABLEをtrueにするとすると、マニフェストは以下のようにダウンロードできる。 # curl -fsSLo weave-daemonset.yaml &quot;https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')&amp;env.CHECKPOINT_DISABLE=1&amp;password-secret=weave-passwd&quot; (通信暗号化は単一ノードなら不要だと思うけどとりあえず設定しておく。) Kubernetesコンポーネントの起動オプション kube-controller-managerの起動オプションの--cluster-cidrはIPALLOC_RANGEと同じにする必要がある。
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="eyecatch">
@@ -142,33 +164,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2018/03/04/open-data/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2018/03/04/open-data/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/ml.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Sun, Mar 4, 2018</span>
               </div>
-              <h2 class="title">オープンデータメモ</h2>
-              <div class="summary">
-                機械学習の勉強に使えそうなオープンデータのメモ。 (adsbygoogle = window.adsbygoogle || []).push({}); テキスト WordNet: 英語の語彙データベース。名詞、動詞、形容詞、副詞ごとに階層的にグルーピングされたDBが提供されている。ライセンスはWordNet Licenseで、著作権表示さえしておけば、目的の制限なく、使用、複製、改変、再配布を無料でできる。 日本語ワードネット: 日本語版WordNet。ライセンスはJapanese WordNetライセンスで、著作権表示さえしておけば、目的の制限なく、使用、複製、改変、再配布を無料でできる。 画像 ImageNet: WordNetの名詞の階層構造に従ってラベル付けされた1400万個以上の画像データ。バウンディングボックスも付いてる。画像はFlickrとかに上がっているもので、そこから自分で無料でダウンロードできる。非商用(研究か教育)目的ならImageNetのサイトから画像をダウンロードできる。 Open Images: 900万個の画像に数千クラスのラベルとバウンディングボックスを付けたデータ。ライセンスはCreative Commons BY 4.0。 MNIST: 手書き数字のラベル付きデータセット。訓練データとテストデータ合わせて7万個。機械学習のHello Worldに使われる。 動画 YouTube-8M: 800万個のYouTube動画を4800クラスでラベル付けしたデータ。ライセンスはCreative Commons BY 4.0。 YouTube-Bounding Boxes: 24万個のYouTube動画に23クラスのラベルと560万個のバウンディングボックスを付けたデータ。ライセンスはCreative Commons BY 4.0。 Atomic Visual Actions(AVA): 5.76万個のYouTube動画を、80種の動作についてラベル付けしたデータ。ライセンスはCreative Commons BY 4.0。 音声 Speech Commands Datase: 6.5万個の1秒音声データで、30種の言葉を数千人が発音してる。ライセンスはCreative Commons BY 4.0。 AudioSet: 200万個の10秒音声データで、527クラスでラベル付けされてる。ライセンスはCreative Commons BY 4.0。 データカタログサイト DATA GO JP: 日本政府が公開してる公共データ集。 UCI Machine Learning Repository: 現時点で426のデータセットが配布されている。有名なアヤメのデータセットのソースはここ。 単語ベクトル HR領域の単語ベクトル: 約9.95億個の日本語のHR系の単語からWord2Vecで学習した単語ベクトル。ベクトル長は100か200。
-              </div>
+              <h3 class="title">オープンデータメモ</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         

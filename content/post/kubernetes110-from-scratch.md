@@ -545,7 +545,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
           --requestheader-allowed-names=front-proxy-client \\
           --requestheader-extra-headers-prefix=X-Remote-Extra- \\
           --v=2 \\
-          --tls-min-version=VersionTLS10
+          --tls-min-version=VersionTLS12
         Restart=always
         RestartSec=10s
 
@@ -609,7 +609,6 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
           --root-ca-file=/etc/kubernetes/pki/ca.crt \\
           --use-service-account-credentials=true \\
           --v=2 \\
-          --tls-min-version=VersionTLS10 \\
           --experimental-cluster-signing-duration=8760h0m0s
         Restart=always
         RestartSec=10s
@@ -801,6 +800,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         ```
 
         Kubernetes環境ではiptablesはkube-proxyが操作するので、Dockerには操作させないようにするため、`/etc/sysconfig/docker`の`OPTIONS`に`--iptables=false`を追加。
+        (これをすると、`--icc=false`は設定できなくなる(不要になる)。)
 
         ```sh
         # systemctl daemon-reload
@@ -874,7 +874,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
           --v=2 \\
           --cgroup-driver=cgroupfs \\
           --pod-infra-container-image=${PAUSE_IMAGE} \\
-          --tls-min-version=VersionTLS10 \\
+          --tls-min-version=VersionTLS12 \\
           --allow-privileged=true
         Restart=always
         RestartSec=10s
@@ -1116,6 +1116,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         ```
 
         flannelは[Network Policy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)をサポートしていないので、[Calico](https://www.projectcalico.org/)か[Weave Net](https://www.weave.works/oss/net/)あたりにすればよかったかも。
+        (した。[Kubernetes 1.10のクラスタにWeave Netをデプロイする](https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/))
 
     3. CoreDNS
 

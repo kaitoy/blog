@@ -644,7 +644,7 @@ ExecStart=/usr/bin/kube-apiserver \\
   --requestheader-allowed-names=front-proxy-client \\
   --requestheader-extra-headers-prefix=X-Remote-Extra- \\
   --v=2 \\
-  --tls-min-version=VersionTLS10
+  --tls-min-version=VersionTLS12
 Restart=always
 RestartSec=10s
 
@@ -708,7 +708,6 @@ ExecStart=/usr/bin/kube-controller-manager \\
   --root-ca-file=/etc/kubernetes/pki/ca.crt \\
   --use-service-account-credentials=true \\
   --v=2 \\
-  --tls-min-version=VersionTLS10 \\
   --experimental-cluster-signing-duration=8760h0m0s
 Restart=always
 RestartSec=10s
@@ -890,7 +889,8 @@ EOF
 <pre><code>DOCKER_NOFILE=1000000
 </code></pre>
 
-<p>Kubernetes環境ではiptablesはkube-proxyが操作するので、Dockerには操作させないようにするため、<code>/etc/sysconfig/docker</code>の<code>OPTIONS</code>に<code>--iptables=false</code>を追加。</p>
+<p>Kubernetes環境ではiptablesはkube-proxyが操作するので、Dockerには操作させないようにするため、<code>/etc/sysconfig/docker</code>の<code>OPTIONS</code>に<code>--iptables=false</code>を追加。
+(これをすると、<code>--icc=false</code>は設定できなくなる(不要になる)。)</p>
 
 <pre><code class="language-sh"># systemctl daemon-reload
 # systemctl enable docker
@@ -960,7 +960,7 @@ ExecStart=/usr/bin/kubelet \\
   --v=2 \\
   --cgroup-driver=cgroupfs \\
   --pod-infra-container-image=${PAUSE_IMAGE} \\
-  --tls-min-version=VersionTLS10 \\
+  --tls-min-version=VersionTLS12 \\
   --allow-privileged=true
 Restart=always
 RestartSec=10s
@@ -1193,7 +1193,8 @@ NAME                    READY     STATUS    RESTARTS   AGE
 kube-flannel-ds-gkcqd   1/1       Running   0          1m
 </code></pre>
 
-<p>flannelは<a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/">Network Policy</a>をサポートしていないので、<a href="https://www.projectcalico.org/">Calico</a>か<a href="https://www.weave.works/oss/net/">Weave Net</a>あたりにすればよかったかも。</p></li>
+<p>flannelは<a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/">Network Policy</a>をサポートしていないので、<a href="https://www.projectcalico.org/">Calico</a>か<a href="https://www.weave.works/oss/net/">Weave Net</a>あたりにすればよかったかも。
+(した。<a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a>)</p></li>
 
 <li><p>CoreDNS</p>
 
@@ -1314,6 +1315,12 @@ kubernetes.default.svc.cluster.local. 5 IN A    10.0.0.1
 
               <ul id="related-posts">
                 
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a></li>
                 
                 
                 
@@ -1661,6 +1668,11 @@ kubernetes.default.svc.cluster.local. 5 IN A    10.0.0.1
           <div class="row">
             <div class="col-sm-6">
               <div class="prev">
+                
+                <a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">
+                  <i class="fa fa-chevron-left"></i>
+                  Kubernetes 1.10のクラスタにWeave Netをデプロイする
+                </a>
                 
               </div>
             </div>

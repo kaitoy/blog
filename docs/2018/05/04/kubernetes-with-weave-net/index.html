@@ -10,19 +10,19 @@
     
     
     <meta property="og:type" content="article">
-    <meta property="og:title" content="GitHub Pagesでブログ立ち上げ - Jekyllのためのツール | To Be Decided">
-    <meta property="og:url" content="https://www.kaitoy.xyz/2015/08/25/tools-for-jekyll/">
-    <link rel="canonical" href="https://www.kaitoy.xyz/2015/08/25/tools-for-jekyll/">
-    <meta property="og:description" content="GitHub Pagesでブログ立ち上げ - GitHub PagesとJekyllの続き。 前回は、GitHub PagesとJekyllでブログを始めることにして、Jekyllのセットアップに四苦八苦した。 Jekyllがだいたいセットアップできたところで、どんなサイトデザインにしようか考え始めた。 調べたところ、生のJekyllを使うよりも簡単に見栄えのいいサイトを作れる方法がある模様。 (adsbygoogle = window.adsbygoogle || []).push({}); Octopress もっとも有名なのはOctopress。 ホームページの説明によると、「Octopress is a framework designed for Jekyll, the static blogging engine powering Github Pages」とのこと。 フレームワークと呼ぶのはちょっと大げさな気がする。 まあ見たところ、Jekyllをサイト生成エンジンとした、ブログサイト構築、ブログエントリ作成、ブログサイトデプロイなどを簡易化するツール。 広く使われていて情報が豊富だし、テーマを選んでエントリの内容をMarkdownで書くだけでかっこいいサイトが作れる。バージョンは2系が主に使われているやつで、3系がβ状態。 血迷って3系に手を出してみる。GitHubにあるREADMEを見ながらWindows 7上にインストールして、適当なサイトを作ろうとするもjekyll buildでエラー。さすがにWindowsじゃだめかと思い、CentOS 7のVMを立ち上げてそこでやってみるもまたjekyll buildでエラー。 心折れかけながらドキュメントなど見ていたら、多くのプラグインがまだ開発中で、3系は基本的な機能しか動かなそうなことが発覚。素直に2系にすることに。 2系は成熟しているし情報が沢山あるので、順調にインストールとテストサイト作成に成功したあたりで、不審な情報を発見した。 Jekyllのドキュメントによると、GitHub Pagesではセキュリティ対策のためにJekyll をセーフモードで実行するため、カスタムプラグインが無効になるとのこと。 Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルドして公開してくれると思っていたけど、OctopressはJekyllのプラグイン機能をもりもり利用しているようなので、上手くいかないようだ。 つまりOctopressをGitHub Pages上のサイトに使うとしたら、結局ビルド成果物をアップしないといけなくなる。JekyllのソースだけをGitHubで管理するように出来たらいいと思っていたが当てが外れた。 Jekyll-Bootstrap Octopressを使うモチベーションが下がり、他のを探したところ、Jekyll-Bootstrapというのを見つけた。 Jekyll-BootstrapはJekyllのソースそのもので、面倒な部分は既にできてるので、ユーザはテンプレートを使って記事の内容を書くだけでいいよ、というもの。テーマ機能と、記事作成作業をRakeで簡易化するためのRakefile付き。 すばらしいことに、「JekyllのソースだけをGitHubで管理するように出来たらいい」という需要に応えることを目指して作られていて、Jekyll-Bootstrapをベースに作ったJekyllソースはGitHub Pages上のJekyllでビルド可能。 まさに求めていたものと心躍った。 が、プロジェクトページを見るにあまり活発に開発が進んでない模様。 廃れ行きそうなツールを使うのもなぁ… 結論 Jekyll-Bootstrapを使うのは気が進まない。Octopressを使うとビルド成果物をアップしないといけない。 どうせビルド成果物を上げるのなら、Jekyllにこだわる必要はないか、ということで、去年末くらいから盛り上がってきているHugoにすることに。Hugoについてはまた別のエントリで書く。">
+    <meta property="og:title" content="Kubernetes 1.10のクラスタにWeave Netをデプロイする | To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">
+    <link rel="canonical" href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">
+    <meta property="og:description" content="「Kubernetes 1.10をスクラッチから全手動で構築」で、Kubernetes 1.10のクラスタに、ネットワークプロバイダとしてflannelをデプロイしたけど、flannelはNetwork Policyをサポートしていないので、代わりにWeave Netをデプロイしてみた話。 (adsbygoogle = window.adsbygoogle || []).push({}); Weave Netにした理由 Network Policyをサポートしているネットワークプロバイダには現時点で以下のものがある。 Calico Cilium Kube-router Romana Weave Net このなかで、よく名前を聞くのがCalicoとWeave Net。 GitHubのスター数が圧倒的に多いのがWeave Net。 性能が比較的いいのがWeave Net。 ということでWeave Netにした。 Weave Netデプロイ 以下を参考に設定してデプロイする。 https://www.weave.works/docs/net/latest/kubernetes/kube-addon/ https://www.weave.works/docs/net/latest/install/installing-weave/ https://github.com/weaveworks/weave/blob/master/prog/weave-kube/launch.sh Kubernetesマニフェスト Weave NetをKubernetesクラスタにデプロイするためのマニフェストは、GitHub Releasesかhttps://cloud.weave.worksからダウンロードできる。 今回は後者にする。 https://cloud.weave.worksを使う場合、Kubernetesのバージョンなどのパラメータはクエリストリングで指定できる。 主なパラメータは以下。 k8s-version: Kubernetesのバージョン。指定しないとlatest。 password-secret: ノード間のWeave Net通信の暗号化に使うパスワードを保持するSecret名。指定しないと平文。(参考: https://www.weave.works/docs/net/latest/tasks/manage/security-untrusted-networks/) IPALLOC_RANGE: Podに割り当てるIPアドレスの範囲。指定しないと10.32.0.0/12。 CHECKPOINT_DISABLE: Weave Netのアップデートを定期的にチェックする機能の無効化オプション。 WEAVE_MTU: MTUを指定するオプション。デフォルトで1376バイト。 WEAVE_MTUはとりあえずデフォルトにしておいて、IPALLOC_RANGEもデフォルトにして、通信暗号化して、CHECKPOINT_DISABLEをtrueにするとすると、マニフェストは以下のようにダウンロードできる。 # curl -fsSLo weave-daemonset.yaml &quot;https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d &#39;\n&#39;)&amp;env.CHECKPOINT_DISABLE=1&amp;password-secret=weave-passwd&quot; (通信暗号化は単一ノードなら不要だと思うけどとりあえず設定しておく。) Kubernetesコンポーネントの起動オプション kube-controller-managerの起動オプションの--cluster-cidrはIPALLOC_RANGEと同じにする必要がある。">
     
-    <meta property="og:image" content="https://www.kaitoy.xyz/images/octopress.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/weave-k8s.png">
     
     
     <meta property="og:site_name" content="To Be Decided">
 
     <title>
       
-      GitHub Pagesでブログ立ち上げ - Jekyllのためのツール | To Be Decided
+      Kubernetes 1.10のクラスタにWeave Netをデプロイする | To Be Decided
       
     </title>
 
@@ -72,25 +72,19 @@
 <div class="row">
   <div class="col-md-9">
     <article id="post">
-      <span class="date">Tue, Aug 25, 2015</span>
-      <h2 class="title">GitHub Pagesでブログ立ち上げ - Jekyllのためのツール</h2>
+      <span class="date">Fri, May 4, 2018</span>
+      <h2 class="title">Kubernetes 1.10のクラスタにWeave Netをデプロイする</h2>
 
       <div class="eyecatch text-center">
         
-        <img src="https://www.kaitoy.xyz/images/octopress.png" alt="GitHub Pagesでブログ立ち上げ - Jekyllのためのツール">
+        <img src="https://www.kaitoy.xyz/images/weave-k8s.png" alt="Kubernetes 1.10のクラスタにWeave Netをデプロイする">
         
       </div>
 
       <div class="content">
         
 
-<p><a href="https://www.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/"><strong>GitHub Pagesでブログ立ち上げ - GitHub PagesとJekyll</strong></a>の続き。
-前回は、<a href="https://pages.github.com/"><strong>GitHub Pages</strong></a>と<a href="http://jekyllrb.com/docs/home/"><strong>Jekyll</strong></a>でブログを始めることにして、Jekyllのセットアップに四苦八苦した。</p>
-
-<p>Jekyllがだいたいセットアップできたところで、どんなサイトデザインにしようか考え始めた。
-調べたところ、生のJekyllを使うよりも簡単に見栄えのいいサイトを作れる方法がある模様。</p>
-
-<p><br></p>
+<p>「<a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a>」で、Kubernetes 1.10のクラスタに、ネットワークプロバイダとして<a href="https://github.com/coreos/flannel">flannel</a>をデプロイしたけど、flannelは<a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/">Network Policy</a>をサポートしていないので、代わりに<a href="https://www.weave.works/oss/net/">Weave Net</a>をデプロイしてみた話。</p>
 
 <p>
 
@@ -107,42 +101,123 @@
 </script>
 </p>
 
-<h2 id="octopress">Octopress</h2>
+<h1 id="weave-netにした理由">Weave Netにした理由</h1>
 
-<p>もっとも有名なのは<a href="http://octopress.org/"><strong>Octopress</strong></a>。
-ホームページの説明によると、「Octopress is a framework designed for Jekyll, the static blogging engine powering Github Pages」とのこと。
-フレームワークと呼ぶのはちょっと大げさな気がする。
-まあ見たところ、Jekyllをサイト生成エンジンとした、ブログサイト構築、ブログエントリ作成、ブログサイトデプロイなどを簡易化するツール。</p>
+<p>Network Policyをサポートしているネットワークプロバイダには現時点で以下のものがある。</p>
 
-<p>広く使われていて情報が豊富だし、テーマを選んでエントリの内容を<a href="https://ja.wikipedia.org/wiki/Markdown"><strong>Markdown</strong></a>で書くだけでかっこいいサイトが作れる。バージョンは2系が主に使われているやつで、3系がβ状態。</p>
+<ul>
+<li><a href="https://www.projectcalico.org/">Calico</a></li>
+<li><a href="https://github.com/cilium/cilium">Cilium</a></li>
+<li><a href="https://www.kube-router.io/">Kube-router</a></li>
+<li><a href="https://github.com/romana/romana">Romana</a></li>
+<li>Weave Net</li>
+</ul>
 
-<p>血迷って3系に手を出してみる。<a href="https://github.com/octopress/octopress">GitHubにあるREADME</a>を見ながらWindows 7上にインストールして、適当なサイトを作ろうとするも<code>jekyll build</code>でエラー。さすがにWindowsじゃだめかと思い、CentOS 7のVMを立ち上げてそこでやってみるもまた<code>jekyll build</code>でエラー。</p>
+<p>このなかで、よく名前を聞くのがCalicoとWeave Net。
+GitHubのスター数が圧倒的に多いのがWeave Net。
+<a href="https://engineering.skybettingandgaming.com/2017/02/03/overlay-network-performance-testing/">性能が比較的いい</a>のがWeave Net。</p>
 
-<p>心折れかけながらドキュメントなど見ていたら、多くのプラグインがまだ開発中で、3系は基本的な機能しか動かなそうなことが発覚。素直に2系にすることに。</p>
+<p>ということでWeave Netにした。</p>
 
-<p>2系は成熟しているし情報が沢山あるので、順調にインストールとテストサイト作成に成功したあたりで、不審な情報を発見した。</p>
+<h1 id="weave-netデプロイ">Weave Netデプロイ</h1>
 
-<p><a href="http://jekyllrb.com/docs/plugins/">Jekyllのドキュメント</a>によると、GitHub Pagesではセキュリティ対策のためにJekyll をセーフモードで実行するため、カスタムプラグインが無効になるとのこと。
-Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルドして公開してくれると思っていたけど、OctopressはJekyllのプラグイン機能をもりもり利用しているようなので、上手くいかないようだ。</p>
+<p>以下を参考に設定してデプロイする。</p>
 
-<p>つまりOctopressをGitHub Pages上のサイトに使うとしたら、結局ビルド成果物をアップしないといけなくなる。JekyllのソースだけをGitHubで管理するように出来たらいいと思っていたが当てが外れた。</p>
+<ul>
+<li><a href="https://www.weave.works/docs/net/latest/kubernetes/kube-addon/">https://www.weave.works/docs/net/latest/kubernetes/kube-addon/</a></li>
+<li><a href="https://www.weave.works/docs/net/latest/install/installing-weave/">https://www.weave.works/docs/net/latest/install/installing-weave/</a></li>
+<li><a href="https://github.com/weaveworks/weave/blob/master/prog/weave-kube/launch.sh">https://github.com/weaveworks/weave/blob/master/prog/weave-kube/launch.sh</a></li>
+</ul>
 
-<h2 id="jekyll-bootstrap">Jekyll-Bootstrap</h2>
+<h2 id="kubernetesマニフェスト">Kubernetesマニフェスト</h2>
 
-<p>Octopressを使うモチベーションが下がり、他のを探したところ、<a href="http://jekyllbootstrap.com/"><strong>Jekyll-Bootstrap</strong></a>というのを見つけた。</p>
+<p>Weave NetをKubernetesクラスタにデプロイするためのマニフェストは、<a href="https://github.com/weaveworks/weave/releases">GitHub Releases</a>か<code>https://cloud.weave.works</code>からダウンロードできる。
+今回は後者にする。</p>
 
-<p>Jekyll-BootstrapはJekyllのソースそのもので、面倒な部分は既にできてるので、ユーザはテンプレートを使って記事の内容を書くだけでいいよ、というもの。テーマ機能と、記事作成作業を<a href="http://docs.seattlerb.org/rake/"><strong>Rake</strong></a>で簡易化するためのRakefile付き。</p>
+<p><code>https://cloud.weave.works</code>を使う場合、Kubernetesのバージョンなどのパラメータは<a href="https://www.weave.works/docs/net/latest/kubernetes/kube-addon/#-changing-configuration-options">クエリストリングで指定できる</a>。
+主なパラメータは以下。</p>
 
-<p>すばらしいことに、「JekyllのソースだけをGitHubで管理するように出来たらいい」という需要に応えることを目指して作られていて、Jekyll-Bootstrapをベースに作ったJekyllソースはGitHub Pages上のJekyllでビルド可能。</p>
+<ul>
+<li>k8s-version: Kubernetesのバージョン。指定しないとlatest。</li>
+<li>password-secret: ノード間の<a href="https://www.weave.works/docs/net/latest/concepts/encryption/">Weave Net通信の暗号化</a>に使うパスワードを保持するSecret名。指定しないと平文。(参考: <a href="https://www.weave.works/docs/net/latest/tasks/manage/security-untrusted-networks/">https://www.weave.works/docs/net/latest/tasks/manage/security-untrusted-networks/</a>)</li>
+<li>IPALLOC_RANGE: Podに割り当てるIPアドレスの範囲。指定しないと10.32.0.0/12。</li>
+<li>CHECKPOINT_DISABLE: Weave Netのアップデートを<a href="https://www.weave.works/docs/net/latest/install/installing-weave/#checkpoint">定期的にチェック</a>する機能の無効化オプション。</li>
+<li>WEAVE_MTU: MTUを指定するオプション。<a href="https://www.weave.works/docs/net/latest/tasks/manage/fastdp/#packet-size-mtu">デフォルトで1376バイト</a>。</li>
+</ul>
 
-<p>まさに求めていたものと心躍った。
-が、<a href="https://github.com/plusjade/jekyll-bootstrap">プロジェクトページ</a>を見るにあまり活発に開発が進んでない模様。
-廃れ行きそうなツールを使うのもなぁ…</p>
+<p><br></p>
 
-<h2 id="結論">結論</h2>
+<p>WEAVE_MTUはとりあえずデフォルトにしておいて、IPALLOC_RANGEもデフォルトにして、通信暗号化して、CHECKPOINT_DISABLEをtrueにするとすると、マニフェストは以下のようにダウンロードできる。</p>
 
-<p>Jekyll-Bootstrapを使うのは気が進まない。Octopressを使うとビルド成果物をアップしないといけない。
-どうせビルド成果物を上げるのなら、Jekyllにこだわる必要はないか、ということで、去年末くらいから盛り上がってきている<a href="https://gohugo.io/"><strong>Hugo</strong></a>にすることに。Hugoについてはまた<a href="https://www.kaitoy.xyz/2015/08/28/using-hugo/">別のエントリ</a>で書く。</p>
+<pre><code class="language-sh"># curl -fsSLo weave-daemonset.yaml &quot;https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')&amp;env.CHECKPOINT_DISABLE=1&amp;password-secret=weave-passwd&quot;
+</code></pre>
+
+<p>(通信暗号化は単一ノードなら不要だと思うけどとりあえず設定しておく。)</p>
+
+<h2 id="kubernetesコンポーネントの起動オプション">Kubernetesコンポーネントの起動オプション</h2>
+
+<p>kube-controller-managerの起動オプションの<code>--cluster-cidr</code>はIPALLOC_RANGEと同じにする必要がある。
+今回は10.32.0.0/12を指定する。</p>
+
+<p>また、kube-proxyの起動オプションの<a href="https://www.weave.works/docs/net/latest/kubernetes/kube-addon/#-things-to-watch-out-for">要件</a>は以下。</p>
+
+<ul>
+<li><code>--masquerade-all</code>を指定してはいけない。</li>
+<li><code>--cluster-cidr</code>を指定する場合、IPALLOC_RANGEと同じにする必要がある。</li>
+</ul>
+
+<h2 id="secret作成">Secret作成</h2>
+
+<p>password-secretに渡すSecretは以下のように作成できる。</p>
+
+<pre><code class="language-sh"># cat &lt;&lt;EOF | kubectl create -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: kube-system
+  name: weave-passwd
+type: Opaque
+data:
+  weave-passwd: your_secure_password
+EOF
+</code></pre>
+
+<p><br></p>
+
+<p>これで準備完了。</p>
+
+<h2 id="マニフェスト適用">マニフェスト適用</h2>
+
+<p>以下のコマンドでマニフェストを適用し、Weave Netをデプロイできる。</p>
+
+<pre><code class="language-sh"># kubectl apply -f weave-daemonset.yaml
+</code></pre>
+
+<p><code>weaveworks/weave-kube:2.3.0</code>と<code>weaveworks/weave-npc:2.3.0</code>がpullされる。
+前者が本体で、後者がNetwork Policy Controller。</p>
+
+<p><br></p>
+
+<p>マスタノード上で以下のコマンドを実行すると、Weave NetのAPIを叩いて状態を確認できる。</p>
+
+<pre><code class="language-sh"># curl http://localhost:6784/status
+        Version: 2.3.0 (version check update disabled)
+
+        Service: router
+       Protocol: weave 1..2
+           Name: 92:44:35:3d:f8:d8(k8s-master)
+     Encryption: enabled
+  PeerDiscovery: enabled
+        Targets: 1
+    Connections: 1 (1 failed)
+          Peers: 1
+ TrustedSubnets: none
+
+        Service: ipam
+         Status: ready
+          Range: 10.32.0.0/12
+  DefaultSubnet: 10.32.0.0/12
+</code></pre>
 
       </div>
 
@@ -171,11 +246,11 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
           <div class="col-sm-5">
             <section id="share">
               <h3>Share</h3>
-              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f08%2f25%2ftools-for-jekyll%2f&t=GitHub%20Pages%e3%81%a7%e3%83%96%e3%83%ad%e3%82%b0%e7%ab%8b%e3%81%a1%e4%b8%8a%e3%81%92%20-%20Jekyll%e3%81%ae%e3%81%9f%e3%82%81%e3%81%ae%e3%83%84%e3%83%bc%e3%83%ab" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
-              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f08%2f25%2ftools-for-jekyll%2f&text=GitHub%20Pages%e3%81%a7%e3%83%96%e3%83%ad%e3%82%b0%e7%ab%8b%e3%81%a1%e4%b8%8a%e3%81%92%20-%20Jekyll%e3%81%ae%e3%81%9f%e3%82%81%e3%81%ae%e3%83%84%e3%83%bc%e3%83%ab&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
-              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f08%2f25%2ftools-for-jekyll%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
-              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f08%2f25%2ftools-for-jekyll%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
-              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f08%2f25%2ftools-for-jekyll%2f&title=GitHub%20Pages%e3%81%a7%e3%83%96%e3%83%ad%e3%82%b0%e7%ab%8b%e3%81%a1%e4%b8%8a%e3%81%92%20-%20Jekyll%e3%81%ae%e3%81%9f%e3%82%81%e3%81%ae%e3%83%84%e3%83%bc%e3%83%ab" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f05%2f04%2fkubernetes-with-weave-net%2f&t=Kubernetes%201.10%e3%81%ae%e3%82%af%e3%83%a9%e3%82%b9%e3%82%bf%e3%81%abWeave%20Net%e3%82%92%e3%83%87%e3%83%97%e3%83%ad%e3%82%a4%e3%81%99%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f05%2f04%2fkubernetes-with-weave-net%2f&text=Kubernetes%201.10%e3%81%ae%e3%82%af%e3%83%a9%e3%82%b9%e3%82%bf%e3%81%abWeave%20Net%e3%82%92%e3%83%87%e3%83%97%e3%83%ad%e3%82%a4%e3%81%99%e3%82%8b&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f05%2f04%2fkubernetes-with-weave-net%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f05%2f04%2fkubernetes-with-weave-net%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f05%2f04%2fkubernetes-with-weave-net%2f&title=Kubernetes%201.10%e3%81%ae%e3%82%af%e3%83%a9%e3%82%b9%e3%82%bf%e3%81%abWeave%20Net%e3%82%92%e3%83%87%e3%83%97%e3%83%ad%e3%82%a4%e3%81%99%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
             </section>
           </div>
 
@@ -188,11 +263,9 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
               <h3>Related Post</h3>
               <div id="tags">
                 
-                <a href="https://www.kaitoy.xyz/tags/blog"><i class="fa fa-tags"></i> blog </a>
+                <a href="https://www.kaitoy.xyz/tags/kubernetes"><i class="fa fa-tags"></i> kubernetes </a>
                 
-                <a href="https://www.kaitoy.xyz/tags/github"><i class="fa fa-tags"></i> github </a>
-                
-                <a href="https://www.kaitoy.xyz/tags/jekyll"><i class="fa fa-tags"></i> jekyll </a>
+                <a href="https://www.kaitoy.xyz/tags/docker"><i class="fa fa-tags"></i> docker </a>
                 
               </div>
 
@@ -207,11 +280,13 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a></li>
                 
                 
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2018/04/01/hello-skaffold/">Skaffoldを触ってみた</a></li>
                 
                 
                 
@@ -249,21 +324,25 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">Kubernetes 1.8のアクセス制御について。あとDashboard。</a></li>
                 
                 
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a></li>
                 
                 
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></li>
                 
                 
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a></li>
                 
                 
                 
@@ -273,6 +352,7 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2017/08/14/webdriverio-chrome/">WebdriverIOとChromeのヘッドレスモードで自動ブラウザテストするDockerイメージ: webdriverio-chrome</a></li>
                 
                 
                 
@@ -295,7 +375,6 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
                 
                 
                 
-                <li><a href="https://www.kaitoy.xyz/2017/02/14/change-subdomain/">ブログアドレスを変更したときにやったこと</a></li>
                 
                 
                 
@@ -347,15 +426,15 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ</a></li>
                 
                 
-                <li><a href="https://www.kaitoy.xyz/2016/08/21/an-encouragement-of-open-sourcing/">オープンソースプロジェクトのすゝめ</a></li>
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</a></li>
                 
                 
-                <li><a href="https://www.kaitoy.xyz/2016/08/18/simpler-github-pages-publishing/">GitHub Pagesの新機能、ソース設定が地味にいい</a></li>
                 
                 
                 
@@ -367,12 +446,13 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2016/07/31/docker-for-windows/">Docker for Windowsがコレジャナかった</a></li>
                 
                 
-                <li><a href="https://www.kaitoy.xyz/2016/07/01/https-support-by-cloudflare/">CloudflareでブログをHTTPS化</a></li>
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/">Windows Server 2016 TP5でWindows Containersにリトライ</a></li>
                 
                 
                 
@@ -402,6 +482,7 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">Pcap4J Meets Windows Containers</a></li>
                 
                 
                 
@@ -471,7 +552,6 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
                 
                 
                 
-                <li><a href="https://www.kaitoy.xyz/2015/08/28/using-hugo/">GitHub Pagesでブログ立ち上げ - Hugoを使う</a></li>
                 
                 
                 
@@ -485,7 +565,6 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
                 
                 
                 
-                <li><a href="https://www.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/">GitHub Pagesでブログ立ち上げ - GitHub PagesとJekyll</a></li>
                 
                 
                 
@@ -505,6 +584,7 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></li>
                 
                 
                 
@@ -514,12 +594,21 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://www.kaitoy.xyz/2015/07/18/first-post/">First Post</a></li>
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></li>
+                
+                
+                
+                
                 
                 
               </ul>
@@ -536,18 +625,13 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
             <div class="col-sm-6">
               <div class="prev">
                 
-                <a href="https://www.kaitoy.xyz/2015/08/28/using-hugo/">
-                  <i class="fa fa-chevron-left"></i>
-                  GitHub Pagesでブログ立ち上げ - Hugoを使う
-                </a>
-                
               </div>
             </div>
             <div class="col-sm-6">
               <div class="next text-right">
                 
-                <a href="https://www.kaitoy.xyz/2015/08/21/japanese-word-selection/">
-                  Atomパッケージを作る - ワード境界を日本語対応させるパッケージ: japanese-word-selection
+                <a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">
+                  Kubernetes 1.10をスクラッチから全手動で構築
                   <i class="fa fa-chevron-right"></i>
                 </a>
                 

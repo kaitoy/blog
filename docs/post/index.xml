@@ -6,8 +6,155 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2018</rights>
-    <updated>2018-04-17 00:31:48 &#43;0900 JST</updated>
+    <updated>2018-05-04 11:14:33 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>Kubernetes 1.10のクラスタにWeave Netをデプロイする</title>
+          <link>https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/</link>
+          <pubDate>Fri, 04 May 2018 11:14:33 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/</guid>
+          <description>
+
+&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/&#34;&gt;Kubernetes 1.10をスクラッチから全手動で構築&lt;/a&gt;」で、Kubernetes 1.10のクラスタに、ネットワークプロバイダとして&lt;a href=&#34;https://github.com/coreos/flannel&#34;&gt;flannel&lt;/a&gt;をデプロイしたけど、flannelは&lt;a href=&#34;https://kubernetes.io/docs/concepts/services-networking/network-policies/&#34;&gt;Network Policy&lt;/a&gt;をサポートしていないので、代わりに&lt;a href=&#34;https://www.weave.works/oss/net/&#34;&gt;Weave Net&lt;/a&gt;をデプロイしてみた話。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h1 id=&#34;weave-netにした理由&#34;&gt;Weave Netにした理由&lt;/h1&gt;
+
+&lt;p&gt;Network Policyをサポートしているネットワークプロバイダには現時点で以下のものがある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.projectcalico.org/&#34;&gt;Calico&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/cilium/cilium&#34;&gt;Cilium&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.kube-router.io/&#34;&gt;Kube-router&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/romana/romana&#34;&gt;Romana&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Weave Net&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;このなかで、よく名前を聞くのがCalicoとWeave Net。
+GitHubのスター数が圧倒的に多いのがWeave Net。
+&lt;a href=&#34;https://engineering.skybettingandgaming.com/2017/02/03/overlay-network-performance-testing/&#34;&gt;性能が比較的いい&lt;/a&gt;のがWeave Net。&lt;/p&gt;
+
+&lt;p&gt;ということでWeave Netにした。&lt;/p&gt;
+
+&lt;h1 id=&#34;weave-netデプロイ&#34;&gt;Weave Netデプロイ&lt;/h1&gt;
+
+&lt;p&gt;以下を参考に設定してデプロイする。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.weave.works/docs/net/latest/kubernetes/kube-addon/&#34;&gt;https://www.weave.works/docs/net/latest/kubernetes/kube-addon/&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.weave.works/docs/net/latest/install/installing-weave/&#34;&gt;https://www.weave.works/docs/net/latest/install/installing-weave/&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/weaveworks/weave/blob/master/prog/weave-kube/launch.sh&#34;&gt;https://github.com/weaveworks/weave/blob/master/prog/weave-kube/launch.sh&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;kubernetesマニフェスト&#34;&gt;Kubernetesマニフェスト&lt;/h2&gt;
+
+&lt;p&gt;Weave NetをKubernetesクラスタにデプロイするためのマニフェストは、&lt;a href=&#34;https://github.com/weaveworks/weave/releases&#34;&gt;GitHub Releases&lt;/a&gt;か&lt;code&gt;https://cloud.weave.works&lt;/code&gt;からダウンロードできる。
+今回は後者にする。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;https://cloud.weave.works&lt;/code&gt;を使う場合、Kubernetesのバージョンなどのパラメータは&lt;a href=&#34;https://www.weave.works/docs/net/latest/kubernetes/kube-addon/#-changing-configuration-options&#34;&gt;クエリストリングで指定できる&lt;/a&gt;。
+主なパラメータは以下。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;k8s-version: Kubernetesのバージョン。指定しないとlatest。&lt;/li&gt;
+&lt;li&gt;password-secret: ノード間の&lt;a href=&#34;https://www.weave.works/docs/net/latest/concepts/encryption/&#34;&gt;Weave Net通信の暗号化&lt;/a&gt;に使うパスワードを保持するSecret名。指定しないと平文。(参考: &lt;a href=&#34;https://www.weave.works/docs/net/latest/tasks/manage/security-untrusted-networks/&#34;&gt;https://www.weave.works/docs/net/latest/tasks/manage/security-untrusted-networks/&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;IPALLOC_RANGE: Podに割り当てるIPアドレスの範囲。指定しないと10.32.0.0/12。&lt;/li&gt;
+&lt;li&gt;CHECKPOINT_DISABLE: Weave Netのアップデートを&lt;a href=&#34;https://www.weave.works/docs/net/latest/install/installing-weave/#checkpoint&#34;&gt;定期的にチェック&lt;/a&gt;する機能の無効化オプション。&lt;/li&gt;
+&lt;li&gt;WEAVE_MTU: MTUを指定するオプション。&lt;a href=&#34;https://www.weave.works/docs/net/latest/tasks/manage/fastdp/#packet-size-mtu&#34;&gt;デフォルトで1376バイト&lt;/a&gt;。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;WEAVE_MTUはとりあえずデフォルトにしておいて、IPALLOC_RANGEもデフォルトにして、通信暗号化して、CHECKPOINT_DISABLEをtrueにするとすると、マニフェストは以下のようにダウンロードできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# curl -fsSLo weave-daemonset.yaml &amp;quot;https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d &#39;\n&#39;)&amp;amp;env.CHECKPOINT_DISABLE=1&amp;amp;password-secret=weave-passwd&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;(通信暗号化は単一ノードなら不要だと思うけどとりあえず設定しておく。)&lt;/p&gt;
+
+&lt;h2 id=&#34;kubernetesコンポーネントの起動オプション&#34;&gt;Kubernetesコンポーネントの起動オプション&lt;/h2&gt;
+
+&lt;p&gt;kube-controller-managerの起動オプションの&lt;code&gt;--cluster-cidr&lt;/code&gt;はIPALLOC_RANGEと同じにする必要がある。
+今回は10.32.0.0/12を指定する。&lt;/p&gt;
+
+&lt;p&gt;また、kube-proxyの起動オプションの&lt;a href=&#34;https://www.weave.works/docs/net/latest/kubernetes/kube-addon/#-things-to-watch-out-for&#34;&gt;要件&lt;/a&gt;は以下。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;--masquerade-all&lt;/code&gt;を指定してはいけない。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--cluster-cidr&lt;/code&gt;を指定する場合、IPALLOC_RANGEと同じにする必要がある。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;secret作成&#34;&gt;Secret作成&lt;/h2&gt;
+
+&lt;p&gt;password-secretに渡すSecretは以下のように作成できる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cat &amp;lt;&amp;lt;EOF | kubectl create -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: kube-system
+  name: weave-passwd
+type: Opaque
+data:
+  weave-passwd: your_secure_password
+EOF
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;これで準備完了。&lt;/p&gt;
+
+&lt;h2 id=&#34;マニフェスト適用&#34;&gt;マニフェスト適用&lt;/h2&gt;
+
+&lt;p&gt;以下のコマンドでマニフェストを適用し、Weave Netをデプロイできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# kubectl apply -f weave-daemonset.yaml
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;weaveworks/weave-kube:2.3.0&lt;/code&gt;と&lt;code&gt;weaveworks/weave-npc:2.3.0&lt;/code&gt;がpullされる。
+前者が本体で、後者がNetwork Policy Controller。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;マスタノード上で以下のコマンドを実行すると、Weave NetのAPIを叩いて状態を確認できる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# curl http://localhost:6784/status
+        Version: 2.3.0 (version check update disabled)
+
+        Service: router
+       Protocol: weave 1..2
+           Name: 92:44:35:3d:f8:d8(k8s-master)
+     Encryption: enabled
+  PeerDiscovery: enabled
+        Targets: 1
+    Connections: 1 (1 failed)
+          Peers: 1
+ TrustedSubnets: none
+
+        Service: ipam
+         Status: ready
+          Range: 10.32.0.0/12
+  DefaultSubnet: 10.32.0.0/12
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -578,7 +725,7 @@ ExecStart=/usr/bin/kube-apiserver \\
   --requestheader-allowed-names=front-proxy-client \\
   --requestheader-extra-headers-prefix=X-Remote-Extra- \\
   --v=2 \\
-  --tls-min-version=VersionTLS10
+  --tls-min-version=VersionTLS12
 Restart=always
 RestartSec=10s
 
@@ -642,7 +789,6 @@ ExecStart=/usr/bin/kube-controller-manager \\
   --root-ca-file=/etc/kubernetes/pki/ca.crt \\
   --use-service-account-credentials=true \\
   --v=2 \\
-  --tls-min-version=VersionTLS10 \\
   --experimental-cluster-signing-duration=8760h0m0s
 Restart=always
 RestartSec=10s
@@ -824,7 +970,8 @@ EOF
 &lt;pre&gt;&lt;code&gt;DOCKER_NOFILE=1000000
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;Kubernetes環境ではiptablesはkube-proxyが操作するので、Dockerには操作させないようにするため、&lt;code&gt;/etc/sysconfig/docker&lt;/code&gt;の&lt;code&gt;OPTIONS&lt;/code&gt;に&lt;code&gt;--iptables=false&lt;/code&gt;を追加。&lt;/p&gt;
+&lt;p&gt;Kubernetes環境ではiptablesはkube-proxyが操作するので、Dockerには操作させないようにするため、&lt;code&gt;/etc/sysconfig/docker&lt;/code&gt;の&lt;code&gt;OPTIONS&lt;/code&gt;に&lt;code&gt;--iptables=false&lt;/code&gt;を追加。
+(これをすると、&lt;code&gt;--icc=false&lt;/code&gt;は設定できなくなる(不要になる)。)&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# systemctl daemon-reload
 # systemctl enable docker
@@ -894,7 +1041,7 @@ ExecStart=/usr/bin/kubelet \\
   --v=2 \\
   --cgroup-driver=cgroupfs \\
   --pod-infra-container-image=${PAUSE_IMAGE} \\
-  --tls-min-version=VersionTLS10 \\
+  --tls-min-version=VersionTLS12 \\
   --allow-privileged=true
 Restart=always
 RestartSec=10s
@@ -1127,7 +1274,8 @@ NAME                    READY     STATUS    RESTARTS   AGE
 kube-flannel-ds-gkcqd   1/1       Running   0          1m
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;flannelは&lt;a href=&#34;https://kubernetes.io/docs/concepts/services-networking/network-policies/&#34;&gt;Network Policy&lt;/a&gt;をサポートしていないので、&lt;a href=&#34;https://www.projectcalico.org/&#34;&gt;Calico&lt;/a&gt;か&lt;a href=&#34;https://www.weave.works/oss/net/&#34;&gt;Weave Net&lt;/a&gt;あたりにすればよかったかも。&lt;/p&gt;&lt;/li&gt;
+&lt;p&gt;flannelは&lt;a href=&#34;https://kubernetes.io/docs/concepts/services-networking/network-policies/&#34;&gt;Network Policy&lt;/a&gt;をサポートしていないので、&lt;a href=&#34;https://www.projectcalico.org/&#34;&gt;Calico&lt;/a&gt;か&lt;a href=&#34;https://www.weave.works/oss/net/&#34;&gt;Weave Net&lt;/a&gt;あたりにすればよかったかも。
+(した。&lt;a href=&#34;https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/&#34;&gt;Kubernetes 1.10のクラスタにWeave Netをデプロイする&lt;/a&gt;)&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;CoreDNS&lt;/p&gt;
 
