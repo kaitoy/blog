@@ -69,11 +69,14 @@ kube-controller-managerの起動オプションの`--cluster-cidr`はIPALLOC_RAN
 * `--masquerade-all`を指定してはいけない。
 * `--cluster-cidr`を指定する場合、IPALLOC_RANGEと同じにする必要がある。
 
+また、kube-apiserverとkube-controller-managerの起動オプションに`--allow-privileged`を付ける必要があるはず。
+
 ## Secret作成
 
 password-secretに渡すSecretは以下のように作成できる。
 
 ```sh
+# WEAVE_PASSWORD=$(echo -n 'your_secure_password' | base64)
 # cat <<EOF | kubectl create -f -
 apiVersion: v1
 kind: Secret
@@ -82,7 +85,7 @@ metadata:
   name: weave-passwd
 type: Opaque
 data:
-  weave-passwd: your_secure_password
+  weave-passwd: ${WEAVE_PASSWORD}
 EOF
 ```
 
