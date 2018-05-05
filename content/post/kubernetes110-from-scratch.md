@@ -912,7 +912,8 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         `--pod-manifest-path`で指定したディレクトリはkubeletに定期的にスキャンされ、そこに置いたKubernetesマニフェスト(ドットで始まるもの以外)が読まれる。
         (参照: [Static Pods](https://kubernetes.io/docs/tasks/administer-cluster/static-pod/))
 
-        本当は[kubelet config file](https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/)を使ったほうがいいみたいなので、次回の記事でそれに対応する。
+        本当は[Kubelet Configファイル](https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/)を使ったほうがいいみたいなので、いずれそれに対応する。
+        (対応した: 「[Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える](https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/)」)
 
         起動確認。
 
@@ -1127,7 +1128,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         ```
 
         flannelは[Network Policy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)をサポートしていないので、[Calico](https://www.projectcalico.org/)か[Weave Net](https://www.weave.works/oss/net/)あたりにすればよかったかも。
-        (した。[Kubernetes 1.10のクラスタにWeave Netをデプロイする](https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/))
+        (やった: 「[Kubernetes 1.10のクラスタにWeave Netをデプロイする](https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/)」)
 
     3. CoreDNS
 

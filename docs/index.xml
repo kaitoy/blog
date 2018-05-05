@@ -6,8 +6,250 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2018</rights>
-    <updated>2018-05-04 11:14:33 &#43;0900 JST</updated>
+    <updated>2018-05-05 21:54:30 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</title>
+          <link>https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/</link>
+          <pubDate>Sat, 05 May 2018 21:54:30 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/</guid>
+          <description>
+
+&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/&#34;&gt;Kubernetes 1.10をスクラッチから全手動で構築&lt;/a&gt;」、「&lt;a href=&#34;https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/&#34;&gt;Kubernetes 1.10のクラスタにWeave Netをデプロイする&lt;/a&gt;」の続き。&lt;/p&gt;
+
+&lt;p&gt;kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPodSecurityPolicyを使うように変更した話。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h1 id=&#34;kubelet-configファイル&#34;&gt;Kubelet Configファイル&lt;/h1&gt;
+
+&lt;p&gt;&lt;code&gt;journalctl -u kubelet&lt;/code&gt;すると、以下の警告が出ている。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Apr 28 15:31:39 k8s-master kubelet[1370]: Flag --address has been deprecated, This parameter should be set via the config file specified by the Kubelet&#39;s -
+-config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --pod-manifest-path has been deprecated, This parameter should be set via the config file specified by the K
+ubelet&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --cluster-dns has been deprecated, This parameter should be set via the config file specified by the Kubelet
+&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --cluster-domain has been deprecated, This parameter should be set via the config file specified by the Kube
+let&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --authorization-mode has been deprecated, This parameter should be set via the config file specified by the
+Kubelet&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --client-ca-file has been deprecated, This parameter should be set via the config file specified by the Kube
+let&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --cgroup-driver has been deprecated, This parameter should be set via the config file specified by the Kubel
+et&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --tls-min-version has been deprecated, This parameter should be set via the config file specified by the Kubelet&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --allow-privileged has been deprecated, will be removed in a future version
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;kubeletのいくつかのオプションは、&lt;a href=&#34;https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/&#34;&gt;https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/&lt;/a&gt; を参照してKubelet Configファイルのほうに書けとある。&lt;/p&gt;
+
+&lt;p&gt;参照先のマニュアルには現時点でほぼ何も書いてないし、ググっても情報が無いので、&lt;a href=&#34;https://github.com/kubernetes/kubernetes/blob/release-1.10/pkg/kubelet/apis/kubeletconfig/v1beta1/types.go&#34;&gt;ソース&lt;/a&gt;を見てそれっぽく書いてみた。&lt;/p&gt;
+
+&lt;p&gt;将来的に調整しそうなパラメータは、Kubelet Configファイルにデフォルト値とともにコメントとして書き出している。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# DNS_SERVER_IP=10.0.0.10
+# DNS_DOMAIN=&amp;quot;cluster.local&amp;quot;
+# mkdir -p /etc/kubernetes/manifests
+# cat &amp;gt; /etc/kubernetes/kubelet.conf &amp;lt;&amp;lt; EOF
+kind: KubeletConfiguration
+apiVersion: kubelet.config.k8s.io/v1beta1
+featureGates:
+  RotateKubeletServerCertificate: true
+address: &amp;quot;0.0.0.0&amp;quot;
+staticPodPath: &amp;quot;/etc/kubernetes/manifests&amp;quot;
+clusterDNS: [&amp;quot;${DNS_SERVER_IP}&amp;quot;]
+clusterDomain: &amp;quot;${DNS_DOMAIN}&amp;quot;
+authorization:
+  mode: Webhook
+  webhook:
+    cacheAuthorizedTTL: &amp;quot;5m0s&amp;quot;
+    cacheUnauthorizedTTL: &amp;quot;30s&amp;quot;
+authentication:
+  x509:
+    clientCAFile: &amp;quot;/etc/kubernetes/pki/ca.crt&amp;quot;
+  webhook:
+    enabled: false
+    cacheTTL: &amp;quot;0s&amp;quot;
+  anonymous:
+    enabled: false
+cgroupDriver: &amp;quot;cgroupfs&amp;quot;
+tlsMinVersion: &amp;quot;VersionTLS12&amp;quot;
+tlsCipherSuites:
+- &amp;quot;TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256&amp;quot;
+- &amp;quot;TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384&amp;quot;
+- &amp;quot;TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256&amp;quot;
+- &amp;quot;TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384&amp;quot;
+readOnlyPort: 0
+# port: 10250
+# containerLogMaxSize: &amp;quot;10Mi&amp;quot;
+# containerLogMaxFiles: 5
+# evictionHard:
+#   imagefs.available: &amp;quot;15%&amp;quot;
+#   memory.available: &amp;quot;100Mi&amp;quot;
+#   nodefs.available: &amp;quot;10%&amp;quot;
+#   nodefs.inodesFree: &amp;quot;5%&amp;quot;
+# evictionMaxPodGracePeriod: 0
+# evictionPressureTransitionPeriod: &amp;quot;5m0s&amp;quot;
+# fileCheckFrequency: &amp;quot;20s&amp;quot;
+# imageGCHighThresholdPercent: 85
+# imageGCLowThresholdPercent: 80
+# maxOpenFiles: 1000000
+# maxPods: 110
+# imageMinimumGCAge: &amp;quot;2m0s&amp;quot;
+# nodeStatusUpdateFrequency: &amp;quot;10s&amp;quot;
+# runtimeRequestTimeout: &amp;quot;2m0s&amp;quot;
+# streamingConnectionIdleTimeout: &amp;quot;4h0m0s&amp;quot;
+# syncFrequency: &amp;quot;1m0s&amp;quot;
+# volumeStatsAggPeriod: &amp;quot;1m0s&amp;quot;
+EOF
+# PAUSE_IMAGE=k8s.gcr.io/pause-amd64:3.1
+# cat &amp;gt; /etc/systemd/system/kubelet.service &amp;lt;&amp;lt; EOF
+[Unit]
+Description=Kubernetes Kubelet
+Documentation=https://github.com/kubernetes/kubernetes
+After=docker.service
+Requires=docker.service
+
+[Service]
+ExecStart=/usr/bin/kubelet \\
+  --allow-privileged=true \\
+  --config=/etc/kubernetes/kubelet.conf \\
+  --bootstrap-kubeconfig=/etc/kubernetes/bootstrap.kubeconfig \\
+  --kubeconfig=/etc/kubernetes/kubelet.kubeconfig \\
+  --network-plugin=cni \\
+  --cni-conf-dir=/etc/cni/net.d \\
+  --cni-bin-dir=/opt/cni/bin \\
+  --cert-dir=/etc/kubernetes/pki \\
+  --rotate-certificates=true \\
+  --v=2 \\
+  --pod-infra-container-image=${PAUSE_IMAGE}
+Restart=always
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+# systemctl daemon-reload
+# systemctl restart kubelet
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;--allow-privileged&lt;/code&gt;だけは、警告が出てるけどKubelet Configファイルで設定できない。&lt;/p&gt;
+
+&lt;h2 id=&#34;podsecuritypolicy&#34;&gt;PodSecurityPolicy&lt;/h2&gt;
+
+&lt;p&gt;&lt;code&gt;--allow-privileged&lt;/code&gt;は非推奨。
+どうも代わりに&lt;a href=&#34;https://kubernetes.io/docs/concepts/policy/pod-security-policy/&#34;&gt;PodSecurityPolicy&lt;/a&gt;で制御しろということのようだ。&lt;/p&gt;
+
+&lt;p&gt;PodSecurityPolicyを使うにはまず、kube-apiserverの起動オプションの&lt;code&gt;--admission-control&lt;/code&gt;に&lt;code&gt;PodSecurityPolicy&lt;/code&gt;を追加する必要がある。&lt;/p&gt;
+
+&lt;p&gt;で、privilegedななんでもできるPodSecurityPolicyと、それを使うロールを作成する。
+因みにPodSecurityPolicyは名前空間に属さない。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
+# kubectl create -f- &amp;lt;&amp;lt;EOF
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: privileged
+spec:
+  privileged: true
+  hostIPC: true
+  hostPID: true
+  hostNetwork: true
+  hostPorts:
+  - min: 0
+    max: 65535
+  volumes:
+  - &amp;quot;*&amp;quot;
+  fsGroup:
+    rule: &amp;quot;RunAsAny&amp;quot;
+  runAsUser:
+    rule: &amp;quot;RunAsAny&amp;quot;
+  supplementalGroups:
+    rule: &amp;quot;RunAsAny&amp;quot;
+  allowPrivilegeEscalation: true
+  allowedCapabilities:
+  - &amp;quot;*&amp;quot;
+  seLinux:
+    rule: &amp;quot;RunAsAny&amp;quot;
+EOF
+# kubectl -n kube-system create role psp:privileged --verb=use --resource=podsecuritypolicy --resource-name=privileged
+# kubectl -n weave create role psp:privileged --verb=use --resource=podsecuritypolicy --resource-name=privileged
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;今のところ、privilegedなPodSecurityPolicyが必要なService AccountはWeave Netのkube-system:weave-netと、Weave Scopeのweave:weave-scopeとweave:default。
+こいつらに上記ロールをバインドする。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# kubectl -n kube-system create rolebinding weave-net:psp:privileged --role=psp:privileged --serviceaccount=kube-system:weave-net
+# kubectl -n weave create rolebinding weave-scope:psp:privileged --role=psp:privileged --serviceaccount=weave:weave-scope
+# kubectl -n weave create rolebinding weave-default:psp:privileged --role=psp:privileged --serviceaccount=weave:default
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;あと、CoreDNS用のPodSecurityPolicyとロールを作ってバインドする。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
+# kubectl apply -f- &amp;lt;&amp;lt;EOF
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: coredns
+spec:
+  privileged: false
+  hostIPC: false
+  hostPID: false
+  hostNetwork: false
+  hostPorts:
+  - min: 0
+    max: 65535
+  volumes:
+  - &amp;quot;configMap&amp;quot;
+  - &amp;quot;secret&amp;quot;
+  fsGroup:
+    rule: &amp;quot;RunAsAny&amp;quot;
+  runAsUser:
+    rule: &amp;quot;RunAsAny&amp;quot;
+  supplementalGroups:
+    rule: &amp;quot;RunAsAny&amp;quot;
+  allowPrivilegeEscalation: true
+  seLinux:
+    rule: &amp;quot;RunAsAny&amp;quot;
+EOF
+# kubectl -n kube-system create role psp:coredns --verb=use --resource=podsecuritypolicy --resource-name=coredns
+# kubectl -n kube-system create rolebinding coredns:psp:coredns --role=psp:coredns --serviceaccount=kube-system:coredns
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;これで晴れてkubeletから&lt;code&gt;--allow-privileged&lt;/code&gt;を外せる、と思ったら、外したら動かなかった。
+どうも現時点では&lt;a href=&#34;https://github.com/kubernetes/kubernetes/issues/58010&#34;&gt;kubeletとPodSecurityPolicyが連携できていない&lt;/a&gt;らしく、&lt;code&gt;--allow-privileged&lt;/code&gt;は付けとかないといけないようだ。
+付けといても、PodSecurityPolicyでprivilegedをtrueにしないとprivilegedが許可されないので、動きとしては問題ない。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;--allow-privileged&lt;/code&gt;はKubernetes 1.12で廃止される予定なので、それまでにはなんとかなるだろう。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -1083,7 +1325,8 @@ EOF
 &lt;p&gt;&lt;code&gt;--pod-manifest-path&lt;/code&gt;で指定したディレクトリはkubeletに定期的にスキャンされ、そこに置いたKubernetesマニフェスト(ドットで始まるもの以外)が読まれる。
 (参照: &lt;a href=&#34;https://kubernetes.io/docs/tasks/administer-cluster/static-pod/&#34;&gt;Static Pods&lt;/a&gt;)&lt;/p&gt;
 
-&lt;p&gt;本当は&lt;a href=&#34;https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/&#34;&gt;kubelet config file&lt;/a&gt;を使ったほうがいいみたいなので、次回の記事でそれに対応する。&lt;/p&gt;
+&lt;p&gt;本当は&lt;a href=&#34;https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/&#34;&gt;Kubelet Configファイル&lt;/a&gt;を使ったほうがいいみたいなので、いずれそれに対応する。
+(対応した: 「&lt;a href=&#34;https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/&#34;&gt;Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える&lt;/a&gt;」)&lt;/p&gt;
 
 &lt;p&gt;起動確認。&lt;/p&gt;
 
@@ -1289,7 +1532,7 @@ kube-flannel-ds-gkcqd   1/1       Running   0          1m
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;flannelは&lt;a href=&#34;https://kubernetes.io/docs/concepts/services-networking/network-policies/&#34;&gt;Network Policy&lt;/a&gt;をサポートしていないので、&lt;a href=&#34;https://www.projectcalico.org/&#34;&gt;Calico&lt;/a&gt;か&lt;a href=&#34;https://www.weave.works/oss/net/&#34;&gt;Weave Net&lt;/a&gt;あたりにすればよかったかも。
-(した。&lt;a href=&#34;https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/&#34;&gt;Kubernetes 1.10のクラスタにWeave Netをデプロイする&lt;/a&gt;)&lt;/p&gt;&lt;/li&gt;
+(やった: 「&lt;a href=&#34;https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/&#34;&gt;Kubernetes 1.10のクラスタにWeave Netをデプロイする&lt;/a&gt;」)&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;CoreDNS&lt;/p&gt;
 
@@ -12965,117 +13208,6 @@ It perfectly worked including MAC/IPv6 addresses detection.&lt;/p&gt;
 もう少し、アーキテクトが品質を確保するために何をすべきかといったことが書いてあると期待してたが。&lt;/p&gt;
 
 &lt;p&gt;責任を委譲してそれに権限が付随するのか、権限を委譲してそれに責任が付随するのか、という細かい疑問はあるが、この記事の主な主張に対しては特に何も言うことがない。&lt;/p&gt;
-</description>
-        </item>
-      
-    
-      
-        <item>
-          <title>pcap-ng support in Pcap4J</title>
-          <link>https://www.kaitoy.xyz/2016/01/10/pcap-ng-support-in-pcap4j/</link>
-          <pubDate>Sun, 10 Jan 2016 09:52:06 -0700</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2016/01/10/pcap-ng-support-in-pcap4j/</guid>
-          <description>
-
-&lt;p&gt;Sometimes I receive inquiries about support for &lt;strong&gt;pcap-ng&lt;/strong&gt; files in &lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;&lt;strong&gt;Pcap4J&lt;/strong&gt;&lt;/a&gt;.
-I wrote the result of my investigation on it in this article.&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h2 id=&#34;what-s-a-pcap-ng-file&#34;&gt;What&amp;rsquo;s a pcap-ng file&lt;/h2&gt;
-
-&lt;p&gt;A pcap-ng file (i.e. a file with &lt;code&gt;.pcapng&lt;/code&gt; extension ) is a packet dump file in &lt;a href=&#34;https://github.com/pcapng/pcapng&#34;&gt;&lt;strong&gt;The pcap Next Generation Capture File Format&lt;/strong&gt;&lt;/a&gt; (or pcap-ng format for short).
-This format was created to overcome the limitations of the traditional &lt;a href=&#34;https://wiki.wireshark.org/Development/LibpcapFileFormat&#34;&gt;&lt;strong&gt;Libpcap File Format&lt;/strong&gt;&lt;/a&gt; (or pcap format for short) which is used in pcap files.&lt;/p&gt;
-
-&lt;p&gt;Although the pcap format has been widely used for a long time, recent &lt;a href=&#34;https://www.wireshark.org/&#34;&gt;&lt;strong&gt;Wireshark&lt;/strong&gt;&lt;/a&gt;, the de facto standard packet capture tool, uses the pcap-ng format by default to save captured packets.
-So, it&amp;rsquo;s expected that the pcap-ng format would be more common and pcap format would be a legacy in the future.&lt;/p&gt;
-
-&lt;h2 id=&#34;pcap-ng-support-in-pcap4j&#34;&gt;pcap-ng support in Pcap4J&lt;/h2&gt;
-
-&lt;p&gt;Of course Pcap4J supports traditional pcap format.
-But how about the pcap-ng format?&lt;/p&gt;
-
-&lt;p&gt;Whether Pcap4J can handle pcap-ng files is up to its underlying native library.
-Remember Pcap4J is a wrapper library for &lt;a href=&#34;http://www.tcpdump.org/&#34;&gt;&lt;strong&gt;libpcap&lt;/strong&gt;&lt;/a&gt; and &lt;a href=&#34;http://www.winpcap.org/&#34;&gt;&lt;strong&gt;WinPcap&lt;/strong&gt;&lt;/a&gt;.
-If the libpcap/WinPcap supports the pcap-ng format Pcap4J does, and vice versa.&lt;/p&gt;
-
-&lt;h2 id=&#34;pcap-ng-support-in-libpcap&#34;&gt;pcap-ng support in libpcap&lt;/h2&gt;
-
-&lt;p&gt;The libpcap got limited support for reading pcap-ng files in &lt;a href=&#34;https://github.com/the-tcpdump-group/libpcap/blob/libpcap-1.1/CHANGES&#34;&gt;1.1.0&lt;/a&gt;, and then the following three bugs around the feature were fixed:&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;filtering issue (fixed in 1.2.1)&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/the-tcpdump-group/libpcap/issues/139&#34;&gt;pcap_datalink() returns wrong value&lt;/a&gt; (fixed in 1.1.2)&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/the-tcpdump-group/libpcap/issues/349&#34;&gt;Wrong timestamps on big-endian machines&lt;/a&gt; (fixed in 1.7.2)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;No enhancement for pcap-ng support since 1.1.0 as of now (1.7.5).&lt;/p&gt;
-
-&lt;p&gt;I don&amp;rsquo;t know what &amp;ldquo;limited&amp;rdquo; means, but anyway it looked like Pcap4J 1.6.2 could read pcap-ng files without any problems as far as I tested it with libpcap 1.7.4.&lt;/p&gt;
-
-&lt;p&gt;As for writing pcap-ng files, the libpcap doesn&amp;rsquo;t provide any support for it yet.&lt;/p&gt;
-
-&lt;h2 id=&#34;pcap-ng-support-in-winpcap&#34;&gt;pcap-ng support in WinPcap&lt;/h2&gt;
-
-&lt;p&gt;WinPcap is the Windows version of libpcap and each version of it is based on a certain version of libpcap.
-The newest version of WinPcap, WinPcap 4.1.3, was developed with libpcap 1.0.0.
-It means WinPcap doesn&amp;rsquo;t support pcap-ng format yet at all.&lt;/p&gt;
-
-&lt;p&gt;But, there is an &lt;a href=&#34;http://sourceforge.net/projects/winpcap413-176/&#34;&gt;unofficial build of WinPcap based on libpcap 1.7.4&lt;/a&gt;.
-As far as I tested this WinPcap through Pcap4J 1.6.2, it worked well on reading pcap-ng files as well as on basic functionalities such as finding network devices and live capture except &lt;a href=&#34;https://github.com/kaitoy/pcap4j/issues/52&#34;&gt;getting capture statistics&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h2 id=&#34;how-to-read-a-pcap-ng-file&#34;&gt;How to read a pcap-ng file&lt;/h2&gt;
-
-&lt;p&gt;How to read a pcap-ng file is exactly the same as how to read a pcap file.&lt;/p&gt;
-
-&lt;p&gt;Use &lt;a href=&#34;http://kaitoy.github.io/pcap4j/javadoc/latest/en/org/pcap4j/core/Pcaps.html#openOffline%28java.lang.String%29&#34;&gt;&lt;code&gt;Pcaps.openOffline()&lt;/code&gt;&lt;/a&gt; to open a pcap-ng file and call read methods such as &lt;a href=&#34;http://kaitoy.github.io/pcap4j/javadoc/latest/en/org/pcap4j/core/PcapHandle.html#getNextPacketEx%28%29&#34;&gt;&lt;code&gt;getNextPacketEx()&lt;/code&gt;&lt;/a&gt; and &lt;a href=&#34;http://kaitoy.github.io/pcap4j/javadoc/latest/en/org/pcap4j/core/PcapHandle.html#loop%28int,%20org.pcap4j.core.PacketListener%29&#34;&gt;&lt;code&gt;loop()&lt;/code&gt;&lt;/a&gt; on the returned &lt;a href=&#34;http://kaitoy.github.io/pcap4j/javadoc/latest/en/org/pcap4j/core/PcapHandle.html&#34;&gt;&lt;code&gt;PcapHandle&lt;/code&gt;&lt;/a&gt; object to get packets in the file.&lt;/p&gt;
-
-&lt;p&gt;For example:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public static void main(String args[]) throws PcapNativeException, NotOpenException {
-  PcapHandle ph = Pcaps.openOffline(&amp;quot;/path/to/test.pcapng&amp;quot;);
-  ph.setFilter(&amp;quot;tcp&amp;quot;, BpfProgram.BpfCompileMode.OPTIMIZE);
-  while (true) {
-    try {
-      Packet p = ph.getNextPacketEx();
-      if (p != null) {
-        System.out.println(p);
-      }
-    } catch (EOFException e) {
-      System.out.println(&amp;quot;End of file&amp;quot;);
-      break;
-    } catch (TimeoutException e) {
-      System.out.println(&amp;quot;Timed out&amp;quot;);
-      break;
-    }
-  }
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;If you try to read a pcap-ng file using Pcap4J with a native library which doesn&amp;rsquo;t support pcap-ng format, Pcap4J throws &lt;a href=&#34;http://kaitoy.github.io/pcap4j/javadoc/latest/en/org/pcap4j/core/PcapNativeException.html&#34;&gt;&lt;code&gt;PcapNativeException&lt;/code&gt;&lt;/a&gt; as follows:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;Exception in thread &amp;quot;main&amp;quot; org.pcap4j.core.PcapNativeException: bad dump file format
-        at org.pcap4j.core.Pcaps.openOffline(Pcaps.java:203)
-        at Test.main(Test.java:16)
-&lt;/code&gt;&lt;/pre&gt;
 </description>
         </item>
       

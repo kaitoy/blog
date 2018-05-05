@@ -14,9 +14,9 @@
     <link rel="canonical" href="https://www.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="「Kubernetes 1.10をスクラッチから全手動で構築」で、Kubernetes 1.10のクラスタに、ネットワークプロバイダとしてflannelをデプロイしたけど、flannelはNetwork Policyをサポートしていないので、代わりにWeave Netをデプロイしてみた話。 (adsbygoogle = window.adsbygoogle || []).push({}); Weave Netにした理由 Network Policyをサポートしているネットワークプロバイダには現時点で以下のものがある。 Calico Cilium Kube-router Romana Weave Net このなかで、よく名前を聞くのがCalicoとWeave Net。 GitHubのスター数が圧倒的に多いのがWeave Net。 性能が比較的いいのがWeave Net。 ということでWeave Netにした。 Weave Netデプロイ 以下を参考に設定してデプロイする。 https://www.weave.works/docs/net/latest/kubernetes/kube-addon/ https://www.weave.works/docs/net/latest/install/installing-weave/ https://github.com/weaveworks/weave/blob/master/prog/weave-kube/launch.sh Kubernetesマニフェスト Weave NetをKubernetesクラスタにデプロイするためのマニフェストは、GitHub Releasesかhttps://cloud.weave.worksからダウンロードできる。 今回は後者にする。 https://cloud.weave.worksを使う場合、Kubernetesのバージョンなどのパラメータはクエリストリングで指定できる。 主なパラメータは以下。 k8s-version: Kubernetesのバージョン。指定しないとlatest。 password-secret: ノード間のWeave Net通信の暗号化に使うパスワードを保持するSecret名。指定しないと平文。(参考: https://www.weave.works/docs/net/latest/tasks/manage/security-untrusted-networks/) IPALLOC_RANGE: Podに割り当てるIPアドレスの範囲。指定しないと10.32.0.0/12。 CHECKPOINT_DISABLE: Weave Netのアップデートを定期的にチェックする機能の無効化オプション。 WEAVE_MTU: MTUを指定するオプション。デフォルトで1376バイト。 WEAVE_MTUはとりあえずデフォルトにしておいて、IPALLOC_RANGEもデフォルトにして、通信暗号化して、CHECKPOINT_DISABLEをtrueにするとすると、マニフェストは以下のようにダウンロードできる。 # curl -fsSLo weave-daemonset.yaml &quot;https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d &#39;\n&#39;)&amp;env.CHECKPOINT_DISABLE=1&amp;password-secret=weave-passwd&quot; (通信暗号化は単一ノードなら不要だと思うけどとりあえず設定しておく。) Kubernetesコンポーネントの起動オプション kube-controller-managerの起動オプションの--cluster-cidrはIPALLOC_RANGEと同じにする必要がある。">
+    <meta property="og:description" content="「Kubernetes 1.10をスクラッチから全手動で構築」、「Kubernetes 1.10のクラスタにWeave Netをデプロイする」の続き。 kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPodSecurityPolicyを使うように変更した話。 (adsbygoogle = window.adsbygoogle || []).push({}); Kubelet Configファイル journalctl -u kubeletすると、以下の警告が出ている。 Apr 28 15:31:39 k8s-master kubelet[1370]: Flag --address has been deprecated, This parameter should be set via the config file specified by the Kubelet&#39;s - -config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information. Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --pod-manifest-path has been deprecated, This parameter should be set via the config file specified by the K ubelet&#39;s --config flag.">
     
-    <meta property="og:image" content="https://www.kaitoy.xyz/images/weave-k8s.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
     
     
     
@@ -82,6 +82,28 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sat, May 5, 2018</span>
+              </div>
+              <h2 class="title">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</h2>
+              <div class="summary">
+                「Kubernetes 1.10をスクラッチから全手動で構築」、「Kubernetes 1.10のクラスタにWeave Netをデプロイする」の続き。 kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPodSecurityPolicyを使うように変更した話。 (adsbygoogle = window.adsbygoogle || []).push({}); Kubelet Configファイル journalctl -u kubeletすると、以下の警告が出ている。 Apr 28 15:31:39 k8s-master kubelet[1370]: Flag --address has been deprecated, This parameter should be set via the config file specified by the Kubelet's - -config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information. Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --pod-manifest-path has been deprecated, This parameter should be set via the config file specified by the K ubelet's --config flag.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/weave-k8s.png" alt="eyecatch">
@@ -142,33 +164,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2018/03/25/hello-world-to-ml-with-keras/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2018/03/25/hello-world-to-ml-with-keras/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/keras.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Sun, Mar 25, 2018</span>
               </div>
-              <h2 class="title">機械学習のHello World: MNISTの分類モデルをKerasで作ってみた</h2>
-              <div class="summary">
-                機械学習のHello WorldとしてよくやられるMNISTの分類モデルをKeras on TensorFlowで作ってみた話。 (adsbygoogle = window.adsbygoogle || []).push({}); MNISTとは 手書き数字画像のラベル付きデータセット。 6万個の訓練データと1万個のテストデータからなる。 CC BY-SA 3.0で配布されているっぽい。 一つの画像は28×28ピクセルの白黒画像で、0から9のアラビア数字が書かれている。 画像とラベルがそれぞれ独特な形式でアーカイブされていて、画像一つ、ラベル一つ取り出すのも一苦労する。 Kerasとは Pythonのニューラルネットワークライブラリ。 バックエンドとしてTensorFlowかCNTKかTheanoを使う。 今回はTensorFlowを使った。 やったこと KerasのMNISTのAPIとかコードサンプルとかがあけどこれらはスルー。 MNISTのサイトにあるデータセットをダウンロードしてきて、サイトに書いてあるデータ形式の説明を見ながらサンプルを取り出すコードを書いた。 で、KerasでVGGっぽいCNNを書いて、学習させてモデルをダンプして、ダンプしたモデルをロードしてテストデータで評価するコードを書いた。 コードはGitHubに。 ネットワークアーキテクチャ 入力画像のサイズに合わせてVGGを小さくした感じのCNNを作った。 VGGは2014年に発表されたアーキテクチャで、各層に同じフィルタを使い、フィルタ数を線形増加させるシンプルな構造でありながら、性能がよく、今でもよく使われるっぽい。 VGGを図にすると以下の構造。 実際はバッチ正規化とかDropoutもやるのかも。 プーリング層は数えないで16層なので、VGG-16とも呼ばれる。 パラメータ数は1億3800万個くらいで、結構深めなアーキテクチャ。 VGG-16は244×244×3の画像を入力して1000クラスに分類するのに対し、MNISTは28×28×1を入れて10クラスに分類するので、以下のような7層版を作った。 これでパラメータ数は27万個くらい。 訓練データのサンプル数が6万個なので、パラメータ数が大分多い感じではある。 コードは以下。 inputs: Tensor = Input(shape=(IMAGE_NUM_ROWS, IMAGE_NUM_COLS, 1)) x: Tensor = Conv2D(filters=8, kernel_size=(2, 2), padding='same', activation='relu')(inputs) x = Conv2D(filters=8, kernel_size=(2, 2), padding='same', activation='relu')(x) x = MaxPooling2D(pool_size=(2, 2))(x) x = Conv2D(filters=16, kernel_size=(2, 2), padding='same', activation='relu')(x) x = Conv2D(filters=16, kernel_size=(2, 2), padding='same', activation='relu')(x) x = Conv2D(filters=16, kernel_size=(2, 2), padding='same', activation='relu')(x) x = MaxPooling2D(pool_size=(2, 2))(x) x = Flatten()(x) x = Dense(units=256, activation='relu')(x) x = Dense(units=256, activation='relu')(x) predictions: Tensor = Dense(NUM_CLASSES, activation='softmax')(x) model: Model = Model(inputs=inputs, outputs=predictions) model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy']) 訓練・評価 上記モデルを6万個のサンプルでバッチサイズ512で一周(1エポック)学習させると、Intel Core i5-6300HQプロセッサー、メモリ16GBのノートPCで28秒前後かかる。 とりあえず3エポック学習させてみる。 (ml-mnist) C:\workspace\ml-mnist&gt;python bin\ml_mnist.py train Using TensorFlow backend.
-              </div>
+              <h3 class="title">機械学習のHello World: MNISTの分類モデルをKerasで作ってみた</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         

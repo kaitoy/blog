@@ -10,19 +10,19 @@
     
     
     <meta property="og:type" content="article">
-    <meta property="og:title" content="Step by Step to Add a Protocol Support to Pcap4J (Part 1) | To Be Decided">
-    <meta property="og:url" content="https://www.kaitoy.xyz/2015/08/09/step-by-step-to-add-a-protocol-support-to-pcap4j-1/">
-    <link rel="canonical" href="https://www.kaitoy.xyz/2015/08/09/step-by-step-to-add-a-protocol-support-to-pcap4j-1/">
-    <meta property="og:description" content="I will show how to add a protocol support to Pcap4J in detail giving the example of DHCP (v4) via some posts. (adsbygoogle = window.adsbygoogle || []).push({}); Named Number Class First of all, we need to know the packet format. It&rsquo;s explained in RFC 2131 as below: 0 1 2 3 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; | op (1) | htype (1) | hlen (1) | hops (1) | &#43;---------------&#43;---------------&#43;---------------&#43;---------------&#43; | xid (4) | &#43;-------------------------------&#43;-------------------------------&#43; | secs (2) | flags (2) | &#43;-------------------------------&#43;-------------------------------&#43; | ciaddr (4) | &#43;---------------------------------------------------------------&#43; | yiaddr (4) | &#43;---------------------------------------------------------------&#43; | siaddr (4) | &#43;---------------------------------------------------------------&#43; | giaddr (4) | &#43;---------------------------------------------------------------&#43; | | | chaddr (16) | | | | | &#43;---------------------------------------------------------------&#43; | | | sname (64) | &#43;---------------------------------------------------------------&#43; | | | file (128) | &#43;---------------------------------------------------------------&#43; | | | options (variable) | &#43;---------------------------------------------------------------&#43; FIELD OCTETS DESCRIPTION op 1 Message op code / message type.">
+    <meta property="og:title" content="Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える | To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">
+    <link rel="canonical" href="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">
+    <meta property="og:description" content="「Kubernetes 1.10をスクラッチから全手動で構築」、「Kubernetes 1.10のクラスタにWeave Netをデプロイする」の続き。 kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPodSecurityPolicyを使うように変更した話。 (adsbygoogle = window.adsbygoogle || []).push({}); Kubelet Configファイル journalctl -u kubeletすると、以下の警告が出ている。 Apr 28 15:31:39 k8s-master kubelet[1370]: Flag --address has been deprecated, This parameter should be set via the config file specified by the Kubelet&#39;s - -config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information. Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --pod-manifest-path has been deprecated, This parameter should be set via the config file specified by the K ubelet&#39;s --config flag.">
     
-    <meta property="og:image" content="https://www.kaitoy.xyz/images/pcap4jlogo.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
     
     
     <meta property="og:site_name" content="To Be Decided">
 
     <title>
       
-      Step by Step to Add a Protocol Support to Pcap4J (Part 1) | To Be Decided
+      Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える | To Be Decided
       
     </title>
 
@@ -72,21 +72,21 @@
 <div class="row">
   <div class="col-md-9">
     <article id="post">
-      <span class="date">Sun, Aug 9, 2015</span>
-      <h2 class="title">Step by Step to Add a Protocol Support to Pcap4J (Part 1)</h2>
+      <span class="date">Sat, May 5, 2018</span>
+      <h2 class="title">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</h2>
 
       <div class="eyecatch text-center">
         
-        <img src="https://www.kaitoy.xyz/images/pcap4jlogo.png" alt="Step by Step to Add a Protocol Support to Pcap4J (Part 1)">
+        <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える">
         
       </div>
 
       <div class="content">
         
 
-<p>I will show how to add a protocol support to <a href="https://github.com/kaitoy/pcap4j">Pcap4J</a> in detail giving the example of DHCP (v4) via some posts.</p>
+<p>「<a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a>」、「<a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a>」の続き。</p>
 
-<p><br></p>
+<p>kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPodSecurityPolicyを使うように変更した話。</p>
 
 <p>
 
@@ -103,286 +103,216 @@
 </script>
 </p>
 
-<h3 id="named-number-class">Named Number Class</h3>
+<h1 id="kubelet-configファイル">Kubelet Configファイル</h1>
 
-<p>First of all, we need to know the packet format. It&rsquo;s explained in <a href="http://www.ietf.org/rfc/rfc2131.txt">RFC 2131</a> as below:</p>
+<p><code>journalctl -u kubelet</code>すると、以下の警告が出ている。</p>
 
-<blockquote>
-<pre><code>0                   1                   2                   3
-0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|     op (1)    |   htype (1)   |   hlen (1)    |   hops (1)    |
-+---------------+---------------+---------------+---------------+
-|                            xid (4)                            |
-+-------------------------------+-------------------------------+
-|           secs (2)            |           flags (2)           |
-+-------------------------------+-------------------------------+
-|                          ciaddr  (4)                          |
-+---------------------------------------------------------------+
-|                          yiaddr  (4)                          |
-+---------------------------------------------------------------+
-|                          siaddr  (4)                          |
-+---------------------------------------------------------------+
-|                          giaddr  (4)                          |
-+---------------------------------------------------------------+
-|                                                               |
-|                          chaddr  (16)                         |
-|                                                               |
-|                                                               |
-+---------------------------------------------------------------+
-|                                                               |
-|                          sname   (64)                         |
-+---------------------------------------------------------------+
-|                                                               |
-|                          file    (128)                        |
-+---------------------------------------------------------------+
-|                                                               |
-|                          options (variable)                   |
-+---------------------------------------------------------------+
+<pre><code>Apr 28 15:31:39 k8s-master kubelet[1370]: Flag --address has been deprecated, This parameter should be set via the config file specified by the Kubelet's -
+-config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --pod-manifest-path has been deprecated, This parameter should be set via the config file specified by the K
+ubelet's --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --cluster-dns has been deprecated, This parameter should be set via the config file specified by the Kubelet
+'s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --cluster-domain has been deprecated, This parameter should be set via the config file specified by the Kube
+let's --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --authorization-mode has been deprecated, This parameter should be set via the config file specified by the
+Kubelet's --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --client-ca-file has been deprecated, This parameter should be set via the config file specified by the Kube
+let's --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --cgroup-driver has been deprecated, This parameter should be set via the config file specified by the Kubel
+et's --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --tls-min-version has been deprecated, This parameter should be set via the config file specified by the Kubelet's --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --allow-privileged has been deprecated, will be removed in a future version
 </code></pre>
 
-<table>
-<thead>
-<tr>
-<th>FIELD</th>
-<th>OCTETS</th>
-<th>DESCRIPTION</th>
-</tr>
-</thead>
+<p>kubeletのいくつかのオプションは、<a href="https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/">https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/</a> を参照してKubelet Configファイルのほうに書けとある。</p>
 
-<tbody>
-<tr>
-<td>op</td>
-<td>1</td>
-<td>Message op code / message type.<br>1 = BOOTREQUEST, 2 = BOOTREPLY</td>
-</tr>
+<p>参照先のマニュアルには現時点でほぼ何も書いてないし、ググっても情報が無いので、<a href="https://github.com/kubernetes/kubernetes/blob/release-1.10/pkg/kubelet/apis/kubeletconfig/v1beta1/types.go">ソース</a>を見てそれっぽく書いてみた。</p>
 
-<tr>
-<td>htype</td>
-<td>1</td>
-<td>Hardware address type, see ARP section in &ldquo;Assigned<br>Numbers&rdquo; RFC; e.g., &lsquo;1&rsquo; = 10mb ethernet.</td>
-</tr>
+<p>将来的に調整しそうなパラメータは、Kubelet Configファイルにデフォルト値とともにコメントとして書き出している。</p>
 
-<tr>
-<td>hlen</td>
-<td>1</td>
-<td>Hardware address length (e.g.  &lsquo;6&rsquo; for 10mb ethernet).</td>
-</tr>
+<pre><code class="language-sh"># DNS_SERVER_IP=10.0.0.10
+# DNS_DOMAIN=&quot;cluster.local&quot;
+# mkdir -p /etc/kubernetes/manifests
+# cat &gt; /etc/kubernetes/kubelet.conf &lt;&lt; EOF
+kind: KubeletConfiguration
+apiVersion: kubelet.config.k8s.io/v1beta1
+featureGates:
+  RotateKubeletServerCertificate: true
+address: &quot;0.0.0.0&quot;
+staticPodPath: &quot;/etc/kubernetes/manifests&quot;
+clusterDNS: [&quot;${DNS_SERVER_IP}&quot;]
+clusterDomain: &quot;${DNS_DOMAIN}&quot;
+authorization:
+  mode: Webhook
+  webhook:
+    cacheAuthorizedTTL: &quot;5m0s&quot;
+    cacheUnauthorizedTTL: &quot;30s&quot;
+authentication:
+  x509:
+    clientCAFile: &quot;/etc/kubernetes/pki/ca.crt&quot;
+  webhook:
+    enabled: false
+    cacheTTL: &quot;0s&quot;
+  anonymous:
+    enabled: false
+cgroupDriver: &quot;cgroupfs&quot;
+tlsMinVersion: &quot;VersionTLS12&quot;
+tlsCipherSuites:
+- &quot;TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256&quot;
+- &quot;TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384&quot;
+- &quot;TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256&quot;
+- &quot;TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384&quot;
+readOnlyPort: 0
+# port: 10250
+# containerLogMaxSize: &quot;10Mi&quot;
+# containerLogMaxFiles: 5
+# evictionHard:
+#   imagefs.available: &quot;15%&quot;
+#   memory.available: &quot;100Mi&quot;
+#   nodefs.available: &quot;10%&quot;
+#   nodefs.inodesFree: &quot;5%&quot;
+# evictionMaxPodGracePeriod: 0
+# evictionPressureTransitionPeriod: &quot;5m0s&quot;
+# fileCheckFrequency: &quot;20s&quot;
+# imageGCHighThresholdPercent: 85
+# imageGCLowThresholdPercent: 80
+# maxOpenFiles: 1000000
+# maxPods: 110
+# imageMinimumGCAge: &quot;2m0s&quot;
+# nodeStatusUpdateFrequency: &quot;10s&quot;
+# runtimeRequestTimeout: &quot;2m0s&quot;
+# streamingConnectionIdleTimeout: &quot;4h0m0s&quot;
+# syncFrequency: &quot;1m0s&quot;
+# volumeStatsAggPeriod: &quot;1m0s&quot;
+EOF
+# PAUSE_IMAGE=k8s.gcr.io/pause-amd64:3.1
+# cat &gt; /etc/systemd/system/kubelet.service &lt;&lt; EOF
+[Unit]
+Description=Kubernetes Kubelet
+Documentation=https://github.com/kubernetes/kubernetes
+After=docker.service
+Requires=docker.service
 
-<tr>
-<td>hops</td>
-<td>1</td>
-<td>Client sets to zero, optionally used by relay agents when booting via a relay agent.</td>
-</tr>
+[Service]
+ExecStart=/usr/bin/kubelet \\
+  --allow-privileged=true \\
+  --config=/etc/kubernetes/kubelet.conf \\
+  --bootstrap-kubeconfig=/etc/kubernetes/bootstrap.kubeconfig \\
+  --kubeconfig=/etc/kubernetes/kubelet.kubeconfig \\
+  --network-plugin=cni \\
+  --cni-conf-dir=/etc/cni/net.d \\
+  --cni-bin-dir=/opt/cni/bin \\
+  --cert-dir=/etc/kubernetes/pki \\
+  --rotate-certificates=true \\
+  --v=2 \\
+  --pod-infra-container-image=${PAUSE_IMAGE}
+Restart=always
+RestartSec=10s
 
-<tr>
-<td>xid</td>
-<td>4</td>
-<td>Transaction ID, a random number chosen by the client, used by the client and server to associate messages and responses between a client and a server.</td>
-</tr>
-
-<tr>
-<td>secs</td>
-<td>2</td>
-<td>Filled in by client, seconds elapsed since client began address acquisition or renewal process.</td>
-</tr>
-
-<tr>
-<td>flags</td>
-<td>2</td>
-<td>Flags (see figure 2).</td>
-</tr>
-
-<tr>
-<td>ciaddr</td>
-<td>4</td>
-<td>Client IP address; only filled in if client is in BOUND, RENEW or REBINDING state and can respond to ARP requests.</td>
-</tr>
-
-<tr>
-<td>yiaddr</td>
-<td>4</td>
-<td>&lsquo;your&rsquo; (client) IP address.</td>
-</tr>
-
-<tr>
-<td>siaddr</td>
-<td>4</td>
-<td>IP address of next server to use in bootstrap; returned in DHCPOFFER, DHCPACK by server.</td>
-</tr>
-
-<tr>
-<td>giaddr</td>
-<td>4</td>
-<td>Relay agent IP address, used in booting via a relay agent.</td>
-</tr>
-
-<tr>
-<td>chaddr</td>
-<td>16</td>
-<td>Client hardware address.</td>
-</tr>
-
-<tr>
-<td>sname</td>
-<td>64</td>
-<td>Optional server host name, null terminated string.</td>
-</tr>
-
-<tr>
-<td>file</td>
-<td>128</td>
-<td>Boot file name, null terminated string; &ldquo;generic&rdquo; name or null in DHCPDISCOVER, fully qualified directory-path name in DHCPOFFER.</td>
-</tr>
-
-<tr>
-<td>options</td>
-<td>var</td>
-<td>Optional parameters field.  See the options documents for a list of defined options.</td>
-</tr>
-</tbody>
-</table>
-</blockquote>
-
-<p>It looks DHCP has only one packet format, and the packet doesn&rsquo;t have a payload.
-So, we will need to write only one packet class, one header class, and one builder class for DHCP. Easy!</p>
-
-<p>The header class will have java fields which represent the packet fields listed above (e.g. op, htype, etc.).</p>
-
-<p>Let&rsquo;s start with writing named number classes, which we will use for types of some of the java fields of the header class.
-For example, <code>op</code> field, which holds a message op code, <code>1</code> or <code>2</code> in an octet.
-Although the value <code>op</code> field carries can be stored in a primitive <code>byte</code> field in the header class,
-it&rsquo;s recommended to create a named number class to store the value with its name (meaning) for more readability and usability.
-<code>new DhcpV4Packet.Builder().operationCode(DhcpV4OperationCode.BOOTREQUEST)</code> looks better than <code>new DhcpV4Packet.Builder().operationCode((byte)1)</code>, doesn&rsquo;t it?</p>
-
-<p>Named number classes are in <a href="https://github.com/kaitoy/pcap4j/tree/master/pcap4j-core/src/main/java/org/pcap4j/packet/namednumber"><code>org.pcap4j.packet.namednumber package</code></a> in pcap4j-core project.
-To write a named number class easily, extend <a href="https://github.com/kaitoy/pcap4j/blob/master/pcap4j-core/src/main/java/org/pcap4j/packet/namednumber/NamedNumber.java"><code>NamedNumber</code></a>.
-The minimum implementation of a number class looks like below:</p>
-
-<pre><code class="language-java">package org.pcap4j.packet.namednumber;
-
-public final class DhcpV4OperationCode extends NamedNumber&lt;Byte, DhcpV4OperationCode&gt; {
-
-  private static final long serialVersionUID = 3155818580398801532L;
-
-  public DhcpV4OperationCode(Byte value, String name) {
-    super(value, name);
-  }
-
-  @Override
-  public int compareTo(DhcpV4OperationCode o) {
-    return value().compareTo(o.value());
-  }
-
-}
+[Install]
+WantedBy=multi-user.target
+EOF
+# systemctl daemon-reload
+# systemctl restart kubelet
 </code></pre>
 
-<p>Only one method we must implement is <code>compareTo</code>. The code in the method is always the same: <code>return value().compareTo(o.value());</code>.</p>
+<p><br></p>
 
-<p>And, because <code>NamedNumber</code> doesn&rsquo;t have the default constructor, we need to write a constructor with 2 arguments, <code>Byte value</code> and <code>String name</code>.</p>
+<p><code>--allow-privileged</code>だけは、警告が出てるけどKubelet Configファイルで設定できない。</p>
 
-<p>Sometimes we may want to override <code>public String valueAsString()</code>. For example, in the case where the String representation of the value should be like <code>0x0a</code> instead of <code>10</code>. <code>DhcpV4OperationCode</code> isn&rsquo;t the case, though.</p>
+<h2 id="podsecuritypolicy">PodSecurityPolicy</h2>
 
-<p>Then, we&rsquo;d better to add pre-defined objects so that:</p>
+<p><code>--allow-privileged</code>は非推奨。
+どうも代わりに<a href="https://kubernetes.io/docs/concepts/policy/pod-security-policy/">PodSecurityPolicy</a>で制御しろということのようだ。</p>
 
-<ul>
-<li>we will not need to repeatedly instantiate them for the same value, and</li>
-<li>we will not need to refer to the RFC when you craft DHCP packets.</li>
-</ul>
+<p>PodSecurityPolicyを使うにはまず、kube-apiserverの起動オプションの<code>--admission-control</code>に<code>PodSecurityPolicy</code>を追加する必要がある。</p>
 
-<pre><code class="language-java">  public static final DhcpV4OperationCode BOOTREQUEST
-    = new DhcpV4OperationCode((byte)1, &quot;BOOTREQUEST&quot;);
+<p>で、privilegedななんでもできるPodSecurityPolicyと、それを使うロールを作成する。
+因みにPodSecurityPolicyは名前空間に属さない。</p>
 
-  public static final DhcpV4OperationCode BOOTREPLY
-    = new DhcpV4OperationCode((byte)2, &quot;BOOTREPLY&quot;);
+<pre><code class="language-sh"># export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
+# kubectl create -f- &lt;&lt;EOF
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: privileged
+spec:
+  privileged: true
+  hostIPC: true
+  hostPID: true
+  hostNetwork: true
+  hostPorts:
+  - min: 0
+    max: 65535
+  volumes:
+  - &quot;*&quot;
+  fsGroup:
+    rule: &quot;RunAsAny&quot;
+  runAsUser:
+    rule: &quot;RunAsAny&quot;
+  supplementalGroups:
+    rule: &quot;RunAsAny&quot;
+  allowPrivilegeEscalation: true
+  allowedCapabilities:
+  - &quot;*&quot;
+  seLinux:
+    rule: &quot;RunAsAny&quot;
+EOF
+# kubectl -n kube-system create role psp:privileged --verb=use --resource=podsecuritypolicy --resource-name=privileged
+# kubectl -n weave create role psp:privileged --verb=use --resource=podsecuritypolicy --resource-name=privileged
 </code></pre>
 
-<p>From a pre-defined object, we can get its value by <code>DhcpV4OperationCode.BOOTREQUEST.value()</code>.
-But, how do we get a pre-defined object from a value? We need to do it when we parse a real packet (a byte array) captured and build a DHCP packet object.</p>
+<p>今のところ、privilegedなPodSecurityPolicyが必要なService AccountはWeave Netのkube-system:weave-netと、Weave Scopeのweave:weave-scopeとweave:default。
+こいつらに上記ロールをバインドする。</p>
 
-<p>So, let&rsquo;s enhance the code as follows:</p>
-
-<pre><code class="language-java">  private static final Map&lt;Byte, DhcpV4OperationCode&gt; registry
-    = new HashMap&lt;Byte, DhcpV4OperationCode&gt;();
-
-  static {
-    registry.put(BOOTREQUEST.value(), BOOTREQUEST);
-    registry.put(BOOTREPLY.value(), BOOTREPLY);
-  }
-
-  public static DhcpV4OperationCode getInstance(Byte value) {
-    if (registry.containsKey(value)) {
-      return registry.get(value);
-    }
-    else {
-      return new DhcpV4OperationCode(value, &quot;unknown&quot;);
-    }
-  }
+<pre><code class="language-sh"># kubectl -n kube-system create rolebinding weave-net:psp:privileged --role=psp:privileged --serviceaccount=kube-system:weave-net
+# kubectl -n weave create rolebinding weave-scope:psp:privileged --role=psp:privileged --serviceaccount=weave:weave-scope
+# kubectl -n weave create rolebinding weave-default:psp:privileged --role=psp:privileged --serviceaccount=weave:default
 </code></pre>
 
-<p>The new field <code>registry</code> holds the mapping between values and pre-defined objects, and the <code>getInstance</code> method is the API to get a pre-defined objects (or new one if not registered) by a value by searching in the <code>registry</code>.</p>
+<p><br></p>
 
-<p>We may want to add one more API which is to add an object instantiated outside of this class to the <code>registy</code> like below:</p>
+<p>あと、CoreDNS用のPodSecurityPolicyとロールを作ってバインドする。</p>
 
-<pre><code class="language-java">  public static DhcpV4OperationCode register(DhcpV4OperationCode version) {
-    return registry.put(version.value(), version);
-  }
+<pre><code class="language-sh"># export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
+# kubectl apply -f- &lt;&lt;EOF
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: coredns
+spec:
+  privileged: false
+  hostIPC: false
+  hostPID: false
+  hostNetwork: false
+  hostPorts:
+  - min: 0
+    max: 65535
+  volumes:
+  - &quot;configMap&quot;
+  - &quot;secret&quot;
+  fsGroup:
+    rule: &quot;RunAsAny&quot;
+  runAsUser:
+    rule: &quot;RunAsAny&quot;
+  supplementalGroups:
+    rule: &quot;RunAsAny&quot;
+  allowPrivilegeEscalation: true
+  seLinux:
+    rule: &quot;RunAsAny&quot;
+EOF
+# kubectl -n kube-system create role psp:coredns --verb=use --resource=podsecuritypolicy --resource-name=coredns
+# kubectl -n kube-system create rolebinding coredns:psp:coredns --role=psp:coredns --serviceaccount=kube-system:coredns
 </code></pre>
 
-<p>Now, the entire code looks like below:</p>
+<p><br></p>
 
-<pre><code class="language-java">package org.pcap4j.packet.namednumber;
+<p>これで晴れてkubeletから<code>--allow-privileged</code>を外せる、と思ったら、外したら動かなかった。
+どうも現時点では<a href="https://github.com/kubernetes/kubernetes/issues/58010">kubeletとPodSecurityPolicyが連携できていない</a>らしく、<code>--allow-privileged</code>は付けとかないといけないようだ。
+付けといても、PodSecurityPolicyでprivilegedをtrueにしないとprivilegedが許可されないので、動きとしては問題ない。</p>
 
-import java.util.HashMap;
-import java.util.Map;
-
-public final class DhcpV4OperationCode extends NamedNumber&lt;Byte, DhcpV4OperationCode&gt; {
-
-  private static final long serialVersionUID = 3155818580398801532L;
-
-  public static final DhcpV4OperationCode BOOTREQUEST
-   = new DhcpV4OperationCode((byte)1, &quot;BOOTREQUEST&quot;);
-
-  public static final DhcpV4OperationCode BOOTREPLY
-   = new DhcpV4OperationCode((byte)2, &quot;BOOTREPLY&quot;);
-
-  private static final Map&lt;Byte, DhcpV4OperationCode&gt; registry
-    = new HashMap&lt;Byte, DhcpV4OperationCode&gt;();
-
-  static {
-    registry.put(BOOTREQUEST.value(), BOOTREQUEST);
-    registry.put(BOOTREPLY.value(), BOOTREPLY);
-  }
-
-  public static DhcpV4OperationCode getInstance(Byte value) {
-    if (registry.containsKey(value)) {
-      return registry.get(value);
-    }
-    else {
-      return new DhcpV4OperationCode(value, &quot;unknown&quot;);
-    }
-  }
-
-  public static DhcpV4OperationCode register(DhcpV4OperationCode version) {
-    return registry.put(version.value(), version);
-  }
-
-  public DhcpV4OperationCode(Byte value, String name) {
-    super(value, name);
-  }
-
-  @Override
-  public int compareTo(DhcpV4OperationCode o) {
-    return value().compareTo(o.value());
-  }
-
-}
-</code></pre>
-
-<p>Likewise, <code>htype</code> should be represented by a named number class.
-Fortunately, we can use the existing class <a href="https://github.com/kaitoy/pcap4j/blob/master/pcap4j-core/src/main/java/org/pcap4j/packet/namednumber/ArpHardwareType.java">ArpHardwareType</a> for it.</p>
-
-<p>In the <a href="https://www.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/">next part</a>, we will write a packet piece class for the <code>flags</code> field.</p>
+<p><code>--allow-privileged</code>はKubernetes 1.12で廃止される予定なので、それまでにはなんとかなるだろう。</p>
 
       </div>
 
@@ -411,11 +341,11 @@ Fortunately, we can use the existing class <a href="https://github.com/kaitoy/pc
           <div class="col-sm-5">
             <section id="share">
               <h3>Share</h3>
-              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f08%2f09%2fstep-by-step-to-add-a-protocol-support-to-pcap4j-1%2f&t=Step%20by%20Step%20to%20Add%20a%20Protocol%20Support%20to%20Pcap4J%20%28Part%201%29" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
-              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f08%2f09%2fstep-by-step-to-add-a-protocol-support-to-pcap4j-1%2f&text=Step%20by%20Step%20to%20Add%20a%20Protocol%20Support%20to%20Pcap4J%20%28Part%201%29&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
-              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f08%2f09%2fstep-by-step-to-add-a-protocol-support-to-pcap4j-1%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
-              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f08%2f09%2fstep-by-step-to-add-a-protocol-support-to-pcap4j-1%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
-              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2015%2f08%2f09%2fstep-by-step-to-add-a-protocol-support-to-pcap4j-1%2f&title=Step%20by%20Step%20to%20Add%20a%20Protocol%20Support%20to%20Pcap4J%20%28Part%201%29" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f05%2f05%2fkubernetes-kubelet-config-and-pod-sec-policy%2f&t=Kubernetes%201.10%e3%81%aekubelet%e3%81%ae%e8%b5%b7%e5%8b%95%e3%82%aa%e3%83%97%e3%82%b7%e3%83%a7%e3%83%b3%e3%82%92Kubelet%20Config%e3%83%95%e3%82%a1%e3%82%a4%e3%83%ab%e3%81%a8PodSecurityPolicy%e3%81%a7%e7%bd%ae%e3%81%8d%e6%8f%9b%e3%81%88%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f05%2f05%2fkubernetes-kubelet-config-and-pod-sec-policy%2f&text=Kubernetes%201.10%e3%81%aekubelet%e3%81%ae%e8%b5%b7%e5%8b%95%e3%82%aa%e3%83%97%e3%82%b7%e3%83%a7%e3%83%b3%e3%82%92Kubelet%20Config%e3%83%95%e3%82%a1%e3%82%a4%e3%83%ab%e3%81%a8PodSecurityPolicy%e3%81%a7%e7%bd%ae%e3%81%8d%e6%8f%9b%e3%81%88%e3%82%8b&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f05%2f05%2fkubernetes-kubelet-config-and-pod-sec-policy%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f05%2f05%2fkubernetes-kubelet-config-and-pod-sec-policy%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f05%2f05%2fkubernetes-kubelet-config-and-pod-sec-policy%2f&title=Kubernetes%201.10%e3%81%aekubelet%e3%81%ae%e8%b5%b7%e5%8b%95%e3%82%aa%e3%83%97%e3%82%b7%e3%83%a7%e3%83%b3%e3%82%92Kubelet%20Config%e3%83%95%e3%82%a1%e3%82%a4%e3%83%ab%e3%81%a8PodSecurityPolicy%e3%81%a7%e7%bd%ae%e3%81%8d%e6%8f%9b%e3%81%88%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
             </section>
           </div>
 
@@ -428,7 +358,9 @@ Fortunately, we can use the existing class <a href="https://github.com/kaitoy/pc
               <h3>Related Post</h3>
               <div id="tags">
                 
-                <a href="https://www.kaitoy.xyz/tags/pcap4j"><i class="fa fa-tags"></i> pcap4j </a>
+                <a href="https://www.kaitoy.xyz/tags/kubernetes"><i class="fa fa-tags"></i> kubernetes </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/docker"><i class="fa fa-tags"></i> docker </a>
                 
               </div>
 
@@ -443,16 +375,19 @@ Fortunately, we can use the existing class <a href="https://github.com/kaitoy/pc
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a></li>
                 
                 
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a></li>
                 
                 
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2018/04/01/hello-skaffold/">Skaffoldを触ってみた</a></li>
                 
                 
                 
@@ -490,21 +425,25 @@ Fortunately, we can use the existing class <a href="https://github.com/kaitoy/pc
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">Kubernetes 1.8のアクセス制御について。あとDashboard。</a></li>
                 
                 
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a></li>
                 
                 
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></li>
                 
                 
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a></li>
                 
                 
                 
@@ -514,6 +453,7 @@ Fortunately, we can use the existing class <a href="https://github.com/kaitoy/pc
                 
                 
                 
+                <li><a href="https://www.kaitoy.xyz/2017/08/14/webdriverio-chrome/">WebdriverIOとChromeのヘッドレスモードで自動ブラウザテストするDockerイメージ: webdriverio-chrome</a></li>
                 
                 
                 
@@ -563,7 +503,13 @@ Fortunately, we can use the existing class <a href="https://github.com/kaitoy/pc
                 
                 
                 
-                <li><a href="https://www.kaitoy.xyz/2016/11/19/pcap4j-doesnt-work-on-bow-yet/">Currently Pcap4J Doesn&#39;t Work on Bash on Windows</a></li>
+                
+                
+                
+                
+                
+                
+                
                 
                 
                 
@@ -587,12 +533,7 @@ Fortunately, we can use the existing class <a href="https://github.com/kaitoy/pc
                 
                 
                 
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2016/08/21/an-encouragement-of-open-sourcing/">オープンソースプロジェクトのすゝめ</a></li>
-                
+                <li><a href="https://www.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</a></li>
                 
                 
                 
@@ -600,6 +541,13 @@ Fortunately, we can use the existing class <a href="https://github.com/kaitoy/pc
                 
                 
                 
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/07/31/docker-for-windows/">Docker for Windowsがコレジャナかった</a></li>
                 
                 
                 
@@ -619,19 +567,13 @@ Fortunately, we can use the existing class <a href="https://github.com/kaitoy/pc
                 
                 
                 
-                <li><a href="https://www.kaitoy.xyz/2016/04/16/pcap4j-in-kotlin/">Pcap4J in Kotlin</a></li>
                 
                 
                 
                 
                 
-                <li><a href="https://www.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/">Pcap4J in Groovy</a></li>
                 
                 
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2016/03/19/zundoko-kiyoshi-with-pcap4j/"> ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた</a></li>
                 
                 
                 
@@ -647,17 +589,6 @@ Fortunately, we can use the existing class <a href="https://github.com/kaitoy/pc
                 
                 
                 
-                <li><a href="https://www.kaitoy.xyz/2016/01/12/pcap4j-with-four-native-libraries-on-windows10/">Pcap4J with Four Native Libraries on Windows 10</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2016/01/10/pcap-ng-support-in-pcap4j/">pcap-ng support in Pcap4J</a></li>
                 
                 
                 
@@ -691,7 +622,6 @@ Fortunately, we can use the existing class <a href="https://github.com/kaitoy/pc
                 
                 
                 
-                <li><a href="https://www.kaitoy.xyz/2015/12/03/software-quality-award-2015/">Pcap4JがSoftware Quality Award 2015で入賞</a></li>
                 
                 
                 
@@ -709,7 +639,11 @@ Fortunately, we can use the existing class <a href="https://github.com/kaitoy/pc
                 
                 
                 
-                <li><a href="https://www.kaitoy.xyz/2015/10/12/step-by-step-to-add-a-protocol-support-to-pcap4j-2/">Step by Step to Add a Protocol Support to Pcap4J (Part 2)</a></li>
+                
+                
+                
+                
+                
                 
                 
                 
@@ -792,18 +726,13 @@ Fortunately, we can use the existing class <a href="https://github.com/kaitoy/pc
             <div class="col-sm-6">
               <div class="prev">
                 
-                <a href="https://www.kaitoy.xyz/2015/08/11/daily-stand-up-meetings-are-a-good-tool-for-a-bad-manager/">
-                  <i class="fa fa-chevron-left"></i>
-                  スタンドアップミーティングはダメマネージャーが好む手法
-                </a>
-                
               </div>
             </div>
             <div class="col-sm-6">
               <div class="next text-right">
                 
-                <a href="https://www.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">
-                  Another way to capture LAN packets with pcap4j container
+                <a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">
+                  Kubernetes 1.10のクラスタにWeave Netをデプロイする
                   <i class="fa fa-chevron-right"></i>
                 </a>
                 
