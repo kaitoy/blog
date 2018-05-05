@@ -637,6 +637,8 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
         `--experimental-cluster-signing-duration`は、Certificate Rotationのための設定で、自動発行する証明書の期限を1年に指定している。
 
+        `--use-service-account-credentials`をつけると、[各コントローラが別々のService Accountで動く](https://kubernetes.io/docs/admin/authorization/rbac/#controller-roles)。
+
         確認。
 
         ```sh
