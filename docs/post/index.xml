@@ -725,7 +725,8 @@ ExecStart=/usr/bin/kube-apiserver \\
   --requestheader-allowed-names=front-proxy-client \\
   --requestheader-extra-headers-prefix=X-Remote-Extra- \\
   --v=2 \\
-  --tls-min-version=VersionTLS12
+  --tls-min-version=VersionTLS12 \\
+  --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 Restart=always
 RestartSec=10s
 
@@ -746,6 +747,11 @@ EOF
 
 &lt;p&gt;&lt;code&gt;--authorization-mode&lt;/code&gt;にはRBACを指定するのが標準。
 後述のTLS Bootstrappingをするなら、Nodeも要る。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;--tls-min-version&lt;/code&gt;と&lt;code&gt;--tls-cipher-suites&lt;/code&gt;は&lt;a href=&#34;https://www.lambdanote.com/blogs/news/openssl-cookbook&#34;&gt;OpenSSLクックブック&lt;/a&gt;と&lt;a href=&#34;https://golang.org/pkg/crypto/tls/#pkg-constants&#34;&gt;Goのtlsパッケージドキュメント&lt;/a&gt;を参考に設定。
+RSA鍵交換はNG、RC4と3DESもNG、AESの鍵長は128ビット以上、SHA1はNG。&lt;/p&gt;
+
+&lt;p&gt;また、(&amp;ndash;tls-min-versionをVersionTLS12にする場合?)TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256が必須で、CBCモードがNG。(参照: &lt;a href=&#34;https://github.com/golang/go/blob/release-branch.go1.9/src/net/http/h2_bundle.go&#34;&gt;https://github.com/golang/go/blob/release-branch.go1.9/src/net/http/h2_bundle.go&lt;/a&gt;)&lt;/p&gt;
 
 &lt;p&gt;&lt;code&gt;--feature-gates&lt;/code&gt;でRotateKubeletServerCertificateを有効にして、kubeletのサーバ証明書を自動更新するようにしている。
 因みに、クライアント証明書を自動更新するRotateKubeletClientCertificateはデフォルトで有効。
@@ -788,6 +794,8 @@ ExecStart=/usr/bin/kube-controller-manager \\
   --cluster-signing-key-file=/etc/kubernetes/pki/ca.key \\
   --root-ca-file=/etc/kubernetes/pki/ca.crt \\
   --use-service-account-credentials=true \\
+  --tls-min-version=VersionTLS12 \\
+  --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 \\
   --v=2 \\
   --experimental-cluster-signing-duration=8760h0m0s
 Restart=always
@@ -1042,6 +1050,7 @@ ExecStart=/usr/bin/kubelet \\
   --cgroup-driver=cgroupfs \\
   --pod-infra-container-image=${PAUSE_IMAGE} \\
   --tls-min-version=VersionTLS12 \\
+  --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 \\
   --allow-privileged=true
 Restart=always
 RestartSec=10s
@@ -1296,9 +1305,9 @@ kube-flannel-ds-gkcqd   1/1       Running   0          1m
 # DNS_SERVER_IP=&amp;quot;10.0.0.10&amp;quot;
 # SERVICE_CLUSTER_IP_RANGE=&amp;quot;10.0.0.0/16&amp;quot;
 # DNS_DOMAIN=&amp;quot;cluster.local&amp;quot;
-# ./deploy.sh -r $SERVICE_CLUSTER_IP_RANGE -i $DNS_SERVER_IP -d $DNS_DOMAIN &amp;gt; /etc/kubernetes/manifests/coredns.yaml
+# ./deploy.sh -r $SERVICE_CLUSTER_IP_RANGE -i $DNS_SERVER_IP -d $DNS_DOMAIN &amp;gt; coredns.yaml
 # export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
-# kubectl apply -f /etc/kubernetes/manifests/coredns.yaml
+# kubectl apply -f coredns.yaml
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;このKubernetesマニフェストではDocker Hubから&lt;code&gt;coredns/coredns:1.1.1&lt;/code&gt;というイメージがpullされる。&lt;/p&gt;
@@ -1332,7 +1341,7 @@ kubernetes.default.svc.cluster.local. 5 IN A    10.0.0.1
 
 &lt;p&gt;&lt;a href=&#34;https://www.weave.works/docs/scope/latest/installing/#k8s&#34;&gt;ドキュメント&lt;/a&gt;を参考に。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/manifests/
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /tmp
 # export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
 # curl -sSL -o scope.yaml https://cloud.weave.works/k8s/scope.yaml?k8s-service-type=NodePort
 # kubectl apply -f scope.yaml

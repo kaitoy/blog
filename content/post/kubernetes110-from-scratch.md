@@ -545,7 +545,8 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
           --requestheader-allowed-names=front-proxy-client \\
           --requestheader-extra-headers-prefix=X-Remote-Extra- \\
           --v=2 \\
-          --tls-min-version=VersionTLS12
+          --tls-min-version=VersionTLS12 \\
+          --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
         Restart=always
         RestartSec=10s
 
@@ -565,6 +566,11 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
         `--authorization-mode`にはRBACを指定するのが標準。
         後述のTLS Bootstrappingをするなら、Nodeも要る。
+
+        `--tls-min-version`と`--tls-cipher-suites`は[OpenSSLクックブック](https://www.lambdanote.com/blogs/news/openssl-cookbook)と[Goのtlsパッケージドキュメント](https://golang.org/pkg/crypto/tls/#pkg-constants)を参考に設定。
+        RSA鍵交換はNG、RC4と3DESもNG、AESの鍵長は128ビット以上、SHA1はNG。
+
+        また、(--tls-min-versionをVersionTLS12にする場合?)TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256が必須で、CBCモードがNG。(参照: https://github.com/golang/go/blob/release-branch.go1.9/src/net/http/h2_bundle.go)
 
         `--feature-gates`でRotateKubeletServerCertificateを有効にして、kubeletのサーバ証明書を自動更新するようにしている。
         因みに、クライアント証明書を自動更新するRotateKubeletClientCertificateはデフォルトで有効。
@@ -608,6 +614,8 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
           --cluster-signing-key-file=/etc/kubernetes/pki/ca.key \\
           --root-ca-file=/etc/kubernetes/pki/ca.crt \\
           --use-service-account-credentials=true \\
+          --tls-min-version=VersionTLS12 \\
+          --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 \\
           --v=2 \\
           --experimental-cluster-signing-duration=8760h0m0s
         Restart=always
@@ -875,6 +883,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
           --cgroup-driver=cgroupfs \\
           --pod-infra-container-image=${PAUSE_IMAGE} \\
           --tls-min-version=VersionTLS12 \\
+          --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 \\
           --allow-privileged=true
         Restart=always
         RestartSec=10s
@@ -1136,9 +1145,9 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # DNS_SERVER_IP="10.0.0.10"
         # SERVICE_CLUSTER_IP_RANGE="10.0.0.0/16"
         # DNS_DOMAIN="cluster.local"
-        # ./deploy.sh -r $SERVICE_CLUSTER_IP_RANGE -i $DNS_SERVER_IP -d $DNS_DOMAIN > /etc/kubernetes/manifests/coredns.yaml
+        # ./deploy.sh -r $SERVICE_CLUSTER_IP_RANGE -i $DNS_SERVER_IP -d $DNS_DOMAIN > coredns.yaml
         # export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
-        # kubectl apply -f /etc/kubernetes/manifests/coredns.yaml
+        # kubectl apply -f coredns.yaml
         ```
 
         このKubernetesマニフェストではDocker Hubから`coredns/coredns:1.1.1`というイメージがpullされる。
@@ -1172,7 +1181,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         [ドキュメント](https://www.weave.works/docs/scope/latest/installing/#k8s)を参考に。
 
         ```sh
-        # cd /etc/kubernetes/manifests/
+        # cd /tmp
         # export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
         # curl -sSL -o scope.yaml https://cloud.weave.works/k8s/scope.yaml?k8s-service-type=NodePort
         # kubectl apply -f scope.yaml
