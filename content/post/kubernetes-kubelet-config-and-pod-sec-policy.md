@@ -12,6 +12,8 @@ title = "Kubernetes 1.10のkubeletの起動オプションをKubelet Configフ�
 
 kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPodSecurityPolicyを使うように変更した話。
 
+ついでにkube-proxyとkube-schedulerもConfigファイルを使うようにした。
+
 {{< google-adsense >}}
 
 # Kubelet Configファイル
@@ -139,7 +141,7 @@ EOF
 `--allow-privileged`は非推奨。
 どうも代わりに[PodSecurityPolicy](https://kubernetes.io/docs/concepts/policy/pod-security-policy/)で制御しろということのようだ。
 
-PodSecurityPolicyを使うにはまず、kube-apiserverの起動オプションの`--admission-control`に`PodSecurityPolicy`を追加する必要がある。
+PodSecurityPolicyを使うにはまず、kube-apiserverの起動オプションの`--enable-admission-plugins`に`PodSecurityPolicy`を追加する必要がある。
 
 で、privilegedななんでもできるPodSecurityPolicyと、それを使うロールを作成する。
 因みにPodSecurityPolicyは名前空間に属さない。
@@ -229,3 +231,73 @@ EOF
 付けといても、PodSecurityPolicyでprivilegedをtrueにしないとprivilegedが許可されないので、動きとしては問題ない。
 
 `--allow-privileged`はKubernetes 1.12で廃止される予定なので、それまでにはなんとかなるだろう。
+
+## Kube Proxy Configファイル
+kube-proxyも[Kube Proxy Config](https://github.com/kubernetes/kubernetes/blob/master/pkg/proxy/apis/kubeproxyconfig/v1alpha1/types.go)というのがある。
+[ドキュメントには載ってない](https://github.com/kubernetes/kubernetes/issues/50041)けど、使わないと警告が出るので適当に書いてみた。
+
+```sh
+# CLUSTER_CIDR="10.32.0.0/16"
+# cat > /etc/kubernetes/kube-proxy.conf << EOF
+kind: KubeProxyConfiguration
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+featureGates:
+  RotateKubeletServerCertificate: true
+bindAddress: "0.0.0.0"
+clientConnection:
+  kubeconfig: "/etc/kubernetes/kube-proxy.kubeconfig"
+clusterCIDR: "${CLUSTER_CIDR}"
+EOF
+# cat > /etc/systemd/system/kube-proxy.service << EOF
+[Unit]
+Description=Kubernetes Kube Proxy
+Documentation=https://github.com/kubernetes/kubernetes
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/kube-proxy \\
+  --config=/etc/kubernetes/kube-proxy.conf \\
+  --v=2
+Restart=always
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+# systemctl daemon-reload
+# systemctl restart kube-proxy
+```
+
+## Kube Scheduler Confファイル
+kube-schedulerも[Kube Scheduler Conf](https://github.com/kubernetes/kubernetes/blob/master/pkg/apis/componentconfig/v1alpha1/types.go)というのがある。
+例によってドキュメントには載ってないけど、使わないと警告が出るので適当に書いてみた。
+
+```sh
+# cat > /etc/kubernetes/kube-scheduler.conf << EOF
+kind: KubeSchedulerConfiguration
+apiVersion: componentconfig/v1alpha1
+featureGates:
+  RotateKubeletServerCertificate: true
+healthzBindAddress: "0.0.0.0"
+clientConnection:
+  kubeconfig: "/etc/kubernetes/scheduler.kubeconfig"
+EOF
+# cat > /etc/systemd/system/kube-scheduler.service << EOF
+[Unit]
+Description=Kubernetes Scheduler
+Documentation=https://github.com/kubernetes/kubernetes
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/kube-scheduler \\
+  --config=/etc/kubernetes/kube-scheduler.conf \\
+  --v=2
+Restart=always
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+# systemctl daemon-reload
+# systemctl restart kube-scheduler
+```

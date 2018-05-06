@@ -13,7 +13,7 @@
     <meta property="og:title" content="Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">
-    <meta property="og:description" content="「Kubernetes 1.10をスクラッチから全手動で構築」、「Kubernetes 1.10のクラスタにWeave Netをデプロイする」の続き。 kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPodSecurityPolicyを使うように変更した話。 (adsbygoogle = window.adsbygoogle || []).push({}); Kubelet Configファイル journalctl -u kubeletすると、以下の警告が出ている。 Apr 28 15:31:39 k8s-master kubelet[1370]: Flag --address has been deprecated, This parameter should be set via the config file specified by the Kubelet&#39;s - -config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information. Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --pod-manifest-path has been deprecated, This parameter should be set via the config file specified by the K ubelet&#39;s --config flag.">
+    <meta property="og:description" content="「Kubernetes 1.10をスクラッチから全手動で構築」、「Kubernetes 1.10のクラスタにWeave Netをデプロイする」の続き。 kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPodSecurityPolicyを使うように変更した話。 ついでにkube-proxyとkube-schedulerもConfigファイルを使うようにした。 (adsbygoogle = window.adsbygoogle || []).push({}); Kubelet Configファイル journalctl -u kubeletすると、以下の警告が出ている。 Apr 28 15:31:39 k8s-master kubelet[1370]: Flag --address has been deprecated, This parameter should be set via the config file specified by the Kubelet&#39;s - -config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information. Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --pod-manifest-path has been deprecated, This parameter should be set via the config file specified by the K ubelet&#39;s --config flag.">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
     
@@ -87,6 +87,8 @@
 <p>「<a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a>」、「<a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a>」の続き。</p>
 
 <p>kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPodSecurityPolicyを使うように変更した話。</p>
+
+<p>ついでにkube-proxyとkube-schedulerもConfigファイルを使うようにした。</p>
 
 <p>
 
@@ -226,7 +228,7 @@ EOF
 <p><code>--allow-privileged</code>は非推奨。
 どうも代わりに<a href="https://kubernetes.io/docs/concepts/policy/pod-security-policy/">PodSecurityPolicy</a>で制御しろということのようだ。</p>
 
-<p>PodSecurityPolicyを使うにはまず、kube-apiserverの起動オプションの<code>--admission-control</code>に<code>PodSecurityPolicy</code>を追加する必要がある。</p>
+<p>PodSecurityPolicyを使うにはまず、kube-apiserverの起動オプションの<code>--enable-admission-plugins</code>に<code>PodSecurityPolicy</code>を追加する必要がある。</p>
 
 <p>で、privilegedななんでもできるPodSecurityPolicyと、それを使うロールを作成する。
 因みにPodSecurityPolicyは名前空間に属さない。</p>
@@ -313,6 +315,76 @@ EOF
 付けといても、PodSecurityPolicyでprivilegedをtrueにしないとprivilegedが許可されないので、動きとしては問題ない。</p>
 
 <p><code>--allow-privileged</code>はKubernetes 1.12で廃止される予定なので、それまでにはなんとかなるだろう。</p>
+
+<h2 id="kube-proxy-configファイル">Kube Proxy Configファイル</h2>
+
+<p>kube-proxyも<a href="https://github.com/kubernetes/kubernetes/blob/master/pkg/proxy/apis/kubeproxyconfig/v1alpha1/types.go">Kube Proxy Config</a>というのがある。
+<a href="https://github.com/kubernetes/kubernetes/issues/50041">ドキュメントには載ってない</a>けど、使わないと警告が出るので適当に書いてみた。</p>
+
+<pre><code class="language-sh"># CLUSTER_CIDR=&quot;10.32.0.0/16&quot;
+# cat &gt; /etc/kubernetes/kube-proxy.conf &lt;&lt; EOF
+kind: KubeProxyConfiguration
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+featureGates:
+  RotateKubeletServerCertificate: true
+bindAddress: &quot;0.0.0.0&quot;
+clientConnection:
+  kubeconfig: &quot;/etc/kubernetes/kube-proxy.kubeconfig&quot;
+clusterCIDR: &quot;${CLUSTER_CIDR}&quot;
+EOF
+# cat &gt; /etc/systemd/system/kube-proxy.service &lt;&lt; EOF
+[Unit]
+Description=Kubernetes Kube Proxy
+Documentation=https://github.com/kubernetes/kubernetes
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/kube-proxy \\
+  --config=/etc/kubernetes/kube-proxy.conf \\
+  --v=2
+Restart=always
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+# systemctl daemon-reload
+# systemctl restart kube-proxy
+</code></pre>
+
+<h2 id="kube-scheduler-confファイル">Kube Scheduler Confファイル</h2>
+
+<p>kube-schedulerも<a href="https://github.com/kubernetes/kubernetes/blob/master/pkg/apis/componentconfig/v1alpha1/types.go">Kube Scheduler Conf</a>というのがある。
+例によってドキュメントには載ってないけど、使わないと警告が出るので適当に書いてみた。</p>
+
+<pre><code class="language-sh"># cat &gt; /etc/kubernetes/kube-scheduler.conf &lt;&lt; EOF
+kind: KubeSchedulerConfiguration
+apiVersion: componentconfig/v1alpha1
+featureGates:
+  RotateKubeletServerCertificate: true
+healthzBindAddress: &quot;0.0.0.0&quot;
+clientConnection:
+  kubeconfig: &quot;/etc/kubernetes/scheduler.kubeconfig&quot;
+EOF
+# cat &gt; /etc/systemd/system/kube-scheduler.service &lt;&lt; EOF
+[Unit]
+Description=Kubernetes Scheduler
+Documentation=https://github.com/kubernetes/kubernetes
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/kube-scheduler \\
+  --config=/etc/kubernetes/kube-scheduler.conf \\
+  --v=2
+Restart=always
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+# systemctl daemon-reload
+# systemctl restart kube-scheduler
+</code></pre>
 
       </div>
 

@@ -22,6 +22,8 @@
 
 &lt;p&gt;kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPodSecurityPolicyを使うように変更した話。&lt;/p&gt;
 
+&lt;p&gt;ついでにkube-proxyとkube-schedulerもConfigファイルを使うようにした。&lt;/p&gt;
+
 &lt;p&gt;
 
 
@@ -160,7 +162,7 @@ EOF
 &lt;p&gt;&lt;code&gt;--allow-privileged&lt;/code&gt;は非推奨。
 どうも代わりに&lt;a href=&#34;https://kubernetes.io/docs/concepts/policy/pod-security-policy/&#34;&gt;PodSecurityPolicy&lt;/a&gt;で制御しろということのようだ。&lt;/p&gt;
 
-&lt;p&gt;PodSecurityPolicyを使うにはまず、kube-apiserverの起動オプションの&lt;code&gt;--admission-control&lt;/code&gt;に&lt;code&gt;PodSecurityPolicy&lt;/code&gt;を追加する必要がある。&lt;/p&gt;
+&lt;p&gt;PodSecurityPolicyを使うにはまず、kube-apiserverの起動オプションの&lt;code&gt;--enable-admission-plugins&lt;/code&gt;に&lt;code&gt;PodSecurityPolicy&lt;/code&gt;を追加する必要がある。&lt;/p&gt;
 
 &lt;p&gt;で、privilegedななんでもできるPodSecurityPolicyと、それを使うロールを作成する。
 因みにPodSecurityPolicyは名前空間に属さない。&lt;/p&gt;
@@ -247,6 +249,76 @@ EOF
 付けといても、PodSecurityPolicyでprivilegedをtrueにしないとprivilegedが許可されないので、動きとしては問題ない。&lt;/p&gt;
 
 &lt;p&gt;&lt;code&gt;--allow-privileged&lt;/code&gt;はKubernetes 1.12で廃止される予定なので、それまでにはなんとかなるだろう。&lt;/p&gt;
+
+&lt;h2 id=&#34;kube-proxy-configファイル&#34;&gt;Kube Proxy Configファイル&lt;/h2&gt;
+
+&lt;p&gt;kube-proxyも&lt;a href=&#34;https://github.com/kubernetes/kubernetes/blob/master/pkg/proxy/apis/kubeproxyconfig/v1alpha1/types.go&#34;&gt;Kube Proxy Config&lt;/a&gt;というのがある。
+&lt;a href=&#34;https://github.com/kubernetes/kubernetes/issues/50041&#34;&gt;ドキュメントには載ってない&lt;/a&gt;けど、使わないと警告が出るので適当に書いてみた。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# CLUSTER_CIDR=&amp;quot;10.32.0.0/16&amp;quot;
+# cat &amp;gt; /etc/kubernetes/kube-proxy.conf &amp;lt;&amp;lt; EOF
+kind: KubeProxyConfiguration
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+featureGates:
+  RotateKubeletServerCertificate: true
+bindAddress: &amp;quot;0.0.0.0&amp;quot;
+clientConnection:
+  kubeconfig: &amp;quot;/etc/kubernetes/kube-proxy.kubeconfig&amp;quot;
+clusterCIDR: &amp;quot;${CLUSTER_CIDR}&amp;quot;
+EOF
+# cat &amp;gt; /etc/systemd/system/kube-proxy.service &amp;lt;&amp;lt; EOF
+[Unit]
+Description=Kubernetes Kube Proxy
+Documentation=https://github.com/kubernetes/kubernetes
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/kube-proxy \\
+  --config=/etc/kubernetes/kube-proxy.conf \\
+  --v=2
+Restart=always
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+# systemctl daemon-reload
+# systemctl restart kube-proxy
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;kube-scheduler-confファイル&#34;&gt;Kube Scheduler Confファイル&lt;/h2&gt;
+
+&lt;p&gt;kube-schedulerも&lt;a href=&#34;https://github.com/kubernetes/kubernetes/blob/master/pkg/apis/componentconfig/v1alpha1/types.go&#34;&gt;Kube Scheduler Conf&lt;/a&gt;というのがある。
+例によってドキュメントには載ってないけど、使わないと警告が出るので適当に書いてみた。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cat &amp;gt; /etc/kubernetes/kube-scheduler.conf &amp;lt;&amp;lt; EOF
+kind: KubeSchedulerConfiguration
+apiVersion: componentconfig/v1alpha1
+featureGates:
+  RotateKubeletServerCertificate: true
+healthzBindAddress: &amp;quot;0.0.0.0&amp;quot;
+clientConnection:
+  kubeconfig: &amp;quot;/etc/kubernetes/scheduler.kubeconfig&amp;quot;
+EOF
+# cat &amp;gt; /etc/systemd/system/kube-scheduler.service &amp;lt;&amp;lt; EOF
+[Unit]
+Description=Kubernetes Scheduler
+Documentation=https://github.com/kubernetes/kubernetes
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/kube-scheduler \\
+  --config=/etc/kubernetes/kube-scheduler.conf \\
+  --v=2
+Restart=always
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+# systemctl daemon-reload
+# systemctl restart kube-scheduler
+&lt;/code&gt;&lt;/pre&gt;
 </description>
         </item>
       
@@ -416,6 +488,7 @@ EOF
 &lt;ul&gt;
 &lt;li&gt;&lt;a href=&#34;https://nixaid.com/deploying-kubernetes-cluster-from-scratch/&#34;&gt;https://nixaid.com/deploying-kubernetes-cluster-from-scratch/&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/getting-started-guides/scratch/&#34;&gt;https://kubernetes.io/docs/getting-started-guides/scratch/&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/reference/setup-tools/kubeadm/implementation-details/&#34;&gt;https://kubernetes.io/docs/reference/setup-tools/kubeadm/implementation-details/&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&#34;https://ulam.io/blog/kubernetes-scratch/&#34;&gt;https://ulam.io/blog/kubernetes-scratch/&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&#34;https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master&#34;&gt;https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
@@ -595,7 +668,8 @@ EOF
 
 &lt;li&gt;&lt;p&gt;Kubernetes CA証明書生成&lt;/p&gt;
 
-&lt;p&gt;以降で生成する証明書に署名するための証明書。&lt;/p&gt;
+&lt;p&gt;以降で生成する証明書に署名するための証明書。
+後述のTLS Bootstrappingでの証明書生成にも使われるはず。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
 # CA_DAYS=5475
@@ -615,9 +689,21 @@ EOF
 # openssl req -new -sha256 -key kube-apiserver.key -subj &amp;quot;/CN=kube-apiserver&amp;quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-apiserver.crt -days $APISERVER_DAYS -extensions v3_req_apiserver -extfile ./openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
+&lt;li&gt;&lt;p&gt;kube-controller-managerサーバ証明書生成&lt;/p&gt;
+
+&lt;p&gt;kube-controller-managerのサーバ証明書。
+kube-controller-managerにアクセスするのって誰だ?&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
+# CONTROLLER_MANAGER_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out kube-controller-manager.key
+# chmod 0600 kube-controller-manager.key
+# openssl req -new -sha256 -key kube-controller-manager.key -subj &amp;quot;/CN=kube-controller-manager&amp;quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-controller-manager.crt -days $CONTROLLER_MANAGER_DAYS -extensions v3_req_server -extfile ./openssl.cnf
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
 &lt;li&gt;&lt;p&gt;kube-apiserver-kubelet証明書生成&lt;/p&gt;
 
-&lt;p&gt;kube-apiserverがkubeletのAPIにアクセスするときのクライアント証明書。&lt;/p&gt;
+&lt;p&gt;kube-apiserverが&lt;a href=&#34;https://kubernetes.io/docs/concepts/architecture/master-node-communication/#apiserver-kubelet&#34;&gt;kubeletのAPIにアクセス&lt;/a&gt;するときのクライアント証明書。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
 # APISERVER_KUBELET_CLIENT_DAYS=5475
@@ -871,6 +957,8 @@ done
 
 &lt;p&gt;で、systemdのユニットファイルを書いてサービス化。&lt;/p&gt;
 
+&lt;p&gt;(参考: &lt;a href=&#34;https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/&#34;&gt;Kubernetesドキュメント&lt;/a&gt;、&lt;a href=&#34;https://github.com/coreos/etcd/blob/master/Documentation/op-guide/security.md&#34;&gt;etcdドキュメント&lt;/a&gt;)&lt;/p&gt;
+
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# MASTER_IP=192.168.171.200
 # CLUSTER_NAME=&amp;quot;default&amp;quot;
 # ETCD_TOKEN=$(openssl rand -hex 5)
@@ -927,86 +1015,232 @@ EOF
 
 &lt;p&gt;systemdのユニットファイルを書いてサービス化。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# MASTER_IP=192.168.171.200
-# SERVICE_CLUSTER_IP_RANGE=&amp;quot;10.0.0.0/16&amp;quot;
-# cat &amp;gt; /etc/systemd/system/kube-apiserver.service &amp;lt;&amp;lt; EOF
-[Unit]
+&lt;p&gt;```sh&lt;/p&gt;
+
+&lt;h1 id=&#34;master-ip-192-168-171-200&#34;&gt;MASTER_IP=192.168.171.200&lt;/h1&gt;
+
+&lt;h1 id=&#34;service-cluster-ip-range-10-0-0-0-16&#34;&gt;SERVICE_CLUSTER_IP_RANGE=&amp;ldquo;10.0.0.0/16&amp;rdquo;&lt;/h1&gt;
+
+&lt;h1 id=&#34;secret-enc-key-echo-n-your-32-bytes-secure-private-key-base64&#34;&gt;SECRET_ENC_KEY=$(echo -n &amp;lsquo;your_32_bytes_secure_private_key&amp;rsquo; | base64)&lt;/h1&gt;
+
+&lt;h1 id=&#34;cat-etc-kubernetes-encryption-conf-eof&#34;&gt;cat &amp;gt; /etc/kubernetes/encryption.conf &amp;lt;&amp;lt; EOF&lt;/h1&gt;
+
+&lt;p&gt;kind: EncryptionConfig
+apiVersion: v1
+resources:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;resources:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;secrets
+providers:&lt;/li&gt;
+&lt;li&gt;aescbc:
+keys:
+
+&lt;ul&gt;
+&lt;li&gt;name: key1
+secret: ${SECRET_ENC_KEY}&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;identity: {}
+EOF&lt;/p&gt;
+
+&lt;h1 id=&#34;cat-etc-kubernetes-audit-policy-conf-eof&#34;&gt;cat &amp;gt; /etc/kubernetes/audit-policy.conf &amp;lt;&amp;lt; EOF&lt;/h1&gt;
+
+&lt;p&gt;apiVersion: audit.k8s.io/v1beta1
+kind: Policy&lt;/p&gt;
+
+&lt;h1 id=&#34;don-t-generate-audit-events-for-all-requests-in-requestreceived-stage&#34;&gt;Don&amp;rsquo;t generate audit events for all requests in RequestReceived stage.&lt;/h1&gt;
+
+&lt;p&gt;omitStages:&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&amp;ldquo;RequestReceived&amp;rdquo;
+rules:&lt;/p&gt;
+
+&lt;h1 id=&#34;log-pod-changes-at-requestresponse-level&#34;&gt;Log pod changes at RequestResponse level&lt;/h1&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;level: RequestResponse
+resources:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;group: &amp;ldquo;&amp;rdquo;&lt;/p&gt;
+
+&lt;h1 id=&#34;resource-pods-doesn-t-match-requests-to-any-subresource-of-pods&#34;&gt;Resource &amp;ldquo;pods&amp;rdquo; doesn&amp;rsquo;t match requests to any subresource of pods,&lt;/h1&gt;
+
+&lt;h1 id=&#34;which-is-consistent-with-the-rbac-policy&#34;&gt;which is consistent with the RBAC policy.&lt;/h1&gt;
+
+&lt;p&gt;resources: [&amp;ldquo;pods&amp;rdquo;]&lt;/p&gt;
+
+&lt;h1 id=&#34;log-pods-log-pods-status-at-metadata-level&#34;&gt;Log &amp;ldquo;pods/log&amp;rdquo;, &amp;ldquo;pods/status&amp;rdquo; at Metadata level&lt;/h1&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;level: Metadata
+resources:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;group: &amp;ldquo;&amp;rdquo;
+resources: [&amp;ldquo;pods/log&amp;rdquo;, &amp;ldquo;pods/status&amp;rdquo;]&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;# Don&amp;rsquo;t log requests to a configmap called &amp;ldquo;controller-leader&amp;rdquo;
+  - level: None
+    resources:
+    - group: &amp;ldquo;&amp;rdquo;
+      resources: [&amp;ldquo;configmaps&amp;rdquo;]
+      resourceNames: [&amp;ldquo;controller-leader&amp;rdquo;]&lt;/p&gt;
+
+&lt;p&gt;# Don&amp;rsquo;t log watch requests by the &amp;ldquo;system:kube-proxy&amp;rdquo; on endpoints or services
+  - level: None
+    users: [&amp;ldquo;system:kube-proxy&amp;rdquo;]
+    verbs: [&amp;ldquo;watch&amp;rdquo;]
+    resources:
+    - group: &amp;ldquo;&amp;rdquo; # core API group
+      resources: [&amp;ldquo;endpoints&amp;rdquo;, &amp;ldquo;services&amp;rdquo;]&lt;/p&gt;
+
+&lt;p&gt;# Don&amp;rsquo;t log authenticated requests to certain non-resource URL paths.
+  - level: None
+    userGroups: [&amp;ldquo;system:authenticated&amp;rdquo;]
+    nonResourceURLs:
+    - &amp;ldquo;/api*&amp;rdquo; # Wildcard matching.
+    - &amp;ldquo;/version&amp;rdquo;&lt;/p&gt;
+
+&lt;p&gt;# Log the request body of configmap changes in kube-system.
+  - level: Request
+    resources:
+    - group: &amp;ldquo;&amp;rdquo; # core API group
+      resources: [&amp;ldquo;configmaps&amp;rdquo;]
+    # This rule only applies to resources in the &amp;ldquo;kube-system&amp;rdquo; namespace.
+    # The empty string &amp;ldquo;&amp;rdquo; can be used to select non-namespaced resources.
+    namespaces: [&amp;ldquo;kube-system&amp;rdquo;]&lt;/p&gt;
+
+&lt;p&gt;# Log configmap and secret changes in all other namespaces at the Metadata level.
+  - level: Metadata
+    resources:
+    - group: &amp;ldquo;&amp;rdquo; # core API group
+      resources: [&amp;ldquo;secrets&amp;rdquo;, &amp;ldquo;configmaps&amp;rdquo;]&lt;/p&gt;
+
+&lt;p&gt;# Log all other resources in core and extensions at the Request level.
+  - level: Request
+    resources:
+    - group: &amp;ldquo;&amp;rdquo; # core API group
+    - group: &amp;ldquo;extensions&amp;rdquo; # Version of group should NOT be included.&lt;/p&gt;
+
+&lt;p&gt;# A catch-all rule to log all other requests at the Metadata level.
+  - level: Metadata
+    # Long-running requests like watches that fall under this rule will not
+    # generate an audit event in RequestReceived.
+    omitStages:
+      - &amp;ldquo;RequestReceived&amp;rdquo;
+EOF&lt;/p&gt;
+
+&lt;h1 id=&#34;cat-etc-systemd-system-kube-apiserver-service-eof&#34;&gt;cat &amp;gt; /etc/systemd/system/kube-apiserver.service &amp;lt;&amp;lt; EOF&lt;/h1&gt;
+
+&lt;p&gt;[Unit]
 Description=Kubernetes API Server
-Documentation=https://github.com/kubernetes/kubernetes
-After=network.target
+Documentation=&lt;a href=&#34;https://github.com/kubernetes/kubernetes&#34;&gt;https://github.com/kubernetes/kubernetes&lt;/a&gt;
+After=network.target&lt;/p&gt;
 
-
-[Service]
-ExecStart=/usr/bin/kube-apiserver \\
-  --feature-gates=RotateKubeletServerCertificate=true \\
-  --apiserver-count=1 \\
-  --allow-privileged=true \\
-  --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,NodeRestriction,DenyEscalatingExec \\
-  --authorization-mode=Node,RBAC \\
-  --secure-port=6443 \\
-  --bind-address=0.0.0.0 \\
-  --advertise-address=${MASTER_IP} \\
-  --audit-log-maxage=30 \\
-  --audit-log-maxbackup=3 \\
-  --audit-log-maxsize=100 \\
-  --audit-log-path=/var/log/kube-audit.log \\
-  --client-ca-file=/etc/kubernetes/pki/ca.crt \\
-  --etcd-cafile=/etc/kubernetes/pki/etcd-ca.crt \\
-  --etcd-certfile=/etc/kubernetes/pki/etcd.crt \\
-  --etcd-keyfile=/etc/kubernetes/pki/etcd.key \\
-  --etcd-servers=https://${MASTER_IP}:2379 \\
-  --service-account-key-file=/etc/kubernetes/pki/sa.pub \\
-  --service-cluster-ip-range=${SERVICE_CLUSTER_IP_RANGE} \\
-  --service-node-port-range=30000-32767 \\
-  --tls-cert-file=/etc/kubernetes/pki/kube-apiserver.crt \\
-  --tls-private-key-file=/etc/kubernetes/pki/kube-apiserver.key \\
-  --enable-bootstrap-token-auth=true \\
-  --kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt \\
-  --kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key \\
-  --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname \\
-  --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt \\
-  --requestheader-username-headers=X-Remote-User \\
-  --requestheader-group-headers=X-Remote-Group \\
-  --requestheader-allowed-names=front-proxy-client \\
-  --requestheader-extra-headers-prefix=X-Remote-Extra- \\
-  --v=2 \\
-  --tls-min-version=VersionTLS12 \\
-  --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+&lt;p&gt;[Service]
+ExecStart=/usr/bin/kube-apiserver \
+  &amp;ndash;feature-gates=RotateKubeletServerCertificate=true \
+  &amp;ndash;apiserver-count=1 \
+  &amp;ndash;allow-privileged=true \
+  &amp;ndash;enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,NodeRestriction,DenyEscalatingExec \
+  &amp;ndash;authorization-mode=Node,RBAC \
+  &amp;ndash;bind-address=0.0.0.0 \
+  &amp;ndash;advertise-address=${MASTER_IP} \
+  &amp;ndash;client-ca-file=/etc/kubernetes/pki/ca.crt \
+  &amp;ndash;etcd-cafile=/etc/kubernetes/pki/etcd-ca.crt \
+  &amp;ndash;etcd-certfile=/etc/kubernetes/pki/etcd.crt \
+  &amp;ndash;etcd-keyfile=/etc/kubernetes/pki/etcd.key \
+  &amp;ndash;etcd-servers=https://${MASTER_IP}:2379 \
+  &amp;ndash;service-account-key-file=/etc/kubernetes/pki/sa.pub \
+  &amp;ndash;service-cluster-ip-range=${SERVICE_CLUSTER_IP_RANGE} \
+  &amp;ndash;tls-cert-file=/etc/kubernetes/pki/kube-apiserver.crt \
+  &amp;ndash;tls-private-key-file=/etc/kubernetes/pki/kube-apiserver.key \
+  &amp;ndash;kubelet-certificate-authority=/etc/kubernetes/pki/ca.crt \
+  &amp;ndash;enable-bootstrap-token-auth=true \
+  &amp;ndash;kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt \
+  &amp;ndash;kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key \
+  &amp;ndash;kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname \
+  &amp;ndash;requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt \
+  &amp;ndash;requestheader-username-headers=X-Remote-User \
+  &amp;ndash;requestheader-group-headers=X-Remote-Group \
+  &amp;ndash;requestheader-allowed-names=front-proxy-client \
+  &amp;ndash;requestheader-extra-headers-prefix=X-Remote-Extra- \
+  &amp;ndash;experimental-encryption-provider-config=/etc/kubernetes/encryption.conf \
+  &amp;ndash;v=2 \
+  &amp;ndash;tls-min-version=VersionTLS12 \
+  &amp;ndash;tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 \
+  &amp;ndash;anonymous-auth=false \
+  &amp;ndash;audit-log-format=json \
+  &amp;ndash;audit-log-maxage=30 \
+  &amp;ndash;audit-log-maxbackup=3 \
+  &amp;ndash;audit-log-maxsize=100 \
+  &amp;ndash;audit-log-path=/var/log/kube-audit.log \
+  &amp;ndash;audit-policy-file=/etc/kubernetes/audit-policy.conf
 Restart=always
-RestartSec=10s
+RestartSec=10s&lt;/p&gt;
 
-
-[Install]
+&lt;p&gt;[Install]
 WantedBy=multi-user.target
-EOF
-# systemctl daemon-reload
-# systemctl enable kube-apiserver
-# systemctl start kube-apiserver
-&lt;/code&gt;&lt;/pre&gt;
+EOF&lt;/p&gt;
 
-&lt;p&gt;&lt;code&gt;--allow-privileged&lt;/code&gt;はflannelなどに必要。&lt;/p&gt;
+&lt;h1 id=&#34;systemctl-daemon-reload&#34;&gt;systemctl daemon-reload&lt;/h1&gt;
 
-&lt;p&gt;&lt;code&gt;--admission-control&lt;/code&gt;には&lt;a href=&#34;https://kubernetes.io/docs/admin/admission-controllers/#is-there-a-recommended-set-of-admission-controllers-to-use&#34;&gt;公式推奨のプラグイン&lt;/a&gt;に加えて、後述のTLS BootstrappingのためのNodeRestrictionを指定。
-また、&lt;code&gt;--allow-privileged&lt;/code&gt;の効果を軽減するため、DenyEscalatingExecも追加で指定。
-因みに、プラグインを指定する順番はKubernetes 1.10からは気にしなくてよくなった。&lt;/p&gt;
+&lt;h1 id=&#34;systemctl-enable-kube-apiserver&#34;&gt;systemctl enable kube-apiserver&lt;/h1&gt;
 
-&lt;p&gt;&lt;code&gt;--authorization-mode&lt;/code&gt;にはRBACを指定するのが標準。
-後述のTLS Bootstrappingをするなら、Nodeも要る。&lt;/p&gt;
+&lt;h1 id=&#34;systemctl-start-kube-apiserver&#34;&gt;systemctl start kube-apiserver&lt;/h1&gt;
 
-&lt;p&gt;&lt;code&gt;--tls-min-version&lt;/code&gt;と&lt;code&gt;--tls-cipher-suites&lt;/code&gt;は&lt;a href=&#34;https://www.lambdanote.com/blogs/news/openssl-cookbook&#34;&gt;OpenSSLクックブック&lt;/a&gt;と&lt;a href=&#34;https://golang.org/pkg/crypto/tls/#pkg-constants&#34;&gt;Goのtlsパッケージドキュメント&lt;/a&gt;を参考に設定。
-RSA鍵交換はNG、RC4と3DESもNG、AESの鍵長は128ビット以上、SHA1はNG。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;
 
-&lt;p&gt;また、(&amp;ndash;tls-min-versionをVersionTLS12にする場合?)TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256が必須で、CBCモードがNG。(参照: &lt;a href=&#34;https://github.com/golang/go/blob/release-branch.go1.9/src/net/http/h2_bundle.go&#34;&gt;https://github.com/golang/go/blob/release-branch.go1.9/src/net/http/h2_bundle.go&lt;/a&gt;)&lt;/p&gt;
+`--allow-privileged`はflannelなどに必要。
 
-&lt;p&gt;&lt;code&gt;--feature-gates&lt;/code&gt;でRotateKubeletServerCertificateを有効にして、kubeletのサーバ証明書を自動更新するようにしている。
+
+`--enable-admission-plugins`には[公式推奨のプラグイン](https://kubernetes.io/docs/admin/admission-controllers/#is-there-a-recommended-set-of-admission-controllers-to-use)に加えて、後述のTLS BootstrappingのためのNodeRestrictionを指定。
+また、`--allow-privileged`の効果を軽減するため、DenyEscalatingExecも追加で指定。
+因みに、プラグインを指定する順番はKubernetes 1.10からは気にしなくてよくなった。
+
+
+`--authorization-mode`にはRBACを指定するのが標準。
+後述のTLS Bootstrappingをするなら、Nodeも要る。
+
+
+`--experimental-encryption-provider-config`は[Secretを暗号化する](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/)ための設定。
+暗号化のキーをローテーションすることもできるけど、それはやってない。
+
+
+`--tls-min-version`と`--tls-cipher-suites`は[OpenSSLクックブック](https://www.lambdanote.com/blogs/news/openssl-cookbook)と[Goのtlsパッケージドキュメント](https://golang.org/pkg/crypto/tls/#pkg-constants)を参考に設定。
+RSA鍵交換はNG、RC4と3DESもNG、AESの鍵長は128ビット以上、SHA1はNG。
+
+
+また、(--tls-min-versionをVersionTLS12にする場合?)TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256が必須で、CBCモードがNG。(参照: https://github.com/golang/go/blob/release-branch.go1.9/src/net/http/h2_bundle.go)
+
+
+`--anonymous-auth=false`はセキュリティのため設定。
+
+
+`--audit-*`は監査ログ設定。
+100MB3面のログを30日間保持する。
+ログポリシーは[公式のサンプル](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/)そのまま。
+
+
+`--feature-gates`でRotateKubeletServerCertificateを有効にして、kubeletのサーバ証明書を自動更新するようにしている。
 因みに、クライアント証明書を自動更新するRotateKubeletClientCertificateはデフォルトで有効。
-これらがCertificate Rotationと呼ばれる機能。&lt;/p&gt;
+これらがCertificate Rotationと呼ばれる機能。
 
-&lt;p&gt;&lt;code&gt;--feature-gates&lt;/code&gt;は全Kubernetesコンポーネントで同じ値を指定するのがよさそう。&lt;/p&gt;
 
-&lt;p&gt;確認。&lt;/p&gt;
+`--feature-gates`は全Kubernetesコンポーネントで同じ値を指定するのがよさそう。
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# systemctl status kube-apiserver -l
+
+確認。
+
+
+```sh
+# systemctl status kube-apiserver -l
 # journalctl -u kube-apiserver
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
@@ -1029,10 +1263,15 @@ ExecStart=/usr/bin/kube-controller-manager \\
   --feature-gates=RotateKubeletServerCertificate=true \\
   --kubeconfig=/etc/kubernetes/controller-manager.kubeconfig \\
   --bind-address=0.0.0.0 \\
+  --port=0 \\
+  --secure-port=10257 \\
+  --tls-cert-file=/etc/kubernetes/pki/kube-controller-manager.crt \\
+  --tls-private-key-file=/etc/kubernetes/pki/kube-controller-manager.key \\
   --controllers=*,bootstrapsigner,tokencleaner \\
   --service-account-private-key-file=/etc/kubernetes/pki/sa.key \\
   --allocate-node-cidrs=true \\
   --cluster-cidr=${CLUSTER_CIDR} \\
+  --node-cidr-mask-size=24 \\
   --cluster-name=${CLUSTER_NAME} \\
   --service-cluster-ip-range=${SERVICE_CLUSTER_IP_RANGE} \\
   --cluster-signing-cert-file=/etc/kubernetes/pki/ca.crt \\
@@ -1060,6 +1299,13 @@ EOF
 &lt;p&gt;bootstrapsignerは後述のcluster-infoにBootstrap tokenで署名するためのコントローラ。&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/admin/kubelet-tls-bootstrapping/#approval-controller&#34;&gt;csrapproving&lt;/a&gt;というコントローラがデフォルトで有効になっていて、後述のTLS BootstrapppingやCertificate Rotationの時に作られるCSRを自動で承認する。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;--cluster-cidr&lt;/code&gt;で指定するネットワークは、後述のネットワークプロバイダの設定と合っている必要がある。
+&lt;code&gt;--allocate-node-cidrs&lt;/code&gt;は&lt;code&gt;--cluster-cidr&lt;/code&gt;の前提。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;--node-cidr-mask-size&lt;/code&gt;は、ノードに使うネットワークのサイズを指定するオプションで、&lt;code&gt;--cluster-cidr&lt;/code&gt;で指定したネットワークの一部になるようにする。
+&lt;code&gt;--cluster-cidr&lt;/code&gt;で&lt;code&gt;/16&lt;/code&gt;を指定した場合、半分の&lt;code&gt;/24&lt;/code&gt;にするのが普通。
+つまり256ノードまで作れて、それぞれ256個のPodをホストできるような構成。&lt;/p&gt;
 
 &lt;p&gt;&lt;code&gt;--experimental-cluster-signing-duration&lt;/code&gt;は、Certificate Rotationのための設定で、自動発行する証明書の期限を1年に指定している。&lt;/p&gt;
 
@@ -1298,7 +1544,8 @@ ExecStart=/usr/bin/kubelet \\
   --pod-infra-container-image=${PAUSE_IMAGE} \\
   --tls-min-version=VersionTLS12 \\
   --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 \\
-  --allow-privileged=true
+  --allow-privileged=true \\
+  --anonymous-auth=false
 Restart=always
 RestartSec=10s
 
@@ -1324,6 +1571,10 @@ EOF
 
 &lt;p&gt;&lt;code&gt;--pod-manifest-path&lt;/code&gt;で指定したディレクトリはkubeletに定期的にスキャンされ、そこに置いたKubernetesマニフェスト(ドットで始まるもの以外)が読まれる。
 (参照: &lt;a href=&#34;https://kubernetes.io/docs/tasks/administer-cluster/static-pod/&#34;&gt;Static Pods&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;--anonymous-auth=false&lt;/code&gt;は&lt;a href=&#34;https://kubernetes.io/docs/admin/kubelet-authentication-authorization/&#34;&gt;セキュリティのために推奨されたオプション&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;--authorization-mode=Webhook&lt;/code&gt;も&lt;a href=&#34;https://kubernetes.io/docs/admin/kubelet-authentication-authorization/&#34;&gt;セキュリティのために推奨されたオプション&lt;/a&gt;で、認可処理をkube-apiserverに移譲する設定。&lt;/p&gt;
 
 &lt;p&gt;本当は&lt;a href=&#34;https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/&#34;&gt;Kubelet Configファイル&lt;/a&gt;を使ったほうがいいみたいなので、いずれそれに対応する。
 (対応した: 「&lt;a href=&#34;https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/&#34;&gt;Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える&lt;/a&gt;」)&lt;/p&gt;
@@ -1476,7 +1727,8 @@ EOF
 
 &lt;p&gt;systemdのユニットファイルを書いてサービス化。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cat &amp;gt; /etc/systemd/system/kube-proxy.service &amp;lt;&amp;lt; EOF
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# CLUSTER_CIDR=&amp;quot;10.244.0.0/16&amp;quot;
+# cat &amp;gt; /etc/systemd/system/kube-proxy.service &amp;lt;&amp;lt; EOF
 [Unit]
 Description=Kubernetes Kube Proxy
 Documentation=https://github.com/kubernetes/kubernetes
@@ -1487,6 +1739,7 @@ After=network.target
 ExecStart=/usr/bin/kube-proxy \\
   --feature-gates=RotateKubeletServerCertificate=true \\
   --bind-address 0.0.0.0 \\
+  --cluster-cidr=${CLUSTER_CIDR} \\
   --kubeconfig=/etc/kubernetes/kube-proxy.kubeconfig \\
   --v=2
 Restart=always
@@ -1506,7 +1759,7 @@ EOF
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# systemctl status kube-proxy -l
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;オーバレイネットワーク (flannel)&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;ネットワークプロバイダ (flannel)&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://github.com/coreos/flannel/blob/master/Documentation/kubernetes.md&#34;&gt;flannelのドキュメント&lt;/a&gt;を参考に。&lt;/p&gt;
 

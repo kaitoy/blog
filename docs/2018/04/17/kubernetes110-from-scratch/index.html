@@ -13,7 +13,7 @@
     <meta property="og:title" content="Kubernetes 1.10をスクラッチから全手動で構築 | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">
-    <meta property="og:description" content="Oracle Linux 7.4.0のVMでKubernetes1.10.0のクラスタをスクラッチから全手動で作った。 参考にしたのは主に以下。 https://nixaid.com/deploying-kubernetes-cluster-from-scratch/ https://kubernetes.io/docs/getting-started-guides/scratch/ https://ulam.io/blog/kubernetes-scratch/ https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master (adsbygoogle = window.adsbygoogle || []).push({}); 構成 マシン: Windows 10 Homeのラップトップの上のVMware PlayerのVM CPU: 2コア メモリ: 4GB NIF: NATのを一つ OS: Oracle Linux 7.4.0 Minimalインストール IPアドレス: 192.168.171.200、静的割り当て ホスト名: k8s-master (hostsで解決) Docker: Oracle Container Runtime for Docker (docker-engine) 17.06.2 Kubernetes: バージョン1.10.0 単一ノード 全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e. 非コンテナ) コンポーネント間通信とkubectlの通信をTLSで暗号化 コンポーネント間通信とkubectlの通信の認証はx509クライアント証明書 TLS BootstrappingにはBootstrap token使用。 Certificate Rotation有効 etcd 3.1.12 flannel 0.10.0 CoreDNS 1.1.1 SERVICE_CLUSTER_IP_RANGE (Serviceに割り当てるIPの範囲) は10.0.0.0/16 kube-apiserverのIPはこの範囲の最初のIP(i.e. 10.0.0.1)になる。 ホストネットワークや、CLUSTER_CIDRと範囲が被らないようにする必要がある。 CLUSTER_CIDR (Podに割り当てるIPの範囲) は10.244.0.0/16 flannelの要件に合わせている。 ホストネットワークや、SERVICE_CLUSTER_IP_RANGEと範囲が被らないようにする必要がある。 kubeletの動作条件にあるので、swapをoffにする。 Oracle Linuxにログインして、/etc/fstabのswapの行を削除して、以下のコマンドを実行。 # swapoff -a SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面倒なのでとりあえず無効にする。 /etc/selinux/configを編集して、SELINUXをpermissiveにして、以下のコマンドを実行。 # setenforce 0 ファイアウォールもちゃんと設定すればいいんだけど面倒なのでとりあえず無効にする。 # systemctl stop firewalld # systemctl disable firewalld これで準備完了。 クラスタ構築手順 おおむね、k8sコンポーネント間の通信の暗号化に使う鍵と証明書の生成、各コンポーネント用kubeconfigの生成、etcdのデプロイ、k8sコンポーネントのデプロイ、fannelデプロイ、CoreDNSデプロイ、という流れ。 ついでに最後にWeave Scopeをデプロイしてみる。 Bridge netfilterとIP forwardingを設定 まず、Bridge netfilterモジュールをロードする。 # modprobe br_netfilter # cat &gt; /etc/sysconfig/modules/br_netfilter.modules &lt;&lt; EOF #!/bin/sh /sbin/modprobe br_netfilter &gt; /dev/null 2&gt;&amp;1 EOF # chmod 755 /etc/sysconfig/modules/br_netfilter.modules Bridge netfilterとIP forwardingを有効化する。 # cat &gt; /etc/sysctl.d/kubernetes.conf &lt;&lt; EOF net.bridge.bridge-nf-call-iptables = 1 net.bridge.bridge-nf-call-ip6tables = 1 net.ipv4.ip_forward = 1 EOF # sysctl -p /etc/sysctl.d/kubernetes.conf 設定確認。 # lsmod |grep br_netfilter # sysctl -a | grep -E &quot;net.bridge.bridge-nf-call-|net.ipv4.ip_forward&quot; x509証明書生成 opensslの設定作成 # mkdir -p /etc/kubernetes/pki # cd /etc/kubernetes/pki # K8S_SERVICE_IP=10.0.0.1 # MASTER_IP=192.168.171.200 # cat &gt; openssl.cnf &lt;&lt; EOF [ req ] distinguished_name = req_distinguished_name [req_distinguished_name] [ v3_ca ] basicConstraints = critical, CA:TRUE keyUsage = critical, digitalSignature, keyEncipherment, keyCertSign [ v3_req_server ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth [ v3_req_client ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = clientAuth [ v3_req_apiserver ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth subjectAltName = @alt_names_cluster [ v3_req_etcd ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth, clientAuth subjectAltName = @alt_names_etcd [ alt_names_cluster ] DNS.1 = kubernetes DNS.2 = kubernetes.default DNS.3 = kubernetes.default.svc DNS.4 = kubernetes.default.svc.cluster.local DNS.5 = k8s-controller IP.1 = ${MASTER_IP} IP.2 = ${K8S_SERVICE_IP} [ alt_names_etcd ] DNS.1 = k8s-controller IP.1 = ${MASTER_IP} EOF Kubernetes CA証明書生成 以降で生成する証明書に署名するための証明書。 # cd /etc/kubernetes/pki # CA_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out ca.key # chmod 0600 ca.key # openssl req -x509 -new -sha256 -nodes -key ca.key -days $CA_DAYS -out ca.crt -subj &quot;/CN=kubernetes-ca&quot; -extensions v3_ca -config ./openssl.cnf kube-apiserver証明書生成 kube-apiserverのサーバ証明書。 # cd /etc/kubernetes/pki # APISERVER_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out kube-apiserver.key # chmod 0600 kube-apiserver.key # openssl req -new -sha256 -key kube-apiserver.key -subj &quot;/CN=kube-apiserver&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-apiserver.crt -days $APISERVER_DAYS -extensions v3_req_apiserver -extfile ./openssl.cnf kube-apiserver-kubelet証明書生成 kube-apiserverがkubeletのAPIにアクセスするときのクライアント証明書。 # cd /etc/kubernetes/pki # APISERVER_KUBELET_CLIENT_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out apiserver-kubelet-client.key # chmod 0600 apiserver-kubelet-client.key # openssl req -new -key apiserver-kubelet-client.key -subj &quot;/CN=kube-apiserver-kubelet-client/O=system:masters&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out apiserver-kubelet-client.crt -days $APISERVER_KUBELET_CLIENT_DAYS -extensions v3_req_client -extfile ./openssl.cnf adminクライアント証明書生成 kubectlがkube-apiserverのAPIにアクセスするときのクライアント証明書。 # cd /etc/kubernetes/pki # ADMIN_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out admin.key # chmod 0600 admin.key # openssl req -new -key admin.key -subj &quot;/CN=kubernetes-admin/O=system:masters&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out admin.crt -days $ADMIN_DAYS -extensions v3_req_client -extfile ./openssl.cnf Service Accountキーとkube-controller-managerのクライアント証明書生成 Service Accountトークンにkube-controller-managerが署名するときに使うキーを生成する。 そのキーを使ってkube-controller-managerのクライアント証明書も生成する。 kube-apiserverがトークンの署名を確認するとき(?)に使う公開鍵も生成する。 # cd /etc/kubernetes/pki # CONTROLLER_MANAGER_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out sa.key # openssl ec -in sa.key -outform PEM -pubout -out sa.pub # chmod 0600 sa.key # openssl req -new -sha256 -key sa.key -subj &quot;/CN=system:kube-controller-manager&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out sa.crt -days $CONTROLLER_MANAGER_DAYS -extensions v3_req_client -extfile ./openssl.cnf kube-schedulerクライアント証明書生成 kube-schedulerがkube-apiserverにリクエストするときに使うクライアント証明書。 多分。 # cd /etc/kubernetes/pki # SCHEDULER_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out kube-scheduler.key # chmod 0600 kube-scheduler.key # openssl req -new -sha256 -key kube-scheduler.key -subj &quot;/CN=system:kube-scheduler&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-scheduler.crt -days $SCHEDULER_DAYS -extensions v3_req_client -extfile ./openssl.cnf front proxy CA証明書生成 front proxyのクライアント証明書に署名するのにつかう証明書。 front proxyってなんだ?">
+    <meta property="og:description" content="Oracle Linux 7.4.0のVMでKubernetes1.10.0のクラスタをスクラッチから全手動で作った。 参考にしたのは主に以下。 https://nixaid.com/deploying-kubernetes-cluster-from-scratch/ https://kubernetes.io/docs/getting-started-guides/scratch/ https://kubernetes.io/docs/reference/setup-tools/kubeadm/implementation-details/ https://ulam.io/blog/kubernetes-scratch/ https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master (adsbygoogle = window.adsbygoogle || []).push({}); 構成 マシン: Windows 10 Homeのラップトップの上のVMware PlayerのVM CPU: 2コア メモリ: 4GB NIF: NATのを一つ OS: Oracle Linux 7.4.0 Minimalインストール IPアドレス: 192.168.171.200、静的割り当て ホスト名: k8s-master (hostsで解決) Docker: Oracle Container Runtime for Docker (docker-engine) 17.06.2 Kubernetes: バージョン1.10.0 単一ノード 全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e. 非コンテナ) コンポーネント間通信とkubectlの通信をTLSで暗号化 コンポーネント間通信とkubectlの通信の認証はx509クライアント証明書 TLS BootstrappingにはBootstrap token使用。 Certificate Rotation有効 etcd 3.1.12 flannel 0.10.0 CoreDNS 1.1.1 SERVICE_CLUSTER_IP_RANGE (Serviceに割り当てるIPの範囲) は10.0.0.0/16 kube-apiserverのIPはこの範囲の最初のIP(i.e. 10.0.0.1)になる。 ホストネットワークや、CLUSTER_CIDRと範囲が被らないようにする必要がある。 CLUSTER_CIDR (Podに割り当てるIPの範囲) は10.244.0.0/16 flannelの要件に合わせている。 ホストネットワークや、SERVICE_CLUSTER_IP_RANGEと範囲が被らないようにする必要がある。 kubeletの動作条件にあるので、swapをoffにする。 Oracle Linuxにログインして、/etc/fstabのswapの行を削除して、以下のコマンドを実行。 # swapoff -a SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面倒なのでとりあえず無効にする。 /etc/selinux/configを編集して、SELINUXをpermissiveにして、以下のコマンドを実行。 # setenforce 0 ファイアウォールもちゃんと設定すればいいんだけど面倒なのでとりあえず無効にする。 # systemctl stop firewalld # systemctl disable firewalld これで準備完了。 クラスタ構築手順 おおむね、k8sコンポーネント間の通信の暗号化に使う鍵と証明書の生成、各コンポーネント用kubeconfigの生成、etcdのデプロイ、k8sコンポーネントのデプロイ、fannelデプロイ、CoreDNSデプロイ、という流れ。 ついでに最後にWeave Scopeをデプロイしてみる。 Bridge netfilterとIP forwardingを設定 まず、Bridge netfilterモジュールをロードする。 # modprobe br_netfilter # cat &gt; /etc/sysconfig/modules/br_netfilter.modules &lt;&lt; EOF #!/bin/sh /sbin/modprobe br_netfilter &gt; /dev/null 2&gt;&amp;1 EOF # chmod 755 /etc/sysconfig/modules/br_netfilter.modules Bridge netfilterとIP forwardingを有効化する。 # cat &gt; /etc/sysctl.d/kubernetes.conf &lt;&lt; EOF net.bridge.bridge-nf-call-iptables = 1 net.bridge.bridge-nf-call-ip6tables = 1 net.ipv4.ip_forward = 1 EOF # sysctl -p /etc/sysctl.d/kubernetes.conf 設定確認。 # lsmod |grep br_netfilter # sysctl -a | grep -E &quot;net.bridge.bridge-nf-call-|net.ipv4.ip_forward&quot; x509証明書生成 opensslの設定作成 # mkdir -p /etc/kubernetes/pki # cd /etc/kubernetes/pki # K8S_SERVICE_IP=10.0.0.1 # MASTER_IP=192.168.171.200 # cat &gt; openssl.cnf &lt;&lt; EOF [ req ] distinguished_name = req_distinguished_name [req_distinguished_name] [ v3_ca ] basicConstraints = critical, CA:TRUE keyUsage = critical, digitalSignature, keyEncipherment, keyCertSign [ v3_req_server ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth [ v3_req_client ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = clientAuth [ v3_req_apiserver ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth subjectAltName = @alt_names_cluster [ v3_req_etcd ] basicConstraints = CA:FALSE keyUsage = critical, digitalSignature, keyEncipherment extendedKeyUsage = serverAuth, clientAuth subjectAltName = @alt_names_etcd [ alt_names_cluster ] DNS.1 = kubernetes DNS.2 = kubernetes.default DNS.3 = kubernetes.default.svc DNS.4 = kubernetes.default.svc.cluster.local DNS.5 = k8s-controller IP.1 = ${MASTER_IP} IP.2 = ${K8S_SERVICE_IP} [ alt_names_etcd ] DNS.1 = k8s-controller IP.1 = ${MASTER_IP} EOF Kubernetes CA証明書生成 以降で生成する証明書に署名するための証明書。 後述のTLS Bootstrappingでの証明書生成にも使われるはず。 # cd /etc/kubernetes/pki # CA_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out ca.key # chmod 0600 ca.key # openssl req -x509 -new -sha256 -nodes -key ca.key -days $CA_DAYS -out ca.crt -subj &quot;/CN=kubernetes-ca&quot; -extensions v3_ca -config ./openssl.cnf kube-apiserver証明書生成 kube-apiserverのサーバ証明書。 # cd /etc/kubernetes/pki # APISERVER_DAYS=5475 # openssl ecparam -name secp521r1 -genkey -noout -out kube-apiserver.key # chmod 0600 kube-apiserver.key # openssl req -new -sha256 -key kube-apiserver.key -subj &quot;/CN=kube-apiserver&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-apiserver.crt -days $APISERVER_DAYS -extensions v3_req_apiserver -extfile ./openssl.cnf kube-controller-managerサーバ証明書生成 kube-controller-managerのサーバ証明書。 kube-controller-managerにアクセスするのって誰だ?">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
     
@@ -90,6 +90,7 @@
 <ul>
 <li><a href="https://nixaid.com/deploying-kubernetes-cluster-from-scratch/">https://nixaid.com/deploying-kubernetes-cluster-from-scratch/</a></li>
 <li><a href="https://kubernetes.io/docs/getting-started-guides/scratch/">https://kubernetes.io/docs/getting-started-guides/scratch/</a></li>
+<li><a href="https://kubernetes.io/docs/reference/setup-tools/kubeadm/implementation-details/">https://kubernetes.io/docs/reference/setup-tools/kubeadm/implementation-details/</a></li>
 <li><a href="https://ulam.io/blog/kubernetes-scratch/">https://ulam.io/blog/kubernetes-scratch/</a></li>
 <li><a href="https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master">https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master</a></li>
 </ul>
@@ -269,7 +270,8 @@ EOF
 
 <li><p>Kubernetes CA証明書生成</p>
 
-<p>以降で生成する証明書に署名するための証明書。</p>
+<p>以降で生成する証明書に署名するための証明書。
+後述のTLS Bootstrappingでの証明書生成にも使われるはず。</p>
 
 <pre><code class="language-sh"># cd /etc/kubernetes/pki
 # CA_DAYS=5475
@@ -289,9 +291,21 @@ EOF
 # openssl req -new -sha256 -key kube-apiserver.key -subj &quot;/CN=kube-apiserver&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-apiserver.crt -days $APISERVER_DAYS -extensions v3_req_apiserver -extfile ./openssl.cnf
 </code></pre></li>
 
+<li><p>kube-controller-managerサーバ証明書生成</p>
+
+<p>kube-controller-managerのサーバ証明書。
+kube-controller-managerにアクセスするのって誰だ?</p>
+
+<pre><code class="language-sh"># cd /etc/kubernetes/pki
+# CONTROLLER_MANAGER_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out kube-controller-manager.key
+# chmod 0600 kube-controller-manager.key
+# openssl req -new -sha256 -key kube-controller-manager.key -subj &quot;/CN=kube-controller-manager&quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-controller-manager.crt -days $CONTROLLER_MANAGER_DAYS -extensions v3_req_server -extfile ./openssl.cnf
+</code></pre></li>
+
 <li><p>kube-apiserver-kubelet証明書生成</p>
 
-<p>kube-apiserverがkubeletのAPIにアクセスするときのクライアント証明書。</p>
+<p>kube-apiserverが<a href="https://kubernetes.io/docs/concepts/architecture/master-node-communication/#apiserver-kubelet">kubeletのAPIにアクセス</a>するときのクライアント証明書。</p>
 
 <pre><code class="language-sh"># cd /etc/kubernetes/pki
 # APISERVER_KUBELET_CLIENT_DAYS=5475
@@ -545,6 +559,8 @@ done
 
 <p>で、systemdのユニットファイルを書いてサービス化。</p>
 
+<p>(参考: <a href="https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/">Kubernetesドキュメント</a>、<a href="https://github.com/coreos/etcd/blob/master/Documentation/op-guide/security.md">etcdドキュメント</a>)</p>
+
 <pre><code class="language-sh"># MASTER_IP=192.168.171.200
 # CLUSTER_NAME=&quot;default&quot;
 # ETCD_TOKEN=$(openssl rand -hex 5)
@@ -601,86 +617,232 @@ EOF
 
 <p>systemdのユニットファイルを書いてサービス化。</p>
 
-<pre><code class="language-sh"># MASTER_IP=192.168.171.200
-# SERVICE_CLUSTER_IP_RANGE=&quot;10.0.0.0/16&quot;
-# cat &gt; /etc/systemd/system/kube-apiserver.service &lt;&lt; EOF
-[Unit]
+<p>```sh</p>
+
+<h1 id="master-ip-192-168-171-200">MASTER_IP=192.168.171.200</h1>
+
+<h1 id="service-cluster-ip-range-10-0-0-0-16">SERVICE_CLUSTER_IP_RANGE=&ldquo;10.0.0.0/16&rdquo;</h1>
+
+<h1 id="secret-enc-key-echo-n-your-32-bytes-secure-private-key-base64">SECRET_ENC_KEY=$(echo -n &lsquo;your_32_bytes_secure_private_key&rsquo; | base64)</h1>
+
+<h1 id="cat-etc-kubernetes-encryption-conf-eof">cat &gt; /etc/kubernetes/encryption.conf &lt;&lt; EOF</h1>
+
+<p>kind: EncryptionConfig
+apiVersion: v1
+resources:</p>
+
+<ul>
+<li><p>resources:</p>
+
+<ul>
+<li>secrets
+providers:</li>
+<li>aescbc:
+keys:
+
+<ul>
+<li>name: key1
+secret: ${SECRET_ENC_KEY}</li>
+</ul></li>
+
+<li><p>identity: {}
+EOF</p>
+
+<h1 id="cat-etc-kubernetes-audit-policy-conf-eof">cat &gt; /etc/kubernetes/audit-policy.conf &lt;&lt; EOF</h1>
+
+<p>apiVersion: audit.k8s.io/v1beta1
+kind: Policy</p>
+
+<h1 id="don-t-generate-audit-events-for-all-requests-in-requestreceived-stage">Don&rsquo;t generate audit events for all requests in RequestReceived stage.</h1>
+
+<p>omitStages:</p></li>
+</ul></li>
+
+<li><p>&ldquo;RequestReceived&rdquo;
+rules:</p>
+
+<h1 id="log-pod-changes-at-requestresponse-level">Log pod changes at RequestResponse level</h1></li>
+
+<li><p>level: RequestResponse
+resources:</p>
+
+<ul>
+<li><p>group: &ldquo;&rdquo;</p>
+
+<h1 id="resource-pods-doesn-t-match-requests-to-any-subresource-of-pods">Resource &ldquo;pods&rdquo; doesn&rsquo;t match requests to any subresource of pods,</h1>
+
+<h1 id="which-is-consistent-with-the-rbac-policy">which is consistent with the RBAC policy.</h1>
+
+<p>resources: [&ldquo;pods&rdquo;]</p>
+
+<h1 id="log-pods-log-pods-status-at-metadata-level">Log &ldquo;pods/log&rdquo;, &ldquo;pods/status&rdquo; at Metadata level</h1></li>
+</ul></li>
+
+<li><p>level: Metadata
+resources:</p>
+
+<ul>
+<li>group: &ldquo;&rdquo;
+resources: [&ldquo;pods/log&rdquo;, &ldquo;pods/status&rdquo;]</li>
+</ul></li>
+</ul>
+
+<p># Don&rsquo;t log requests to a configmap called &ldquo;controller-leader&rdquo;
+  - level: None
+    resources:
+    - group: &ldquo;&rdquo;
+      resources: [&ldquo;configmaps&rdquo;]
+      resourceNames: [&ldquo;controller-leader&rdquo;]</p>
+
+<p># Don&rsquo;t log watch requests by the &ldquo;system:kube-proxy&rdquo; on endpoints or services
+  - level: None
+    users: [&ldquo;system:kube-proxy&rdquo;]
+    verbs: [&ldquo;watch&rdquo;]
+    resources:
+    - group: &ldquo;&rdquo; # core API group
+      resources: [&ldquo;endpoints&rdquo;, &ldquo;services&rdquo;]</p>
+
+<p># Don&rsquo;t log authenticated requests to certain non-resource URL paths.
+  - level: None
+    userGroups: [&ldquo;system:authenticated&rdquo;]
+    nonResourceURLs:
+    - &ldquo;/api*&rdquo; # Wildcard matching.
+    - &ldquo;/version&rdquo;</p>
+
+<p># Log the request body of configmap changes in kube-system.
+  - level: Request
+    resources:
+    - group: &ldquo;&rdquo; # core API group
+      resources: [&ldquo;configmaps&rdquo;]
+    # This rule only applies to resources in the &ldquo;kube-system&rdquo; namespace.
+    # The empty string &ldquo;&rdquo; can be used to select non-namespaced resources.
+    namespaces: [&ldquo;kube-system&rdquo;]</p>
+
+<p># Log configmap and secret changes in all other namespaces at the Metadata level.
+  - level: Metadata
+    resources:
+    - group: &ldquo;&rdquo; # core API group
+      resources: [&ldquo;secrets&rdquo;, &ldquo;configmaps&rdquo;]</p>
+
+<p># Log all other resources in core and extensions at the Request level.
+  - level: Request
+    resources:
+    - group: &ldquo;&rdquo; # core API group
+    - group: &ldquo;extensions&rdquo; # Version of group should NOT be included.</p>
+
+<p># A catch-all rule to log all other requests at the Metadata level.
+  - level: Metadata
+    # Long-running requests like watches that fall under this rule will not
+    # generate an audit event in RequestReceived.
+    omitStages:
+      - &ldquo;RequestReceived&rdquo;
+EOF</p>
+
+<h1 id="cat-etc-systemd-system-kube-apiserver-service-eof">cat &gt; /etc/systemd/system/kube-apiserver.service &lt;&lt; EOF</h1>
+
+<p>[Unit]
 Description=Kubernetes API Server
-Documentation=https://github.com/kubernetes/kubernetes
-After=network.target
+Documentation=<a href="https://github.com/kubernetes/kubernetes">https://github.com/kubernetes/kubernetes</a>
+After=network.target</p>
 
-
-[Service]
-ExecStart=/usr/bin/kube-apiserver \\
-  --feature-gates=RotateKubeletServerCertificate=true \\
-  --apiserver-count=1 \\
-  --allow-privileged=true \\
-  --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,NodeRestriction,DenyEscalatingExec \\
-  --authorization-mode=Node,RBAC \\
-  --secure-port=6443 \\
-  --bind-address=0.0.0.0 \\
-  --advertise-address=${MASTER_IP} \\
-  --audit-log-maxage=30 \\
-  --audit-log-maxbackup=3 \\
-  --audit-log-maxsize=100 \\
-  --audit-log-path=/var/log/kube-audit.log \\
-  --client-ca-file=/etc/kubernetes/pki/ca.crt \\
-  --etcd-cafile=/etc/kubernetes/pki/etcd-ca.crt \\
-  --etcd-certfile=/etc/kubernetes/pki/etcd.crt \\
-  --etcd-keyfile=/etc/kubernetes/pki/etcd.key \\
-  --etcd-servers=https://${MASTER_IP}:2379 \\
-  --service-account-key-file=/etc/kubernetes/pki/sa.pub \\
-  --service-cluster-ip-range=${SERVICE_CLUSTER_IP_RANGE} \\
-  --service-node-port-range=30000-32767 \\
-  --tls-cert-file=/etc/kubernetes/pki/kube-apiserver.crt \\
-  --tls-private-key-file=/etc/kubernetes/pki/kube-apiserver.key \\
-  --enable-bootstrap-token-auth=true \\
-  --kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt \\
-  --kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key \\
-  --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname \\
-  --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt \\
-  --requestheader-username-headers=X-Remote-User \\
-  --requestheader-group-headers=X-Remote-Group \\
-  --requestheader-allowed-names=front-proxy-client \\
-  --requestheader-extra-headers-prefix=X-Remote-Extra- \\
-  --v=2 \\
-  --tls-min-version=VersionTLS12 \\
-  --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+<p>[Service]
+ExecStart=/usr/bin/kube-apiserver \
+  &ndash;feature-gates=RotateKubeletServerCertificate=true \
+  &ndash;apiserver-count=1 \
+  &ndash;allow-privileged=true \
+  &ndash;enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,NodeRestriction,DenyEscalatingExec \
+  &ndash;authorization-mode=Node,RBAC \
+  &ndash;bind-address=0.0.0.0 \
+  &ndash;advertise-address=${MASTER_IP} \
+  &ndash;client-ca-file=/etc/kubernetes/pki/ca.crt \
+  &ndash;etcd-cafile=/etc/kubernetes/pki/etcd-ca.crt \
+  &ndash;etcd-certfile=/etc/kubernetes/pki/etcd.crt \
+  &ndash;etcd-keyfile=/etc/kubernetes/pki/etcd.key \
+  &ndash;etcd-servers=https://${MASTER_IP}:2379 \
+  &ndash;service-account-key-file=/etc/kubernetes/pki/sa.pub \
+  &ndash;service-cluster-ip-range=${SERVICE_CLUSTER_IP_RANGE} \
+  &ndash;tls-cert-file=/etc/kubernetes/pki/kube-apiserver.crt \
+  &ndash;tls-private-key-file=/etc/kubernetes/pki/kube-apiserver.key \
+  &ndash;kubelet-certificate-authority=/etc/kubernetes/pki/ca.crt \
+  &ndash;enable-bootstrap-token-auth=true \
+  &ndash;kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt \
+  &ndash;kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key \
+  &ndash;kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname \
+  &ndash;requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt \
+  &ndash;requestheader-username-headers=X-Remote-User \
+  &ndash;requestheader-group-headers=X-Remote-Group \
+  &ndash;requestheader-allowed-names=front-proxy-client \
+  &ndash;requestheader-extra-headers-prefix=X-Remote-Extra- \
+  &ndash;experimental-encryption-provider-config=/etc/kubernetes/encryption.conf \
+  &ndash;v=2 \
+  &ndash;tls-min-version=VersionTLS12 \
+  &ndash;tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 \
+  &ndash;anonymous-auth=false \
+  &ndash;audit-log-format=json \
+  &ndash;audit-log-maxage=30 \
+  &ndash;audit-log-maxbackup=3 \
+  &ndash;audit-log-maxsize=100 \
+  &ndash;audit-log-path=/var/log/kube-audit.log \
+  &ndash;audit-policy-file=/etc/kubernetes/audit-policy.conf
 Restart=always
-RestartSec=10s
+RestartSec=10s</p>
 
-
-[Install]
+<p>[Install]
 WantedBy=multi-user.target
-EOF
-# systemctl daemon-reload
-# systemctl enable kube-apiserver
-# systemctl start kube-apiserver
-</code></pre>
+EOF</p>
 
-<p><code>--allow-privileged</code>はflannelなどに必要。</p>
+<h1 id="systemctl-daemon-reload">systemctl daemon-reload</h1>
 
-<p><code>--admission-control</code>には<a href="https://kubernetes.io/docs/admin/admission-controllers/#is-there-a-recommended-set-of-admission-controllers-to-use">公式推奨のプラグイン</a>に加えて、後述のTLS BootstrappingのためのNodeRestrictionを指定。
-また、<code>--allow-privileged</code>の効果を軽減するため、DenyEscalatingExecも追加で指定。
-因みに、プラグインを指定する順番はKubernetes 1.10からは気にしなくてよくなった。</p>
+<h1 id="systemctl-enable-kube-apiserver">systemctl enable kube-apiserver</h1>
 
-<p><code>--authorization-mode</code>にはRBACを指定するのが標準。
-後述のTLS Bootstrappingをするなら、Nodeも要る。</p>
+<h1 id="systemctl-start-kube-apiserver">systemctl start kube-apiserver</h1>
 
-<p><code>--tls-min-version</code>と<code>--tls-cipher-suites</code>は<a href="https://www.lambdanote.com/blogs/news/openssl-cookbook">OpenSSLクックブック</a>と<a href="https://golang.org/pkg/crypto/tls/#pkg-constants">Goのtlsパッケージドキュメント</a>を参考に設定。
-RSA鍵交換はNG、RC4と3DESもNG、AESの鍵長は128ビット以上、SHA1はNG。</p>
+<pre><code>
 
-<p>また、(&ndash;tls-min-versionをVersionTLS12にする場合?)TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256が必須で、CBCモードがNG。(参照: <a href="https://github.com/golang/go/blob/release-branch.go1.9/src/net/http/h2_bundle.go">https://github.com/golang/go/blob/release-branch.go1.9/src/net/http/h2_bundle.go</a>)</p>
+`--allow-privileged`はflannelなどに必要。
 
-<p><code>--feature-gates</code>でRotateKubeletServerCertificateを有効にして、kubeletのサーバ証明書を自動更新するようにしている。
+
+`--enable-admission-plugins`には[公式推奨のプラグイン](https://kubernetes.io/docs/admin/admission-controllers/#is-there-a-recommended-set-of-admission-controllers-to-use)に加えて、後述のTLS BootstrappingのためのNodeRestrictionを指定。
+また、`--allow-privileged`の効果を軽減するため、DenyEscalatingExecも追加で指定。
+因みに、プラグインを指定する順番はKubernetes 1.10からは気にしなくてよくなった。
+
+
+`--authorization-mode`にはRBACを指定するのが標準。
+後述のTLS Bootstrappingをするなら、Nodeも要る。
+
+
+`--experimental-encryption-provider-config`は[Secretを暗号化する](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/)ための設定。
+暗号化のキーをローテーションすることもできるけど、それはやってない。
+
+
+`--tls-min-version`と`--tls-cipher-suites`は[OpenSSLクックブック](https://www.lambdanote.com/blogs/news/openssl-cookbook)と[Goのtlsパッケージドキュメント](https://golang.org/pkg/crypto/tls/#pkg-constants)を参考に設定。
+RSA鍵交換はNG、RC4と3DESもNG、AESの鍵長は128ビット以上、SHA1はNG。
+
+
+また、(--tls-min-versionをVersionTLS12にする場合?)TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256が必須で、CBCモードがNG。(参照: https://github.com/golang/go/blob/release-branch.go1.9/src/net/http/h2_bundle.go)
+
+
+`--anonymous-auth=false`はセキュリティのため設定。
+
+
+`--audit-*`は監査ログ設定。
+100MB3面のログを30日間保持する。
+ログポリシーは[公式のサンプル](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/)そのまま。
+
+
+`--feature-gates`でRotateKubeletServerCertificateを有効にして、kubeletのサーバ証明書を自動更新するようにしている。
 因みに、クライアント証明書を自動更新するRotateKubeletClientCertificateはデフォルトで有効。
-これらがCertificate Rotationと呼ばれる機能。</p>
+これらがCertificate Rotationと呼ばれる機能。
 
-<p><code>--feature-gates</code>は全Kubernetesコンポーネントで同じ値を指定するのがよさそう。</p>
 
-<p>確認。</p>
+`--feature-gates`は全Kubernetesコンポーネントで同じ値を指定するのがよさそう。
 
-<pre><code class="language-sh"># systemctl status kube-apiserver -l
+
+確認。
+
+
+```sh
+# systemctl status kube-apiserver -l
 # journalctl -u kube-apiserver
 </code></pre></li>
 
@@ -703,10 +865,15 @@ ExecStart=/usr/bin/kube-controller-manager \\
   --feature-gates=RotateKubeletServerCertificate=true \\
   --kubeconfig=/etc/kubernetes/controller-manager.kubeconfig \\
   --bind-address=0.0.0.0 \\
+  --port=0 \\
+  --secure-port=10257 \\
+  --tls-cert-file=/etc/kubernetes/pki/kube-controller-manager.crt \\
+  --tls-private-key-file=/etc/kubernetes/pki/kube-controller-manager.key \\
   --controllers=*,bootstrapsigner,tokencleaner \\
   --service-account-private-key-file=/etc/kubernetes/pki/sa.key \\
   --allocate-node-cidrs=true \\
   --cluster-cidr=${CLUSTER_CIDR} \\
+  --node-cidr-mask-size=24 \\
   --cluster-name=${CLUSTER_NAME} \\
   --service-cluster-ip-range=${SERVICE_CLUSTER_IP_RANGE} \\
   --cluster-signing-cert-file=/etc/kubernetes/pki/ca.crt \\
@@ -734,6 +901,13 @@ EOF
 <p>bootstrapsignerは後述のcluster-infoにBootstrap tokenで署名するためのコントローラ。</p>
 
 <p><a href="https://kubernetes.io/docs/admin/kubelet-tls-bootstrapping/#approval-controller">csrapproving</a>というコントローラがデフォルトで有効になっていて、後述のTLS BootstrapppingやCertificate Rotationの時に作られるCSRを自動で承認する。</p>
+
+<p><code>--cluster-cidr</code>で指定するネットワークは、後述のネットワークプロバイダの設定と合っている必要がある。
+<code>--allocate-node-cidrs</code>は<code>--cluster-cidr</code>の前提。</p>
+
+<p><code>--node-cidr-mask-size</code>は、ノードに使うネットワークのサイズを指定するオプションで、<code>--cluster-cidr</code>で指定したネットワークの一部になるようにする。
+<code>--cluster-cidr</code>で<code>/16</code>を指定した場合、半分の<code>/24</code>にするのが普通。
+つまり256ノードまで作れて、それぞれ256個のPodをホストできるような構成。</p>
 
 <p><code>--experimental-cluster-signing-duration</code>は、Certificate Rotationのための設定で、自動発行する証明書の期限を1年に指定している。</p>
 
@@ -972,7 +1146,8 @@ ExecStart=/usr/bin/kubelet \\
   --pod-infra-container-image=${PAUSE_IMAGE} \\
   --tls-min-version=VersionTLS12 \\
   --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 \\
-  --allow-privileged=true
+  --allow-privileged=true \\
+  --anonymous-auth=false
 Restart=always
 RestartSec=10s
 
@@ -998,6 +1173,10 @@ EOF
 
 <p><code>--pod-manifest-path</code>で指定したディレクトリはkubeletに定期的にスキャンされ、そこに置いたKubernetesマニフェスト(ドットで始まるもの以外)が読まれる。
 (参照: <a href="https://kubernetes.io/docs/tasks/administer-cluster/static-pod/">Static Pods</a>)</p>
+
+<p><code>--anonymous-auth=false</code>は<a href="https://kubernetes.io/docs/admin/kubelet-authentication-authorization/">セキュリティのために推奨されたオプション</a>。</p>
+
+<p><code>--authorization-mode=Webhook</code>も<a href="https://kubernetes.io/docs/admin/kubelet-authentication-authorization/">セキュリティのために推奨されたオプション</a>で、認可処理をkube-apiserverに移譲する設定。</p>
 
 <p>本当は<a href="https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/">Kubelet Configファイル</a>を使ったほうがいいみたいなので、いずれそれに対応する。
 (対応した: 「<a href="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a>」)</p>
@@ -1150,7 +1329,8 @@ EOF
 
 <p>systemdのユニットファイルを書いてサービス化。</p>
 
-<pre><code class="language-sh"># cat &gt; /etc/systemd/system/kube-proxy.service &lt;&lt; EOF
+<pre><code class="language-sh"># CLUSTER_CIDR=&quot;10.244.0.0/16&quot;
+# cat &gt; /etc/systemd/system/kube-proxy.service &lt;&lt; EOF
 [Unit]
 Description=Kubernetes Kube Proxy
 Documentation=https://github.com/kubernetes/kubernetes
@@ -1161,6 +1341,7 @@ After=network.target
 ExecStart=/usr/bin/kube-proxy \\
   --feature-gates=RotateKubeletServerCertificate=true \\
   --bind-address 0.0.0.0 \\
+  --cluster-cidr=${CLUSTER_CIDR} \\
   --kubeconfig=/etc/kubernetes/kube-proxy.kubeconfig \\
   --v=2
 Restart=always
@@ -1180,7 +1361,7 @@ EOF
 <pre><code class="language-sh"># systemctl status kube-proxy -l
 </code></pre></li>
 
-<li><p>オーバレイネットワーク (flannel)</p>
+<li><p>ネットワークプロバイダ (flannel)</p>
 
 <p><a href="https://github.com/coreos/flannel/blob/master/Documentation/kubernetes.md">flannelのドキュメント</a>を参考に。</p>
 

@@ -14,6 +14,7 @@ Oracle Linux 7.4.0のVMでKubernetes1.10.0のクラスタをスクラッチか�
 
 * https://nixaid.com/deploying-kubernetes-cluster-from-scratch/
 * https://kubernetes.io/docs/getting-started-guides/scratch/
+* https://kubernetes.io/docs/reference/setup-tools/kubeadm/implementation-details/
 * https://ulam.io/blog/kubernetes-scratch/
 * https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master
 
@@ -168,6 +169,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
     2. Kubernetes CA証明書生成
 
         以降で生成する証明書に署名するための証明書。
+        後述のTLS Bootstrappingでの証明書生成にも使われるはず。
 
         ```sh
         # cd /etc/kubernetes/pki
@@ -189,9 +191,22 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # openssl req -new -sha256 -key kube-apiserver.key -subj "/CN=kube-apiserver" | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-apiserver.crt -days $APISERVER_DAYS -extensions v3_req_apiserver -extfile ./openssl.cnf
         ```
 
-    4. kube-apiserver-kubelet証明書生成
+    4. kube-controller-managerサーバ証明書生成
 
-        kube-apiserverがkubeletのAPIにアクセスするときのクライアント証明書。
+        kube-controller-managerのサーバ証明書。
+        kube-controller-managerにアクセスするのって誰だ?
+
+        ```sh
+        # cd /etc/kubernetes/pki
+        # CONTROLLER_MANAGER_DAYS=5475
+        # openssl ecparam -name secp521r1 -genkey -noout -out kube-controller-manager.key
+        # chmod 0600 kube-controller-manager.key
+        # openssl req -new -sha256 -key kube-controller-manager.key -subj "/CN=kube-controller-manager" | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-controller-manager.crt -days $CONTROLLER_MANAGER_DAYS -extensions v3_req_server -extfile ./openssl.cnf
+        ```
+
+    5. kube-apiserver-kubelet証明書生成
+
+        kube-apiserverが[kubeletのAPIにアクセス](https://kubernetes.io/docs/concepts/architecture/master-node-communication/#apiserver-kubelet)するときのクライアント証明書。
 
         ```sh
         # cd /etc/kubernetes/pki
@@ -447,6 +462,8 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
     で、systemdのユニットファイルを書いてサービス化。
 
+    (参考: [Kubernetesドキュメント](https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/)、[etcdドキュメント](https://github.com/coreos/etcd/blob/master/Documentation/op-guide/security.md))
+
     ```sh
     # MASTER_IP=192.168.171.200
     # CLUSTER_NAME="default"
@@ -505,6 +522,90 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         ```sh
         # MASTER_IP=192.168.171.200
         # SERVICE_CLUSTER_IP_RANGE="10.0.0.0/16"
+        # SECRET_ENC_KEY=$(echo -n 'your_32_bytes_secure_private_key' | base64)
+        # cat > /etc/kubernetes/encryption.conf << EOF
+        kind: EncryptionConfig
+        apiVersion: v1
+        resources:
+          - resources:
+            - secrets
+            providers:
+            - aescbc:
+                keys:
+                - name: key1
+                  secret: ${SECRET_ENC_KEY}
+            - identity: {}
+        EOF
+        # cat > /etc/kubernetes/audit-policy.conf << EOF
+        apiVersion: audit.k8s.io/v1beta1
+        kind: Policy
+        # Don't generate audit events for all requests in RequestReceived stage.
+        omitStages:
+          - "RequestReceived"
+        rules:
+          # Log pod changes at RequestResponse level
+          - level: RequestResponse
+            resources:
+            - group: ""
+              # Resource "pods" doesn't match requests to any subresource of pods,
+              # which is consistent with the RBAC policy.
+              resources: ["pods"]
+          # Log "pods/log", "pods/status" at Metadata level
+          - level: Metadata
+            resources:
+            - group: ""
+              resources: ["pods/log", "pods/status"]
+
+          # Don't log requests to a configmap called "controller-leader"
+          - level: None
+            resources:
+            - group: ""
+              resources: ["configmaps"]
+              resourceNames: ["controller-leader"]
+
+          # Don't log watch requests by the "system:kube-proxy" on endpoints or services
+          - level: None
+            users: ["system:kube-proxy"]
+            verbs: ["watch"]
+            resources:
+            - group: "" # core API group
+              resources: ["endpoints", "services"]
+
+          # Don't log authenticated requests to certain non-resource URL paths.
+          - level: None
+            userGroups: ["system:authenticated"]
+            nonResourceURLs:
+            - "/api*" # Wildcard matching.
+            - "/version"
+
+          # Log the request body of configmap changes in kube-system.
+          - level: Request
+            resources:
+            - group: "" # core API group
+              resources: ["configmaps"]
+            # This rule only applies to resources in the "kube-system" namespace.
+            # The empty string "" can be used to select non-namespaced resources.
+            namespaces: ["kube-system"]
+
+          # Log configmap and secret changes in all other namespaces at the Metadata level.
+          - level: Metadata
+            resources:
+            - group: "" # core API group
+              resources: ["secrets", "configmaps"]
+
+          # Log all other resources in core and extensions at the Request level.
+          - level: Request
+            resources:
+            - group: "" # core API group
+            - group: "extensions" # Version of group should NOT be included.
+
+          # A catch-all rule to log all other requests at the Metadata level.
+          - level: Metadata
+            # Long-running requests like watches that fall under this rule will not
+            # generate an audit event in RequestReceived.
+            omitStages:
+              - "RequestReceived"
+        EOF
         # cat > /etc/systemd/system/kube-apiserver.service << EOF
         [Unit]
         Description=Kubernetes API Server
@@ -516,15 +617,10 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
           --feature-gates=RotateKubeletServerCertificate=true \\
           --apiserver-count=1 \\
           --allow-privileged=true \\
-          --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,NodeRestriction,DenyEscalatingExec \\
+          --enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,NodeRestriction,DenyEscalatingExec \\
           --authorization-mode=Node,RBAC \\
-          --secure-port=6443 \\
           --bind-address=0.0.0.0 \\
           --advertise-address=${MASTER_IP} \\
-          --audit-log-maxage=30 \\
-          --audit-log-maxbackup=3 \\
-          --audit-log-maxsize=100 \\
-          --audit-log-path=/var/log/kube-audit.log \\
           --client-ca-file=/etc/kubernetes/pki/ca.crt \\
           --etcd-cafile=/etc/kubernetes/pki/etcd-ca.crt \\
           --etcd-certfile=/etc/kubernetes/pki/etcd.crt \\
@@ -532,9 +628,9 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
           --etcd-servers=https://${MASTER_IP}:2379 \\
           --service-account-key-file=/etc/kubernetes/pki/sa.pub \\
           --service-cluster-ip-range=${SERVICE_CLUSTER_IP_RANGE} \\
-          --service-node-port-range=30000-32767 \\
           --tls-cert-file=/etc/kubernetes/pki/kube-apiserver.crt \\
           --tls-private-key-file=/etc/kubernetes/pki/kube-apiserver.key \\
+          --kubelet-certificate-authority=/etc/kubernetes/pki/ca.crt \\
           --enable-bootstrap-token-auth=true \\
           --kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt \\
           --kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key \\
@@ -544,9 +640,17 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
           --requestheader-group-headers=X-Remote-Group \\
           --requestheader-allowed-names=front-proxy-client \\
           --requestheader-extra-headers-prefix=X-Remote-Extra- \\
+          --experimental-encryption-provider-config=/etc/kubernetes/encryption.conf \\
           --v=2 \\
           --tls-min-version=VersionTLS12 \\
-          --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+          --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 \\
+          --anonymous-auth=false \\
+          --audit-log-format=json \\
+          --audit-log-maxage=30 \\
+          --audit-log-maxbackup=3 \\
+          --audit-log-maxsize=100 \\
+          --audit-log-path=/var/log/kube-audit.log \\
+          --audit-policy-file=/etc/kubernetes/audit-policy.conf
         Restart=always
         RestartSec=10s
 
@@ -560,17 +664,26 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
         `--allow-privileged`はflannelなどに必要。
 
-        `--admission-control`には[公式推奨のプラグイン](https://kubernetes.io/docs/admin/admission-controllers/#is-there-a-recommended-set-of-admission-controllers-to-use)に加えて、後述のTLS BootstrappingのためのNodeRestrictionを指定。
+        `--enable-admission-plugins`には[公式推奨のプラグイン](https://kubernetes.io/docs/admin/admission-controllers/#is-there-a-recommended-set-of-admission-controllers-to-use)に加えて、後述のTLS BootstrappingのためのNodeRestrictionを指定。
         また、`--allow-privileged`の効果を軽減するため、DenyEscalatingExecも追加で指定。
         因みに、プラグインを指定する順番はKubernetes 1.10からは気にしなくてよくなった。
 
         `--authorization-mode`にはRBACを指定するのが標準。
         後述のTLS Bootstrappingをするなら、Nodeも要る。
 
+        `--experimental-encryption-provider-config`は[Secretを暗号化する](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/)ための設定。
+        暗号化のキーをローテーションすることもできるけど、それはやってない。
+
         `--tls-min-version`と`--tls-cipher-suites`は[OpenSSLクックブック](https://www.lambdanote.com/blogs/news/openssl-cookbook)と[Goのtlsパッケージドキュメント](https://golang.org/pkg/crypto/tls/#pkg-constants)を参考に設定。
         RSA鍵交換はNG、RC4と3DESもNG、AESの鍵長は128ビット以上、SHA1はNG。
 
         また、(--tls-min-versionをVersionTLS12にする場合?)TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256が必須で、CBCモードがNG。(参照: https://github.com/golang/go/blob/release-branch.go1.9/src/net/http/h2_bundle.go)
+
+        `--anonymous-auth=false`はセキュリティのため設定。
+
+        `--audit-*`は監査ログ設定。
+        100MB3面のログを30日間保持する。
+        ログポリシーは[公式のサンプル](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/)そのまま。
 
         `--feature-gates`でRotateKubeletServerCertificateを有効にして、kubeletのサーバ証明書を自動更新するようにしている。
         因みに、クライアント証明書を自動更新するRotateKubeletClientCertificateはデフォルトで有効。
@@ -604,10 +717,15 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
           --feature-gates=RotateKubeletServerCertificate=true \\
           --kubeconfig=/etc/kubernetes/controller-manager.kubeconfig \\
           --bind-address=0.0.0.0 \\
+          --port=0 \\
+          --secure-port=10257 \\
+          --tls-cert-file=/etc/kubernetes/pki/kube-controller-manager.crt \\
+          --tls-private-key-file=/etc/kubernetes/pki/kube-controller-manager.key \\
           --controllers=*,bootstrapsigner,tokencleaner \\
           --service-account-private-key-file=/etc/kubernetes/pki/sa.key \\
           --allocate-node-cidrs=true \\
           --cluster-cidr=${CLUSTER_CIDR} \\
+          --node-cidr-mask-size=24 \\
           --cluster-name=${CLUSTER_NAME} \\
           --service-cluster-ip-range=${SERVICE_CLUSTER_IP_RANGE} \\
           --cluster-signing-cert-file=/etc/kubernetes/pki/ca.crt \\
@@ -634,6 +752,13 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         bootstrapsignerは後述のcluster-infoにBootstrap tokenで署名するためのコントローラ。
 
         [csrapproving](https://kubernetes.io/docs/admin/kubelet-tls-bootstrapping/#approval-controller)というコントローラがデフォルトで有効になっていて、後述のTLS BootstrapppingやCertificate Rotationの時に作られるCSRを自動で承認する。
+
+        `--cluster-cidr`で指定するネットワークは、後述のネットワークプロバイダの設定と合っている必要がある。
+        `--allocate-node-cidrs`は`--cluster-cidr`の前提。
+
+        `--node-cidr-mask-size`は、ノードに使うネットワークのサイズを指定するオプションで、`--cluster-cidr`で指定したネットワークの一部になるようにする。
+        `--cluster-cidr`で`/16`を指定した場合、半分の`/24`にするのが普通。
+        つまり256ノードまで作れて、それぞれ256個のPodをホストできるような構成。
 
         `--experimental-cluster-signing-duration`は、Certificate Rotationのための設定で、自動発行する証明書の期限を1年に指定している。
 
@@ -886,7 +1011,8 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
           --pod-infra-container-image=${PAUSE_IMAGE} \\
           --tls-min-version=VersionTLS12 \\
           --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 \\
-          --allow-privileged=true
+          --allow-privileged=true \\
+          --anonymous-auth=false
         Restart=always
         RestartSec=10s
 
@@ -911,6 +1037,10 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
         `--pod-manifest-path`で指定したディレクトリはkubeletに定期的にスキャンされ、そこに置いたKubernetesマニフェスト(ドットで始まるもの以外)が読まれる。
         (参照: [Static Pods](https://kubernetes.io/docs/tasks/administer-cluster/static-pod/))
+
+        `--anonymous-auth=false`は[セキュリティのために推奨されたオプション](https://kubernetes.io/docs/admin/kubelet-authentication-authorization/)。
+
+        `--authorization-mode=Webhook`も[セキュリティのために推奨されたオプション](https://kubernetes.io/docs/admin/kubelet-authentication-authorization/)で、認可処理をkube-apiserverに移譲する設定。
 
         本当は[Kubelet Configファイル](https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/)を使ったほうがいいみたいなので、いずれそれに対応する。
         (対応した: 「[Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える](https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/)」)
@@ -1071,6 +1201,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         systemdのユニットファイルを書いてサービス化。
 
         ```sh
+        # CLUSTER_CIDR="10.244.0.0/16"
         # cat > /etc/systemd/system/kube-proxy.service << EOF
         [Unit]
         Description=Kubernetes Kube Proxy
@@ -1081,6 +1212,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         ExecStart=/usr/bin/kube-proxy \\
           --feature-gates=RotateKubeletServerCertificate=true \\
           --bind-address 0.0.0.0 \\
+          --cluster-cidr=${CLUSTER_CIDR} \\
           --kubeconfig=/etc/kubernetes/kube-proxy.kubeconfig \\
           --v=2
         Restart=always
@@ -1100,7 +1232,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # systemctl status kube-proxy -l
         ```
 
-    2. オーバレイネットワーク (flannel)
+    2. ネットワークプロバイダ (flannel)
 
         [flannelのドキュメント](https://github.com/coreos/flannel/blob/master/Documentation/kubernetes.md)を参考に。
 
