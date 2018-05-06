@@ -617,232 +617,193 @@ EOF
 
 <p>systemdのユニットファイルを書いてサービス化。</p>
 
-<p>```sh</p>
-
-<h1 id="master-ip-192-168-171-200">MASTER_IP=192.168.171.200</h1>
-
-<h1 id="service-cluster-ip-range-10-0-0-0-16">SERVICE_CLUSTER_IP_RANGE=&ldquo;10.0.0.0/16&rdquo;</h1>
-
-<h1 id="secret-enc-key-echo-n-your-32-bytes-secure-private-key-base64">SECRET_ENC_KEY=$(echo -n &lsquo;your_32_bytes_secure_private_key&rsquo; | base64)</h1>
-
-<h1 id="cat-etc-kubernetes-encryption-conf-eof">cat &gt; /etc/kubernetes/encryption.conf &lt;&lt; EOF</h1>
-
-<p>kind: EncryptionConfig
-apiVersion: v1
-resources:</p>
-
 <ul>
-<li><p>resources:</p>
-
-<ul>
-<li>secrets
-providers:</li>
-<li>aescbc:
-keys:
-
-<ul>
-<li>name: key1
-secret: ${SECRET_ENC_KEY}</li>
-</ul></li>
-
-<li><p>identity: {}
-EOF</p>
-
-<h1 id="cat-etc-kubernetes-audit-policy-conf-eof">cat &gt; /etc/kubernetes/audit-policy.conf &lt;&lt; EOF</h1>
-
-<p>apiVersion: audit.k8s.io/v1beta1
-kind: Policy</p>
-
-<h1 id="don-t-generate-audit-events-for-all-requests-in-requestreceived-stage">Don&rsquo;t generate audit events for all requests in RequestReceived stage.</h1>
-
-<p>omitStages:</p></li>
-</ul></li>
-
-<li><p>&ldquo;RequestReceived&rdquo;
-rules:</p>
-
-<h1 id="log-pod-changes-at-requestresponse-level">Log pod changes at RequestResponse level</h1></li>
-
-<li><p>level: RequestResponse
-resources:</p>
-
-<ul>
-<li><p>group: &ldquo;&rdquo;</p>
-
-<h1 id="resource-pods-doesn-t-match-requests-to-any-subresource-of-pods">Resource &ldquo;pods&rdquo; doesn&rsquo;t match requests to any subresource of pods,</h1>
-
-<h1 id="which-is-consistent-with-the-rbac-policy">which is consistent with the RBAC policy.</h1>
-
-<p>resources: [&ldquo;pods&rdquo;]</p>
-
-<h1 id="log-pods-log-pods-status-at-metadata-level">Log &ldquo;pods/log&rdquo;, &ldquo;pods/status&rdquo; at Metadata level</h1></li>
-</ul></li>
-
-<li><p>level: Metadata
-resources:</p>
-
-<ul>
-<li>group: &ldquo;&rdquo;
-resources: [&ldquo;pods/log&rdquo;, &ldquo;pods/status&rdquo;]</li>
-</ul></li>
+<li>d</li>
 </ul>
 
-<p># Don&rsquo;t log requests to a configmap called &ldquo;controller-leader&rdquo;
-  - level: None
+<pre><code class="language-sh"># MASTER_IP=192.168.171.200
+# SERVICE_CLUSTER_IP_RANGE=&quot;10.0.0.0/16&quot;
+# SECRET_ENC_KEY=$(echo -n 'your_32_bytes_secure_private_key' | base64)
+# cat &gt; /etc/kubernetes/encryption.conf &lt;&lt; EOF
+kind: EncryptionConfig
+apiVersion: v1
+resources:
+  - resources:
+    - secrets
+    providers:
+    - aescbc:
+        keys:
+        - name: key1
+          secret: ${SECRET_ENC_KEY}
+    - identity: {}
+EOF
+# cat &gt; /etc/kubernetes/audit-policy.conf &lt;&lt; EOF
+apiVersion: audit.k8s.io/v1beta1
+kind: Policy
+# Don't generate audit events for all requests in RequestReceived stage.
+omitStages:
+  - &quot;RequestReceived&quot;
+rules:
+  # Log pod changes at RequestResponse level
+  - level: RequestResponse
     resources:
-    - group: &ldquo;&rdquo;
-      resources: [&ldquo;configmaps&rdquo;]
-      resourceNames: [&ldquo;controller-leader&rdquo;]</p>
-
-<p># Don&rsquo;t log watch requests by the &ldquo;system:kube-proxy&rdquo; on endpoints or services
-  - level: None
-    users: [&ldquo;system:kube-proxy&rdquo;]
-    verbs: [&ldquo;watch&rdquo;]
-    resources:
-    - group: &ldquo;&rdquo; # core API group
-      resources: [&ldquo;endpoints&rdquo;, &ldquo;services&rdquo;]</p>
-
-<p># Don&rsquo;t log authenticated requests to certain non-resource URL paths.
-  - level: None
-    userGroups: [&ldquo;system:authenticated&rdquo;]
-    nonResourceURLs:
-    - &ldquo;/api*&rdquo; # Wildcard matching.
-    - &ldquo;/version&rdquo;</p>
-
-<p># Log the request body of configmap changes in kube-system.
-  - level: Request
-    resources:
-    - group: &ldquo;&rdquo; # core API group
-      resources: [&ldquo;configmaps&rdquo;]
-    # This rule only applies to resources in the &ldquo;kube-system&rdquo; namespace.
-    # The empty string &ldquo;&rdquo; can be used to select non-namespaced resources.
-    namespaces: [&ldquo;kube-system&rdquo;]</p>
-
-<p># Log configmap and secret changes in all other namespaces at the Metadata level.
+    - group: &quot;&quot;
+      # Resource &quot;pods&quot; doesn't match requests to any subresource of pods,
+      # which is consistent with the RBAC policy.
+      resources: [&quot;pods&quot;]
+  # Log &quot;pods/log&quot;, &quot;pods/status&quot; at Metadata level
   - level: Metadata
     resources:
-    - group: &ldquo;&rdquo; # core API group
-      resources: [&ldquo;secrets&rdquo;, &ldquo;configmaps&rdquo;]</p>
+    - group: &quot;&quot;
+      resources: [&quot;pods/log&quot;, &quot;pods/status&quot;]
 
-<p># Log all other resources in core and extensions at the Request level.
+
+  # Don't log requests to a configmap called &quot;controller-leader&quot;
+  - level: None
+    resources:
+    - group: &quot;&quot;
+      resources: [&quot;configmaps&quot;]
+      resourceNames: [&quot;controller-leader&quot;]
+
+
+  # Don't log watch requests by the &quot;system:kube-proxy&quot; on endpoints or services
+  - level: None
+    users: [&quot;system:kube-proxy&quot;]
+    verbs: [&quot;watch&quot;]
+    resources:
+    - group: &quot;&quot; # core API group
+      resources: [&quot;endpoints&quot;, &quot;services&quot;]
+
+
+  # Don't log authenticated requests to certain non-resource URL paths.
+  - level: None
+    userGroups: [&quot;system:authenticated&quot;]
+    nonResourceURLs:
+    - &quot;/api*&quot; # Wildcard matching.
+    - &quot;/version&quot;
+
+
+  # Log the request body of configmap changes in kube-system.
   - level: Request
     resources:
-    - group: &ldquo;&rdquo; # core API group
-    - group: &ldquo;extensions&rdquo; # Version of group should NOT be included.</p>
+    - group: &quot;&quot; # core API group
+      resources: [&quot;configmaps&quot;]
+    # This rule only applies to resources in the &quot;kube-system&quot; namespace.
+    # The empty string &quot;&quot; can be used to select non-namespaced resources.
+    namespaces: [&quot;kube-system&quot;]
 
-<p># A catch-all rule to log all other requests at the Metadata level.
+
+  # Log configmap and secret changes in all other namespaces at the Metadata level.
+  - level: Metadata
+    resources:
+    - group: &quot;&quot; # core API group
+      resources: [&quot;secrets&quot;, &quot;configmaps&quot;]
+
+
+  # Log all other resources in core and extensions at the Request level.
+  - level: Request
+    resources:
+    - group: &quot;&quot; # core API group
+    - group: &quot;extensions&quot; # Version of group should NOT be included.
+
+
+  # A catch-all rule to log all other requests at the Metadata level.
   - level: Metadata
     # Long-running requests like watches that fall under this rule will not
     # generate an audit event in RequestReceived.
     omitStages:
-      - &ldquo;RequestReceived&rdquo;
-EOF</p>
-
-<h1 id="cat-etc-systemd-system-kube-apiserver-service-eof">cat &gt; /etc/systemd/system/kube-apiserver.service &lt;&lt; EOF</h1>
-
-<p>[Unit]
+      - &quot;RequestReceived&quot;
+EOF
+# cat &gt; /etc/systemd/system/kube-apiserver.service &lt;&lt; EOF
+[Unit]
 Description=Kubernetes API Server
-Documentation=<a href="https://github.com/kubernetes/kubernetes">https://github.com/kubernetes/kubernetes</a>
-After=network.target</p>
+Documentation=https://github.com/kubernetes/kubernetes
+After=network.target
 
-<p>[Service]
-ExecStart=/usr/bin/kube-apiserver \
-  &ndash;feature-gates=RotateKubeletServerCertificate=true \
-  &ndash;apiserver-count=1 \
-  &ndash;allow-privileged=true \
-  &ndash;enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,NodeRestriction,DenyEscalatingExec \
-  &ndash;authorization-mode=Node,RBAC \
-  &ndash;bind-address=0.0.0.0 \
-  &ndash;advertise-address=${MASTER_IP} \
-  &ndash;client-ca-file=/etc/kubernetes/pki/ca.crt \
-  &ndash;etcd-cafile=/etc/kubernetes/pki/etcd-ca.crt \
-  &ndash;etcd-certfile=/etc/kubernetes/pki/etcd.crt \
-  &ndash;etcd-keyfile=/etc/kubernetes/pki/etcd.key \
-  &ndash;etcd-servers=https://${MASTER_IP}:2379 \
-  &ndash;service-account-key-file=/etc/kubernetes/pki/sa.pub \
-  &ndash;service-cluster-ip-range=${SERVICE_CLUSTER_IP_RANGE} \
-  &ndash;tls-cert-file=/etc/kubernetes/pki/kube-apiserver.crt \
-  &ndash;tls-private-key-file=/etc/kubernetes/pki/kube-apiserver.key \
-  &ndash;kubelet-certificate-authority=/etc/kubernetes/pki/ca.crt \
-  &ndash;enable-bootstrap-token-auth=true \
-  &ndash;kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt \
-  &ndash;kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key \
-  &ndash;kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname \
-  &ndash;requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt \
-  &ndash;requestheader-username-headers=X-Remote-User \
-  &ndash;requestheader-group-headers=X-Remote-Group \
-  &ndash;requestheader-allowed-names=front-proxy-client \
-  &ndash;requestheader-extra-headers-prefix=X-Remote-Extra- \
-  &ndash;experimental-encryption-provider-config=/etc/kubernetes/encryption.conf \
-  &ndash;v=2 \
-  &ndash;tls-min-version=VersionTLS12 \
-  &ndash;tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 \
-  &ndash;anonymous-auth=false \
-  &ndash;audit-log-format=json \
-  &ndash;audit-log-maxage=30 \
-  &ndash;audit-log-maxbackup=3 \
-  &ndash;audit-log-maxsize=100 \
-  &ndash;audit-log-path=/var/log/kube-audit.log \
-  &ndash;audit-policy-file=/etc/kubernetes/audit-policy.conf
+
+[Service]
+ExecStart=/usr/bin/kube-apiserver \\
+  --feature-gates=RotateKubeletServerCertificate=true \\
+  --apiserver-count=1 \\
+  --allow-privileged=true \\
+  --enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,NodeRestriction,DenyEscalatingExec \\
+  --authorization-mode=Node,RBAC \\
+  --bind-address=0.0.0.0 \\
+  --advertise-address=${MASTER_IP} \\
+  --client-ca-file=/etc/kubernetes/pki/ca.crt \\
+  --etcd-cafile=/etc/kubernetes/pki/etcd-ca.crt \\
+  --etcd-certfile=/etc/kubernetes/pki/etcd.crt \\
+  --etcd-keyfile=/etc/kubernetes/pki/etcd.key \\
+  --etcd-servers=https://${MASTER_IP}:2379 \\
+  --service-account-key-file=/etc/kubernetes/pki/sa.pub \\
+  --service-cluster-ip-range=${SERVICE_CLUSTER_IP_RANGE} \\
+  --tls-cert-file=/etc/kubernetes/pki/kube-apiserver.crt \\
+  --tls-private-key-file=/etc/kubernetes/pki/kube-apiserver.key \\
+  --kubelet-certificate-authority=/etc/kubernetes/pki/ca.crt \\
+  --enable-bootstrap-token-auth=true \\
+  --kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt \\
+  --kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key \\
+  --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname \\
+  --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt \\
+  --requestheader-username-headers=X-Remote-User \\
+  --requestheader-group-headers=X-Remote-Group \\
+  --requestheader-allowed-names=front-proxy-client \\
+  --requestheader-extra-headers-prefix=X-Remote-Extra- \\
+  --experimental-encryption-provider-config=/etc/kubernetes/encryption.conf \\
+  --v=2 \\
+  --tls-min-version=VersionTLS12 \\
+  --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 \\
+  --anonymous-auth=false \\
+  --audit-log-format=json \\
+  --audit-log-maxage=30 \\
+  --audit-log-maxbackup=3 \\
+  --audit-log-maxsize=100 \\
+  --audit-log-path=/var/log/kube-audit.log \\
+  --audit-policy-file=/etc/kubernetes/audit-policy.conf
 Restart=always
-RestartSec=10s</p>
+RestartSec=10s
 
-<p>[Install]
+
+[Install]
 WantedBy=multi-user.target
-EOF</p>
+EOF
+# systemctl daemon-reload
+# systemctl enable kube-apiserver
+# systemctl start kube-apiserver
+</code></pre>
 
-<h1 id="systemctl-daemon-reload">systemctl daemon-reload</h1>
+<p><code>--allow-privileged</code>はflannelなどに必要。</p>
 
-<h1 id="systemctl-enable-kube-apiserver">systemctl enable kube-apiserver</h1>
+<p><code>--enable-admission-plugins</code>には<a href="https://kubernetes.io/docs/admin/admission-controllers/#is-there-a-recommended-set-of-admission-controllers-to-use">公式推奨のプラグイン</a>に加えて、後述のTLS BootstrappingのためのNodeRestrictionを指定。
+また、<code>--allow-privileged</code>の効果を軽減するため、DenyEscalatingExecも追加で指定。
+因みに、プラグインを指定する順番はKubernetes 1.10からは気にしなくてよくなった。</p>
 
-<h1 id="systemctl-start-kube-apiserver">systemctl start kube-apiserver</h1>
+<p><code>--authorization-mode</code>にはRBACを指定するのが標準。
+後述のTLS Bootstrappingをするなら、Nodeも要る。</p>
 
-<pre><code>
+<p><code>--experimental-encryption-provider-config</code>は<a href="https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/">Secretを暗号化する</a>ための設定。
+暗号化のキーをローテーションすることもできるけど、それはやってない。</p>
 
-`--allow-privileged`はflannelなどに必要。
+<p><code>--tls-min-version</code>と<code>--tls-cipher-suites</code>は<a href="https://www.lambdanote.com/blogs/news/openssl-cookbook">OpenSSLクックブック</a>と<a href="https://golang.org/pkg/crypto/tls/#pkg-constants">Goのtlsパッケージドキュメント</a>を参考に設定。
+RSA鍵交換はNG、RC4と3DESもNG、AESの鍵長は128ビット以上、SHA1はNG。</p>
 
+<p>また、(&ndash;tls-min-versionをVersionTLS12にする場合?)TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256が必須で、CBCモードがNG。(参照: <a href="https://github.com/golang/go/blob/release-branch.go1.9/src/net/http/h2_bundle.go">https://github.com/golang/go/blob/release-branch.go1.9/src/net/http/h2_bundle.go</a>)</p>
 
-`--enable-admission-plugins`には[公式推奨のプラグイン](https://kubernetes.io/docs/admin/admission-controllers/#is-there-a-recommended-set-of-admission-controllers-to-use)に加えて、後述のTLS BootstrappingのためのNodeRestrictionを指定。
-また、`--allow-privileged`の効果を軽減するため、DenyEscalatingExecも追加で指定。
-因みに、プラグインを指定する順番はKubernetes 1.10からは気にしなくてよくなった。
+<p><code>--anonymous-auth=false</code>はセキュリティのため設定。</p>
 
-
-`--authorization-mode`にはRBACを指定するのが標準。
-後述のTLS Bootstrappingをするなら、Nodeも要る。
-
-
-`--experimental-encryption-provider-config`は[Secretを暗号化する](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/)ための設定。
-暗号化のキーをローテーションすることもできるけど、それはやってない。
-
-
-`--tls-min-version`と`--tls-cipher-suites`は[OpenSSLクックブック](https://www.lambdanote.com/blogs/news/openssl-cookbook)と[Goのtlsパッケージドキュメント](https://golang.org/pkg/crypto/tls/#pkg-constants)を参考に設定。
-RSA鍵交換はNG、RC4と3DESもNG、AESの鍵長は128ビット以上、SHA1はNG。
-
-
-また、(--tls-min-versionをVersionTLS12にする場合?)TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256が必須で、CBCモードがNG。(参照: https://github.com/golang/go/blob/release-branch.go1.9/src/net/http/h2_bundle.go)
-
-
-`--anonymous-auth=false`はセキュリティのため設定。
-
-
-`--audit-*`は監査ログ設定。
+<p><code>--audit-*</code>は監査ログ設定。
 100MB3面のログを30日間保持する。
-ログポリシーは[公式のサンプル](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/)そのまま。
+ログポリシーは<a href="https://kubernetes.io/docs/tasks/debug-application-cluster/audit/">公式のサンプル</a>そのまま。</p>
 
-
-`--feature-gates`でRotateKubeletServerCertificateを有効にして、kubeletのサーバ証明書を自動更新するようにしている。
+<p><code>--feature-gates</code>でRotateKubeletServerCertificateを有効にして、kubeletのサーバ証明書を自動更新するようにしている。
 因みに、クライアント証明書を自動更新するRotateKubeletClientCertificateはデフォルトで有効。
-これらがCertificate Rotationと呼ばれる機能。
+これらがCertificate Rotationと呼ばれる機能。</p>
 
+<p><code>--feature-gates</code>は全Kubernetesコンポーネントで同じ値を指定するのがよさそう。</p>
 
-`--feature-gates`は全Kubernetesコンポーネントで同じ値を指定するのがよさそう。
+<p>確認。</p>
 
-
-確認。
-
-
-```sh
-# systemctl status kube-apiserver -l
+<pre><code class="language-sh"># systemctl status kube-apiserver -l
 # journalctl -u kube-apiserver
 </code></pre></li>
 

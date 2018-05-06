@@ -519,6 +519,8 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
         systemdのユニットファイルを書いてサービス化。
 
+        * d
+
         ```sh
         # MASTER_IP=192.168.171.200
         # SERVICE_CLUSTER_IP_RANGE="10.0.0.0/16"
