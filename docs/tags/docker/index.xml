@@ -689,18 +689,6 @@ EOF
 # openssl req -new -sha256 -key kube-apiserver.key -subj &amp;quot;/CN=kube-apiserver&amp;quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-apiserver.crt -days $APISERVER_DAYS -extensions v3_req_apiserver -extfile ./openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;kube-controller-managerサーバ証明書生成&lt;/p&gt;
-
-&lt;p&gt;kube-controller-managerのサーバ証明書。
-kube-controller-managerにアクセスするのって誰だ?&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
-# CONTROLLER_MANAGER_DAYS=5475
-# openssl ecparam -name secp521r1 -genkey -noout -out kube-controller-manager.key
-# chmod 0600 kube-controller-manager.key
-# openssl req -new -sha256 -key kube-controller-manager.key -subj &amp;quot;/CN=kube-controller-manager&amp;quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-controller-manager.crt -days $CONTROLLER_MANAGER_DAYS -extensions v3_req_server -extfile ./openssl.cnf
-&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
-
 &lt;li&gt;&lt;p&gt;kube-apiserver-kubelet証明書生成&lt;/p&gt;
 
 &lt;p&gt;kube-apiserverが&lt;a href=&#34;https://kubernetes.io/docs/concepts/architecture/master-node-communication/#apiserver-kubelet&#34;&gt;kubeletのAPIにアクセス&lt;/a&gt;するときのクライアント証明書。&lt;/p&gt;
@@ -971,6 +959,8 @@ After=network.target
 
 
 [Service]
+Type=notify
+NotifyAccess=all
 ExecStart=/usr/bin/etcd \\
   --name default \\
   --listen-client-urls https://${MASTER_IP}:2379,http://127.0.0.1:2379 \\
@@ -1224,10 +1214,6 @@ ExecStart=/usr/bin/kube-controller-manager \\
   --feature-gates=RotateKubeletServerCertificate=true \\
   --kubeconfig=/etc/kubernetes/controller-manager.kubeconfig \\
   --bind-address=0.0.0.0 \\
-  --port=0 \\
-  --secure-port=10257 \\
-  --tls-cert-file=/etc/kubernetes/pki/kube-controller-manager.crt \\
-  --tls-private-key-file=/etc/kubernetes/pki/kube-controller-manager.key \\
   --controllers=*,bootstrapsigner,tokencleaner \\
   --service-account-private-key-file=/etc/kubernetes/pki/sa.key \\
   --allocate-node-cidrs=true \\
@@ -1239,8 +1225,6 @@ ExecStart=/usr/bin/kube-controller-manager \\
   --cluster-signing-key-file=/etc/kubernetes/pki/ca.key \\
   --root-ca-file=/etc/kubernetes/pki/ca.crt \\
   --use-service-account-credentials=true \\
-  --tls-min-version=VersionTLS12 \\
-  --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 \\
   --v=2 \\
   --experimental-cluster-signing-duration=8760h0m0s
 Restart=always
@@ -1271,6 +1255,8 @@ EOF
 &lt;p&gt;&lt;code&gt;--experimental-cluster-signing-duration&lt;/code&gt;は、Certificate Rotationのための設定で、自動発行する証明書の期限を1年に指定している。&lt;/p&gt;
 
 &lt;p&gt;&lt;code&gt;--use-service-account-credentials&lt;/code&gt;をつけると、&lt;a href=&#34;https://kubernetes.io/docs/admin/authorization/rbac/#controller-roles&#34;&gt;各コントローラが別々のService Accountで動く&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;--secure-port&lt;/code&gt;や&lt;code&gt;--tls-*&lt;/code&gt;は、ヘルスチェックAPIをHTTPSにするだけで意味が無いし、設定すると&lt;code&gt;kubectl get componentstatuses&lt;/code&gt;でエラーが出るようになるので、設定しないほうがいい。&lt;/p&gt;
 
 &lt;p&gt;確認。&lt;/p&gt;
 

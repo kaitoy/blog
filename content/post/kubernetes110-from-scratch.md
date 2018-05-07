@@ -191,20 +191,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # openssl req -new -sha256 -key kube-apiserver.key -subj "/CN=kube-apiserver" | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-apiserver.crt -days $APISERVER_DAYS -extensions v3_req_apiserver -extfile ./openssl.cnf
         ```
 
-    4. kube-controller-managerサーバ証明書生成
-
-        kube-controller-managerのサーバ証明書。
-        kube-controller-managerにアクセスするのって誰だ?
-
-        ```sh
-        # cd /etc/kubernetes/pki
-        # CONTROLLER_MANAGER_DAYS=5475
-        # openssl ecparam -name secp521r1 -genkey -noout -out kube-controller-manager.key
-        # chmod 0600 kube-controller-manager.key
-        # openssl req -new -sha256 -key kube-controller-manager.key -subj "/CN=kube-controller-manager" | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-controller-manager.crt -days $CONTROLLER_MANAGER_DAYS -extensions v3_req_server -extfile ./openssl.cnf
-        ```
-
-    5. kube-apiserver-kubelet証明書生成
+    4. kube-apiserver-kubelet証明書生成
 
         kube-apiserverが[kubeletのAPIにアクセス](https://kubernetes.io/docs/concepts/architecture/master-node-communication/#apiserver-kubelet)するときのクライアント証明書。
 
@@ -476,6 +463,8 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
     After=network.target
 
     [Service]
+    Type=notify
+    NotifyAccess=all
     ExecStart=/usr/bin/etcd \\
       --name default \\
       --listen-client-urls https://${MASTER_IP}:2379,http://127.0.0.1:2379 \\
@@ -719,10 +708,6 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
           --feature-gates=RotateKubeletServerCertificate=true \\
           --kubeconfig=/etc/kubernetes/controller-manager.kubeconfig \\
           --bind-address=0.0.0.0 \\
-          --port=0 \\
-          --secure-port=10257 \\
-          --tls-cert-file=/etc/kubernetes/pki/kube-controller-manager.crt \\
-          --tls-private-key-file=/etc/kubernetes/pki/kube-controller-manager.key \\
           --controllers=*,bootstrapsigner,tokencleaner \\
           --service-account-private-key-file=/etc/kubernetes/pki/sa.key \\
           --allocate-node-cidrs=true \\
@@ -734,8 +719,6 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
           --cluster-signing-key-file=/etc/kubernetes/pki/ca.key \\
           --root-ca-file=/etc/kubernetes/pki/ca.crt \\
           --use-service-account-credentials=true \\
-          --tls-min-version=VersionTLS12 \\
-          --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 \\
           --v=2 \\
           --experimental-cluster-signing-duration=8760h0m0s
         Restart=always
@@ -765,6 +748,8 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         `--experimental-cluster-signing-duration`は、Certificate Rotationのための設定で、自動発行する証明書の期限を1年に指定している。
 
         `--use-service-account-credentials`をつけると、[各コントローラが別々のService Accountで動く](https://kubernetes.io/docs/admin/authorization/rbac/#controller-roles)。
+
+        `--secure-port`や`--tls-*`は、ヘルスチェックAPIをHTTPSにするだけで意味が無いし、設定すると`kubectl get componentstatuses`でエラーが出るようになるので、設定しないほうがいい。
 
         確認。
 
