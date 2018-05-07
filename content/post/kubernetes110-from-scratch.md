@@ -1025,6 +1025,9 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         `--pod-manifest-path`で指定したディレクトリはkubeletに定期的にスキャンされ、そこに置いたKubernetesマニフェスト(ドットで始まるもの以外)が読まれる。
         (参照: [Static Pods](https://kubernetes.io/docs/tasks/administer-cluster/static-pod/))
 
+        `--pod-cidr`は指定しない。
+        これはkube-controller-managerに渡した`--cluster-cidr`と`--node-cidr-mask-size`から計算されるので。
+
         `--anonymous-auth=false`は[セキュリティのために推奨されたオプション](https://kubernetes.io/docs/admin/kubelet-authentication-authorization/)。
 
         `--authorization-mode=Webhook`も[セキュリティのために推奨されたオプション](https://kubernetes.io/docs/admin/kubelet-authentication-authorization/)で、認可処理をkube-apiserverに移譲する設定。
