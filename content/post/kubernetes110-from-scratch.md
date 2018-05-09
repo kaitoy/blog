@@ -91,11 +91,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
     ```sh
     # modprobe br_netfilter
-    # cat > /etc/sysconfig/modules/br_netfilter.modules << EOF
-    #!/bin/sh
-    /sbin/modprobe br_netfilter > /dev/null 2>&1
-    EOF
-    # chmod 755 /etc/sysconfig/modules/br_netfilter.modules
+    # echo "br_netfilter" > /etc/modules-load.d/br_netfilter.conf
     ```
 
     Bridge netfilterとIP forwardingを有効化する。
