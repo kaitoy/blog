@@ -130,10 +130,6 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         [ v3_ca ]
         basicConstraints = critical, CA:TRUE
         keyUsage = critical, digitalSignature, keyEncipherment, keyCertSign
-        [ v3_req_server ]
-        basicConstraints = CA:FALSE
-        keyUsage = critical, digitalSignature, keyEncipherment
-        extendedKeyUsage = serverAuth
         [ v3_req_client ]
         basicConstraints = CA:FALSE
         keyUsage = critical, digitalSignature, keyEncipherment
