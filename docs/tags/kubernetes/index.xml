@@ -69,7 +69,6 @@ Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --allow-privileged has been depre
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# DNS_SERVER_IP=10.0.0.10
 # DNS_DOMAIN=&amp;quot;cluster.local&amp;quot;
-# mkdir -p /etc/kubernetes/manifests
 # cat &amp;gt; /etc/kubernetes/kubelet.conf &amp;lt;&amp;lt; EOF
 kind: KubeletConfiguration
 apiVersion: kubelet.config.k8s.io/v1beta1
@@ -131,6 +130,8 @@ After=docker.service
 Requires=docker.service
 
 [Service]
+User=root
+Group=root
 ExecStart=/usr/bin/kubelet \\
   --allow-privileged=true \\
   --config=/etc/kubernetes/kubelet.conf \\
@@ -167,8 +168,7 @@ EOF
 &lt;p&gt;で、privilegedななんでもできるPodSecurityPolicyと、それを使うロールを作成する。
 因みにPodSecurityPolicyは名前空間に属さない。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
-# kubectl create -f- &amp;lt;&amp;lt;EOF
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# kubectl create -f- &amp;lt;&amp;lt;EOF
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
@@ -211,8 +211,7 @@ EOF
 
 &lt;p&gt;あと、CoreDNS用のPodSecurityPolicyとロールを作ってバインドする。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
-# kubectl apply -f- &amp;lt;&amp;lt;EOF
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# kubectl apply -f- &amp;lt;&amp;lt;EOF
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
@@ -273,6 +272,8 @@ Documentation=https://github.com/kubernetes/kubernetes
 After=network.target
 
 [Service]
+User=root
+Group=root
 ExecStart=/usr/bin/kube-proxy \\
   --config=/etc/kubernetes/kube-proxy.conf \\
   --v=2
@@ -298,7 +299,7 @@ featureGates:
   RotateKubeletServerCertificate: true
 healthzBindAddress: &amp;quot;0.0.0.0&amp;quot;
 clientConnection:
-  kubeconfig: &amp;quot;/etc/kubernetes/scheduler.kubeconfig&amp;quot;
+  kubeconfig: &amp;quot;/etc/kubernetes/kube-scheduler.kubeconfig&amp;quot;
 EOF
 # cat &amp;gt; /etc/systemd/system/kube-scheduler.service &amp;lt;&amp;lt; EOF
 [Unit]
@@ -307,6 +308,8 @@ Documentation=https://github.com/kubernetes/kubernetes
 After=network.target
 
 [Service]
+User=kubernetes
+Group=kubernetes
 ExecStart=/usr/bin/kube-scheduler \\
   --config=/etc/kubernetes/kube-scheduler.conf \\
   --v=2
@@ -487,6 +490,7 @@ EOF
 
 &lt;ul&gt;
 &lt;li&gt;&lt;a href=&#34;https://nixaid.com/deploying-kubernetes-cluster-from-scratch/&#34;&gt;https://nixaid.com/deploying-kubernetes-cluster-from-scratch/&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/kubernetes/kubeadm/blob/master/docs/design/design_v1.10.md&#34;&gt;https://github.com/kubernetes/kubeadm/blob/master/docs/design/design_v1.10.md&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/getting-started-guides/scratch/&#34;&gt;https://kubernetes.io/docs/getting-started-guides/scratch/&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/reference/setup-tools/kubeadm/implementation-details/&#34;&gt;https://kubernetes.io/docs/reference/setup-tools/kubeadm/implementation-details/&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&#34;https://ulam.io/blog/kubernetes-scratch/&#34;&gt;https://ulam.io/blog/kubernetes-scratch/&lt;/a&gt;&lt;/li&gt;
@@ -530,10 +534,26 @@ EOF
 
 &lt;ul&gt;
 &lt;li&gt;単一ノード&lt;/li&gt;
-&lt;li&gt;全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e. 非コンテナ)&lt;/li&gt;
-&lt;li&gt;コンポーネント間通信とkubectlの通信をTLSで暗号化&lt;/li&gt;
+&lt;li&gt;全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e. 非コンテナ)
+
+&lt;ul&gt;
+&lt;li&gt;kubeletとkube-proxy以外は非rootユーザ&lt;/li&gt;
+&lt;li&gt;kubeletは&lt;a href=&#34;https://github.com/kubernetes/kubernetes/blob/v1.10.2/cmd/kubelet/app/server.go#L388&#34;&gt;現時点でrootで動かす必要がある&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;kube-proxyはiptableいじったりする都合上rootで動かす必要があるっぽい。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;コンポーネント間通信とkubectlの通信をTLSで暗号化
+
+&lt;ul&gt;
+&lt;li&gt;TLS 1.2&lt;/li&gt;
+&lt;li&gt;セキュアなCipher Suites&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
 &lt;li&gt;コンポーネント間通信とkubectlの通信の認証は&lt;a href=&#34;https://kubernetes.io/docs/admin/authentication/#x509-client-certs&#34;&gt;x509クライアント証明書&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;TLS BootstrappingにはBootstrap token使用。&lt;/li&gt;
+&lt;li&gt;TLS Bootstrapping
+
+&lt;ul&gt;
+&lt;li&gt;Bootstrap token使用&lt;/li&gt;
+&lt;li&gt;CSR自動承認&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/tasks/tls/certificate-rotation/&#34;&gt;Certificate Rotation&lt;/a&gt;有効&lt;/li&gt;
 &lt;li&gt;etcd 3.1.12&lt;/li&gt;
 &lt;li&gt;&lt;a href=&#34;https://github.com/coreos/flannel&#34;&gt;flannel&lt;/a&gt; 0.10.0&lt;/li&gt;
@@ -620,10 +640,9 @@ EOF
 &lt;li&gt;&lt;p&gt;opensslの設定作成&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# mkdir -p /etc/kubernetes/pki
-# cd /etc/kubernetes/pki
 # K8S_SERVICE_IP=10.0.0.1
 # MASTER_IP=192.168.171.200
-# cat &amp;gt; openssl.cnf &amp;lt;&amp;lt; EOF
+# cat &amp;gt; /etc/kubernetes/pki/openssl.cnf &amp;lt;&amp;lt; EOF
 [ req ]
 distinguished_name = req_distinguished_name
 [req_distinguished_name]
@@ -642,7 +661,7 @@ subjectAltName = @alt_names_cluster
 [ v3_req_etcd ]
 basicConstraints = CA:FALSE
 keyUsage = critical, digitalSignature, keyEncipherment
-extendedKeyUsage = serverAuth, clientAuth
+extendedKeyUsage = serverAuth
 subjectAltName = @alt_names_etcd
 [ alt_names_cluster ]
 DNS.1 = kubernetes
@@ -661,141 +680,169 @@ EOF
 &lt;li&gt;&lt;p&gt;Kubernetes CA証明書生成&lt;/p&gt;
 
 &lt;p&gt;以降で生成する証明書に署名するための証明書。
-後述のTLS Bootstrappingでの証明書生成にも使われるはず。&lt;/p&gt;
+後述のTLS Bootstrappingでの証明書生成にも使う。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# groupadd -r kubernetes
+# adduser -r -g kubernetes -M -s /sbin/nologin kubernetes
 # CA_DAYS=5475
-# openssl ecparam -name secp521r1 -genkey -noout -out ca.key
-# chmod 0600 ca.key
-# openssl req -x509 -new -sha256 -nodes -key ca.key -days $CA_DAYS -out ca.crt -subj &amp;quot;/CN=kubernetes-ca&amp;quot;  -extensions v3_ca -config ./openssl.cnf
+# openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/ca.key
+# chown kubernetes:kubernetes /etc/kubernetes/pki/ca.key
+# chmod 0600 /etc/kubernetes/pki/ca.key
+# openssl req -x509 -new -sha256 -nodes -key /etc/kubernetes/pki/ca.key -days $CA_DAYS -out /etc/kubernetes/pki/ca.crt -subj &amp;quot;/CN=kubernetes-ca&amp;quot;  -extensions v3_ca -config /etc/kubernetes/pki/openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;kube-apiserver証明書生成&lt;/p&gt;
 
 &lt;p&gt;kube-apiserverのサーバ証明書。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
-# APISERVER_DAYS=5475
-# openssl ecparam -name secp521r1 -genkey -noout -out kube-apiserver.key
-# chmod 0600 kube-apiserver.key
-# openssl req -new -sha256 -key kube-apiserver.key -subj &amp;quot;/CN=kube-apiserver&amp;quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-apiserver.crt -days $APISERVER_DAYS -extensions v3_req_apiserver -extfile ./openssl.cnf
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# APISERVER_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/kube-apiserver.key
+# chown kubernetes:kubernetes /etc/kubernetes/pki/kube-apiserver.key
+# chmod 0600 /etc/kubernetes/pki/kube-apiserver.key
+# openssl req -new -sha256 -key /etc/kubernetes/pki/kube-apiserver.key -subj &amp;quot;/CN=kube-apiserver&amp;quot; | openssl x509 -req -sha256 -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out /etc/kubernetes/pki/kube-apiserver.crt -days $APISERVER_DAYS -extensions v3_req_apiserver -extfile /etc/kubernetes/pki/openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;kube-apiserver-kubelet証明書生成&lt;/p&gt;
 
 &lt;p&gt;kube-apiserverが&lt;a href=&#34;https://kubernetes.io/docs/concepts/architecture/master-node-communication/#apiserver-kubelet&#34;&gt;kubeletのAPIにアクセス&lt;/a&gt;するときのクライアント証明書。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
-# APISERVER_KUBELET_CLIENT_DAYS=5475
-# openssl ecparam -name secp521r1 -genkey -noout -out apiserver-kubelet-client.key
-# chmod 0600 apiserver-kubelet-client.key
-# openssl req -new -key apiserver-kubelet-client.key -subj &amp;quot;/CN=kube-apiserver-kubelet-client/O=system:masters&amp;quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out apiserver-kubelet-client.crt -days $APISERVER_KUBELET_CLIENT_DAYS -extensions v3_req_client -extfile ./openssl.cnf
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# APISERVER_KUBELET_CLIENT_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/apiserver-kubelet-client.key
+# chown kubernetes:kubernetes /etc/kubernetes/pki/apiserver-kubelet-client.key
+# chmod 0600 /etc/kubernetes/pki/apiserver-kubelet-client.key
+# openssl req -new -key /etc/kubernetes/pki/apiserver-kubelet-client.key -subj &amp;quot;/CN=kube-apiserver-kubelet-client/O=system:masters&amp;quot; | openssl x509 -req -sha256 -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out /etc/kubernetes/pki/apiserver-kubelet-client.crt -days $APISERVER_KUBELET_CLIENT_DAYS -extensions v3_req_client -extfile /etc/kubernetes/pki/openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;adminクライアント証明書生成&lt;/p&gt;
 
 &lt;p&gt;kubectlがkube-apiserverのAPIにアクセスするときのクライアント証明書。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# groupadd -r kube-admin
+# adduser -r -g kube-admin -M -s /sbin/nologin kube-admin
 # ADMIN_DAYS=5475
-# openssl ecparam -name secp521r1 -genkey -noout -out admin.key
-# chmod 0600 admin.key
-# openssl req -new -key admin.key -subj &amp;quot;/CN=kubernetes-admin/O=system:masters&amp;quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out admin.crt -days $ADMIN_DAYS -extensions v3_req_client -extfile ./openssl.cnf
+# openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/admin.key
+# chown kube-admin:kube-admin /etc/kubernetes/pki/admin.key
+# chmod 0600 /etc/kubernetes/pki/admin.key
+# openssl req -new -key /etc/kubernetes/pki/admin.key -subj &amp;quot;/CN=kubernetes-admin/O=system:masters&amp;quot; | openssl x509 -req -sha256 -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out /etc/kubernetes/pki/admin.crt -days $ADMIN_DAYS -extensions v3_req_client -extfile /etc/kubernetes/pki/openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Service Accountキーとkube-controller-managerのクライアント証明書生成&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;kube-controller-managerのクライアント証明書生成&lt;/p&gt;
 
-&lt;p&gt;Service Accountトークンにkube-controller-managerが署名するときに使うキーを生成する。
-そのキーを使ってkube-controller-managerのクライアント証明書も生成する。&lt;/p&gt;
+&lt;p&gt;kube-controller-managerがkube-apiserverに接続するときのクライアント証明書。
+この証明書に対応する秘密鍵と公開鍵はそれぞれ、kube-controller-managerがService Accountトークンに署名するとき、kube-apiserverがトークンの署名を確認するときにも使う。&lt;/p&gt;
 
-&lt;p&gt;kube-apiserverがトークンの署名を確認するとき(?)に使う公開鍵も生成する。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
-# CONTROLLER_MANAGER_DAYS=5475
-# openssl ecparam -name secp521r1 -genkey -noout -out sa.key
-# openssl ec -in sa.key -outform PEM -pubout -out sa.pub
-# chmod 0600 sa.key
-# openssl req -new -sha256 -key sa.key -subj &amp;quot;/CN=system:kube-controller-manager&amp;quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out sa.crt -days $CONTROLLER_MANAGER_DAYS -extensions v3_req_client -extfile ./openssl.cnf
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# CONTROLLER_MANAGER_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/kube-controller-manager.key
+# openssl ec -in /etc/kubernetes/pki/kube-controller-manager.key -outform PEM -pubout -out /etc/kubernetes/pki/kube-controller-manager.pub
+# chown kubernetes:kubernetes /etc/kubernetes/pki/kube-controller-manager.key
+# chmod 0600 /etc/kubernetes/pki/kube-controller-manager.key
+# openssl req -new -sha256 -key /etc/kubernetes/pki/kube-controller-manager.key -subj &amp;quot;/CN=system:kube-controller-manager&amp;quot; | openssl x509 -req -sha256 -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out /etc/kubernetes/pki/kube-controller-manager.crt -days $CONTROLLER_MANAGER_DAYS -extensions v3_req_client -extfile /etc/kubernetes/pki/openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;kube-schedulerクライアント証明書生成&lt;/p&gt;
 
-&lt;p&gt;kube-schedulerがkube-apiserverにリクエストするときに使うクライアント証明書。
-多分。&lt;/p&gt;
+&lt;p&gt;kube-schedulerがkube-apiserverにリクエストするときに使うクライアント証明書。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
-# SCHEDULER_DAYS=5475
-# openssl ecparam -name secp521r1 -genkey -noout -out kube-scheduler.key
-# chmod 0600 kube-scheduler.key
-# openssl req -new -sha256 -key kube-scheduler.key -subj &amp;quot;/CN=system:kube-scheduler&amp;quot; | openssl x509 -req -sha256 -CA ca.crt -CAkey ca.key -CAcreateserial -out kube-scheduler.crt -days $SCHEDULER_DAYS -extensions v3_req_client -extfile ./openssl.cnf
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# SCHEDULER_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/kube-scheduler.key
+# chown kubernetes:kubernetes /etc/kubernetes/pki/kube-scheduler.key
+# chmod 0600 /etc/kubernetes/pki/kube-scheduler.key
+# openssl req -new -sha256 -key /etc/kubernetes/pki/kube-scheduler.key -subj &amp;quot;/CN=system:kube-scheduler&amp;quot; | openssl x509 -req -sha256 -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out /etc/kubernetes/pki/kube-scheduler.crt -days $SCHEDULER_DAYS -extensions v3_req_client -extfile /etc/kubernetes/pki/openssl.cnf
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;kube-proxyクライアント証明書生成&lt;/p&gt;
+
+&lt;p&gt;kube-proxyがkube-apiserverにリクエストするときに使うクライアント証明書。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# PROXY_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/kube-proxy.key
+# chown kubernetes:kubernetes /etc/kubernetes/pki/kube-proxy.key
+# chmod 0600 /etc/kubernetes/pki/kube-proxy.key
+# openssl req -new -sha256 -key /etc/kubernetes/pki/kube-proxy.key -subj &amp;quot;/CN=system:kube-proxy&amp;quot; | openssl x509 -req -sha256 -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out /etc/kubernetes/pki/kube-proxy.crt -days $PROXY_DAYS -extensions v3_req_client -extfile /etc/kubernetes/pki/openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;front proxy CA証明書生成&lt;/p&gt;
 
-&lt;p&gt;front proxyのクライアント証明書に署名するのにつかう証明書。
-front proxyってなんだ?
-多分、kube-apiserverの前にいて、クラスタの外からの通信を受けるやつ(&lt;a href=&#34;https://kubernetes.io/docs/concepts/cluster-administration/proxies/&#34;&gt;apiserver proxy&lt;/a&gt;)か。&lt;/p&gt;
+&lt;p&gt;front proxyの証明書に署名するのにつかう証明書。
+front proxyは&lt;a href=&#34;https://github.com/kubernetes/community/blob/master/contributors/design-proposals/api-machinery/aggregated-api-servers.md&#34;&gt;API Aggregation&lt;/a&gt;のためのもの。
+API Aggregationは、kube-apiserverを変更することなく、別途作られた&lt;a href=&#34;https://kubernetes.io/docs/tasks/access-kubernetes-api/setup-extension-api-server/&#34;&gt;Extension API Server&lt;/a&gt;でKubernetesのAPIを拡張できるようにする機能。
+API Aggregationは現時点では&lt;a href=&#34;https://kubernetes.io/docs/concepts/api-extension/apiserver-aggregation/#overview&#34;&gt;kube-apiserverの一機能として実装されていて&lt;/a&gt;、将来的には&lt;a href=&#34;https://github.com/kubernetes/kube-aggregator&#34;&gt;kubernetes-aggregator&lt;/a&gt;という別のコンポーネントで実現される。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
-# FRONT_PROXY_CA_DAYS=5475
-# openssl ecparam -name secp521r1 -genkey -noout -out front-proxy-ca.key
-# chmod 0600 front-proxy-ca.key
-# openssl req -x509 -new -sha256 -nodes -key front-proxy-ca.key -days $FRONT_PROXY_CA_DAYS -out front-proxy-ca.crt -subj &amp;quot;/CN=front-proxy-ca&amp;quot; -extensions v3_ca -config ./openssl.cnf
+&lt;p&gt;API AggregationしないならこのCA証明書と次のクライアント証明書はいらないはず。
+今回はしないけど、とりあえず作って設定したおく。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# FRONT_PROXY_CA_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/front-proxy-ca.key
+# chown kubernetes:kubernetes /etc/kubernetes/pki/front-proxy-ca.key
+# chmod 0600 /etc/kubernetes/pki/front-proxy-ca.key
+# openssl req -x509 -new -sha256 -nodes -key /etc/kubernetes/pki/front-proxy-ca.key -days $FRONT_PROXY_CA_DAYS -out /etc/kubernetes/pki/front-proxy-ca.crt -subj &amp;quot;/CN=front-proxy-ca&amp;quot; -extensions v3_ca -config /etc/kubernetes/pki/openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;front proxyクライアント証明書&lt;/p&gt;
 
-&lt;p&gt;クラスタの外からくるHTTPリクエストの、&lt;code&gt;--requestheader-username-headers&lt;/code&gt;で指定されたヘッダに書いてあるユーザ名を認証するときに見るクライアント証明書。
-kubectlの証明書(adminクライアント証明書)とは違うんだろうか。&lt;/p&gt;
+&lt;p&gt;Extension API ServerのAPIへのリクエストは、いったんkube-apiserverが受け取ってExtension API Serverに転送される。(多分。)
+この転送の暗号化と認証にTLSが使われていて、ここではそのクライアント証明書を生成する。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
-# FRONT_PROXY_CLIENT_DAYS=5475
-# openssl ecparam -name secp521r1 -genkey -noout -out front-proxy-client.key
-# chmod 0600 front-proxy-client.key
-# openssl req -new -sha256 -key front-proxy-client.key -subj &amp;quot;/CN=front-proxy-client&amp;quot; | openssl x509 -req -sha256 -CA front-proxy-ca.crt -CAkey front-proxy-ca.key -CAcreateserial -out front-proxy-client.crt -days $FRONT_PROXY_CLIENT_DAYS -extensions v3_req_client -extfile ./openssl.cnf
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# FRONT_PROXY_CLIENT_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/front-proxy-client.key
+# chown kubernetes:kubernetes /etc/kubernetes/pki/front-proxy-client.key
+# chmod 0600 /etc/kubernetes/pki/front-proxy-client.key
+# openssl req -new -sha256 -key /etc/kubernetes/pki/front-proxy-client.key -subj &amp;quot;/CN=front-proxy-client&amp;quot; | openssl x509 -req -sha256 -CA /etc/kubernetes/pki/front-proxy-ca.crt -CAkey /etc/kubernetes/pki/front-proxy-ca.key -CAcreateserial -out /etc/kubernetes/pki/front-proxy-client.crt -days $FRONT_PROXY_CLIENT_DAYS -extensions v3_req_client -extfile /etc/kubernetes/pki/openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;etcd CA証明書&lt;/p&gt;
 
 &lt;p&gt;以降で生成するetcdの証明書に署名するための証明書。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# groupadd -r etcd
+# adduser -r -g etcd -M -s /sbin/nologin etcd
 # ETCD_CA_DAYS=5475
-# openssl ecparam -name secp521r1 -genkey -noout -out etcd-ca.key
-# chmod 0600 etcd-ca.key
-# openssl req -x509 -new -sha256 -nodes -key etcd-ca.key -days $ETCD_CA_DAYS -out etcd-ca.crt -subj &amp;quot;/CN=etcd-ca&amp;quot; -extensions v3_ca -config ./openssl.cnf
+# openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/etcd-ca.key
+# chown etcd:etcd /etc/kubernetes/pki/etcd-ca.key
+# chmod 0600 /etc/kubernetes/pki/etcd-ca.key
+# openssl req -x509 -new -sha256 -nodes -key /etc/kubernetes/pki/etcd-ca.key -days $ETCD_CA_DAYS -out /etc/kubernetes/pki/etcd-ca.crt -subj &amp;quot;/CN=etcd-ca&amp;quot; -extensions v3_ca -config /etc/kubernetes/pki/openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;etcd証明書&lt;/p&gt;
 
-&lt;p&gt;etcdサーバのサーバ証明書。
-多分。&lt;/p&gt;
+&lt;p&gt;etcdのサーバ証明書。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
-# ETCD_DAYS=5475
-# openssl ecparam -name secp521r1 -genkey -noout -out etcd.key
-# chmod 0600 etcd.key
-# openssl req -new -sha256 -key etcd.key -subj &amp;quot;/CN=etcd&amp;quot; | openssl x509 -req -sha256 -CA etcd-ca.crt -CAkey etcd-ca.key -CAcreateserial -out etcd.crt -days $ETCD_DAYS -extensions v3_req_etcd -extfile ./openssl.cnf
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# ETCD_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/etcd.key
+# chown etcd:etcd /etc/kubernetes/pki/etcd.key
+# chmod 0600 /etc/kubernetes/pki/etcd.key
+# openssl req -new -sha256 -key /etc/kubernetes/pki/etcd.key -subj &amp;quot;/CN=etcd&amp;quot; | openssl x509 -req -sha256 -CA /etc/kubernetes/pki/etcd-ca.crt -CAkey /etc/kubernetes/pki/etcd-ca.key -CAcreateserial -out /etc/kubernetes/pki/etcd.crt -days $ETCD_DAYS -extensions v3_req_etcd -extfile /etc/kubernetes/pki/openssl.cnf
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;etcdクライアント証明書&lt;/p&gt;
+
+&lt;p&gt;etcdのクライアント証明書。
+kube-apiserverだけがetcdと話すので、kube-apiserverだけが使う。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# ETCD_CLIENT_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/etcd-client.key
+# chown kubernetes:kubernetes /etc/kubernetes/pki/etcd-client.key
+# chmod 0600 /etc/kubernetes/pki/etcd-client.key
+# openssl req -new -sha256 -key /etc/kubernetes/pki/etcd-client.key -subj &amp;quot;/CN=kube-apiserver&amp;quot; | openssl x509 -req -sha256 -CA /etc/kubernetes/pki/etcd-ca.crt -CAkey /etc/kubernetes/pki/etcd-ca.key -CAcreateserial -out /etc/kubernetes/pki/etcd-client.crt -days $ETCD_CLIENT_DAYS -extensions v3_req_client -extfile /etc/kubernetes/pki/openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;etcd peer証明書&lt;/p&gt;
 
 &lt;p&gt;etcdサーバが冗長構成のとき、サーバ間の通信の暗号化に使う証明書。
-マスタが一つなら要らない?&lt;/p&gt;
+マスタが一つなら要らないはずだけど、今回とりあえず作って設定しておく。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
-# ETCD_PEER_DAYS=5475
-# openssl ecparam -name secp521r1 -genkey -noout -out etcd-peer.key
-# chmod 0600 etcd-peer.key
-# openssl req -new -sha256 -key etcd-peer.key -subj &amp;quot;/CN=etcd-peer&amp;quot; | openssl x509 -req -sha256 -CA etcd-ca.crt -CAkey etcd-ca.key -CAcreateserial -out etcd-peer.crt -days $ETCD_PEER_DAYS -extensions v3_req_etcd -extfile ./openssl.cnf
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# ETCD_PEER_DAYS=5475
+# openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/etcd-peer.key
+# chown etcd:etcd /etc/kubernetes/pki/etcd-peer.key
+# chmod 0600 /etc/kubernetes/pki/etcd-peer.key
+# openssl req -new -sha256 -key /etc/kubernetes/pki/etcd-peer.key -subj &amp;quot;/CN=etcd-peer&amp;quot; | openssl x509 -req -sha256 -CA /etc/kubernetes/pki/etcd-ca.crt -CAkey /etc/kubernetes/pki/etcd-ca.key -CAcreateserial -out /etc/kubernetes/pki/etcd-peer.crt -days $ETCD_PEER_DAYS -extensions v3_req_etcd -extfile /etc/kubernetes/pki/openssl.cnf
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;確認&lt;/p&gt;
 
 &lt;p&gt;以上で生成した証明書の内容を確認する。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cd /etc/kubernetes/pki
-# for i in *crt; do
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# for i in /etc/kubernetes/pki/*crt; do
   echo $i:;
   openssl x509 -subject -issuer -noout -in $i;
   echo;
@@ -869,14 +916,15 @@ done
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# MASTER_IP=192.168.171.200
 # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
-# CLUSTER_NAME=&amp;quot;default&amp;quot;
-# KCONFIG=controller-manager.kubeconfig
+# CLUSTER_NAME=&amp;quot;k8s&amp;quot;
+# KCONFIG=/etc/kubernetes/kube-controller-manager.kubeconfig
 # KUSER=&amp;quot;system:kube-controller-manager&amp;quot;
-# cd /etc/kubernetes/
-# kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
-# kubectl config set-credentials ${KUSER} --client-certificate=pki/sa.crt --client-key=pki/sa.key --embed-certs=true --kubeconfig=${KCONFIG}
+# kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=/etc/kubernetes/pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
+# kubectl config set-credentials ${KUSER} --client-certificate=/etc/kubernetes/pki/kube-controller-manager.crt --client-key=/etc/kubernetes/pki/kube-controller-manager.key --embed-certs=true --kubeconfig=${KCONFIG}
 # kubectl config set-context ${KUSER}@${CLUSTER_NAME} --cluster=${CLUSTER_NAME} --user=${KUSER} --kubeconfig=${KCONFIG}
 # kubectl config use-context ${KUSER}@${CLUSTER_NAME} --kubeconfig=${KCONFIG}
+# chown kubernetes:kubernetes ${KCONFIG}
+# chmod 0600 ${KCONFIG}
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;設定確認。&lt;/p&gt;
@@ -888,14 +936,15 @@ done
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# MASTER_IP=192.168.171.200
 # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
-# CLUSTER_NAME=&amp;quot;default&amp;quot;
-# KCONFIG=scheduler.kubeconfig
+# CLUSTER_NAME=&amp;quot;k8s&amp;quot;
+# KCONFIG=/etc/kubernetes/kube-scheduler.kubeconfig
 # KUSER=&amp;quot;system:kube-scheduler&amp;quot;
-# cd /etc/kubernetes/
-# kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
-# kubectl config set-credentials ${KUSER} --client-certificate=pki/kube-scheduler.crt --client-key=pki/kube-scheduler.key --embed-certs=true --kubeconfig=${KCONFIG}
+# kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=/etc/kubernetes/pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
+# kubectl config set-credentials ${KUSER} --client-certificate=/etc/kubernetes/pki/kube-scheduler.crt --client-key=/etc/kubernetes/pki/kube-scheduler.key --embed-certs=true --kubeconfig=${KCONFIG}
 # kubectl config set-context ${KUSER}@${CLUSTER_NAME} --cluster=${CLUSTER_NAME} --user=${KUSER} --kubeconfig=${KCONFIG}
 # kubectl config use-context ${KUSER}@${CLUSTER_NAME} --kubeconfig=${KCONFIG}
+# chown kubernetes:kubernetes ${KCONFIG}
+# chmod 0600 ${KCONFIG}
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;設定確認。&lt;/p&gt;
@@ -909,14 +958,16 @@ done
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# MASTER_IP=192.168.171.200
 # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
-# CLUSTER_NAME=&amp;quot;default&amp;quot;
-# KCONFIG=admin.kubeconfig
+# CLUSTER_NAME=&amp;quot;k8s&amp;quot;
+# KCONFIG=/etc/kubernetes/admin.kubeconfig
 # KUSER=&amp;quot;kubernetes-admin&amp;quot;
-# cd /etc/kubernetes/
-# kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
-# kubectl config set-credentials ${KUSER} --client-certificate=pki/admin.crt --client-key=pki/admin.key --embed-certs=true --kubeconfig=${KCONFIG}
+# kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=/etc/kubernetes/pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
+# kubectl config set-credentials ${KUSER} --client-certificate=/etc/kubernetes/pki/admin.crt --client-key=/etc/kubernetes/pki/admin.key --embed-certs=true --kubeconfig=${KCONFIG}
 # kubectl config set-context ${KUSER}@${CLUSTER_NAME} --cluster=${CLUSTER_NAME} --user=${KUSER} --kubeconfig=${KCONFIG}
 # kubectl config use-context ${KUSER}@${CLUSTER_NAME} --kubeconfig=${KCONFIG}
+# chown kube-admin:kube-admin ${KCONFIG}
+# chmod 0600 ${KCONFIG}
+# ln -s ${KCONFIG} ~/.kube/config
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;設定確認。&lt;/p&gt;
@@ -933,6 +984,7 @@ done
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# chown root:root /usr/bin/etcd*
 # chmod 0755 /usr/bin/etcd*
 # mkdir -p /var/lib/etcd
+# chown etcd:etcd /var/lib/etcd
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;で、systemdのユニットファイルを書いてサービス化。&lt;/p&gt;
@@ -940,7 +992,8 @@ done
 &lt;p&gt;(参考: &lt;a href=&#34;https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/&#34;&gt;Kubernetesドキュメント&lt;/a&gt;、&lt;a href=&#34;https://github.com/coreos/etcd/blob/master/Documentation/op-guide/security.md&#34;&gt;etcdドキュメント&lt;/a&gt;)&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# MASTER_IP=192.168.171.200
-# CLUSTER_NAME=&amp;quot;default&amp;quot;
+# ETCD_MEMBER_NAME=etcd1
+# CLUSTER_NAME=&amp;quot;k8s&amp;quot;
 # ETCD_TOKEN=$(openssl rand -hex 5)
 # ETCD_CLUSTER_TOKEN=$CLUSTER_NAME-$ETCD_TOKEN
 # cat &amp;gt; /etc/systemd/system/etcd.service &amp;lt;&amp;lt; EOF
@@ -953,9 +1006,11 @@ After=network.target
 [Service]
 Type=notify
 NotifyAccess=all
+User=etcd
+Group=etcd
 ExecStart=/usr/bin/etcd \\
-  --name default \\
-  --listen-client-urls https://${MASTER_IP}:2379,http://127.0.0.1:2379 \\
+  --name ${ETCD_MEMBER_NAME} \\
+  --listen-client-urls https://${MASTER_IP}:2379 \\
   --advertise-client-urls https://${MASTER_IP}:2379 \\
   --data-dir=/var/lib/etcd \\
   --cert-file=/etc/kubernetes/pki/etcd.crt \\
@@ -969,7 +1024,7 @@ ExecStart=/usr/bin/etcd \\
   --initial-advertise-peer-urls https://${MASTER_IP}:2380 \\
   --listen-peer-urls https://${MASTER_IP}:2380 \\
   --initial-cluster-token ${ETCD_CLUSTER_TOKEN} \\
-  --initial-cluster default=https://${MASTER_IP}:2380 \\
+  --initial-cluster ${ETCD_MEMBER_NAME}=https://${MASTER_IP}:2380 \\
   --initial-cluster-state new
 Restart=always
 RestartSec=10s
@@ -986,8 +1041,9 @@ EOF
 &lt;p&gt;確認。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# systemctl status etcd -l
-# etcdctl --ca-file=/etc/kubernetes/pki/etcd-ca.crt --cert-file=/etc/kubernetes/pki/etcd.crt --key-file=/etc/kubernetes/pki/etcd.key cluster-health
-# etcdctl --ca-file=/etc/kubernetes/pki/etcd-ca.crt --cert-file=/etc/kubernetes/pki/etcd.crt --key-file=/etc/kubernetes/pki/etcd.key member list
+# MASTER_IP=192.168.171.200
+# etcdctl --endpoints https://${MASTER_IP}:2379 --ca-file=/etc/kubernetes/pki/etcd-ca.crt --cert-file=/etc/kubernetes/pki/etcd-client.crt --key-file=/etc/kubernetes/pki/etcd-client.key cluster-health
+# etcdctl --endpoints https://${MASTER_IP}:2379 --ca-file=/etc/kubernetes/pki/etcd-ca.crt --cert-file=/etc/kubernetes/pki/etcd-client.crt --key-file=/etc/kubernetes/pki/etcd-client.key member list
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;マスタコンポーネントデプロイ。&lt;/p&gt;
@@ -1102,20 +1158,22 @@ After=network.target
 
 
 [Service]
+User=kubernetes
+Group=kubernetes
 ExecStart=/usr/bin/kube-apiserver \\
   --feature-gates=RotateKubeletServerCertificate=true \\
   --apiserver-count=1 \\
   --allow-privileged=true \\
-  --enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,NodeRestriction,DenyEscalatingExec \\
+  --enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,NodeRestriction,DenyEscalatingExec,StorageObjectInUseProtection \\
   --authorization-mode=Node,RBAC \\
   --bind-address=0.0.0.0 \\
   --advertise-address=${MASTER_IP} \\
   --client-ca-file=/etc/kubernetes/pki/ca.crt \\
   --etcd-cafile=/etc/kubernetes/pki/etcd-ca.crt \\
-  --etcd-certfile=/etc/kubernetes/pki/etcd.crt \\
-  --etcd-keyfile=/etc/kubernetes/pki/etcd.key \\
+  --etcd-certfile=/etc/kubernetes/pki/etcd-client.crt \\
+  --etcd-keyfile=/etc/kubernetes/pki/etcd-client.key \\
   --etcd-servers=https://${MASTER_IP}:2379 \\
-  --service-account-key-file=/etc/kubernetes/pki/sa.pub \\
+  --service-account-key-file=/etc/kubernetes/pki/kube-controller-manager.pub \\
   --service-cluster-ip-range=${SERVICE_CLUSTER_IP_RANGE} \\
   --tls-cert-file=/etc/kubernetes/pki/kube-apiserver.crt \\
   --tls-private-key-file=/etc/kubernetes/pki/kube-apiserver.key \\
@@ -1129,6 +1187,8 @@ ExecStart=/usr/bin/kube-apiserver \\
   --requestheader-group-headers=X-Remote-Group \\
   --requestheader-allowed-names=front-proxy-client \\
   --requestheader-extra-headers-prefix=X-Remote-Extra- \\
+  --proxy-client-cert-file=/etc/kubernetes/pki/front-proxy-client.crt \\
+  --proxy-client-key-file=/etc/kubernetes/pki/front-proxy-client.key \\
   --experimental-encryption-provider-config=/etc/kubernetes/encryption.conf \\
   --v=2 \\
   --tls-min-version=VersionTLS12 \\
@@ -1156,6 +1216,7 @@ EOF
 
 &lt;p&gt;&lt;code&gt;--enable-admission-plugins&lt;/code&gt;には&lt;a href=&#34;https://kubernetes.io/docs/admin/admission-controllers/#is-there-a-recommended-set-of-admission-controllers-to-use&#34;&gt;公式推奨のプラグイン&lt;/a&gt;に加えて、後述のTLS BootstrappingのためのNodeRestrictionを指定。
 また、&lt;code&gt;--allow-privileged&lt;/code&gt;の効果を軽減するため、DenyEscalatingExecも追加で指定。
+また、使われているPersistent VolumeやPersistent Volume Claimが誤って消されることを防ぐ&lt;a href=&#34;https://kubernetes.io/docs/concepts/storage/persistent-volumes/#storage-object-in-use-protection&#34;&gt;StorageObjectInUseProtection&lt;/a&gt;も追加で指定。
 因みに、プラグインを指定する順番はKubernetes 1.10からは気にしなくてよくなった。&lt;/p&gt;
 
 &lt;p&gt;&lt;code&gt;--authorization-mode&lt;/code&gt;にはRBACを指定するのが標準。
@@ -1170,6 +1231,8 @@ RSA鍵交換はNG、RC4と3DESもNG、AESの鍵長は128ビット以上、SHA1�
 &lt;p&gt;また、(&amp;ndash;tls-min-versionをVersionTLS12にする場合?)TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256が必須で、CBCモードがNG。(参照: &lt;a href=&#34;https://github.com/golang/go/blob/release-branch.go1.9/src/net/http/h2_bundle.go&#34;&gt;https://github.com/golang/go/blob/release-branch.go1.9/src/net/http/h2_bundle.go&lt;/a&gt;)&lt;/p&gt;
 
 &lt;p&gt;&lt;code&gt;--anonymous-auth=false&lt;/code&gt;はセキュリティのため設定。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;--requestheader-*&lt;/code&gt;と&lt;code&gt;--proxy-client-*&lt;/code&gt;は上記API Aggregationのための設定。&lt;/p&gt;
 
 &lt;p&gt;&lt;code&gt;--audit-*&lt;/code&gt;は監査ログ設定。
 100MB3面のログを30日間保持する。
@@ -1193,7 +1256,7 @@ RSA鍵交換はNG、RC4と3DESもNG、AESの鍵長は128ビット以上、SHA1�
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# CLUSTER_CIDR=&amp;quot;10.244.0.0/16&amp;quot;
 # SERVICE_CLUSTER_IP_RANGE=&amp;quot;10.0.0.0/16&amp;quot;
-# CLUSTER_NAME=&amp;quot;default&amp;quot;
+# CLUSTER_NAME=&amp;quot;k8s&amp;quot;
 # cat &amp;gt; /etc/systemd/system/kube-controller-manager.service &amp;lt;&amp;lt; EOF
 [Unit]
 Description=Kubernetes Controller Manager
@@ -1202,12 +1265,14 @@ After=network.target
 
 
 [Service]
+User=kubernetes
+Group=kubernetes
 ExecStart=/usr/bin/kube-controller-manager \\
   --feature-gates=RotateKubeletServerCertificate=true \\
-  --kubeconfig=/etc/kubernetes/controller-manager.kubeconfig \\
+  --kubeconfig=/etc/kubernetes/kube-controller-manager.kubeconfig \\
   --bind-address=0.0.0.0 \\
   --controllers=*,bootstrapsigner,tokencleaner \\
-  --service-account-private-key-file=/etc/kubernetes/pki/sa.key \\
+  --service-account-private-key-file=/etc/kubernetes/pki/kube-controller-manager.key \\
   --allocate-node-cidrs=true \\
   --cluster-cidr=${CLUSTER_CIDR} \\
   --node-cidr-mask-size=24 \\
@@ -1242,7 +1307,7 @@ EOF
 
 &lt;p&gt;&lt;code&gt;--node-cidr-mask-size&lt;/code&gt;は、ノードに使うネットワークのサイズを指定するオプションで、&lt;code&gt;--cluster-cidr&lt;/code&gt;で指定したネットワークの一部になるようにする。
 &lt;code&gt;--cluster-cidr&lt;/code&gt;で&lt;code&gt;/16&lt;/code&gt;を指定した場合、半分の&lt;code&gt;/24&lt;/code&gt;にするのが普通。
-つまり256ノードまで作れて、それぞれ256個のPodをホストできるような構成。&lt;/p&gt;
+つまり256ノードまで作れて、それぞれ254個のPodをホストできるような構成。&lt;/p&gt;
 
 &lt;p&gt;&lt;code&gt;--experimental-cluster-signing-duration&lt;/code&gt;は、Certificate Rotationのための設定で、自動発行する証明書の期限を1年に指定している。&lt;/p&gt;
 
@@ -1267,9 +1332,11 @@ After=network.target
 
 
 [Service]
+User=kubernetes
+Group=kubernetes
 ExecStart=/usr/bin/kube-scheduler \\
   --feature-gates=RotateKubeletServerCertificate=true \\
-  --kubeconfig=/etc/kubernetes/scheduler.kubeconfig \\
+  --kubeconfig=/etc/kubernetes/kube-scheduler.kubeconfig \\
   --address=0.0.0.0 \\
   --v=2
 Restart=always
@@ -1291,9 +1358,7 @@ EOF
 
 &lt;li&gt;&lt;p&gt;マスタコンポーネント状態確認&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
-# kubectl config use-context kubernetes-admin@default
-# kubectl version
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# kubectl version
 # kubectl get componentstatuses
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 &lt;/ol&gt;&lt;/li&gt;
@@ -1340,15 +1405,17 @@ EOF
 &lt;p&gt;Bootstrap時は&lt;code&gt;kubelet-bootstrap&lt;/code&gt;というユーザでkube-apiserverに接続する。
 &lt;code&gt;kubelet-bootstrap&lt;/code&gt;は&lt;code&gt;system:node-bootstrapper&lt;/code&gt;ロールを持って&lt;code&gt;system:bootstrappers&lt;/code&gt;に属しているユーザとして認証される必要がある。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# MASTER_IP=192.168.171.200
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# mkdir -p /etc/kubernetes/manifests
+# MASTER_IP=192.168.171.200
 # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
-# CLUSTER_NAME=&amp;quot;default&amp;quot;
-# KCONFIG=&amp;quot;bootstrap.kubeconfig&amp;quot;
+# CLUSTER_NAME=&amp;quot;k8s&amp;quot;
+# KCONFIG=&amp;quot;/etc/kubernetes/bootstrap.kubeconfig&amp;quot;
 # KUSER=&amp;quot;kubelet-bootstrap&amp;quot;
-# cd /etc/kubernetes
-# kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
+# kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=/etc/kubernetes/pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
 # kubectl config set-context ${KUSER}@${CLUSTER_NAME} --cluster=${CLUSTER_NAME} --user=${KUSER} --kubeconfig=${KCONFIG}
 # kubectl config use-context ${KUSER}@${CLUSTER_NAME} --kubeconfig=${KCONFIG}
+# chown kubernetes:kubernetes ${KCONFIG}
+# chmod 0600 ${KCONFIG}
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;確認。&lt;/p&gt;
@@ -1422,6 +1489,7 @@ EOF
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# cat /proc/$(pidof dockerd)/environ
 # systemctl status docker -l
+# docker version
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;CNI&lt;/p&gt;
@@ -1453,7 +1521,6 @@ EOF
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# DNS_SERVER_IP=10.0.0.10
 # PAUSE_IMAGE=k8s.gcr.io/pause-amd64:3.1
 # DNS_DOMAIN=&amp;quot;cluster.local&amp;quot;
-# mkdir -p /etc/kubernetes/manifests
 # cat &amp;gt; /etc/systemd/system/kubelet.service &amp;lt;&amp;lt; EOF
 [Unit]
 Description=Kubernetes Kubelet
@@ -1463,6 +1530,8 @@ Requires=docker.service
 
 
 [Service]
+User=root
+Group=root
 ExecStart=/usr/bin/kubelet \\
   --feature-gates=RotateKubeletServerCertificate=true \\
   --address=0.0.0.0 \\
@@ -1635,26 +1704,19 @@ EOF
 &lt;ol&gt;
 &lt;li&gt;&lt;p&gt;kube-proxy&lt;/p&gt;
 
-&lt;p&gt;Service Account作成。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
-# kubectl -n kube-system create serviceaccount kube-proxy
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;kube-proxyのkubeconfig作成&lt;/p&gt;
+&lt;p&gt;kube-proxyのkubeconfigを作成。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# MASTER_IP=192.168.171.200
 # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
-# export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
-# SECRET=$(kubectl -n kube-system get sa/kube-proxy --output=jsonpath=&#39;{.secrets[0].name}&#39;)
-# JWT_TOKEN=$(kubectl -n kube-system get secret/$SECRET --output=jsonpath=&#39;{.data.token}&#39; | base64 -d)
-# CLUSTER_NAME=&amp;quot;default&amp;quot;
-# KCONFIG=&amp;quot;kube-proxy.kubeconfig&amp;quot;
-# cd /etc/kubernetes
-# kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
-# kubectl config set-context ${CLUSTER_NAME} --cluster=${CLUSTER_NAME} --user=default --namespace=default --kubeconfig=${KCONFIG}
-# kubectl config set-credentials ${CLUSTER_NAME} --token=${JWT_TOKEN} --kubeconfig=${KCONFIG}
-# kubectl config use-context ${CLUSTER_NAME} --kubeconfig=${KCONFIG}
+# CLUSTER_NAME=&amp;quot;k8s&amp;quot;
+# KCONFIG=&amp;quot;/etc/kubernetes/kube-proxy.kubeconfig&amp;quot;
+# KUSER=&amp;quot;system:kube-proxy&amp;quot;
+# kubectl config set-cluster ${CLUSTER_NAME} --certificate-authority=/etc/kubernetes/pki/ca.crt --embed-certs=true --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 --kubeconfig=${KCONFIG}
+# kubectl config set-credentials ${KUSER} --client-certificate=/etc/kubernetes/pki/kube-proxy.crt --client-key=/etc/kubernetes/pki/kube-proxy.key --embed-certs=true --kubeconfig=${KCONFIG}
+# kubectl config set-context ${KUSER}@${CLUSTER_NAME} --cluster=${CLUSTER_NAME} --user=${KUSER} --kubeconfig=${KCONFIG}
+# kubectl config use-context ${KUSER}@${CLUSTER_NAME} --kubeconfig=${KCONFIG}
+# chown kubernetes:kubernetes ${KCONFIG}
+# chmod 0600 ${KCONFIG}
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;確認。&lt;/p&gt;
@@ -1678,6 +1740,8 @@ After=network.target
 
 
 [Service]
+User=root
+Group=root
 ExecStart=/usr/bin/kube-proxy \\
   --feature-gates=RotateKubeletServerCertificate=true \\
   --bind-address 0.0.0.0 \\

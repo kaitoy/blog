@@ -135,7 +135,6 @@ Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --allow-privileged has been depre
 
 <pre><code class="language-sh"># DNS_SERVER_IP=10.0.0.10
 # DNS_DOMAIN=&quot;cluster.local&quot;
-# mkdir -p /etc/kubernetes/manifests
 # cat &gt; /etc/kubernetes/kubelet.conf &lt;&lt; EOF
 kind: KubeletConfiguration
 apiVersion: kubelet.config.k8s.io/v1beta1
@@ -197,6 +196,8 @@ After=docker.service
 Requires=docker.service
 
 [Service]
+User=root
+Group=root
 ExecStart=/usr/bin/kubelet \\
   --allow-privileged=true \\
   --config=/etc/kubernetes/kubelet.conf \\
@@ -233,8 +234,7 @@ EOF
 <p>で、privilegedななんでもできるPodSecurityPolicyと、それを使うロールを作成する。
 因みにPodSecurityPolicyは名前空間に属さない。</p>
 
-<pre><code class="language-sh"># export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
-# kubectl create -f- &lt;&lt;EOF
+<pre><code class="language-sh"># kubectl create -f- &lt;&lt;EOF
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
@@ -277,8 +277,7 @@ EOF
 
 <p>あと、CoreDNS用のPodSecurityPolicyとロールを作ってバインドする。</p>
 
-<pre><code class="language-sh"># export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
-# kubectl apply -f- &lt;&lt;EOF
+<pre><code class="language-sh"># kubectl apply -f- &lt;&lt;EOF
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
@@ -339,6 +338,8 @@ Documentation=https://github.com/kubernetes/kubernetes
 After=network.target
 
 [Service]
+User=root
+Group=root
 ExecStart=/usr/bin/kube-proxy \\
   --config=/etc/kubernetes/kube-proxy.conf \\
   --v=2
@@ -364,7 +365,7 @@ featureGates:
   RotateKubeletServerCertificate: true
 healthzBindAddress: &quot;0.0.0.0&quot;
 clientConnection:
-  kubeconfig: &quot;/etc/kubernetes/scheduler.kubeconfig&quot;
+  kubeconfig: &quot;/etc/kubernetes/kube-scheduler.kubeconfig&quot;
 EOF
 # cat &gt; /etc/systemd/system/kube-scheduler.service &lt;&lt; EOF
 [Unit]
@@ -373,6 +374,8 @@ Documentation=https://github.com/kubernetes/kubernetes
 After=network.target
 
 [Service]
+User=kubernetes
+Group=kubernetes
 ExecStart=/usr/bin/kube-scheduler \\
   --config=/etc/kubernetes/kube-scheduler.conf \\
   --v=2

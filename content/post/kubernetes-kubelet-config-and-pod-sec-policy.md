@@ -48,7 +48,6 @@ kubeletのいくつかのオプションは、https://kubernetes.io/docs/tasks/a
 ```sh
 # DNS_SERVER_IP=10.0.0.10
 # DNS_DOMAIN="cluster.local"
-# mkdir -p /etc/kubernetes/manifests
 # cat > /etc/kubernetes/kubelet.conf << EOF
 kind: KubeletConfiguration
 apiVersion: kubelet.config.k8s.io/v1beta1
@@ -110,6 +109,8 @@ After=docker.service
 Requires=docker.service
 
 [Service]
+User=root
+Group=root
 ExecStart=/usr/bin/kubelet \\
   --allow-privileged=true \\
   --config=/etc/kubernetes/kubelet.conf \\
@@ -147,7 +148,6 @@ PodSecurityPolicyを使うにはまず、kube-apiserverの起動オプション�
 因みにPodSecurityPolicyは名前空間に属さない。
 
 ```sh
-# export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
 # kubectl create -f- <<EOF
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
@@ -193,7 +193,6 @@ EOF
 あと、CoreDNS用のPodSecurityPolicyとロールを作ってバインドする。
 
 ```sh
-# export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
 # kubectl apply -f- <<EOF
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
@@ -255,6 +254,8 @@ Documentation=https://github.com/kubernetes/kubernetes
 After=network.target
 
 [Service]
+User=root
+Group=root
 ExecStart=/usr/bin/kube-proxy \\
   --config=/etc/kubernetes/kube-proxy.conf \\
   --v=2
@@ -280,7 +281,7 @@ featureGates:
   RotateKubeletServerCertificate: true
 healthzBindAddress: "0.0.0.0"
 clientConnection:
-  kubeconfig: "/etc/kubernetes/scheduler.kubeconfig"
+  kubeconfig: "/etc/kubernetes/kube-scheduler.kubeconfig"
 EOF
 # cat > /etc/systemd/system/kube-scheduler.service << EOF
 [Unit]
@@ -289,6 +290,8 @@ Documentation=https://github.com/kubernetes/kubernetes
 After=network.target
 
 [Service]
+User=kubernetes
+Group=kubernetes
 ExecStart=/usr/bin/kube-scheduler \\
   --config=/etc/kubernetes/kube-scheduler.conf \\
   --v=2
