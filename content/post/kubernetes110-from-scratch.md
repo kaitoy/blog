@@ -1279,7 +1279,6 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         デプロイ自体は以下のコマンドを実行するだけ。
 
         ```sh
-        # export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
         # kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
         ```
 
@@ -1317,7 +1316,6 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # SERVICE_CLUSTER_IP_RANGE="10.0.0.0/16"
         # DNS_DOMAIN="cluster.local"
         # ./deploy.sh -r $SERVICE_CLUSTER_IP_RANGE -i $DNS_SERVER_IP -d $DNS_DOMAIN > coredns.yaml
-        # export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
         # kubectl apply -f coredns.yaml
         ```
 
@@ -1353,7 +1351,6 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
         ```sh
         # cd /tmp
-        # export KUBECONFIG=/etc/kubernetes/admin.kubeconfig
         # curl -sSL -o scope.yaml https://cloud.weave.works/k8s/scope.yaml?k8s-service-type=NodePort
         # kubectl apply -f scope.yaml
         ```
