@@ -550,6 +550,9 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         * d
 
         ```sh
+        # mkdir -p /var/log/kubernetes
+        # chown kubernetes:kubernetes /var/log/kubernetes
+        # chmod 0700 /var/log/kubernetes
         # MASTER_IP=192.168.171.200
         # SERVICE_CLUSTER_IP_RANGE="10.0.0.0/16"
         # SECRET_ENC_KEY=$(echo -n 'your_32_bytes_secure_private_key' | base64)
@@ -683,7 +686,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
           --audit-log-maxage=30 \\
           --audit-log-maxbackup=3 \\
           --audit-log-maxsize=100 \\
-          --audit-log-path=/var/log/kube-audit.log \\
+          --audit-log-path=/var/log/kubernetes/kube-audit.log \\
           --audit-policy-file=/etc/kubernetes/audit-policy.conf
         Restart=always
         RestartSec=10s
