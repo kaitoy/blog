@@ -652,6 +652,8 @@ PodのフェールオーバーもしないしDashboardも開けない。
 
 ちゃんと一つ一つ自分で構築しないとよく分からないな。
 
+(後日[全手動で構築した](https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/)。)
+
 <br>
 
 あとでふと思い立って、`/etd/hosts`をいじったらDashboardは動いた。
