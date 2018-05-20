@@ -128,6 +128,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
         ```sh
         # mkdir -p /etc/kubernetes/pki
+        # HOSTNAME=k8s-master
         # K8S_SERVICE_IP=10.0.0.1
         # MASTER_IP=192.168.171.200
         # cat > /etc/kubernetes/pki/openssl.cnf << EOF
@@ -156,11 +157,11 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         DNS.2 = kubernetes.default
         DNS.3 = kubernetes.default.svc
         DNS.4 = kubernetes.default.svc.cluster.local
-        DNS.5 = k8s-controller
+        DNS.5 = ${HOSTNAME}
         IP.1 = ${MASTER_IP}
         IP.2 = ${K8S_SERVICE_IP}
         [ alt_names_etcd ]
-        DNS.1 = k8s-controller
+        DNS.1 = ${HOSTNAME}
         IP.1 = ${MASTER_IP}
         EOF
         ```
@@ -1156,15 +1157,15 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         また、kubeletのクライアント証明書を自動更新(i.e. RotateKubeletClientCertificate)するときのCSRを承認するClusterRoleとして`system:certificates.k8s.io:certificatesigningrequests:selfnodeclient`が自動生成されていて、これをノード毎のユーザにバインドしてやると、自動承認が有効になる。
 
         ```sh
-        # NODE_USER_NAME=k8s-master
+        # HOSTNAME=k8s-master
         # cat <<EOF | kubectl create -f -
         kind: ClusterRoleBinding
         apiVersion: rbac.authorization.k8s.io/v1
         metadata:
-          name: ${NODE_USER_NAME}-node-client-cert-renewal
+          name: ${HOSTNAME}-node-client-cert-renewal
         subjects:
         - kind: User
-          name: system:node:${NODE_USER_NAME}
+          name: system:node:${HOSTNAME}
           apiGroup: rbac.authorization.k8s.io
         roleRef:
           kind: ClusterRole
@@ -1186,15 +1187,15 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
           resources: ["certificatesigningrequests/selfnodeserver"]
           verbs: ["create"]
         EOF
-        # NODE_USER_NAME=k8s-master
+        # HOSTNAME=k8s-master
         # cat <<EOF | kubectl create -f -
         kind: ClusterRoleBinding
         apiVersion: rbac.authorization.k8s.io/v1
         metadata:
-          name: ${NODE_USER_NAME}-server-client-cert-renewal
+          name: ${HOSTNAME}-server-client-cert-renewal
         subjects:
         - kind: User
-          name: system:node:${NODE_USER_NAME}
+          name: system:node:${HOSTNAME}
           apiGroup: rbac.authorization.k8s.io
         roleRef:
           kind: ClusterRole
