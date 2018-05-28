@@ -931,7 +931,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # kubectl -n kube-public create rolebinding kubeadm:bootstrap-signer-clusterinfo --role system:bootstrap-signer-clusterinfo --user system:anonymous
         ```
 
-        kubelet-bootstrapユーザにロールとグループを紐づける。
+        system:bootstrappersグループにsystem:node-bootstrapperロールを紐づける。
 
         ```sh
         # kubectl create clusterrolebinding kubeadm:kubelet-bootstrap --clusterrole system:node-bootstrapper --group system:bootstrappers
