@@ -169,6 +169,11 @@
 <li>flannelの要件に合わせている。</li>
 <li>ホストネットワークや、SERVICE_CLUSTER_IP_RANGEと範囲が被らないようにする必要がある。</li>
 </ul></li>
+<li><a href="https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies">Proxyモード</a>はiptables。
+
+<ul>
+<li>ipvsのほうが速いけど、flannelとかがサポートしているかよくわからないので。</li>
+</ul></li>
 </ul></li>
 </ul>
 
@@ -1082,6 +1087,10 @@ EOF
 
 <p>Kubernetes環境ではiptablesはkube-proxyが操作するので、Dockerには操作させないようにするため、<code>/etc/sysconfig/docker</code>の<code>OPTIONS</code>に<code>--iptables=false</code>を追加。
 (これをすると、<code>--icc=false</code>は設定できなくなる(不要になる)。)</p>
+
+<p>また、Podの<a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/">allowPrivilegeEscalation</a>をfalseにできない<a href="https://github.com/coreos/bugs/issues/1796">問題</a>に対処するため、<code>/etc/sysconfig/docker</code>の<code>OPTIONS</code>から<code>--selinux-enabled</code>を消す。</p>
+
+<p>で、起動。</p>
 
 <pre><code class="language-sh"># systemctl daemon-reload
 # systemctl enable docker

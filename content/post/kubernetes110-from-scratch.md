@@ -55,6 +55,8 @@ Oracle Linux 7.4.0のVMでKubernetes1.10.0のクラスタをスクラッチか�
     * CLUSTER_CIDR (Podに割り当てるIPの範囲) は10.244.0.0/16
         * flannelの要件に合わせている。
         * ホストネットワークや、SERVICE_CLUSTER_IP_RANGEと範囲が被らないようにする必要がある。
+    * [Proxyモード](https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies)はiptables。
+        * ipvsのほうが速いけど、flannelとかがサポートしているかよくわからないので。
 
 <br>
 
@@ -977,6 +979,10 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
         Kubernetes環境ではiptablesはkube-proxyが操作するので、Dockerには操作させないようにするため、`/etc/sysconfig/docker`の`OPTIONS`に`--iptables=false`を追加。
         (これをすると、`--icc=false`は設定できなくなる(不要になる)。)
+
+        また、Podの[allowPrivilegeEscalation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)をfalseにできない[問題](https://github.com/coreos/bugs/issues/1796)に対処するため、`/etc/sysconfig/docker`の`OPTIONS`から`--selinux-enabled`を消す。
+
+        で、起動。
 
         ```sh
         # systemctl daemon-reload

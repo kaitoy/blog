@@ -570,6 +570,11 @@ EOF
 &lt;li&gt;flannelの要件に合わせている。&lt;/li&gt;
 &lt;li&gt;ホストネットワークや、SERVICE_CLUSTER_IP_RANGEと範囲が被らないようにする必要がある。&lt;/li&gt;
 &lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies&#34;&gt;Proxyモード&lt;/a&gt;はiptables。
+
+&lt;ul&gt;
+&lt;li&gt;ipvsのほうが速いけど、flannelとかがサポートしているかよくわからないので。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
 &lt;/ul&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
@@ -1483,6 +1488,10 @@ EOF
 
 &lt;p&gt;Kubernetes環境ではiptablesはkube-proxyが操作するので、Dockerには操作させないようにするため、&lt;code&gt;/etc/sysconfig/docker&lt;/code&gt;の&lt;code&gt;OPTIONS&lt;/code&gt;に&lt;code&gt;--iptables=false&lt;/code&gt;を追加。
 (これをすると、&lt;code&gt;--icc=false&lt;/code&gt;は設定できなくなる(不要になる)。)&lt;/p&gt;
+
+&lt;p&gt;また、Podの&lt;a href=&#34;https://kubernetes.io/docs/tasks/configure-pod-container/security-context/&#34;&gt;allowPrivilegeEscalation&lt;/a&gt;をfalseにできない&lt;a href=&#34;https://github.com/coreos/bugs/issues/1796&#34;&gt;問題&lt;/a&gt;に対処するため、&lt;code&gt;/etc/sysconfig/docker&lt;/code&gt;の&lt;code&gt;OPTIONS&lt;/code&gt;から&lt;code&gt;--selinux-enabled&lt;/code&gt;を消す。&lt;/p&gt;
+
+&lt;p&gt;で、起動。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# systemctl daemon-reload
 # systemctl enable docker
