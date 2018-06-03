@@ -126,3 +126,10 @@ Playbookの書き方は他にたくさん情報があるし、どうせすぐに
 
 Ansibleの変数をいじればある程度違う構成もできる。
 複数ノードや、マスターコンポーネントの冗長化や、etcdが別サーバの構成もできそうな感じにはRoleを分けて書いたけど、試してはいない。
+
+## kubespray
+
+一通り作った後で、[kubespray](https://github.com/kubernetes-incubator/kubespray)というものを知った。
+これ使うと、Ansibleでマルチノードのk8sクラスタ作れて、ネットワークプロバイダ切り替えたり、[istio](https://istio.io/)とか[Helm](https://helm.sh/)とかDocker Registryとか簡単にデプロイできたり、AWSやAzureにクラスタ作れたり、すごい。
+
+あ、いや、けどこれOracle Linuxサポートしてないし…
