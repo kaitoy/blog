@@ -43,15 +43,12 @@ Masterには[kube-apiserver](https://kubernetes.io/docs/admin/kube-apiserver/)�
 このAPIを通して[Kubernetesオブジェクト](https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/)を定義したりすることで、宣言的にコンテナの管理ができる仕組み。
 ユーザは普通、[kubectl](https://kubernetes.io/docs/user-guide/kubectl/)(キューブシーティーエル)というコマンドでkube-apiserverとやり取りする。
 
-KubernetesオブジェクトはMasterの[etcd](https://github.com/coreos/etcd)によって分散キーバリューストアに永続化され、そのストアを[kube-controller-manager](https://kubernetes.io/docs/admin/kube-controller-manager/)と[kube-scheduler](https://kubernetes.io/docs/admin/kube-scheduler/)がwatchしてて、変更に応じた処理をする。
+KubernetesオブジェクトはMasterの[etcd](https://github.com/coreos/etcd)によって分散キーバリューストアに永続化され、そのストアを[kube-controller-manager](https://kubernetes.io/docs/admin/kube-controller-manager/)と[kube-scheduler](https://kubernetes.io/docs/admin/kube-scheduler/)が(kube-apiserver経由で)watchしてて、変更に応じた処理をする。
 
 kube-controller-managerは、ノードの管理や、オブジェクトのライフサイクルの管理や、コンテナのスケーリングなど、クラスタレベルの機能を実行する。
 (よくわからない。)
 
 kube-schedulerは、コンテナを実行するホストを選出し、コンテナのスケジューリングをする。
-
-あと、図にはないけど、[cloud-controller-manager](https://kubernetes.io/docs/admin/cloud-controller-manager/)というのがMasterで動くこともあって、クラウドプラットフォームとやり取りしてクラウド固有の仕事をするらしい。
-クラウドベンダじゃなければ気にしなくて良さそう。
 
 <br>
 
