@@ -6,8 +6,178 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2018</rights>
-    <updated>2018-05-05 21:54:30 &#43;0900 JST</updated>
+    <updated>2018-06-03 17:14:07 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</title>
+          <link>https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/</link>
+          <pubDate>Sun, 03 Jun 2018 17:14:07 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/</guid>
+          <description>
+
+&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/&#34;&gt;Kubernetes 1.10をスクラッチから全手動で構築&lt;/a&gt;」、「&lt;a href=&#34;https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/&#34;&gt;Kubernetes 1.10のクラスタにWeave Netをデプロイする&lt;/a&gt;」、「&lt;a href=&#34;https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/&#34;&gt;Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える&lt;/a&gt;」のまとめとして、Kubernetes 1.10のクラスタを構築するAnsible Playbookを書いた。&lt;/p&gt;
+
+&lt;p&gt;書いたものは&lt;a href=&#34;https://github.com/kaitoy/k8s-on-ol74-ansible&#34;&gt;GitHub&lt;/a&gt;に置いた。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;ansibleとは&#34;&gt;Ansibleとは&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.ansible.com/&#34;&gt;Ansible&lt;/a&gt;は、Ansible社が開発したOSSのIT自動化ツール。
+Ansible社は2015年10月にRedHatが買収したので、現在はRedHatが開発している。
+似たようなツールに&lt;a href=&#34;https://puppet.com/&#34;&gt;Puppet&lt;/a&gt;や&lt;a href=&#34;https://www.chef.io/&#34;&gt;Chef&lt;/a&gt;があるが、最近はAnsibleが最も支持されている気がする。&lt;/p&gt;
+
+&lt;p&gt;構成管理ツールと紹介されることが多い気がするが、2014年末位からはIT自動化ツールを自称していて、構成管理は実現するユースケースの一つという位置づけになっているので、そろそろ認識を改めてあげたい。&lt;/p&gt;
+
+&lt;p&gt;ユースケースは以下のようなもの。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.ansible.com/use-cases/provisioning&#34;&gt;プロビジョニング&lt;/a&gt; (ベアメタル、VM、クラウドインスタンス)&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.ansible.com/use-cases/configuration-management&#34;&gt;構成管理&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.ansible.com/use-cases/application-deployment&#34;&gt;アプリケーションデプロイメント&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.ansible.com/use-cases/continuous-delivery&#34;&gt;CI/CD&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.ansible.com/use-cases/security-and-compliance&#34;&gt;セキュリティ・コンプライアンス管理&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.ansible.com/use-cases/orchestration&#34;&gt;オーケストレーション&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;以下のような特徴を持つ。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Python(とPowerShell)で作られてる。
+
+&lt;ul&gt;
+&lt;li&gt;昔はPython 2じゃないと動かなかったけど、2.2から&lt;a href=&#34;https://docs.ansible.com/ansible/2.3/python_3_support.html&#34;&gt;Python 3でも動くようになった&lt;/a&gt;。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;YAMLで書いた定義(Playbook)に従って処理を実行する。&lt;/li&gt;
+&lt;li&gt;シンプルで簡便であることを売りにしている。
+
+&lt;ul&gt;
+&lt;li&gt;多数のモジュールがビルトインされていて、様々な操作を簡潔な定義で宣言的に実行できる。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;エージェントレスで、SSH(等)で対象のサーバにつないで処理を実行する。&lt;/li&gt;
+&lt;li&gt;処理を冪等にできるような仕組みが備わっていて、特にビルトインモジュールを活用すると簡単に冪等性を持たせられる。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Pythonで書かれているのでどこでも動くかと思いきや、&lt;a href=&#34;https://docs.python.jp/3/library/fcntl.html&#34;&gt;fcntl&lt;/a&gt;とか&lt;a href=&#34;https://docs.python.jp/3/library/grp.html&#34;&gt;grp&lt;/a&gt;やらUnix特有のモジュールを使っているため、WindowsのPythonでは動かない。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://kzlog.picoaccel.com/post-935/&#34;&gt;MSYS2&lt;/a&gt;とか&lt;a href=&#34;https://qiita.com/comefigo/items/f2b42c22e903f43e136e&#34;&gt;WSL&lt;/a&gt;では動く模様。
+(&lt;a href=&#34;https://superuser.com/questions/1255634/install-ansible-in-windows-using-git-bash&#34;&gt;Git Bash (MinGW)では動かない…&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;今回使ったのは最新版の2.5.3。&lt;/p&gt;
+
+&lt;h2 id=&#34;ansibleインストール&#34;&gt;Ansibleインストール&lt;/h2&gt;
+
+&lt;p&gt;AnsibleはYUMとかpipとかでインストールできる。&lt;/p&gt;
+
+&lt;p&gt;今回はOracle Linux 7.4で動かすため、以下のようにインストールした。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;YUMリポジトリ追加&lt;/p&gt;
+
+&lt;p&gt;以下の内容を&lt;code&gt;/etc/yum.repos.d/&lt;/code&gt;の適当な&lt;code&gt;.repo&lt;/code&gt;ファイルに書く。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-txt&#34;&gt;[ansible]
+name=Ansible
+baseurl=http://releases.ansible.com/ansible/rpm/release/epel-7-x86_64/
+gpgcheck=0
+enabled=1
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;インストール&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# yum install -y ansible
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&#34;playbookの書き方&#34;&gt;Playbookの書き方&lt;/h2&gt;
+
+&lt;p&gt;Playbookの書き方は他にたくさん情報があるし、どうせすぐに陳腐化するのでここには書かない。&lt;/p&gt;
+
+&lt;p&gt;以下を参照して書いた。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;http://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html#how-to-differentiate-staging-vs-production&#34;&gt;公式のBest Practices&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://docs.ansible.com/ansible/latest/modules/modules_by_category.html&#34;&gt;公式マニュアルのモジュール編&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html&#34;&gt;公式マニュアルの変数編&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://docs.ansible.com/ansible/latest/user_guide/playbooks_loops.html&#34;&gt;公式マニュアルのループ編&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://jinja.pocoo.org/docs/2.10/&#34;&gt;Jinja2のマニュアル&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://openedx.atlassian.net/wiki/spaces/OpenOPS/pages/26837527/Ansible+Code+Conventions&#34;&gt;edXのAnsibleコーディング規約&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;一つ他にあまりなかった情報を書く:&lt;/p&gt;
+
+&lt;p&gt;タスクをループするとき、&lt;code&gt;with_items&lt;/code&gt;プロパティを書くのはもう古くて、バージョン2.5以降では&lt;code&gt;loop&lt;/code&gt;プロパティを使う。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;書いたPlaybookで構築できるのは以下のようなKubernetesクラスタ。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Kubernetes: バージョン1.10.1
+
+&lt;ul&gt;
+&lt;li&gt;単一ノード&lt;/li&gt;
+&lt;li&gt;全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e. 非コンテナ)
+
+&lt;ul&gt;
+&lt;li&gt;kubeletとkube-proxy以外は非rootユーザ&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;コンポーネント間通信とkubectlの通信をTLSで暗号化&lt;/li&gt;
+&lt;li&gt;コンポーネント間通信とkubectlの通信の認証は&lt;a href=&#34;https://kubernetes.io/docs/admin/authentication/#x509-client-certs&#34;&gt;x509クライアント証明書&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;TLS Bootstrapping
+
+&lt;ul&gt;
+&lt;li&gt;Bootstrap token使用&lt;/li&gt;
+&lt;li&gt;CSR自動承認&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/tasks/tls/certificate-rotation/&#34;&gt;Certificate Rotation&lt;/a&gt;有効&lt;/li&gt;
+&lt;li&gt;etcd 3.1.12&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.weave.works/oss/net/&#34;&gt;Weave Net&lt;/a&gt; 2.3.0&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/coredns/coredns&#34;&gt;CoreDNS&lt;/a&gt; 1.1.3&lt;/li&gt;
+&lt;li&gt;SERVICE_CLUSTER_IP_RANGE (Serviceに割り当てるIPの範囲) は10.0.0.0/16&lt;/li&gt;
+&lt;li&gt;CLUSTER_CIDR (Podに割り当てるIPの範囲) は10.32.0.0/16&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies&#34;&gt;Proxyモード&lt;/a&gt;はiptables。&lt;/li&gt;
+&lt;li&gt;PodSecurityPolicy有効。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/&#34;&gt;KubeletConfiguration&lt;/a&gt;、&lt;a href=&#34;https://github.com/kubernetes/kubernetes/blob/master/pkg/proxy/apis/kubeproxyconfig/v1alpha1/types.go&#34;&gt;KubeProxyConfiguration&lt;/a&gt;、&lt;a href=&#34;https://github.com/kubernetes/kubernetes/blob/master/pkg/apis/componentconfig/v1alpha1/types.go&#34;&gt;KubeSchedulerConfiguration&lt;/a&gt;を使用。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;開発ツール付き
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/c-bata/kube-prompt&#34;&gt;kube-prompt&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/moncho/dry&#34;&gt;dry&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;etc.&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Ansibleの変数をいじればある程度違う構成もできる。
+複数ノードや、マスターコンポーネントの冗長化や、etcdが別サーバの構成もできそうな感じにはRoleを分けて書いたけど、試してはいない。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>

@@ -74,6 +74,27 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="/images/kubernetes-ansible.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sun, Jun 3, 2018</span>
+              </div>
+              <h2 class="title">Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</h2>
+              <div class="summary">
+                「Kubernetes 1.10をスクラッチから全手動で構築」、「Kubernetes 1.10のクラスタにWeave Netをデプロイする」、「Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える」のまとめとして、Kubernetes 1.10のクラスタを構築するAnsible Playbookを書いた。 書いたものはGitHubに置いた。 (adsbygoogle = window.adsbygoogle || []).push({}); Ansibleとは Ansibleは、Ansible社が開発したOSSのIT自動化ツール。 Ansible社は2015年10月にRedHatが買収したので、現在はRedHatが開発している。 似たようなツールにPuppetやChefがあるが、最近はAnsibleが最も支持されている気がする。 構成管理ツールと紹介されることが多い気がするが、2014年末位からはIT自動化ツールを自称していて、構成管理は実現するユースケースの一つという位置づけになっているので、そろそろ認識を改めてあげたい。 ユースケースは以下のようなもの。 プロビジョニング (ベアメタル、VM、クラウドインスタンス) 構成管理 アプリケーションデプロイメント CI/CD セキュリティ・コンプライアンス管理 オーケストレーション 以下のような特徴を持つ。 Python(とPowerShell)で作られてる。 昔はPython 2じゃないと動かなかったけど、2.2からPython 3でも動くようになった。 YAMLで書いた定義(Playbook)に従って処理を実行する。 シンプルで簡便であることを売りにしている。 多数のモジュールがビルトインされていて、様々な操作を簡潔な定義で宣言的に実行できる。 エージェントレスで、SSH(等)で対象のサーバにつないで処理を実行する。 処理を冪等にできるような仕組みが備わっていて、特にビルトインモジュールを活用すると簡単に冪等性を持たせられる。 Pythonで書かれているのでどこでも動くかと思いきや、fcntlとかgrpやらUnix特有のモジュールを使っているため、WindowsのPythonでは動かない。 MSYS2とかWSLでは動く模様。 (Git Bash (MinGW)では動かない…) 今回使ったのは最新版の2.5.3。 Ansibleインストール AnsibleはYUMとかpipとかでインストールできる。 今回はOracle Linux 7.4で動かすため、以下のようにインストールした。 YUMリポジトリ追加 以下の内容を/etc/yum.repos.d/の適当な.repoファイルに書く。 [ansible] name=Ansible baseurl=http://releases.ansible.com/ansible/rpm/release/epel-7-x86_64/ gpgcheck=0 enabled=1 インストール # yum install -y ansible Playbookの書き方 Playbookの書き方は他にたくさん情報があるし、どうせすぐに陳腐化するのでここには書かない。 以下を参照して書いた。 公式のBest Practices 公式マニュアルのモジュール編 公式マニュアルの変数編 公式マニュアルのループ編 Jinja2のマニュアル edXのAnsibleコーディング規約 一つ他にあまりなかった情報を書く: タスクをループするとき、with_itemsプロパティを書くのはもう古くて、バージョン2.5以降ではloopプロパティを使う。 書いたPlaybookで構築できるのは以下のようなKubernetesクラスタ。 Kubernetes: バージョン1.10.1 単一ノード 全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="/images/kubernetes.png" alt="eyecatch">
@@ -135,19 +156,16 @@
         
         
         
-        <div class="col-sm-6">
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2018/04/01/hello-skaffold/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2018/04/01/hello-skaffold/" class="post">
               <header class="eyecatch text-center">
                 <img src="/images/kubernetes.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Sun, Apr 1, 2018</span>
               </div>
-              <h2 class="title">Skaffoldを触ってみた</h2>
-              <div class="summary">
-                Skaffoldを試してみた話。 (adsbygoogle = window.adsbygoogle || []).push({}); Skaffoldとは Googleが開発している、Kubernetesアプリケーションを快適に開発するためのツール。 アプリケーションのソースを監視し、変更が入ると、自動的にコンテナイメージをビルドしてKubernetesクラスタにデプロイしてくれる。 2018/3/16に発表された新しいツールで、触った感じではまだこれからといった感じだった。 Goで書かれていて、Linux、OS X、Windows用のバイナリが提供されている。 似たツールにはMicrosoftのDraftがある。 また、Gitのコミットを自動デプロイしてくれるものに、Gitkube、Jenkins X (エックス)がある。 Windows版を試す 自PCがWindowsなのでWindows版を試す。 会社で使ってるのもWindowsだし。 Skaffoldを使うには、Skaffoldの実行バイナリ、Kubernetesクラスタ、そのクラスタをコンテクストに設定したkubectl、Dockerが必要。 まずWindows版Skaffoldをインストールする。 GitHubのリリースページからWindowsバイナリをダウンロードして、skaffold.exeにリネームしてPATHの通ったところに置くだけ。 Skaffoldのバージョンは0.3.0。 Kubernetesクラスタは、Windows 10 Home上にminikube 0.22.2で作ったKubernetes 1.7.0のクラスタ。 minikubeは以前インストールしたものを使う。 minikubeを起動。 &gt; minikube start --kubernetes-version v1.7.0 kubectlもminikubeと一緒にインストール済み。 Dockerについては、デーモンはminikube上のを使えばいいとして、クライアント(Docker Client)はskaffoldコマンドから実行するのでWindows上にないとだめはなず。 WindowsでDockerと言えば今ならDocker for Windowsだけど、これはWindows 10 Proじゃないと使えなかったはずなので、Docker Toolboxでクライアントをいれた。 このクライアントはデフォルトではローカルのデーモンを見てるので、minikubeのデーモンを見させる。 そのための設定はminikubeのコマンドで分かるようになっている。 &gt; minikube docker-env SET DOCKER_TLS_VERIFY=1 SET DOCKER_HOST=tcp://192.168.99.100:2376 SET DOCKER_CERT_PATH=C:\Users\kaitoy\.minikube\certs SET DOCKER_API_VERSION=1.23 REM Run this command to configure your shell: REM @FOR /f &quot;tokens=*&quot; %i IN ('minikube docker-env') DO @%i これに従って以下のコマンドを実行するとクライアントの設定完了。 &gt; @FOR /f &quot;tokens=*&quot; %i IN ('minikube docker-env') DO @%i これで準備完了。 SkaffoldのGetting Startedをやってみる。 Skaffoldのリポジトリをcloneして、コマンドプロンプト開いて、examples/getting-startedにcdして、以下のコマンドを実行。 &gt; skaffold dev エラーで終わった。 [31mERRO[0m[0047] run: running skaffold steps: starting watch on file C:\Users\kaitoy\Desktop\skaffold\examples\getting-started\Dockerfile: adding watch for C:\Users\kaitoy\Desktop\skaffold\examples\getting-started\Dockerfile: The parameter is incorrect.
-              </div>
+              <h3 class="title">Skaffoldを触ってみた</h3>
             </a>
           </article>
         </div>
@@ -270,6 +288,9 @@
     
     <div id="tag-cloud" class="text-center">
       
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ansible">ansible</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
