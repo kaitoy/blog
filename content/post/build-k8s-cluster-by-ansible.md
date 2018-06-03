@@ -10,7 +10,7 @@ title = "Kubernetes 1.10のクラスタを全手動で構築するのをAnsible�
 
 「[Kubernetes 1.10をスクラッチから全手動で構築](https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/)」、「[Kubernetes 1.10のクラスタにWeave Netをデプロイする](https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/)」、「[Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える](https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/)」のまとめとして、Kubernetes 1.10のクラスタを構築するAnsible Playbookを書いた。
 
-書いたものは[GitHub](https://github.com/kaitoy/k8s-on-ol74-ansible)に置いた。
+書いたものは[GitHub](https://github.com/kaitoy/ansible-k8s)に置いた。
 
 {{< google-adsense >}}
 
