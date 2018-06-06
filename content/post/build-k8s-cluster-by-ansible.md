@@ -60,7 +60,7 @@ AnsibleはYUMとかpipとかでインストールできる。
 
 今回はOracle Linux 7.4で動かすため、以下のようにインストールした。
 
-1. YUMリポジトリ追加
+1. AnsibleのYUMリポジトリ追加
 
     以下の内容を`/etc/yum.repos.d/`の適当な`.repo`ファイルに書く。
 
@@ -72,7 +72,11 @@ AnsibleはYUMとかpipとかでインストールできる。
     enabled=1
     ```
 
-2. インストール
+2. 依存するPythonパッケージのYUMリポジトリを有効化
+
+    `/etc/yum.repos.d/public-yum-ol7.repo`を編集して、`ol7_openstack30`セクションの`enabled`を1にする。
+
+3. インストール
 
     ```sh
     # yum install -y ansible
