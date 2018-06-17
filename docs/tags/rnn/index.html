@@ -251,6 +251,9 @@
       <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
       
       
+      <a href="https://www.kaitoy.xyz/tags/msys2">msys2</a>
+      
+      
       <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
       
       
@@ -264,6 +267,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/packer">packer</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>

@@ -48,7 +48,7 @@ Ansible社は2015年10月にRedHatが買収したので、現在はRedHatが開�
 Pythonで書かれているのでどこでも動くかと思いきや、[fcntl](https://docs.python.jp/3/library/fcntl.html)とか[grp](https://docs.python.jp/3/library/grp.html)やらUnix特有のモジュールを使っているため、WindowsのPythonでは動かない。
 
 [MSYS2](http://kzlog.picoaccel.com/post-935/)とか[WSL](https://qiita.com/comefigo/items/f2b42c22e903f43e136e)では動く模様。
-([Git Bash (MinGW)では動かない…](https://superuser.com/questions/1255634/install-ansible-in-windows-using-git-bash))
+([Git Bashでは動かない…](https://superuser.com/questions/1255634/install-ansible-in-windows-using-git-bash))
 
 <br>
 

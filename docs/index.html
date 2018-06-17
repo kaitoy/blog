@@ -14,9 +14,9 @@
     <link rel="canonical" href="https://www.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="「Kubernetes 1.10をスクラッチから全手動で構築」、「Kubernetes 1.10のクラスタにWeave Netをデプロイする」、「Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える」のまとめとして、Kubernetes 1.10のクラスタを構築するAnsible Playbookを書いた。 書いたものはGitHubに置いた。 (adsbygoogle = window.adsbygoogle || []).push({}); Ansibleとは Ansibleは、Ansible社が開発したOSSのIT自動化ツール。 Ansible社は2015年10月にRedHatが買収したので、現在はRedHatが開発している。 似たようなツールにPuppetやChefがあるが、最近はAnsibleが最も支持されている気がする。 構成管理ツールと紹介されることが多い気がするが、2014年末位からはIT自動化ツールを自称していて、構成管理は実現するユースケースの一つという位置づけになっているので、そろそろ認識を改めてあげたい。 ユースケースは以下のようなもの。 プロビジョニング (ベアメタル、VM、クラウドインスタンス) 構成管理 アプリケーションデプロイメント CI/CD セキュリティ・コンプライアンス管理 オーケストレーション 以下のような特徴を持つ。 Python(とPowerShell)で作られてる。 昔はPython 2じゃないと動かなかったけど、2.2からPython 3でも動くようになった。 YAMLで書いた定義(Playbook)に従って処理を実行する。 シンプルで簡便であることを売りにしている。 多数のモジュールがビルトインされていて、様々な操作を簡潔な定義で宣言的に実行できる。 エージェントレスで、SSH(等)で対象のサーバにつないで処理を実行する。 処理を冪等にできるような仕組みが備わっていて、特にビルトインモジュールを活用すると簡単に冪等性を持たせられる。 Pythonで書かれているのでどこでも動くかと思いきや、fcntlとかgrpやらUnix特有のモジュールを使っているため、WindowsのPythonでは動かない。 MSYS2とかWSLでは動く模様。 (Git Bash (MinGW)では動かない…) 今回使ったのは最新版の2.5.3。 Ansibleインストール AnsibleはYUMとかpipとかでインストールできる。 今回はOracle Linux 7.4で動かすため、以下のようにインストールした。 AnsibleのYUMリポジトリ追加 以下の内容を/etc/yum.repos.d/の適当な.repoファイルに書く。 [ansible] name=Ansible baseurl=http://releases.ansible.com/ansible/rpm/release/epel-7-x86_64/ gpgcheck=0 enabled=1 依存するPythonパッケージのYUMリポジトリを有効化 /etc/yum.repos.d/public-yum-ol7.repoを編集して、ol7_openstack30セクションのenabledを1にする。 インストール # yum install -y ansible Playbookの書き方 Playbookの書き方は他にたくさん情報があるし、どうせすぐに陳腐化するのでここには書かない。 以下を参照して書いた。 公式のBest Practices 公式マニュアルのモジュール編 公式マニュアルの変数編 公式マニュアルのループ編 Jinja2のマニュアル edXのAnsibleコーディング規約 一つ他にあまりなかった情報を書く: タスクをループするとき、with_itemsプロパティを書くのはもう古くて、バージョン2.5以降ではloopプロパティを使う。 書いたPlaybookで構築できるのは以下のようなKubernetesクラスタ。 Kubernetes: バージョン1.10.1 単一ノード 全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e.">
+    <meta property="og:description" content="「Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した」の続きで、さらにPackerを組み合わせて、VM作成まで自動化した話。 AnsibleをWindows(MSYS2)で動かした話でもある。 書いたPackerテンプレートはGitHubに置いた。 (adsbygoogle = window.adsbygoogle || []).push({}); Packerとは Packerは、様々な種類のVMを構築できるツール。 VagrantとかTerraformとかを開発しているHashiCorpが開発している。 テンプレートと呼ばれるビルド定義をJSONファイルに書いて、ビルド、プロビジョニング、ポストプロセスを実行して、アーティファクトと呼ばれるビルドの成果物を生成する。 ビルドのステップでは、VMを作成して、ハードウェア構成を設定したり、OSをインストールしたりする。 以下のような環境でVMを作れる。 VirtualBox Hyper-V VMware Workstation VMware vSphere Hypervisor Docker AWS EC2 プロビジョニングのステップでは、ビルドで作ったVMのOS上で指定された操作を実行し、ソフトウェアのインストールなどのセットアップ処理をする。 プロビジョニングには以下のようなツールを使える。 Shell PowerShell Ansible Chef Puppet プロビジョニングが終わるとアーティファクト(VMイメージファイルや、AWS EC2のAMI IDとか)が出力される。 ポストプロセスのステップでは、アーティファクトを入力として何らかの処理をして、最終的なアーティファクトを生成する。 ポストプロセスでは以下のような処理を実行できる。 アーカイブ VagrantBox生成 AWS EC2へのインポート Docker push PackerはGoで書かれていてビルド済みのバイナリが配布されているので、ダウンロードページから落として PATHの通ったところに置くだけでインストールできる。 今回はPacker 1.2.4のWindows版をインストールした。 Packerのテンプレート概要 Packerのテンプレートにはビルド、プロビジョニング、ポストプロセスの定義を複数かけて、複数環境のVM生成を1ファイルで定義できる。 テンプレートには以下のプロパティを書く。 builders: ビルドの定義のリスト。 description: テンプレートの説明。 min_packer_version: Packer の最低バージョン指定。 post-processors: ポストプロセスの定義のリスト。 provisioners: プロビジョニングの定義のリスト。 variables: テンプレート内で使う変数の定義。 _comment: コメントなどを書くためのプロパティ。実際はアンダースコアで始まればなんでもいい。JSON オブジェクトのルートレベルのみで使える。 これらのうち、必須なのはbuildersだけ。 一つのビルド定義には一つのcommunicatorを紐づける。 communicatorはビルド時にVMにつなぐための設定。 基本はSSHだけど、WinRMとかもある。 やりたいこと Windows 10上でPackerとAnsibleを動かして、VirtualBoxのVMをOracle Linux 7.4で作って、Kubernetes 1.10をインストールしたい。 Windowsでやりたいのは、単にベアメタルのLinuxの環境が無いからってのもあるし、いずれHyper-VのVMも作りたいからってのもある。 PackerはGo製で普通にWindowsで動くからいいけど、問題はAnsibleがPython製のくせにWindowsのPythonでは動かないこと。 AnsibleはWSLでは動くけど、VirtualBoxとかHyper-VはWindows上で動くから、PackerはWindows上で動かさないといけないはずで、そうなるとPackerから呼ばれるAnsibleもWindows上で動かさないといけない気がする。 のでWSLではだめな気がするし、そもそも実はWindows 7でも同じことやりたいのでWSLは無し。 要はWindows上でLinuxのPythonを使ってAnsibleを動かしたい。 ならばCygwinかMSYS2&#43;MinGW-w64かGit Bashか。 ここにAnsibleはCygwinでもGit Bashでも動かすの難しいと書いてあって、逆にMSYS2でAnsible動かした記事はあったので、安直にMSYS2でやることにした。 MSYS2インストール MSYS2は、公式サイトからx86_64のインストーラ(msys2-x86_64-20180531.exe)をダウンロードして実行して普通にインストールしただけ。 Ansibleインストール MSYS2でのパッケージ管理にはpacmanを使う。 何はともあれPythonを入れる。3系でいい。 MSYS2 MinGW 64-bitのショートカットからターミナルを開いて、 $ pacman -S python で、Python 3.6.2が入った。 次に、Ansible(の依存)のビルドに必要なパッケージを入れる。 $ pacman -S gcc $ pacman -S make $ pacman -S libffi-devel $ pacman -S openssl-devel さらに、AnsibleからのSSH接続で(鍵ではなくて)パスワードを使う場合に必要なパッケージも入れる。 $ pacman -S sshpass sshpassの依存としてopensshも入った。 Ansibleはpipでインストールするんだけど、pacmanで入れたPython 3にはpipが付いてなかったので、別途入れる。 $ curl https://bootstrap.pypa.io/get-pip.py -LO $ python get-pip.py で、ようやくAnsibleインストール。 $ export CFLAGS=-I/usr/lib/libffi-3.2.1/include $ pip install ansible Ansible 2.5.4がインストールされた。 AnsibleでJinja2のipaddrフィルターを使うために、もう一つPyPiパッケージ入れる。 $ pip install netaddr Packerテンプレート作成 ビルドは、OSインストールメディアのISOファイルを使うVirtualBoxのビルダであるvirtualbox-isoを指定して書いた。 OSのインストールは、Boot Commandをテンプレートに書くことで、インストーラのGUIを操作してやることもできるけど、RHEL系ならKickstartを使うのが楽。 Kickstartの定義ファイルは、普通に手動でOSをインストールした後、/root/anaconda-ks.cfgを採取して、必要に応じて編集して作る。 今回作ったのはこれで、このスレを参考に、Minimalインストールから、Wifiのファームウェアとか要らないのを抜いてる。 プロビジョニングは、「Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した」ときのPlaybookを実行するやつを公式マニュアル見ながら適当に書いて、ポストプロセスも適当に書いて、できたのがこれ。 ansible_env_varsでANSIBLE_SSH_ARGSに-o ControlMaster=noを入れているのは、この問題に対応するため。 ビルド実行 MSYS2 MinGW 64-bitのショートカットからターミナルを開いて、Packerを実行してみたら以下のエラー。 $ packer build -var-file=variables.json k8s_single_node_cluster-vb.json bash: packer: コマンドが見つかりません WindowsのPathが通ったところにPackerバイナリを置いておいてもMSYS2からは見えない。 のでpackerバイナリのフルパスを指定してやる。 $ /c/Users/kaitoy/Desktop/bin/packer.exe build -var-file=variables.json k8s_single_node_cluster-vb.json k8s-single-node-cluster output will be in this color.">
     
-    <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes-ansible.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes-ansible-packer.png">
     
     
     
@@ -82,6 +82,28 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2018/06/17/packer-k8s/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/kubernetes-ansible-packer.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sun, Jun 17, 2018</span>
+              </div>
+              <h2 class="title">Packer &#43; Ansible on Windows 7でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</h2>
+              <div class="summary">
+                「Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した」の続きで、さらにPackerを組み合わせて、VM作成まで自動化した話。 AnsibleをWindows(MSYS2)で動かした話でもある。 書いたPackerテンプレートはGitHubに置いた。 (adsbygoogle = window.adsbygoogle || []).push({}); Packerとは Packerは、様々な種類のVMを構築できるツール。 VagrantとかTerraformとかを開発しているHashiCorpが開発している。 テンプレートと呼ばれるビルド定義をJSONファイルに書いて、ビルド、プロビジョニング、ポストプロセスを実行して、アーティファクトと呼ばれるビルドの成果物を生成する。 ビルドのステップでは、VMを作成して、ハードウェア構成を設定したり、OSをインストールしたりする。 以下のような環境でVMを作れる。 VirtualBox Hyper-V VMware Workstation VMware vSphere Hypervisor Docker AWS EC2 プロビジョニングのステップでは、ビルドで作ったVMのOS上で指定された操作を実行し、ソフトウェアのインストールなどのセットアップ処理をする。 プロビジョニングには以下のようなツールを使える。 Shell PowerShell Ansible Chef Puppet プロビジョニングが終わるとアーティファクト(VMイメージファイルや、AWS EC2のAMI IDとか)が出力される。 ポストプロセスのステップでは、アーティファクトを入力として何らかの処理をして、最終的なアーティファクトを生成する。 ポストプロセスでは以下のような処理を実行できる。 アーカイブ VagrantBox生成 AWS EC2へのインポート Docker push PackerはGoで書かれていてビルド済みのバイナリが配布されているので、ダウンロードページから落として PATHの通ったところに置くだけでインストールできる。 今回はPacker 1.2.4のWindows版をインストールした。 Packerのテンプレート概要 Packerのテンプレートにはビルド、プロビジョニング、ポストプロセスの定義を複数かけて、複数環境のVM生成を1ファイルで定義できる。 テンプレートには以下のプロパティを書く。 builders: ビルドの定義のリスト。 description: テンプレートの説明。 min_packer_version: Packer の最低バージョン指定。 post-processors: ポストプロセスの定義のリスト。 provisioners: プロビジョニングの定義のリスト。 variables: テンプレート内で使う変数の定義。 _comment: コメントなどを書くためのプロパティ。実際はアンダースコアで始まればなんでもいい。JSON オブジェクトのルートレベルのみで使える。 これらのうち、必須なのはbuildersだけ。 一つのビルド定義には一つのcommunicatorを紐づける。 communicatorはビルド時にVMにつなぐための設定。 基本はSSHだけど、WinRMとかもある。 やりたいこと Windows 10上でPackerとAnsibleを動かして、VirtualBoxのVMをOracle Linux 7.4で作って、Kubernetes 1.10をインストールしたい。 Windowsでやりたいのは、単にベアメタルのLinuxの環境が無いからってのもあるし、いずれHyper-VのVMも作りたいからってのもある。 PackerはGo製で普通にWindowsで動くからいいけど、問題はAnsibleがPython製のくせにWindowsのPythonでは動かないこと。 AnsibleはWSLでは動くけど、VirtualBoxとかHyper-VはWindows上で動くから、PackerはWindows上で動かさないといけないはずで、そうなるとPackerから呼ばれるAnsibleもWindows上で動かさないといけない気がする。 のでWSLではだめな気がするし、そもそも実はWindows 7でも同じことやりたいのでWSLは無し。 要はWindows上でLinuxのPythonを使ってAnsibleを動かしたい。 ならばCygwinかMSYS2+MinGW-w64かGit Bashか。 ここにAnsibleはCygwinでもGit Bashでも動かすの難しいと書いてあって、逆にMSYS2でAnsible動かした記事はあったので、安直にMSYS2でやることにした。 MSYS2インストール MSYS2は、公式サイトからx86_64のインストーラ(msys2-x86_64-20180531.exe)をダウンロードして実行して普通にインストールしただけ。 Ansibleインストール MSYS2でのパッケージ管理にはpacmanを使う。 何はともあれPythonを入れる。3系でいい。 MSYS2 MinGW 64-bitのショートカットからターミナルを開いて、 $ pacman -S python で、Python 3.6.2が入った。 次に、Ansible(の依存)のビルドに必要なパッケージを入れる。 $ pacman -S gcc $ pacman -S make $ pacman -S libffi-devel $ pacman -S openssl-devel さらに、AnsibleからのSSH接続で(鍵ではなくて)パスワードを使う場合に必要なパッケージも入れる。 $ pacman -S sshpass sshpassの依存としてopensshも入った。 Ansibleはpipでインストールするんだけど、pacmanで入れたPython 3にはpipが付いてなかったので、別途入れる。 $ curl https://bootstrap.pypa.io/get-pip.py -LO $ python get-pip.py で、ようやくAnsibleインストール。 $ export CFLAGS=-I/usr/lib/libffi-3.2.1/include $ pip install ansible Ansible 2.5.4がインストールされた。 AnsibleでJinja2のipaddrフィルターを使うために、もう一つPyPiパッケージ入れる。 $ pip install netaddr Packerテンプレート作成 ビルドは、OSインストールメディアのISOファイルを使うVirtualBoxのビルダであるvirtualbox-isoを指定して書いた。 OSのインストールは、Boot Commandをテンプレートに書くことで、インストーラのGUIを操作してやることもできるけど、RHEL系ならKickstartを使うのが楽。 Kickstartの定義ファイルは、普通に手動でOSをインストールした後、/root/anaconda-ks.cfgを採取して、必要に応じて編集して作る。 今回作ったのはこれで、このスレを参考に、Minimalインストールから、Wifiのファームウェアとか要らないのを抜いてる。 プロビジョニングは、「Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した」ときのPlaybookを実行するやつを公式マニュアル見ながら適当に書いて、ポストプロセスも適当に書いて、できたのがこれ。 ansible_env_varsでANSIBLE_SSH_ARGSに-o ControlMaster=noを入れているのは、この問題に対応するため。 ビルド実行 MSYS2 MinGW 64-bitのショートカットからターミナルを開いて、Packerを実行してみたら以下のエラー。 $ packer build -var-file=variables.json k8s_single_node_cluster-vb.json bash: packer: コマンドが見つかりません WindowsのPathが通ったところにPackerバイナリを置いておいてもMSYS2からは見えない。 のでpackerバイナリのフルパスを指定してやる。 $ /c/Users/kaitoy/Desktop/bin/packer.exe build -var-file=variables.json k8s_single_node_cluster-vb.json k8s-single-node-cluster output will be in this color.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/kubernetes-ansible.png" alt="eyecatch">
@@ -91,7 +113,7 @@
               </div>
               <h2 class="title">Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</h2>
               <div class="summary">
-                「Kubernetes 1.10をスクラッチから全手動で構築」、「Kubernetes 1.10のクラスタにWeave Netをデプロイする」、「Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える」のまとめとして、Kubernetes 1.10のクラスタを構築するAnsible Playbookを書いた。 書いたものはGitHubに置いた。 (adsbygoogle = window.adsbygoogle || []).push({}); Ansibleとは Ansibleは、Ansible社が開発したOSSのIT自動化ツール。 Ansible社は2015年10月にRedHatが買収したので、現在はRedHatが開発している。 似たようなツールにPuppetやChefがあるが、最近はAnsibleが最も支持されている気がする。 構成管理ツールと紹介されることが多い気がするが、2014年末位からはIT自動化ツールを自称していて、構成管理は実現するユースケースの一つという位置づけになっているので、そろそろ認識を改めてあげたい。 ユースケースは以下のようなもの。 プロビジョニング (ベアメタル、VM、クラウドインスタンス) 構成管理 アプリケーションデプロイメント CI/CD セキュリティ・コンプライアンス管理 オーケストレーション 以下のような特徴を持つ。 Python(とPowerShell)で作られてる。 昔はPython 2じゃないと動かなかったけど、2.2からPython 3でも動くようになった。 YAMLで書いた定義(Playbook)に従って処理を実行する。 シンプルで簡便であることを売りにしている。 多数のモジュールがビルトインされていて、様々な操作を簡潔な定義で宣言的に実行できる。 エージェントレスで、SSH(等)で対象のサーバにつないで処理を実行する。 処理を冪等にできるような仕組みが備わっていて、特にビルトインモジュールを活用すると簡単に冪等性を持たせられる。 Pythonで書かれているのでどこでも動くかと思いきや、fcntlとかgrpやらUnix特有のモジュールを使っているため、WindowsのPythonでは動かない。 MSYS2とかWSLでは動く模様。 (Git Bash (MinGW)では動かない…) 今回使ったのは最新版の2.5.3。 Ansibleインストール AnsibleはYUMとかpipとかでインストールできる。 今回はOracle Linux 7.4で動かすため、以下のようにインストールした。 AnsibleのYUMリポジトリ追加 以下の内容を/etc/yum.repos.d/の適当な.repoファイルに書く。 [ansible] name=Ansible baseurl=http://releases.ansible.com/ansible/rpm/release/epel-7-x86_64/ gpgcheck=0 enabled=1 依存するPythonパッケージのYUMリポジトリを有効化 /etc/yum.repos.d/public-yum-ol7.repoを編集して、ol7_openstack30セクションのenabledを1にする。 インストール # yum install -y ansible Playbookの書き方 Playbookの書き方は他にたくさん情報があるし、どうせすぐに陳腐化するのでここには書かない。 以下を参照して書いた。 公式のBest Practices 公式マニュアルのモジュール編 公式マニュアルの変数編 公式マニュアルのループ編 Jinja2のマニュアル edXのAnsibleコーディング規約 一つ他にあまりなかった情報を書く: タスクをループするとき、with_itemsプロパティを書くのはもう古くて、バージョン2.5以降ではloopプロパティを使う。 書いたPlaybookで構築できるのは以下のようなKubernetesクラスタ。 Kubernetes: バージョン1.10.1 単一ノード 全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e.
+                「Kubernetes 1.10をスクラッチから全手動で構築」、「Kubernetes 1.10のクラスタにWeave Netをデプロイする」、「Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える」のまとめとして、Kubernetes 1.10のクラスタを構築するAnsible Playbookを書いた。 書いたものはGitHubに置いた。 (adsbygoogle = window.adsbygoogle || []).push({}); Ansibleとは Ansibleは、Ansible社が開発したOSSのIT自動化ツール。 Ansible社は2015年10月にRedHatが買収したので、現在はRedHatが開発している。 似たようなツールにPuppetやChefがあるが、最近はAnsibleが最も支持されている気がする。 構成管理ツールと紹介されることが多い気がするが、2014年末位からはIT自動化ツールを自称していて、構成管理は実現するユースケースの一つという位置づけになっているので、そろそろ認識を改めてあげたい。 ユースケースは以下のようなもの。 プロビジョニング (ベアメタル、VM、クラウドインスタンス) 構成管理 アプリケーションデプロイメント CI/CD セキュリティ・コンプライアンス管理 オーケストレーション 以下のような特徴を持つ。 Python(とPowerShell)で作られてる。 昔はPython 2じゃないと動かなかったけど、2.2からPython 3でも動くようになった。 YAMLで書いた定義(Playbook)に従って処理を実行する。 シンプルで簡便であることを売りにしている。 多数のモジュールがビルトインされていて、様々な操作を簡潔な定義で宣言的に実行できる。 エージェントレスで、SSH(等)で対象のサーバにつないで処理を実行する。 処理を冪等にできるような仕組みが備わっていて、特にビルトインモジュールを活用すると簡単に冪等性を持たせられる。 Pythonで書かれているのでどこでも動くかと思いきや、fcntlとかgrpやらUnix特有のモジュールを使っているため、WindowsのPythonでは動かない。 MSYS2とかWSLでは動く模様。 (Git Bashでは動かない…) 今回使ったのは最新版の2.5.3。 Ansibleインストール AnsibleはYUMとかpipとかでインストールできる。 今回はOracle Linux 7.4で動かすため、以下のようにインストールした。 AnsibleのYUMリポジトリ追加 以下の内容を/etc/yum.repos.d/の適当な.repoファイルに書く。 [ansible] name=Ansible baseurl=http://releases.ansible.com/ansible/rpm/release/epel-7-x86_64/ gpgcheck=0 enabled=1 依存するPythonパッケージのYUMリポジトリを有効化 /etc/yum.repos.d/public-yum-ol7.repoを編集して、ol7_openstack30セクションのenabledを1にする。 インストール # yum install -y ansible Playbookの書き方 Playbookの書き方は他にたくさん情報があるし、どうせすぐに陳腐化するのでここには書かない。 以下を参照して書いた。 公式のBest Practices 公式マニュアルのモジュール編 公式マニュアルの変数編 公式マニュアルのループ編 Jinja2のマニュアル edXのAnsibleコーディング規約 一つ他にあまりなかった情報を書く: タスクをループするとき、with_itemsプロパティを書くのはもう古くて、バージョン2.5以降ではloopプロパティを使う。 書いたPlaybookで構築できるのは以下のようなKubernetesクラスタ。 Kubernetes: バージョン1.10.1 単一ノード 全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e.
               </div>
             </a>
           </article>
@@ -142,33 +164,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Tue, Apr 17, 2018</span>
               </div>
-              <h2 class="title">Kubernetes 1.10をスクラッチから全手動で構築</h2>
-              <div class="summary">
-                Oracle Linux 7.4.0のVMでKubernetes1.10.0のクラスタをスクラッチから全手動で作った。 参考にしたのは主に以下。 https://nixaid.com/deploying-kubernetes-cluster-from-scratch/ https://github.com/kubernetes/kubeadm/blob/master/docs/design/design_v1.10.md https://kubernetes.io/docs/getting-started-guides/scratch/ https://kubernetes.io/docs/reference/setup-tools/kubeadm/implementation-details/ https://ulam.io/blog/kubernetes-scratch/ https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master (adsbygoogle = window.adsbygoogle || []).push({}); 構成 マシン: Windows 10 Homeのラップトップの上のVMware PlayerのVM CPU: 2コア メモリ: 4GB NIF: NATのを一つ OS: Oracle Linux 7.4.0 Minimalインストール IPアドレス: 192.168.171.200、静的割り当て ホスト名: k8s-master (hostsで解決) Docker: Oracle Container Runtime for Docker (docker-engine) 17.06.2 Kubernetes: バージョン1.10.0 単一ノード 全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e. 非コンテナ) kubeletとkube-proxy以外は非rootユーザ kubeletは現時点でrootで動かす必要がある kube-proxyはiptableいじったりする都合上rootで動かす必要があるっぽい。 コンポーネント間通信とkubectlの通信をTLSで暗号化 TLS 1.2 セキュアなCipher Suites コンポーネント間通信とkubectlの通信の認証はx509クライアント証明書 TLS Bootstrapping Bootstrap token使用 CSR自動承認 Certificate Rotation有効 etcd 3.1.12 flannel 0.10.0 CoreDNS 1.1.1 SERVICE_CLUSTER_IP_RANGE (Serviceに割り当てるIPの範囲) は10.0.0.0/16 kube-apiserverのIPはこの範囲の最初のIP(i.e.
-              </div>
+              <h3 class="title">Kubernetes 1.10をスクラッチから全手動で構築</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         
@@ -1757,6 +1776,9 @@
       <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
       
       
+      <a href="https://www.kaitoy.xyz/tags/msys2">msys2</a>
+      
+      
       <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
       
       
@@ -1770,6 +1792,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/packer">packer</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>

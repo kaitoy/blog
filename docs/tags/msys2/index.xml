@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>To Be Decided </title>
+    <link>https://www.kaitoy.xyz/tags/msys2/</link>
+    <language>en-us</language>
+    <author>Kaito Yamada</author>
+    <rights>(C) 2018</rights>
+    <updated>2018-06-17 23:22:33 &#43;0900 JST</updated>
+
+    
+      
+        <item>
+          <title>Packer &#43; Ansible on Windows 7でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</title>
+          <link>https://www.kaitoy.xyz/2018/06/17/packer-k8s/</link>
+          <pubDate>Sun, 17 Jun 2018 23:22:33 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2018/06/17/packer-k8s/</guid>
+          <description>
+
+&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/&#34;&gt;Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した&lt;/a&gt;」の続きで、さらに&lt;a href=&#34;https://www.packer.io/&#34;&gt;Packer&lt;/a&gt;を組み合わせて、VM作成まで自動化した話。&lt;/p&gt;
+
+&lt;p&gt;AnsibleをWindows(&lt;a href=&#34;https://www.msys2.org/&#34;&gt;MSYS2&lt;/a&gt;)で動かした話でもある。&lt;/p&gt;
+
+&lt;p&gt;書いたPackerテンプレートは&lt;a href=&#34;https://github.com/kaitoy/packer-k8s&#34;&gt;GitHub&lt;/a&gt;に置いた。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;packerとは&#34;&gt;Packerとは&lt;/h2&gt;
+
+&lt;p&gt;Packerは、様々な種類のVMを構築できるツール。
+VagrantとかTerraformとかを開発している&lt;a href=&#34;https://www.hashicorp.com/&#34;&gt;HashiCorp&lt;/a&gt;が開発している。&lt;/p&gt;
+
+&lt;p&gt;テンプレートと呼ばれるビルド定義をJSONファイルに書いて、ビルド、プロビジョニング、ポストプロセスを実行して、アーティファクトと呼ばれるビルドの成果物を生成する。&lt;/p&gt;
+
+&lt;p&gt;ビルドのステップでは、VMを作成して、ハードウェア構成を設定したり、OSをインストールしたりする。&lt;/p&gt;
+
+&lt;p&gt;以下のような環境でVMを作れる。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;VirtualBox&lt;/li&gt;
+&lt;li&gt;Hyper-V&lt;/li&gt;
+&lt;li&gt;VMware Workstation&lt;/li&gt;
+&lt;li&gt;VMware vSphere Hypervisor&lt;/li&gt;
+&lt;li&gt;Docker&lt;/li&gt;
+&lt;li&gt;AWS EC2&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;プロビジョニングのステップでは、ビルドで作ったVMのOS上で指定された操作を実行し、ソフトウェアのインストールなどのセットアップ処理をする。&lt;/p&gt;
+
+&lt;p&gt;プロビジョニングには以下のようなツールを使える。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Shell&lt;/li&gt;
+&lt;li&gt;PowerShell&lt;/li&gt;
+&lt;li&gt;Ansible&lt;/li&gt;
+&lt;li&gt;Chef&lt;/li&gt;
+&lt;li&gt;Puppet&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;プロビジョニングが終わるとアーティファクト(VMイメージファイルや、AWS EC2のAMI IDとか)が出力される。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ポストプロセスのステップでは、アーティファクトを入力として何らかの処理をして、最終的なアーティファクトを生成する。&lt;/p&gt;
+
+&lt;p&gt;ポストプロセスでは以下のような処理を実行できる。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;アーカイブ&lt;/li&gt;
+&lt;li&gt;VagrantBox生成&lt;/li&gt;
+&lt;li&gt;AWS EC2へのインポート&lt;/li&gt;
+&lt;li&gt;Docker push&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;PackerはGoで書かれていてビルド済みのバイナリが配布されているので、&lt;a href=&#34;https://www.packer.io/downloads.html&#34;&gt;ダウンロードページ&lt;/a&gt;から落として PATHの通ったところに置くだけでインストールできる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;今回はPacker 1.2.4のWindows版をインストールした。&lt;/p&gt;
+
+&lt;h2 id=&#34;packerの-テンプレート-https-www-packer-io-docs-templates-index-html-概要&#34;&gt;Packerの&lt;a href=&#34;https://www.packer.io/docs/templates/index.html&#34;&gt;テンプレート&lt;/a&gt;概要&lt;/h2&gt;
+
+&lt;p&gt;Packerのテンプレートにはビルド、プロビジョニング、ポストプロセスの定義を複数かけて、複数環境のVM生成を1ファイルで定義できる。&lt;/p&gt;
+
+&lt;p&gt;テンプレートには以下のプロパティを書く。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.packer.io/docs/templates/builders.html&#34;&gt;builders&lt;/a&gt;: ビルドの定義のリスト。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;description&lt;/code&gt;: テンプレートの説明。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;min_packer_version&lt;/code&gt;: Packer の最低バージョン指定。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.packer.io/docs/templates/post-processors.html&#34;&gt;post-processors&lt;/a&gt;: ポストプロセスの定義のリスト。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.packer.io/docs/templates/provisioners.html&#34;&gt;provisioners&lt;/a&gt;: プロビジョニングの定義のリスト。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.packer.io/docs/templates/user-variables.html&#34;&gt;variables&lt;/a&gt;: テンプレート内で使う変数の定義。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;_comment&lt;/code&gt;: コメントなどを書くためのプロパティ。実際はアンダースコアで始まればなんでもいい。JSON オブジェクトのルートレベルのみで使える。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;これらのうち、必須なのはbuildersだけ。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;一つのビルド定義には一つの&lt;a href=&#34;https://www.packer.io/docs/templates/communicator.html&#34;&gt;communicator&lt;/a&gt;を紐づける。
+communicatorはビルド時にVMにつなぐための設定。
+基本は&lt;a href=&#34;https://www.packer.io/docs/templates/communicator.html#ssh-communicator&#34;&gt;SSH&lt;/a&gt;だけど、WinRMとかもある。&lt;/p&gt;
+
+&lt;h2 id=&#34;やりたいこと&#34;&gt;やりたいこと&lt;/h2&gt;
+
+&lt;p&gt;Windows 10上でPackerとAnsibleを動かして、VirtualBoxのVMをOracle Linux 7.4で作って、Kubernetes 1.10をインストールしたい。
+Windowsでやりたいのは、単にベアメタルのLinuxの環境が無いからってのもあるし、いずれHyper-VのVMも作りたいからってのもある。&lt;/p&gt;
+
+&lt;p&gt;PackerはGo製で普通にWindowsで動くからいいけど、問題はAnsibleがPython製のくせにWindowsのPythonでは動かないこと。
+AnsibleはWSLでは動くけど、VirtualBoxとかHyper-VはWindows上で動くから、PackerはWindows上で動かさないといけないはずで、そうなるとPackerから呼ばれるAnsibleもWindows上で動かさないといけない気がする。
+のでWSLではだめな気がするし、そもそも実はWindows 7でも同じことやりたいのでWSLは無し。&lt;/p&gt;
+
+&lt;p&gt;要はWindows上でLinuxのPythonを使ってAnsibleを動かしたい。
+ならばCygwinかMSYS2+MinGW-w64かGit Bashか。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://superuser.com/questions/1255634/install-ansible-in-windows-using-git-bash&#34;&gt;ここ&lt;/a&gt;にAnsibleはCygwinでもGit Bashでも動かすの難しいと書いてあって、逆に&lt;a href=&#34;http://itsp0.blogspot.com/2017/03/ansible-msys2-ansible.html&#34;&gt;MSYS2でAnsible動かした記事&lt;/a&gt;はあったので、安直にMSYS2でやることにした。&lt;/p&gt;
+
+&lt;h2 id=&#34;msys2インストール&#34;&gt;MSYS2インストール&lt;/h2&gt;
+
+&lt;p&gt;MSYS2は、&lt;a href=&#34;http://www.msys2.org/&#34;&gt;公式サイト&lt;/a&gt;からx86_64のインストーラ(msys2-x86_64-20180531.exe)をダウンロードして実行して普通にインストールしただけ。&lt;/p&gt;
+
+&lt;h2 id=&#34;ansibleインストール&#34;&gt;Ansibleインストール&lt;/h2&gt;
+
+&lt;p&gt;MSYS2でのパッケージ管理にはpacmanを使う。&lt;/p&gt;
+
+&lt;p&gt;何はともあれPythonを入れる。3系でいい。
+&lt;code&gt;MSYS2 MinGW 64-bit&lt;/code&gt;のショートカットからターミナルを開いて、&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ pacman -S python
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;で、Python 3.6.2が入った。&lt;/p&gt;
+
+&lt;p&gt;次に、Ansible(の依存)のビルドに必要なパッケージを入れる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ pacman -S gcc
+$ pacman -S make
+$ pacman -S libffi-devel
+$ pacman -S openssl-devel
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;さらに、AnsibleからのSSH接続で(鍵ではなくて)パスワードを使う場合に必要なパッケージも入れる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ pacman -S sshpass
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;sshpassの依存としてopensshも入った。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Ansibleはpipでインストールするんだけど、pacmanで入れたPython 3にはpipが付いてなかったので、&lt;a href=&#34;https://pip.pypa.io/en/stable/installing/&#34;&gt;別途入れる&lt;/a&gt;。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ curl https://bootstrap.pypa.io/get-pip.py -LO
+$ python get-pip.py
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;で、ようやくAnsibleインストール。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ export CFLAGS=-I/usr/lib/libffi-3.2.1/include
+$ pip install ansible
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Ansible 2.5.4がインストールされた。&lt;/p&gt;
+
+&lt;p&gt;AnsibleでJinja2のipaddrフィルターを使うために、もう一つPyPiパッケージ入れる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ pip install netaddr
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;packerテンプレート作成&#34;&gt;Packerテンプレート作成&lt;/h2&gt;
+
+&lt;p&gt;ビルドは、OSインストールメディアのISOファイルを使うVirtualBoxのビルダである&lt;a href=&#34;https://www.packer.io/docs/builders/virtualbox-iso.html&#34;&gt;virtualbox-iso&lt;/a&gt;を指定して書いた。&lt;/p&gt;
+
+&lt;p&gt;OSのインストールは、&lt;a href=&#34;https://www.packer.io/docs/builders/virtualbox-iso.html#boot-command&#34;&gt;Boot Command&lt;/a&gt;をテンプレートに書くことで、インストーラのGUIを操作してやることもできるけど、RHEL系なら&lt;a href=&#34;https://access.redhat.com/documentation/ja-jp/red_hat_enterprise_linux/7/html/installation_guide/chap-kickstart-installations&#34;&gt;Kickstart&lt;/a&gt;を使うのが楽。&lt;/p&gt;
+
+&lt;p&gt;Kickstartの定義ファイルは、普通に手動でOSをインストールした後、&lt;code&gt;/root/anaconda-ks.cfg&lt;/code&gt;を採取して、必要に応じて編集して作る。
+今回作ったのは&lt;a href=&#34;https://github.com/kaitoy/packer-k8s/blob/fc530d94a04c15c97986e73d2c190e659ee0ddc0/http/ks.cfg&#34;&gt;これ&lt;/a&gt;で、&lt;a href=&#34;https://www.centos.org/forums/viewtopic.php?t=47262&#34;&gt;このスレ&lt;/a&gt;を参考に、Minimalインストールから、Wifiのファームウェアとか要らないのを抜いてる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;プロビジョニングは、「&lt;a href=&#34;https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/&#34;&gt;Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した&lt;/a&gt;」ときのPlaybookを実行するやつを&lt;a href=&#34;https://www.packer.io/docs/provisioners/ansible.html&#34;&gt;公式マニュアル&lt;/a&gt;見ながら適当に書いて、ポストプロセスも適当に書いて、できたのが&lt;a href=&#34;https://github.com/kaitoy/packer-k8s/blob/fc530d94a04c15c97986e73d2c190e659ee0ddc0/k8s_single_node_cluster-vb.json&#34;&gt;これ&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;ansible_env_vars&lt;/code&gt;で&lt;code&gt;ANSIBLE_SSH_ARGS&lt;/code&gt;に&lt;code&gt;-o ControlMaster=no&lt;/code&gt;を入れているのは、&lt;a href=&#34;https://github.com/geerlingguy/JJG-Ansible-Windows/issues/6&#34;&gt;この問題&lt;/a&gt;に対応するため。&lt;/p&gt;
+
+&lt;h2 id=&#34;ビルド実行&#34;&gt;ビルド実行&lt;/h2&gt;
+
+&lt;p&gt;&lt;code&gt;MSYS2 MinGW 64-bit&lt;/code&gt;のショートカットからターミナルを開いて、Packerを実行してみたら以下のエラー。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ packer build -var-file=variables.json k8s_single_node_cluster-vb.json
+bash: packer: コマンドが見つかりません
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;WindowsのPathが通ったところにPackerバイナリを置いておいてもMSYS2からは見えない。
+のでpackerバイナリのフルパスを指定してやる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ /c/Users/kaitoy/Desktop/bin/packer.exe build -var-file=variables.json k8s_single_node_cluster-vb.json
+k8s-single-node-cluster output will be in this color.
+
+1 error(s) occurred:
+
+* Error running &amp;quot;ansible-playbook --version&amp;quot;: exec: &amp;quot;ansible-playbook&amp;quot;: executable file not found in %PATH%
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;と、今度は、ansible-playbookが無いと言われる。
+ansible-playbookはansibleパッケージに入っていて/usr/bin/にインストールされているんだけど、Windows界で動いているPackerからはLinuxのPATHが見えないので、見つけられない。&lt;/p&gt;
+
+&lt;p&gt;さらに、AnsibleのPlaybookのパスなど、Packerが妙な気を利かせてWindowsのフルパスにしてansible-playbookに渡してくれちゃうので、それをLinuxなパスに変換してやる必要がある。&lt;/p&gt;
+
+&lt;p&gt;ということで、以下のようなラッパスクリプトを書いて、PATHの通った場所に置くことにした。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bat&#34;&gt;@echo off
+setlocal enabledelayedexpansion
+
+for %%f in (%*) do (
+  if !key_file! == 1 (
+    rem The value of ansible_ssh_private_key_file is the path to
+    rem a key file in Windows TMP directory from MSYS2 point of view.
+    set arg=/%tmp:\=/%
+    set arg=!arg::=!
+    set args=!args!=!arg!/%%~nxf
+    set key_file=0
+  ) else if %%~xf == .yml (
+    rem Convert the passed Playbook path to relative one.
+    set arg=%%f
+    set arg=!arg:%CD%=!
+    set arg=!arg:\=/!
+    set args=!args! !arg:~1!
+  ) else (
+    rem Add other args as they are
+    set args=!args! %%f
+  )
+  if %%f == ansible_ssh_private_key_file (
+    rem The next arg will be the value of ansible_ssh_private_key_file
+    set key_file=1
+  )
+)
+
+echo args: %args%
+python C:\msys64\usr\bin\ansible-playbook -v %args%
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;以上でちゃんと実行できるようになった。&lt;/p&gt;
+
+&lt;p&gt;まとめると、&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Windows 10に、&lt;/li&gt;
+&lt;li&gt;VirtualBox 5.1.28をインストールして、&lt;/li&gt;
+&lt;li&gt;Packer 1.2.4のWindows版をインストールして、&lt;/li&gt;
+&lt;li&gt;MSYS2をインストールして、&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MSYS2 MinGW 64-bit&lt;/code&gt;のターミナルでPython 3.6.2とAnsible 2.5.4(とGit)をインストールして、&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;以下を実行すればいい。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ git clone --recursive https://github.com/kaitoy/packer-k8s.git
+$ cd packer-k8s
+$ /c/Users/kaitoy/Desktop/bin/packer.exe build -var-file=variables.json k8s_single_node_cluster-vb.json
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;code&gt;packer.exe build&lt;/code&gt;に&lt;code&gt;-debug&lt;/code&gt;を渡すと、内部の処理ステップごとに停止するようになり、デバッグしやすい。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;一回実行したらゴミができて、次回実行時にエラーになるので、以下でクリーンアップする必要がある。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ rm -rf /tmp/ansible
+$ rm -f ~/.ssh/known_hosts
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;因みに、上記known_hostsを消し忘れると以下のようなエラーになる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt; k8s-single-node-cluster: fatal: [k8s_master]: UNREACHABLE! =&amp;gt; {&amp;quot;changed&amp;quot;: false, &amp;quot;msg&amp;quot;: &amp;quot;Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\n@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\r\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\nIT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\r\nSomeone could be eavesdropping on you right now (man-in-the-middle attack)!\r\nIt is also possible that a host key has just been changed.\r\nThe fingerprint for the ECDSA key sent by the remote host is\nSHA256:JNs/ZY38VpIuBE3QEzLHyLFGYe+Qg+bEWi8BOzgSNc0.\r\nPlease contact your system administrator.\r\nAdd correct host key in /home/kaitoy/.ssh/known_hosts to get rid of this message.\r\nOffending ECDSA key in /home/kaitoy/.ssh/known_hosts:1\r\nPassword authentication is disabled to avoid man-in-the-middle attacks.\r\nKeyboard-interactive authentication is disabled to avoid man-in-the-middle attacks.\r\nroot@127.0.0.1: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).\r\n&amp;quot;, &amp;quot;unreachable&amp;quot;: true}
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+        </item>
+      
+    
+
+  </channel>
+</rss>
