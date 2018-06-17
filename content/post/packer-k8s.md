@@ -5,7 +5,7 @@ draft = false
 eyecatch = "kubernetes-ansible-packer.png"
 slug = "packer-k8s"
 tags = ["kubernetes", "docker", "ansible", "packer", "msys2"]
-title = "Packer + Ansible on Windows 7でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築"
+title = "Packer + Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築"
 +++
 
 「[Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した](https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/)」の続きで、さらに[Packer](https://www.packer.io/)を組み合わせて、VM作成まで自動化した話。
