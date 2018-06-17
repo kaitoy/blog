@@ -186,7 +186,7 @@ bash: packer: コマンドが見つかりません
 ```
 
 WindowsのPathが通ったところにPackerバイナリを置いておいてもMSYS2からは見えない。
-のでpackerバイナリのフルパスを指定してやる。
+のでpackerバイナリのフルパス(今回は`C:\Users\kaitoy\Desktop\bin\`にインストールしてたのでそのパス)を指定してやる。
 
 ```
 $ /c/Users/kaitoy/Desktop/bin/packer.exe build -var-file=variables.json k8s_single_node_cluster-vb.json
@@ -202,7 +202,7 @@ ansible-playbookはansibleパッケージに入っていて/usr/bin/にインス
 
 さらに、AnsibleのPlaybookのパスなど、Packerが妙な気を利かせてWindowsのフルパスにしてansible-playbookに渡してくれちゃうので、それをLinuxなパスに変換してやる必要がある。
 
-ということで、以下のようなラッパスクリプトを書いて、PATHの通った場所に置くことにした。
+ということで、以下のようなラッパスクリプトを書いて、カレントディレクトリに置くことにした。
 
 ```bat
 @echo off
@@ -233,7 +233,7 @@ for %%f in (%*) do (
 )
 
 echo args: %args%
-python C:\msys64\usr\bin\ansible-playbook -v %args%
+C:\msys64\usr\bin\python C:\msys64\usr\bin\ansible-playbook -v %args%
 ```
 
 <br>
