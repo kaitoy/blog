@@ -112,7 +112,7 @@ MSYS2は、[公式サイト](http://www.msys2.org/)からx86_64のインスト�
 MSYS2でのパッケージ管理にはpacmanを使う。
 
 何はともあれPythonを入れる。3系でいい。
-`MSYS2 MinGW 64-bit`のショートカットからターミナルを開いて、
+`MSYS2 MSYS`のショートカット(`MSYS2 MinGW 64-bit`じゃだめ)からターミナルを開いて、
 
 ```sh
 $ pacman -S python
@@ -146,6 +146,10 @@ $ curl https://bootstrap.pypa.io/get-pip.py -LO
 $ python get-pip.py
 ```
 
+(ちょっと古いけどpipは`pacman python3-pip`でも入る。)
+
+<br>
+
 で、ようやくAnsibleインストール。
 
 ```sh
@@ -153,7 +157,9 @@ $ export CFLAGS=-I/usr/lib/libffi-3.2.1/include
 $ pip install ansible
 ```
 
-Ansible 2.5.4がインストールされた。
+依存するPyNaClのビルドに20分くらいかかるのでゆっくり待つと、インストール完了するはず。
+
+今回はAnsible 2.5.4がインストールされた。
 
 AnsibleでJinja2のipaddrフィルターを使うために、もう一つPyPiパッケージ入れる。
 
@@ -178,7 +184,7 @@ Kickstartの定義ファイルは、普通に手動でOSをインストールし
 
 ## ビルド実行
 
-`MSYS2 MinGW 64-bit`のショートカットからターミナルを開いて、Packerを実行してみたら以下のエラー。
+`MSYS2 MSYS`のショートカットからターミナルを開いて、Packerを実行してみたら以下のエラー。
 
 ```sh
 $ packer build -var-file=variables.json k8s_single_node_cluster-vb.json
@@ -246,7 +252,7 @@ C:\msys64\usr\bin\python C:\msys64\usr\bin\ansible-playbook -v %args%
 2. VirtualBox 5.1.28をインストールして、
 2. Packer 1.2.4のWindows版をインストールして、
 3. MSYS2をインストールして、
-4. `MSYS2 MinGW 64-bit`のターミナルでPython 3.6.2とAnsible 2.5.4(とGit)をインストールして、
+4. `MSYS2 MSYS`のターミナルでPython 3.6.2とAnsible 2.5.4とか(とGit)をインストールして、
 5. 以下を実行すればいい。
 
     ```sh
