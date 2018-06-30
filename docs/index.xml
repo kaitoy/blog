@@ -6,8 +6,120 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2018</rights>
-    <updated>2018-06-17 23:22:33 &#43;0900 JST</updated>
+    <updated>2018-06-30 16:56:34 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>PackerでESXiにVMを自動構築</title>
+          <link>https://www.kaitoy.xyz/2018/06/30/packer-esxi/</link>
+          <pubDate>Sat, 30 Jun 2018 16:56:34 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2018/06/30/packer-esxi/</guid>
+          <description>
+
+&lt;p&gt;前回「&lt;a href=&#34;https://www.kaitoy.xyz/2018/06/17/packer-k8s/&#34;&gt;Packer + Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築&lt;/a&gt;」で、やったことをESXiでやっただけ。&lt;/p&gt;
+
+&lt;p&gt;書いたコードは&lt;a href=&#34;https://github.com/kaitoy/packer-k8s&#34;&gt;GitHub&lt;/a&gt;に置いてある。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;前回との違い&#34;&gt;前回との違い&lt;/h2&gt;
+
+&lt;p&gt;VirtualBoxとESXiとで変えないといけない部分は、主にPackerのbuilderの定義。
+前回はvirtualbox-isoだったけど、今回は&lt;a href=&#34;https://www.packer.io/docs/builders/vmware-iso.html&#34;&gt;vmware-iso&lt;/a&gt;を使う。
+それに伴ってパラメータが結構違ってくる。&lt;/p&gt;
+
+&lt;p&gt;いっこトリッキーだったのが、&lt;code&gt;cdrom_adapter_type&lt;/code&gt;に&lt;code&gt;ide&lt;/code&gt;を明示的に指定しておかないと、CDロムドライブがSCSIになって、OSのインストールメディアのマウントか読み取り辺りでエラーになってしまったところ。
+環境によっては指定しないでいいかも。&lt;/p&gt;
+
+&lt;p&gt;また、&lt;code&gt;&amp;quot;vnc_disable_password&amp;quot;: &amp;quot;true&amp;quot;&lt;/code&gt;をbuilderに指定しておかないと、Packerが「Error handshaking with VNC: no suitable auth schemes found. server supported: []byte{0x1}」という&lt;a href=&#34;https://github.com/hashicorp/packer/issues/5939&#34;&gt;エラーを出す&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;あとは、Nested Virtualizationでやった(下記)ので、すごく遅くて、色々タイムアウトを伸ばしたりしてやる必要があった。&lt;/p&gt;
+
+&lt;h2 id=&#34;esxi環境&#34;&gt;ESXi環境&lt;/h2&gt;
+
+&lt;p&gt;ESXi(というかVMware vSphere Hypervisor)は、現時点での最新の6.7を使用。
+自前のWindows 10 HomeのノートPC上で動くVMware Player 12で作ったVMにESXiをインストールして環境を作った。&lt;/p&gt;
+
+&lt;p&gt;(因みにVirtualBoxにもインストールしてみたESXi上ではVM作成できなかった。VirtualBoxは今の時点でNested Virtualization未サポートで、サポートする予定もない模様。)&lt;/p&gt;
+
+&lt;p&gt;Packerから操作するには、以下の設定をする必要がある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;静的IPアドレスを設定。Packerからの接続先に指定するので。&lt;/li&gt;
+&lt;li&gt;SSH有効化。PackerがSSHで接続するので。
+
+&lt;ul&gt;
+&lt;li&gt;因みにSSHクライアントでESXiにつなぐときは、チャレンジ/レスポンス認証になる。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.packer.io/docs/builders/vmware-iso.html#building-on-a-remote-vsphere-hypervisor&#34;&gt;GuestIPHack の有効化&lt;/a&gt;
+
+&lt;ul&gt;
+&lt;li&gt;ESXiにSSHでログインして「&lt;code&gt;esxcli system settings advanced set -o /Net/GuestIPHack -i 1&lt;/code&gt;」&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;ファイアウォール設定でVNCポート(TCP5900番台)を開ける。
+これをしないとPackerが「Starting HTTP server on port xxxx」でハングする。
+けどこれが一筋縄ではいかない。&lt;a href=&#34;https://kb.vmware.com/s/article/2008226?lang=ja&#34;&gt;この記事&lt;/a&gt;にあるように、&lt;code&gt;/etc/vmware/firewall/service.xml&lt;/code&gt;に設定を追加して「&lt;code&gt;esxcli network firewall refresh&lt;/code&gt;」してもいいんだけど、再起動するともとに戻ってしまう。&lt;/p&gt;
+
+&lt;p&gt;ので、&lt;a href=&#34;https://kb.vmware.com/s/article/2043564&#34;&gt;この記事&lt;/a&gt;などを参考に、&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;VNCポートの設定ファイルをデータストアに作成。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;/vmfs/volumes/datastore1/svc/packer.xml&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-xml&#34;&gt;&amp;lt;ConfigRoot&amp;gt;
+  &amp;lt;service id=&amp;quot;1000&amp;quot;&amp;gt;
+    &amp;lt;id&amp;gt;packer-vnc&amp;lt;/id&amp;gt;
+    &amp;lt;rule id=&amp;quot;0000&amp;quot;&amp;gt;
+      &amp;lt;direction&amp;gt;inbound&amp;lt;/direction&amp;gt;
+      &amp;lt;protocol&amp;gt;tcp&amp;lt;/protocol&amp;gt;
+      &amp;lt;porttype&amp;gt;dst&amp;lt;/porttype&amp;gt;
+      &amp;lt;port&amp;gt;
+        &amp;lt;begin&amp;gt;5900&amp;lt;/begin&amp;gt;
+        &amp;lt;end&amp;gt;6000&amp;lt;/end&amp;gt;
+      &amp;lt;/port&amp;gt;
+    &amp;lt;/rule&amp;gt;
+    &amp;lt;enabled&amp;gt;true&amp;lt;/enabled&amp;gt;
+    &amp;lt;required&amp;gt;true&amp;lt;/required&amp;gt;
+  &amp;lt;/service&amp;gt;
+&amp;lt;/ConfigRoot&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;設定ファイルをESXi起動時に読み込むスクリプトを記述。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;/etc/rc.local.d/local.sh&lt;/code&gt;に以下を追記:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;cp /vmfs/volumes/datastore1/svc/packer.xml /etc/vmware/firewall/
+esxcli network firewall refresh
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ol&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;packer実行&#34;&gt;Packer実行&lt;/h2&gt;
+
+&lt;p&gt;設定ファイルが出来てESXi環境が用意できれば、Packer実行は前回と一緒。&lt;/p&gt;
+
+&lt;p&gt;ただ結局、環境が激遅なせいでところどころでタイムアウトしたり、OSインストール中にランダムにパニックになったり、PackerのBoot Commandの入力がランダムに失敗したりして、最後までビルド成功させる前に心折れた。
+まあAnsibleのプロビジョニングの途中までは動いたので、だいたいよしとする。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -13470,252 +13582,6 @@ CIって意外と上手くいかないけど、こうすれば改善できるよ
 &lt;code&gt;master&lt;/code&gt;の更新をスクリプトに任せてしまえば、それでなおビルドが壊れたとしてもスクリプトのせいにできるので気が楽だろう。&lt;/p&gt;
 
 &lt;p&gt;実装が簡単そうなアイデアでもあるので、いつかCIを実装する日まで覚えておきたい。&lt;/p&gt;
-</description>
-        </item>
-      
-    
-      
-        <item>
-          <title>Pcap4J Meets Windows Containers</title>
-          <link>https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/</link>
-          <pubDate>Fri, 22 Jan 2016 17:46:43 -0700</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/</guid>
-          <description>
-
-&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;https://msdn.microsoft.com/en-us/virtualization/windowscontainers/about/about_overview&#34;&gt;Windows Containers&lt;/a&gt;&lt;/strong&gt; で &lt;strong&gt;&lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;Pcap4J&lt;/a&gt;&lt;/strong&gt; のコンテナをビルドしてみた話。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h2 id=&#34;windows-containersとは&#34;&gt;Windows Containersとは&lt;/h2&gt;
-
-&lt;p&gt;Windows Containersは、Microsoftが&lt;a href=&#34;https://www.docker.com/company&#34;&gt;Docker, Inc&lt;/a&gt;と提携して開発している&lt;a href=&#34;http://www.sophia-it.com/content/%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E6%8A%80%E8%A1%93&#34;&gt;コンテナ技術&lt;/a&gt;で、Windows版&lt;a href=&#34;https://www.docker.com/&#34;&gt;Docker&lt;/a&gt;とも言われる機能。
-今年リリースされる &lt;strong&gt;Windows Server 2016&lt;/strong&gt; に実装される予定で、その3つめのテクニカルプレビューである &lt;strong&gt;Windows Server 2016 Technical Preview 3&lt;/strong&gt; (2015/8/19公開)から評価できるようになった。&lt;/p&gt;
-
-&lt;p&gt;Windows Containersには次の二種類がある。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Windows Server Containers&lt;/p&gt;
-
-&lt;p&gt;プロセスと名前空間の分離を実現する機能で、これによるコンテナはカーネルをホストと共有する。
-つまり本家Dockerに近い形の機能。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Hyper-V Containers&lt;/p&gt;
-
-&lt;p&gt;それぞれのコンテナを軽量化されたHyper-Vの仮想マシンっぽいものの上で動かす機能。
-このコンテナの実行にはHyper-Vが必要。
-Windows Server Containersよりコンテナ間の分離性が高く、カーネルの共有もしないが、そもそもそれってコンテナなの?&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;どちらも同じようなインターフェースで操作でき、このインターフェースには&lt;a href=&#34;https://msdn.microsoft.com/en-us/virtualization/windowscontainers/reference/ps_docker_comparison&#34;&gt;PowershellのコマンドレットとDockerコマンドの二種類がある&lt;/a&gt;。&lt;/p&gt;
-
-&lt;p&gt;より詳しくは、&lt;a href=&#34;https://msdn.microsoft.com/en-us/virtualization/windowscontainers/about/about_overview&#34;&gt;Microsoftによる解説&lt;/a&gt;や&lt;a href=&#34;http://www.atmarkit.co.jp/ait/articles/1512/11/news022.html&#34;&gt;@ITのこの記事&lt;/a&gt;がわかりやすい。
-また、&lt;a href=&#34;http://qiita.com/Arturias/items/3e82de8328067d0e03a3&#34;&gt;Qiitaのこの記事&lt;/a&gt;がDockerとWindows Server Containersのアーキテクチャを詳細に説明していて面白い。&lt;/p&gt;
-
-&lt;h2 id=&#34;windows-containersセットアップ&#34;&gt;Windows Containersセットアップ&lt;/h2&gt;
-
-&lt;p&gt;まず、Windows 7 x64のノートPCにVMware Player 7.1.0を入れてWindows 10 x64用のVM(CPU2つとメモリ2.5GB)を作り、そこに2015/11/19に公開された &lt;strong&gt;Windows Server 2016 Technical Preview 4&lt;/strong&gt; をインストール。
-コマンドでいろいろ設定するの慣れていないのでGUI(Desktop Experience)付きで。
-(リモートデスクトップ使えばよかったのかもしれないけど。)
-ロケールは英語以外は問題が起きそうなので英語で。&lt;/p&gt;
-
-&lt;p&gt;このVMに、&lt;a href=&#34;https://msdn.microsoft.com/en-us/virtualization/windowscontainers/quick_start/inplace_setup&#34;&gt;Microsoftのセットアップガイド&lt;/a&gt;と&lt;a href=&#34;http://www.atmarkit.co.jp/ait/articles/1512/14/news006.html&#34;&gt;@ITの記事&lt;/a&gt;を参照しながらWindows Containersをセットアップ。&lt;/p&gt;
-
-&lt;p&gt;後者の記事によると、Hyper-V ContainersをVM上にセットアップするには、&lt;a href=&#34;https://msdn.microsoft.com/en-us/virtualization/hyperv_on_windows/user_guide/nesting&#34;&gt;Nested Virtualization&lt;/a&gt;というHyper-VのVMの上でHyper-Vを動かす機能を有効にしたホスト上のHyper-V VMを使わないといけないようなので、Windows Server Containersの方を試すことに。&lt;/p&gt;
-
-&lt;p&gt;Windows Server Containersをセットアップする手順は以下。&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;VM上でコマンドプロンプトを開いて &lt;code&gt;powershell start-process powershell -Verb runas&lt;/code&gt; を実行。&lt;/li&gt;
-&lt;li&gt;青いパワーシェルウィンドウが開くのでそこで &lt;code&gt;wget -uri https://aka.ms/tp4/Install-ContainerHost -OutFile C:\Install-ContainerHost.ps1&lt;/code&gt; を実行。&lt;code&gt;Install-ContainerHost.ps1&lt;/code&gt; というスクリプトがダウンロードされる。&lt;/li&gt;
-&lt;li&gt;青いパワーシェルウィンドウで &lt;code&gt;C:\Install-ContainerHost.ps1&lt;/code&gt; を実行するとWindows Server Containersのインストールが始まる。&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/pcap4j-meets-windows-containers/install.png&#34; alt=&#34;install.png&#34; /&gt;
-&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;途中再起動が一回あって、ログインしたらインストール処理が再開した。
-全部で2時間以上かかった。&lt;/p&gt;
-
-&lt;p&gt;仮想Ethernetスイッチ接続の追加に失敗したというエラーが出たけどなんなんだろう。
-&lt;code&gt;ipconfig&lt;/code&gt; の出力によると &lt;code&gt;vEthernet&lt;/code&gt; というDockerの&lt;a href=&#34;https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/#docker-network&#34;&gt;virtual Ethernet bridge&lt;/a&gt;にあたるものはちゃんと作られているみたいなんだけど。&lt;/p&gt;
-
-&lt;h2 id=&#34;windows-server-containers味見&#34;&gt;Windows Server Containers味見&lt;/h2&gt;
-
-&lt;p&gt;コマンドプロンプトで &lt;code&gt;docker images&lt;/code&gt; を実行すると、既に &lt;code&gt;windowsservercore&lt;/code&gt; というコンテナイメージが入っていることがわかる。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\Administrator&amp;gt;docker images
-REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
-windowsservercore   10.0.10586.0        6801d964fda5        11 weeks ago        0 B
-windowsservercore   latest              6801d964fda5        11 weeks ago        0 B
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;code&gt;docker run -it windowsservercore cmd&lt;/code&gt; を実行すると &lt;code&gt;windowsservercore&lt;/code&gt; からコンテナを起動してその上でコマンドプロンプトを起動できる。
-コンテナの起動は非常に遅い。30秒以上かかる。これは今の時点での&lt;a href=&#34;https://msdn.microsoft.com/virtualization/windowscontainers/about/work_in_progress#windows-containers-start-slowly&#34;&gt;制限&lt;/a&gt;らしい。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;docker login --help&lt;/code&gt; するとわかるが、コンテナイメージのリポジトリは &lt;code&gt;https://registry-win-tp3.docker.io/v1/&lt;/code&gt; という仮っぽいサーバにあって、&lt;code&gt;docker search *&lt;/code&gt; を実行するとそこに登録されたイメージのリストが見れる。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\Users\Administrator&amp;gt;docker search *
-NAME                 DESCRIPTION                                     STARS     OFFICIAL   AUTOMATED
-microsoft/aspnet     ASP.NET 5 framework installed in a Windows...   1         [OK]       [OK]
-microsoft/django     Django installed in a Windows Server Core ...   1                    [OK]
-microsoft/dotnet35   .NET 3.5 Runtime installed in a Windows Se...   1         [OK]       [OK]
-microsoft/golang     Go Programming Language installed in a Win...   1                    [OK]
-microsoft/httpd      Apache httpd installed in a Windows Server...   1                    [OK]
-microsoft/iis        Internet Information Services (IIS) instal...   1         [OK]       [OK]
-microsoft/mongodb    MongoDB installed in a Windows Server Core...   1                    [OK]
-microsoft/mysql      MySQL installed in a Windows Server Core b...   1                    [OK]
-microsoft/nginx      Nginx installed in a Windows Server Core b...   1                    [OK]
-microsoft/node       Node installed in a Windows Server Core ba...   1                    [OK]
-microsoft/php        PHP running on Internet Information Servic...   1                    [OK]
-microsoft/python     Python installed in a Windows Server Core ...   1                    [OK]
-microsoft/rails      Ruby on Rails installed in a Windows Serve...   1                    [OK]
-microsoft/redis      Redis installed in a Windows Server Core b...   1                    [OK]
-microsoft/ruby       Ruby installed in a Windows Server Core ba...   1                    [OK]
-microsoft/sqlite     SQLite installed in a Windows Server Core ...   1                    [OK]
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;これらはちゃんと &lt;code&gt;docker pull&lt;/code&gt; して使える。
-けど多分 &lt;code&gt;docker push&lt;/code&gt; はできない。&lt;/p&gt;
-
-&lt;h2 id=&#34;pcap4j-on-windows-container&#34;&gt;Pcap4J on Windows Container&lt;/h2&gt;
-
-&lt;p&gt;結論から言うと、以下の &lt;code&gt;Dockerfile&lt;/code&gt; を書いて &lt;code&gt;docker build&lt;/code&gt; してPcap4Jをコンテナ上でビルドするところまではできたが、それを実行してもNIFが全く検出できず、よってパケットキャプチャも実行できなかった。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;#
-# Dockerfile for Pcap4J on Windows
-#
-
-FROM windowsservercore:latest
-MAINTAINER Kaito Yamada &amp;lt;kaitoy@pcap4j.org&amp;gt;
-
-# Install Chocolatey.
-RUN mkdir C:\pcap4j
-WORKDIR /pcap4j
-ADD https://chocolatey.org/install.ps1 install.ps1
-RUN powershell .\install.ps1
-
-# Install dependencies.
-RUN choco install -y nmap maven git jdk7
-
-# Build Pcap4J.
-RUN git clone git://github.com/kaitoy/pcap4j.git
-WORKDIR pcap4j
-RUN powershell -NoProfile -ExecutionPolicy Bypass -Command &amp;quot;mvn &#39;-Dmaven.repo.local=C:\pcap4j\repo&#39; -P distribution-assembly install 2&amp;gt;&amp;amp;1 | add-content -Path build.log -pass
-
-# Collect libraries.
-RUN mkdir bin &amp;amp;&amp;amp; \
-    cd pcap4j-packetfactory-static &amp;amp;&amp;amp; \
-    mvn -Dmaven.repo.local=C:\pcap4j\repo -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeScope=compile dependency:copy-dependencies &amp;amp;&amp;amp; \
-    mvn -Dmaven.repo.local=C:\pcap4j\repo -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeGroupIds=ch.qos.logback dependency:copy-dependencies &amp;amp;&amp;amp; \
-    cd ../pcap4j-distribution &amp;amp;&amp;amp; \
-    mvn -Dmaven.repo.local=C:\pcap4j\repo -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeArtifactIds=pcap4j-packetfactory-static,pcap4j-sample dependency:copy-dependencies
-
-# Generate sample script. (C:\pcap4j\pcap4j\bin\capture.bat)
-RUN echo @echo off &amp;gt; bin\capture.bat &amp;amp;&amp;amp; \
-    echo &amp;quot;%JAVA_HOME%\bin\java&amp;quot; -cp C:\pcap4j\pcap4j\bin\pcap4j-core.jar;C:\pcap4j\pcap4j\bin\pcap4j-packetfactory-static.jar;C:\pcap4j\pcap4j\bin\pcap4j-sample.jar;C:\pcap4j\pcap4j\bin\jna.jar;C:\pcap4j\pcap4j\bin\slf4j-api.jar;C:\pcap4j\pcap4j\bin\logback-classic.jar;C:\pcap4j\pcap4j\bin\logback-core.jar org.pcap4j.sample.GetNextPacketEx &amp;gt;&amp;gt; bin\capture.bat
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;この &lt;code&gt;Dockerfile&lt;/code&gt; でやっていることはだいたい以下。&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;&lt;a href=&#34;https://chocolatey.org/&#34;&gt;Chocolatey&lt;/a&gt;をインストール。&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://nmap.org/&#34;&gt;Nmap&lt;/a&gt;と&lt;a href=&#34;https://maven.apache.org/&#34;&gt;Maven&lt;/a&gt;と&lt;a href=&#34;https://git-scm.com/&#34;&gt;Git&lt;/a&gt;とJDK7をChocolateyでインストール。&lt;/li&gt;
-&lt;li&gt;Pcap4Jのソースを &lt;code&gt;git clone&lt;/code&gt; でダウンロード。&lt;/li&gt;
-&lt;li&gt;MavenでPcap4Jのビルドを実行。&lt;/li&gt;
-&lt;li&gt;Pcap4Jのサンプルクラスを実行するスクリプトを生成。&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;2でNmapは&lt;a href=&#34;http://www.winpcap.org/&#34;&gt;WinPcap&lt;/a&gt;の代わりに入れている。
-GUI無しの環境でWinPcapをChocolateyで入れようとしても、エラーが発生したりしなかったりして、しかもどちらにせよ正常に入らない。
-これはWinPcapのインストーラがサイレントインストールをサポートしていないから。
-Nmapはサイレントインストールできて、インストール処理中にWinPcapを入れてくれるのでありがたい。&lt;/p&gt;
-
-&lt;p&gt;ビルドしてみると、各ステップの実行(多分レイヤの作成)がすごく遅い。
-&lt;code&gt;RUN choco install -y nmap maven git jdk7&lt;/code&gt; の後、次のコマンド実行まで30分くらい固まった。&lt;/p&gt;
-
-&lt;p&gt;また、&lt;code&gt;Dockerfile&lt;/code&gt; を書いていて以下のバグに悩まされた。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;&lt;code&gt;WORKDIR&lt;/code&gt; や &lt;code&gt;ENV&lt;/code&gt; で環境変数が展開されない。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;  ENV hoge %tmp%
-  RUN echo %hoge%
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;とすると &lt;code&gt;%tmp%&lt;/code&gt; と表示される。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;code&gt;WORKDIR&lt;/code&gt; や &lt;code&gt;ENV&lt;/code&gt; や &lt;code&gt;COPY&lt;/code&gt; でパスの区切りは &lt;code&gt;\&lt;/code&gt; 一つだと消えちゃうので &lt;code&gt;\\&lt;/code&gt; か &lt;code&gt;/&lt;/code&gt; を使わないといけない。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;code&gt;WORKDIR&lt;/code&gt; や &lt;code&gt;COPY&lt;/code&gt; のコンテナ内のパスに絶対パスを指定したい場合、&lt;code&gt;C:\hoge&lt;/code&gt;、&lt;code&gt;C:/hoge&lt;/code&gt;、&lt;code&gt;C:\\hoge&lt;/code&gt;、いずれもダメ。
-以下の様なエラーが出る。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;  GetFileAttributesEx \\?\Volume{67df3c84-a0ef-11e5-9a63-000c2976fbc3}\C:: The filename, directory name, or volume label syntax is incorrect.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;UNIX式に &lt;code&gt;/hoge&lt;/code&gt; とするといける。C以外のドライブを指定したいときはどうするんだろう。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;コンテナ内で &lt;code&gt;C:\&lt;/code&gt; 直下に &lt;code&gt;.&lt;/code&gt; で始まる名前のフォルダ作ると次のステップで消えてる。
-&lt;code&gt;.&lt;/code&gt; で始まる名前のファイルは &lt;code&gt;C:\&lt;/code&gt; 直下じゃなくても次のステップで消えてる。
-Mavenのリポジトリがデフォルトで &lt;code&gt;C:\.m2\&lt;/code&gt; 以下にできるのではまる。&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;これらのバグを乗り越えて頑張って &lt;code&gt;Dockerfile&lt;/code&gt; 書いたのに、NIFの検出すらできなかったという哀しい結果。
-&lt;code&gt;pcap_lookupdev&lt;/code&gt; が以下のエラーを吐いて &lt;code&gt;NULL&lt;/code&gt; を返してきてたので、なんとなくコンテナのNIFに長すぎる名前がついていて検出失敗しているんじゃないかと。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;PacketGetAdapterNames: The data area passed to a system call is too small. (122)
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;因みにコンテナ内から見えるNIFは一つで、以下の構成。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;Ethernet adapter vEthernet (Virtual Switch-d206475ce13256766b9a16383540a740fe31da8d20499349fe98693393a8490f-0):
-
-   Connection-specific DNS Suffix  . : localdomain
-   Link-local IPv6 Address . . . . . : fe80::4086:d11e:5e6:28fe%26
-   IPv4 Address. . . . . . . . . . . : 172.16.0.2
-   Subnet Mask . . . . . . . . . . . : 255.240.0.0
-   Default Gateway . . . . . . . . . : 172.16.0.1
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;コンテナ内から &lt;code&gt;www.google.com&lt;/code&gt; とかにping届いたので、このNIFはちゃんと働いていはずなんだけどPcap4Jから見えない。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;
-&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;後日上記 &lt;code&gt;Dockerfile&lt;/code&gt; でビルドしてみたら、&lt;code&gt;RUN powershell .\install.ps1&lt;/code&gt; で以下のエラーが出るようになった。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;The request was aborted: Could not create SSL/TLS secure channel.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;install.ps1の中でChocolateyのインストーラをHTTPSで取ってこようとしてエラーになっている模様。
-Windows Containersの&lt;a href=&#34;https://msdn.microsoft.com/en-us/virtualization/windowscontainers/about/work_in_progress#https-and-tls-are-not-supported&#34;&gt;ドキュメント&lt;/a&gt;や&lt;a href=&#34;https://social.msdn.microsoft.com/Forums/en-US/c0d93dda-37b7-4a2c-9a78-55e4ba0b88f5/https-support-in-windowsservercore-image?forum=windowscontainers&#34;&gt;フォーラム&lt;/a&gt;にHTTPSが使えないという制限が載っているけどこのせい?
-ちょっと前にやったときは同じ &lt;code&gt;Dockerfile&lt;/code&gt; でビルドできたはずなんだけど。&lt;/p&gt;
-
-&lt;p&gt;試しに以下の処理を挟んでChocolateyのインストーラをHTTPで取ってくるようにしたらChocolateyのインストールまではできた。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;RUN powershell $(Get-Content install.ps1) -replace \&amp;quot;https\&amp;quot;,\&amp;quot;http\&amp;quot; &amp;gt; install.mod.ps1
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;けど &lt;code&gt;choco install&lt;/code&gt; がHTTPS使うので結局駄目だった。&lt;/p&gt;
-
-&lt;p&gt;もう面倒なのでHTTPSの制限がとれるのをまとう。&lt;/p&gt;
 </description>
         </item>
       

@@ -14,9 +14,9 @@
     <link rel="canonical" href="https://www.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="「Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した」の続きで、さらにPackerを組み合わせて、VM作成まで自動化した話。 AnsibleをWindows(MSYS2)で動かした話でもある。 書いたPackerテンプレートはGitHubに置いた。 (adsbygoogle = window.adsbygoogle || []).push({}); Packerとは Packerは、様々な種類のVMを構築できるツール。 VagrantとかTerraformとかを開発しているHashiCorpが開発している。 テンプレートと呼ばれるビルド定義をJSONファイルに書いて、ビルド、プロビジョニング、ポストプロセスを実行して、アーティファクトと呼ばれるビルドの成果物を生成する。 ビルドのステップでは、VMを作成して、ハードウェア構成を設定したり、OSをインストールしたりする。 以下のような環境でVMを作れる。 VirtualBox Hyper-V VMware Workstation VMware vSphere Hypervisor Docker AWS EC2 プロビジョニングのステップでは、ビルドで作ったVMのOS上で指定された操作を実行し、ソフトウェアのインストールなどのセットアップ処理をする。 プロビジョニングには以下のようなツールを使える。 Shell PowerShell Ansible Chef Puppet プロビジョニングが終わるとアーティファクト(VMイメージファイルや、AWS EC2のAMI IDとか)が出力される。 ポストプロセスのステップでは、アーティファクトを入力として何らかの処理をして、最終的なアーティファクトを生成する。 ポストプロセスでは以下のような処理を実行できる。 アーカイブ VagrantBox生成 AWS EC2へのインポート Docker push PackerはGoで書かれていてビルド済みのバイナリが配布されているので、ダウンロードページから落として PATHの通ったところに置くだけでインストールできる。 今回はPacker 1.2.4のWindows版をインストールした。 Packerのテンプレート概要 Packerのテンプレートにはビルド、プロビジョニング、ポストプロセスの定義を複数かけて、複数環境のVM生成を1ファイルで定義できる。 テンプレートには以下のプロパティを書く。 builders: ビルドの定義のリスト。 description: テンプレートの説明。 min_packer_version: Packer の最低バージョン指定。 post-processors: ポストプロセスの定義のリスト。 provisioners: プロビジョニングの定義のリスト。 variables: テンプレート内で使う変数の定義。 _comment: コメントなどを書くためのプロパティ。実際はアンダースコアで始まればなんでもいい。JSON オブジェクトのルートレベルのみで使える。 これらのうち、必須なのはbuildersだけ。 一つのビルド定義には一つのcommunicatorを紐づける。 communicatorはビルド時にVMにつなぐための設定。 基本はSSHだけど、WinRMとかもある。 やりたいこと Windows 10上でPackerとAnsibleを動かして、VirtualBoxのVMをOracle Linux 7.4で作って、Kubernetes 1.10をインストールしたい。 Windowsでやりたいのは、単にベアメタルのLinuxの環境が無いからってのもあるし、いずれHyper-VのVMも作りたいからってのもある。 PackerはGo製で普通にWindowsで動くからいいけど、問題はAnsibleがPython製のくせにWindowsのPythonでは動かないこと。 AnsibleはWSLでは動くけど、VirtualBoxとかHyper-VはWindows上で動くから、PackerはWindows上で動かさないといけないはずで、そうなるとPackerから呼ばれるAnsibleもWindows上で動かさないといけない気がする。 のでWSLではだめな気がするし、そもそも実はWindows 7でも同じことやりたいのでWSLは無し。 要はWindows上でLinuxのPythonを使ってAnsibleを動かしたい。 ならばCygwinかMSYS2&#43;MinGW-w64かGit Bashか。 ここにAnsibleはCygwinでもGit Bashでも動かすの難しいと書いてあって、逆にMSYS2でAnsible動かした記事はあったので、安直にMSYS2でやることにした。 MSYS2インストール MSYS2は、公式サイトからx86_64のインストーラ(msys2-x86_64-20180531.exe)をダウンロードして実行して普通にインストールしただけ。 Ansibleインストール MSYS2でのパッケージ管理にはpacmanを使う。 何はともあれPythonを入れる。3系でいい。 MSYS2 MSYSのショートカット(MSYS2 MinGW 64-bitじゃだめ)からターミナルを開いて、 $ pacman -S python で、Python 3.6.2が入った。 次に、Ansible(の依存)のビルドに必要なパッケージを入れる。 $ pacman -S gcc $ pacman -S make $ pacman -S libffi-devel $ pacman -S openssl-devel さらに、AnsibleからのSSH接続で(鍵ではなくて)パスワードを使う場合に必要なパッケージも入れる。 $ pacman -S sshpass sshpassの依存としてopensshも入った。 Ansibleはpipでインストールするんだけど、pacmanで入れたPython 3にはpipが付いてなかったので、別途入れる。 $ curl https://bootstrap.pypa.io/get-pip.py -LO $ python get-pip.py (ちょっと古いけどpipはpacman python3-pipでも入る。) で、ようやくAnsibleインストール。 $ export CFLAGS=-I/usr/lib/libffi-3.2.1/include $ pip install ansible 依存するPyNaClのビルドに20分くらいかかるのでゆっくり待つと、インストール完了するはず。 今回はAnsible 2.5.4がインストールされた。 AnsibleでJinja2のipaddrフィルターを使うために、もう一つPyPiパッケージ入れる。 $ pip install netaddr Packerテンプレート作成 ビルドは、OSインストールメディアのISOファイルを使うVirtualBoxのビルダであるvirtualbox-isoを指定して書いた。 OSのインストールは、Boot Commandをテンプレートに書くことで、インストーラのGUIを操作してやることもできるけど、RHEL系ならKickstartを使うのが楽。 Kickstartの定義ファイルは、普通に手動でOSをインストールした後、/root/anaconda-ks.cfgを採取して、必要に応じて編集して作る。 今回作ったのはこれで、このスレを参考に、Minimalインストールから、Wifiのファームウェアとか要らないのを抜いてる。 プロビジョニングは、「Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した」ときのPlaybookを実行するやつを公式マニュアル見ながら適当に書いて、ポストプロセスも適当に書いて、できたのがこれ。 ansible_env_varsでANSIBLE_SSH_ARGSに-o ControlMaster=noを入れているのは、この問題に対応するため。 ビルド実行 MSYS2 MSYSのショートカットからターミナルを開いて、Packerを実行してみたら以下のエラー。 $ packer build -var-file=variables.json k8s_single_node_cluster-vb.json bash: packer: コマンドが見つかりません WindowsのPathが通ったところにPackerバイナリを置いておいてもMSYS2からは見えない。 のでpackerバイナリのフルパス(今回はC:\Users\kaitoy\Desktop\bin\にインストールしてたのでそのパス)を指定してやる。 $ /c/Users/kaitoy/Desktop/bin/packer.exe build -var-file=variables.json k8s_single_node_cluster-vb.json k8s-single-node-cluster output will be in this color.">
+    <meta property="og:description" content="前回「Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築」で、やったことをESXiでやっただけ。 書いたコードはGitHubに置いてある。 (adsbygoogle = window.adsbygoogle || []).push({}); 前回との違い VirtualBoxとESXiとで変えないといけない部分は、主にPackerのbuilderの定義。 前回はvirtualbox-isoだったけど、今回はvmware-isoを使う。 それに伴ってパラメータが結構違ってくる。 いっこトリッキーだったのが、cdrom_adapter_typeにideを明示的に指定しておかないと、CDロムドライブがSCSIになって、OSのインストールメディアのマウントか読み取り辺りでエラーになってしまったところ。 環境によっては指定しないでいいかも。 また、&quot;vnc_disable_password&quot;: &quot;true&quot;をbuilderに指定しておかないと、Packerが「Error handshaking with VNC: no suitable auth schemes found. server supported: []byte{0x1}」というエラーを出す。 あとは、Nested Virtualizationでやった(下記)ので、すごく遅くて、色々タイムアウトを伸ばしたりしてやる必要があった。 ESXi環境 ESXi(というかVMware vSphere Hypervisor)は、現時点での最新の6.7を使用。 自前のWindows 10 HomeのノートPC上で動くVMware Player 12で作ったVMにESXiをインストールして環境を作った。 (因みにVirtualBoxにもインストールしてみたESXi上ではVM作成できなかった。VirtualBoxは今の時点でNested Virtualization未サポートで、サポートする予定もない模様。) Packerから操作するには、以下の設定をする必要がある。 静的IPアドレスを設定。Packerからの接続先に指定するので。 SSH有効化。PackerがSSHで接続するので。 因みにSSHクライアントでESXiにつなぐときは、チャレンジ/レスポンス認証になる。 GuestIPHack の有効化 ESXiにSSHでログインして「esxcli system settings advanced set -o /Net/GuestIPHack -i 1」 ファイアウォール設定でVNCポート(TCP5900番台)を開ける。 これをしないとPackerが「Starting HTTP server on port xxxx」でハングする。 けどこれが一筋縄ではいかない。この記事にあるように、/etc/vmware/firewall/service.xmlに設定を追加して「esxcli">
     
-    <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes-ansible-packer.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/packer-esxi.png">
     
     
     
@@ -82,6 +82,28 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2018/06/30/packer-esxi/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/packer-esxi.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sat, Jun 30, 2018</span>
+              </div>
+              <h2 class="title">PackerでESXiにVMを自動構築</h2>
+              <div class="summary">
+                前回「Packer + Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築」で、やったことをESXiでやっただけ。 書いたコードはGitHubに置いてある。 (adsbygoogle = window.adsbygoogle || []).push({}); 前回との違い VirtualBoxとESXiとで変えないといけない部分は、主にPackerのbuilderの定義。 前回はvirtualbox-isoだったけど、今回はvmware-isoを使う。 それに伴ってパラメータが結構違ってくる。 いっこトリッキーだったのが、cdrom_adapter_typeにideを明示的に指定しておかないと、CDロムドライブがSCSIになって、OSのインストールメディアのマウントか読み取り辺りでエラーになってしまったところ。 環境によっては指定しないでいいかも。 また、&quot;vnc_disable_password&quot;: &quot;true&quot;をbuilderに指定しておかないと、Packerが「Error handshaking with VNC: no suitable auth schemes found. server supported: []byte{0x1}」というエラーを出す。 あとは、Nested Virtualizationでやった(下記)ので、すごく遅くて、色々タイムアウトを伸ばしたりしてやる必要があった。 ESXi環境 ESXi(というかVMware vSphere Hypervisor)は、現時点での最新の6.7を使用。 自前のWindows 10 HomeのノートPC上で動くVMware Player 12で作ったVMにESXiをインストールして環境を作った。 (因みにVirtualBoxにもインストールしてみたESXi上ではVM作成できなかった。VirtualBoxは今の時点でNested Virtualization未サポートで、サポートする予定もない模様。) Packerから操作するには、以下の設定をする必要がある。 静的IPアドレスを設定。Packerからの接続先に指定するので。 SSH有効化。PackerがSSHで接続するので。 因みにSSHクライアントでESXiにつなぐときは、チャレンジ/レスポンス認証になる。 GuestIPHack の有効化 ESXiにSSHでログインして「esxcli system settings advanced set -o /Net/GuestIPHack -i 1」 ファイアウォール設定でVNCポート(TCP5900番台)を開ける。 これをしないとPackerが「Starting HTTP server on port xxxx」でハングする。 けどこれが一筋縄ではいかない。この記事にあるように、/etc/vmware/firewall/service.xmlに設定を追加して「esxcli
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2018/06/17/packer-k8s/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/kubernetes-ansible-packer.png" alt="eyecatch">
@@ -142,33 +164,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/weave-k8s.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Fri, May 4, 2018</span>
               </div>
-              <h2 class="title">Kubernetes 1.10のクラスタにWeave Netをデプロイする</h2>
-              <div class="summary">
-                「Kubernetes 1.10をスクラッチから全手動で構築」で、Kubernetes 1.10のクラスタに、ネットワークプロバイダとしてflannelをデプロイしたけど、flannelはNetwork Policyをサポートしていないので、代わりにWeave Netをデプロイしてみた話。 (adsbygoogle = window.adsbygoogle || []).push({}); Weave Netにした理由 Network Policyをサポートしているネットワークプロバイダには現時点で以下のものがある。 Calico Cilium Kube-router Romana Weave Net このなかで、よく名前を聞くのがCalicoとWeave Net。 GitHubのスター数が圧倒的に多いのがWeave Net。 性能が比較的いいのがWeave Net。 ということでWeave Netにした。 Weave Netデプロイ 以下を参考に設定してデプロイする。 https://www.weave.works/docs/net/latest/kubernetes/kube-addon/ https://www.weave.works/docs/net/latest/install/installing-weave/ https://github.com/weaveworks/weave/blob/master/prog/weave-kube/launch.sh Kubernetesマニフェスト Weave NetをKubernetesクラスタにデプロイするためのマニフェストは、GitHub Releasesかhttps://cloud.weave.worksからダウンロードできる。 今回は後者にする。 https://cloud.weave.worksを使う場合、Kubernetesのバージョンなどのパラメータはクエリストリングで指定できる。 主なパラメータは以下。 k8s-version: Kubernetesのバージョン。指定しないとlatest。 password-secret: ノード間のWeave Net通信の暗号化に使うパスワードを保持するSecret名。指定しないと平文。(参考: https://www.weave.works/docs/net/latest/tasks/manage/security-untrusted-networks/) IPALLOC_RANGE: Podに割り当てるIPアドレスの範囲。指定しないと10.32.0.0/12。 CHECKPOINT_DISABLE: Weave Netのアップデートを定期的にチェックする機能の無効化オプション。 WEAVE_MTU: MTUを指定するオプション。デフォルトで1376バイト。 WEAVE_MTUはとりあえずデフォルトにしておいて、IPALLOC_RANGEもデフォルトにして、通信暗号化して、CHECKPOINT_DISABLEをtrueにするとすると、マニフェストは以下のようにダウンロードできる。 # curl -fsSLo weave-daemonset.yaml &quot;https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')&amp;env.CHECKPOINT_DISABLE=1&amp;password-secret=weave-passwd&quot; (通信暗号化は単一ノードなら不要だと思うけどとりあえず設定しておく。) Kubernetesコンポーネントの起動オプション kube-controller-managerの起動オプションの--cluster-cidrはIPALLOC_RANGEと同じにする必要がある。
-              </div>
+              <h3 class="title">Kubernetes 1.10のクラスタにWeave Netをデプロイする</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         
@@ -1702,6 +1721,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/esxi">esxi</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
