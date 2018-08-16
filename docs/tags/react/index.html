@@ -74,6 +74,27 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2018/08/16/chronicle-of-frontend-2018/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="/images/frontends.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Thu, Aug 16, 2018</span>
+              </div>
+              <h2 class="title">Webアプリケーションフロントエンド年代記 - 2018年夏編</h2>
+              <div class="summary">
+                Webアプリケーションの、主にフロントエンド周りに関連する歴史をまとめた。 (adsbygoogle = window.adsbygoogle || []).push({}); 静的サイト HTTPサーバーに複数のHTMLファイルを置いておいて、クライアントのHTTPリクエストのURLのパスによって配信するHTMLファイルを変える。 例えば、HTTPサーバーをhttpdで立てて、ドキュメントルートを/var/www/htmlに設定して、以下のようにファイルを配置したとする。 /var/www/html/ | +-- index.html | +-- sub/ | +-- hoge.html この場合、ブラウザでhttp://&lt;HTTPサーバアドレス&gt;/index.htmlにアクセスすれば/var/www/html/index.htmlが配信されてレンダリングされて表示される。 http://&lt;HTTPサーバアドレス&gt;/sub/hoge.htmlにアクセスすれば/var/www/html/sub/hoge.htmlが配信される。 古のWebサイトは、こんな感じにコンテンツごとにHTMLファイルを書いてサーバに置いておいて、その間にリンクを張って辿れるようにすることで構成されていた。 まあ今も大体そんな感じだけど。 DHTML 1990年代後半、クライアントサイドのJavaScriptでHTMLドキュメントをいじって、多少の動的感・インタラクティブ感をだす技術は既に一応あって、DHTMLと呼ばれていた。 DHTMLの肝はJavaScriptのDOM APIだ。 このAPIでは、HTML文書が各要素(タグなど)をノードとするツリー構造(DOMツリー)で表され、任意の要素を検索して取得したり、属性などを書き換えたり、要素の追加・削除ができる。 &lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01 Transitional//EN&quot; &quot;http://www.w3.org/TR/html4/loose.dtd&quot;&gt; &lt;html&gt; &lt;head&gt; &lt;/head&gt; &lt;body&gt; &lt;div id=&quot;hogehoge&quot;&gt;&lt;/div&gt; &lt;script type=&quot;text/javascript&quot;&gt; // idがhogehogeの要素の子要素として「&lt;p&gt;HOGEEEEEEE&lt;/p&gt;」を追加。 document.getElementById(&quot;hogehoge&quot;).innerHTML = &quot;&lt;p&gt;HOGEEEEEEE&lt;/p&gt;&quot; &lt;/script&gt; &lt;/body&gt; &lt;/html&gt; しかし、このころのJavaScriptは、仕様・機能が貧弱だった上、ブラウザ間で挙動に差があったり、標準メソッドがブラウザ固有のメソッドで代替されていたりして開発体験が最悪だったためか、今日のようにWeb UIの中心的役割を果たすことはなく、補助的・装飾的機能の実装に使われることが多かったように思う。 アクセスした日付を表示したり、背景に雪を降らせたり、マウスカーソルを目玉に追いかけさせたり。 動的HTML生成 (プログラムでHTMLを書き出す) 静的サイトだと表現できることが非常に限られるので、クライアントからのリクエストの内容をサーバが解釈し、DBの情報やなんかをもとにサーバ側でHTMLドキュメントを動的に生成し、クライアントに返す、ということをするようになった。 原始的には、プログラム中で一連のHTMLドキュメントを出力する方法がとられた。 public void doGet( HttpServletRequest request, HttpServletResponse response ) throws IOException, ServletException { response.setContentType(&quot;text/html;&quot;); PrintWriter out = response.getWriter(); out.println(&quot;&lt;html&gt;&quot;); out.println(&quot; &lt;head&gt;&quot;); out.println(&quot; &lt;title&gt;Hoge&lt;/title&gt;&quot;); out.println(&quot; &lt;/head&gt;&quot;); out.println(&quot; &lt;body&gt;&quot;); out.println(new java.util.Date()); out.println(&quot; &lt;/body&gt;&quot;); out.println(&quot;&lt;/html&gt;&quot;); } 使われた技術は、CGI (Perl)とか、Java Servletとか。 Jakarta ECSなんてのもあった。 動的HTML生成 (HTMLにプログラムを埋め込む) プログラムでHTMLを書き出すことにより、かなり動的な感じにはなったが、書き出す処理を書くのがめんどくさすぎるし、読みにくい。 そのため、HTMLを主体にして、そのなかの動的な部分だけにプログラムを埋め込む方式が生まれた。 &lt;%@ page contentType=&quot;text/html %&gt; &lt;html&gt; &lt;head&gt; &lt;title&gt;Hoge&lt;/title&gt; &lt;/head&gt; &lt;body&gt; &lt;% out.println(new java.util.Date()); %&gt; &lt;/body&gt; &lt;/html&gt; HTMLドキュメントのひな型を作っておいて、その中にプログラムの処理結果を埋め込んでクライアントに返すため、テンプレートエンジンとか、テンプレートシステムとか呼ばれる。 該当する技術は、PHPとか、JSPとか、Velocityとか、eRubyとか。 MVCアーキテクチャ 2000年初頭、Struts (Struts1)というJavaのWebアプリケーションフレームワークが流行り、Controller (Java Servlet)がクライアントからリクエストを受け取り、Model (JavaBeans)がそれを処理して、View (JSP)がHTMLをレンダリングしてクライアントに返す、という、MVCアーキテクチャが流行った。 Strutsに続いてSpring MVC、Ruby on Rails、CakePHPといったフレームワークが出てきて、MVCアーキテクチャによる開発効率や開発体験は洗練されていった。 Ajax Strutsが全盛期の2005年ころ、JavaScriptで非同期にサーバからデータを取得し、それをもとにクライアントサイドでHTMLを動的に編集するような技術に、Ajaxという名前が付いた。 Ajaxは「Asynchronous JavaScript + XML」の略で、XMLHttpRequest (略してXHR)というJavaScriptのAPIで 、サーバにHTTPリクエストを送り、そのレスポンスを非同期に処理する技術。 レスポンスは、当時XMLが流行っていたので、その形式で送ることが想定されていたが、実際にはどんな形式でもいい。はず。 最近はJSONで送られることがほとんど。 JavaScriptはシングルスレッドで動くわけだけど、XMLHttpRequestはレスポンスを非同期に処理するため、リクエスト送信からレスポンス受信までの間、クライアントがスタックせずに済む。 また、通常のHTTPリクエストは、完全なHTMLドキュメントを受信して画面全体をレンダリングしなおす(i.e.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2017/08/25/if-youre-a-startup-you-should-not-use-react-reflecting-on-the-bsd-patents-license/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="/images/react.png" alt="eyecatch">
@@ -207,6 +228,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/frontend">frontend</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/git">git</a>

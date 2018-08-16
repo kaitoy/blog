@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Webアプリケーションフロントエンド年代記 - 2018年夏編 | To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2018/08/16/chronicle-of-frontend-2018/">
+    <link rel="canonical" href="https://www.kaitoy.xyz/2018/08/16/chronicle-of-frontend-2018/">
+    <meta property="og:description" content="Webアプリケーションの、主にフロントエンド周りに関連する歴史をまとめた。 (adsbygoogle = window.adsbygoogle || []).push({}); 静的サイト HTTPサーバーに複数のHTMLファイルを置いておいて、クライアントのHTTPリクエストのURLのパスによって配信するHTMLファイルを変える。 例えば、HTTPサーバーをhttpdで立てて、ドキュメントルートを/var/www/htmlに設定して、以下のようにファイルを配置したとする。 /var/www/html/ | &#43;-- index.html | &#43;-- sub/ | &#43;-- hoge.html この場合、ブラウザでhttp://&lt;HTTPサーバアドレス&gt;/index.htmlにアクセスすれば/var/www/html/index.htmlが配信されてレンダリングされて表示される。 http://&lt;HTTPサーバアドレス&gt;/sub/hoge.htmlにアクセスすれば/var/www/html/sub/hoge.htmlが配信される。 古のWebサイトは、こんな感じにコンテンツごとにHTMLファイルを書いてサーバに置いておいて、その間にリンクを張って辿れるようにすることで構成されていた。 まあ今も大体そんな感じだけど。 DHTML 1990年代後半、クライアントサイドのJavaScriptでHTMLドキュメントをいじって、多少の動的感・インタラクティブ感をだす技術は既に一応あって、DHTMLと呼ばれていた。 DHTMLの肝はJavaScriptのDOM APIだ。 このAPIでは、HTML文書が各要素(タグなど)をノードとするツリー構造(DOMツリー)で表され、任意の要素を検索して取得したり、属性などを書き換えたり、要素の追加・削除ができる。 &lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01 Transitional//EN&quot; &quot;http://www.w3.org/TR/html4/loose.dtd&quot;&gt; &lt;html&gt; &lt;head&gt; &lt;/head&gt; &lt;body&gt; &lt;div id=&quot;hogehoge&quot;&gt;&lt;/div&gt; &lt;script type=&quot;text/javascript&quot;&gt; // idがhogehogeの要素の子要素として「&lt;p&gt;HOGEEEEEEE&lt;/p&gt;」を追加。 document.getElementById(&quot;hogehoge&quot;).innerHTML = &quot;&lt;p&gt;HOGEEEEEEE&lt;/p&gt;&quot; &lt;/script&gt; &lt;/body&gt; &lt;/html&gt; しかし、このころのJavaScriptは、仕様・機能が貧弱だった上、ブラウザ間で挙動に差があったり、標準メソッドがブラウザ固有のメソッドで代替されていたりして開発体験が最悪だったためか、今日のようにWeb UIの中心的役割を果たすことはなく、補助的・装飾的機能の実装に使われることが多かったように思う。 アクセスした日付を表示したり、背景に雪を降らせたり、マウスカーソルを目玉に追いかけさせたり。 動的HTML生成 (プログラムでHTMLを書き出す) 静的サイトだと表現できることが非常に限られるので、クライアントからのリクエストの内容をサーバが解釈し、DBの情報やなんかをもとにサーバ側でHTMLドキュメントを動的に生成し、クライアントに返す、ということをするようになった。 原始的には、プログラム中で一連のHTMLドキュメントを出力する方法がとられた。 public void doGet( HttpServletRequest request, HttpServletResponse response ) throws IOException, ServletException { response.setContentType(&quot;text/html;&quot;); PrintWriter out = response.getWriter(); out.println(&quot;&lt;html&gt;&quot;); out.println(&quot; &lt;head&gt;&quot;); out.println(&quot; &lt;title&gt;Hoge&lt;/title&gt;&quot;); out.println(&quot; &lt;/head&gt;&quot;); out.println(&quot; &lt;body&gt;&quot;); out.println(new java.util.Date()); out.println(&quot; &lt;/body&gt;&quot;); out.println(&quot;&lt;/html&gt;&quot;); } 使われた技術は、CGI (Perl)とか、Java Servletとか。 Jakarta ECSなんてのもあった。 動的HTML生成 (HTMLにプログラムを埋め込む) プログラムでHTMLを書き出すことにより、かなり動的な感じにはなったが、書き出す処理を書くのがめんどくさすぎるし、読みにくい。 そのため、HTMLを主体にして、そのなかの動的な部分だけにプログラムを埋め込む方式が生まれた。 &lt;%@ page contentType=&quot;text/html %&gt; &lt;html&gt; &lt;head&gt; &lt;title&gt;Hoge&lt;/title&gt; &lt;/head&gt; &lt;body&gt; &lt;% out.println(new java.util.Date()); %&gt; &lt;/body&gt; &lt;/html&gt; HTMLドキュメントのひな型を作っておいて、その中にプログラムの処理結果を埋め込んでクライアントに返すため、テンプレートエンジンとか、テンプレートシステムとか呼ばれる。 該当する技術は、PHPとか、JSPとか、Velocityとか、eRubyとか。 MVCアーキテクチャ 2000年初頭、Struts (Struts1)というJavaのWebアプリケーションフレームワークが流行り、Controller (Java Servlet)がクライアントからリクエストを受け取り、Model (JavaBeans)がそれを処理して、View (JSP)がHTMLをレンダリングしてクライアントに返す、という、MVCアーキテクチャが流行った。 Strutsに続いてSpring MVC、Ruby on Rails、CakePHPといったフレームワークが出てきて、MVCアーキテクチャによる開発効率や開発体験は洗練されていった。 Ajax Strutsが全盛期の2005年ころ、JavaScriptで非同期にサーバからデータを取得し、それをもとにクライアントサイドでHTMLを動的に編集するような技術に、Ajaxという名前が付いた。 Ajaxは「Asynchronous JavaScript &#43; XML」の略で、XMLHttpRequest (略してXHR)というJavaScriptのAPIで 、サーバにHTTPリクエストを送り、そのレスポンスを非同期に処理する技術。 レスポンスは、当時XMLが流行っていたので、その形式で送ることが想定されていたが、実際にはどんな形式でもいい。はず。 最近はJSONで送られることがほとんど。 JavaScriptはシングルスレッドで動くわけだけど、XMLHttpRequestはレスポンスを非同期に処理するため、リクエスト送信からレスポンス受信までの間、クライアントがスタックせずに済む。 また、通常のHTTPリクエストは、完全なHTMLドキュメントを受信して画面全体をレンダリングしなおす(i.e.">
+    
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/frontends.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      Webアプリケーションフロントエンド年代記 - 2018年夏編 | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+    
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-6244473643910448",
+        enable_page_level_ads: true
+      });
+    </script>
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Thu, Aug 16, 2018</span>
+      <h2 class="title">Webアプリケーションフロントエンド年代記 - 2018年夏編</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://www.kaitoy.xyz/images/frontends.png" alt="Webアプリケーションフロントエンド年代記 - 2018年夏編">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>Webアプリケーションの、主にフロントエンド周りに関連する歴史をまとめた。</p>
+
+<p>
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</p>
+
+<h1 id="静的サイト">静的サイト</h1>
+
+<p>HTTPサーバーに複数のHTMLファイルを置いておいて、クライアントのHTTPリクエストのURLのパスによって配信するHTMLファイルを変える。</p>
+
+<p>例えば、HTTPサーバーを<a href="https://httpd.apache.org/">httpd</a>で立てて、ドキュメントルートを<code>/var/www/html</code>に設定して、以下のようにファイルを配置したとする。</p>
+
+<p><br></p>
+
+<pre><code class="language-text">/var/www/html/
+    |
+    +-- index.html
+    |
+    +-- sub/
+          |
+          +-- hoge.html
+</code></pre>
+
+<p><br></p>
+
+<p>この場合、ブラウザで<code>http://&lt;HTTPサーバアドレス&gt;/index.html</code>にアクセスすれば<code>/var/www/html/index.html</code>が配信されてレンダリングされて表示される。
+<code>http://&lt;HTTPサーバアドレス&gt;/sub/hoge.html</code>にアクセスすれば<code>/var/www/html/sub/hoge.html</code>が配信される。</p>
+
+<p>古のWebサイトは、こんな感じにコンテンツごとにHTMLファイルを書いてサーバに置いておいて、その間にリンクを張って辿れるようにすることで構成されていた。</p>
+
+<p>まあ今も大体そんな感じだけど。</p>
+
+<h1 id="dhtml">DHTML</h1>
+
+<p><strong>1990年代後半</strong>、クライアントサイドのJavaScriptでHTMLドキュメントをいじって、多少の動的感・インタラクティブ感をだす技術は既に一応あって、<a href="https://ja.wikipedia.org/wiki/%E3%83%80%E3%82%A4%E3%83%8A%E3%83%9F%E3%83%83%E3%82%AFHTML">DHTML</a>と呼ばれていた。</p>
+
+<p>DHTMLの肝はJavaScriptの<a href="https://ja.wikipedia.org/wiki/Document_Object_Model">DOM</a> APIだ。
+このAPIでは、HTML文書が各要素(タグなど)をノードとするツリー構造(DOMツリー)で表され、任意の要素を検索して取得したり、属性などを書き換えたり、要素の追加・削除ができる。</p>
+
+<pre><code class="language-javascript">&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01 Transitional//EN&quot; &quot;http://www.w3.org/TR/html4/loose.dtd&quot;&gt;
+&lt;html&gt;
+  &lt;head&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;div id=&quot;hogehoge&quot;&gt;&lt;/div&gt;
+    &lt;script type=&quot;text/javascript&quot;&gt;
+      // idがhogehogeの要素の子要素として「&lt;p&gt;HOGEEEEEEE&lt;/p&gt;」を追加。
+      document.getElementById(&quot;hogehoge&quot;).innerHTML = &quot;&lt;p&gt;HOGEEEEEEE&lt;/p&gt;&quot;
+    &lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+
+<p>しかし、このころのJavaScriptは、仕様・機能が貧弱だった上、ブラウザ間で挙動に差があったり、標準メソッドがブラウザ固有のメソッドで代替されていたりして開発体験が最悪だったためか、今日のようにWeb UIの中心的役割を果たすことはなく、補助的・装飾的機能の実装に使われることが多かったように思う。</p>
+
+<p>アクセスした日付を表示したり、背景に雪を降らせたり、マウスカーソルを目玉に追いかけさせたり。</p>
+
+<h1 id="動的html生成-プログラムでhtmlを書き出す">動的HTML生成 (プログラムでHTMLを書き出す)</h1>
+
+<p>静的サイトだと表現できることが非常に限られるので、クライアントからのリクエストの内容をサーバが解釈し、DBの情報やなんかをもとにサーバ側でHTMLドキュメントを動的に生成し、クライアントに返す、ということをするようになった。</p>
+
+<p>原始的には、プログラム中で一連のHTMLドキュメントを出力する方法がとられた。</p>
+
+<pre><code class="language-java">public void doGet(
+  HttpServletRequest request, HttpServletResponse response
+) throws IOException, ServletException {
+
+  response.setContentType(&quot;text/html;&quot;);
+  PrintWriter out = response.getWriter();
+
+  out.println(&quot;&lt;html&gt;&quot;);
+  out.println(&quot;  &lt;head&gt;&quot;);
+  out.println(&quot;    &lt;title&gt;Hoge&lt;/title&gt;&quot;);
+  out.println(&quot;  &lt;/head&gt;&quot;);
+  out.println(&quot;  &lt;body&gt;&quot;);
+  out.println(new java.util.Date());
+  out.println(&quot;  &lt;/body&gt;&quot;);
+  out.println(&quot;&lt;/html&gt;&quot;);
+}
+</code></pre>
+
+<p>使われた技術は、<a href="https://ja.wikipedia.org/wiki/Common_Gateway_Interface">CGI</a> (Perl)とか、<a href="https://ja.wikipedia.org/wiki/Java_Servlet">Java Servlet</a>とか。
+<a href="http://jakarta.apache.org/ecs/index.html">Jakarta ECS</a>なんてのもあった。</p>
+
+<h1 id="動的html生成-htmlにプログラムを埋め込む">動的HTML生成 (HTMLにプログラムを埋め込む)</h1>
+
+<p>プログラムでHTMLを書き出すことにより、かなり動的な感じにはなったが、書き出す処理を書くのがめんどくさすぎるし、読みにくい。
+そのため、HTMLを主体にして、そのなかの動的な部分だけにプログラムを埋め込む方式が生まれた。</p>
+
+<pre><code class="language-jsp">&lt;%@ page contentType=&quot;text/html %&gt;
+
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;Hoge&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;%
+    out.println(new java.util.Date());
+    %&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+
+<p>HTMLドキュメントのひな型を作っておいて、その中にプログラムの処理結果を埋め込んでクライアントに返すため、テンプレートエンジンとか、テンプレートシステムとか呼ばれる。</p>
+
+<p>該当する技術は、<a href="http://www.php.net/">PHP</a>とか、<a href="https://ja.wikipedia.org/wiki/JavaServer_Pages">JSP</a>とか、<a href="http://velocity.apache.org/">Velocity</a>とか、<a href="https://ja.wikipedia.org/wiki/ERuby">eRuby</a>とか。</p>
+
+<h1 id="mvcアーキテクチャ">MVCアーキテクチャ</h1>
+
+<p><strong>2000年初頭</strong>、<a href="http://struts.apache.org/">Struts</a> (Struts1)というJavaのWebアプリケーションフレームワークが流行り、Controller (Java Servlet)がクライアントからリクエストを受け取り、Model (JavaBeans)がそれを処理して、View (JSP)がHTMLをレンダリングしてクライアントに返す、という、<a href="https://ja.wikipedia.org/wiki/Model_View_Controller">MVCアーキテクチャ</a>が流行った。</p>
+
+<p><br></p>
+
+<p><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/MVC-Process.svg/500px-MVC-Process.svg.png" alt="MVC" title="MVC" />
+</p>
+
+<p><br></p>
+
+<p>Strutsに続いて<a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/web.html">Spring MVC</a>、<a href="https://rubyonrails.org/">Ruby on Rails</a>、<a href="https://cakephp.org/jp">CakePHP</a>といったフレームワークが出てきて、MVCアーキテクチャによる開発効率や開発体験は洗練されていった。</p>
+
+<h1 id="ajax">Ajax</h1>
+
+<p>Strutsが全盛期の<strong>2005年</strong>ころ、JavaScriptで非同期にサーバからデータを取得し、それをもとにクライアントサイドでHTMLを動的に編集するような技術に、<a href="https://ja.wikipedia.org/wiki/Ajax">Ajax</a>という名前が付いた。</p>
+
+<p>Ajaxは「Asynchronous JavaScript + XML」の略で、<a href="https://developer.mozilla.org/ja/docs/Web/API/XMLHttpRequest">XMLHttpRequest</a> (略してXHR)というJavaScriptのAPIで
+、サーバにHTTPリクエストを送り、そのレスポンスを非同期に処理する技術。
+レスポンスは、当時XMLが流行っていたので、その形式で送ることが想定されていたが、実際にはどんな形式でもいい。はず。
+最近はJSONで送られることがほとんど。</p>
+
+<p>JavaScriptはシングルスレッドで動くわけだけど、XMLHttpRequestはレスポンスを非同期に処理するため、リクエスト送信からレスポンス受信までの間、クライアントがスタックせずに済む。
+また、通常のHTTPリクエストは、完全なHTMLドキュメントを受信して画面全体をレンダリングしなおす(i.e. 画面遷移する)のに対して、Ajaxは受信したデータをもとに画面の一部だけを更新するので、ネイティブアプリケーションに近めなユーザエクスペリエンスを実現できる。</p>
+
+<pre><code class="language-javascript">var xhr = new XMLHttpRequest();
+xhr.open('GET', 'https://httpbin.org/get', true);
+xhr.onreadystatechange = function() {
+  if (xhr.readyState === 4 &amp;&amp; xhr.status === 200) {
+    console.log(xhr.responseText);
+    // DOMをいじる処理
+    // …
+  }
+};
+xhr.send(null);
+</code></pre>
+
+<p>Ajaxは、GoogleがGoogle Mapsで活用して一気に注目を集めた。
+地図データをサーバから非同期に先読みするなどして、マウスのドラッグによって地図を滑らかにスクロールして見せるそのUIは当時画期的で、それまでの、画面遷移中心のUIからの飛躍を感じさせた。</p>
+
+<h1 id="prototypeとjquery">PrototypeとjQuery</h1>
+
+<p>Ajaxの普及を後押ししたのが、<a href="http://prototypejs.org/">Prototype</a>と<a href="https://jquery.com/">jQuery</a>というJavaScriptライブラリの登場だった。</p>
+
+<p>PrototypeはRubyにインスパイアされて開発され、Ruby on Railsに採用されたことで<strong>2005年</strong>ころから普及したライブラリで、JavaScriptの標準グローバルオブジェクトであるArrayとかElementに便利メソッドを生やしたり、独自のグローバルユーティリティオブジェクトを追加したりして、Ajax処理をしやすくしたり、JavaScriptの機能を拡張してくれたりする。</p>
+
+<p>特に、当時のプロトタイプベースで使いにくかったJavaScriptのオブジェクト指向を扱いやすくしてくれる<a href="http://prototypejs.org/learn/class-inheritance">Class</a>や、配列の処理に便利なeachとかmapとかincludeとかのメソッドを追加する<a href="http://api.prototypejs.org/language/Enumerable/">Enumerable</a>なんかが熱かったように思う。</p>
+
+<p>一方jQueryは、ファーストバージョンが<strong>2006年8月</strong>にリリースされ、ブラウザ間の非互換性をほとんど気にすることなく、簡潔なコードでDOM操作やAjax通信ができるAPIを提供した。
+Prototypeと比べて、標準オブジェクトやグローバル名前空間を汚さない点がよかったのか、<strong>2007年</strong> ころにはPrototypeを抜いて猛烈に普及した。</p>
+
+<p>この頃からWebアプリケーションは、UIはクライアントサイドのJavaScriptでインタラクティブな感じに書いて、サーバサイドはXMLHttpRequestに対してJSONデータを返すAPIサーバとして働く、という感じのものが増えていったように思う。
+またこの頃から、クライアントサイドの開発が量質ともに上がったために独立した仕事になり、サーバサイドと対比して、前者をフロントエンド、後者をバックエンドと呼ぶようになってきた。</p>
+
+<p><br></p>
+
+<p>因みに、PrototypeやjQueryと同様というかもう少し高機能な<a href="https://dojotoolkit.org/">Dojo Toolkit</a>というライブラリが<strong>2004年</strong>ころからあったんだけど、あまり流行らなかった。
+カスタムビルドという、モジュールを結合してminifyする<a href="https://webpack.js.org/">webpack</a>みたいな機能を、<a href="https://nodejs.org/ja/">Node.js</a>もない時代に実現していた先進的なライブラリだったんだけど、時代がついてこれなかったのかもしれない。</p>
+
+<h1 id="ria-flashとか">RIA (Flashとか)</h1>
+
+<p>WebアプリケーションにはAjaxと別の世界線もあった。</p>
+
+<p>そこでは<strong>1997年</strong>ころに<a href="https://ja.wikipedia.org/wiki/%E3%83%AA%E3%83%83%E3%83%81%E3%82%A4%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%8D%E3%83%83%E3%83%88%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3">RIA (Rich Internet Application)</a>という言葉が生まれた。
+これは、クライアントサイドの技術を駆使した、表現力やユーザビリティが高いWebアプリケーションのこと。</p>
+
+<p>(実際にはAjaxなアプリもこのくくりに入るが、ここでは非Web標準なクライアントサイド技術を使ったものの話を書く。)</p>
+
+<p>RIA技術の代表格である<a href="https://ja.wikipedia.org/wiki/Adobe_Flash">Flash</a>は<strong>1996年</strong>に生まれた。
+このころはShockwave FlashとかMacromedia Flashとか呼ばれたが、開発元が<strong>2005年</strong>にAdobeに買収されてAdobe Flashになり、そのあたりから<strong>2010年代前半</strong>辺りまで最先端のWeb UI技術として甚だしく流行った。</p>
+
+<p>Flashは、<a href="https://www.adobe.com/jp/products/flex.html">Flex</a>というフレームワーク(ツール?)のもと、<a href="https://ja.wikipedia.org/wiki/ActionScript">ActionScript</a>というJavaScriptっぽいプログラミング言語と、<a href="https://ja.wikipedia.org/wiki/MXML">MXML</a>というXMLなUI記述言語を駆使してWeb UIを開発できる技術。
+WebブラウザにAdobe Flash PlayerとかAdobe AIRのプラグインを入れると表示できる。</p>
+
+<p>Flashの人気に触発されたのか、Microsoftが<strong>2007年</strong>に<a href="https://www.microsoft.com/silverlight/">Silverlight</a>というのをリリースした。
+これは、<a href="https://ja.wikipedia.org/wiki/.NET_Framework">.NET Framework</a>な言語(<a href="https://docs.microsoft.com/ja-jp/dotnet/csharp/">C#</a>とか<a href="https://msdn.microsoft.com/ja-jp/library/cc427807.aspx">JScript</a>とか)と、<a href="https://docs.microsoft.com/ja-jp/dotnet/framework/wpf/advanced/xaml-overview-wpf">XAML</a>というHTMLっぽいUI記述言語を駆使してWeb UIを開発できる技術。
+WebブラウザにMicrosoft Silverlightプラグインを入れると表示できる。</p>
+
+<p>また、Flashの誕生とほぼ同時期に、JavaでWebアプリケーションのUIを書く<a href="https://ja.wikipedia.org/wiki/Java%E3%82%A2%E3%83%97%E3%83%AC%E3%83%83%E3%83%88">Java Applet</a>というのも生まれていた。が、初期のバージョンでロードに時間がかかったり動作が重かったりする問題があり、嫌厭されてFlashほど流行らなかった。
+WebブラウザにJavaプラグインを入れると表示できる。
+なぜか最近になって、<strong>2017年</strong> 公開のマイナンバーのポータルサイトで採用されて話題になった。</p>
+
+<p><br></p>
+
+<p>こうした非Web標準技術を使ったRIAは、Ajaxに比べてリッチな表現ができたり、ブラウザ間の非互換性に悩まされないところに優位性があったが、以下のような問題があった。</p>
+
+<ul>
+<li>プロプライエタリな技術をベースにしていて、実装がブラックボックスだったり、仕様の方向性がベンダの都合に左右されたり、ベンダロックインされやすかったりする。</li>
+<li>ユーザがブラウザにプラグインをいれてないと表示されない。</li>
+<li>セキュリティ問題が見つかった場合、オープンな技術のものに比べて対策が遅い傾向があるし、ベンダによる実装しかないので替えが利かない。</li>
+<li>他ベンダの技術や標準技術との親和性が無かったり、連携が弱かったりする。</li>
+<li>ブラウザ内で文字列検索ができなかったり、検索エンジンにまともにクローリングしてもらえない。</li>
+<li>動作が重い。</li>
+</ul>
+
+<p><br></p>
+
+<p>このような問題のためか、Web標準周辺技術の発展に伴い、一時期は隆盛を誇ったFlashなども次第に廃れていった。</p>
+
+<p>Flashは<strong>2020年</strong>に、Silverlightは<strong>2021年</strong>にサポート終了になり、Java Appletは<strong>2018年9月</strong>に出るJava 11で廃止されることが決まっている。</p>
+
+<h1 id="html-5とcss-3とecmascript-5">HTML 5とCSS 3とECMAScript 5</h1>
+
+<p><strong>2000年代中盤</strong> から非Web標準なRIAが流行ったのは、そもそもWeb標準技術であるHTML、CSS、JavaScript(というかその標準仕様を定める<a href="https://ja.wikipedia.org/wiki/ECMAScript">ECMAScript</a>)が、アプリケーションのUIを作るという目的で設計されているわけではなく、それらを使ってWeb UIを作ることに限界があったのが一因だったと思う。</p>
+
+<p>RIAの流行を受け、Web標準業界に危機感が募ったのか、<strong>2000年代後半</strong> くらいからWeb標準技術にWeb UIを意識したバージョンアップの動きが始まった。</p>
+
+<ul>
+<li><p><a href="https://www.w3schools.com/html/html5_intro.asp">HTML 5</a>の勧告 (<strong>2014年</strong>)</p>
+
+<ul>
+<li>それまでの標準であるHTML 4.01の勧告が<strong>1999年</strong>だったので、<strong>15年</strong> ぶり。</li>
+<li>文書構造を表すタグの追加: <code>&lt;header&gt;</code>とか<code>&lt;footer&gt;</code>とか。</li>
+<li>図を表現するためのタグの追加: <code>&lt;svg&gt;</code>と<code>&lt;canvas&gt;</code>。</li>
+<li>inputタイプの追加: <code>date</code>、<code>range</code>、<code>email</code>とか。</li>
+<li>inputタグの属性の追加: <code>autocomplete</code>、<code>pattern</code>、<code>placeholder</code>、<code>required</code>とか。</li>
+<li>マルチメディアのためのタグの追加:<code>&lt;audio&gt;</code>と<code>&lt;video&gt;</code>。</li>
+<li>Webアプリケーション向けAPI追加: Drag and Drop、Local Storage、Web Workerとか。</li>
+<li>冗長だったり見た目に関するタグ・属性の削除: <code>&lt;center&gt;</code>とか<code>&lt;font&gt;</code>とか<code>border</code>とか<code>color</code>とか。</li>
+<li><code>data-*</code>属性のサポート。</li>
+</ul></li>
+
+<li><p><a href="https://developer.mozilla.org/ja/docs/Web/CSS/CSS3">CSS 3</a>の勧告 (<strong>2011年</strong>)</p>
+
+<ul>
+<li>それまでの標準であるCSS 2の勧告が<strong>1998年</strong>だったので、<strong>13年</strong> ぶり。</li>
+<li>角丸、シャドウ、グラデーションのサポート。</li>
+<li>セレクタの機能追加: 属性値の部分マッチ、nth-childなど。</li>
+<li>メディアクエリ。</li>
+<li>Flexboxレイアウト、Gridレイアウト。</li>
+<li>Webフォント。</li>
+<li>トランジション、トランスフォーム、アニメーション。</li>
+</ul></li>
+
+<li><p><a href="https://www.w3schools.com/js/js_es5.asp">ECMAScript 5</a>の発行 (<strong>2009年</strong>)</p>
+
+<ul>
+<li>それまでの標準であるECMAScript 3の勧告が<strong>1999年</strong>だったので、<strong>10年</strong> ぶり。</li>
+<li>strictモード。</li>
+<li>Arrayのメソッド追加: forEach、map、filterなど。</li>
+<li>Objectのメソッド追加: keys、freezeなど。</li>
+<li>グローバルオブジェクトにJSONが追加。</li>
+</ul></li>
+</ul>
+
+<h1 id="javascriptフロントエンドフレームワーク-第1世代">JavaScriptフロントエンドフレームワーク (第1世代)</h1>
+
+<p>Web標準技術が進化して表現力が上がり、ECMAScript 5やjQueryによってロジックを書きやすくなり、人々がWeb UIをバリバリ書けるようになり、RIAの影響もあってUIの複雑化が進んだ。</p>
+
+<p>UIが複雑化すると、ユーザ入力の処理、Ajaxによるサーバとのデータ通信、UIの状態の取得、DOMの操作なんかを、何の秩序も構造化もレイヤー分けもなくナイーブにコーディングするのが辛くなってきた。</p>
+
+<p>この辛みに対処すべく誕生してきたのが数多のJavaScriptフロントエンドフレームワーク。
+<strong>2018年現在</strong> まで続くフロントエンドフレームワーク戦国時代の幕開けである。</p>
+
+<p>フロントエンドフレームワークは大抵以下のような機能を提供してくれる。</p>
+
+<ul>
+<li>UI(View)の記述を楽にする何か。テンプレートエンジンとか。</li>
+<li>Viewに表示しているデータとJavaScriptプログラムで保持しているデータを紐づける仕組み。(i.e. <a href="https://ja.wikipedia.org/wiki/%E3%83%87%E3%83%BC%E3%82%BF%E3%83%90%E3%82%A4%E3%83%B3%E3%83%87%E3%82%A3%E3%83%B3%E3%82%B0">データバインディング</a>)</li>
+<li>Ajaxユーティリティ。</li>
+<li>URLをViewやロジックと紐づける仕組み。(i.e. URLルーティング)</li>
+</ul>
+
+<p><br></p>
+
+<p>フロントエンドフレームワーク戦国時代初期に生まれた主要なフロントエンドフレームワークを列挙する。</p>
+
+<p>(この記事では便宜上第1世代と呼ぶ。)</p>
+
+<ul>
+<li><p><a href="http://knockoutjs.com/">Knockout</a></p>
+
+<ul>
+<li><strong>2010年</strong> に誕生。</li>
+<li><a href="https://ja.wikipedia.org/wiki/Model_View_ViewModel">MVVMアーキテクチャ</a>。
+
+<ul>
+<li>ModelがUIと独立してデータ(Ajaxでサーバから取ったものなど)を保持する。</li>
+<li>ViewModelがUIに紐づくデータとその操作を表現する。</li>
+<li>ViewはDOMツリー。ViewModelへの変更は自動でViewに反映されるし、その逆もしかり。</li>
+</ul></li>
+</ul></li>
+
+<li><p><a href="http://backbonejs.org/">Backbone.js</a></p>
+
+<ul>
+<li><strong>2010年</strong> に誕生。</li>
+<li>主にModelとViewからなるMVC的アーキテクチャ。
+
+<ul>
+<li>Modelはデータとビジネスロジックを表現する。
+
+<ul>
+<li>サーバから取ってきたデータを保持。</li>
+<li>ビジネスロジックによってデータが変わると、イベントを生成。</li>
+</ul></li>
+<li>ViewがModelをDOMに反映する。
+
+<ul>
+<li>ModelからのイベントをlistenしてDOMに反映。</li>
+<li>ユーザからの入力を取得して、Modelに渡す。</li>
+</ul></li>
+</ul></li>
+</ul></li>
+
+<li><p><a href="https://www.emberjs.com/">Ember.js</a> v1</p>
+
+<ul>
+<li><strong>2011年</strong> に誕生。</li>
+<li>MVVMアーキテクチャ。</li>
+<li>URLルーティングをコアとするコンセプトが特徴的。</li>
+</ul></li>
+
+<li><p><a href="https://angularjs.org/">AngularJS</a></p>
+
+<ul>
+<li><strong>2012年</strong> に誕生。</li>
+<li>Google製。</li>
+<li>MVVMアーキテクチャ。</li>
+<li>DIやテストなどのサポートまであるフルスタックフレームワーク。</li>
+</ul></li>
+</ul>
+
+<p>第1世代は、フロントエンドの世界にMVCアーキテクチャ(とその派生)をもたらした。</p>
+
+<p>このMVCは、Struts時代のMVCとは違い、完全にクライアントサイドに閉じたアーキテクチャだ。
+サーバ側はエントリーポイントとしてHTML(とCSSとJavaScript)をサーブするほかは、JSONを返すAPIサーバとしての役割に徹する。
+このようなWebアプリケーションは、ページ遷移が発生せず、単一ページだけでUIが構成されるので、<a href="https://ja.wikipedia.org/wiki/%E3%82%B7%E3%83%B3%E3%82%B0%E3%83%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3">Single Page Application (SPA)</a>と呼ばれる。</p>
+
+<p>ModelとViewとの間でのデータの同期の仕方には以下のように2方向がある。</p>
+
+<ul>
+<li>M⇒V: Modelを更新すると対応するViewが自動で更新される。</li>
+<li>V⇒M: Viewがユーザ入力などによって変更されるとModelが自動で更新される。</li>
+</ul>
+
+<p>前者だけをするのが1-wayバインディングで、両方するのが2-wayバインディング。
+上に挙げた中では、Backbone.js以外が2-wayバインディング推しで、このころは2-wayバインディングが正義だったっぽい。</p>
+
+<h1 id="commonjs-node-js-パッケージマネージャ-モジュールバンドラ-altjs-altcss-トランスパイラ-タスクランナー">CommonJS、Node.js、パッケージマネージャ、モジュールバンドラ、AltJS、AltCSS、トランスパイラ、タスクランナー</h1>
+
+<p>第1世代のフロントエンドフレームワークが出始めたころ、JavaScriptの言語周りの環境にも大きな変化があった。
+正直書くの辛くなってきたので、一気に片付ける。</p>
+
+<h3 id="commonjs">CommonJS</h3>
+
+<p>クライアントサイドでJavaScriptが盛り上がっているのを見て、もっとJavaScriptいろんなところで活用できるんじゃね?
+となって、ブラウザの外でも普通のプログラミング言語としてJavaScriptを使うためには、どんな機能を追加すべきか、みたいな議論をするプロジェクトが<strong>2009年</strong>に立ち上がった。
+<a href="http://www.commonjs.org/">CommonJS</a>である。</p>
+
+<p>CommonJSの最大の功績は多分、モジュールシステムを言語仕様でちゃんとサポートしよう、と言ったこと。
+モジュールシステムは、Cでいうincludeとか、JavaやPythonのimportとか、そういう機能。
+JavaScriptにはもともとそういうのが無くて、単にファイルを分割して個別にロードしていただけだったので、名前空間がコンフリクトしたりしなかったりしてた。</p>
+
+<p>因みに、JavaScriptのモジュールシステムには、CommonJSのやつ以外にも<a href="https://en.wikipedia.org/wiki/Asynchronous_module_definition">AMD</a>というのがあったけど、そっちは盛り上がらなかった。</p>
+
+<h3 id="node-js">Node.js</h3>
+
+<p>CommonJSの流れを汲んで、サーバサイドのJavaScriptランタイムとして<a href="https://nodejs.org/en/">Node.js</a>が<strong>2009年</strong>にリリースされた。
+これにより、ブラウザ外でJavaScriptを実行できるようになり、以降のJavaScript開発体験の劇的な改善につながった。</p>
+
+<h3 id="パッケージマネージャ">パッケージマネージャ</h3>
+
+<p><strong>2010年</strong> には、Node.jsにパッケージマネージャとして<a href="https://www.npmjs.com/">npm</a>が同梱されるようになった。
+これにより、モジュールを公開してシェアして再利用する文化が定着し、JavaScriptプログラムの開発効率や品質がかなり向上したはず。</p>
+
+<p>パッケージマネージャとしてはもうひとつ、<a href="https://bower.io/">Bower</a>というのが<strong>2012年</strong>に出た。
+npmはサーバサイドのパッケージ、Bowerはクライアントサイドのパッケージ、みたいな住みわけが当初はあったが、最近は全部npmになってBower使ってるプロジェクトは見なくなった。</p>
+
+<h3 id="モジュールバンドラ">モジュールバンドラ</h3>
+
+<p>サーバサイドでモジュールシステムができたのはよかったけど、その仕様がブラウザでサポートされることは終ぞなかった。
+ので、モジュールバンドラというものが生まれた。
+これは、ソース中のモジュールインポート(requireとかimport)をたどって、モジュール分割されたソースをブラウザが読めるように一つに結合してくれるツール。</p>
+
+<p>モジュールバンドラのパイオニアが、<strong>2011年</strong> にリリースされた<a href="http://browserify.org/">Browserify</a>。
+Browserifyは、モジュールの結合だけでなく、Node.js特有のAPIをある程度ブラウザでも動くようにしてくれるなど、魔法のようなツールだった。</p>
+
+<p><strong>2012年</strong> には<a href="https://webpack.js.org/">webpack</a>というモジュールバンドラが出て、後述のトランスパイラと上手く連携したり、JavaScriptだけでなくCSSもHTMLもフォントも画像ファイルもなんでもバンドルできる高機能により、Browserifyを食った。</p>
+
+<p>モジュールバンドルすると、ファイルサイズが大きくなって、ブラウザでロードするのに時間がかかって、初期画面の表示が遅くなる問題があった。
+<strong>2015年</strong>、その問題を軽減すべく、<a href="https://rollupjs.org/guide/en">Rollup</a>というのが出てきた。
+Rollupは、<a href="https://rollupjs.org/guide/en#tree-shaking">Tree-shaking</a>という機能で、バンドル時に不要なコードを削除することでファイルサイズを小さくできることを売りにした。
+が、webpackがバージョン2でTree-shakingをサポートしたため、使う理由がなくなった。</p>
+
+<p>webpackは機能的には最高にクールだったが、設定が複雑で設定ファイルが肥大化するという問題があった。
+この問題を解消すべく、<strong>2017年末</strong> に<a href="https://parceljs.org/">Parcel</a>というモジュールバンドラがリリースされ、ゼロ設定で使えるということで人気を集めてきている。
+今の時点でプロダクションレディなレベルなのかは疑問。</p>
+
+<h3 id="altjs">AltJS</h3>
+
+<p>上に書いた通り、<strong>2009年</strong> にECMAScript 5が発行されて、JavaScriptは若干改善されたわけだけど、はっきり言ってまだまだ貧弱な言語だった。
+そこに<a href="https://coffeescript.org/">CoffeeScript</a>が登場。
+<strong>2009年末</strong> のことだった。</p>
+
+<p>CoffeeScriptは、RubyやPythonみたいな簡潔で機能的な構文を備えた生産性の高い言語で、JavaScriptにコンパイルできる。
+クラス構文とか、アロー関数とか、配列内包表記とか、インデントによるブロック構造とかを実現してて書き心地がかなりよかったのと、Ruby on Railsに採用されたというのもあって、<strong>2010年代中盤</strong> くらいまで結構流行った。</p>
+
+<p>CoffeeScriptのように、JavaScriptの代替として使い、JavaScriptに変換して実行するのを主なユースケースとする言語を、AltJS (Alternative JavaScript)と呼ぶ。
+CoffeeScriptの最大の功績は、このAltJSという分野を切り開き、JavaScriptフロントエンドにコンパイルという概念を持ち込んだことだったと思う。</p>
+
+<p>CoffeeScript自体はその後、<strong>2015年</strong> に発行されたECMAScript 2015がその仕様を取り込んだことで役目を終えた。
+<strong>2017年9月</strong> に<a href="https://coffeescript.org/announcing-coffeescript-2/">バージョン2をアナウンス</a>して再起を図ったが、そのころすでに他に有力なAltJSが出てたし、ECMAScriptも結構成熟してきてたし、あまり注目されなかった。</p>
+
+<p><br></p>
+
+<p>AltJSには他に以下のようなものがあるが、ほぼTypeScriptしか使われてなさそう。</p>
+
+<ul>
+<li><a href="https://www.typescriptlang.org/">TypeScript</a>
+
+<ul>
+<li><strong>2012年10月</strong> 初版リリース。</li>
+<li>Microsoft製。</li>
+<li>静的型付けが最大の特徴で、他にもクラスやアロー関数やレキシカル変数などをサポート。</li>
+</ul></li>
+<li><a href="http://www.purescript.org/">PureScript</a>
+
+<ul>
+<li><strong>2014年4月</strong> 初版リリース。</li>
+<li>強い静的型付けの関数型言語。</li>
+</ul></li>
+<li><a href="https://www.dartlang.org/">Dart</a>
+
+<ul>
+<li><strong>2011年10月</strong> 初版リリース。</li>
+<li>Google製。</li>
+<li>全く流行らなかったし、Google自身も社内標準プログラミング言語にTypeScriptを採用したので、だれも使ってなくてよくわからない。</li>
+<li><strong>2018年8月</strong> にバージョン2がリリースされ、再起を図ってはいる。</li>
+</ul></li>
+<li><a href="https://jsx.github.io/">JSX</a>
+
+<ul>
+<li>DeNA製。</li>
+<li>名前がReactの<a href="https://reactjs.org/docs/introducing-jsx.html">JSX</a>と紛らわしい。</li>
+<li>誰も使ってないし、<strong>2014年</strong> くらいから開発止まってる。</li>
+</ul></li>
+</ul>
+
+<h3 id="altcss">AltCSS</h3>
+
+<p>CSSにもalternativesがある。
+というかAltJSよりも歴史が古い。</p>
+
+<ul>
+<li><a href="https://sass-lang.com/">Sass</a>
+
+<ul>
+<li><strong>2006年</strong> に誕生。</li>
+<li>SASS記法とSCSS記法がある。</li>
+<li>AltCSSでは1番人気っぽい。</li>
+</ul></li>
+<li><a href="http://lesscss.org/">Less</a>
+
+<ul>
+<li><strong>2009年</strong> に誕生。</li>
+<li>Sassに感銘を受けたけど、そのSASS記法がCSSと違いすぎてちょっと、と思った人がCSSに寄せて作った。けどSassもCSSに寄せたSCSS記法をサポートしたため食われた。</li>
+</ul></li>
+<li><a href="http://stylus-lang.com/">Stylus</a>
+
+<ul>
+<li><strong>2010年</strong> に誕生。</li>
+</ul></li>
+<li><a href="https://postcss.org/">PostCSS</a>
+
+<ul>
+<li><strong>2013年</strong> に誕生。</li>
+<li>正確にはAltCSSではなく、CSSを処理するツールをJavaScriptで開発できるフレームワーク。</li>
+<li><a href="https://preset-env.cssdb.org/">PostCSS Preset Env</a>というプラグインとともに使うと、CSSのエッジな機能を使えるようになる。つまりどちらかといえば後述のトランスパイラに近い。</li>
+</ul></li>
+</ul>
+
+<h3 id="トランスパイラ">トランスパイラ</h3>
+
+<p>CoffeeScriptの流行などを受けて、ECMAScriptに再び改善の圧力がかかったのか、<strong>2011年後半</strong> ころから次期ECMAScriptの議論が活発化した。
+<strong>2015年</strong> に満を持してECMAScript 6改めECMAScript 2015が発行された。</p>
+
+<p>ECMAScript 2015は、クラス構文、アロー関数、レキシカル変数、定数、関数のデフォルト引数、ジェネレータ、テンプレート文字列、モジュールシステムなどをサポートし、一気にまともなプログラミング言語になった。</p>
+
+<p>しかし、それらの新しい機能をアプリケーションに使うには、各社のブラウザのJavaScriptエンジンが実装して、さらにその実装したバージョンのブラウザがユーザに十分に行きわたるのを待たないといけない。
+ECMAScriptの新機能は、正式に発行される前から仕様が公開され、ブラウザが先行して実装してはいくものの、<a href="http://threevirtues.com/">プログラマは短気</a>なのでそんなの待ってられない。</p>
+
+<p>といった状況のなか、<strong>2014年10月</strong> に<a href="https://www.npmjs.com/package/6to5">6to5</a>というツールがnpmで公開された。
+ECMAScript 6で書かれたコードをECMAScript 5なコードに変換してくれる、トランスパイラというツールだった。</p>
+
+<p>(実はトランスパイラとしては<strong>2013年3月</strong>に公開されたGoogle製の<a href="https://github.com/google/traceur-compiler">Traceur</a>とか、<strong>2014年4月</strong> に公開されたEmber.jsチーム製の<a href="https://esnext.github.io/esnext/">esnext</a>のほうが先駆けだったんだけど、6to5の開発スピードがとんでもなく早く、<strong>2015年1Q</strong> には機能面で両者を抜いてしまったらしい。)</p>
+
+<p>6to5は<strong>2015年2月</strong>に名前を<a href="https://babeljs.io/">Babel</a>に<a href="https://babeljs.io/blog/2015/02/15/not-born-to-die">変えて</a>、単に6to5という名前が示す機能だけでなく、JavaScript周りの様々なツールを開発・統合するためのプラットフォームとなった。</p>
+
+<p><strong>2018年現在</strong>、Babel無しでフロントエンド開発をすることはほぼ無さそうな感じになってる。</p>
+
+<h3 id="タスクランナー">タスクランナー</h3>
+
+<p>モジュールバンドラやら、AltJSやら、AltCSSやらで、フロントエンドにコンパイルとかビルドとかいう作業が必要になって来たため、この業界にも必然的にタスクランナーが登場してきた。</p>
+
+<p>タスクランナーというのは、他業界ではビルドツールなどとも呼ばれているもので、Cとかで使われる<a href="https://ja.wikipedia.org/wiki/Make">Make</a>とか、Javaの<a href="https://ant.apache.org/">Ant</a>とか<a href="https://maven.apache.org/">Maven</a>とか<a href="https://gradle.org/">Gradle</a>とか、Googleの<a href="https://bazel.build/">Bazel</a>とかと同様のもの。</p>
+
+<p>まず、<strong>2012年1月</strong> に<a href="https://gruntjs.com/">Grunt</a>がリリースされて人気を博した。
+が、当時のGruntの設定ファイルがJSONで<a href="http://monmon.hatenablog.com/entry/2013/12/20/151321">書きにくい</a>とか、処理がシーケンシャルで遅いとかいう不満が潜在的に溜まっていった。</p>
+
+<p>で、それらの問題を払拭する<a href="https://gulpjs.com/">gulp</a>が<strong>2013年7月</strong>に出て、Gruntを食った。</p>
+
+<p>けど結局、Gruntもgulpも、タスクの処理をどこかの馬の骨が作ったプラグインに頼っていて不安定で、またビルドツールというレイヤが増えたせいでビルドエラーのデバッグがし辛くなるという<a href="https://qiita.com/chuck0523/items/dafdbd19c12efd40e2de">根本的な問題が顕在化</a>し、<a href="https://docs.npmjs.com/misc/scripts">npm-scripts</a>でいいじゃん、ってなった。</p>
+
+<p>シンプルイズベスト。</p>
+
+<h1 id="javascriptフロントエンドフレームワーク-第2世代">JavaScriptフロントエンドフレームワーク (第2世代)</h1>
+
+<p>前章で書いたフロントエンド界の変容の後あたりに、当時の先端技術を取り入れて誕生したフロントエンドフレームワークを、この記事では第2世代と呼ぶ。</p>
+
+<p>第2世代は第1世代から正統な進化を遂げた感じで、あいかわらずMVW (i.e. MV*)だった。
+主要なのは以下。</p>
+
+<ul>
+<li><p><a href="https://vuejs.org/">Vue.js</a> v1</p>
+
+<ul>
+<li><strong>2013年12月</strong> に誕生。</li>
+<li>Googleのエンジニア(個人)製。</li>
+<li>MVVMアーキテクチャ。</li>
+<li><a href="https://mizchi.hatenablog.com/entry/2014/02/13/153742">軽量AngularJS</a>な感じらしい。</li>
+</ul></li>
+
+<li><p><a href="https://aurelia.io/">Aurelia</a></p>
+
+<ul>
+<li><strong>2015年11月</strong> に誕生。</li>
+<li>AngularJSっぽいフルスタックフレームワークで、EcmaScript 2015+とかWeb Componentsとかの先端技術を取り入れていることが売り。</li>
+<li>2-wayバインディング推しで、あまり流行らなかった。</li>
+</ul></li>
+
+<li><p><a href="https://riot.js.org/">Riot</a></p>
+
+<ul>
+<li><strong>2014年6月</strong> に誕生。</li>
+<li>AngularJSもReactも複雑すぎ。フロントエンド開発に必要十分なコンパクトな機能を提供するぜ、というフレームワーク。</li>
+<li>Aureliaよりかは使われていそう。</li>
+</ul></li>
+
+<li><p><a href="https://angular.io/">Angular</a></p>
+
+<ul>
+<li><strong>2016年9月</strong> に誕生。</li>
+<li>AngularJSの後継。AngularJSとの互換性をばっさり切り捨てる代わりに、アーキテクチャを刷新し、性能面と機能面の<a href="https://medium.com/@mnemon1ck/why-you-should-not-use-angularjs-1df5ddf6fc99">色々な問題</a>を克服したらしい。</li>
+<li>が、Reactが画期的過ぎてAngularJSの栄光は取り戻せなかった。</li>
+<li>最初2-wayバインディングまで切り捨てたが、あとで復活させた。</li>
+</ul></li>
+</ul>
+
+<h1 id="react-virtual-dom">React (Virtual DOM)</h1>
+
+<p>第1世代から流行っていた2-wayバインディングがちょっと<a href="https://stackoverflow.com/questions/35379515/why-is-two-way-databinding-in-angularjs-an-antipattern">辛みを帯びてきた</a>。
+というか、2-wayバインディングしかできないAngularJSが辛くなってきたということだったのかもしれない。</p>
+
+<p>2-wayバインディングには以下のような問題があった。</p>
+
+<ul>
+<li>変更をwatchするオブジェクトが増えて、性能が悪くなる。</li>
+<li>ModelとViewとの間の依存やデータの流れが複雑になって、コーディングやデバッグが難しくなる。</li>
+</ul>
+
+<p>これに異を唱えて登場してきたのがFacebookによる<a href="https://reactjs.org/">React</a>。
+<strong>2013年3月</strong> のことであった。</p>
+
+<p>2-wayバインディングもMVCもテンプレートも要らんとして、代わりにReactが突きつけてきた<a href="https://reactjs.org/docs/faq-internals.html">Virtual DOM</a>という解は、世界中の人々の<a href="https://qiita.com/mizchi/items/4d25bc26def1719d52e6">魂を震えさせた</a>。</p>
+
+<p>Virtual DOMは、その名の通りDOMの仮想化であり、JavaScriptからReactのAPIを通してDOMのようなものを更新すると、Reactがいい感じに実DOMを更新してくれるというもの。
+開発者は深く考えずに、イベントが発生するごとに、ページ全体を表すDOMツリーがどうなっているべきかをReactに教えるだけでいい。
+あとはReactが、現在の実DOMとの差分を計算し、差分だけを性能よく更新してくれる。
+これによって開発者は、DOMの状態やイベントの種類をみてアドホックに実DOMやModelの更新処理を書くという苦行から解放され、宣言的に<a href="http://blog.neleid.com/2016/04/05/%E5%AF%8C%E8%B1%AA%E7%9A%84%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%9F%E3%83%B3%E3%82%B0%E3%81%AF%E6%AD%BB%E8%AA%9E%E3%81%8B/">富豪的に</a>フロントエンドプログラミングができるようになった。</p>
+
+<p>さらに<strong>2014年5月</strong>、Reactにベストマッチするアプリケーションアーキテクチャとして<a href="https://facebook.github.io/flux/">Flux</a>が発表された。
+これは単方向のデータフローが特徴のアーキテクチャで、斬新でかっこよくて未来だった。</p>
+
+<p><img src="https://github.com/facebook/flux/raw/master/docs/img/flux-diagram-white-background.png" alt="Flux" title="Flux" />
+</p>
+
+<h1 id="javascriptフロントエンドフレームワーク-第3世代">JavaScriptフロントエンドフレームワーク (第3世代)</h1>
+
+<p>React後、Virtual DOMの実装がいくつも出てきた。
+<a href="https://github.com/Matt-Esch/virtual-dom">virtual-dom</a>とか<a href="https://maquettejs.org/">Maquette</a>とか<a href="https://preactjs.com/">Preact</a>とか<a href="https://infernojs.org/">Inferno</a>とか。</p>
+
+<p>Fluxの実装も、Facebook自身による<a href="https://github.com/facebook/flux">Flux</a>のほか、<a href="http://fluxxor.com/">Fluxxor</a>とか<a href="https://redux.js.org/">Redux</a>とか<a href="https://mobx.js.org/">MobX</a>とか沢山出た。</p>
+
+<p>で、React+Reduxがいい感じってなって、<a href="https://medium.com/@TechMagic/reactjs-vs-angular5-vs-vue-js-what-to-choose-in-2018-b91e028fa91d">世界の8割近くの人がReactで書くようになって</a>、猫も杓子もVirtual DOMってなった辺りのフロントエンドフレームワークを第3世代と呼ぶことにする。</p>
+
+<p>第3世代としては以下が挙げられる。</p>
+
+<ul>
+<li><p><a href="http://grommet.io/">Grommet</a></p>
+
+<ul>
+<li><strong>2015年6月</strong> に誕生。</li>
+<li>HPE製。</li>
+<li>Reactと<a href="https://github.com/inuitcss/inuitcss">inuitcss</a>によるフレームワーク。</li>
+<li>全然流行ってないけど<a href="http://grommet.io/docs/components">コンポーネント</a>の取り揃えがよくて結構いいような気がする。</li>
+</ul></li>
+
+<li><p><a href="https://emberjs.com/blog/2015/08/13/ember-2-0-released.html">Ember.js v2</a></p>
+
+<ul>
+<li><strong>2015年8月</strong> リリース。</li>
+<li><a href="https://glimmerjs.com/">Glimmer</a>というレンダリングエンジンを搭載。
+
+<ul>
+<li>Glimmerは、テンプレートをGlimmer VM上で動くバイトコードにコンパイルして、実DOMを速くレンダリングしてくれるもの。</li>
+<li>Virtual DOMとは違う感じだけど、実DOMの更新を開発者の代わりにやってくれるあたり、目指しているものは同じ。</li>
+</ul></li>
+</ul></li>
+
+<li><p><a href="https://jp.vuejs.org/2016/10/01/here-2.0/">Vue.js v2</a></p>
+
+<ul>
+<li><strong>2016年10月</strong> リリース。</li>
+<li><a href="https://github.com/snabbdom/snabbdom">snabbdom</a>ベースのVirtual DOM実装を搭載。</li>
+<li>2017年頭位からかなりの勢いで流行ってきている。</li>
+</ul></li>
+
+<li><p><a href="https://hyperapp.js.org/">Hyperapp</a></p>
+
+<ul>
+<li><strong>2017年1月</strong> に誕生。</li>
+<li><a href="https://qiita.com/">Qiita</a>で働いてるエンジニアが趣味で作ったフレームワークで、Qiitaに採用された。</li>
+<li>超軽量(1KB!)で、シンプルが売り。</li>
+<li>独自のVirtual DOM実装であるPicodom(現<a href="https://github.com/jorgebucaran/superfine">superfine</a>)を搭載。</li>
+<li>JSXにも対応。</li>
+</ul></li>
+
+<li><p><a href="https://dojo.io/">Dojo</a></p>
+
+<ul>
+<li><strong>2018年5月</strong> 正式版リリース。</li>
+<li>Dojo Toolkitの後継。</li>
+<li>Virtual DomでTypeScriptでリアクティブでフルスタック。</li>
+</ul></li>
+</ul>
+
+<h1 id="終わりに">終わりに</h1>
+
+<p><strong>2018年8月現在</strong> では、React vs Vue.js vs Angularといった感じで、激動の時代が過ぎてやや落ち着いて来ている感があるが、油断はできない。</p>
+
+<p><br></p>
+
+<p>いろいろ書いたけど、<a href="https://electronjs.org/">Electron</a>とか<a href="https://facebook.github.io/react-native/">React Native</a>とか<a href="https://nextjs.org">Next.js</a>とかの<a href="https://jp.vuejs.org/v2/guide/ssr.html">SSR</a>とか<a href="https://www.gatsbyjs.org/">Gatsby.js</a>とか<a href="https://graphql.org/learn/">GraphQL</a>とか<a href="https://developers.google.com/web/fundamentals/codelabs/your-first-pwapp/?hl=ja">PWA</a>とか<a href="https://webassembly.org/">WebAssembly</a>とか<a href="https://aws.amazon.com/jp/getting-started/serverless-web-app/">サーバーレス</a>とか<a href="https://kuroeveryday.blogspot.com/2017/03/css-structure-and-rules.html">CSS設計手法</a>とかCSSフレームワークとかいろいろ書き漏れた。</p>
+
+<p>フロントエンドのユニットテストとかE2Eテストとかもいろいろあって面白い。
+(E2Eテストは<a href="https://www.kaitoy.xyz/2017/08/04/browser-test-framework/">前に書いた</a>。)</p>
+
+<p><br></p>
+
+<p>年表も気が向いたら追加したい。</p>
+
+<p>しかしReact+Reduxに再入門したよ、っていう記事の前座として書くつもりだったのに、ずいぶん長編になってしまった…</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        
+        
+
+        
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-6244473643910448"
+             data-ad-slot="1845600530"
+             data-ad-format="auto"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </aside>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f08%2f16%2fchronicle-of-frontend-2018%2f&t=Web%e3%82%a2%e3%83%97%e3%83%aa%e3%82%b1%e3%83%bc%e3%82%b7%e3%83%a7%e3%83%b3%e3%83%95%e3%83%ad%e3%83%b3%e3%83%88%e3%82%a8%e3%83%b3%e3%83%89%e5%b9%b4%e4%bb%a3%e8%a8%98%20-%202018%e5%b9%b4%e5%a4%8f%e7%b7%a8" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f08%2f16%2fchronicle-of-frontend-2018%2f&text=Web%e3%82%a2%e3%83%97%e3%83%aa%e3%82%b1%e3%83%bc%e3%82%b7%e3%83%a7%e3%83%b3%e3%83%95%e3%83%ad%e3%83%b3%e3%83%88%e3%82%a8%e3%83%b3%e3%83%89%e5%b9%b4%e4%bb%a3%e8%a8%98%20-%202018%e5%b9%b4%e5%a4%8f%e7%b7%a8&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f08%2f16%2fchronicle-of-frontend-2018%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f08%2f16%2fchronicle-of-frontend-2018%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f08%2f16%2fchronicle-of-frontend-2018%2f&title=Web%e3%82%a2%e3%83%97%e3%83%aa%e3%82%b1%e3%83%bc%e3%82%b7%e3%83%a7%e3%83%b3%e3%83%95%e3%83%ad%e3%83%b3%e3%83%88%e3%82%a8%e3%83%b3%e3%83%89%e5%b9%b4%e4%bb%a3%e8%a8%98%20-%202018%e5%b9%b4%e5%a4%8f%e7%b7%a8" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://www.kaitoy.xyz/tags/react"><i class="fa fa-tags"></i> react </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/frontend"><i class="fa fa-tags"></i> frontend </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/08/25/if-youre-a-startup-you-should-not-use-react-reflecting-on-the-bsd-patents-license/">スタートアップはReactを使うべきではない (BSD &#43; patentsライセンスを考慮して) — もし、いつか大企業に買収されたいと望むなら</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/12/21/hello-react/">ReactをAtomパッケージ開発に使ってみた</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://www.kaitoy.xyz/2018/06/30/packer-esxi/">
+                  PackerでESXiにVMを自動構築
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ansible">ansible</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cnn">cnn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/coursera">coursera</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/deep-learning">deep-learning</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/esxi">esxi</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/frontend">frontend</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/headless-browser">headless-browser</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/keras">keras</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubeadm">kubeadm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/license">license</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/machine-learning">machine-learning</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/msys2">msys2</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/neural-network">neural-network</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nlp">nlp</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/packer">packer</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/rnn">rnn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/selenium">selenium</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/servicenow">servicenow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/skaffold">skaffold</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/tensorflow">tensorflow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/test-framework">test-framework</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/webdriverio">webdriverio</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-6244473643910448"
+    data-ad-slot="1845600530"
+    data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2018  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/highlight.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dos.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/yaml.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dockerfile.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+
