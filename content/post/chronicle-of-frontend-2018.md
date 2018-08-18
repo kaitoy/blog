@@ -348,6 +348,9 @@ __2010年__ には、Node.jsにパッケージマネージャとして[npm](http
 パッケージマネージャとしてはもうひとつ、[Bower](https://bower.io/)というのが__2012年__に出た。
 npmはサーバサイドのパッケージ、Bowerはクライアントサイドのパッケージ、みたいな住みわけが当初はあったが、最近は全部npmになってBower使ってるプロジェクトは見なくなった。
 
+__2016年10月__ には、Facebookが[Yarn](https://yarnpkg.com/lang/ja/)というnpmを代替するツールを[発表](https://code.fb.com/web/yarn-a-new-package-manager-for-javascript/)。
+パッケージバージョンのロック、[CDN (CloudFlare)](https://twitter.com/madbyk/status/988795520805203969?ref_src=twsrc%5Etfw%7Ctwcamp%5Etweetembed%7Ctwterm%5E988795520805203969&ref_url=https%3A%2F%2Fblog.risingstack.com%2Fyarn-vs-npm-node-js-package-managers%2F)・キャッシュ・並列処理によるパッケージダウンロードの高速化、パッケージ間のバージョンの不整合解消(フラットモード)、といった機能により、発表直後から急速にシェアを伸ばした。
+
 ### モジュールバンドラ
 
 サーバサイドでモジュールシステムができたのはよかったけど、その仕様がブラウザでサポートされることは終ぞなかった。
