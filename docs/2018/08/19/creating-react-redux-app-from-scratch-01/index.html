@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その1: Node.jsとYarnとBabelとwebpack | To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2018/08/19/creating-react-redux-app-from-scratch-01/">
+    <link rel="canonical" href="https://www.kaitoy.xyz/2018/08/19/creating-react-redux-app-from-scratch-01/">
+    <meta property="og:description" content="昔、Dojo Toolkitを使ってFlashなUIをJavaScriptに書き換えた時以来、仕事でWeb UIを触ることはなかったんだけど、最近になってWeb UIを書かなければいけなくなるような気がして再学習を始めた。 題材はReact (とRedux)。 今一番人気のフロントエンドフレームワークで、昔触ったこともあるので。 前回の記事でReactが生まれた経緯を学んだので、今回から実習に入る。 (adsbygoogle = window.adsbygoogle || []).push({}); プロジェクト作成 ちょっとCreate React Appを触ってみたけど使わないことにした。 すぐ開発始められるのはよかったんだけど、裏でなにが起こっているかわからな過ぎて肌に合わないし、使うライブラリが結構固定されちゃいそうだったし、トラブルシュート(特にライブラリのバグを踏んだ時)が大変そうだったので。 代わりに、公式で紹介されているブログ記事であるCreating a React App… From Scratch.を見ながら、スクラッチからプロジェクトを作ることにした。 環境はWindows 10 Home。 Node.jsインストール なにはともあれNode.js。 Node.jsのバージョン管理には以前はnodist使っていたんだけど、こいつは2年ほど前に開発が止まっているので、代わりにnvm for Windowsを入れた。 nvm installで任意のバージョンのNode.jsをインストール出来て、nvm useで使うNode.jsのバージョンを切り替えられる。 今回使うNode.jsのバージョンは、現時点でLTS版の最新である8.11.4にする。 C:\&gt;nvm install 8.11.4 Downloading node.js version 8.11.4 (64-bit)... Complete Creating C:\Users\kaitoy\AppData\Roaming\nvm\temp Downloading npm version 5.6.0... Complete Installing npm v5.6.0... Installation complete. If you want to use this version, type nvm use 8.11.4 C:\&gt;nvm use 8.11.4 Now using node v8.11.4 (64-bit) Yarnインストール パッケージマネージャにはYarnを使う。 Yarnちょっとバギーだとか、npm 5がlockファイルをサポートしてYarnの優位性が減ったとか、Yarnからnpmに戻るためのツールが出てきたりしてるけど、現時点では深く考えずにYarnでいいと思う。 YarnはWindows環境ではMSIファイルをダウンロードして実行すればインストールできる。 (npmでもインストールできるけど邪道。) Yarnはv1.7.0を使う。 package.json生成 プロジェクトの構成情報を記述するファイルであるpackage.jsonをYarnで生成する。 C:\&gt;mkdir react-redux-scaffold C:\&gt;cd react-redux-scaffold C:\react-redux-scaffold&gt;yarn init yarn init v1.7.0 question name (react-redux-scaffold): question version (1.0.0): question description: React Redux Scaffold question entry point (index.js): src/index.jsx question repository url: https://github.com/kaitoy/react-redux-scaffold.git question author: kaitoy question license (MIT): question private: success Saved package.json Done in 40.38s.">
+    
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/babel-webpack.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その1: Node.jsとYarnとBabelとwebpack | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+    
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-6244473643910448",
+        enable_page_level_ads: true
+      });
+    </script>
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Sun, Aug 19, 2018</span>
+      <h2 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その1: Node.jsとYarnとBabelとwebpack</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://www.kaitoy.xyz/images/babel-webpack.png" alt="React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その1: Node.jsとYarnとBabelとwebpack">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>昔、<a href="https://dojotoolkit.org/">Dojo Toolkit</a>を使ってFlashなUIをJavaScriptに書き換えた時以来、仕事でWeb UIを触ることはなかったんだけど、最近になってWeb UIを書かなければいけなくなるような気がして再学習を始めた。</p>
+
+<p>題材は<a href="https://reactjs.org/">React</a> (と<a href="https://redux.js.org/">Redux</a>)。
+今一番人気のフロントエンドフレームワークで、<a href="https://www.kaitoy.xyz/2015/12/21/hello-react/">昔触ったこともある</a>ので。</p>
+
+<p><a href="https://www.kaitoy.xyz/2018/08/16/chronicle-of-frontend-2018/">前回の記事でReactが生まれた経緯を学んだ</a>ので、今回から実習に入る。</p>
+
+<p>
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</p>
+
+<h1 id="プロジェクト作成">プロジェクト作成</h1>
+
+<p>ちょっと<a href="https://github.com/facebook/create-react-app">Create React App</a>を触ってみたけど使わないことにした。
+すぐ開発始められるのはよかったんだけど、裏でなにが起こっているかわからな過ぎて肌に合わないし、使うライブラリが結構固定されちゃいそうだったし、トラブルシュート(特にライブラリのバグを踏んだ時)が大変そうだったので。</p>
+
+<p>代わりに、<a href="https://reactjs.org/docs/create-a-new-react-app.html#creating-a-toolchain-from-scratch">公式</a>で紹介されているブログ記事である<a href="https://blog.usejournal.com/creating-a-react-app-from-scratch-f3c693b84658">Creating a React App… From Scratch.</a>を見ながら、スクラッチからプロジェクトを作ることにした。</p>
+
+<p>環境はWindows 10 Home。</p>
+
+<h2 id="node-jsインストール">Node.jsインストール</h2>
+
+<p>なにはともあれ<a href="https://nodejs.org/ja/">Node.js</a>。</p>
+
+<p>Node.jsのバージョン管理には以前は<a href="https://github.com/marcelklehr/nodist">nodist</a>使っていたんだけど、こいつは2年ほど前に開発が止まっているので、代わりに<a href="https://github.com/coreybutler/nvm-windows">nvm for Windows</a>を入れた。</p>
+
+<p><code>nvm install</code>で任意のバージョンのNode.jsをインストール出来て、<code>nvm use</code>で使うNode.jsのバージョンを切り替えられる。</p>
+
+<p>今回使うNode.jsのバージョンは、現時点でLTS版の最新である8.11.4にする。</p>
+
+<pre><code class="language-cmd">C:\&gt;nvm install 8.11.4
+Downloading node.js version 8.11.4 (64-bit)...
+Complete
+Creating C:\Users\kaitoy\AppData\Roaming\nvm\temp
+
+Downloading npm version 5.6.0... Complete
+Installing npm v5.6.0...
+
+Installation complete. If you want to use this version, type
+
+nvm use 8.11.4
+
+C:\&gt;nvm use 8.11.4
+Now using node v8.11.4 (64-bit)
+</code></pre>
+
+<h2 id="yarnインストール">Yarnインストール</h2>
+
+<p>パッケージマネージャには<a href="https://yarnpkg.com/lang/ja/">Yarn</a>を使う。</p>
+
+<p>Yarnちょっとバギーだとか、npm 5がlockファイルをサポートしてYarnの優位性が減ったとか、<a href="https://github.com/mixmaxhq/deyarn">Yarnからnpmに戻るためのツール</a>が出てきたりしてるけど、現時点では深く考えずにYarnでいいと思う。</p>
+
+<p>YarnはWindows環境ではMSIファイルを<a href="https://yarnpkg.com/ja/docs/install#windows-stable">ダウンロード</a>して実行すればインストールできる。</p>
+
+<p>(npmでもインストールできるけど邪道。)</p>
+
+<p>Yarnはv1.7.0を使う。</p>
+
+<h2 id="package-json生成">package.json生成</h2>
+
+<p>プロジェクトの構成情報を記述するファイルであるpackage.jsonをYarnで生成する。</p>
+
+<pre><code class="language-cmd">C:\&gt;mkdir react-redux-scaffold
+
+C:\&gt;cd react-redux-scaffold
+
+C:\react-redux-scaffold&gt;yarn init
+yarn init v1.7.0
+question name (react-redux-scaffold):
+question version (1.0.0):
+question description: React Redux Scaffold
+question entry point (index.js): src/index.jsx
+question repository url: https://github.com/kaitoy/react-redux-scaffold.git
+question author: kaitoy
+question license (MIT):
+question private:
+success Saved package.json
+Done in 40.38s.
+</code></pre>
+
+<p>できたのがこれ。</p>
+
+<p>package.json:</p>
+
+<pre><code class="language-json">{
+  &quot;name&quot;: &quot;react-redux-scaffold&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;description&quot;: &quot;React Redux Scaffold&quot;,
+  &quot;main&quot;: &quot;src/index.jsx&quot;,
+  &quot;repository&quot;: &quot;https://github.com/kaitoy/react-redux-scaffold.git&quot;,
+  &quot;author&quot;: &quot;kaitoy&quot;,
+  &quot;license&quot;: &quot;MIT&quot;
+}
+</code></pre>
+
+<p><br></p>
+
+<p>以降、カレントディレクトリは<code>C:\react-redux-scaffold</code>として、プロンプト表示は省略する。</p>
+
+<h1 id="ビルド環境セットアップ">ビルド環境セットアップ</h1>
+
+<p>ビルド環境としてトランスパイラとかモジュールバンドラとかをセットアップする。</p>
+
+<h2 id="babel">Babel</h2>
+
+<p>トランスパイラはデファクトスタンダードの<a href="https://babeljs.io/">Babel</a>を使う。</p>
+
+<p>Babelのプラグインはとりあえず最低限入れるとして、以下のnpmパッケージをプロジェクトにインストールする。</p>
+
+<ul>
+<li><a href="https://babeljs.io/docs/en/babel-core">babel-core</a>: Babel本体。</li>
+<li><a href="https://babeljs.io/docs/en/babel-preset-react">babel-preset-react</a>: Reactの<a href="https://reactjs.org/docs/introducing-jsx.html">JSX</a>とか<a href="https://flow.org/">Flow</a>とかを処理するプラグイン集。</li>
+<li><a href="https://babeljs.io/docs/en/babel-preset-env">babel-preset-env</a>: ES 2015+をES 5にトランスパイルするプラグイン集。</li>
+</ul>
+
+<p>これらのパッケージは実行時には要らないので<code>yarn add -D</code>コマンドで開発時依存としてインストールする。</p>
+
+<pre><code class="language-cmd">yarn add -D babel-core babel-preset-react babel-preset-env
+</code></pre>
+
+<p>Babelは6.26.3が入った。</p>
+
+<p><br></p>
+
+<p>で、Babelの<a href="https://babeljs.io/docs/en/babelrc">設定ファイル</a>を書いてプロジェクトルートに置いておく。</p>
+
+<p>.babelrc:</p>
+
+<pre><code class="language-json">{
+  &quot;presets&quot;: [&quot;env&quot;, &quot;react&quot;]
+}
+</code></pre>
+
+<h2 id="polyfill">Polyfill</h2>
+
+<p>BabelはES 2015+で追加された構文の変換はしてくれるけど、追加されたグローバルオブジェクト(e.g. <a href="https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Promise">Promise</a>)とかメソッド(e.g. Object.assignとかArray.prototype.includes)とかを補完してくれるわけではない。
+そこを補完してくれるのが<a href="https://en.wikipedia.org/wiki/Polyfill_%28programming%29">Polyfill</a>。</p>
+
+<p>少なくとも後で導入する<a href="https://redux-saga.js.org/">redux-saga</a>が使う<a href="https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Statements/function*">ジェネレータ</a>がPolyfillを必要とする(ないと<code>ReferenceError: regeneratorRuntime is not defined</code>というエラーが出る)ので、今の時点で入れておくことにする。</p>
+
+<p>Polyfillの実装はいくつかあるけど、定番っぽい<a href="https://babeljs.io/docs/en/babel-polyfill/">babel-polyfill</a>を使う。
+こちらは実行時依存としてインストールする。</p>
+
+<pre><code class="language-cmd">yarn add babel-polyfill
+</code></pre>
+
+<h2 id="webpack">webpack</h2>
+
+<p>モジュールバンドラは現時点で一番人気の<a href="https://webpack.js.org/">webpack</a>を使う。
+(<a href="https://parceljs.org/">Parcel</a>の方がナウいはナウいけど。)</p>
+
+<p>webpackは、タスクランナーの機能も備えたモジュールバンドラみたいな感じで、バンドルしたいファイルの形式とか実行したいタスクに応じた<a href="https://webpack.js.org/loaders/">ローダー</a>を設定することでプロジェクトのビルドを定義できる。</p>
+
+<p>ちょっと古いけど<a href="https://qiita.com/chuck0523/items/caacbf4137642cb175ec">この記事</a>を読むとwebpackの理解が深まる。</p>
+
+<p>こちらもとりあえず最低限のローダーをセットアップするとして、以下のnpmパッケージをプロジェクトにインストールする。</p>
+
+<ul>
+<li>webpack: webpack本体。</li>
+<li>webpack-cli: webpackのコマンドラインインターフェース。</li>
+<li><a href="https://github.com/webpack/webpack-dev-server">webpack-dev-server</a>: webpackから起動できる開発用 HTTP サーバ。ライブリロードしてくれる。(<a href="https://github.com/webpack-contrib/webpack-serve">webpack-serve</a>の方がモダンではある。)</li>
+<li><a href="https://webpack.js.org/loaders/babel-loader/">babel-loader</a>: Babelを実行してくれるやつ。</li>
+</ul>
+
+<p><br></p>
+
+<pre><code class="language-cmd">yarn add -D webpack webpack-cli webpack-dev-server babel-loader
+</code></pre>
+
+<p>webpackはv4.16.0が入った。</p>
+
+<h3 id="webpack設定ファイル">webpack設定ファイル</h3>
+
+<p>webpackの設定は<a href="https://webpack.js.org/configuration/">設定ファイル</a>を書いてプロジェクトルートに置けばいい。
+設定は結構複雑だけど、v1の時よりかは若干書きやすくなったし、公式のマニュアルとかローダーのマニュアル見てれば書くのは難しくない。
+<a href="https://generatewebpackconfig.netlify.com/">設定ファイルを生成してくれるサイト</a>もある。</p>
+
+<p>とりあえず適当に書くとこんな感じ。</p>
+
+<p>webpack.config.js:</p>
+
+<pre><code class="language-javascript">const path = require('path');
+const pjson = require('./package.json');
+
+module.exports = {
+  mode: 'development',
+  entry: ['babel-polyfill', `./${pjson.main}`],
+  output: {
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'bundle.js',
+  },
+  module: {
+    rules: [
+      {
+        test: /\.(js|jsx)$/,
+        include: [path.resolve(__dirname, 'src')],
+        loader: 'babel-loader',
+      },
+    ],
+  },
+  resolve: {
+    extensions: ['*', '.js', '.jsx'],
+    modules: ['node_modules'],
+  },
+};
+</code></pre>
+
+<p>この設定の意味は、<code>./src/index.jsx</code>を読んで、<code>.js</code>か<code>.jsx</code>を拡張子としたファイルとかモジュールをロードするコードがあったら、babel-loaderでBabelを呼んでトランスパイルして、バンドルした結果は<code>&lt;プロジェクトルート&gt;/dist/bundle.js</code>に吐き出す。
+というだけ。
+(<a href="https://nodejs.org/docs/latest/api/modules.html#modules_dirname">__dirname</a>はNode.jsが値を入れてくれる変数で、webpack.config.jsのあるディレクトリの絶対パスが入ってる。)</p>
+
+<p>ファイルをロードするコードというのは、<code>import App from './components/App';</code>みたいなやつ。
+webpackはこのコードを読んだら、<code>./components</code>ディレクトリのなかを見て、<code>App</code>か<code>App.js</code>か<code>App.jsx</code>というファイルを探してロードする。
+また、モジュールをロードするコードというのは<code>import React from 'react';</code>みたいなやつで、webpackはこのコードを読んだら、プロジェクトの<code>node_modules/react/package.json</code>の<code>main</code>プロパティの値に書いてあるファイルをロードする。
+という挙動が上記webpack.config.jsの<code>resolve</code>に書いてあって、その詳細は<a href="https://webpack.js.org/concepts/module-resolution/">公式のドキュメントのModule Resolution</a>に書いてある。</p>
+
+<p>webpack.config.jsの<code>entry</code>には、最初に<code>babel-polyfill</code>を書いておいて、bundle.jsの最初に一度だけPolyfillがロードされるようにしている。</p>
+
+<p><code>mode</code>は後述。</p>
+
+<h3 id="webpack-dev-server設定">webpack-dev-server設定</h3>
+
+<p>webpack-dev-serverの設定もwebpack.config.jsに書く。</p>
+
+<p>以下を<code>resolve</code>の次辺りに書き足せばいい。</p>
+
+<pre><code class="language-javascript">  devServer: {
+    contentBase: path.join(__dirname, 'public'),
+    compress: true,
+    hot: true,
+    port: 3000,
+    publicPath: 'http://localhost:3000/',
+  },
+</code></pre>
+
+<p><br></p>
+
+<p>この設定でwebpack-dev-serverを実行すると、<code>http://localhost:3000/</code>へのアクセスに<code>public/index.html</code>を返すWebサーバを起動できる。
+Webサーバが起動するときにプロジェクトがインメモリでビルドされ、メモリからbundle.jsがサーブされる。</p>
+
+<p><code>hot</code>をtrueにしておくと<a href="https://webpack.js.org/concepts/hot-module-replacement/">Hot Module Replacement</a>が有効になる。
+これによって、webpack-dev-serverの起動中にソースを編集すると、自動で再ビルドし、動的にモジュール単位でロードし、ブラウザをリロードしてくれるようになる。
+Hot Module Replacementを有効にするときは<code>publicPath</code>をフルURLで書かないといけない。</p>
+
+<p>webpack-dev-serverの他の設定については<a href="https://webpack.js.org/configuration/dev-server/">公式のマニュアルのDevServer</a>を見るべし。</p>
+
+<h3 id="webpackのmode">webpackのmode</h3>
+
+<p>webpackにはビルドの<a href="https://webpack.js.org/concepts/#mode">mode</a>という概念があり、modeを切り替えることで適切な最適化を適用してくれる。</p>
+
+<p>modeにはdevelopmentとproduction(とnone)があり、productionにしておくと、<a href="https://webpack.js.org/plugins/uglifyjs-webpack-plugin/">UglifyJsPlugin</a>とかを適用して、出力するバンドルファイルのサイズを小さくしてくれたりする。
+(v1のころはUglifyJsPluginとかは全部自分でwebpack.config.jsに指定していた記憶があるので、楽になった。)</p>
+
+<h3 id="webpack-config-jsの分割">webpack.config.jsの分割</h3>
+
+<p>modeを切り替えるのにwebpack.config.jsを書き換えるのはイケてないので、developmentとproductionでファイルを分割して使い分けるようにする。</p>
+
+<p>developmentとproductionはほとんどが共通の設定なので、共通部分をwebpack.common.jsに書いて、developmentとproductionに固有な設定だけをそれぞれwebpack.dev.jsとwebpack.prod.jsに書く。
+webpack.common.jsは、<a href="https://github.com/survivejs/webpack-merge">webpack-merge</a>でwebpack.dev.jsとwebpack.prod.jsにマージする。
+というのが<a href="https://webpack.js.org/guides/production/">公式</a>で紹介されているプラクティス。</p>
+
+<p>まずwebpack-mergeをプロジェクトにインストール。</p>
+
+<pre><code class="language-cmd">yarn add -D webpack-merge
+</code></pre>
+
+<p>分割したファイルは以下の感じ。全部プロジェクトルートに置いておく。</p>
+
+<p>webpack.common.js</p>
+
+<pre><code class="language-javascript">const path = require('path');
+const pjson = require('./package.json');
+
+module.exports = {
+  entry: ['babel-polyfill', `./${pjson.main}`],
+  output: {
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'bundle.js',
+  },
+  module: {
+    rules: [
+      {
+        test: /\.(js|jsx)$/,
+        include: [path.resolve(__dirname, 'src')],
+        loader: 'babel-loader',
+      },
+    ],
+  },
+  resolve: {
+    extensions: ['*', '.js', '.jsx'],
+    modules: ['node_modules'],
+  },
+};
+</code></pre>
+
+<p>webpack.dev.js</p>
+
+<pre><code class="language-javascript">const path = require('path');
+const webpackMerge = require('webpack-merge');
+const webpackCommon = require('./webpack.common.js');
+
+module.exports = webpackMerge(webpackCommon, {
+  mode: 'development',
+  devServer: {
+    contentBase: path.join(__dirname, 'public'),
+    compress: true,
+    hot: true,
+    port: 3000,
+    publicPath: 'http://localhost:3000/',
+  },
+});
+</code></pre>
+
+<p>webpack.prod.js</p>
+
+<pre><code class="language-javascript">const webpackMerge = require('webpack-merge');
+const webpackCommon = require('./webpack.common.js');
+
+module.exports = webpackMerge(webpackCommon, {
+  mode: 'production',
+});
+</code></pre>
+
+<h3 id="npmスクリプト">npmスクリプト</h3>
+
+<p>webpackによるビルドは次のコマンドで実行できる。</p>
+
+<pre><code class="language-cmd">node_modules\.bin\webpack --config webpack.prod.js
+</code></pre>
+
+<p>また、webpack-dev-serverは次のコマンドで起動できる。</p>
+
+<pre><code class="language-cmd">node_modules\.bin\webpack-dev-server --hot --config webpack.dev.js
+</code></pre>
+
+<p><code>--hot</code>はHot Module Replacementに必要なオプション。</p>
+
+<p>コマンドが長くて面倒なのは、<a href="https://docs.npmjs.com/misc/scripts">npmスクリプト</a>で楽にできる。
+package.jsonの<code>main</code>の次辺りに以下を書き足せばいい。
+(npmスクリプトは実行時に<code>node_modules\.bin</code>にPATHを通してくれるので、それを省略できる。)</p>
+
+<pre><code class="language-javascript">  &quot;scripts&quot;: {
+    &quot;build&quot;: &quot;webpack --config webpack.prod.js&quot;,
+    &quot;start&quot;: &quot;webpack-dev-server --hot --config webpack.dev.js&quot;
+  },
+</code></pre>
+
+<p>こうしておくと、<code>yarn build</code>でビルド、<code>yarn start</code>でwebpack-dev-server起動できる。</p>
+
+<p><br></p>
+
+<p>以上でビルド環境セットアップはいったん完了とする。
+次回はReactが動くところらへんまで。</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        
+        
+
+        
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-6244473643910448"
+             data-ad-slot="1845600530"
+             data-ad-format="auto"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </aside>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f08%2f19%2fcreating-react-redux-app-from-scratch-01%2f&t=React%20%2b%20Redux%e3%82%a2%e3%83%97%e3%83%aa%e3%82%b1%e3%83%bc%e3%82%b7%e3%83%a7%e3%83%b3%e3%83%97%e3%83%ad%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e3%81%ae%e3%83%86%e3%83%b3%e3%83%97%e3%83%ac%e3%83%bc%e3%83%88%e3%82%92%e4%bd%9c%e3%82%8b%20%e2%80%95%20%e3%81%9d%e3%81%ae1%3a%20Node.js%e3%81%a8Yarn%e3%81%a8Babel%e3%81%a8webpack" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f08%2f19%2fcreating-react-redux-app-from-scratch-01%2f&text=React%20%2b%20Redux%e3%82%a2%e3%83%97%e3%83%aa%e3%82%b1%e3%83%bc%e3%82%b7%e3%83%a7%e3%83%b3%e3%83%97%e3%83%ad%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e3%81%ae%e3%83%86%e3%83%b3%e3%83%97%e3%83%ac%e3%83%bc%e3%83%88%e3%82%92%e4%bd%9c%e3%82%8b%20%e2%80%95%20%e3%81%9d%e3%81%ae1%3a%20Node.js%e3%81%a8Yarn%e3%81%a8Babel%e3%81%a8webpack&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f08%2f19%2fcreating-react-redux-app-from-scratch-01%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f08%2f19%2fcreating-react-redux-app-from-scratch-01%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f08%2f19%2fcreating-react-redux-app-from-scratch-01%2f&title=React%20%2b%20Redux%e3%82%a2%e3%83%97%e3%83%aa%e3%82%b1%e3%83%bc%e3%82%b7%e3%83%a7%e3%83%b3%e3%83%97%e3%83%ad%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e3%81%ae%e3%83%86%e3%83%b3%e3%83%97%e3%83%ac%e3%83%bc%e3%83%88%e3%82%92%e4%bd%9c%e3%82%8b%20%e2%80%95%20%e3%81%9d%e3%81%ae1%3a%20Node.js%e3%81%a8Yarn%e3%81%a8Babel%e3%81%a8webpack" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://www.kaitoy.xyz/tags/react"><i class="fa fa-tags"></i> react </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/frontend"><i class="fa fa-tags"></i> frontend </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/webpack"><i class="fa fa-tags"></i> webpack </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/babel"><i class="fa fa-tags"></i> babel </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/08/16/chronicle-of-frontend-2018/">Webアプリケーションフロントエンド年代記 - 2018年夏編</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/08/25/if-youre-a-startup-you-should-not-use-react-reflecting-on-the-bsd-patents-license/">スタートアップはReactを使うべきではない (BSD &#43; patentsライセンスを考慮して) — もし、いつか大企業に買収されたいと望むなら</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/12/21/hello-react/">ReactをAtomパッケージ開発に使ってみた</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://www.kaitoy.xyz/2018/08/16/chronicle-of-frontend-2018/">
+                  Webアプリケーションフロントエンド年代記 - 2018年夏編
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ansible">ansible</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/babel">babel</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cnn">cnn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/coursera">coursera</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/deep-learning">deep-learning</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/esxi">esxi</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/frontend">frontend</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/headless-browser">headless-browser</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/keras">keras</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubeadm">kubeadm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/license">license</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/machine-learning">machine-learning</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/msys2">msys2</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/neural-network">neural-network</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nlp">nlp</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/packer">packer</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/rnn">rnn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/selenium">selenium</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/servicenow">servicenow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/skaffold">skaffold</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/tensorflow">tensorflow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/test-framework">test-framework</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/webdriverio">webdriverio</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/webpack">webpack</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-6244473643910448"
+    data-ad-slot="1845600530"
+    data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2018  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/highlight.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dos.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/yaml.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dockerfile.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

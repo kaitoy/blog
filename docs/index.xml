@@ -6,8 +6,385 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2018</rights>
-    <updated>2018-08-16 23:44:39 &#43;0900 JST</updated>
+    <updated>2018-08-19 15:27:19 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その1: Node.jsとYarnとBabelとwebpack</title>
+          <link>https://www.kaitoy.xyz/2018/08/19/creating-react-redux-app-from-scratch-01/</link>
+          <pubDate>Sun, 19 Aug 2018 15:27:19 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2018/08/19/creating-react-redux-app-from-scratch-01/</guid>
+          <description>
+
+&lt;p&gt;昔、&lt;a href=&#34;https://dojotoolkit.org/&#34;&gt;Dojo Toolkit&lt;/a&gt;を使ってFlashなUIをJavaScriptに書き換えた時以来、仕事でWeb UIを触ることはなかったんだけど、最近になってWeb UIを書かなければいけなくなるような気がして再学習を始めた。&lt;/p&gt;
+
+&lt;p&gt;題材は&lt;a href=&#34;https://reactjs.org/&#34;&gt;React&lt;/a&gt; (と&lt;a href=&#34;https://redux.js.org/&#34;&gt;Redux&lt;/a&gt;)。
+今一番人気のフロントエンドフレームワークで、&lt;a href=&#34;https://www.kaitoy.xyz/2015/12/21/hello-react/&#34;&gt;昔触ったこともある&lt;/a&gt;ので。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/08/16/chronicle-of-frontend-2018/&#34;&gt;前回の記事でReactが生まれた経緯を学んだ&lt;/a&gt;ので、今回から実習に入る。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h1 id=&#34;プロジェクト作成&#34;&gt;プロジェクト作成&lt;/h1&gt;
+
+&lt;p&gt;ちょっと&lt;a href=&#34;https://github.com/facebook/create-react-app&#34;&gt;Create React App&lt;/a&gt;を触ってみたけど使わないことにした。
+すぐ開発始められるのはよかったんだけど、裏でなにが起こっているかわからな過ぎて肌に合わないし、使うライブラリが結構固定されちゃいそうだったし、トラブルシュート(特にライブラリのバグを踏んだ時)が大変そうだったので。&lt;/p&gt;
+
+&lt;p&gt;代わりに、&lt;a href=&#34;https://reactjs.org/docs/create-a-new-react-app.html#creating-a-toolchain-from-scratch&#34;&gt;公式&lt;/a&gt;で紹介されているブログ記事である&lt;a href=&#34;https://blog.usejournal.com/creating-a-react-app-from-scratch-f3c693b84658&#34;&gt;Creating a React App… From Scratch.&lt;/a&gt;を見ながら、スクラッチからプロジェクトを作ることにした。&lt;/p&gt;
+
+&lt;p&gt;環境はWindows 10 Home。&lt;/p&gt;
+
+&lt;h2 id=&#34;node-jsインストール&#34;&gt;Node.jsインストール&lt;/h2&gt;
+
+&lt;p&gt;なにはともあれ&lt;a href=&#34;https://nodejs.org/ja/&#34;&gt;Node.js&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;Node.jsのバージョン管理には以前は&lt;a href=&#34;https://github.com/marcelklehr/nodist&#34;&gt;nodist&lt;/a&gt;使っていたんだけど、こいつは2年ほど前に開発が止まっているので、代わりに&lt;a href=&#34;https://github.com/coreybutler/nvm-windows&#34;&gt;nvm for Windows&lt;/a&gt;を入れた。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;nvm install&lt;/code&gt;で任意のバージョンのNode.jsをインストール出来て、&lt;code&gt;nvm use&lt;/code&gt;で使うNode.jsのバージョンを切り替えられる。&lt;/p&gt;
+
+&lt;p&gt;今回使うNode.jsのバージョンは、現時点でLTS版の最新である8.11.4にする。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\&amp;gt;nvm install 8.11.4
+Downloading node.js version 8.11.4 (64-bit)...
+Complete
+Creating C:\Users\kaitoy\AppData\Roaming\nvm\temp
+
+Downloading npm version 5.6.0... Complete
+Installing npm v5.6.0...
+
+Installation complete. If you want to use this version, type
+
+nvm use 8.11.4
+
+C:\&amp;gt;nvm use 8.11.4
+Now using node v8.11.4 (64-bit)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;yarnインストール&#34;&gt;Yarnインストール&lt;/h2&gt;
+
+&lt;p&gt;パッケージマネージャには&lt;a href=&#34;https://yarnpkg.com/lang/ja/&#34;&gt;Yarn&lt;/a&gt;を使う。&lt;/p&gt;
+
+&lt;p&gt;Yarnちょっとバギーだとか、npm 5がlockファイルをサポートしてYarnの優位性が減ったとか、&lt;a href=&#34;https://github.com/mixmaxhq/deyarn&#34;&gt;Yarnからnpmに戻るためのツール&lt;/a&gt;が出てきたりしてるけど、現時点では深く考えずにYarnでいいと思う。&lt;/p&gt;
+
+&lt;p&gt;YarnはWindows環境ではMSIファイルを&lt;a href=&#34;https://yarnpkg.com/ja/docs/install#windows-stable&#34;&gt;ダウンロード&lt;/a&gt;して実行すればインストールできる。&lt;/p&gt;
+
+&lt;p&gt;(npmでもインストールできるけど邪道。)&lt;/p&gt;
+
+&lt;p&gt;Yarnはv1.7.0を使う。&lt;/p&gt;
+
+&lt;h2 id=&#34;package-json生成&#34;&gt;package.json生成&lt;/h2&gt;
+
+&lt;p&gt;プロジェクトの構成情報を記述するファイルであるpackage.jsonをYarnで生成する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;C:\&amp;gt;mkdir react-redux-scaffold
+
+C:\&amp;gt;cd react-redux-scaffold
+
+C:\react-redux-scaffold&amp;gt;yarn init
+yarn init v1.7.0
+question name (react-redux-scaffold):
+question version (1.0.0):
+question description: React Redux Scaffold
+question entry point (index.js): src/index.jsx
+question repository url: https://github.com/kaitoy/react-redux-scaffold.git
+question author: kaitoy
+question license (MIT):
+question private:
+success Saved package.json
+Done in 40.38s.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;できたのがこれ。&lt;/p&gt;
+
+&lt;p&gt;package.json:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{
+  &amp;quot;name&amp;quot;: &amp;quot;react-redux-scaffold&amp;quot;,
+  &amp;quot;version&amp;quot;: &amp;quot;1.0.0&amp;quot;,
+  &amp;quot;description&amp;quot;: &amp;quot;React Redux Scaffold&amp;quot;,
+  &amp;quot;main&amp;quot;: &amp;quot;src/index.jsx&amp;quot;,
+  &amp;quot;repository&amp;quot;: &amp;quot;https://github.com/kaitoy/react-redux-scaffold.git&amp;quot;,
+  &amp;quot;author&amp;quot;: &amp;quot;kaitoy&amp;quot;,
+  &amp;quot;license&amp;quot;: &amp;quot;MIT&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;以降、カレントディレクトリは&lt;code&gt;C:\react-redux-scaffold&lt;/code&gt;として、プロンプト表示は省略する。&lt;/p&gt;
+
+&lt;h1 id=&#34;ビルド環境セットアップ&#34;&gt;ビルド環境セットアップ&lt;/h1&gt;
+
+&lt;p&gt;ビルド環境としてトランスパイラとかモジュールバンドラとかをセットアップする。&lt;/p&gt;
+
+&lt;h2 id=&#34;babel&#34;&gt;Babel&lt;/h2&gt;
+
+&lt;p&gt;トランスパイラはデファクトスタンダードの&lt;a href=&#34;https://babeljs.io/&#34;&gt;Babel&lt;/a&gt;を使う。&lt;/p&gt;
+
+&lt;p&gt;Babelのプラグインはとりあえず最低限入れるとして、以下のnpmパッケージをプロジェクトにインストールする。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://babeljs.io/docs/en/babel-core&#34;&gt;babel-core&lt;/a&gt;: Babel本体。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://babeljs.io/docs/en/babel-preset-react&#34;&gt;babel-preset-react&lt;/a&gt;: Reactの&lt;a href=&#34;https://reactjs.org/docs/introducing-jsx.html&#34;&gt;JSX&lt;/a&gt;とか&lt;a href=&#34;https://flow.org/&#34;&gt;Flow&lt;/a&gt;とかを処理するプラグイン集。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://babeljs.io/docs/en/babel-preset-env&#34;&gt;babel-preset-env&lt;/a&gt;: ES 2015+をES 5にトランスパイルするプラグイン集。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;これらのパッケージは実行時には要らないので&lt;code&gt;yarn add -D&lt;/code&gt;コマンドで開発時依存としてインストールする。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D babel-core babel-preset-react babel-preset-env
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Babelは6.26.3が入った。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;で、Babelの&lt;a href=&#34;https://babeljs.io/docs/en/babelrc&#34;&gt;設定ファイル&lt;/a&gt;を書いてプロジェクトルートに置いておく。&lt;/p&gt;
+
+&lt;p&gt;.babelrc:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{
+  &amp;quot;presets&amp;quot;: [&amp;quot;env&amp;quot;, &amp;quot;react&amp;quot;]
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;polyfill&#34;&gt;Polyfill&lt;/h2&gt;
+
+&lt;p&gt;BabelはES 2015+で追加された構文の変換はしてくれるけど、追加されたグローバルオブジェクト(e.g. &lt;a href=&#34;https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Promise&#34;&gt;Promise&lt;/a&gt;)とかメソッド(e.g. Object.assignとかArray.prototype.includes)とかを補完してくれるわけではない。
+そこを補完してくれるのが&lt;a href=&#34;https://en.wikipedia.org/wiki/Polyfill_%28programming%29&#34;&gt;Polyfill&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;少なくとも後で導入する&lt;a href=&#34;https://redux-saga.js.org/&#34;&gt;redux-saga&lt;/a&gt;が使う&lt;a href=&#34;https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Statements/function*&#34;&gt;ジェネレータ&lt;/a&gt;がPolyfillを必要とする(ないと&lt;code&gt;ReferenceError: regeneratorRuntime is not defined&lt;/code&gt;というエラーが出る)ので、今の時点で入れておくことにする。&lt;/p&gt;
+
+&lt;p&gt;Polyfillの実装はいくつかあるけど、定番っぽい&lt;a href=&#34;https://babeljs.io/docs/en/babel-polyfill/&#34;&gt;babel-polyfill&lt;/a&gt;を使う。
+こちらは実行時依存としてインストールする。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add babel-polyfill
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;webpack&#34;&gt;webpack&lt;/h2&gt;
+
+&lt;p&gt;モジュールバンドラは現時点で一番人気の&lt;a href=&#34;https://webpack.js.org/&#34;&gt;webpack&lt;/a&gt;を使う。
+(&lt;a href=&#34;https://parceljs.org/&#34;&gt;Parcel&lt;/a&gt;の方がナウいはナウいけど。)&lt;/p&gt;
+
+&lt;p&gt;webpackは、タスクランナーの機能も備えたモジュールバンドラみたいな感じで、バンドルしたいファイルの形式とか実行したいタスクに応じた&lt;a href=&#34;https://webpack.js.org/loaders/&#34;&gt;ローダー&lt;/a&gt;を設定することでプロジェクトのビルドを定義できる。&lt;/p&gt;
+
+&lt;p&gt;ちょっと古いけど&lt;a href=&#34;https://qiita.com/chuck0523/items/caacbf4137642cb175ec&#34;&gt;この記事&lt;/a&gt;を読むとwebpackの理解が深まる。&lt;/p&gt;
+
+&lt;p&gt;こちらもとりあえず最低限のローダーをセットアップするとして、以下のnpmパッケージをプロジェクトにインストールする。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;webpack: webpack本体。&lt;/li&gt;
+&lt;li&gt;webpack-cli: webpackのコマンドラインインターフェース。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/webpack/webpack-dev-server&#34;&gt;webpack-dev-server&lt;/a&gt;: webpackから起動できる開発用 HTTP サーバ。ライブリロードしてくれる。(&lt;a href=&#34;https://github.com/webpack-contrib/webpack-serve&#34;&gt;webpack-serve&lt;/a&gt;の方がモダンではある。)&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://webpack.js.org/loaders/babel-loader/&#34;&gt;babel-loader&lt;/a&gt;: Babelを実行してくれるやつ。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D webpack webpack-cli webpack-dev-server babel-loader
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;webpackはv4.16.0が入った。&lt;/p&gt;
+
+&lt;h3 id=&#34;webpack設定ファイル&#34;&gt;webpack設定ファイル&lt;/h3&gt;
+
+&lt;p&gt;webpackの設定は&lt;a href=&#34;https://webpack.js.org/configuration/&#34;&gt;設定ファイル&lt;/a&gt;を書いてプロジェクトルートに置けばいい。
+設定は結構複雑だけど、v1の時よりかは若干書きやすくなったし、公式のマニュアルとかローダーのマニュアル見てれば書くのは難しくない。
+&lt;a href=&#34;https://generatewebpackconfig.netlify.com/&#34;&gt;設定ファイルを生成してくれるサイト&lt;/a&gt;もある。&lt;/p&gt;
+
+&lt;p&gt;とりあえず適当に書くとこんな感じ。&lt;/p&gt;
+
+&lt;p&gt;webpack.config.js:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;const path = require(&#39;path&#39;);
+const pjson = require(&#39;./package.json&#39;);
+
+module.exports = {
+  mode: &#39;development&#39;,
+  entry: [&#39;babel-polyfill&#39;, `./${pjson.main}`],
+  output: {
+    path: path.resolve(__dirname, &#39;dist&#39;),
+    filename: &#39;bundle.js&#39;,
+  },
+  module: {
+    rules: [
+      {
+        test: /\.(js|jsx)$/,
+        include: [path.resolve(__dirname, &#39;src&#39;)],
+        loader: &#39;babel-loader&#39;,
+      },
+    ],
+  },
+  resolve: {
+    extensions: [&#39;*&#39;, &#39;.js&#39;, &#39;.jsx&#39;],
+    modules: [&#39;node_modules&#39;],
+  },
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;この設定の意味は、&lt;code&gt;./src/index.jsx&lt;/code&gt;を読んで、&lt;code&gt;.js&lt;/code&gt;か&lt;code&gt;.jsx&lt;/code&gt;を拡張子としたファイルとかモジュールをロードするコードがあったら、babel-loaderでBabelを呼んでトランスパイルして、バンドルした結果は&lt;code&gt;&amp;lt;プロジェクトルート&amp;gt;/dist/bundle.js&lt;/code&gt;に吐き出す。
+というだけ。
+(&lt;a href=&#34;https://nodejs.org/docs/latest/api/modules.html#modules_dirname&#34;&gt;__dirname&lt;/a&gt;はNode.jsが値を入れてくれる変数で、webpack.config.jsのあるディレクトリの絶対パスが入ってる。)&lt;/p&gt;
+
+&lt;p&gt;ファイルをロードするコードというのは、&lt;code&gt;import App from &#39;./components/App&#39;;&lt;/code&gt;みたいなやつ。
+webpackはこのコードを読んだら、&lt;code&gt;./components&lt;/code&gt;ディレクトリのなかを見て、&lt;code&gt;App&lt;/code&gt;か&lt;code&gt;App.js&lt;/code&gt;か&lt;code&gt;App.jsx&lt;/code&gt;というファイルを探してロードする。
+また、モジュールをロードするコードというのは&lt;code&gt;import React from &#39;react&#39;;&lt;/code&gt;みたいなやつで、webpackはこのコードを読んだら、プロジェクトの&lt;code&gt;node_modules/react/package.json&lt;/code&gt;の&lt;code&gt;main&lt;/code&gt;プロパティの値に書いてあるファイルをロードする。
+という挙動が上記webpack.config.jsの&lt;code&gt;resolve&lt;/code&gt;に書いてあって、その詳細は&lt;a href=&#34;https://webpack.js.org/concepts/module-resolution/&#34;&gt;公式のドキュメントのModule Resolution&lt;/a&gt;に書いてある。&lt;/p&gt;
+
+&lt;p&gt;webpack.config.jsの&lt;code&gt;entry&lt;/code&gt;には、最初に&lt;code&gt;babel-polyfill&lt;/code&gt;を書いておいて、bundle.jsの最初に一度だけPolyfillがロードされるようにしている。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;mode&lt;/code&gt;は後述。&lt;/p&gt;
+
+&lt;h3 id=&#34;webpack-dev-server設定&#34;&gt;webpack-dev-server設定&lt;/h3&gt;
+
+&lt;p&gt;webpack-dev-serverの設定もwebpack.config.jsに書く。&lt;/p&gt;
+
+&lt;p&gt;以下を&lt;code&gt;resolve&lt;/code&gt;の次辺りに書き足せばいい。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;  devServer: {
+    contentBase: path.join(__dirname, &#39;public&#39;),
+    compress: true,
+    hot: true,
+    port: 3000,
+    publicPath: &#39;http://localhost:3000/&#39;,
+  },
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;この設定でwebpack-dev-serverを実行すると、&lt;code&gt;http://localhost:3000/&lt;/code&gt;へのアクセスに&lt;code&gt;public/index.html&lt;/code&gt;を返すWebサーバを起動できる。
+Webサーバが起動するときにプロジェクトがインメモリでビルドされ、メモリからbundle.jsがサーブされる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;hot&lt;/code&gt;をtrueにしておくと&lt;a href=&#34;https://webpack.js.org/concepts/hot-module-replacement/&#34;&gt;Hot Module Replacement&lt;/a&gt;が有効になる。
+これによって、webpack-dev-serverの起動中にソースを編集すると、自動で再ビルドし、動的にモジュール単位でロードし、ブラウザをリロードしてくれるようになる。
+Hot Module Replacementを有効にするときは&lt;code&gt;publicPath&lt;/code&gt;をフルURLで書かないといけない。&lt;/p&gt;
+
+&lt;p&gt;webpack-dev-serverの他の設定については&lt;a href=&#34;https://webpack.js.org/configuration/dev-server/&#34;&gt;公式のマニュアルのDevServer&lt;/a&gt;を見るべし。&lt;/p&gt;
+
+&lt;h3 id=&#34;webpackのmode&#34;&gt;webpackのmode&lt;/h3&gt;
+
+&lt;p&gt;webpackにはビルドの&lt;a href=&#34;https://webpack.js.org/concepts/#mode&#34;&gt;mode&lt;/a&gt;という概念があり、modeを切り替えることで適切な最適化を適用してくれる。&lt;/p&gt;
+
+&lt;p&gt;modeにはdevelopmentとproduction(とnone)があり、productionにしておくと、&lt;a href=&#34;https://webpack.js.org/plugins/uglifyjs-webpack-plugin/&#34;&gt;UglifyJsPlugin&lt;/a&gt;とかを適用して、出力するバンドルファイルのサイズを小さくしてくれたりする。
+(v1のころはUglifyJsPluginとかは全部自分でwebpack.config.jsに指定していた記憶があるので、楽になった。)&lt;/p&gt;
+
+&lt;h3 id=&#34;webpack-config-jsの分割&#34;&gt;webpack.config.jsの分割&lt;/h3&gt;
+
+&lt;p&gt;modeを切り替えるのにwebpack.config.jsを書き換えるのはイケてないので、developmentとproductionでファイルを分割して使い分けるようにする。&lt;/p&gt;
+
+&lt;p&gt;developmentとproductionはほとんどが共通の設定なので、共通部分をwebpack.common.jsに書いて、developmentとproductionに固有な設定だけをそれぞれwebpack.dev.jsとwebpack.prod.jsに書く。
+webpack.common.jsは、&lt;a href=&#34;https://github.com/survivejs/webpack-merge&#34;&gt;webpack-merge&lt;/a&gt;でwebpack.dev.jsとwebpack.prod.jsにマージする。
+というのが&lt;a href=&#34;https://webpack.js.org/guides/production/&#34;&gt;公式&lt;/a&gt;で紹介されているプラクティス。&lt;/p&gt;
+
+&lt;p&gt;まずwebpack-mergeをプロジェクトにインストール。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D webpack-merge
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;分割したファイルは以下の感じ。全部プロジェクトルートに置いておく。&lt;/p&gt;
+
+&lt;p&gt;webpack.common.js&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;const path = require(&#39;path&#39;);
+const pjson = require(&#39;./package.json&#39;);
+
+module.exports = {
+  entry: [&#39;babel-polyfill&#39;, `./${pjson.main}`],
+  output: {
+    path: path.resolve(__dirname, &#39;dist&#39;),
+    filename: &#39;bundle.js&#39;,
+  },
+  module: {
+    rules: [
+      {
+        test: /\.(js|jsx)$/,
+        include: [path.resolve(__dirname, &#39;src&#39;)],
+        loader: &#39;babel-loader&#39;,
+      },
+    ],
+  },
+  resolve: {
+    extensions: [&#39;*&#39;, &#39;.js&#39;, &#39;.jsx&#39;],
+    modules: [&#39;node_modules&#39;],
+  },
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;webpack.dev.js&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;const path = require(&#39;path&#39;);
+const webpackMerge = require(&#39;webpack-merge&#39;);
+const webpackCommon = require(&#39;./webpack.common.js&#39;);
+
+module.exports = webpackMerge(webpackCommon, {
+  mode: &#39;development&#39;,
+  devServer: {
+    contentBase: path.join(__dirname, &#39;public&#39;),
+    compress: true,
+    hot: true,
+    port: 3000,
+    publicPath: &#39;http://localhost:3000/&#39;,
+  },
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;webpack.prod.js&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;const webpackMerge = require(&#39;webpack-merge&#39;);
+const webpackCommon = require(&#39;./webpack.common.js&#39;);
+
+module.exports = webpackMerge(webpackCommon, {
+  mode: &#39;production&#39;,
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;npmスクリプト&#34;&gt;npmスクリプト&lt;/h3&gt;
+
+&lt;p&gt;webpackによるビルドは次のコマンドで実行できる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;node_modules\.bin\webpack --config webpack.prod.js
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;また、webpack-dev-serverは次のコマンドで起動できる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;node_modules\.bin\webpack-dev-server --hot --config webpack.dev.js
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;--hot&lt;/code&gt;はHot Module Replacementに必要なオプション。&lt;/p&gt;
+
+&lt;p&gt;コマンドが長くて面倒なのは、&lt;a href=&#34;https://docs.npmjs.com/misc/scripts&#34;&gt;npmスクリプト&lt;/a&gt;で楽にできる。
+package.jsonの&lt;code&gt;main&lt;/code&gt;の次辺りに以下を書き足せばいい。
+(npmスクリプトは実行時に&lt;code&gt;node_modules\.bin&lt;/code&gt;にPATHを通してくれるので、それを省略できる。)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;  &amp;quot;scripts&amp;quot;: {
+    &amp;quot;build&amp;quot;: &amp;quot;webpack --config webpack.prod.js&amp;quot;,
+    &amp;quot;start&amp;quot;: &amp;quot;webpack-dev-server --hot --config webpack.dev.js&amp;quot;
+  },
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;こうしておくと、&lt;code&gt;yarn build&lt;/code&gt;でビルド、&lt;code&gt;yarn start&lt;/code&gt;でwebpack-dev-server起動できる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;以上でビルド環境セットアップはいったん完了とする。
+次回はReactが動くところらへんまで。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -13926,170 +14303,6 @@ GitHubにホストされているGroovyプロジェクトは、2016/4/9現在 &l
 バッチだと、&lt;code&gt;;&lt;/code&gt;で区切られているものは半角スペースで区切られているのと同じで別々の引数になってしまうので、上のような書き方だと&lt;code&gt;jna.jar&lt;/code&gt;は&lt;code&gt;-cp&lt;/code&gt;の値として処理されない。
 クラスパス全体をダブルコーテーションで囲って、&lt;code&gt;-cp &amp;quot;pcap4j-core.jar;jna.jar&amp;quot;&lt;/code&gt;みたいにしたらできた。なんか残念な出来。。。&lt;/p&gt;&lt;/li&gt;
 &lt;/ol&gt;
-</description>
-        </item>
-      
-    
-      
-        <item>
-          <title> ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた</title>
-          <link>https://www.kaitoy.xyz/2016/03/19/zundoko-kiyoshi-with-pcap4j/</link>
-          <pubDate>Sat, 19 Mar 2016 11:47:03 -0600</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2016/03/19/zundoko-kiyoshi-with-pcap4j/</guid>
-          <description>
-
-&lt;p&gt;先週くらいから巷でズンドコズンドコ騒いでいると思ってはいたが、昨日ようやくその元ネタを見た。
-以下のツイートだ。&lt;/p&gt;
-
-&lt;p&gt;&lt;blockquote class=&#34;twitter-tweet&#34; data-lang=&#34;ja&#34;&gt;&lt;p lang=&#34;ja&#34; dir=&#34;ltr&#34;&gt;Javaの講義、試験が「自作関数を作り記述しなさい」って問題だったから&lt;br&gt;「ズン」「ドコ」のいずれかをランダムで出力し続けて「ズン」「ズン」「ズン」「ズン」「ドコ」の配列が出たら「キ・ヨ・シ！」って出力した後終了って関数作ったら満点で単位貰ってた&lt;/p&gt;&amp;mdash; てくも (@kumiromilk) &lt;a href=&#34;https://twitter.com/kumiromilk/status/707437861881180160&#34;&gt;2016年3月9日&lt;/a&gt;&lt;/blockquote&gt;
-&lt;script async src=&#34;//platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;&lt;/p&gt;
-
-&lt;p&gt;面白い。
-巷ではこれを&lt;a href=&#34;http://qiita.com/shunsugai@github/items/971a15461de29563bf90&#34;&gt;いろんな言語で実装したりしているみたい&lt;/a&gt;でさらに面白い。&lt;/p&gt;
-
-&lt;p&gt;私もこのビッグウェーブに乗らないわけにいかないので、専門分野であるネットワーク周りを開拓しようと思い、ZUNDOKOプロトコルというものを考案して実装してみた。書いたソースは&lt;a href=&#34;https://github.com/kaitoy/zundoko-protocol&#34;&gt;GitHub&lt;/a&gt;においた。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h2 id=&#34;zundokoプロトコル&#34;&gt;ZUNDOKOプロトコル&lt;/h2&gt;
-
-&lt;p&gt;クライアントはサーバに「ズン」か「ドコ」を送る。&lt;/p&gt;
-
-&lt;p&gt;サーバは「ズン」を4回受信した後に「ドコ」を受信するとクライアントに「キ・ヨ・シ！」を返す。&lt;/p&gt;
-
-&lt;p&gt;クライアント/サーバ間でやり取りするメッセージ(Zundokoパケット)のフォーマットは下図。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt; 0                            15                              31
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|             zundoko (null-terminated string)                  |
-|                                                               |
-|                                                               |
-|                                                               |
-|                                                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;要はzundokoフィールドがあるだけ。
-このzundokoフィールドは20 byte固定長で、NULL (0x00)で終わるUTF-8の文字列を保持する。&lt;/p&gt;
-
-&lt;p&gt;このメッセージを運ぶ下位レイヤはEthernetで、EtherTypeは0x01FF。&lt;/p&gt;
-
-&lt;p&gt;Ethernetにした理由は実装(下記)が楽だから。
-EtherTypeは&lt;a href=&#34;http://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml#ieee-802-numbers-1&#34;&gt;IANA&lt;/a&gt;でExperimentalとされている範囲から適当に選んだ。もちろんIANAに登録などはしていない。&lt;/p&gt;
-
-&lt;p&gt;因みに、Ethernetヘッダを加えた、クライアント/サーバ間でやり取りする完全なパケットは以下の様になる。(プリアンブルとかは除く。)&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt; 0                            15
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|    Dst Hardware Address       |
-+                               +
-|                               |
-+                               +
-|                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|    Src Hardware Address       |
-+                               +
-|                               |
-+                               +
-|                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|    EtherType (0x01FF)         |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|        zundoko                |
-| (null-terminated string)      |
-|                               |
-|                               |
-|                               |
-|                               |
-|                               |
-|                               |
-|                               |
-|                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|            padding            |
-|                               |
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&#34;実装&#34;&gt;実装&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;Pcap4J&lt;/a&gt;を使ってクライアントとサーバを実装した。
-書いたのは以下の3つのクラス。(といくつかのインナークラス。)&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/kaitoy/zundoko-protocol/tree/master/src/main/java/com/github/kaitoy/zundoko/protocol/ZundokoPacket.java&#34;&gt;com.github.kaitoy.zundoko.protocol.ZundokoPacket&lt;/a&gt;: Pcap4JがZundokoパケットを解析するのに使うクラス&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/kaitoy/zundoko-protocol/tree/master/src/main/java/com/github/kaitoy/zundoko/protocol/ZundokoServer.java&#34;&gt;com.github.kaitoy.zundoko.protocol.ZundokoServer&lt;/a&gt;: Zundokoサーバ&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/kaitoy/zundoko-protocol/tree/master/src/main/java/com/github/kaitoy/zundoko/protocol/ZundokoClient.java&#34;&gt;com.github.kaitoy.zundoko.protocol.ZundokoClient&lt;/a&gt;: Zundokoクライアント&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;ビルド&#34;&gt;ビルド&lt;/h2&gt;
-
-&lt;p&gt;今だに&lt;a href=&#34;https://maven.apache.org/&#34;&gt;Maven&lt;/a&gt;。&lt;/p&gt;
-
-&lt;p&gt;以下を実行するとビルドできる。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;git clone https://github.com/kaitoy/zundoko-protocol.git
-cd zundoko-protocol
-mvn install
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&#34;サーバ-クライアントの使い方&#34;&gt;サーバ/クライアントの使い方&lt;/h2&gt;
-
-&lt;p&gt;下位レイヤがEthernetなのでネットワークセグメントを超えたZundokoパケットのやり取りはできない。
-よってまずは同一ネットワーク内にサーバマシンとクライアントマシンを用意する。
-VMware Playerのホストとゲストで可。&lt;/p&gt;
-
-&lt;p&gt;サーバマシンとクライアントマシンには&lt;a href=&#34;http://www.winpcap.org/&#34;&gt;WinPcap&lt;/a&gt;か&lt;a href=&#34;http://www.tcpdump.org/&#34;&gt;libpcap&lt;/a&gt;をインストールしておく。&lt;/p&gt;
-
-&lt;p&gt;依存ライブラリをダウンロードするため、&lt;code&gt;zundoko-protocol\bin\&lt;/code&gt;に&lt;code&gt;cd&lt;/code&gt;して以下のコマンドを実行する。(要Maven。)&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;configure.bat
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;サーバを起動するには、&lt;code&gt;zundoko-protocol\bin\&lt;/code&gt;で以下のコマンドを実行する。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;run-server.bat
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;起動するとZundokoパケットをやり取りするネットワークインターフェースを聞かれるので、
-クライアントとL2レベルでつながっているものを選ぶ。
-選んだインターフェースのMacアドレスはクライアントの起動に使うのでメモしておく。&lt;/p&gt;
-
-&lt;p&gt;クライアントを起動するには、&lt;code&gt;zundoko-protocol\bin\&lt;/code&gt;で以下のコマンドを実行する。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;run-client.bat &amp;lt;Macアドレス&amp;gt;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;code&gt;&amp;lt;Macアドレス&amp;gt;&lt;/code&gt;にはサーバ起動時にメモしたMacアドレスを入力する。
-起動するとZundokoパケットをやり取りするネットワークインターフェースを聞かれるので、
-サーバとL2レベルでつながっているものを選ぶ。&lt;/p&gt;
-
-&lt;p&gt;クライアントが起動すると、一秒おきに「ズン」と「ドコ」をランダムに選び、
-サーバに送りつつコンソールに表示する。
-また、サーバからZundokoパケット受信したらそのzundokoフィールドの値を表示する。&lt;/p&gt;
-
-&lt;h2 id=&#34;実行例&#34;&gt;実行例&lt;/h2&gt;
-
-&lt;p&gt;&lt;div class=&#34;embed video-player&#34; style=&#34;text-align: center&#34;&gt;
-  &lt;iframe class=&#34;youtube-player&#34; type=&#34;text/html&#34; width=&#34;320&#34; height=&#34;193&#34; src=&#34;https://www.youtube.com/embed/ad3u4Y86e_I&#34; allowfullscreen frameborder=&#34;0&#34;&gt;
-  &lt;/iframe&gt;
-&lt;/div&gt;
-&lt;/p&gt;
 </description>
         </item>
       
