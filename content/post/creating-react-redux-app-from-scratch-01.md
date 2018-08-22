@@ -190,11 +190,11 @@ webpackの設定は[設定ファイル](https://webpack.js.org/configuration/)�
 webpack.config.js:
 ```javascript
 const path = require('path');
-const pjson = require('./package.json');
+const packageJson = require('./package.json');
 
 module.exports = {
   mode: 'development',
-  entry: ['babel-polyfill', `./${pjson.main}`],
+  entry: ['babel-polyfill', `./${packageJson.main}`],
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'bundle.js',
@@ -281,10 +281,10 @@ yarn add -D webpack-merge
 webpack.common.js
 ```javascript
 const path = require('path');
-const pjson = require('./package.json');
+const packageJson = require('./package.json');
 
 module.exports = {
-  entry: ['babel-polyfill', `./${pjson.main}`],
+  entry: ['babel-polyfill', `./${packageJson.main}`],
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'bundle.js',
@@ -365,4 +365,4 @@ package.jsonの`main`の次辺りに以下を書き足せばいい。
 <br>
 
 以上でビルド環境セットアップはいったん完了とする。
-次回はReactが動くところらへんまで。
+[次回](https://www.kaitoy.xyz/2018/08/22/creating-react-redux-app-from-scratch-02/)はReactが動くところらへんまで。
