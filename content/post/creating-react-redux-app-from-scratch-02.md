@@ -251,4 +251,4 @@ public/index.html:
 
 `yarn start`してブラウザで`http://localhost:3000`にアクセスするとHOGEと表示されるはず。
 
-次回はESLintとprettierとPostCSSとstylelintとCSS Modules辺りを導入する。
+[次回](https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/)はフォーマッタとリンタを導入する。

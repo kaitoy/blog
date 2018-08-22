@@ -6,8 +6,242 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2018</rights>
-    <updated>2018-08-22 08:21:28 &#43;0900 JST</updated>
+    <updated>2018-08-23 00:19:09 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その3: PrettierとESLint</title>
+          <link>https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/</link>
+          <pubDate>Thu, 23 Aug 2018 00:19:09 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;https://reactjs.org/&#34;&gt;React&lt;/a&gt;と&lt;a href=&#34;https://redux.js.org/&#34;&gt;Redux&lt;/a&gt;を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/08/22/creating-react-redux-app-from-scratch-02/&#34;&gt;前回&lt;/a&gt;はReactをセットアップした。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h1 id=&#34;フォーマッタとリンタ&#34;&gt;フォーマッタとリンタ&lt;/h1&gt;
+
+&lt;p&gt;プロジェクトにフォーマッタとリンタを導入する。&lt;/p&gt;
+
+&lt;p&gt;フォーマッタはソースの体裁を整えるツール。
+フォーマッタを使うことで体裁が統一され、ソースが読みやすくなり、品質向上につながる。&lt;/p&gt;
+
+&lt;p&gt;リンタはソースを静的解析して、潜在的なバグ、構造的な問題、体裁の問題を検出して警告してくれるツール。
+フォーマッタは体裁だけ整えるのに対し、リンタは論理構造にも制約を課せるので、コーディングスタイルがより統一できたり、ミスをしやすい論理構造が無くなったりして、品質向上につながる。&lt;/p&gt;
+
+&lt;p&gt;JavaScriptのような動的型付け言語では、実行時まで顕在化しないバグを作りこみやすく、また実行時エラーの原因解析が静的型付け言語に比べて難しいので、フォーマッタとリンタでプログラム実行前に問題をできるだけ取り除いておくのが重要。
+またチーム開発では、コードレビューでコーディンスタイルを見る必要がなくなり、効率化につながる。&lt;/p&gt;
+
+&lt;h2 id=&#34;prettier&#34;&gt;Prettier&lt;/h2&gt;
+
+&lt;p&gt;フォーマッタには&lt;a href=&#34;https://prettier.io/&#34;&gt;Prettier&lt;/a&gt;を使う。&lt;/p&gt;
+
+&lt;p&gt;Prettierは&lt;a href=&#34;https://jlongster.com/A-Prettier-Formatter&#34;&gt;2017年1月&lt;/a&gt;にリリースされた新しいツール。
+構文解析をして&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E6%8A%BD%E8%B1%A1%E6%A7%8B%E6%96%87%E6%9C%A8&#34;&gt;AST&lt;/a&gt;を構築し、そこからフォーマット済みコードを出力するので、従来のツールよりも厳密な整形(e.g. 行の最大長を考慮した整形)ができる。&lt;/p&gt;
+
+&lt;p&gt;また、opinionated(独断的)であることも特徴で、Prettierプロジェクトが推奨するフォーマットをほぼ強制し、設定がほとんどない。
+このため導入が簡単だけど、かゆいところに手が届かないこともある。&lt;/p&gt;
+
+&lt;p&gt;JavaScriptの他、JSX、CSS、Markdown、GraphQLのフォーマットにも対応している。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;まずプロジェクトにインストールする。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D prettier
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;v1.14.0が入った。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://prettier.io/docs/en/options.html&#34;&gt;設定&lt;/a&gt;は&lt;code&gt;prettier.config.js&lt;/code&gt;という&lt;a href=&#34;https://prettier.io/docs/en/configuration.html&#34;&gt;ファイル&lt;/a&gt;を書いてプロジェクトルートに置けばいい。&lt;/p&gt;
+
+&lt;p&gt;prettier.config.js:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;module.exports = {
+  printWidth: 100, // 行の最大長
+  tabWidth: 2, // インデント長
+  singleQuote: true, // 文字列をシングルクオートで囲う
+  trailingComma: &#39;all&#39;, // オブジェクトのプロパティとか関数の引数を複数行で書いたときに、全行の末尾にカンマをつける
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;また、フォーマット対象外のファイルを指定するファイルである&lt;code&gt;.prettierignore&lt;/code&gt;をプロジェクトルートに置く。&lt;/p&gt;
+
+&lt;p&gt;.prettierignore:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;node_modules/
+dist/
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;node_modulesはnpmパッケージが入るディレクトリ。
+実際はnode_modulesはデフォルトで無視されるから書かなくていいんだけど。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://prettier.io/docs/en/ignore.html&#34;&gt;prettier-ignoreコメント&lt;/a&gt;を書くことで、ソースを部分的にフォーマット対象外とすることもできる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;最後に、npmスクリプトを書く。&lt;/p&gt;
+
+&lt;p&gt;package.json:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt;(前略)
+  &amp;quot;scripts&amp;quot;: {
++   &amp;quot;format&amp;quot;: &amp;quot;prettier --write **/*.jsx **/*.js **/*.css&amp;quot;,
+    &amp;quot;build&amp;quot;: &amp;quot;webpack --config webpack.prod.js&amp;quot;,
+    &amp;quot;start&amp;quot;: &amp;quot;webpack-dev-server --hot --config webpack.dev.js&amp;quot;
+  },
+(後略)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これで、&lt;code&gt;yarn format&lt;/code&gt;を実行するとプロジェクト内ソースを一通りフォーマットできる。&lt;/p&gt;
+
+&lt;h2 id=&#34;eslint&#34;&gt;ESLint&lt;/h2&gt;
+
+&lt;p&gt;リンタにはデファクトスタンダードの&lt;a href=&#34;https://eslint.org/&#34;&gt;ESLint&lt;/a&gt;を使う。&lt;/p&gt;
+
+&lt;p&gt;ESLintは2013年6月にリリースされたそこそこ歴史のあるツール。
+リンティングルールがプラガブルで、豊富なルールを細かく制御できるのが特徴。
+フォーマッタとしての機能もあるけど、そこはPrettierにまかせることにする。&lt;/p&gt;
+
+&lt;p&gt;JavaScriptもJSXもリンティングできる。&lt;/p&gt;
+
+&lt;p&gt;リンティングルールはAirbnbによる&lt;a href=&#34;https://github.com/airbnb/javascript/tree/master/packages/eslint-config-airbnb&#34;&gt;eslint-config-airbnb&lt;/a&gt;が有名なのでこれを使う。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ESLintを導入するために、以下のパッケージをプロジェクトにインストールする。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;eslint: ESLint本体。&lt;/li&gt;
+&lt;li&gt;eslint-loader: webpackからESLintを実行するやつ。&lt;/li&gt;
+&lt;li&gt;eslint-config-airbnb: ESLintルール設定集。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/benmosher/eslint-plugin-import&#34;&gt;eslint-plugin-import&lt;/a&gt;: eslint-config-airbnbのピア依存。import文を処理するためのESLintプラグイン。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/evcohen/eslint-plugin-jsx-a11y&#34;&gt;eslint-plugin-jsx-a11y&lt;/a&gt;: eslint-config-airbnbのピア依存。JSXを処理するためのESLintプラグイン。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/yannickcr/eslint-plugin-react&#34;&gt;eslint-plugin-react&lt;/a&gt;: eslint-config-airbnbのピア依存。React特有のリンティングルールを追加するESLintプラグイン。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/prettier/eslint-config-prettier&#34;&gt;eslint-config-prettier&lt;/a&gt;: Prettierが施すコード整形とコンフリクトするルールを無効にするESLintルール設定集。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;ピア依存をインストールするのにはちょっとコツがいるので、&lt;a href=&#34;https://github.com/airbnb/javascript/tree/master/packages/eslint-config-airbnb#eslint-config-airbnb-1&#34;&gt;eslint-config-airbnbのドキュメント&lt;/a&gt;を参照すべし。&lt;/p&gt;
+
+&lt;p&gt;今回は以下のコマンドでインストールした。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D &amp;quot;eslint@&amp;gt;=1.6.0 &amp;lt;5.0.0&amp;quot; eslint-loader eslint-config-airbnb &amp;quot;eslint-plugin-import@^2.12.0&amp;quot; &amp;quot;eslint-plugin-jsx-a11y@^6.0.3&amp;quot; &amp;quot;eslint-plugin-react@^7.9.1&amp;quot; eslint-config-prettier
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ESlintはv4.19.1が入った。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://eslint.org/docs/user-guide/configuring&#34;&gt;ESlintの設定&lt;/a&gt;は、設定ファイルである&lt;code&gt;.eslintrc.js&lt;/code&gt;をプロジェクトルートに置けばいい。&lt;/p&gt;
+
+&lt;p&gt;.eslintrc.js:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;module.exports = {
+  env: {
+    browser: true,
+  },
+  extends: [&#39;airbnb&#39;, &#39;prettier&#39;],
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;アプリの実行環境はブラウザなので&lt;code&gt;env.browser&lt;/code&gt;をtrueにしている。
+これにより、ブラウザ環境でデフォルトで使えるグローバル変数(e.g. &lt;code&gt;document&lt;/code&gt;)を使うときにESLintに怒られないようになる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;extends&lt;/code&gt;は&lt;code&gt;eslint-config-airbnb&lt;/code&gt;と&lt;code&gt;eslint-config-prettier&lt;/code&gt;のルール設定を取り込むように書いている。
+&lt;code&gt;prettier&lt;/code&gt;が最後でなければいけないことに注意。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;また、&lt;a href=&#34;https://eslint.org/docs/user-guide/configuring#ignoring-files-and-directories&#34;&gt;リンティング対象外のファイルを指定するファイル&lt;/a&gt;をプロジェクトルートに置く。&lt;/p&gt;
+
+&lt;p&gt;.eslintignore:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;node_modules/*
+dist/*
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;node_modulesはnpmパッケージが入るディレクトリ。
+実際はnode_modulesはデフォルトで無視されるから書かなくていいんだけど。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://eslint.org/docs/user-guide/configuring#disabling-rules-with-inline-comments&#34;&gt;eslint-disableコメント&lt;/a&gt;を書くことで、ソースを部分的にリンティング対象外としたり、特定のルールを無効化することもできる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;webpackからESLintを実行し、エラーがなくならない限りビルド成功できないようにする。&lt;/p&gt;
+
+&lt;p&gt;webpack.common.js:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt;(前略)
+  module: {
+    rules: [
++     {
++       test: /\.(js|jsx)$/,
++       include: [path.resolve(__dirname, &#39;src&#39;)],
++       enforce: &#39;pre&#39;,
++       loader: &#39;eslint-loader&#39;,
++       options: {
++         configFile: &#39;./.eslintrc.js&#39;,
++         failOnError: true,
++       },
+      },
+      {
+        test: /\.(js|jsx)$/,
+        include: [path.resolve(__dirname, &#39;src&#39;)],
+        loader: &#39;babel-loader&#39;,
+      },
+    ],
+  },
+(後略)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;あとはnpmスクリプト書くだけ。&lt;/p&gt;
+
+&lt;p&gt;package.json:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt;(前略)
+  &amp;quot;scripts&amp;quot;: {
+    &amp;quot;format&amp;quot;: &amp;quot;prettier --write **/*.jsx **/*.js **/*.css&amp;quot;,
++   &amp;quot;lint&amp;quot;: &amp;quot;eslint **/*.jsx **/*.js&amp;quot;,
+    &amp;quot;build&amp;quot;: &amp;quot;webpack --config webpack.prod.js&amp;quot;,
+    &amp;quot;start&amp;quot;: &amp;quot;webpack-dev-server --hot --config webpack.dev.js&amp;quot;
+  },
+(後略)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これで、&lt;code&gt;yarn lint&lt;/code&gt;を実行するとプロジェクト内ソースを一通りリンティングできる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;以上で、フォーマッタとリンタを導入できた。&lt;/p&gt;
+
+&lt;p&gt;次回はCSS周りの処理系を追加する。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -275,7 +509,7 @@ if (root) {
 
 &lt;p&gt;&lt;code&gt;yarn start&lt;/code&gt;してブラウザで&lt;code&gt;http://localhost:3000&lt;/code&gt;にアクセスするとHOGEと表示されるはず。&lt;/p&gt;
 
-&lt;p&gt;次回はESLintとprettierとPostCSSとstylelintとCSS Modules辺りを導入する。&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/&#34;&gt;次回&lt;/a&gt;はフォーマッタとリンタを導入する。&lt;/p&gt;
 </description>
         </item>
       
@@ -14340,135 +14574,6 @@ Steve Jobsだったら、ドキュメントが必要なくなるまでUIを洗�
 そうしてくれた方が使う方は助かるんだけど、作る側はドキュメントの保守が大変だ。かなり頑張って気を使っても、ドキュメントと実装のずれってのは本当に簡単に頻繁に起こる。特に大きい会社の大きいプロジェクトで、開発チームとは別にマニュアルチームがあるような場合、このずれはほとんど全く避けられない。&lt;/p&gt;
 
 &lt;p&gt;自然言語でのプログラミングへの希望が大昔からあるようだけど、そんなものより、プログラミング言語で書いたものから自然言語のマニュアルを生成してくれるもののほうがよっぽど価値があると思う。&lt;/p&gt;
-</description>
-        </item>
-      
-    
-      
-        <item>
-          <title>Pcap4J in Kotlin</title>
-          <link>https://www.kaitoy.xyz/2016/04/16/pcap4j-in-kotlin/</link>
-          <pubDate>Sat, 16 Apr 2016 11:09:53 -0600</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2016/04/16/pcap4j-in-kotlin/</guid>
-          <description>
-
-&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/&#34;&gt;Groovy&lt;/a&gt;に続いて、&lt;a href=&#34;https://kotlinlang.org/&#34;&gt;&lt;strong&gt;Kotlin&lt;/strong&gt;&lt;/a&gt;で&lt;a href=&#34;https://github.com/kaitoy/pcap4j&#34;&gt;&lt;strong&gt;Pcap4J&lt;/strong&gt;&lt;/a&gt;を使ってパケットキャプチャしてみた。&lt;/p&gt;
-
-&lt;p&gt;KotlinからでもPcap4Jちゃんと動くよということを実証するのが主な目的。
-また、今後JavaなアプリはKotlinで書こうかと思っているので、その予習も兼ねている。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h2 id=&#34;kotlinとは&#34;&gt;Kotlinとは&lt;/h2&gt;
-
-&lt;p&gt;KotlinはJVM言語、つまりJavaのバイトコードにコンパイルされてJavaの実行環境で動くプログラミング言語のひとつ。
-&lt;a href=&#34;https://www.jetbrains.com/idea/&#34;&gt;IntelliJ IDEA&lt;/a&gt;で有名な&lt;a href=&#34;https://www.jetbrains.com/&#34;&gt;JetBrains社&lt;/a&gt;によって&lt;a href=&#34;https://github.com/JetBrains/kotlin&#34;&gt;OSS&lt;/a&gt;として開発されている。&lt;/p&gt;
-
-&lt;p&gt;2011年に生まれた新しめな言語で、2016/2/17に&lt;a href=&#34;http://blog.jetbrains.com/jp/2016/02/17/578&#34;&gt;v1がリリースされ&lt;/a&gt;、主にAndroidアプリの開発用として注目されている。&lt;/p&gt;
-
-&lt;p&gt;「実用的」であることを売りにしていて、つまり少ない学習コストで導入でき、既存のJavaコードやMavenなどのツールとの相互運用性を持つとされている。
-IntelliJ IDEA、&lt;a href=&#34;http://developer.android.com/sdk/index.html&#34;&gt;Android Studio&lt;/a&gt;、&lt;a href=&#34;https://eclipse.org/&#34;&gt;Eclipse&lt;/a&gt;といった主要なIDEのサポートもあり、開発環境は整っている。
-v1以降の後方互換性の維持も表明されていて、長期サポートが必要な製品開発にも堪える。&lt;/p&gt;
-
-&lt;p&gt;さらに、厳格な静的型付けやNullable/Non-Null型などにより安全性を確保しつつ、型推論やラムダ式などで生産性を高めている。&lt;/p&gt;
-
-&lt;p&gt;Javaのバイトコードだけでなく、JavaScriptを生成するバックエンドを持っているのも大きな特徴。
-ユースケースがよく分からないが。&lt;/p&gt;
-
-&lt;p&gt;GitHubにホストされているKotlinプロジェクトは、2016/4/15現在、全体の &lt;strong&gt;0.1%&lt;/strong&gt; (&lt;sup&gt;3493&lt;/sup&gt;&amp;frasl;&lt;sub&gt;3215549&lt;/sub&gt;) しかない。
-v1のリリースは結構注目を集めたので、この割合は今後増えていくと期待される。&lt;/p&gt;
-
-&lt;h2 id=&#34;kotlinのインストール&#34;&gt;Kotlinのインストール&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://kotlinlang.org/docs/tutorials/&#34;&gt;チュートリアル&lt;/a&gt;に従えば、IDEやテキストエディタ+コマンドラインの環境を整えてHello Worldを書いて実行するところまで簡単にできる。
-筆者はEclipse(Mars)とコマンドラインの環境をWindows 7上で作った。
-Kotlinのバージョンは1.0.1-2。&lt;/p&gt;
-
-&lt;p&gt;コマンドラインについては、&lt;a href=&#34;https://github.com/JetBrains/kotlin/releases/latest&#34;&gt;GitHub Releases&lt;/a&gt;からアーカイブをダウンロードして、適当なところに展開して&lt;code&gt;bin&lt;/code&gt;フォルダにパスを通すだけ。
-前提となるJavaについては、環境変数&lt;code&gt;JAVA_HOME&lt;/code&gt;を設定するか、&lt;code&gt;java&lt;/code&gt;コマンドにパスを通せばいい模様。&lt;/p&gt;
-
-&lt;p&gt;因みにKotlinの書き方は、&lt;a href=&#34;https://kotlinlang.org/docs/tutorials/koans.html&#34;&gt;Kotlin Koans&lt;/a&gt;という例題集を&lt;a href=&#34;http://try.kotlinlang.org/koans&#34;&gt;オンラインのIDE&lt;/a&gt;で解きながらを学ぶことができる。&lt;/p&gt;
-
-&lt;h2 id=&#34;パケットキャプチャ-with-pcap4j-in-java&#34;&gt;パケットキャプチャ with Pcap4J in Java&lt;/h2&gt;
-
-&lt;p&gt;Pcap4Jでパケットキャプチャするコードを普通にJavaで書くと以下の様になる。
-(&lt;a href=&#34;https://www.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/&#34;&gt;Groovy&lt;/a&gt;の時のと一緒。)&lt;/p&gt;
-
-&lt;p&gt;&lt;script src=&#34;https://gist.github.com/kaitoy/eebcd5bdfab179cab916d3182f3d6d11.js&#34;&gt;&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;p&gt;これを実行すると、パケットキャプチャするネットワークインターフェースを選択し、5つのパケットをキャプチャしてタイムスタンプと共にコンソールに表示する。&lt;/p&gt;
-
-&lt;h2 id=&#34;パケットキャプチャ-with-pcap4j-in-kotlin&#34;&gt;パケットキャプチャ with Pcap4J in Kotlin&lt;/h2&gt;
-
-&lt;p&gt;上記処理をKotlinで書くと以下の様になる。&lt;/p&gt;
-
-&lt;p&gt;&lt;script src=&#34;https://gist.github.com/kaitoy/074769880c7bf4c0628c1c25a724c1a7.js&#34;&gt;&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;p&gt;メインクラスはGroovy同様書かなくていいが、&lt;code&gt;main&lt;/code&gt;関数は必要。&lt;/p&gt;
-
-&lt;p&gt;型推論があってとても楽。
-ラムダ式、補間文字列(String interpolation)、名前付き引数といったモダンめな機能は普通に使える。
-(名前付き引数はJavaで書いたメソッドをKotlinから呼ぶときは使えない。)&lt;/p&gt;
-
-&lt;p&gt;オープンクラスを実現する機能である&lt;a href=&#34;https://kotlinlang.org/docs/reference/extensions.html&#34;&gt;Extensions&lt;/a&gt;を&lt;code&gt;PcapHandle&lt;/code&gt;に使ってみた。
-なんだか便利そう。&lt;/p&gt;
-
-&lt;p&gt;Nullable/Non-Null型がすごい。言語仕様で&lt;code&gt;NullPointerException&lt;/code&gt;が発生しないように守ってくれる。
-例えば&lt;code&gt;filter&lt;/code&gt;は宣言の時点では初期化文で&lt;code&gt;null&lt;/code&gt;が入る可能性があるので&lt;code&gt;Nullable&lt;/code&gt;な&lt;code&gt;String&lt;/code&gt;という型に推論されるが、&lt;code&gt;filter?.let&lt;/code&gt;というNullチェックをするメソッドに渡したブロック内では自動で&lt;code&gt;Non-Null&lt;/code&gt;な&lt;code&gt;String&lt;/code&gt;にキャストされ、&lt;code&gt;filter.length&lt;/code&gt;を安全に評価できるようになっている。
-Nullチェックをしないで&lt;code&gt;filter.length&lt;/code&gt;と書くとコンパイルエラーになる。すごい。&lt;/p&gt;
-
-&lt;p&gt;けどJavaのコードから返ってくるオブジェクトは普通、プラットフォーム型というものになり、このNullセーフな仕組みが働かない。
-これに対しては&lt;a href=&#34;https://kotlinlang.org/docs/reference/java-interop.html#nullability-annotations&#34;&gt;Null可能性アノテーション&lt;/a&gt;を使えば幸せになれるらしい。&lt;/p&gt;
-
-&lt;p&gt;さらに、上記コードには表れていないが、キャストも安全になっている模様。(cf. &lt;a href=&#34;http://kotlinlang.org/docs/reference/typecasts.html#smart-casts&#34;&gt;スマートキャスト&lt;/a&gt;、&lt;a href=&#34;http://kotlinlang.org/docs/reference/typecasts.html#safe-nullable-cast-operator&#34;&gt;セーフキャスト&lt;/a&gt;)&lt;/p&gt;
-
-&lt;p&gt;Kotlinは基本コンパイラ言語なので、上記コードを実行するには以下ようなコマンドで一旦コンパイルする必要がある。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;kotlinc -cp pcap4j-core.jar Pcap4jLoop.kt -include-runtime -d Pcap4jLoop.jar
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;このコマンドだとKotlinのランタイム入りjarファイルができる。
-このjarを、Pcap4J 1.6.2、Slf4J 1.7.12、JNA 4.2.1を使って、以下のコマンドで実行できることを確認した。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;java -cp pcap4j-core.jar;pcap4j-packetfactory-static.jar;jna.jar;slf4j-api.jar;Pcap4jLoop.jar Pcap4jLoopKt tcp
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;このコマンドで指定しているメインクラス&lt;code&gt;Pcap4jLoopKt&lt;/code&gt;は、上記コードでクラスの記述を省いた為にKotlinがソースファイル名(Pcap4jLoop.kt)を基に自動生成したもの。&lt;/p&gt;
-
-&lt;p&gt;コンパイル/実行方法は&lt;a href=&#34;https://kotlinlang.org/docs/tutorials/command-line.html#creating-and-running-a-first-application&#34;&gt;他にもある&lt;/a&gt;。&lt;/p&gt;
-
-&lt;h2 id=&#34;スクリプトなkotlin&#34;&gt;スクリプトなKotlin&lt;/h2&gt;
-
-&lt;p&gt;Kotlinプログラムはスクリプトとしても書けて、コンパイル無しで実行することができる。
-この場合、&lt;code&gt;main&lt;/code&gt;関数は消してその中身をトップレベルに書き、ファイルの拡張子を&lt;code&gt;.kts&lt;/code&gt;にする。&lt;/p&gt;
-
-&lt;p&gt;&lt;script src=&#34;https://gist.github.com/kaitoy/b6ee844ad2353585a30984ef0bedf844.js&#34;&gt;&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;p&gt;上記スクリプトは以下のコマンドで実行できた。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;kotlinc -cp pcap4j-core.jar;jna.jar;pcap4j-packetfactory-static.jar;slf4j-api.jar -script Pcap4jLoop.kts tcp
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;EclipseのKotlinプラグインはこのスクリプト形式をまだサポートしていないようで残念。&lt;/p&gt;
 </description>
         </item>
       

@@ -14,9 +14,9 @@
     <link rel="canonical" href="https://www.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 前回はNode.jsとYarnとBabelとwebpackをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); Reactとは 以前にも同じような事を書いたけど、改めてReactについて書く。 ちょっとコーディングの詳細にも触れながら。 ReactはViewを記述するためのライブラリで、特徴はVirtual DOMとJSX。 Virtual DOM Virtual DOMはDOMを仮想化するもので、JavaScriptからVirtual DOMでUIを記述してやると、それが実DOMに効率的に反映されるようになっている。 JSX Virtual DOMはJSXというHTMLみたいな言語で記述できる。 import React from &#39;react&#39;; import ReactDOM from &#39;react-dom&#39;; ReactDOM.render( &lt;h1&gt;Hello, world!&lt;/h1&gt;, document.getElementById(&#39;root&#39;) ); こんな風に書くと、idがrootであるHTML要素の中に、&lt;h1&gt;Hello, world!&lt;/h1&gt;がレンダリングされる。 上記コードの&lt;h1&gt;Hello, world!&lt;/h1&gt;の部分がJSX。 コンポーネント JSXではコンポーネントを定義して新たなタグとして使うことができるので、再利用できるコンポーネントを作って、それらを組み合わせてUIを構築することで、効率的な開発ができる。 import React from &#39;react&#39;; import ReactDOM from &#39;react-dom&#39;; // Welcomeコンポーネントの定義 function Welcome() { return &lt;h1&gt;Hello, World&lt;/h1&gt;; } // Welcomeコンポーネントのレンダリング ReactDOM.render( &lt;Welcome /&gt;, document.getElementById(&#39;root&#39;) ); 上記コードではコンポーネントをfunctionで定義しているが、アロー関数で書いても全く一緒。 const Welcome = () =&gt; ( &lt;h1&gt;Hello, World&lt;/h1&gt;; ); 関数の代わりにclassで定義することもできる。 class Welcome extends React.Component { render() { return &lt;h1&gt;Hello, World&lt;/h1&gt;; } } 関数による定義とclassによる定義はおおむね変わらないが、stateとライフサイクルメソッドを使いたいときはclassにする必要がある。 props コンポーネントはレンダリングの際にpropsというパラメータを受け取って使うことができるので、上手く設計すれば汎用的なコンポーネントが書ける。 import React from &#39;react&#39;; import ReactDOM from &#39;react-dom&#39;; // Welcomeコンポーネントの定義 (props付き) function Welcome(props) { return &lt;h1&gt;Hello, {props.name}&lt;/h1&gt;; } // Welcomeコンポーネントのレンダリング (props付き) ReactDOM.render( &lt;Welcome name=&quot;Kaitoy&quot; /&gt;, document.getElementById(&#39;root&#39;) ); propsはイミュータブルにしてコンポーネント内で変更しない(i.e.">
+    <meta property="og:description" content="ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 前回はReactをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); フォーマッタとリンタ プロジェクトにフォーマッタとリンタを導入する。 フォーマッタはソースの体裁を整えるツール。 フォーマッタを使うことで体裁が統一され、ソースが読みやすくなり、品質向上につながる。 リンタはソースを静的解析して、潜在的なバグ、構造的な問題、体裁の問題を検出して警告してくれるツール。 フォーマッタは体裁だけ整えるのに対し、リンタは論理構造にも制約を課せるので、コーディングスタイルがより統一できたり、ミスをしやすい論理構造が無くなったりして、品質向上につながる。 JavaScriptのような動的型付け言語では、実行時まで顕在化しないバグを作りこみやすく、また実行時エラーの原因解析が静的型付け言語に比べて難しいので、フォーマッタとリンタでプログラム実行前に問題をできるだけ取り除いておくのが重要。 またチーム開発では、コードレビューでコーディンスタイルを見る必要がなくなり、効率化につながる。 Prettier フォーマッタにはPrettierを使う。 Prettierは2017年1月にリリースされた新しいツール。 構文解析をしてASTを構築し、そこからフォーマット済みコードを出力するので、従来のツールよりも厳密な整形(e.g. 行の最大長を考慮した整形)ができる。 また、opinionated(独断的)であることも特徴で、Prettierプロジェクトが推奨するフォーマットをほぼ強制し、設定がほとんどない。 このため導入が簡単だけど、かゆいところに手が届かないこともある。 JavaScriptの他、JSX、CSS、Markdown、GraphQLのフォーマットにも対応している。 まずプロジェクトにインストールする。 yarn add -D prettier v1.14.0が入った。 設定はprettier.config.jsというファイルを書いてプロジェクトルートに置けばいい。 prettier.config.js: module.exports = { printWidth: 100, // 行の最大長 tabWidth: 2, // インデント長 singleQuote: true, // 文字列をシングルクオートで囲う trailingComma: &#39;all&#39;, // オブジェクトのプロパティとか関数の引数を複数行で書いたときに、全行の末尾にカンマをつける }; また、フォーマット対象外のファイルを指定するファイルである.prettierignoreをプロジェクトルートに置く。 .prettierignore: node_modules/ dist/ node_modulesはnpmパッケージが入るディレクトリ。 実際はnode_modulesはデフォルトで無視されるから書かなくていいんだけど。 prettier-ignoreコメントを書くことで、ソースを部分的にフォーマット対象外とすることもできる。 最後に、npmスクリプトを書く。 package.json: (前略) &quot;scripts&quot;: { &#43; &quot;format&quot;: &quot;prettier --write **/*.jsx **/*.js **/*.css&quot;, &quot;build&quot;: &quot;webpack --config webpack.prod.js&quot;, &quot;start&quot;: &quot;webpack-dev-server --hot --config webpack.dev.js&quot; }, (後略) これで、yarn formatを実行するとプロジェクト内ソースを一通りフォーマットできる。 ESLint リンタにはデファクトスタンダードのESLintを使う。 ESLintは2013年6月にリリースされたそこそこ歴史のあるツール。 リンティングルールがプラガブルで、豊富なルールを細かく制御できるのが特徴。 フォーマッタとしての機能もあるけど、そこはPrettierにまかせることにする。 JavaScriptもJSXもリンティングできる。 リンティングルールはAirbnbによるeslint-config-airbnbが有名なのでこれを使う。 ESLintを導入するために、以下のパッケージをプロジェクトにインストールする。 eslint: ESLint本体。 eslint-loader: webpackからESLintを実行するやつ。 eslint-config-airbnb: ESLintルール設定集。 eslint-plugin-import: eslint-config-airbnbのピア依存。import文を処理するためのESLintプラグイン。 eslint-plugin-jsx-a11y: eslint-config-airbnbのピア依存。JSXを処理するためのESLintプラグイン。 eslint-plugin-react: eslint-config-airbnbのピア依存。React特有のリンティングルールを追加するESLintプラグイン。 eslint-config-prettier: Prettierが施すコード整形とコンフリクトするルールを無効にするESLintルール設定集。 ピア依存をインストールするのにはちょっとコツがいるので、eslint-config-airbnbのドキュメントを参照すべし。 今回は以下のコマンドでインストールした。 yarn add -D &quot;eslint@&gt;=1.6.0 &lt;5.0.0&quot; eslint-loader eslint-config-airbnb &quot;eslint-plugin-import@^2.12.0&quot; &quot;eslint-plugin-jsx-a11y@^6.0.3&quot; &quot;eslint-plugin-react@^7.9.1&quot; eslint-config-prettier ESlintはv4.19.1が入った。 ESlintの設定は、設定ファイルである.eslintrc.jsをプロジェクトルートに置けばいい。 .eslintrc.js: module.exports = { env: { browser: true, }, extends: [&#39;airbnb&#39;, &#39;prettier&#39;], }; アプリの実行環境はブラウザなのでenv.browserをtrueにしている。 これにより、ブラウザ環境でデフォルトで使えるグローバル変数(e.g.">
     
-    <meta property="og:image" content="https://www.kaitoy.xyz/images/react.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/prettier-eslint.png">
     
     
     
@@ -82,6 +82,28 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/prettier-eslint.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Thu, Aug 23, 2018</span>
+              </div>
+              <h2 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その3: PrettierとESLint</h2>
+              <div class="summary">
+                ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 前回はReactをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); フォーマッタとリンタ プロジェクトにフォーマッタとリンタを導入する。 フォーマッタはソースの体裁を整えるツール。 フォーマッタを使うことで体裁が統一され、ソースが読みやすくなり、品質向上につながる。 リンタはソースを静的解析して、潜在的なバグ、構造的な問題、体裁の問題を検出して警告してくれるツール。 フォーマッタは体裁だけ整えるのに対し、リンタは論理構造にも制約を課せるので、コーディングスタイルがより統一できたり、ミスをしやすい論理構造が無くなったりして、品質向上につながる。 JavaScriptのような動的型付け言語では、実行時まで顕在化しないバグを作りこみやすく、また実行時エラーの原因解析が静的型付け言語に比べて難しいので、フォーマッタとリンタでプログラム実行前に問題をできるだけ取り除いておくのが重要。 またチーム開発では、コードレビューでコーディンスタイルを見る必要がなくなり、効率化につながる。 Prettier フォーマッタにはPrettierを使う。 Prettierは2017年1月にリリースされた新しいツール。 構文解析をしてASTを構築し、そこからフォーマット済みコードを出力するので、従来のツールよりも厳密な整形(e.g. 行の最大長を考慮した整形)ができる。 また、opinionated(独断的)であることも特徴で、Prettierプロジェクトが推奨するフォーマットをほぼ強制し、設定がほとんどない。 このため導入が簡単だけど、かゆいところに手が届かないこともある。 JavaScriptの他、JSX、CSS、Markdown、GraphQLのフォーマットにも対応している。 まずプロジェクトにインストールする。 yarn add -D prettier v1.14.0が入った。 設定はprettier.config.jsというファイルを書いてプロジェクトルートに置けばいい。 prettier.config.js: module.exports = { printWidth: 100, // 行の最大長 tabWidth: 2, // インデント長 singleQuote: true, // 文字列をシングルクオートで囲う trailingComma: 'all', // オブジェクトのプロパティとか関数の引数を複数行で書いたときに、全行の末尾にカンマをつける }; また、フォーマット対象外のファイルを指定するファイルである.prettierignoreをプロジェクトルートに置く。 .prettierignore: node_modules/ dist/ node_modulesはnpmパッケージが入るディレクトリ。 実際はnode_modulesはデフォルトで無視されるから書かなくていいんだけど。 prettier-ignoreコメントを書くことで、ソースを部分的にフォーマット対象外とすることもできる。 最後に、npmスクリプトを書く。 package.json: (前略) &quot;scripts&quot;: { + &quot;format&quot;: &quot;prettier --write **/*.jsx **/*.js **/*.css&quot;, &quot;build&quot;: &quot;webpack --config webpack.prod.js&quot;, &quot;start&quot;: &quot;webpack-dev-server --hot --config webpack.dev.js&quot; }, (後略) これで、yarn formatを実行するとプロジェクト内ソースを一通りフォーマットできる。 ESLint リンタにはデファクトスタンダードのESLintを使う。 ESLintは2013年6月にリリースされたそこそこ歴史のあるツール。 リンティングルールがプラガブルで、豊富なルールを細かく制御できるのが特徴。 フォーマッタとしての機能もあるけど、そこはPrettierにまかせることにする。 JavaScriptもJSXもリンティングできる。 リンティングルールはAirbnbによるeslint-config-airbnbが有名なのでこれを使う。 ESLintを導入するために、以下のパッケージをプロジェクトにインストールする。 eslint: ESLint本体。 eslint-loader: webpackからESLintを実行するやつ。 eslint-config-airbnb: ESLintルール設定集。 eslint-plugin-import: eslint-config-airbnbのピア依存。import文を処理するためのESLintプラグイン。 eslint-plugin-jsx-a11y: eslint-config-airbnbのピア依存。JSXを処理するためのESLintプラグイン。 eslint-plugin-react: eslint-config-airbnbのピア依存。React特有のリンティングルールを追加するESLintプラグイン。 eslint-config-prettier: Prettierが施すコード整形とコンフリクトするルールを無効にするESLintルール設定集。 ピア依存をインストールするのにはちょっとコツがいるので、eslint-config-airbnbのドキュメントを参照すべし。 今回は以下のコマンドでインストールした。 yarn add -D &quot;eslint@&gt;=1.6.0 &lt;5.0.0&quot; eslint-loader eslint-config-airbnb &quot;eslint-plugin-import@^2.12.0&quot; &quot;eslint-plugin-jsx-a11y@^6.0.3&quot; &quot;eslint-plugin-react@^7.9.1&quot; eslint-config-prettier ESlintはv4.19.1が入った。 ESlintの設定は、設定ファイルである.eslintrc.jsをプロジェクトルートに置けばいい。 .eslintrc.js: module.exports = { env: { browser: true, }, extends: ['airbnb', 'prettier'], }; アプリの実行環境はブラウザなのでenv.browserをtrueにしている。 これにより、ブラウザ環境でデフォルトで使えるグローバル変数(e.g.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2018/08/22/creating-react-redux-app-from-scratch-02/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/react.png" alt="eyecatch">
@@ -142,33 +164,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2018/06/30/packer-esxi/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2018/06/30/packer-esxi/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/packer-esxi.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Sat, Jun 30, 2018</span>
               </div>
-              <h2 class="title">PackerでESXiにVMを自動構築</h2>
-              <div class="summary">
-                前回「Packer + Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築」で、やったことをESXiでやっただけ。 書いたコードはGitHubに置いてある。 (adsbygoogle = window.adsbygoogle || []).push({}); 前回との違い VirtualBoxとESXiとで変えないといけない部分は、主にPackerのbuilderの定義。 前回はvirtualbox-isoだったけど、今回はvmware-isoを使う。 それに伴ってパラメータが結構違ってくる。 いっこトリッキーだったのが、cdrom_adapter_typeにideを明示的に指定しておかないと、CDロムドライブがSCSIになって、OSのインストールメディアのマウントか読み取り辺りでエラーになってしまったところ。 環境によっては指定しないでいいかも。 また、&quot;vnc_disable_password&quot;: &quot;true&quot;をbuilderに指定しておかないと、Packerが「Error handshaking with VNC: no suitable auth schemes found. server supported: []byte{0x1}」というエラーを出す。 あとは、Nested Virtualizationでやった(下記)ので、すごく遅くて、色々タイムアウトを伸ばしたりしてやる必要があった。 ESXi環境 ESXi(というかVMware vSphere Hypervisor)は、現時点での最新の6.7を使用。 自前のWindows 10 HomeのノートPC上で動くVMware Player 12で作ったVMにESXiをインストールして環境を作った。 (因みにVirtualBoxにもインストールしてみたESXi上ではVM作成できなかった。VirtualBoxは今の時点でNested Virtualization未サポートで、サポートする予定もない模様。) Packerから操作するには、以下の設定をする必要がある。 静的IPアドレスを設定。Packerからの接続先に指定するので。 SSH有効化。PackerがSSHで接続するので。 因みにSSHクライアントでESXiにつなぐときは、チャレンジ/レスポンス認証になる。 GuestIPHack の有効化 ESXiにSSHでログインして「esxcli system settings advanced set -o /Net/GuestIPHack -i 1」 ファイアウォール設定でVNCポート(TCP5900番台)を開ける。 これをしないとPackerが「Starting HTTP server on port xxxx」でハングする。 けどこれが一筋縄ではいかない。この記事にあるように、/etc/vmware/firewall/service.xmlに設定を追加して「esxcli
-              </div>
+              <h3 class="title">PackerでESXiにVMを自動構築</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         
@@ -1783,6 +1802,9 @@
       <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
       
       
+      <a href="https://www.kaitoy.xyz/tags/eslint">eslint</a>
+      
+      
       <a href="https://www.kaitoy.xyz/tags/esxi">esxi</a>
       
       
@@ -1883,6 +1905,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/prettier">prettier</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/react">react</a>

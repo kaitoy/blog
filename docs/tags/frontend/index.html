@@ -74,6 +74,27 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="/images/prettier-eslint.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Thu, Aug 23, 2018</span>
+              </div>
+              <h2 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その3: PrettierとESLint</h2>
+              <div class="summary">
+                ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 前回はReactをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); フォーマッタとリンタ プロジェクトにフォーマッタとリンタを導入する。 フォーマッタはソースの体裁を整えるツール。 フォーマッタを使うことで体裁が統一され、ソースが読みやすくなり、品質向上につながる。 リンタはソースを静的解析して、潜在的なバグ、構造的な問題、体裁の問題を検出して警告してくれるツール。 フォーマッタは体裁だけ整えるのに対し、リンタは論理構造にも制約を課せるので、コーディングスタイルがより統一できたり、ミスをしやすい論理構造が無くなったりして、品質向上につながる。 JavaScriptのような動的型付け言語では、実行時まで顕在化しないバグを作りこみやすく、また実行時エラーの原因解析が静的型付け言語に比べて難しいので、フォーマッタとリンタでプログラム実行前に問題をできるだけ取り除いておくのが重要。 またチーム開発では、コードレビューでコーディンスタイルを見る必要がなくなり、効率化につながる。 Prettier フォーマッタにはPrettierを使う。 Prettierは2017年1月にリリースされた新しいツール。 構文解析をしてASTを構築し、そこからフォーマット済みコードを出力するので、従来のツールよりも厳密な整形(e.g. 行の最大長を考慮した整形)ができる。 また、opinionated(独断的)であることも特徴で、Prettierプロジェクトが推奨するフォーマットをほぼ強制し、設定がほとんどない。 このため導入が簡単だけど、かゆいところに手が届かないこともある。 JavaScriptの他、JSX、CSS、Markdown、GraphQLのフォーマットにも対応している。 まずプロジェクトにインストールする。 yarn add -D prettier v1.14.0が入った。 設定はprettier.config.jsというファイルを書いてプロジェクトルートに置けばいい。 prettier.config.js: module.exports = { printWidth: 100, // 行の最大長 tabWidth: 2, // インデント長 singleQuote: true, // 文字列をシングルクオートで囲う trailingComma: 'all', // オブジェクトのプロパティとか関数の引数を複数行で書いたときに、全行の末尾にカンマをつける }; また、フォーマット対象外のファイルを指定するファイルである.prettierignoreをプロジェクトルートに置く。 .prettierignore: node_modules/ dist/ node_modulesはnpmパッケージが入るディレクトリ。 実際はnode_modulesはデフォルトで無視されるから書かなくていいんだけど。 prettier-ignoreコメントを書くことで、ソースを部分的にフォーマット対象外とすることもできる。 最後に、npmスクリプトを書く。 package.json: (前略) &quot;scripts&quot;: { + &quot;format&quot;: &quot;prettier --write **/*.jsx **/*.js **/*.css&quot;, &quot;build&quot;: &quot;webpack --config webpack.prod.js&quot;, &quot;start&quot;: &quot;webpack-dev-server --hot --config webpack.dev.js&quot; }, (後略) これで、yarn formatを実行するとプロジェクト内ソースを一通りフォーマットできる。 ESLint リンタにはデファクトスタンダードのESLintを使う。 ESLintは2013年6月にリリースされたそこそこ歴史のあるツール。 リンティングルールがプラガブルで、豊富なルールを細かく制御できるのが特徴。 フォーマッタとしての機能もあるけど、そこはPrettierにまかせることにする。 JavaScriptもJSXもリンティングできる。 リンティングルールはAirbnbによるeslint-config-airbnbが有名なのでこれを使う。 ESLintを導入するために、以下のパッケージをプロジェクトにインストールする。 eslint: ESLint本体。 eslint-loader: webpackからESLintを実行するやつ。 eslint-config-airbnb: ESLintルール設定集。 eslint-plugin-import: eslint-config-airbnbのピア依存。import文を処理するためのESLintプラグイン。 eslint-plugin-jsx-a11y: eslint-config-airbnbのピア依存。JSXを処理するためのESLintプラグイン。 eslint-plugin-react: eslint-config-airbnbのピア依存。React特有のリンティングルールを追加するESLintプラグイン。 eslint-config-prettier: Prettierが施すコード整形とコンフリクトするルールを無効にするESLintルール設定集。 ピア依存をインストールするのにはちょっとコツがいるので、eslint-config-airbnbのドキュメントを参照すべし。 今回は以下のコマンドでインストールした。 yarn add -D &quot;eslint@&gt;=1.6.0 &lt;5.0.0&quot; eslint-loader eslint-config-airbnb &quot;eslint-plugin-import@^2.12.0&quot; &quot;eslint-plugin-jsx-a11y@^6.0.3&quot; &quot;eslint-plugin-react@^7.9.1&quot; eslint-config-prettier ESlintはv4.19.1が入った。 ESlintの設定は、設定ファイルである.eslintrc.jsをプロジェクトルートに置けばいい。 .eslintrc.js: module.exports = { env: { browser: true, }, extends: ['airbnb', 'prettier'], }; アプリの実行環境はブラウザなのでenv.browserをtrueにしている。 これにより、ブラウザ環境でデフォルトで使えるグローバル変数(e.g.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2018/08/22/creating-react-redux-app-from-scratch-02/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="/images/react.png" alt="eyecatch">
@@ -224,6 +245,9 @@
       <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
       
       
+      <a href="https://www.kaitoy.xyz/tags/eslint">eslint</a>
+      
+      
       <a href="https://www.kaitoy.xyz/tags/esxi">esxi</a>
       
       
@@ -324,6 +348,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/prettier">prettier</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/react">react</a>
