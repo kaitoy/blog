@@ -217,4 +217,4 @@ package.json:
 
 以上で、フォーマッタとリンタを導入できた。
 
-次回はCSS周りの処理系を追加する。
+[次回](https://www.kaitoy.xyz/2018/08/29/creating-react-redux-app-from-scratch-04/)はCSS周りの処理系を追加する。
