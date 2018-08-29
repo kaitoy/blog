@@ -6,8 +6,383 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2018</rights>
-    <updated>2018-08-23 00:19:09 &#43;0900 JST</updated>
+    <updated>2018-08-29 23:50:53 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その4: CSS ModulesとPostCSSとstylelintとstyled-components</title>
+          <link>https://www.kaitoy.xyz/2018/08/29/creating-react-redux-app-from-scratch-04/</link>
+          <pubDate>Wed, 29 Aug 2018 23:50:53 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2018/08/29/creating-react-redux-app-from-scratch-04/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;https://reactjs.org/&#34;&gt;React&lt;/a&gt;と&lt;a href=&#34;https://redux.js.org/&#34;&gt;Redux&lt;/a&gt;を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/&#34;&gt;前回&lt;/a&gt;はPrettierとESLintをセットアップした。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h1 id=&#34;css&#34;&gt;CSS&lt;/h1&gt;
+
+&lt;p&gt;前回までで作った環境で、Reactを使ってHTMLのDOMツリーを構築することができるようになったが、これは基本的にUIに表示する情報の構造しか定義しない。
+UIの見た目(スタイル)を決めるのはCSSなので、それをアプリに組み込むことを考えないといけない。&lt;/p&gt;
+
+&lt;p&gt;組み込み方には現時点で大きく3通りある。&lt;/p&gt;
+
+&lt;h2 id=&#34;cssを別途設計する&#34;&gt;CSSを別途設計する&lt;/h2&gt;
+
+&lt;p&gt;一つ目はCSSを別途設計する方法。&lt;/p&gt;
+
+&lt;p&gt;Reactコンポーネントからレンダリングされる要素にclassが付くようにしておいて、設計したCSSをbundle.jsとは別途読み込んでスタイルを適用することにはる。&lt;/p&gt;
+
+&lt;p&gt;この場合、CSSのスタイル定義はすべてグローバルなので、設計効率やメンテナンス効率を維持しつつ、各コンポーネントに意図したスタイルが適用されるようにするため、テクニックを凝らしてCSSクラスを設計する必要がある。
+例えば&lt;a href=&#34;https://en.bem.info/&#34;&gt;BEM&lt;/a&gt; (2009年3月誕生)、&lt;a href=&#34;http://oocss.org/&#34;&gt;OOCSS&lt;/a&gt; (2009年3月誕生)、&lt;a href=&#34;https://smacss.com/ja&#34;&gt;SMACSS&lt;/a&gt; (2011年9月誕生)、&lt;a href=&#34;https://github.com/hiloki/flocss&#34;&gt;FLOCSS&lt;/a&gt; (2014年4月誕生)など。&lt;/p&gt;
+
+&lt;p&gt;CSS自体は、素のCSSを書くことはあまりなく、普通は&lt;a href=&#34;https://sass-lang.com/&#34;&gt;Sass&lt;/a&gt;などのAltCSSや&lt;a href=&#34;https://postcss.org/&#34;&gt;PostCSS&lt;/a&gt;を使って書く。&lt;/p&gt;
+
+&lt;p&gt;さらに、&lt;a href=&#34;https://github.com/stylelint/stylelint&#34;&gt;stylelint&lt;/a&gt;でリンティングすることで、CSSの品質を上げられる。
+リンティングルールは、stylelintプロジェクトから提供されている&lt;a href=&#34;https://github.com/stylelint/stylelint-config-recommended&#34;&gt;stylelint-config-recommended&lt;/a&gt;か&lt;a href=&#34;https://github.com/stylelint/stylelint-config-standard&#34;&gt;stylelint-config-standard&lt;/a&gt;を使えば十分。
+後者がGoogleやAirbnbのCSSスタイルガイドを反映していていい感じ。&lt;/p&gt;
+
+&lt;p&gt;書いたCSSは、webpackの&lt;a href=&#34;https://github.com/webpack-contrib/css-loader&#34;&gt;css-loader&lt;/a&gt;で読み込める。
+webpackはJavaScriptの&lt;code&gt;import &#39;./App.css&#39;;&lt;/code&gt;みたいなコードを見つけると、css-loaderに処理を渡す。
+css-loaderは、&lt;code&gt;import&lt;/code&gt;文で指定されたCSSファイルだけでなく、&lt;code&gt;@import&lt;/code&gt;や&lt;code&gt;url()&lt;/code&gt;で定義される依存関係をたどって関連するCSSを一通り読み込む。&lt;/p&gt;
+
+&lt;p&gt;読み込んだCSSは、webpackの&lt;a href=&#34;https://github.com/webpack-contrib/style-loader&#34;&gt;style-loader&lt;/a&gt;を使ってDOMに適用できる。
+style-loaderは、読み込んだCSSを&lt;code&gt;&amp;lt;style&amp;gt;&lt;/code&gt;タグで囲ってHTMLのヘッダに挿入してくれる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;CSSの処理にはPostCSSを使うとして、プロジェクトに以下のパッケージを追加する。
+(PostCSSについては&lt;a href=&#34;https://qiita.com/morishitter/items/4a04eb144abf49f41d7d&#34;&gt;Qiitaの記事&lt;/a&gt;が参考になった。)&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;css-loader: CSSを読み込むためのwebpackのローダ。&lt;/li&gt;
+&lt;li&gt;style-loader: CSSをDOMに追加するためのwebpackのローダ。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/postcss/postcss-loader&#34;&gt;postcss-loader&lt;/a&gt;: PostCSSを実行するためのwebpackのローダ。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://preset-env.cssdb.org/&#34;&gt;postcss-preset-env&lt;/a&gt;: CSSのエッジな機能を使うためのPostCSSプラグイン。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/postcss/autoprefixer&#34;&gt;autoprefixer&lt;/a&gt;: CSSプロパティにベンダプレフィックスを追加してくれるPostCSSプラグイン。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/luisrudge/postcss-flexbugs-fixes&#34;&gt;postcss-flexbugs-fixes&lt;/a&gt;: &lt;a href=&#34;https://www.w3schools.com/css/css3_flexbox.asp&#34;&gt;Flexbox&lt;/a&gt;のバグを修正してくれるPostCSSプラグイン。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/cssnano/cssnano&#34;&gt;cssnano&lt;/a&gt;: CSSをミニファイしてくれるPostCSSプラグイン。&lt;/li&gt;
+&lt;li&gt;stylelint: CSSのリンタ。&lt;/li&gt;
+&lt;li&gt;stylelint-config-standard: stylelintのルール設定集。&lt;/li&gt;
+&lt;li&gt;stylelint-config-prettier: &lt;a href=&#34;https://prettier.io/&#34;&gt;Prettier&lt;/a&gt;が施すコード整形とコンフリクトするルールを無効にするstylelintルール設定集。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D css-loader style-loader postcss-loader postcss-preset-env autoprefixer postcss-flexbugs-fixes cssnano stylelint stylelint-config-standard stylelint-config-prettier
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;PostCSSとstylelintの設定は、それぞれpostcss.config.jsとstylelint.config.jsを書いてプロジェクトルートに置けばいい。&lt;/p&gt;
+
+&lt;p&gt;postcss.config.js:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;module.exports = {
+  plugins: {
+    stylelint: {},
+    &#39;postcss-preset-env&#39;: {},
+    autoprefixer: {},
+    &#39;postcss-flexbugs-fixes&#39;: {},
+    cssnano: {},
+  },
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;stylelint.config.js:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;module.exports = {
+  extends: [&#39;stylelint-config-standard&#39;, &#39;stylelint-config-prettier&#39;],
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;stylelintはPostCSSのプラグインとしてPostCSSから実行する構成。&lt;/p&gt;
+
+&lt;p&gt;stylelint.config.jsで、stylelint-config-prettierはextendsの最後に書く必要があることに注意。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;webpackにもローダの設定を追加する。&lt;/p&gt;
+
+&lt;p&gt;webpack.common.js:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; (前略)
+       {
+         test: /\.(js|jsx)$/,
+         include: [path.resolve(__dirname, &#39;src&#39;)],
+         loader: &#39;babel-loader&#39;,
+       },
++      {
++        test: /\.css$/,
++        include: [path.resolve(__dirname, &#39;src&#39;)],
++        use: [
++          &#39;style-loader&#39;,
++          {
++            loader: &#39;css-loader&#39;,
++            options: {
++              importLoaders: 1,
++            },
++          },
++          &#39;postcss-loader&#39;,
++        ],
++      },
+     ],
+   },
+ (後略)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ここで追加した設定は、&lt;code&gt;&amp;lt;プロジェクトルート&amp;gt;/src&lt;/code&gt;ディレクトリ内の&lt;code&gt;.css&lt;/code&gt;ファイルが&lt;code&gt;import&lt;/code&gt;されたら、postcss-loader、css-loader、style-loaderの順にそのファイルを処理する、というもの。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;実際のCSSは普通に書いて、JavaScriptからimportしてやればいい。&lt;/p&gt;
+
+&lt;p&gt;components/App.css:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-css&#34;&gt;.normal {
+  font-size: 5rem;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;components/App.jsx:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
++import &#39;./App.css&#39;
+
+ const App = () =&amp;gt; (
+-  &amp;lt;div&amp;gt;
++  &amp;lt;div className=&amp;quot;normal&amp;quot;&amp;gt;
+     HOGE
+   &amp;lt;/div&amp;gt;
+ );
+
+ export default App;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;JSXでHTML要素にclass属性を付けるには、classNameプロパティを使うことに注意。&lt;/p&gt;
+
+&lt;p&gt;これでHOGEに&lt;code&gt;font-size: 5rem&lt;/code&gt;が適用され、文字が大きくなる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;以上でCSSを適用できた。&lt;/p&gt;
+
+&lt;p&gt;これはこれで十分で柔軟なやりかただけど、BEMなどでCSSクラスの設計を頑張る手間がある。
+UIコンポーネントの構造とスタイルの構造を1対1対応させるなら、もっと楽な方法がある。&lt;/p&gt;
+
+&lt;h2 id=&#34;css-modules&#34;&gt;CSS Modules&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/css-modules/css-modules&#34;&gt;CSS Modules&lt;/a&gt;は2015年9月に&lt;a href=&#34;https://postd.cc/css-modules/&#34;&gt;発表&lt;/a&gt;された技術で、一つのCSSファイルを一つのモジュールと考え、モジュールごとにCSSクラス名の名前空間を自動生成し、スタイルの影響範囲をモジュールに閉じ込めてくれるもの。
+(実際には、子要素に継承されるプロパティもあるので完全に閉じ込められるわけではない。)&lt;/p&gt;
+
+&lt;p&gt;ReactによるUIコンポーネントごとにCSSモジュールを作り、コンポーネント単位でスタイリングすることを意図した技術であり、コンポーネント内で閉じたCSSクラス設計をすればいいだけになり、BEMとかを考えなくてよくなる。&lt;/p&gt;
+
+&lt;p&gt;CSS Modulesを使うには、&lt;a href=&#34;https://github.com/gajus/babel-plugin-react-css-modules&#34;&gt;babel-plugin-react-css-modules&lt;/a&gt;というBabelのプラグインをセットアップすればいい。
+まずはそれをプロジェクトにインストールする。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D babel-plugin-react-css-modules
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Babelの設定を修正してインストールしたbabel-plugin-react-css-modulesを使うようにする。&lt;/p&gt;
+
+&lt;p&gt;.babelrc&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; {
+-  &amp;quot;presets&amp;quot;: [&amp;quot;env&amp;quot;, &amp;quot;react&amp;quot;]
++  &amp;quot;presets&amp;quot;: [&amp;quot;env&amp;quot;, &amp;quot;react&amp;quot;],
++  &amp;quot;plugins&amp;quot;: [&amp;quot;react-css-modules&amp;quot;]
+ }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;webpackのcss-loaderのオプションを追加して、CSS Modulesを有効にする。&lt;/p&gt;
+
+&lt;p&gt;webpack.common.js:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; (前略)
+       {
+         test: /\.css$/,
+         include: [path.resolve(__dirname, &#39;src&#39;)],
+         use: [
+           &#39;style-loader&#39;,
+           {
+             loader: &#39;css-loader&#39;,
+             options: {
+               importLoaders: 1,
++              modules: true,
++              localIdentName: &#39;[path]___[name]__[local]___[hash:base64:5]&#39;,
+             },
+           },
+           &#39;postcss-loader&#39;,
+         ],
+       },
+ (後略)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;modules&lt;/code&gt;がCSS Modulesを有効化するスイッチ。
+&lt;code&gt;localIdentName&lt;/code&gt;はモジュール化したCSSクラスの命名規則で、babel-plugin-react-css-modulesの設定と合っている必要がある。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;あとは、コンポーネントの方で&lt;code&gt;className&lt;/code&gt;プロパティを&lt;code&gt;styleName&lt;/code&gt;プロパティに変えればいい。&lt;/p&gt;
+
+&lt;p&gt;components/App.jsx:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
+ import &#39;./App.css&#39;
+
+ const App = () =&amp;gt; (
+-  &amp;lt;div className=&amp;quot;normal&amp;quot;&amp;gt;
++  &amp;lt;div styleName=&amp;quot;normal&amp;quot;&amp;gt;
+     HOGE
+   &amp;lt;/div&amp;gt;
+ );
+
+ export default App;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;以上でCSS Modulesの設定は完了。
+App.cssに書いたクラス名はcss-loaderによって変換され、App.jsxに書いたstyleNameはbabel-plugin-react-css-modulesによって変換され、どちらも&lt;code&gt;src-components-___App__normal___1fxGx&lt;/code&gt;になるようになる。&lt;/p&gt;
+
+&lt;h2 id=&#34;css-in-js&#34;&gt;CSS in JS&lt;/h2&gt;
+
+&lt;p&gt;3つめはCSS in JS。&lt;/p&gt;
+
+&lt;p&gt;これは2014年11月に&lt;a href=&#34;https://speakerdeck.com/vjeux/react-css-in-js&#34;&gt;提唱された&lt;/a&gt;技術で、UIコンポーネントとそのスタイルを両方一つのJavaScriptファイルに書いて、完全に一体化させるというもの。&lt;/p&gt;
+
+&lt;p&gt;CSS in JSはCSS Modulesの陰でしばらく目立たなかったが、2016年に&lt;a href=&#34;https://www.styled-components.com/&#34;&gt;styled-components&lt;/a&gt;という実装がリリースされて注目され、その後いくつかの実装が生まれた。
+styled-componentsは2017年ころからCSS Modulesに代わって人気になり、&lt;a href=&#34;https://postd.cc/stop-using-css-in-javascript-for-web-development-fa/&#34;&gt;CSS Modules陣営からの反撃&lt;/a&gt;もあったものの、今日まで支持を増やしている模様。
+SassやPostCSSなど既存のCSSエコシステムを切り捨てているのと、React限定なのが気になるところではあるが、時流に乗って使ってみることにする。&lt;/p&gt;
+
+&lt;p&gt;なお、CSS in JSはCSS Modulesとセットアップ方法がかなり異なるので、本稿前節までの変更はいったん全部破棄する。&lt;/p&gt;
+
+&lt;p&gt;styled-componentsを使う場合、プロジェクトに追加する必要があるのは二つだけ。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;styled-components: styled-components本体。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/styled-components/babel-plugin-styled-components&#34;&gt;babel-plugin-styled-components&lt;/a&gt;: styled-componentsのサポートを強化するBabelプラグイン。実際には必須ではないけど、バンドルサイズを削減出来たり、SSRしやすくなったりする。ベンダプレフィックスの付与とかミニファイもしてくれる。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add styled-components
+yarn add -D babel-plugin-styled-components
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;styled-componentsはv3.4.4が入った。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Babelの設定は以下のように修正する。&lt;/p&gt;
+
+&lt;p&gt;.babelrc&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; {
+-  &amp;quot;presets&amp;quot;: [&amp;quot;env&amp;quot;, &amp;quot;react&amp;quot;]
++  &amp;quot;presets&amp;quot;: [&amp;quot;env&amp;quot;, &amp;quot;react&amp;quot;],
++  &amp;quot;plugins&amp;quot;: [&amp;quot;styled-components&amp;quot;]
+ }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;App.jsxは、styled-componentsのstyledというAPIを使ってWrapperコンポーネント(スタイル付きdiv)を定義し、これをdivと置き換える。&lt;/p&gt;
+
+&lt;p&gt;components/App.jsx:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
++import styled from &#39;styled-components&#39;;
+
++const Wrapper = styled.div`
++  font-size: 5rem;
++`;
+
+ const App = () =&amp;gt; (
+-  &amp;lt;div&amp;gt;
++  &amp;lt;Wrapper&amp;gt;
+     HOGE
+-  &amp;lt;/div&amp;gt;
++  &amp;lt;/Wrapper&amp;gt;
+ );
+
+ export default App;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これだけ。CSS Modulesに比べて大分シンプル。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ややややこしいが、&lt;a href=&#34;https://www.styled-components.com/docs/tooling#stylelint&#34;&gt;stylelintによるリンティング&lt;/a&gt;もできる。
+以下のパッケージをプロジェクトに追加する。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;stylelint: CSSのリンタ。(既出)&lt;/li&gt;
+&lt;li&gt;stylelint-config-standard: stylelintのルール設定集。(既出)&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/styled-components/stylelint-processor-styled-components&#34;&gt;stylelint-processor-styled-components&lt;/a&gt;: スタイル付きコンポーネントからスタイル定義を抽出するstylelintのカスタムプロセッサ。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/styled-components/stylelint-config-styled-components&#34;&gt;stylelint-config-styled-components&lt;/a&gt;: stylelint-processor-styled-componentsを使うのに必要なstylelint設定集。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/emilgoldsmith/stylelint-custom-processor-loader&#34;&gt;stylelint-custom-processor-loader&lt;/a&gt;: stylelintでカスタムプロセッサを使う場合に必要なwebpackのローダ。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D stylelint stylelint-config-standard stylelint-processor-styled-components stylelint-config-styled-components stylelint-custom-processor-loader
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;stylelintの設定は以下。&lt;/p&gt;
+
+&lt;p&gt;stylelint.config.js:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;module.exports = {
+  processors: [&#39;stylelint-processor-styled-components&#39;],
+  extends: [&#39;stylelint-config-standard&#39;, &#39;stylelint-config-styled-components&#39;],
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;webpackの設定にstylelint-custom-processor-loaderの設定を追加する。&lt;/p&gt;
+
+&lt;p&gt;webpack.common.js:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; (前略)
+       {
+         test: /\.(js|jsx)$/,
+         include: [path.resolve(__dirname, &#39;src&#39;)],
+         loader: &#39;babel-loader&#39;,
+       },
++      {
++        test: /\.(js|jsx)$/,
++        include: [path.resolve(__dirname, &#39;src&#39;)],
++        enforce: &#39;pre&#39;,
++        loader: &#39;stylelint-custom-processor-loader&#39;,
++      },
+     ],
+   },
+ (後略)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これでstyled-componentsにstylelintを適用できた。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -106,13 +481,13 @@ dist/
 
 &lt;p&gt;package.json:&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt;(前略)
-  &amp;quot;scripts&amp;quot;: {
-+   &amp;quot;format&amp;quot;: &amp;quot;prettier --write **/*.jsx **/*.js **/*.css&amp;quot;,
-    &amp;quot;build&amp;quot;: &amp;quot;webpack --config webpack.prod.js&amp;quot;,
-    &amp;quot;start&amp;quot;: &amp;quot;webpack-dev-server --hot --config webpack.dev.js&amp;quot;
-  },
-(後略)
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; (前略)
+   &amp;quot;scripts&amp;quot;: {
++    &amp;quot;format&amp;quot;: &amp;quot;prettier --write **/*.jsx **/*.js **/*.css&amp;quot;,
+     &amp;quot;build&amp;quot;: &amp;quot;webpack --config webpack.prod.js&amp;quot;,
+     &amp;quot;start&amp;quot;: &amp;quot;webpack-dev-server --hot --config webpack.dev.js&amp;quot;
+   },
+ (後略)
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;これで、&lt;code&gt;yarn format&lt;/code&gt;を実行するとプロジェクト内ソースを一通りフォーマットできる。&lt;/p&gt;
@@ -193,27 +568,27 @@ dist/*
 
 &lt;p&gt;webpack.common.js:&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt;(前略)
-  module: {
-    rules: [
-+     {
-+       test: /\.(js|jsx)$/,
-+       include: [path.resolve(__dirname, &#39;src&#39;)],
-+       enforce: &#39;pre&#39;,
-+       loader: &#39;eslint-loader&#39;,
-+       options: {
-+         configFile: &#39;./.eslintrc.js&#39;,
-+         failOnError: true,
-+       },
-      },
-      {
-        test: /\.(js|jsx)$/,
-        include: [path.resolve(__dirname, &#39;src&#39;)],
-        loader: &#39;babel-loader&#39;,
-      },
-    ],
-  },
-(後略)
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; (前略)
+   module: {
+     rules: [
++      {
++        test: /\.(js|jsx)$/,
++        include: [path.resolve(__dirname, &#39;src&#39;)],
++        enforce: &#39;pre&#39;,
++        loader: &#39;eslint-loader&#39;,
++        options: {
++          configFile: &#39;./.eslintrc.js&#39;,
++          failOnError: true,
++        },
+       },
+       {
+         test: /\.(js|jsx)$/,
+         include: [path.resolve(__dirname, &#39;src&#39;)],
+         loader: &#39;babel-loader&#39;,
+       },
+     ],
+   },
+ (後略)
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
@@ -222,14 +597,14 @@ dist/*
 
 &lt;p&gt;package.json:&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt;(前略)
-  &amp;quot;scripts&amp;quot;: {
-    &amp;quot;format&amp;quot;: &amp;quot;prettier --write **/*.jsx **/*.js **/*.css&amp;quot;,
-+   &amp;quot;lint&amp;quot;: &amp;quot;eslint **/*.jsx **/*.js&amp;quot;,
-    &amp;quot;build&amp;quot;: &amp;quot;webpack --config webpack.prod.js&amp;quot;,
-    &amp;quot;start&amp;quot;: &amp;quot;webpack-dev-server --hot --config webpack.dev.js&amp;quot;
-  },
-(後略)
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; (前略)
+   &amp;quot;scripts&amp;quot;: {
+     &amp;quot;format&amp;quot;: &amp;quot;prettier --write **/*.jsx **/*.js **/*.css&amp;quot;,
++    &amp;quot;lint&amp;quot;: &amp;quot;eslint **/*.jsx **/*.js&amp;quot;,
+     &amp;quot;build&amp;quot;: &amp;quot;webpack --config webpack.prod.js&amp;quot;,
+     &amp;quot;start&amp;quot;: &amp;quot;webpack-dev-server --hot --config webpack.dev.js&amp;quot;
+   },
+ (後略)
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;これで、&lt;code&gt;yarn lint&lt;/code&gt;を実行するとプロジェクト内ソースを一通りリンティングできる。&lt;/p&gt;

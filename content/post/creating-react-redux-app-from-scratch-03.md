@@ -85,13 +85,13 @@ node_modulesはnpmパッケージが入るディレクトリ。
 
 package.json:
 ```diff
-(前略)
-  "scripts": {
-+   "format": "prettier --write **/*.jsx **/*.js **/*.css",
-    "build": "webpack --config webpack.prod.js",
-    "start": "webpack-dev-server --hot --config webpack.dev.js"
-  },
-(後略)
+ (前略)
+   "scripts": {
++    "format": "prettier --write **/*.jsx **/*.js **/*.css",
+     "build": "webpack --config webpack.prod.js",
+     "start": "webpack-dev-server --hot --config webpack.dev.js"
+   },
+ (後略)
 ```
 
 これで、`yarn format`を実行するとプロジェクト内ソースを一通りフォーマットできる。
@@ -172,27 +172,27 @@ webpackからESLintを実行し、エラーがなくならない限りビルド�
 
 webpack.common.js:
 ```diff
-(前略)
-  module: {
-    rules: [
-+     {
-+       test: /\.(js|jsx)$/,
-+       include: [path.resolve(__dirname, 'src')],
-+       enforce: 'pre',
-+       loader: 'eslint-loader',
-+       options: {
-+         configFile: './.eslintrc.js',
-+         failOnError: true,
-+       },
-      },
-      {
-        test: /\.(js|jsx)$/,
-        include: [path.resolve(__dirname, 'src')],
-        loader: 'babel-loader',
-      },
-    ],
-  },
-(後略)
+ (前略)
+   module: {
+     rules: [
++      {
++        test: /\.(js|jsx)$/,
++        include: [path.resolve(__dirname, 'src')],
++        enforce: 'pre',
++        loader: 'eslint-loader',
++        options: {
++          configFile: './.eslintrc.js',
++          failOnError: true,
++        },
+       },
+       {
+         test: /\.(js|jsx)$/,
+         include: [path.resolve(__dirname, 'src')],
+         loader: 'babel-loader',
+       },
+     ],
+   },
+ (後略)
 ```
 
 <br>
@@ -201,14 +201,14 @@ webpack.common.js:
 
 package.json:
 ```diff
-(前略)
-  "scripts": {
-    "format": "prettier --write **/*.jsx **/*.js **/*.css",
-+   "lint": "eslint **/*.jsx **/*.js",
-    "build": "webpack --config webpack.prod.js",
-    "start": "webpack-dev-server --hot --config webpack.dev.js"
-  },
-(後略)
+ (前略)
+   "scripts": {
+     "format": "prettier --write **/*.jsx **/*.js **/*.css",
++    "lint": "eslint **/*.jsx **/*.js",
+     "build": "webpack --config webpack.prod.js",
+     "start": "webpack-dev-server --hot --config webpack.dev.js"
+   },
+ (後略)
 ```
 
 これで、`yarn lint`を実行するとプロジェクト内ソースを一通りリンティングできる。
