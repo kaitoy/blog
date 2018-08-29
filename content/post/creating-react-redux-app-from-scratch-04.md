@@ -304,6 +304,10 @@ components/App.jsx:
 
 これだけ。CSS Modulesに比べて大分シンプル。
 
+`styled.div`でスタイルを記述している部分は見慣れない構文だけど、ECMAScript 2015で追加されたタグ付きテンプレートリテラルという構文で、テンプレート文字列の一種。
+ここに書くスタイルの構文はCSSと全く一緒。
+JavaScriptの構文としては単なる文字列なので、変数を使ったり、if文とかで動的に変えたり、数値を計算したり、自由に書ける。
+
 <br>
 
 ややややこしいが、[stylelintによるリンティング](https://www.styled-components.com/docs/tooling#stylelint)もできる。
