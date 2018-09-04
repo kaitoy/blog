@@ -232,7 +232,7 @@ EOF
 `--allow-privileged`はKubernetes 1.12で廃止される予定なので、それまでにはなんとかなるだろう。
 
 ## Kube Proxy Configファイル
-kube-proxyも[Kube Proxy Config](https://github.com/kubernetes/kubernetes/blob/master/pkg/proxy/apis/kubeproxyconfig/v1alpha1/types.go)というのがある。
+kube-proxyも[Kube Proxy Config](https://github.com/kubernetes/kubernetes/blob/master/pkg/proxy/apis/config/types.go)というのがある。
 [ドキュメントには載ってない](https://github.com/kubernetes/kubernetes/issues/50041)けど、使わないと警告が出るので適当に書いてみた。
 
 ```sh
