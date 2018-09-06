@@ -174,6 +174,27 @@ yarn add -D file-loader
 
 <br>
 
+webpackのローダ設定は以下のようなのを追加すればいい。
+
+```diff
+(前略)
+   module: {
+     rules: [
+(中略)
+-      }
++      },
++      {
++        test: /\.(png|woff|woff2|eot|ttf|svg)$/,
++        include: [path.resolve(__dirname, 'node_modules')],
++        loader: 'file-loader',
++      },
+     ],
+   },
+(後略)
+```
+
+<br>
+
 で、[ここ](https://github.com/styled-components/styled-components/issues/233)にある通り、styled-componentsの[injectGlobal](https://www.styled-components.com/docs/api#injectglobal)というAPIを使って、以下のようにフォントファイルを読み込む。
 
 src/font.js:
