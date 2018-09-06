@@ -14,9 +14,9 @@
     <link rel="canonical" href="https://www.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 前回はPrettierとESLintをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); CSS 前回までで作った環境で、Reactを使ってHTMLのDOMツリーを構築することができるようになったが、これは基本的にUIに表示する情報の構造しか定義しない。 UIの見た目(スタイル)を決めるのはCSSなので、それをアプリに組み込むことを考えないといけない。 組み込み方には現時点で大きく3通りある。 CSSを別途設計する 一つ目はCSSを別途設計する方法。 Reactコンポーネントからレンダリングされる要素にclassが付くようにしておいて、設計したCSSをbundle.jsとは別途読み込んでスタイルを適用することにはる。 この場合、CSSのスタイル定義はすべてグローバルなので、設計効率やメンテナンス効率を維持しつつ、各コンポーネントに意図したスタイルが適用されるようにするため、テクニックを凝らしてCSSクラスを設計する必要がある。 例えばBEM (2009年3月誕生)、OOCSS (2009年3月誕生)、SMACSS (2011年9月誕生)、FLOCSS (2014年4月誕生)など。 CSS自体は、素のCSSを書くことはあまりなく、普通はSassなどのAltCSSやPostCSSを使って書く。 さらに、stylelintでリンティングすることで、CSSの品質を上げられる。 リンティングルールは、stylelintプロジェクトから提供されているstylelint-config-recommendedかstylelint-config-standardを使えば十分。 後者がGoogleやAirbnbのCSSスタイルガイドを反映していていい感じ。 書いたCSSは、webpackのcss-loaderで読み込める。 webpackはJavaScriptのimport &#39;./App.css&#39;;みたいなコードを見つけると、css-loaderに処理を渡す。 css-loaderは、import文で指定されたCSSファイルだけでなく、@importやurl()で定義される依存関係をたどって関連するCSSを一通り読み込む。 読み込んだCSSは、webpackのstyle-loaderを使ってDOMに適用できる。 style-loaderは、読み込んだCSSを&lt;style&gt;タグで囲ってHTMLのヘッダに挿入してくれる。 CSSの処理にはPostCSSを使うとして、プロジェクトに以下のパッケージを追加する。 (PostCSSについてはQiitaの記事が参考になった。) css-loader: CSSを読み込むためのwebpackのローダ。 style-loader: CSSをDOMに追加するためのwebpackのローダ。 postcss-loader: PostCSSを実行するためのwebpackのローダ。 postcss-preset-env: CSSのエッジな機能を使うためのPostCSSプラグイン。 autoprefixer: CSSプロパティにベンダプレフィックスを追加してくれるPostCSSプラグイン。 postcss-flexbugs-fixes: Flexboxのバグを修正してくれるPostCSSプラグイン。 cssnano: CSSをミニファイしてくれるPostCSSプラグイン。 stylelint: CSSのリンタ。 stylelint-config-standard: stylelintのルール設定集。 stylelint-config-prettier: Prettierが施すコード整形とコンフリクトするルールを無効にするstylelintルール設定集。 yarn add -D css-loader style-loader postcss-loader postcss-preset-env autoprefixer postcss-flexbugs-fixes cssnano stylelint stylelint-config-standard stylelint-config-prettier PostCSSとstylelintの設定は、それぞれpostcss.config.jsとstylelint.config.jsを書いてプロジェクトルートに置けばいい。 postcss.config.js: module.exports = {">
+    <meta property="og:description" content="ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はCSS周りの処理系をセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); 既成Reactコンポーネント 前回まででHTMLもCSSもReactコンポーネント単位で書けるようになったんだけど、実際、自分で1からコンポーネントを書くのは、特にデザインセンスがない人にとっては辛い。 かっこいいUIコンポーネントを作りたいならデザイナーの協力が必要だけど、個人の開発などそれができない状況も多い。 という問題を抱えた人たち向けなのかはわからないが、既成のReactコンポーネントセットが色々OSSで提供されている。 Material-UI: GoogleのマテリアルデザインのReact実装。 Semantic UI React: Semantic UIのReactバインディング。 antd: Ant DesignのReact実装。 Blueprint: 複雑でデータ量の多いUI向けに作られたReact UIツールキット。 React-Bootstrap: BootstrapのReactバインディング。現時点ではv4未対応。 Grommet: HPEによるエンタープライズレディなデザインシステム。 Office UI Fabric React: OfficeなどのMicrosoft製品に使われているReactコンポーネントセット。 今回はこの中でも圧倒的に人気なMaterial-UIを導入する。 Material-UI Material-UIは簡単に使える。 とりあえずコアパッケージをインストールする。 yarn add @material-ui/core あとはパッケージに入っている色々なコンポーネントをMaterial-UIのドキュメント見ながら使えばいいだけ。 import React from &#39;react&#39;; import styled from &#39;styled-components&#39;; &#43;import Button from &#39;@material-ui/core/Button&#39;; const Wrapper = styled.div` font-size: 5rem; `; const App = () =&gt; ( &lt;Wrapper&gt; - HOGE &#43; &lt;Button variant=&quot;contained&quot;&gt; &#43; HOGE &#43; &lt;/Button&gt; &lt;/Wrapper&gt; ); export default App; これでただのテキストがボタンになった。 CSS Web Fonts 前節でいちおうMaterial-UI使えたけど、フォントをケアしてやるともう少しかっこよくなる。 Material-UIはRobotoフォントを想定して作られているが、これはブラウザにデフォルトで入ってはいないので、そのままだとArialとかにフォールバックされちゃう。 のでRobotoフォントを導入する。 フォントはCSS Web Fontsの機能である@font-faceで、フォントファイルをブラウザにロードさせることで導入できる。 @font-faceで読み込むフォントファイル(i.e.">
     
-    <meta property="og:image" content="https://www.kaitoy.xyz/images/css-modules-postcss-stylelint-styled-components.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/material-ui-logo.png">
     
     
     
@@ -82,6 +82,28 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2018/09/06/creating-react-redux-app-from-scratch-05/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/material-ui-logo.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Thu, Sep 6, 2018</span>
+              </div>
+              <h2 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その5: Material-UIとWebフォント</h2>
+              <div class="summary">
+                ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はCSS周りの処理系をセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); 既成Reactコンポーネント 前回まででHTMLもCSSもReactコンポーネント単位で書けるようになったんだけど、実際、自分で1からコンポーネントを書くのは、特にデザインセンスがない人にとっては辛い。 かっこいいUIコンポーネントを作りたいならデザイナーの協力が必要だけど、個人の開発などそれができない状況も多い。 という問題を抱えた人たち向けなのかはわからないが、既成のReactコンポーネントセットが色々OSSで提供されている。 Material-UI: GoogleのマテリアルデザインのReact実装。 Semantic UI React: Semantic UIのReactバインディング。 antd: Ant DesignのReact実装。 Blueprint: 複雑でデータ量の多いUI向けに作られたReact UIツールキット。 React-Bootstrap: BootstrapのReactバインディング。現時点ではv4未対応。 Grommet: HPEによるエンタープライズレディなデザインシステム。 Office UI Fabric React: OfficeなどのMicrosoft製品に使われているReactコンポーネントセット。 今回はこの中でも圧倒的に人気なMaterial-UIを導入する。 Material-UI Material-UIは簡単に使える。 とりあえずコアパッケージをインストールする。 yarn add @material-ui/core あとはパッケージに入っている色々なコンポーネントをMaterial-UIのドキュメント見ながら使えばいいだけ。 import React from 'react'; import styled from 'styled-components'; +import Button from '@material-ui/core/Button'; const Wrapper = styled.div` font-size: 5rem; `; const App = () =&gt; ( &lt;Wrapper&gt; - HOGE + &lt;Button variant=&quot;contained&quot;&gt; + HOGE + &lt;/Button&gt; &lt;/Wrapper&gt; ); export default App; これでただのテキストがボタンになった。 CSS Web Fonts 前節でいちおうMaterial-UI使えたけど、フォントをケアしてやるともう少しかっこよくなる。 Material-UIはRobotoフォントを想定して作られているが、これはブラウザにデフォルトで入ってはいないので、そのままだとArialとかにフォールバックされちゃう。 のでRobotoフォントを導入する。 フォントはCSS Web Fontsの機能である@font-faceで、フォントファイルをブラウザにロードさせることで導入できる。 @font-faceで読み込むフォントファイル(i.e.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2018/08/29/creating-react-redux-app-from-scratch-04/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/css-modules-postcss-stylelint-styled-components.png" alt="eyecatch">
@@ -91,7 +113,7 @@
               </div>
               <h2 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その4: CSS ModulesとPostCSSとstylelintとstyled-components</h2>
               <div class="summary">
-                ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 前回はPrettierとESLintをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); CSS 前回までで作った環境で、Reactを使ってHTMLのDOMツリーを構築することができるようになったが、これは基本的にUIに表示する情報の構造しか定義しない。 UIの見た目(スタイル)を決めるのはCSSなので、それをアプリに組み込むことを考えないといけない。 組み込み方には現時点で大きく3通りある。 CSSを別途設計する 一つ目はCSSを別途設計する方法。 Reactコンポーネントからレンダリングされる要素にclassが付くようにしておいて、設計したCSSをbundle.jsとは別途読み込んでスタイルを適用することにはる。 この場合、CSSのスタイル定義はすべてグローバルなので、設計効率やメンテナンス効率を維持しつつ、各コンポーネントに意図したスタイルが適用されるようにするため、テクニックを凝らしてCSSクラスを設計する必要がある。 例えばBEM (2009年3月誕生)、OOCSS (2009年3月誕生)、SMACSS (2011年9月誕生)、FLOCSS (2014年4月誕生)など。 CSS自体は、素のCSSを書くことはあまりなく、普通はSassなどのAltCSSやPostCSSを使って書く。 さらに、stylelintでリンティングすることで、CSSの品質を上げられる。 リンティングルールは、stylelintプロジェクトから提供されているstylelint-config-recommendedかstylelint-config-standardを使えば十分。 後者がGoogleやAirbnbのCSSスタイルガイドを反映していていい感じ。 書いたCSSは、webpackのcss-loaderで読み込める。 webpackはJavaScriptのimport './App.css';みたいなコードを見つけると、css-loaderに処理を渡す。 css-loaderは、import文で指定されたCSSファイルだけでなく、@importやurl()で定義される依存関係をたどって関連するCSSを一通り読み込む。 読み込んだCSSは、webpackのstyle-loaderを使ってDOMに適用できる。 style-loaderは、読み込んだCSSを&lt;style&gt;タグで囲ってHTMLのヘッダに挿入してくれる。 CSSの処理にはPostCSSを使うとして、プロジェクトに以下のパッケージを追加する。 (PostCSSについてはQiitaの記事が参考になった。) css-loader: CSSを読み込むためのwebpackのローダ。 style-loader: CSSをDOMに追加するためのwebpackのローダ。 postcss-loader: PostCSSを実行するためのwebpackのローダ。 postcss-preset-env: CSSのエッジな機能を使うためのPostCSSプラグイン。 autoprefixer: CSSプロパティにベンダプレフィックスを追加してくれるPostCSSプラグイン。 postcss-flexbugs-fixes: Flexboxのバグを修正してくれるPostCSSプラグイン。 cssnano: CSSをミニファイしてくれるPostCSSプラグイン。 stylelint: CSSのリンタ。 stylelint-config-standard: stylelintのルール設定集。 stylelint-config-prettier: Prettierが施すコード整形とコンフリクトするルールを無効にするstylelintルール設定集。 yarn add -D css-loader style-loader postcss-loader postcss-preset-env autoprefixer postcss-flexbugs-fixes cssnano stylelint stylelint-config-standard stylelint-config-prettier PostCSSとstylelintの設定は、それぞれpostcss.config.jsとstylelint.config.jsを書いてプロジェクトルートに置けばいい。 postcss.config.js: module.exports = {
+                ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はPrettierとESLintをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); CSS 前回までで作った環境で、Reactを使ってHTMLのDOMツリーを構築することができるようになったが、これは基本的にUIに表示する情報の構造しか定義しない。 UIの見た目(スタイル)を決めるのはCSSなので、それをアプリに組み込むことを考えないといけない。 組み込み方には現時点で大きく3通りある。 CSSを別途設計する 一つ目はCSSを別途設計する方法。 Reactコンポーネントからレンダリングされる要素にclassが付くようにしておいて、設計したCSSをbundle.jsとは別途読み込んでスタイルを適用することにはる。 この場合、CSSのスタイル定義はすべてグローバルなので、設計効率やメンテナンス効率を維持しつつ、各コンポーネントに意図したスタイルが適用されるようにするため、テクニックを凝らしてCSSクラスを設計する必要がある。 例えばBEM (2009年3月誕生)、OOCSS (2009年3月誕生)、SMACSS (2011年9月誕生)、FLOCSS (2014年4月誕生)など。 CSS自体は、素のCSSを書くことはあまりなく、普通はSassなどのAltCSSやPostCSSを使って書く。 さらに、stylelintでリンティングすることで、CSSの品質を上げられる。 リンティングルールは、stylelintプロジェクトから提供されているstylelint-config-recommendedかstylelint-config-standardを使えば十分。 後者がGoogleやAirbnbのCSSスタイルガイドを反映していていい感じ。 書いたCSSは、webpackのcss-loaderで読み込める。 webpackはJavaScriptのimport './App.css';みたいなコードを見つけると、css-loaderに処理を渡す。 css-loaderは、import文で指定されたCSSファイルだけでなく、@importやurl()で定義される依存関係をたどって関連するCSSを一通り読み込む。 読み込んだCSSは、webpackのstyle-loaderを使ってDOMに適用できる。 style-loaderは、読み込んだCSSを&lt;style&gt;タグで囲ってHTMLのヘッダに挿入してくれる。 CSSの処理にはPostCSSを使うとして、プロジェクトに以下のパッケージを追加する。 (PostCSSについてはQiitaの記事が参考になった。) css-loader: CSSを読み込むためのwebpackのローダ。 style-loader: CSSをDOMに追加するためのwebpackのローダ。 postcss-loader: PostCSSを実行するためのwebpackのローダ。 postcss-preset-env: CSSのエッジな機能を使うためのPostCSSプラグイン。 autoprefixer: CSSプロパティにベンダプレフィックスを追加してくれるPostCSSプラグイン。 postcss-flexbugs-fixes: Flexboxのバグを修正してくれるPostCSSプラグイン。 cssnano: CSSをミニファイしてくれるPostCSSプラグイン。 stylelint: CSSのリンタ。 stylelint-config-standard: stylelintのルール設定集。 stylelint-config-prettier: Prettierが施すコード整形とコンフリクトするルールを無効にするstylelintルール設定集。 yarn add -D css-loader style-loader postcss-loader postcss-preset-env autoprefixer postcss-flexbugs-fixes cssnano stylelint stylelint-config-standard stylelint-config-prettier PostCSSとstylelintの設定は、それぞれpostcss.config.jsとstylelint.config.jsを書いてプロジェクトルートに置けばいい。 postcss.config.js: module.exports =
               </div>
             </a>
           </article>
@@ -113,7 +135,7 @@
               </div>
               <h2 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その3: PrettierとESLint</h2>
               <div class="summary">
-                ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 前回はReactをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); フォーマッタとリンタ プロジェクトにフォーマッタとリンタを導入する。 フォーマッタはソースの体裁を整えるツール。 フォーマッタを使うことで体裁が統一され、ソースが読みやすくなり、品質向上につながる。 リンタはソースを静的解析して、潜在的なバグ、構造的な問題、体裁の問題を検出して警告してくれるツール。 フォーマッタは体裁だけ整えるのに対し、リンタは論理構造にも制約を課せるので、コーディングスタイルがより統一できたり、ミスをしやすい論理構造が無くなったりして、品質向上につながる。 JavaScriptのような動的型付け言語では、実行時まで顕在化しないバグを作りこみやすく、また実行時エラーの原因解析が静的型付け言語に比べて難しいので、フォーマッタとリンタでプログラム実行前に問題をできるだけ取り除いておくのが重要。 またチーム開発では、コードレビューでコーディンスタイルを見る必要がなくなり、効率化につながる。 Prettier フォーマッタにはPrettierを使う。 Prettierは2017年1月にリリースされた新しいツール。 構文解析をしてASTを構築し、そこからフォーマット済みコードを出力するので、従来のツールよりも厳密な整形(e.g. 行の最大長を考慮した整形)ができる。 また、opinionated(独断的)であることも特徴で、Prettierプロジェクトが推奨するフォーマットをほぼ強制し、設定がほとんどない。 このため導入が簡単だけど、かゆいところに手が届かないこともある。 JavaScriptの他、JSX、CSS、Markdown、GraphQLのフォーマットにも対応している。 まずプロジェクトにインストールする。 yarn add -D prettier v1.14.0が入った。 設定はprettier.config.jsというファイルを書いてプロジェクトルートに置けばいい。 prettier.config.js: module.exports = { printWidth: 100, // 行の最大長 tabWidth: 2, // インデント長 singleQuote: true, // 文字列をシングルクオートで囲う trailingComma: 'all', // オブジェクトのプロパティとか関数の引数を複数行で書いたときに、全行の末尾にカンマをつける }; また、フォーマット対象外のファイルを指定するファイルである.prettierignoreをプロジェクトルートに置く。 .prettierignore: node_modules/ dist/ node_modulesはnpmパッケージが入るディレクトリ。 実際はnode_modulesはデフォルトで無視されるから書かなくていいんだけど。 prettier-ignoreコメントを書くことで、ソースを部分的にフォーマット対象外とすることもできる。 最後に、npmスクリプトを書く。 package.json: (前略) &quot;scripts&quot;: { + &quot;format&quot;: &quot;prettier --write **/*.jsx **/*.js **/*.css&quot;, &quot;build&quot;: &quot;webpack --config webpack.prod.js&quot;, &quot;start&quot;: &quot;webpack-dev-server --hot --config webpack.dev.js&quot; }, (後略) これで、yarn formatを実行するとプロジェクト内ソースを一通りフォーマットできる。 ESLint リンタにはデファクトスタンダードのESLintを使う。 ESLintは2013年6月にリリースされたそこそこ歴史のあるツール。 リンティングルールがプラガブルで、豊富なルールを細かく制御できるのが特徴。 フォーマッタとしての機能もあるけど、そこはPrettierにまかせることにする。 JavaScriptもJSXもリンティングできる。 リンティングルールはAirbnbによるeslint-config-airbnbが有名なのでこれを使う。 ESLintを導入するために、以下のパッケージをプロジェクトにインストールする。 eslint: ESLint本体。 eslint-loader: webpackからESLintを実行するやつ。 eslint-config-airbnb: ESLintルール設定集。 eslint-plugin-import: eslint-config-airbnbのピア依存。import文を処理するためのESLintプラグイン。 eslint-plugin-jsx-a11y: eslint-config-airbnbのピア依存。JSXを処理するためのESLintプラグイン。 eslint-plugin-react: eslint-config-airbnbのピア依存。React特有のリンティングルールを追加するESLintプラグイン。 eslint-config-prettier: Prettierが施すコード整形とコンフリクトするルールを無効にするESLintルール設定集。 ピア依存をインストールするのにはちょっとコツがいるので、eslint-config-airbnbのドキュメントを参照すべし。 今回は以下のコマンドでインストールした。 yarn add -D &quot;eslint@&gt;=1.6.0 &lt;5.0.0&quot; eslint-loader eslint-config-airbnb &quot;eslint-plugin-import@^2.12.0&quot; &quot;eslint-plugin-jsx-a11y@^6.0.3&quot; &quot;eslint-plugin-react@^7.9.1&quot; eslint-config-prettier ESlintはv4.19.1が入った。 ESlintの設定は、設定ファイルである.eslintrc.jsをプロジェクトルートに置けばいい。 .eslintrc.js: module.exports = { env: { browser: true, }, extends: ['airbnb', 'prettier'], }; アプリの実行環境はブラウザなのでenv.browserをtrueにしている。 これにより、ブラウザ環境でデフォルトで使えるグローバル変数(e.g.
+                ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はReactをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); フォーマッタとリンタ プロジェクトにフォーマッタとリンタを導入する。 フォーマッタはソースの体裁を整えるツール。 フォーマッタを使うことで体裁が統一され、ソースが読みやすくなり、品質向上につながる。 リンタはソースを静的解析して、潜在的なバグ、構造的な問題、体裁の問題を検出して警告してくれるツール。 フォーマッタは体裁だけ整えるのに対し、リンタは論理構造にも制約を課せるので、コーディングスタイルがより統一できたり、ミスをしやすい論理構造が無くなったりして、品質向上につながる。 JavaScriptのような動的型付け言語では、実行時まで顕在化しないバグを作りこみやすく、また実行時エラーの原因解析が静的型付け言語に比べて難しいので、フォーマッタとリンタでプログラム実行前に問題をできるだけ取り除いておくのが重要。 またチーム開発では、コードレビューでコーディンスタイルを見る必要がなくなり、効率化につながる。 Prettier フォーマッタにはPrettierを使う。 Prettierは2017年1月にリリースされた新しいツール。 構文解析をしてASTを構築し、そこからフォーマット済みコードを出力するので、従来のツールよりも厳密な整形(e.g. 行の最大長を考慮した整形)ができる。 また、opinionated(独断的)であることも特徴で、Prettierプロジェクトが推奨するフォーマットをほぼ強制し、設定がほとんどない。 このため導入が簡単だけど、かゆいところに手が届かないこともある。 JavaScriptの他、JSX、CSS、Markdown、GraphQLのフォーマットにも対応している。 まずプロジェクトにインストールする。 yarn add -D prettier v1.14.0が入った。 設定はprettier.config.jsというファイルを書いてプロジェクトルートに置けばいい。 prettier.config.js: module.exports = { printWidth: 100, // 行の最大長 tabWidth: 2, // インデント長 singleQuote: true, // 文字列をシングルクオートで囲う trailingComma: 'all', // オブジェクトのプロパティとか関数の引数を複数行で書いたときに、全行の末尾にカンマをつける }; また、フォーマット対象外のファイルを指定するファイルである.prettierignoreをプロジェクトルートに置く。 .prettierignore: node_modules/ dist/ node_modulesはnpmパッケージが入るディレクトリ。 実際はnode_modulesはデフォルトで無視されるから書かなくていいんだけど。 prettier-ignoreコメントを書くことで、ソースを部分的にフォーマット対象外とすることもできる。 最後に、npmスクリプトを書く。 package.json: (前略) &quot;scripts&quot;: { + &quot;format&quot;: &quot;prettier --write **/*.jsx **/*.js **/*.css&quot;, &quot;build&quot;: &quot;webpack --config webpack.prod.js&quot;, &quot;start&quot;: &quot;webpack-dev-server --hot --config webpack.dev.js&quot; }, (後略) これで、yarn formatを実行するとプロジェクト内ソースを一通りフォーマットできる。 ESLint リンタにはデファクトスタンダードのESLintを使う。 ESLintは2013年6月にリリースされたそこそこ歴史のあるツール。 リンティングルールがプラガブルで、豊富なルールを細かく制御できるのが特徴。 フォーマッタとしての機能もあるけど、そこはPrettierにまかせることにする。 JavaScriptもJSXもリンティングできる。 リンティングルールはAirbnbによるeslint-config-airbnbが有名なのでこれを使う。 ESLintを導入するために、以下のパッケージをプロジェクトにインストールする。 eslint: ESLint本体。 eslint-loader: webpackからESLintを実行するやつ。 eslint-config-airbnb: ESLintルール設定集。 eslint-plugin-import: eslint-config-airbnbのピア依存。import文を処理するためのESLintプラグイン。 eslint-plugin-jsx-a11y: eslint-config-airbnbのピア依存。JSXを処理するためのESLintプラグイン。 eslint-plugin-react: eslint-config-airbnbのピア依存。React特有のリンティングルールを追加するESLintプラグイン。 eslint-config-prettier: Prettierが施すコード整形とコンフリクトするルールを無効にするESLintルール設定集。 ピア依存をインストールするのにはちょっとコツがいるので、eslint-config-airbnbのドキュメントを参照すべし。 今回は以下のコマンドでインストールした。 yarn add -D &quot;eslint@&gt;=1.6.0 &lt;5.0.0&quot; eslint-loader eslint-config-airbnb &quot;eslint-plugin-import@^2.12.0&quot; &quot;eslint-plugin-jsx-a11y@^6.0.3&quot; &quot;eslint-plugin-react@^7.9.1&quot; eslint-config-prettier ESlintはv4.19.1が入った。 ESlintの設定は、設定ファイルである.eslintrc.jsをプロジェクトルートに置けばいい。 .eslintrc.js: module.exports = { env: { browser: true, }, extends: ['airbnb', 'prettier'], }; アプリの実行環境はブラウザなのでenv.browserをtrueにしている。 これにより、ブラウザ環境でデフォルトで使えるグローバル変数(e.g.
               </div>
             </a>
           </article>
@@ -135,29 +157,7 @@
               </div>
               <h2 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その2: React</h2>
               <div class="summary">
-                ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 前回はNode.jsとYarnとBabelとwebpackをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); Reactとは 以前にも同じような事を書いたけど、改めてReactについて書く。 ちょっとコーディングの詳細にも触れながら。 ReactはViewを記述するためのライブラリで、特徴はVirtual DOMとJSX。 Virtual DOM Virtual DOMはDOMを仮想化するもので、JavaScriptからVirtual DOMでUIを記述してやると、それが実DOMに効率的に反映されるようになっている。 JSX Virtual DOMはJSXというHTMLみたいな言語で記述できる。 import React from 'react'; import ReactDOM from 'react-dom'; ReactDOM.render( &lt;h1&gt;Hello, world!&lt;/h1&gt;, document.getElementById('root') ); こんな風に書くと、idがrootであるHTML要素の中に、&lt;h1&gt;Hello, world!&lt;/h1&gt;がレンダリングされる。 上記コードの&lt;h1&gt;Hello, world!&lt;/h1&gt;の部分がJSX。 コンポーネント JSXではコンポーネントを定義して新たなタグとして使うことができるので、再利用できるコンポーネントを作って、それらを組み合わせてUIを構築することで、効率的な開発ができる。 import React from 'react'; import ReactDOM from 'react-dom'; // Welcomeコンポーネントの定義 function Welcome() { return &lt;h1&gt;Hello, World&lt;/h1&gt;; } // Welcomeコンポーネントのレンダリング ReactDOM.render( &lt;Welcome /&gt;, document.getElementById('root') ); 上記コードではコンポーネントをfunctionで定義しているが、アロー関数で書いても全く一緒。 const Welcome = () =&gt; ( &lt;h1&gt;Hello, World&lt;/h1&gt;; ); 関数の代わりにclassで定義することもできる。 class Welcome extends React.Component { render() { return &lt;h1&gt;Hello, World&lt;/h1&gt;; } } 関数による定義とclassによる定義はおおむね変わらないが、stateとライフサイクルメソッドを使いたいときはclassにする必要がある。 props コンポーネントはレンダリングの際にpropsというパラメータを受け取って使うことができるので、上手く設計すれば汎用的なコンポーネントが書ける。 import React from 'react'; import ReactDOM from 'react-dom'; // Welcomeコンポーネントの定義 (props付き) function Welcome(props) { return &lt;h1&gt;Hello, {props.name}&lt;/h1&gt;; } // Welcomeコンポーネントのレンダリング (props付き) ReactDOM.render( &lt;Welcome name=&quot;Kaitoy&quot; /&gt;, document.getElementById('root') ); propsはイミュータブルにしてコンポーネント内で変更しない(i.e.
-              </div>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        
-        <div class="col-sm-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2018/08/19/creating-react-redux-app-from-scratch-01/" class="post post-topix">
-              <header class="eyecatch text-center">
-                <img src="https://www.kaitoy.xyz/images/babel-webpack.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Sun, Aug 19, 2018</span>
-              </div>
-              <h2 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その1: Node.jsとYarnとBabelとwebpack</h2>
-              <div class="summary">
-                昔、Dojo Toolkitを使ってFlashなUIをJavaScriptに書き換えた時以来、仕事でWeb UIを触ることはなかったんだけど、最近になってWeb UIを書かなければいけなくなるような気がして再学習を始めた。 題材はReact (とRedux)。 今一番人気のフロントエンドフレームワークで、昔触ったこともあるので。 前回の記事でReactが生まれた経緯を学んだので、今回から実習に入る。 (adsbygoogle = window.adsbygoogle || []).push({}); プロジェクト作成 ちょっとCreate React Appを触ってみたけど使わないことにした。 すぐ開発始められるのはよかったんだけど、裏でなにが起こっているかわからな過ぎて肌に合わないし、使うライブラリが結構固定されちゃいそうだったし、トラブルシュート(特にライブラリのバグを踏んだ時)が大変そうだったので。 代わりに、公式で紹介されているブログ記事であるCreating a React App… From Scratch.を見ながら、スクラッチからプロジェクトを作ることにした。 環境はWindows 10 Home。 Node.jsインストール なにはともあれNode.js。 Node.jsのバージョン管理には以前はnodist使っていたんだけど、こいつは2年ほど前に開発が止まっているので、代わりにnvm for Windowsを入れた。 nvm installで任意のバージョンのNode.jsをインストール出来て、nvm useで使うNode.jsのバージョンを切り替えられる。 今回使うNode.jsのバージョンは、現時点でLTS版の最新である8.11.4にする。 C:\&gt;nvm install 8.11.4 Downloading node.js version 8.11.4 (64-bit)... Complete Creating C:\Users\kaitoy\AppData\Roaming\nvm\temp Downloading npm version 5.6.0... Complete Installing npm v5.6.0... Installation complete. If you want to use this version, type nvm use 8.11.4 C:\&gt;nvm use 8.11.4 Now using node v8.11.4 (64-bit) Yarnインストール パッケージマネージャにはYarnを使う。 Yarnちょっとバギーだとか、npm 5がlockファイルをサポートしてYarnの優位性が減ったとか、Yarnからnpmに戻るためのツールが出てきたりしてるけど、現時点では深く考えずにYarnでいいと思う。 YarnはWindows環境ではMSIファイルをダウンロードして実行すればインストールできる。 (npmでもインストールできるけど邪道。) Yarnはv1.7.0を使う。 package.json生成 プロジェクトの構成情報を記述するファイルであるpackage.jsonをYarnで生成する。 C:\&gt;mkdir react-redux-scaffold C:\&gt;cd react-redux-scaffold C:\react-redux-scaffold&gt;yarn init yarn init v1.7.0 question name (react-redux-scaffold): question version (1.0.0): question description: React Redux Scaffold question entry point (index.js): src/index.jsx question repository url: https://github.com/kaitoy/react-redux-scaffold.git question author: kaitoy question license (MIT): question private: success Saved package.json Done in 40.38s.
+                ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はNode.jsとYarnとBabelとwebpackをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); Reactとは 以前にも同じような事を書いたけど、改めてReactについて書く。 ちょっとコーディングの詳細にも触れながら。 ReactはViewを記述するためのライブラリで、特徴はVirtual DOMとJSX。 Virtual DOM Virtual DOMはDOMを仮想化するもので、JavaScriptからVirtual DOMでUIを記述してやると、それが実DOMに効率的に反映されるようになっている。 JSX Virtual DOMはJSXというHTMLみたいな言語で記述できる。 import React from 'react'; import ReactDOM from 'react-dom'; ReactDOM.render( &lt;h1&gt;Hello, world!&lt;/h1&gt;, document.getElementById('root') ); こんな風に書くと、idがrootであるHTML要素の中に、&lt;h1&gt;Hello, world!&lt;/h1&gt;がレンダリングされる。 上記コードの&lt;h1&gt;Hello, world!&lt;/h1&gt;の部分がJSX。 コンポーネント JSXではコンポーネントを定義して新たなタグとして使うことができるので、再利用できるコンポーネントを作って、それらを組み合わせてUIを構築することで、効率的な開発ができる。 import React from 'react'; import ReactDOM from 'react-dom'; // Welcomeコンポーネントの定義 function Welcome() { return &lt;h1&gt;Hello, World&lt;/h1&gt;; } // Welcomeコンポーネントのレンダリング ReactDOM.render( &lt;Welcome /&gt;, document.getElementById('root') ); 上記コードではコンポーネントをfunctionで定義しているが、アロー関数で書いても全く一緒。 const Welcome = () =&gt; ( &lt;h1&gt;Hello, World&lt;/h1&gt;; ); 関数の代わりにclassで定義することもできる。 class Welcome extends React.Component { render() { return &lt;h1&gt;Hello, World&lt;/h1&gt;; } } 関数による定義とclassによる定義はおおむね変わらないが、stateとライフサイクルメソッドを使いたいときはclassにする必要がある。 props コンポーネントはレンダリングの際にpropsというパラメータを受け取って使うことができるので、上手く設計すれば汎用的なコンポーネントが書ける。 import React from 'react'; import ReactDOM from 'react-dom'; // Welcomeコンポーネントの定義 (props付き) function Welcome(props) { return &lt;h1&gt;Hello, {props.name}&lt;/h1&gt;; } // Welcomeコンポーネントのレンダリング (props付き) ReactDOM.render( &lt;Welcome name=&quot;Kaitoy&quot; /&gt;, document.getElementById('root') ); propsはイミュータブルにしてコンポーネント内で変更しない(i.e.
               </div>
             </a>
           </article>
@@ -169,6 +169,25 @@
             
           </div>
         </div>
+        
+        
+        
+        
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <article>
+            <a href="https://www.kaitoy.xyz/2018/08/19/creating-react-redux-app-from-scratch-01/" class="post">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/babel-webpack.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Sun, Aug 19, 2018</span>
+              </div>
+              <h3 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その1: Node.jsとYarnとBabelとwebpack</h3>
+            </a>
+          </article>
+        </div>
+        
         
         
         
@@ -1900,6 +1919,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/material-ui">material-ui</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>

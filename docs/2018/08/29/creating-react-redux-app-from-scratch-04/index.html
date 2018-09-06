@@ -13,7 +13,7 @@
     <meta property="og:title" content="React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その4: CSS ModulesとPostCSSとstylelintとstyled-components | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2018/08/29/creating-react-redux-app-from-scratch-04/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2018/08/29/creating-react-redux-app-from-scratch-04/">
-    <meta property="og:description" content="ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 前回はPrettierとESLintをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); CSS 前回までで作った環境で、Reactを使ってHTMLのDOMツリーを構築することができるようになったが、これは基本的にUIに表示する情報の構造しか定義しない。 UIの見た目(スタイル)を決めるのはCSSなので、それをアプリに組み込むことを考えないといけない。 組み込み方には現時点で大きく3通りある。 CSSを別途設計する 一つ目はCSSを別途設計する方法。 Reactコンポーネントからレンダリングされる要素にclassが付くようにしておいて、設計したCSSをbundle.jsとは別途読み込んでスタイルを適用することにはる。 この場合、CSSのスタイル定義はすべてグローバルなので、設計効率やメンテナンス効率を維持しつつ、各コンポーネントに意図したスタイルが適用されるようにするため、テクニックを凝らしてCSSクラスを設計する必要がある。 例えばBEM (2009年3月誕生)、OOCSS (2009年3月誕生)、SMACSS (2011年9月誕生)、FLOCSS (2014年4月誕生)など。 CSS自体は、素のCSSを書くことはあまりなく、普通はSassなどのAltCSSやPostCSSを使って書く。 さらに、stylelintでリンティングすることで、CSSの品質を上げられる。 リンティングルールは、stylelintプロジェクトから提供されているstylelint-config-recommendedかstylelint-config-standardを使えば十分。 後者がGoogleやAirbnbのCSSスタイルガイドを反映していていい感じ。 書いたCSSは、webpackのcss-loaderで読み込める。 webpackはJavaScriptのimport &#39;./App.css&#39;;みたいなコードを見つけると、css-loaderに処理を渡す。 css-loaderは、import文で指定されたCSSファイルだけでなく、@importやurl()で定義される依存関係をたどって関連するCSSを一通り読み込む。 読み込んだCSSは、webpackのstyle-loaderを使ってDOMに適用できる。 style-loaderは、読み込んだCSSを&lt;style&gt;タグで囲ってHTMLのヘッダに挿入してくれる。 CSSの処理にはPostCSSを使うとして、プロジェクトに以下のパッケージを追加する。 (PostCSSについてはQiitaの記事が参考になった。) css-loader: CSSを読み込むためのwebpackのローダ。 style-loader: CSSをDOMに追加するためのwebpackのローダ。 postcss-loader: PostCSSを実行するためのwebpackのローダ。 postcss-preset-env: CSSのエッジな機能を使うためのPostCSSプラグイン。 autoprefixer: CSSプロパティにベンダプレフィックスを追加してくれるPostCSSプラグイン。 postcss-flexbugs-fixes: Flexboxのバグを修正してくれるPostCSSプラグイン。 cssnano: CSSをミニファイしてくれるPostCSSプラグイン。 stylelint: CSSのリンタ。 stylelint-config-standard: stylelintのルール設定集。 stylelint-config-prettier: Prettierが施すコード整形とコンフリクトするルールを無効にするstylelintルール設定集。 yarn add -D css-loader style-loader postcss-loader postcss-preset-env autoprefixer postcss-flexbugs-fixes cssnano stylelint stylelint-config-standard stylelint-config-prettier PostCSSとstylelintの設定は、それぞれpostcss.config.jsとstylelint.config.jsを書いてプロジェクトルートに置けばいい。 postcss.config.js: module.exports = {">
+    <meta property="og:description" content="ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はPrettierとESLintをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); CSS 前回までで作った環境で、Reactを使ってHTMLのDOMツリーを構築することができるようになったが、これは基本的にUIに表示する情報の構造しか定義しない。 UIの見た目(スタイル)を決めるのはCSSなので、それをアプリに組み込むことを考えないといけない。 組み込み方には現時点で大きく3通りある。 CSSを別途設計する 一つ目はCSSを別途設計する方法。 Reactコンポーネントからレンダリングされる要素にclassが付くようにしておいて、設計したCSSをbundle.jsとは別途読み込んでスタイルを適用することにはる。 この場合、CSSのスタイル定義はすべてグローバルなので、設計効率やメンテナンス効率を維持しつつ、各コンポーネントに意図したスタイルが適用されるようにするため、テクニックを凝らしてCSSクラスを設計する必要がある。 例えばBEM (2009年3月誕生)、OOCSS (2009年3月誕生)、SMACSS (2011年9月誕生)、FLOCSS (2014年4月誕生)など。 CSS自体は、素のCSSを書くことはあまりなく、普通はSassなどのAltCSSやPostCSSを使って書く。 さらに、stylelintでリンティングすることで、CSSの品質を上げられる。 リンティングルールは、stylelintプロジェクトから提供されているstylelint-config-recommendedかstylelint-config-standardを使えば十分。 後者がGoogleやAirbnbのCSSスタイルガイドを反映していていい感じ。 書いたCSSは、webpackのcss-loaderで読み込める。 webpackはJavaScriptのimport &#39;./App.css&#39;;みたいなコードを見つけると、css-loaderに処理を渡す。 css-loaderは、import文で指定されたCSSファイルだけでなく、@importやurl()で定義される依存関係をたどって関連するCSSを一通り読み込む。 読み込んだCSSは、webpackのstyle-loaderを使ってDOMに適用できる。 style-loaderは、読み込んだCSSを&lt;style&gt;タグで囲ってHTMLのヘッダに挿入してくれる。 CSSの処理にはPostCSSを使うとして、プロジェクトに以下のパッケージを追加する。 (PostCSSについてはQiitaの記事が参考になった。) css-loader: CSSを読み込むためのwebpackのローダ。 style-loader: CSSをDOMに追加するためのwebpackのローダ。 postcss-loader: PostCSSを実行するためのwebpackのローダ。 postcss-preset-env: CSSのエッジな機能を使うためのPostCSSプラグイン。 autoprefixer: CSSプロパティにベンダプレフィックスを追加してくれるPostCSSプラグイン。 postcss-flexbugs-fixes: Flexboxのバグを修正してくれるPostCSSプラグイン。 cssnano: CSSをミニファイしてくれるPostCSSプラグイン。 stylelint: CSSのリンタ。 stylelint-config-standard: stylelintのルール設定集。 stylelint-config-prettier: Prettierが施すコード整形とコンフリクトするルールを無効にするstylelintルール設定集。 yarn add -D css-loader style-loader postcss-loader postcss-preset-env autoprefixer postcss-flexbugs-fixes cssnano stylelint stylelint-config-standard stylelint-config-prettier PostCSSとstylelintの設定は、それぞれpostcss.config.jsとstylelint.config.jsを書いてプロジェクトルートに置けばいい。 postcss.config.js: module.exports =">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/css-modules-postcss-stylelint-styled-components.png">
     
@@ -84,7 +84,8 @@
       <div class="content">
         
 
-<p><a href="https://reactjs.org/">React</a>と<a href="https://redux.js.org/">Redux</a>を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。</p>
+<p><a href="https://reactjs.org/">React</a>と<a href="https://redux.js.org/">Redux</a>を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
+(最終的な成果は<a href="https://github.com/kaitoy/react-redux-scaffold">GitHub</a>に置いた。)</p>
 
 <p><a href="https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/">前回</a>はPrettierとESLintをセットアップした。</p>
 
@@ -451,6 +452,8 @@ JavaScriptの構文としては単なる文字列なので、変数を使った�
 
 <p>これでstyled-componentsにstylelintを適用できた。</p>
 
+<p><a href="https://www.kaitoy.xyz/2018/09/06/creating-react-redux-app-from-scratch-05/">次回</a>は<a href="https://material-ui.com/">Material-UI</a>を導入する。</p>
+
       </div>
 
       <div class="text-center custom-partial">
@@ -511,6 +514,12 @@ JavaScriptの構文としては単なる文字列なので、変数を使った�
 
               <ul id="related-posts">
                 
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/09/06/creating-react-redux-app-from-scratch-05/">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その5: Material-UIとWebフォント</a></li>
                 
                 
                 
@@ -883,6 +892,11 @@ JavaScriptの構文としては単なる文字列なので、変数を使った�
             <div class="col-sm-6">
               <div class="prev">
                 
+                <a href="https://www.kaitoy.xyz/2018/09/06/creating-react-redux-app-from-scratch-05/">
+                  <i class="fa fa-chevron-left"></i>
+                  React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その5: Material-UIとWebフォント
+                </a>
+                
               </div>
             </div>
             <div class="col-sm-6">
@@ -1090,6 +1104,9 @@ JavaScriptの構文としては単なる文字列なので、変数を使った�
       
       
       <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/material-ui">material-ui</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>

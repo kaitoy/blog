@@ -10,6 +10,7 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 +++
 
 [React](https://reactjs.org/)と[Redux](https://redux.js.org/)を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
+(最終的な成果は[GitHub](https://github.com/kaitoy/react-redux-scaffold)に置いた。)
 
 [前回](https://www.kaitoy.xyz/2018/08/19/creating-react-redux-app-from-scratch-01/)はNode.jsとYarnとBabelとwebpackをセットアップした。
 

@@ -27,6 +27,8 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 
 環境はWindows 10 Home。
 
+最終的な成果は[GitHub](https://github.com/kaitoy/react-redux-scaffold)に置いた。
+
 ## Node.jsインストール
 
 なにはともあれ[Node.js](https://nodejs.org/ja/)。
