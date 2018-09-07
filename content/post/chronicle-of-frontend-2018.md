@@ -557,6 +557,7 @@ Fluxの実装も、Facebook自身による[Flux](https://github.com/facebook/flu
 # 終わりに
 
 __2018年8月現在__ では、React vs Vue.js vs Angularといった感じで、激動の時代が過ぎてやや落ち着いて来ている感があるが、油断はできない。
+実際、最近[Elm](http://elm-lang.org/)という関数型AltJS兼Frontendフレームワークがじわじわ盛り上がってきている感じがあり、一波乱あるかもしれない。
 
 <br>
 
