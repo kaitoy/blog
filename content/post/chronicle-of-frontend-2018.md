@@ -44,37 +44,11 @@ __1990年代前半__、まだWebアプリケーションという言葉が無か
 
 まあ今も大体そんな感じだけど。
 
-# DHTML
-
-__1990年代後半__、クライアントサイドのJavaScriptでHTMLドキュメントをいじって、多少の動的感・インタラクティブ感をだす技術は既に一応あって、[DHTML](https://ja.wikipedia.org/wiki/%E3%83%80%E3%82%A4%E3%83%8A%E3%83%9F%E3%83%83%E3%82%AFHTML)と呼ばれていた。
-
-DHTMLの肝はJavaScriptの[DOM](https://ja.wikipedia.org/wiki/Document_Object_Model) APIだ。
-このAPIでは、HTML文書が各要素(タグなど)をノードとするツリー構造(DOMツリー)で表され、任意の要素を検索して取得したり、属性などを書き換えたり、要素の追加・削除ができる。
-
-```javascript
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
-  <head>
-  </head>
-  <body>
-    <div id="hogehoge"></div>
-    <script type="text/javascript">
-      // idがhogehogeの要素の子要素として「<p>HOGEEEEEEE</p>」を追加。
-      document.getElementById("hogehoge").innerHTML = "<p>HOGEEEEEEE</p>"
-    </script>
-  </body>
-</html>
-```
-
-しかし、このころのJavaScriptは、仕様・機能が貧弱だった上、ブラウザ間で挙動に差があったり、標準メソッドがブラウザ固有のメソッドで代替されていたりして開発体験が最悪だったためか、今日のようにWeb UIの中心的役割を果たすことはなく、補助的・装飾的機能の実装に使われることが多かったように思う。
-
-アクセスした日付を表示したり、背景に雪を降らせたり、マウスカーソルを目玉に追いかけさせたり。
-
 # 動的HTML生成 (プログラムでHTMLを書き出す)
 
 静的サイトだと表現できることが非常に限られるので、クライアントからのリクエストの内容をサーバが解釈し、DBの情報やなんかをもとにサーバ側でHTMLドキュメントを動的に生成し、クライアントに返す、ということをするようになった。
 
-原始的には、プログラム中で一連のHTMLドキュメントを出力する方法がとられた。
+原始的(__1990年代中盤から後半__)には、プログラム中で一連のHTMLドキュメントを出力する方法がとられた。
 
 ```java
 public void doGet(
@@ -101,7 +75,7 @@ public void doGet(
 # 動的HTML生成 (HTMLにプログラムを埋め込む)
 
 プログラムでHTMLを書き出すことにより、かなり動的な感じにはなったが、書き出す処理を書くのがめんどくさすぎるし、読みにくい。
-そのため、HTMLを主体にして、そのなかの動的な部分だけにプログラムを埋め込む方式が生まれた。
+そのため、__1990年代後半から2000年代初頭__ にかけ、HTMLを主体にして、そのなかの動的な部分だけにプログラムを埋め込む技術がいくつも生まれた。
 
 ```jsp
 <%@ page contentType="text/html %>
@@ -121,6 +95,32 @@ public void doGet(
 HTMLドキュメントのひな型を作っておいて、その中にプログラムの処理結果を埋め込んでクライアントに返すため、テンプレートエンジンとか、テンプレートシステムとか呼ばれる。
 
 該当する技術は、[PHP](http://www.php.net/)とか、[JSP](https://ja.wikipedia.org/wiki/JavaServer_Pages)とか、[Velocity](http://velocity.apache.org/)とか、[eRuby](https://ja.wikipedia.org/wiki/ERuby)とか。
+
+# DHTML
+
+__1990年代後半__、クライアントサイドのJavaScriptでHTMLドキュメントをいじって、多少の動的感・インタラクティブ感をだす技術は既に一応あって、[DHTML](https://ja.wikipedia.org/wiki/%E3%83%80%E3%82%A4%E3%83%8A%E3%83%9F%E3%83%83%E3%82%AFHTML)と呼ばれていた。
+
+DHTMLの肝はJavaScriptの[DOM](https://ja.wikipedia.org/wiki/Document_Object_Model) APIだ。
+このAPIでは、HTML文書が各要素(タグなど)をノードとするツリー構造(DOMツリー)で表され、任意の要素を検索して取得したり、属性などを書き換えたり、要素の追加・削除ができる。
+
+```javascript
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <head>
+  </head>
+  <body>
+    <div id="hogehoge"></div>
+    <script type="text/javascript">
+      // idがhogehogeの要素の子要素として「<p>HOGEEEEEEE</p>」を追加。
+      document.getElementById("hogehoge").innerHTML = "<p>HOGEEEEEEE</p>"
+    </script>
+  </body>
+</html>
+```
+
+しかし、このころのJavaScriptは、仕様・機能が貧弱だった上、ブラウザ間で挙動に差があったり、標準メソッドがブラウザ固有のメソッドで代替されていたりして開発体験が最悪だったためか、今日のようにWeb UIの中心的役割を果たすことはなく、補助的・装飾的機能の実装に使われることが多かったように思う。
+
+アクセスした日付を表示したり、背景に雪を降らせたり、マウスカーソルを目玉に追いかけさせたり。
 
 # MVCアーキテクチャ
 

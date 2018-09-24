@@ -4,7 +4,7 @@ date = "2018-09-06T23:33:31+09:00"
 draft = false
 eyecatch = "material-ui-logo.png"
 slug = "creating-react-redux-app-from-scratch-05"
-tags = ["react", "material-ui"]
+tags = ["react", "frontend", "material-ui"]
 title = "React + Reduxアプリケーションプロジェクトのテンプレートを作る ― その5: Material-UIとWebフォント"
 
 +++
@@ -43,6 +43,8 @@ Material-UIは簡単に使える。
 ```cmd
 yarn add @material-ui/core
 ```
+
+v1.4.1が入った。
 
 <br>
 
