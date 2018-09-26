@@ -6,8 +6,336 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2018</rights>
-    <updated>2018-09-06 23:33:31 &#43;0900 JST</updated>
+    <updated>2018-09-26 23:03:04 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その6: Redux</title>
+          <link>https://www.kaitoy.xyz/2018/09/26/creating-react-redux-app-from-scratch-06/</link>
+          <pubDate>Wed, 26 Sep 2018 23:03:04 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2018/09/26/creating-react-redux-app-from-scratch-06/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;https://reactjs.org/&#34;&gt;React&lt;/a&gt;と&lt;a href=&#34;https://redux.js.org/&#34;&gt;Redux&lt;/a&gt;を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
+(最終的な成果は&lt;a href=&#34;https://github.com/kaitoy/react-redux-scaffold&#34;&gt;GitHub&lt;/a&gt;に置いた。)&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/09/06/creating-react-redux-app-from-scratch-05/&#34;&gt;前回&lt;/a&gt;はMaterial-UIをセットアップした。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h1 id=&#34;reactの状態管理&#34;&gt;Reactの状態管理&lt;/h1&gt;
+
+&lt;p&gt;Reactによるプログラミングをするとき、小さいUIコンポーネントをたくさん作って、それらを組み合わせてVirtual DOMツリーを作っておいて、そこにpropsをほうりこんでレンダリングする、という感じになる。
+また、レンダリングした後はコンポーネントのstateをいじって状態を変化させる。&lt;/p&gt;
+
+&lt;p&gt;このpropsやstateの扱いをReactの状態管理という。
+propsやstateを適当にアドホックに設定してると、結局jQuery使ってるのとそんなに変わらなくなって辛くなるので、Reactの開発元であるFacebookは&lt;a href=&#34;https://facebook.github.io/flux/&#34;&gt;Flux&lt;/a&gt;というアーキテクチャを提案している。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://github.com/facebook/flux/raw/master/docs/img/flux-diagram-white-background.png&#34; alt=&#34;Flux&#34; title=&#34;Flux&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Fluxでは、単一の(またはドメイン毎くらいの単位の)オブジェクトでアプリケーション全体の状態(state)を表し、これをStoreに保持する。
+ReactはStoreが保持するstateを受け取り、それをもとにViewをレンダリングする。
+Viewに対するユーザの操作(など)はActionというオブジェクトで表現され、Dispatcherに渡され、Dispatcherに登録されたcallbackを通してstateを変化させる。&lt;/p&gt;
+
+&lt;p&gt;データが常に一方向に流れて見通しがよく、各コンポーネントの独立性が高いのが特徴。
+各コンポーネントは、受け取ったデータをピュアに処理すればよく、リアクティブにファンクショナルに実装できる。&lt;/p&gt;
+
+&lt;h1 id=&#34;redux&#34;&gt;Redux&lt;/h1&gt;
+
+&lt;p&gt;Fluxの実装、というか発展形がRedux。&lt;/p&gt;
+
+&lt;p&gt;ReduxではFluxのDispatcher辺りがReducerに置き換わっている。
+ReducerはActionと現在のstateから次のstateを計算する純粋関数。&lt;/p&gt;
+
+&lt;p&gt;また、ReduxからはViewが切り離されていて、Actionによってstateを更新する状態管理ライブラリの役割に徹している。
+ReactコンポーネントのイベントハンドラからActionオブジェクトを生成したり、更新したstateをReactに渡したりするつなぎ目は、別途&lt;a href=&#34;https://github.com/reduxjs/react-redux&#34;&gt;React Redux&lt;/a&gt;というライブラリが担当する。&lt;/p&gt;
+
+&lt;p&gt;ReduxとReact Reduxについては、Qiitaの「&lt;a href=&#34;https://qiita.com/mpyw/items/a816c6380219b1d5a3bf&#34;&gt;たぶんこれが一番分かりやすいと思います React + Redux のフロー図解&lt;/a&gt;」という記事が分かりやすい。&lt;/p&gt;
+
+&lt;p&gt;今回はReduxを導入する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add redux
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Redux v4.0.0が入った。&lt;/p&gt;
+
+&lt;p&gt;以降、現時点で唯一のUIコンポーネントであるHOGEボタンの状態管理を実装してみる。&lt;/p&gt;
+
+&lt;h2 id=&#34;action&#34;&gt;Action&lt;/h2&gt;
+
+&lt;p&gt;まず&lt;a href=&#34;https://redux.js.org/basics/actions&#34;&gt;Action&lt;/a&gt;を実装する。&lt;/p&gt;
+
+&lt;p&gt;Actionオブジェクトはどんな形式でもいいけど、普通は&lt;a href=&#34;https://github.com/redux-utilities/flux-standard-action&#34;&gt;Flux Standard Action&lt;/a&gt;(FSA)にする。
+FSAは以下のプロパティを持つプレーンオブジェクト。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;type: Action種別を示す文字列定数。必須。&lt;/li&gt;
+&lt;li&gt;payload: Actionの情報を示す任意の型の値。任意。&lt;/li&gt;
+&lt;li&gt;error: Actionがエラーを表すものかを示す boolean プロパティ。エラーなら true にして、payload にエラーオブジェクトをセットする。任意。&lt;/li&gt;
+&lt;li&gt;meta: その他の情報を入れる任意の型の値。任意。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Actionのコードは、Actionのtypeに入れる値を定義する&lt;code&gt;actionTypes.js&lt;/code&gt;と、Action Creator(i.e. Actionオブジェクトを生成する関数)を定義する&lt;code&gt;actions.js&lt;/code&gt;からなり、ともに&lt;code&gt;src/actions/&lt;/code&gt;に置く。&lt;/p&gt;
+
+&lt;p&gt;HOGEボタンをクリックしたときのAction、&lt;code&gt;HOGE_BUTTON_CLICKED&lt;/code&gt;を定義してみる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/actions/actionTypes.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;export const HOGE_BUTTON_CLICKED = &#39;HOGE_BUTTON_CLICKED&#39;;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;src/actions/actions.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import {
+  HOGE_BUTTON_CLICKED,
+} from &#39;./actionTypes&#39;;
+
+export function hogeButtonClicked(payload) {
+  return {
+    type: HOGE_BUTTON_CLICKED,
+    payload,
+  };
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;こんな感じ。&lt;/p&gt;
+
+&lt;h2 id=&#34;reducer&#34;&gt;Reducer&lt;/h2&gt;
+
+&lt;p&gt;次は&lt;a href=&#34;https://redux.js.org/basics/reducers&#34;&gt;Reducer&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;Reducerは、上記Action Creatorが生成するActionオブジェクトに対応して起動し、Store(後述)から現在のstateオブジェクトを受け取って、Actionオブジェクトのpayloadの値(など)に応じて新しいstateオブジェクトを作る。&lt;/p&gt;
+
+&lt;p&gt;Reducerを書く前に、stateオブジェクトの構造を設計しておくことが推奨されている。
+UIコンポーネント毎にプロパティを分けて、コンポーネント構造と同様の階層構造にしておけばだいたいよさそう。&lt;/p&gt;
+
+&lt;p&gt;HOGEボタンに一つ、クリックしたかどうかの状態(&lt;code&gt;clicked&lt;/code&gt;)を持たせるとすると、stateオブジェクトは以下のようになる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;{
+  hoge: {
+    clicked: false,
+  },
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Reducerはピュアじゃないといけないので、内部で&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E5%89%AF%E4%BD%9C%E7%94%A8_(%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%A0&#34;&gt;副作用&lt;/a&gt;を起こしてはいけない。
+副作用とは、具体的には以下のようなもの。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;引数で与えられたオブジェクトを変更する。&lt;/li&gt;
+&lt;li&gt;REST APIへのリクエストを送る。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;(ログの出力も厳密には副作用なんだろうけど、それは許されてる気がする。)&lt;/p&gt;
+
+&lt;p&gt;また、ピュアであるためには&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E5%8F%82%E7%85%A7%E9%80%8F%E9%81%8E%E6%80%A7&#34;&gt;参照透過性&lt;/a&gt;を持たないといけなくて、つまり同じ引数に対しては同じ戻り値を返さないといけないので、内部で&lt;code&gt;Date.now()&lt;/code&gt;とか&lt;code&gt;Math.random()&lt;/code&gt;とかを呼ぶのもダメ。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Reducerのコードは&lt;code&gt;src/reducers/&lt;/code&gt;に置く。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;HOGE_BUTTON_CLICKED&lt;/code&gt;が発生したら、&lt;code&gt;hoge&lt;/code&gt;の&lt;code&gt;clicked&lt;/code&gt;を&lt;code&gt;true&lt;/code&gt;にするReducer(&lt;code&gt;hoge()&lt;/code&gt;)は以下の感じに書ける。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/reducers/reducers.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import { HOGE_BUTTON_CLICKED } from &#39;../actions/actionTypes&#39;;
+
+const initialState = {
+  hoge: {
+    clicked: false,
+  },
+};
+
+export function hoge(state = initialState, action) {
+  switch (action.type) {
+    case HOGE_BUTTON_CLICKED:
+      const newHoge = {
+        hoge: {
+          clicked: true,
+        },
+      };
+      return Object.assign({}, state, newHoge);
+    default:
+      return state;
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;hoge()&lt;/code&gt;のポイントはたくさんある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;state&lt;/code&gt;と&lt;code&gt;action&lt;/code&gt;を引数に取る。前者が現在の状態を表すstateオブジェクトで、後者がActionオブジェクト。&lt;/li&gt;
+&lt;li&gt;戻り値は新しい状態を表すstateオブジェクト。&lt;/li&gt;
+&lt;li&gt;actionオブジェクトはどのActionを表すものかは分からないので、&lt;code&gt;action.type&lt;/code&gt;を見て&lt;code&gt;HOGE_BUTTON_CLICKED&lt;/code&gt;だけを処理するようにする。
+
+&lt;ul&gt;
+&lt;li&gt;知らないActionだったら(i.e. &lt;code&gt;default&lt;/code&gt;句のなかに来たら)、受け取ったstateオブジェクトをそのまま返す。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;アプリケーションの初期化時には&lt;code&gt;state&lt;/code&gt;に&lt;code&gt;undefined&lt;/code&gt;が渡されるので、それに備え、初期状態である&lt;code&gt;initialState&lt;/code&gt;をデフォルト引数に設定する。&lt;/li&gt;
+&lt;li&gt;渡されたstateオブジェクトを変更してはいけないので、&lt;a href=&#34;https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Object/assign&#34;&gt;Object.assgin()&lt;/a&gt;に空オブジェクト&lt;code&gt;{}&lt;/code&gt;とともに&lt;code&gt;state&lt;/code&gt;を渡してコピーする。
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Object.assgin()&lt;/code&gt;の代わりに&lt;a href=&#34;https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#%E3%82%AA%E3%83%96%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88%E3%81%AE%E5%88%86%E5%89%B2%E4%BB%A3%E5%85%A5&#34;&gt;オブジェクト分割代入&lt;/a&gt;を使う方法も&lt;a href=&#34;https://redux.js.org/recipes/usingobjectspreadoperator&#34;&gt;ある&lt;/a&gt;。この場合&lt;a href=&#34;https://babeljs.io/docs/en/babel-plugin-transform-object-rest-spread&#34;&gt;babel-plugin-transform-object-rest-spread&lt;/a&gt;が必要。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Object.assign()&lt;/code&gt;の第三引数に&lt;code&gt;newHoge&lt;/code&gt;で上書きするようにしている。
+
+&lt;ul&gt;
+&lt;li&gt;今はstateオブジェクトのプロパティが&lt;code&gt;hoge&lt;/code&gt;一つだけなので単に&lt;code&gt;newHoge&lt;/code&gt;をreturnしても結果は一緒。なので無駄なことをしてるようにも見えるけど、stateオブジェクトのプロパティが増えた場合に&lt;code&gt;hoge&lt;/code&gt;以外に影響を与えないための計らい。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;これはこれでいい感じに見えるけど、&lt;code&gt;hoge()&lt;/code&gt;が&lt;code&gt;hoge&lt;/code&gt;プロパティしか扱わないのに、stateオブジェクト全体を渡しているのがイケていない。
+(まあ今はstateオブジェクトには&lt;code&gt;hoge&lt;/code&gt;プロパティしかないんだけど、他のプロパティが色々増えてくるとイケてない感が高まる。)
+&lt;code&gt;hoge&lt;/code&gt;プロパティがstateオブジェクト構造のどこにあるかを&lt;code&gt;hoge()&lt;/code&gt;が気にしないといけないのもイケてない。
+&lt;code&gt;hoge()&lt;/code&gt;には&lt;code&gt;hoge&lt;/code&gt;プロパティだけを見てほしい。&lt;/p&gt;
+
+&lt;p&gt;ということで、普通はReducerは分割して書いて、それぞれのReducerにstateオブジェクトを分割して渡してやる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/reducers/reducers.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import { HOGE_BUTTON_CLICKED } from &#39;../actions/actionTypes&#39;;
+
+-const initialState = {
+-  hoge: {
+-    clicked: false,
+-  },
+-};
+
+-export function hoge(state = initialState, action) {
++export function hoge(state = { clicked: false }, action) {
+   switch (action.type) {
+     case HOGE_BUTTON_CLICKED:
+       const newHoge = {
+-        hoge: {
+-          clicked: true,
+-        },
++        clicked: true,
+       };
+       return Object.assign({}, state, newHoge);
+     default:
+       return state;
+   }
+ }
+
++export function rootReducer(state = {}, action) {
++  return {
++    hoge: hoge(state.hoge, action),
++  }
++}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;こんな感じで、&lt;code&gt;rootReducer()&lt;/code&gt;がstateオブジェクトを分割して子Reducerを呼び出す。
+孫Reducerとか曾孫Reducerとかがあってもいい。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;rootReducer()&lt;/code&gt;は別のファイルに書くと見やすくなるし、Reduxの&lt;a href=&#34;https://redux.js.org/api/combinereducers&#34;&gt;combineReducers()&lt;/a&gt;というヘルパー関数を使うともっと楽に書ける。
+上記&lt;code&gt;reducers.js&lt;/code&gt;からは&lt;code&gt;rootReducer()&lt;/code&gt;を削除して、&lt;code&gt;rootReducer.js&lt;/code&gt;に以下のように書く。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/reducers/rootReducer.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import { combineReducers } from &#39;redux&#39;;
+import hoge from &#39;./reducers&#39;;
+
+const rootReducer = combineReducers({
+  hoge,
+});
+export default rootReducer;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;このように&lt;code&gt;combineReducers()&lt;/code&gt;で作った&lt;code&gt;rootReducer&lt;/code&gt;は、上で自前で書いた&lt;code&gt;rootReducer&lt;/code&gt;と全く同じ動きをする。&lt;/p&gt;
+
+&lt;p&gt;さらに簡単に、以下のようにも書ける。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/reducers/rootReducer.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import { combineReducers } from &#39;redux&#39;;
+import * as reducers from &#39;./reducers&#39;;
+
+const rootReducer = combineReducers(reducers);
+export default rootReducer;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;こうしておけば、Reducerの追加は&lt;code&gt;reducers.js&lt;/code&gt;に関数を追加するだけでよくなる。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/redux-utilities/redux-actions&#34;&gt;redux-actions&lt;/a&gt;を使うとさらに記述を簡略化できるみたいだけど、逆に何が何だか分からなくなりそうだったので、慣れるまでは使わないでおく。&lt;/p&gt;
+
+&lt;h2 id=&#34;store&#34;&gt;Store&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://redux.js.org/basics/store&#34;&gt;Store&lt;/a&gt;は以下のような特徴を持つオブジェクト。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;getState()&lt;/code&gt;でstateオブジェクトを返す。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dispatch(action)&lt;/code&gt;でActionをディスパッチできる。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;subscribe(listener)&lt;/code&gt;でActionのディスパッチをサブスクライブできる。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;StoreはrootReducerを&lt;a href=&#34;https://redux.js.org/api/createstore&#34;&gt;createStore()&lt;/a&gt;に渡すことで作れる。
+&lt;code&gt;createStore()&lt;/code&gt;を呼ぶコードはモジュールにしておくのがいい。
+後で膨らんでくるので。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/configureStore.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import { createStore } from &#39;redux&#39;;
+import rootReducer from &#39;./reducers/rootReducer&#39;;
+
+export default function configureStore(initialState = {}) {
+  const store = createStore(
+    rootReducer,
+    initialState,
+  );
+  return store;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これだけ。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;以上でReduxのコンポーネントが一通りそろって、状態管理システムができた。
+試しに動かしてみる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/try.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import { hogeButtonClicked } from &#39;./actions/actions&#39;;
+import configureStore from &#39;./configureStore&#39;;
+
+const store = configureStore();
+console.log(store.getState()); // =&amp;gt; { hoge: {clicked: false} }
+
+store.subscribe(() =&amp;gt; {
+  console.log(store.getState());
+});
+
+store.dispatch(hogeButtonClicked()); // =&amp;gt; { hoge: {clicked: true} }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;store.dispatch()&lt;/code&gt;するとReducer(&lt;code&gt;hoge()&lt;/code&gt;)が実行され、stateオブジェクトが更新されることが分かる。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -256,6 +584,10 @@ injectGlobal`
    );
  }
 &lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/09/26/creating-react-redux-app-from-scratch-06/&#34;&gt;次回&lt;/a&gt;はようやくReduxを導入する。&lt;/p&gt;
 </description>
         </item>
       
