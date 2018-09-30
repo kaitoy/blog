@@ -10,19 +10,19 @@
     
     
     <meta property="og:type" content="article">
-    <meta property="og:title" content="React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その2: React | To Be Decided">
-    <meta property="og:url" content="https://www.kaitoy.xyz/2018/08/22/creating-react-redux-app-from-scratch-02/">
-    <link rel="canonical" href="https://www.kaitoy.xyz/2018/08/22/creating-react-redux-app-from-scratch-02/">
-    <meta property="og:description" content="ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はNode.jsとYarnとBabelとwebpackをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); Reactとは 以前にも同じような事を書いたけど、改めてReactについて書く。 ちょっとコーディングの詳細にも触れながら。 ReactはViewを記述するためのライブラリで、特徴はVirtual DOMとJSX。 Virtual DOM Virtual DOMはDOMを仮想化するもので、JavaScriptからVirtual DOMでUIを記述してやると、それが実DOMに効率的に反映されるようになっている。 JSX Virtual DOMはJSXというHTMLみたいな言語で記述できる。 import React from &#39;react&#39;; import ReactDOM from &#39;react-dom&#39;; ReactDOM.render( &lt;h1&gt;Hello, world!&lt;/h1&gt;, document.getElementById(&#39;root&#39;) ); こんな風に書くと、idがrootであるHTML要素の中に、&lt;h1&gt;Hello, world!&lt;/h1&gt;がレンダリングされる。 上記コードの&lt;h1&gt;Hello, world!&lt;/h1&gt;の部分がJSX。 コンポーネント JSXではコンポーネントを定義して新たなタグとして使うことができるので、再利用できるコンポーネントを作って、それらを組み合わせてUIを構築することで、効率的な開発ができる。 import React from &#39;react&#39;; import ReactDOM from &#39;react-dom&#39;; // Welcomeコンポーネントの定義 function Welcome() { return &lt;h1&gt;Hello, World&lt;/h1&gt;; } // Welcomeコンポーネントのレンダリング ReactDOM.render( &lt;Welcome /&gt;, document.getElementById(&#39;root&#39;) ); 上記コードではコンポーネントをfunctionで定義しているが、アロー関数で書いても全く一緒。 const Welcome = () =&gt; ( &lt;h1&gt;Hello, World&lt;/h1&gt;; ); 関数の代わりにclassで定義することもできる。 class Welcome extends React.Component { render() { return &lt;h1&gt;Hello, World&lt;/h1&gt;; } } 関数による定義とclassによる定義はおおむね変わらないが、stateとライフサイクルメソッドを使いたいときはclassにする必要がある。 props コンポーネントはレンダリングの際にpropsというパラメータを受け取って使うことができるので、上手く設計すれば汎用的なコンポーネントが書ける。 import React from &#39;react&#39;; import ReactDOM from &#39;react-dom&#39;; // Welcomeコンポーネントの定義 (props付き) function Welcome(props) { return &lt;h1&gt;Hello, {props.name}&lt;/h1&gt;; } // Welcomeコンポーネントのレンダリング (props付き) ReactDOM.render( &lt;Welcome name=&quot;Kaitoy&quot; /&gt;, document.getElementById(&#39;root&#39;) ); propsはイミュータブルにしてコンポーネント内で変更しない(i.e.">
+    <meta property="og:title" content="React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その7: React Redux | To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/">
+    <link rel="canonical" href="https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/">
+    <meta property="og:description" content="ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はReduxをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); React Redux 前回はReduxをセットアップして、ActionをStoreにディスパッチしてstateを更新できるようになった。 今回はこれをReactにつなぐ。 使うのはReact Redux。 yarn add react-redux v5.0.7が入った。 Presentational Components と Container Components React Reduxの使い方を理解するには、Presentational Components と Container Components という概念を知らないといけない。 これはReactコンポーネントを役割別に分ける考え方で、それぞれ以下のような特徴をもつ。 Presentational Components Container Components 主な役割 DOMをレンダリングする データを取得したりstateを更新したりする(Reduxとつなぐ) Reduxとの関連 無し 有り データの読み込み propsから読む Reduxのstateオブジェクトから読む データの更新 propsで渡されたコールバックを呼ぶ ReduxのActionをディスパッチする 作り方 自前で書く React Reduxで生成する 要するに、普通にReactで作ったUIコンポーネントを、React Reduxで生成するContainer ComponentでラップしてやることでReduxのStoreとつなぐことができる。 connect() Container Componentの生成にはReact Reduxのconnect()というAPIを使う。 React Reduxを使う場合、Reduxのstateの更新に応じてReactコンポーネントに新しいpropsを渡して再レンダリングすることになるが、この新しいpropsを作ってコンポーネントに渡す処理を定義するのがconnect()。 connect()の第一引数には、ReduxのstateのプロパティとReactコンポーネントのpropsのプロパティとのマッピングをする関数であるmapStateToProps()を渡す。 mapStateToProps()はstateの更新に応じて呼び出され、引数にstate(と現在のprops)が渡される。 mapStateToProps()が返すオブジェクトはReactコンポーネントに渡されるpropsにマージされる。 connect()の第二引数には、Storeのdispatch()を呼び出す処理とReactコンポーネントのpropsのプロパティとのマッピングをする関数であるmapDispatchToProps()を渡す。 mapDispatchToProps()の引数にはdispatch()が渡される。 mapDispatchToProps()が返すオブジェクトはReactコンポーネントに渡されるpropsにマージされる。 (mapDispatchToProps()は第二引数にpropsを受け取ることもできて、この場合、propsの更新に反応して呼び出されるコールバックになる。) connect()を実行すると関数が返ってくる。 この関数にReactコンポーネント(Presentational Component)を渡して実行すると、Storeに接続されたReactコンポーネント(Container">
     
-    <meta property="og:image" content="https://www.kaitoy.xyz/images/react.png">
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/redux.png">
     
     
     <meta property="og:site_name" content="To Be Decided">
 
     <title>
       
-      React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その2: React | To Be Decided
+      React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その7: React Redux | To Be Decided
       
     </title>
 
@@ -72,12 +72,12 @@
 <div class="row">
   <div class="col-md-9">
     <article id="post">
-      <span class="date">Wed, Aug 22, 2018</span>
-      <h2 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その2: React</h2>
+      <span class="date">Mon, Oct 1, 2018</span>
+      <h2 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その7: React Redux</h2>
 
       <div class="eyecatch text-center">
         
-        <img src="https://www.kaitoy.xyz/images/react.png" alt="React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その2: React">
+        <img src="https://www.kaitoy.xyz/images/redux.png" alt="React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その7: React Redux">
         
       </div>
 
@@ -87,7 +87,7 @@
 <p><a href="https://reactjs.org/">React</a>と<a href="https://redux.js.org/">Redux</a>を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
 (最終的な成果は<a href="https://github.com/kaitoy/react-redux-scaffold">GitHub</a>に置いた。)</p>
 
-<p><a href="https://www.kaitoy.xyz/2018/08/19/creating-react-redux-app-from-scratch-01/">前回</a>はNode.jsとYarnとBabelとwebpackをセットアップした。</p>
+<p><a href="https://www.kaitoy.xyz/2018/09/26/creating-react-redux-app-from-scratch-06/">前回</a>はReduxをセットアップした。</p>
 
 <p>
 
@@ -104,245 +104,208 @@
 </script>
 </p>
 
-<h1 id="reactとは">Reactとは</h1>
+<h1 id="react-redux">React Redux</h1>
 
-<p>以前にも同じような事を書いたけど、改めてReactについて書く。
-ちょっとコーディングの詳細にも触れながら。</p>
+<p>前回はReduxをセットアップして、ActionをStoreにディスパッチしてstateを更新できるようになった。
+今回はこれをReactにつなぐ。</p>
 
-<p>ReactはViewを記述するためのライブラリで、特徴は<a href="https://reactjs.org/docs/faq-internals.html">Virtual DOM</a>と<a href="https://reactjs.org/docs/introducing-jsx.html">JSX</a>。</p>
+<p>使うのは<a href="https://redux.js.org/basics/usagewithreact">React Redux</a>。</p>
 
-<h2 id="virtual-dom">Virtual DOM</h2>
-
-<p>Virtual DOMはDOMを仮想化するもので、JavaScriptからVirtual DOMでUIを記述してやると、それが実DOMに効率的に反映されるようになっている。</p>
-
-<h2 id="jsx">JSX</h2>
-
-<p>Virtual DOMはJSXというHTMLみたいな言語で記述できる。</p>
-
-<pre><code class="language-javascript">import React from 'react';
-import ReactDOM from 'react-dom';
-
-ReactDOM.render(
-  &lt;h1&gt;Hello, world!&lt;/h1&gt;,
-  document.getElementById('root')
-);
+<pre><code class="language-cmd">yarn add react-redux
 </code></pre>
 
-<p>こんな風に書くと、idが<code>root</code>であるHTML要素の中に、<code>&lt;h1&gt;Hello, world!&lt;/h1&gt;</code>がレンダリングされる。
-上記コードの<code>&lt;h1&gt;Hello, world!&lt;/h1&gt;</code>の部分がJSX。</p>
+<p>v5.0.7が入った。</p>
 
-<h2 id="コンポーネント">コンポーネント</h2>
+<h1 id="presentational-components-と-container-components">Presentational Components と Container Components</h1>
 
-<p>JSXではコンポーネントを定義して新たなタグとして使うことができるので、再利用できるコンポーネントを作って、それらを組み合わせてUIを構築することで、効率的な開発ができる。</p>
+<p>React Reduxの使い方を理解するには、<a href="https://medium.com/@dan_abramov/smart-and-dumb-components-7ca2f9a7c7d0">Presentational Components と Container Components</a> という概念を知らないといけない。
+これはReactコンポーネントを役割別に分ける考え方で、それぞれ以下のような特徴をもつ。</p>
 
-<pre><code class="language-javascript">import React from 'react';
-import ReactDOM from 'react-dom';
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Presentational Components</th>
+<th>Container Components</th>
+</tr>
+</thead>
 
-// Welcomeコンポーネントの定義
-function Welcome() {
-  return &lt;h1&gt;Hello, World&lt;/h1&gt;;
-}
+<tbody>
+<tr>
+<td>主な役割</td>
+<td>DOMをレンダリングする</td>
+<td>データを取得したりstateを更新したりする(Reduxとつなぐ)</td>
+</tr>
 
-// Welcomeコンポーネントのレンダリング
-ReactDOM.render(
-  &lt;Welcome /&gt;,
-  document.getElementById('root')
-);
-</code></pre>
+<tr>
+<td>Reduxとの関連</td>
+<td>無し</td>
+<td>有り</td>
+</tr>
 
-<p>上記コードではコンポーネントをfunctionで定義しているが、アロー関数で書いても全く一緒。</p>
+<tr>
+<td>データの読み込み</td>
+<td>propsから読む</td>
+<td>Reduxのstateオブジェクトから読む</td>
+</tr>
 
-<pre><code class="language-javascript">const Welcome = () =&gt; (
-  &lt;h1&gt;Hello, World&lt;/h1&gt;;
-);
-</code></pre>
+<tr>
+<td>データの更新</td>
+<td>propsで渡されたコールバックを呼ぶ</td>
+<td>ReduxのActionをディスパッチする</td>
+</tr>
+
+<tr>
+<td>作り方</td>
+<td>自前で書く</td>
+<td>React Reduxで生成する</td>
+</tr>
+</tbody>
+</table>
 
 <p><br></p>
 
-<p>関数の代わりにclassで定義することもできる。</p>
+<p>要するに、普通にReactで作ったUIコンポーネントを、React Reduxで生成するContainer ComponentでラップしてやることでReduxのStoreとつなぐことができる。</p>
 
-<pre><code class="language-javascript">class Welcome extends React.Component {
-  render() {
-    return &lt;h1&gt;Hello, World&lt;/h1&gt;;
-  }
-}
-</code></pre>
+<h1 id="connect">connect()</h1>
 
-<p>関数による定義とclassによる定義はおおむね変わらないが、<a href="https://reactjs.org/docs/state-and-lifecycle.html">stateとライフサイクルメソッド</a>を使いたいときはclassにする必要がある。</p>
+<p>Container Componentの生成にはReact Reduxの<a href="https://github.com/reduxjs/react-redux/blob/master/docs/api.md#connectmapstatetoprops-mapdispatchtoprops-mergeprops-options">connect()</a>というAPIを使う。</p>
 
-<h2 id="props">props</h2>
+<p>React Reduxを使う場合、Reduxのstateの更新に応じてReactコンポーネントに新しいpropsを渡して再レンダリングすることになるが、この新しいpropsを作ってコンポーネントに渡す処理を定義するのが<code>connect()</code>。</p>
 
-<p>コンポーネントはレンダリングの際に<code>props</code>というパラメータを受け取って使うことができるので、上手く設計すれば汎用的なコンポーネントが書ける。</p>
+<p><code>connect()</code>の第一引数には、ReduxのstateのプロパティとReactコンポーネントのpropsのプロパティとのマッピングをする関数である<code>mapStateToProps()</code>を渡す。
+<code>mapStateToProps()</code>はstateの更新に応じて呼び出され、引数にstate(と現在のprops)が渡される。
+<code>mapStateToProps()</code>が返すオブジェクトはReactコンポーネントに渡されるpropsにマージされる。</p>
+
+<p><code>connect()</code>の第二引数には、Storeの<code>dispatch()</code>を呼び出す処理とReactコンポーネントのpropsのプロパティとのマッピングをする関数である<code>mapDispatchToProps()</code>を渡す。
+<code>mapDispatchToProps()</code>の引数には<code>dispatch()</code>が渡される。
+<code>mapDispatchToProps()</code>が返すオブジェクトはReactコンポーネントに渡されるpropsにマージされる。</p>
+
+<p>(<code>mapDispatchToProps()</code>は第二引数に<code>props</code>を受け取ることもできて、この場合、propsの更新に反応して呼び出されるコールバックになる。)</p>
+
+<p><code>connect()</code>を実行すると関数が返ってくる。
+この関数にReactコンポーネント(Presentational Component)を渡して実行すると、Storeに接続されたReactコンポーネント(Container Component)が返ってくる。</p>
+
+<h2 id="connect-の使い方">connect()の使い方</h2>
+
+<p>前回作ったStoreをHOGEボタン(これはPresentational Component)につなげるContainer Componentを書いてみる。
+Container Componentのソースは<code>src/containers/</code>に入れる。</p>
+
+<p><code>src/containers/HogeButton.js</code></p>
 
 <pre><code class="language-javascript">import React from 'react';
-import ReactDOM from 'react-dom';
+import Button from '@material-ui/core/Button';
+import { connect } from 'react-redux';
+import { hogeButtonClicked } from '../actions/actions';
 
-// Welcomeコンポーネントの定義 (props付き)
-function Welcome(props) {
-  return &lt;h1&gt;Hello, {props.name}&lt;/h1&gt;;
+function mapStateToProps(state) {
+  return {
+    clicked: state.hoge.clicked
+  };
 }
 
-// Welcomeコンポーネントのレンダリング (props付き)
-ReactDOM.render(
-  &lt;Welcome name=&quot;Kaitoy&quot; /&gt;,
-  document.getElementById('root')
-);
+function mapDispatchToProps(dispatch) {
+  return {
+    onClick: function() {
+      dispatch(hogeButtonClicked());
+    }
+  };
+}
+
+const HogeButton = connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(Button);
+
+export default HogeButton;
 </code></pre>
 
-<p><br></p>
+<p>こんな感じ。</p>
 
-<p><code>props</code>はイミュータブルにしてコンポーネント内で変更しない(i.e. コンポーネントをpureにする)のが定石。</p>
+<p>HOGEボタンをクリックすると、以下の流れで状態が遷移する。</p>
 
-<h2 id="prop-types">prop-types</h2>
+<ol>
+<li><code>hogeButtonClicked()</code>が呼ばれて<code>HOGE_BUTTON_CLICKED</code>アクションが生成されてdispatchされる。</li>
+<li>Storeの中で<code>state.hoge.clicked</code>が更新される。</li>
+<li>stateの更新に反応して<code>mapStateToProps()</code>が呼び出され、その戻り値がpropsにマージされる。</li>
+<li>新しいpropsを使って、新たにHOGEボタンがレンダリングされる。</li>
+</ol>
 
-<p><a href="https://github.com/facebook/prop-types">prop-types</a>を使うと、コンポーネントに渡される<code>props</code>に期待する型を定義することができる。</p>
+<h2 id="connect-のシンプルな書き方">connect()のシンプルな書き方</h2>
 
-<p>前節で作ったWelcomeコンポーネントの<code>props</code>の<code>name</code>はStringオブジェクトを受け取ることを期待するので、prop-typesを以下のように定義する。</p>
+<p><code>mapDispatchToProps</code>は実はプレーンオブジェクトでもいい。
+この場合、オブジェクトのキーと値はそれぞれ、propsのプロパティ名とAction Creatorにする。
+(Action Creatorは<code>connect()</code>が<code>dispatch()</code>でラップしてくれる。)</p>
 
-<pre><code class="language-javascript">function Welcome(props) {
-  return &lt;h1&gt;Hello, {props.name}&lt;/h1&gt;;
-}
-
-Welcome.propTypes = {
-  name: PropTypes.string.isRequired,
+<pre><code class="language-javascript">const mapDispatchToProps ⁼ {
+  onClick: hogeButtonClicked,
 };
 </code></pre>
 
-<p>こうしておくと、実行時に型チェックが走り、型が合わないとコンソールに警告がでるようになる。</p>
+<p><br></p>
 
-<h1 id="reactのインストール">Reactのインストール</h1>
+<p>また、<code>mapStateToProps</code>と<code>mapDispatchToProps</code>はexportするわけでも再利用するわけでもないので、<code>connect()</code>の中に直接書いてしまってもいい。
+この場合、<code>mapStateToProps</code>はアロー関数で書いて、<code>return</code>は省略してしまうのがいい。</p>
 
-<p>上記のコードを実行するためのライブラリを一通りプロジェクトに追加する。</p>
-
-<pre><code class="language-cmd">yarn add react react-dom prop-types
+<pre><code class="language-javascript">const HogeButton = connect(
+  (state) =&gt; ({
+    clicked: state.hoge.clicked
+  }),
+  {
+    onClick: hogeButtonClicked,
+  },
+)(Button);
 </code></pre>
-
-<p>Reactはv16.4.1が入った。</p>
-
-<h1 id="ソース構成">ソース構成</h1>
-
-<p>ソースを入れる<code>src</code>ディレクトリの構成は、<a href="https://qiita.com/numanomanu/items/af97312f34cf1388cee6#%E5%AE%9F%E9%9A%9B%E3%81%AE%E3%83%97%E3%83%AD%E3%83%80%E3%82%AF%E3%83%88%E3%81%AE%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E6%A7%8B%E6%88%90">Qiitaの記事</a>を参考に以下のようにする。</p>
-
-<ul>
-<li>react-redux-scaffold/
-
-<ul>
-<li>src/
-
-<ul>
-<li>actions/</li>
-<li>components/</li>
-<li>containers/</li>
-<li>reducers/</li>
-<li>sagas/</li>
-<li>services/</li>
-<li>index.jsx</li>
-</ul></li>
-</ul></li>
-</ul>
 
 <p><br></p>
 
-<p>今のところ使うのは<code>index.jsx</code>と<code>components</code>だけ。</p>
+<p>さらに、<code>mapStateToProps</code>が受け取る<code>state</code>は、<code>hoge</code>プロパティしか興味ないので、オブジェクト分割代入をするのがいい。</p>
 
-<p><code>index.jsx</code>は<a href="https://www.kaitoy.xyz/2018/08/19/creating-react-redux-app-from-scratch-01/#webpack%E8%A8%AD%E5%AE%9A%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB">前回</a>書いた通り、webpackが初めにロードするファイル。</p>
+<pre><code class="language-javascript">const HogeButton = connect(
+  ({hoge}) =&gt; ({
+    clicked: hoge.clicked
+  }),
+  {
+    onClick: hogeButtonClicked,
+  },
+)(Button);
+</code></pre>
 
-<p><code>components</code>にはReactのコンポーネントを入れる。</p>
+<p><br></p>
 
-<p>その他のディレクトリについては追って説明する。</p>
+<p>まとめると、以下のように書けるということ。</p>
 
-<h1 id="reactコンポーネント作成">Reactコンポーネント作成</h1>
-
-<p>最初のReactコンポーネントとして、適当なものを作る。</p>
-
-<p>components/App.jsx:</p>
+<p><code>src/containers/HogeButton.js</code></p>
 
 <pre><code class="language-javascript">import React from 'react';
+import Button from '@material-ui/core/Button';
+import { connect } from 'react-redux';
+import { hogeButtonClicked } from '../actions/actions';
 
-const App = () =&gt; (
-  &lt;div&gt;
-    HOGE
-  &lt;/div&gt;
-);
+const HogeButton = connect(
+  ({hoge}) =&gt; ({
+    clicked: hoge.clicked
+  }),
+  {
+    onClick: hogeButtonClicked,
+  },
+)(Button);
 
-export default App;
-</code></pre>
-
-<p>で、これを<code>index.jsx</code>でインポートしてレンダリングしてやる。</p>
-
-<p>src/index.jsx:</p>
-
-<pre><code class="language-javascript">import React from 'react';
-import ReactDOM from 'react-dom';
-import App from './components/App';
-
-const root = document.getElementById('root');
-
-if (root) {
-  ReactDOM.render(
-    &lt;App /&gt;,
-    root,
-  );
-}
-</code></pre>
-
-<p>これで<code>yarn build</code>すると<code>dist/bundle.js</code>が生成される。</p>
-
-<p>実践的なコンポーネント構成の考え方については、公式の<a href="https://reactjs.org/docs/thinking-in-react.html">Thinking in React</a>が参考になる。</p>
-
-<h1 id="htmlファイル作成">HTMLファイル作成</h1>
-
-<p>bundle.jsを読み込むHTMLファイルを作る。</p>
-
-<p>HTMLファイルを書くときは、「<a href="https://hail2u.net/documents/html-best-practices.html">普通のHTMLの書き方</a>」の1～3章とか、「<a href="https://qiita.com/miya0001/items/8fff46c201bf9eaeba4a">フロントエンドチェックリスト</a>」のHead、HTML辺りが参考になる。
-まあ開発時にしか使わないだろうから実際は適当でいいし、なんなら<a href="https://webpack.js.org/plugins/html-webpack-plugin/">HtmlWebpackPlugin</a>で自動生成してもいい。</p>
-
-<p>作るファイルは、<a href="https://www.kaitoy.xyz/2018/08/19/creating-react-redux-app-from-scratch-01/#webpack-dev-server%E8%A8%AD%E5%AE%9A">webpackの設定に書いた</a>通り、<code>public/index.html</code>。</p>
-
-<p>内容は以下。</p>
-
-<p>public/index.html:</p>
-
-<pre><code class="language-html">&lt;!doctype html&gt;
-&lt;html lang=&quot;en&quot;&gt;
-  &lt;head&gt;
-    &lt;meta charset=&quot;utf-8&quot; /&gt;
-    &lt;meta http-equiv=&quot;x-ua-compatible&quot; content=&quot;ie=edge&quot;&gt;
-    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
-    &lt;title&gt;React Redux&lt;/title&gt;
-    &lt;meta name=&quot;description&quot; content=&quot;React Redux Scaffold&quot;&gt;
-  &lt;/head&gt;
-  &lt;body&gt;
-    &lt;div id=&quot;root&quot;&gt;&lt;/div&gt;
-    &lt;noscript&gt;
-      You need to enable JavaScript to run this app.
-    &lt;/noscript&gt;
-    &lt;script src=&quot;./bundle.js&quot;&gt;&lt;/script&gt;
-  &lt;/body&gt;
-&lt;/html&gt;
+export default HogeButton;
 </code></pre>
 
 <p><br></p>
 
-<p>ポイントは2点。</p>
+<p>参考: <a href="https://qiita.com/taneba/items/4d45d1075137a7dae10e">シンプルなreact-reduxのconnectの書き方</a></p>
 
-<ul>
-<li><p><code>&lt;body&gt;</code>の最初に<code>id=root</code>の<code>&lt;div&gt;</code>を書く</p>
+<h2 id="reselect">reselect</h2>
 
-<p>上で書いた<code>index.jsx</code>で、<code>id</code>が<code>root</code>の要素を取得して<code>ReactDOM.render()</code>に渡しているので、この<code>&lt;div&gt;</code>要素のなかに全てのWeb UIがレンダリングされることになる。</p></li>
+<p><code>mapStateToProps</code>はstateが更新されるたびに呼ばれるので、中で複雑な計算してたりするとアプリ全体のパフォーマンスに影響を与える。</p>
 
-<li><p><code>&lt;body&gt;</code>の最後に<code>&lt;script src=&quot;./bundle.js&quot;&gt;&lt;/script&gt;</code>を書く</p>
+<p>このような問題に対応するため、stateの特定のサブツリーが更新された時だけ<code>mapStateToProps</code>の先の計算を実行できるようにするライブラリがある。
+それが<a href="https://github.com/reduxjs/reselect">relesect</a>。</p>
 
-<p>この<code>&lt;script&gt;</code>要素により、bundle.jsがWebサーバからダウンロードされて実行される。</p></li>
-</ul>
-
-<p><br></p>
-
-<p>以上でReactは一通り。</p>
-
-<p><code>yarn start</code>してブラウザで<code>http://localhost:3000</code>にアクセスするとHOGEと表示されるはず。</p>
-
-<p><a href="https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/">次回</a>はフォーマッタとリンタを導入する。</p>
+<p>reselectは重要なライブラリだとは思うけど、とりあえずほって先に進む。</p>
 
       </div>
 
@@ -371,11 +334,11 @@ if (root) {
           <div class="col-sm-5">
             <section id="share">
               <h3>Share</h3>
-              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f08%2f22%2fcreating-react-redux-app-from-scratch-02%2f&t=React%20%2b%20Redux%e3%82%a2%e3%83%97%e3%83%aa%e3%82%b1%e3%83%bc%e3%82%b7%e3%83%a7%e3%83%b3%e3%83%97%e3%83%ad%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e3%81%ae%e3%83%86%e3%83%b3%e3%83%97%e3%83%ac%e3%83%bc%e3%83%88%e3%82%92%e4%bd%9c%e3%82%8b%20%e2%80%95%20%e3%81%9d%e3%81%ae2%3a%20React" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
-              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f08%2f22%2fcreating-react-redux-app-from-scratch-02%2f&text=React%20%2b%20Redux%e3%82%a2%e3%83%97%e3%83%aa%e3%82%b1%e3%83%bc%e3%82%b7%e3%83%a7%e3%83%b3%e3%83%97%e3%83%ad%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e3%81%ae%e3%83%86%e3%83%b3%e3%83%97%e3%83%ac%e3%83%bc%e3%83%88%e3%82%92%e4%bd%9c%e3%82%8b%20%e2%80%95%20%e3%81%9d%e3%81%ae2%3a%20React&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
-              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f08%2f22%2fcreating-react-redux-app-from-scratch-02%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
-              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f08%2f22%2fcreating-react-redux-app-from-scratch-02%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
-              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f08%2f22%2fcreating-react-redux-app-from-scratch-02%2f&title=React%20%2b%20Redux%e3%82%a2%e3%83%97%e3%83%aa%e3%82%b1%e3%83%bc%e3%82%b7%e3%83%a7%e3%83%b3%e3%83%97%e3%83%ad%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e3%81%ae%e3%83%86%e3%83%b3%e3%83%97%e3%83%ac%e3%83%bc%e3%83%88%e3%82%92%e4%bd%9c%e3%82%8b%20%e2%80%95%20%e3%81%9d%e3%81%ae2%3a%20React" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f10%2f01%2fcreating-react-redux-app-from-scratch-07%2f&t=React%20%2b%20Redux%e3%82%a2%e3%83%97%e3%83%aa%e3%82%b1%e3%83%bc%e3%82%b7%e3%83%a7%e3%83%b3%e3%83%97%e3%83%ad%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e3%81%ae%e3%83%86%e3%83%b3%e3%83%97%e3%83%ac%e3%83%bc%e3%83%88%e3%82%92%e4%bd%9c%e3%82%8b%20%e2%80%95%20%e3%81%9d%e3%81%ae7%3a%20React%20Redux" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f10%2f01%2fcreating-react-redux-app-from-scratch-07%2f&text=React%20%2b%20Redux%e3%82%a2%e3%83%97%e3%83%aa%e3%82%b1%e3%83%bc%e3%82%b7%e3%83%a7%e3%83%b3%e3%83%97%e3%83%ad%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e3%81%ae%e3%83%86%e3%83%b3%e3%83%97%e3%83%ac%e3%83%bc%e3%83%88%e3%82%92%e4%bd%9c%e3%82%8b%20%e2%80%95%20%e3%81%9d%e3%81%ae7%3a%20React%20Redux&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f10%2f01%2fcreating-react-redux-app-from-scratch-07%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f10%2f01%2fcreating-react-redux-app-from-scratch-07%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f10%2f01%2fcreating-react-redux-app-from-scratch-07%2f&title=React%20%2b%20Redux%e3%82%a2%e3%83%97%e3%83%aa%e3%82%b1%e3%83%bc%e3%82%b7%e3%83%a7%e3%83%b3%e3%83%97%e3%83%ad%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e3%81%ae%e3%83%86%e3%83%b3%e3%83%97%e3%83%ac%e3%83%bc%e3%83%88%e3%82%92%e4%bd%9c%e3%82%8b%20%e2%80%95%20%e3%81%9d%e3%81%ae7%3a%20React%20Redux" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
             </section>
           </div>
 
@@ -392,6 +355,8 @@ if (root) {
                 
                 <a href="https://www.kaitoy.xyz/tags/frontend"><i class="fa fa-tags"></i> frontend </a>
                 
+                <a href="https://www.kaitoy.xyz/tags/redux"><i class="fa fa-tags"></i> redux </a>
+                
               </div>
 
               <ul id="related-posts">
@@ -400,8 +365,6 @@ if (root) {
                 
                 
                 
-                
-                <li><a href="https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その7: React Redux</a></li>
                 
                 
                 
@@ -430,6 +393,8 @@ if (root) {
                 
                 
                 
+                
+                <li><a href="https://www.kaitoy.xyz/2018/08/22/creating-react-redux-app-from-scratch-02/">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その2: React</a></li>
                 
                 
                 
@@ -786,18 +751,13 @@ if (root) {
             <div class="col-sm-6">
               <div class="prev">
                 
-                <a href="https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/">
-                  <i class="fa fa-chevron-left"></i>
-                  React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その3: PrettierとESLint
-                </a>
-                
               </div>
             </div>
             <div class="col-sm-6">
               <div class="next text-right">
                 
-                <a href="https://www.kaitoy.xyz/2018/08/19/creating-react-redux-app-from-scratch-01/">
-                  React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その1: Node.jsとYarnとBabelとwebpack
+                <a href="https://www.kaitoy.xyz/2018/09/26/creating-react-redux-app-from-scratch-06/">
+                  React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その6: Redux
                   <i class="fa fa-chevron-right"></i>
                 </a>
                 

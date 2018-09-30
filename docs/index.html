@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://www.kaitoy.xyz">
     <meta property="og:title" content="To Be Decided">
     
-    <meta property="og:description" content="ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はMaterial-UIをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); Reactの状態管理 Reactによるプログラミングをするとき、小さいUIコンポーネントをたくさん作って、それらを組み合わせてVirtual DOMツリーを作っておいて、そこにpropsをほうりこんでレンダリングする、という感じになる。 また、レンダリングした後はコンポーネントのstateをいじって状態を変化させる。 このpropsやstateの扱いをReactの状態管理という。 propsやstateを適当にアドホックに設定してると、結局jQuery使ってるのとそんなに変わらなくなって辛くなるので、Reactの開発元であるFacebookはFluxというアーキテクチャを提案している。 Fluxでは、単一の(またはドメイン毎くらいの単位の)オブジェクトでアプリケーション全体の状態(state)を表し、これをStoreに保持する。 ReactはStoreが保持するstateを受け取り、それをもとにViewをレンダリングする。 Viewに対するユーザの操作(など)はActionというオブジェクトで表現され、Dispatcherに渡され、Dispatcherに登録されたcallbackを通してstateを変化させる。 データが常に一方向に流れて見通しがよく、各コンポーネントの独立性が高いのが特徴。 各コンポーネントは、受け取ったデータをピュアに処理すればよく、リアクティブにファンクショナルに実装できる。 Redux Fluxの実装、というか発展形がRedux。 ReduxではFluxのDispatcher辺りがReducerに置き換わっている。 ReducerはActionと現在のstateから次のstateを計算する純粋関数。 また、ReduxからはViewが切り離されていて、Actionによってstateを更新する状態管理ライブラリの役割に徹している。 ReactコンポーネントのイベントハンドラからActionオブジェクトを生成したり、更新したstateをReactに渡したりするつなぎ目は、別途React Reduxというライブラリが担当する。 ReduxとReact Reduxについては、Qiitaの「たぶんこれが一番分かりやすいと思います React &#43; Redux のフロー図解」という記事が分かりやすい。 今回はReduxを導入する。 yarn add redux Redux v4.0.0が入った。 以降、現時点で唯一のUIコンポーネントであるHOGEボタンの状態管理を実装してみる。 Action まずActionを実装する。 Actionオブジェクトはどんな形式でもいいけど、普通はFlux Standard Action(FSA)にする。 FSAは以下のプロパティを持つプレーンオブジェクト。 type: Action種別を示す文字列定数。必須。 payload: Actionの情報を示す任意の型の値。任意。 error: Actionがエラーを表すものかを示す boolean プロパティ。エラーなら true にして、payload にエラーオブジェクトをセットする。任意。 meta: その他の情報を入れる任意の型の値。任意。 Actionのコードは、Actionのtypeに入れる値を定義するactionTypes.jsと、Action Creator(i.e. Actionオブジェクトを生成する関数)を定義するactions.jsからなり、ともにsrc/actions/に置く。 HOGEボタンをクリックしたときのAction、HOGE_BUTTON_CLICKEDを定義してみる。 src/actions/actionTypes.js: export const HOGE_BUTTON_CLICKED = &#39;HOGE_BUTTON_CLICKED&#39;; src/actions/actions.js: import { HOGE_BUTTON_CLICKED, } from &#39;./actionTypes&#39;; export function hogeButtonClicked(payload) { return { type: HOGE_BUTTON_CLICKED, payload, }; } こんな感じ。 Reducer 次はReducer。 Reducerは、上記Action Creatorが生成するActionオブジェクトに対応して起動し、Store(後述)から現在のstateオブジェクトを受け取って、Actionオブジェクトのpayloadの値(など)に応じて新しいstateオブジェクトを作る。 Reducerを書く前に、stateオブジェクトの構造を設計しておくことが推奨されている。 UIコンポーネント毎にプロパティを分けて、コンポーネント構造と同様の階層構造にしておけばだいたいよさそう。 HOGEボタンに一つ、クリックしたかどうかの状態(clicked)を持たせるとすると、stateオブジェクトは以下のようになる。 { hoge: { clicked: false, }, } Reducerはピュアじゃないといけないので、内部で副作用を起こしてはいけない。 副作用とは、具体的には以下のようなもの。 引数で与えられたオブジェクトを変更する。 REST APIへのリクエストを送る。 (ログの出力も厳密には副作用なんだろうけど、それは許されてる気がする。) また、ピュアであるためには参照透過性を持たないといけなくて、つまり同じ引数に対しては同じ戻り値を返さないといけないので、内部でDate.now()とかMath.random()とかを呼ぶのもダメ。 Reducerのコードはsrc/reducers/に置く。 HOGE_BUTTON_CLICKEDが発生したら、hogeのclickedをtrueにするReducer(hoge())は以下の感じに書ける。 src/reducers/reducers.js: import { HOGE_BUTTON_CLICKED } from &#39;../actions/actionTypes&#39;; const initialState = { hoge: { clicked: false, }, }; export function hoge(state = initialState, action) { switch (action.type) { case HOGE_BUTTON_CLICKED: const newHoge = { hoge: { clicked: true, }, }; return Object.assign({}, state, newHoge); default: return state; } } hoge()のポイントはたくさんある。 stateとactionを引数に取る。前者が現在の状態を表すstateオブジェクトで、後者がActionオブジェクト。 戻り値は新しい状態を表すstateオブジェクト。 actionオブジェクトはどのActionを表すものかは分からないので、action.typeを見てHOGE_BUTTON_CLICKEDだけを処理するようにする。 知らないActionだったら(i.e.">
+    <meta property="og:description" content="ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はReduxをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); React Redux 前回はReduxをセットアップして、ActionをStoreにディスパッチしてstateを更新できるようになった。 今回はこれをReactにつなぐ。 使うのはReact Redux。 yarn add react-redux v5.0.7が入った。 Presentational Components と Container Components React Reduxの使い方を理解するには、Presentational Components と Container Components という概念を知らないといけない。 これはReactコンポーネントを役割別に分ける考え方で、それぞれ以下のような特徴をもつ。 Presentational Components Container Components 主な役割 DOMをレンダリングする データを取得したりstateを更新したりする(Reduxとつなぐ) Reduxとの関連 無し 有り データの読み込み propsから読む Reduxのstateオブジェクトから読む データの更新 propsで渡されたコールバックを呼ぶ ReduxのActionをディスパッチする 作り方 自前で書く React Reduxで生成する 要するに、普通にReactで作ったUIコンポーネントを、React Reduxで生成するContainer ComponentでラップしてやることでReduxのStoreとつなぐことができる。 connect() Container Componentの生成にはReact Reduxのconnect()というAPIを使う。 React Reduxを使う場合、Reduxのstateの更新に応じてReactコンポーネントに新しいpropsを渡して再レンダリングすることになるが、この新しいpropsを作ってコンポーネントに渡す処理を定義するのがconnect()。 connect()の第一引数には、ReduxのstateのプロパティとReactコンポーネントのpropsのプロパティとのマッピングをする関数であるmapStateToProps()を渡す。 mapStateToProps()はstateの更新に応じて呼び出され、引数にstate(と現在のprops)が渡される。 mapStateToProps()が返すオブジェクトはReactコンポーネントに渡されるpropsにマージされる。 connect()の第二引数には、Storeのdispatch()を呼び出す処理とReactコンポーネントのpropsのプロパティとのマッピングをする関数であるmapDispatchToProps()を渡す。 mapDispatchToProps()の引数にはdispatch()が渡される。 mapDispatchToProps()が返すオブジェクトはReactコンポーネントに渡されるpropsにマージされる。 (mapDispatchToProps()は第二引数にpropsを受け取ることもできて、この場合、propsの更新に反応して呼び出されるコールバックになる。) connect()を実行すると関数が返ってくる。 この関数にReactコンポーネント(Presentational Component)を渡して実行すると、Storeに接続されたReactコンポーネント(Container">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/redux.png">
     
@@ -82,6 +82,28 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="https://www.kaitoy.xyz/images/redux.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Mon, Oct 1, 2018</span>
+              </div>
+              <h2 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その7: React Redux</h2>
+              <div class="summary">
+                ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はReduxをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); React Redux 前回はReduxをセットアップして、ActionをStoreにディスパッチしてstateを更新できるようになった。 今回はこれをReactにつなぐ。 使うのはReact Redux。 yarn add react-redux v5.0.7が入った。 Presentational Components と Container Components React Reduxの使い方を理解するには、Presentational Components と Container Components という概念を知らないといけない。 これはReactコンポーネントを役割別に分ける考え方で、それぞれ以下のような特徴をもつ。 Presentational Components Container Components 主な役割 DOMをレンダリングする データを取得したりstateを更新したりする(Reduxとつなぐ) Reduxとの関連 無し 有り データの読み込み propsから読む Reduxのstateオブジェクトから読む データの更新 propsで渡されたコールバックを呼ぶ ReduxのActionをディスパッチする 作り方 自前で書く React Reduxで生成する 要するに、普通にReactで作ったUIコンポーネントを、React Reduxで生成するContainer ComponentでラップしてやることでReduxのStoreとつなぐことができる。 connect() Container Componentの生成にはReact Reduxのconnect()というAPIを使う。 React Reduxを使う場合、Reduxのstateの更新に応じてReactコンポーネントに新しいpropsを渡して再レンダリングすることになるが、この新しいpropsを作ってコンポーネントに渡す処理を定義するのがconnect()。 connect()の第一引数には、ReduxのstateのプロパティとReactコンポーネントのpropsのプロパティとのマッピングをする関数であるmapStateToProps()を渡す。 mapStateToProps()はstateの更新に応じて呼び出され、引数にstate(と現在のprops)が渡される。 mapStateToProps()が返すオブジェクトはReactコンポーネントに渡されるpropsにマージされる。 connect()の第二引数には、Storeのdispatch()を呼び出す処理とReactコンポーネントのpropsのプロパティとのマッピングをする関数であるmapDispatchToProps()を渡す。 mapDispatchToProps()の引数にはdispatch()が渡される。 mapDispatchToProps()が返すオブジェクトはReactコンポーネントに渡されるpropsにマージされる。 (mapDispatchToProps()は第二引数にpropsを受け取ることもできて、この場合、propsの更新に反応して呼び出されるコールバックになる。) connect()を実行すると関数が返ってくる。 この関数にReactコンポーネント(Presentational Component)を渡して実行すると、Storeに接続されたReactコンポーネント(Container
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2018/09/26/creating-react-redux-app-from-scratch-06/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/redux.png" alt="eyecatch">
@@ -142,33 +164,30 @@
         </div>
         
         
+        <div class="col-md-12">
+          <div class="text-center custom-partial">
+            
+          </div>
+        </div>
         
         
         
         
-        <div class="col-sm-6">
+        
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/" class="post">
               <header class="eyecatch text-center">
                 <img src="https://www.kaitoy.xyz/images/prettier-eslint.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Thu, Aug 23, 2018</span>
               </div>
-              <h2 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その3: PrettierとESLint</h2>
-              <div class="summary">
-                ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はReactをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); フォーマッタとリンタ プロジェクトにフォーマッタとリンタを導入する。 フォーマッタはソースの体裁を整えるツール。 フォーマッタを使うことで体裁が統一され、ソースが読みやすくなり、品質向上につながる。 リンタはソースを静的解析して、潜在的なバグ、構造的な問題、体裁の問題を検出して警告してくれるツール。 フォーマッタは体裁だけ整えるのに対し、リンタは論理構造にも制約を課せるので、コーディングスタイルがより統一できたり、ミスをしやすい論理構造が無くなったりして、品質向上につながる。 JavaScriptのような動的型付け言語では、実行時まで顕在化しないバグを作りこみやすく、また実行時エラーの原因解析が静的型付け言語に比べて難しいので、フォーマッタとリンタでプログラム実行前に問題をできるだけ取り除いておくのが重要。 またチーム開発では、コードレビューでコーディンスタイルを見る必要がなくなり、効率化につながる。 Prettier フォーマッタにはPrettierを使う。 Prettierは2017年1月にリリースされた新しいツール。 構文解析をしてASTを構築し、そこからフォーマット済みコードを出力するので、従来のツールよりも厳密な整形(e.g. 行の最大長を考慮した整形)ができる。 また、opinionated(独断的)であることも特徴で、Prettierプロジェクトが推奨するフォーマットをほぼ強制し、設定がほとんどない。 このため導入が簡単だけど、かゆいところに手が届かないこともある。 JavaScriptの他、JSX、CSS、Markdown、GraphQLのフォーマットにも対応している。 まずプロジェクトにインストールする。 yarn add -D prettier v1.14.0が入った。 設定はprettier.config.jsというファイルを書いてプロジェクトルートに置けばいい。 prettier.config.js: module.exports = { printWidth: 100, // 行の最大長 tabWidth: 2, // インデント長 singleQuote: true, // 文字列をシングルクオートで囲う trailingComma: 'all', // オブジェクトのプロパティとか関数の引数を複数行で書いたときに、全行の末尾にカンマをつける }; また、フォーマット対象外のファイルを指定するファイルである.prettierignoreをプロジェクトルートに置く。 .prettierignore: node_modules/ dist/ node_modulesはnpmパッケージが入るディレクトリ。 実際はnode_modulesはデフォルトで無視されるから書かなくていいんだけど。 prettier-ignoreコメントを書くことで、ソースを部分的にフォーマット対象外とすることもできる。 最後に、npmスクリプトを書く。 package.json: (前略) &quot;scripts&quot;: { + &quot;format&quot;: &quot;prettier --write **/*.jsx **/*.js **/*.css&quot;, &quot;build&quot;: &quot;webpack --config webpack.prod.js&quot;, &quot;start&quot;: &quot;webpack-dev-server --hot --config webpack.dev.js&quot; }, (後略) これで、yarn formatを実行するとプロジェクト内ソースを一通りフォーマットできる。 ESLint リンタにはデファクトスタンダードのESLintを使う。 ESLintは2013年6月にリリースされたそこそこ歴史のあるツール。 リンティングルールがプラガブルで、豊富なルールを細かく制御できるのが特徴。 フォーマッタとしての機能もあるけど、そこはPrettierにまかせることにする。 JavaScriptもJSXもリンティングできる。 リンティングルールはAirbnbによるeslint-config-airbnbが有名なのでこれを使う。 ESLintを導入するために、以下のパッケージをプロジェクトにインストールする。 eslint: ESLint本体。 eslint-loader: webpackからESLintを実行するやつ。 eslint-config-airbnb: ESLintルール設定集。 eslint-plugin-import: eslint-config-airbnbのピア依存。import文を処理するためのESLintプラグイン。 eslint-plugin-jsx-a11y: eslint-config-airbnbのピア依存。JSXを処理するためのESLintプラグイン。 eslint-plugin-react: eslint-config-airbnbのピア依存。React特有のリンティングルールを追加するESLintプラグイン。 eslint-config-prettier: Prettierが施すコード整形とコンフリクトするルールを無効にするESLintルール設定集。 ピア依存をインストールするのにはちょっとコツがいるので、eslint-config-airbnbのドキュメントを参照すべし。 今回は以下のコマンドでインストールした。 yarn add -D &quot;eslint@&gt;=1.6.0 &lt;5.0.0&quot; eslint-loader eslint-config-airbnb &quot;eslint-plugin-import@^2.12.0&quot; &quot;eslint-plugin-jsx-a11y@^6.0.3&quot; &quot;eslint-plugin-react@^7.9.1&quot; eslint-config-prettier ESlintはv4.19.1が入った。 ESlintの設定は、設定ファイルである.eslintrc.jsをプロジェクトルートに置けばいい。 .eslintrc.js: module.exports = { env: { browser: true, }, extends: ['airbnb', 'prettier'], }; アプリの実行環境はブラウザなのでenv.browserをtrueにしている。 これにより、ブラウザ環境でデフォルトで使えるグローバル変数(e.g.
-              </div>
+              <h3 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その3: PrettierとESLint</h3>
             </a>
           </article>
         </div>
         
-        
-        <div class="col-md-12">
-          <div class="text-center custom-partial">
-            
-          </div>
-        </div>
         
         
         
