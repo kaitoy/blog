@@ -6,8 +6,325 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2018</rights>
-    <updated>2018-10-01 07:54:53 &#43;0900 JST</updated>
+    <updated>2018-10-07 13:26:22 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その8: Redux-Saga</title>
+          <link>https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/</link>
+          <pubDate>Sun, 07 Oct 2018 13:26:22 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;https://reactjs.org/&#34;&gt;React&lt;/a&gt;と&lt;a href=&#34;https://redux.js.org/&#34;&gt;Redux&lt;/a&gt;を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
+(最終的な成果は&lt;a href=&#34;https://github.com/kaitoy/react-redux-scaffold&#34;&gt;GitHub&lt;/a&gt;に置いた。)&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/&#34;&gt;前回&lt;/a&gt;は&lt;a href=&#34;https://redux.js.org/basics/usagewithreact&#34;&gt;React Redux&lt;/a&gt;をセットアップした。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h1 id=&#34;reduxのmiddleware&#34;&gt;ReduxのMiddleware&lt;/h1&gt;
+
+&lt;p&gt;Redux単体では同期的なデータフローしか実装できない。
+つまり、Actionを発生させたら、即座にディスパッチされ、stateが更新される。
+一方、非同期なフローとは、REST APIを呼んでその結果でstateを更新するような処理。
+REST API呼び出しが非同期なわけだが、これをReduxのピュアなフローのどこで実行するのかというと、&lt;a href=&#34;https://redux.js.org/advanced/middleware&#34;&gt;Middleware&lt;/a&gt;で実行する。&lt;/p&gt;
+
+&lt;p&gt;MiddlewareはStoreの&lt;code&gt;dispatch()&lt;/code&gt;をラップして、Actionをトラップして副作用を含む任意の処理をするための機能。
+Middlewareの仕組みについては&lt;a href=&#34;https://qiita.com/pirosikick/items/d7f9e5e197a2e8aad62f&#34;&gt;この記事&lt;/a&gt;が分かりやすい。&lt;/p&gt;
+
+&lt;p&gt;Middlewareには例えば、発生したActionの内容と、それによるstateの変化をログに出力する&lt;a href=&#34;https://github.com/evgenyrodionov/redux-logger&#34;&gt;redux-logger&lt;/a&gt;がある。
+デバッグに有用そうなので入れておく。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add redux-logger
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;v3.0.6が入った。&lt;/p&gt;
+
+&lt;p&gt;Middlewareは、Reduxの&lt;code&gt;applyMiddleware()&lt;/code&gt;というAPIを使って、&lt;code&gt;createStore()&lt;/code&gt;実行時に適用できる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/configureStore.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt;-import { createStore } from &#39;redux&#39;;
++import { createStore, applyMiddleware } from &#39;redux&#39;;
++import { logger } from &#39;redux-logger&#39;;
+ import rootReducer from &#39;./reducers/rootReducer&#39;;
+
+ export default function configureStore(initialState = {}) {
++  const middlewares = [];
++  if (process.env.NODE_ENV === `development`) {
++    middlewares.push(logger);
++  }
++
+   const store = createStore(
+     rootReducer,
+     initialState,
++    applyMiddleware(...middlewares),
+   );
+   return store;
+ }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これだけ。
+これで、HOGEボタンをクリックしたときにコンソールに以下のようなログが出るようになる。
+(ログは&lt;code&gt;yarn start&lt;/code&gt;とかの開発モードの時だけでる。)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;action HOGE_BUTTON_CLICKED @ 23:19:35.190
+ prev state Object { hoge: {…} }
+ action Object { type: &amp;quot;HOGE_BUTTON_CLICKED&amp;quot;, payload: undefined }
+ next state Object { hoge: {…} }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;非同期処理&#34;&gt;非同期処理&lt;/h1&gt;
+
+&lt;p&gt;非同期処理をするためのMiddlewareには&lt;a href=&#34;https://github.com/reduxjs/redux-thunk&#34;&gt;redux-thunk&lt;/a&gt;とか&lt;a href=&#34;https://github.com/redux-utilities/redux-promise&#34;&gt;redux-promise&lt;/a&gt;とかがあるけど、なかでもGitHubのスター数が一番多い&lt;a href=&#34;https://redux-saga.js.org/&#34;&gt;redux-saga&lt;/a&gt;を使うことにする。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add redux-saga
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;v0.16.0が入った。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;因みに次にスター数が多いのがredux-thunkで、これはActionをfunctionオブジェクトで書けるようにするMiddleware。
+そのfunctionの中で非同期処理をすることで、非同期なReduxフローを実現できる。
+redux-sagaはredux-thunkに比べて以下の特長を持つ。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;コールバック地獄に悩まされることが無い&lt;/li&gt;
+&lt;li&gt;Actionをプレーン且つピュアに保てるのでテストしやすい&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;redux-sagaの使い方&#34;&gt;redux-sagaの使い方&lt;/h1&gt;
+
+&lt;p&gt;redux-sagaでは、非同期処理はSagaというコンポーネントに書く。
+Sagaでは、&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;ディスパッチされるActionをWatcherが監視し、&lt;/li&gt;
+&lt;li&gt;特定のActionが来たらWorkerを起動し、&lt;/li&gt;
+&lt;li&gt;Workerが非同期処理などのTaskを実行し、&lt;/li&gt;
+&lt;li&gt;その結果を通知するActionをディスパッチする、&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;といった処理を実行する。&lt;/p&gt;
+
+&lt;p&gt;これらの処理は、Saga Middlewareから呼ばれる&lt;a href=&#34;https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Generator&#34;&gt;ジェネレータ関数&lt;/a&gt;のなかで、EffectというオブジェクトをSaga Middlewareに返すことで、Saga Middlewareに指示して実行させる。
+このEffectを生成する&lt;a href=&#34;https://redux-saga.js.org/docs/api/&#34;&gt;API&lt;/a&gt;がredux-sagaからいろいろ提供されている。&lt;/p&gt;
+
+&lt;p&gt;上記処理の1~4はそれぞれ以下のAPIで実装できる。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;take(pattern)&lt;/code&gt;: ディスパッチされるActionを監視して、&lt;code&gt;pattern&lt;/code&gt;にマッチしたら取得するEffectを生成する。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;fork(fn, ...args)&lt;/code&gt;: 渡された関数&lt;code&gt;fn&lt;/code&gt;をノンブロッキングで呼び出すEffectを生成する。&lt;code&gt;fn&lt;/code&gt;はジェネレータか&lt;a href=&#34;https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Promise&#34;&gt;Promise&lt;/a&gt;を返す関数。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;call(fn, ...args)&lt;/code&gt;: 渡された関数&lt;code&gt;fn&lt;/code&gt;を同期的に呼び出すEffectを生成する。&lt;code&gt;fn&lt;/code&gt;はジェネレータか&lt;a href=&#34;https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Promise&#34;&gt;Promise&lt;/a&gt;を返す関数。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;put(action)&lt;/code&gt;: Actionオブジェクトの&lt;code&gt;action&lt;/code&gt;をディスパッチするEffectを生成する。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;rest-api呼び出し&#34;&gt;REST API呼び出し&lt;/h1&gt;
+
+&lt;p&gt;非同期実行で最もよくあるのがREST API呼び出しであろう。
+REST API呼び出し処理は&lt;code&gt;call()&lt;/code&gt;で実行するわけだけど、&lt;code&gt;call()&lt;/code&gt;にはPromiseを返す必要があるので、使うライブラリはそこを考慮しないといけない。&lt;/p&gt;
+
+&lt;p&gt;ざっと調べたところ、&lt;a href=&#34;https://www.npmjs.com/package/axios&#34;&gt;axios&lt;/a&gt;、&lt;a href=&#34;https://www.npmjs.com/package/superagent&#34;&gt;SuperAgent&lt;/a&gt;、&lt;a href=&#34;https://www.npmjs.com/package/r2&#34;&gt;r2&lt;/a&gt;あたりが選択肢。
+最も人気のあるaxiosを使うことにする。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add axios
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;v0.18.0が入った。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;REST API呼び出しのコードは&lt;code&gt;src/services/&lt;/code&gt;に置く。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/services/api.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import axios from &#39;axios&#39;;
+
+export const HOGE_URL = &#39;https://httpbin.org/get&#39;;
+
+export function getHoge() {
+  return axios.get(HOGE_URL);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;getHoge()&lt;/code&gt;はGETリクエストを送ってPromiseオブジェクトを返す。
+このPromiseオブジェクトはレスポンスボディやステータスコードを保持する&lt;a href=&#34;https://github.com/axios/axios#response-schema&#34;&gt;Response&lt;/a&gt;オブジェクトに解決される。&lt;/p&gt;
+
+&lt;h1 id=&#34;rest-api呼び出しを表現するaction&#34;&gt;REST API呼び出しを表現するAction&lt;/h1&gt;
+
+&lt;p&gt;REST API呼び出しをする場合、呼び出し開始、呼び出し成功、呼び出し失敗の3種類のActionで表現するのが一つの&lt;a href=&#34;https://redux.js.org/advanced/asyncactions&#34;&gt;プラクティス&lt;/a&gt;。
+これら3種類を、同一のtypeのActionのプロパティ値を変えて表現するやりかたもあるけど、ここでは別々のtypeのアクションとする。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/actions/actionTypes.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; export const HOGE_BUTTON_CLICKED = &#39;HOGE_BUTTON_CLICKED&#39;;
++export const HOGE_FETCH_SUCCEEDED = &#39;HOGE_FETCH_SUCCEEDED&#39;;
++export const HOGE_FETCH_FAILED = &#39;HOGE_FETCH_FAILED&#39;;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;src/actions/actions.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import {
+   HOGE_BUTTON_CLICKED,
++  HOGE_FETCH_SUCCEEDED,
++  HOGE_FETCH_FAILED,
+ } from &#39;./actionTypes&#39;;
+
+ export function hogeButtonClicked(payload) {
+   return {
+     type: HOGE_BUTTON_CLICKED,
+     payload,
+   };
+ }
++
++export function hogeFetchSucceeded(payload, meta) {
++  return {
++    type: HOGE_FETCH_SUCCEEDED,
++    payload,
++    meta,
++  };
++}
++
++export function hogeFetchFailed(payload) {
++  return {
++    type: HOGE_FETCH_FAILED,
++    error: true,
++    payload,
++  };
++}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;sagaの実装&#34;&gt;Sagaの実装&lt;/h1&gt;
+
+&lt;p&gt;Sagaのソースは&lt;code&gt;src/sagas/&lt;/code&gt;に置く。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;HOGE_BUTTON_CLICKED&lt;/code&gt;が来たら&lt;code&gt;getHoge()&lt;/code&gt;を実行するSagaは以下のような感じ。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/sagas/hoge.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import { call, fork, put, take } from &#39;redux-saga/effects&#39;;
+import { getHoge } from &#39;../services/apis&#39;;
+import { HOGE_BUTTON_CLICKED } from &#39;../actions/actionTypes&#39;;
+import { hogeFetchSucceeded, hogeFetchFailed } from &#39;../actions/actions&#39;;
+
+// Task
+function* fetchHoge() {
+  try {
+    const response = yield call(getHoge);
+    const payload = response.data;
+    const meta = { statusCode: response.status, statusText: response.statusText };
+    yield put(hogeFetchSucceeded(payload, meta));
+  } catch (ex) {
+    yield put(hogeFetchFailed(ex));
+  }
+}
+
+// Watcher
+export function* watchHogeButtonClicked(): Generator&amp;lt;any, void, Object&amp;gt; {
+  while (true) {
+    const action = yield take(HOGE_BUTTON_CLICKED);
+    yield fork(fetchHoge, action); // actionはfetchHogeの引数に渡される。使ってないけど…
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Watcherは&lt;code&gt;take&lt;/code&gt;して&lt;code&gt;fork&lt;/code&gt;するのを無限ループで回すのが常なので、これをもうちょっときれいに書けるAPIが用意されていて、以下のように書ける。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import { takeEvery } from &#39;redux-saga/effects&#39;
+
+// Watcher
+export function* watchHogeButtonClicked(): Generator&amp;lt;any, void, Object&amp;gt; {
+  yield takeEvery(HOGE_BUTTON_CLICKED, fetchHoge)
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;この場合、&lt;code&gt;fetchHoge()&lt;/code&gt;の最後の引数に&lt;code&gt;take&lt;/code&gt;したActionオブジェクトが渡される。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;で、今後Watcherはモジュールを分けていくつも書いていくことになるので、それらをまとめて起動するためのモジュール&lt;code&gt;rootSaga.js&lt;/code&gt;を作って、そこで各Watcherを&lt;code&gt;import&lt;/code&gt;して&lt;code&gt;call()&lt;/code&gt;したい。
+&lt;code&gt;call()&lt;/code&gt;はブロッキングなAPIなので、パラレルに実行するために&lt;code&gt;all()&lt;/code&gt;を使う。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/sagas/rootSaga.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import { call, all } from &#39;redux-saga/effects&#39;;
+import { watchHogeButtonClicked } from &#39;./hoge&#39;;
+
+export default function* rootSaga() {
+  yield all([
+    call(watchHogeButtonClicked),
+    // call(watchAnotherAction),
+    // call(watchYetAnotherAction),
+  ]);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;そもそもブロッキングな&lt;code&gt;call()&lt;/code&gt;を使うのがだめなので、代わりに&lt;code&gt;fork()&lt;/code&gt;を使ってもいい。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/sagas/rootSaga.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import { fork } from &#39;redux-saga/effects&#39;;
+import { watchHogeButtonClicked } from &#39;./hoge&#39;;
+
+export default function* rootSaga() {
+  yield fork(watchHogeButtonClicked);
+  // yield fork(watchAnotherAction);
+  // yield fork(watchYetAnotherAction);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;どっちがいいんだろう。&lt;/p&gt;
+
+&lt;h1 id=&#34;saga-middlewareの追加と起動&#34;&gt;Saga Middlewareの追加と起動&lt;/h1&gt;
+
+&lt;p&gt;Saga Middlewareは以下のように追加して起動する。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/configureStore.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import { createStore, applyMiddleware } from &#39;redux&#39;;
++import createSagaMiddleware from &#39;redux-saga&#39;;
+ import { logger } from &#39;redux-logger&#39;;
++import rootSaga from &#39;./sagas/rootSaga&#39;;
+ import rootReducer from &#39;./reducers/rootReducer&#39;;
+
++const sagaMiddleware = createSagaMiddleware();
+
+ export default function configureStore(initialState = {}) {
+   const middlewares = [];
+   if (process.env.NODE_ENV === `development`) {
+     middlewares.push(logger);
+   }
++  middlewares.push(sagaMiddleware);
+
+   const store = createStore(
+     rootReducer,
+     initialState,
+     applyMiddleware(...middlewares),
+   );
++  sagaMiddleware.run(rootSaga);
+   return store;
+ }
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -240,6 +557,10 @@ export default HogeButton;
 それが&lt;a href=&#34;https://github.com/reduxjs/reselect&#34;&gt;relesect&lt;/a&gt;。&lt;/p&gt;
 
 &lt;p&gt;reselectは重要なライブラリだとは思うけど、とりあえずほって先に進む。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/&#34;&gt;次回&lt;/a&gt;は、ReduxにMiddlewareを追加して、非同期処理を実装する。&lt;/p&gt;
 </description>
         </item>
       
@@ -568,6 +889,10 @@ store.dispatch(hogeButtonClicked()); // =&amp;gt; { hoge: {clicked: true} }
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;&lt;code&gt;store.dispatch()&lt;/code&gt;するとReducer(&lt;code&gt;hoge()&lt;/code&gt;)が実行され、stateオブジェクトが更新されることが分かる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/&#34;&gt;次回&lt;/a&gt;は、今回作ったStoreをReactコンポーネントにつなぐ。&lt;/p&gt;
 </description>
         </item>
       
@@ -14629,75 +14954,6 @@ Pcap4Jのユーザから、要望や指摘やIssuesやプルリクエストを�
   ロシア: 7
 不明: 42
 &lt;/div&gt;
-</description>
-        </item>
-      
-    
-      
-        <item>
-          <title>GitHub Pagesの新機能、ソース設定が地味にいい</title>
-          <link>https://www.kaitoy.xyz/2016/08/18/simpler-github-pages-publishing/</link>
-          <pubDate>Thu, 18 Aug 2016 00:26:06 -0600</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2016/08/18/simpler-github-pages-publishing/</guid>
-          <description>
-
-&lt;p&gt;今日、&lt;a href=&#34;https://github.com/blog/2228-simpler-github-pages-publishing&#34;&gt;よりシンプルにGitHub Pagesを使えるようになった&lt;/a&gt;というアナウンスがあり、ソース設定という新機能が追加されていたので、さっそく試してみた話。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h2 id=&#34;github-pagesの新機能-ソース設定&#34;&gt;GitHub Pagesの新機能: ソース設定&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://pages.github.com/&#34;&gt;GitHub Pages&lt;/a&gt;には&lt;a href=&#34;https://help.github.com/articles/user-organization-and-project-pages/&#34;&gt;User Pages、Organization Pages、Project Pages&lt;/a&gt;の三種類があるが、ソース設定が使えるのはProject Pages、つまりGitHubリポジトリごとに使えて&lt;code&gt;username.github.io/projectname&lt;/code&gt;のようなURLのやつだけ。&lt;/p&gt;
-
-&lt;p&gt;今まではProject Pagesで公開するサイトのソースは&lt;code&gt;gh-pages&lt;/code&gt;という名のブランチに置く必要があったが、ソース設定により&lt;code&gt;master&lt;/code&gt;ブランチのルートに置いたり&lt;code&gt;master&lt;/code&gt;ブランチの&lt;code&gt;/docs&lt;/code&gt;フォルダに置いたりもできるようになった。&lt;/p&gt;
-
-&lt;h2 id=&#34;ソース設定の使い道&#34;&gt;ソース設定の使い道&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.pcap4j.org/&#34;&gt;Pcap4Jのホームページ&lt;/a&gt;のソースを&lt;code&gt;master&lt;/code&gt;ブランチの&lt;code&gt;/docs&lt;/code&gt;フォルダに置く設定にしたら捗った。&lt;/p&gt;
-
-&lt;p&gt;Pcap4Jのホームページは&lt;a href=&#34;https://gohugo.io/&#34;&gt;Hugo&lt;/a&gt;で作っていて、以前は、Hugoのソースを&lt;a href=&#34;https://github.com/kaitoy/pcap4j-hp&#34;&gt;pcap4j-hpリポジトリのmasterブランチ&lt;/a&gt;に置き、&lt;code&gt;gh-pages&lt;/code&gt;ブランチを作ってそこにHugoのビルド成果物(=ホームページのソース)を入れていた。&lt;/p&gt;
-
-&lt;p&gt;ローカルPCでは、&lt;code&gt;master&lt;/code&gt;をcloneして、そこから&lt;code&gt;git worktree&lt;/code&gt;で&lt;code&gt;gh-pages&lt;/code&gt;を別のフォルダにチェックアウトしておいてあり、Hugoのビルドオプションで&lt;code&gt;gh-pages&lt;/code&gt;のフォルダにビルド成果物を出力するようにしていた。
-これだと、ホームページを修正したい場合、まず&lt;code&gt;master&lt;/code&gt;でHugoソースを修正して&lt;code&gt;git add/commit/push&lt;/code&gt;、次いでビルドして&lt;code&gt;gh-pages&lt;/code&gt;フォルダに移動して&lt;code&gt;git add/commit/push&lt;/code&gt;、というように、二度手間で面倒だった。&lt;/p&gt;
-
-&lt;p&gt;Hugoのビルド成果物を&lt;code&gt;master&lt;/code&gt;ブランチの&lt;code&gt;/docs&lt;/code&gt;フォルダに置けるようにできれば、&lt;code&gt;git add/commit/push&lt;/code&gt;はビルド後に&lt;code&gt;master&lt;/code&gt;に対して一回だけやれば済むようになる。&lt;/p&gt;
-
-&lt;h2 id=&#34;gh-pagesからmasterブランチの-docsフォルダへの移行&#34;&gt;gh-pagesからmasterブランチの/docsフォルダへの移行&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://help.github.com/articles/configuring-a-publishing-source-for-github-pages/&#34;&gt;GitHubのヘルプ&lt;/a&gt;を参考にしつつ、&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;ローカルPCで、&lt;code&gt;master&lt;/code&gt;の作業ディレクトリのルートに&lt;code&gt;docs&lt;/code&gt;というフォルダを作り、&lt;code&gt;gh-pages&lt;/code&gt;のフォルダの中身を全てそこに移動。&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;master&lt;/code&gt;の&lt;code&gt;docs&lt;/code&gt;を&lt;code&gt;git add/commit/push&lt;/code&gt;。&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;GitHubのpcap4j-hpリポジトリのページに行き、SettingsタブのGitHub PagesセクションのSourceを&lt;code&gt;gh-pages branch&lt;/code&gt;から&lt;code&gt;master branch /docs folder&lt;/code&gt;に変えてSaveボタンをクリック。&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/simpler-github-pages-publishing/gh-pages-to-docs.png&#34; alt=&#34;gh-pages-to-docs.png&#34; title=&#34;gh-pages-to-docs.png&#34; /&gt;
-&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;実にこれだけ。
-カスタムドメインにしていてもこれだけ。簡単。ダウンタイムもなし。&lt;/p&gt;
-
-&lt;p&gt;あとはローカルPCの&lt;code&gt;gh-pages&lt;/code&gt;の作業ディレクトリを削除したり、&lt;code&gt;gh-pages&lt;/code&gt;ブランチを削除したり。&lt;/p&gt;
 </description>
         </item>
       

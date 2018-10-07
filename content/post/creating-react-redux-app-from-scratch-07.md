@@ -186,3 +186,7 @@ export default HogeButton;
 それが[relesect](https://github.com/reduxjs/reselect)。
 
 reselectは重要なライブラリだとは思うけど、とりあえずほって先に進む。
+
+<br>
+
+[次回](https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/)は、ReduxにMiddlewareを追加して、非同期処理を実装する。

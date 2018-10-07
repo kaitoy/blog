@@ -295,3 +295,7 @@ store.dispatch(hogeButtonClicked()); // => { hoge: {clicked: true} }
 ```
 
 `store.dispatch()`するとReducer(`hoge()`)が実行され、stateオブジェクトが更新されることが分かる。
+
+<br>
+
+[次回](https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/)は、今回作ったStoreをReactコンポーネントにつなぐ。

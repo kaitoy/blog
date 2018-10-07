@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その8: Redux-Saga | To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/">
+    <link rel="canonical" href="https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/">
+    <meta property="og:description" content="ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はReact Reduxをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); ReduxのMiddleware Redux単体では同期的なデータフローしか実装できない。 つまり、Actionを発生させたら、即座にディスパッチされ、stateが更新される。 一方、非同期なフローとは、REST APIを呼んでその結果でstateを更新するような処理。 REST API呼び出しが非同期なわけだが、これをReduxのピュアなフローのどこで実行するのかというと、Middlewareで実行する。 MiddlewareはStoreのdispatch()をラップして、Actionをトラップして副作用を含む任意の処理をするための機能。 Middlewareの仕組みについてはこの記事が分かりやすい。 Middlewareには例えば、発生したActionの内容と、それによるstateの変化をログに出力するredux-loggerがある。 デバッグに有用そうなので入れておく。 yarn add redux-logger v3.0.6が入った。 Middlewareは、ReduxのapplyMiddleware()というAPIを使って、createStore()実行時に適用できる。 src/configureStore.js: -import { createStore } from &#39;redux&#39;; &#43;import { createStore, applyMiddleware } from &#39;redux&#39;; &#43;import { logger } from &#39;redux-logger&#39;; import rootReducer from &#39;./reducers/rootReducer&#39;; export default function configureStore(initialState = {}) { &#43; const middlewares = []; &#43; if (process.env.NODE_ENV === `development`) { &#43; middlewares.push(logger); &#43;">
+    
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/redux-saga.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その8: Redux-Saga | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+    
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-6244473643910448",
+        enable_page_level_ads: true
+      });
+    </script>
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Sun, Oct 7, 2018</span>
+      <h2 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その8: Redux-Saga</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://www.kaitoy.xyz/images/redux-saga.png" alt="React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その8: Redux-Saga">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p><a href="https://reactjs.org/">React</a>と<a href="https://redux.js.org/">Redux</a>を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
+(最終的な成果は<a href="https://github.com/kaitoy/react-redux-scaffold">GitHub</a>に置いた。)</p>
+
+<p><a href="https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/">前回</a>は<a href="https://redux.js.org/basics/usagewithreact">React Redux</a>をセットアップした。</p>
+
+<p>
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</p>
+
+<h1 id="reduxのmiddleware">ReduxのMiddleware</h1>
+
+<p>Redux単体では同期的なデータフローしか実装できない。
+つまり、Actionを発生させたら、即座にディスパッチされ、stateが更新される。
+一方、非同期なフローとは、REST APIを呼んでその結果でstateを更新するような処理。
+REST API呼び出しが非同期なわけだが、これをReduxのピュアなフローのどこで実行するのかというと、<a href="https://redux.js.org/advanced/middleware">Middleware</a>で実行する。</p>
+
+<p>MiddlewareはStoreの<code>dispatch()</code>をラップして、Actionをトラップして副作用を含む任意の処理をするための機能。
+Middlewareの仕組みについては<a href="https://qiita.com/pirosikick/items/d7f9e5e197a2e8aad62f">この記事</a>が分かりやすい。</p>
+
+<p>Middlewareには例えば、発生したActionの内容と、それによるstateの変化をログに出力する<a href="https://github.com/evgenyrodionov/redux-logger">redux-logger</a>がある。
+デバッグに有用そうなので入れておく。</p>
+
+<pre><code class="language-cmd">yarn add redux-logger
+</code></pre>
+
+<p>v3.0.6が入った。</p>
+
+<p>Middlewareは、Reduxの<code>applyMiddleware()</code>というAPIを使って、<code>createStore()</code>実行時に適用できる。</p>
+
+<p><code>src/configureStore.js</code>:</p>
+
+<pre><code class="language-diff">-import { createStore } from 'redux';
++import { createStore, applyMiddleware } from 'redux';
++import { logger } from 'redux-logger';
+ import rootReducer from './reducers/rootReducer';
+
+ export default function configureStore(initialState = {}) {
++  const middlewares = [];
++  if (process.env.NODE_ENV === `development`) {
++    middlewares.push(logger);
++  }
++
+   const store = createStore(
+     rootReducer,
+     initialState,
++    applyMiddleware(...middlewares),
+   );
+   return store;
+ }
+</code></pre>
+
+<p>これだけ。
+これで、HOGEボタンをクリックしたときにコンソールに以下のようなログが出るようになる。
+(ログは<code>yarn start</code>とかの開発モードの時だけでる。)</p>
+
+<pre><code>action HOGE_BUTTON_CLICKED @ 23:19:35.190
+ prev state Object { hoge: {…} }
+ action Object { type: &quot;HOGE_BUTTON_CLICKED&quot;, payload: undefined }
+ next state Object { hoge: {…} }
+</code></pre>
+
+<h1 id="非同期処理">非同期処理</h1>
+
+<p>非同期処理をするためのMiddlewareには<a href="https://github.com/reduxjs/redux-thunk">redux-thunk</a>とか<a href="https://github.com/redux-utilities/redux-promise">redux-promise</a>とかがあるけど、なかでもGitHubのスター数が一番多い<a href="https://redux-saga.js.org/">redux-saga</a>を使うことにする。</p>
+
+<pre><code class="language-cmd">yarn add redux-saga
+</code></pre>
+
+<p>v0.16.0が入った。</p>
+
+<p><br></p>
+
+<p>因みに次にスター数が多いのがredux-thunkで、これはActionをfunctionオブジェクトで書けるようにするMiddleware。
+そのfunctionの中で非同期処理をすることで、非同期なReduxフローを実現できる。
+redux-sagaはredux-thunkに比べて以下の特長を持つ。</p>
+
+<ul>
+<li>コールバック地獄に悩まされることが無い</li>
+<li>Actionをプレーン且つピュアに保てるのでテストしやすい</li>
+</ul>
+
+<h1 id="redux-sagaの使い方">redux-sagaの使い方</h1>
+
+<p>redux-sagaでは、非同期処理はSagaというコンポーネントに書く。
+Sagaでは、</p>
+
+<ol>
+<li>ディスパッチされるActionをWatcherが監視し、</li>
+<li>特定のActionが来たらWorkerを起動し、</li>
+<li>Workerが非同期処理などのTaskを実行し、</li>
+<li>その結果を通知するActionをディスパッチする、</li>
+</ol>
+
+<p>といった処理を実行する。</p>
+
+<p>これらの処理は、Saga Middlewareから呼ばれる<a href="https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Generator">ジェネレータ関数</a>のなかで、EffectというオブジェクトをSaga Middlewareに返すことで、Saga Middlewareに指示して実行させる。
+このEffectを生成する<a href="https://redux-saga.js.org/docs/api/">API</a>がredux-sagaからいろいろ提供されている。</p>
+
+<p>上記処理の1~4はそれぞれ以下のAPIで実装できる。</p>
+
+<ul>
+<li><code>take(pattern)</code>: ディスパッチされるActionを監視して、<code>pattern</code>にマッチしたら取得するEffectを生成する。</li>
+<li><code>fork(fn, ...args)</code>: 渡された関数<code>fn</code>をノンブロッキングで呼び出すEffectを生成する。<code>fn</code>はジェネレータか<a href="https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Promise">Promise</a>を返す関数。</li>
+<li><code>call(fn, ...args)</code>: 渡された関数<code>fn</code>を同期的に呼び出すEffectを生成する。<code>fn</code>はジェネレータか<a href="https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Promise">Promise</a>を返す関数。</li>
+<li><code>put(action)</code>: Actionオブジェクトの<code>action</code>をディスパッチするEffectを生成する。</li>
+</ul>
+
+<h1 id="rest-api呼び出し">REST API呼び出し</h1>
+
+<p>非同期実行で最もよくあるのがREST API呼び出しであろう。
+REST API呼び出し処理は<code>call()</code>で実行するわけだけど、<code>call()</code>にはPromiseを返す必要があるので、使うライブラリはそこを考慮しないといけない。</p>
+
+<p>ざっと調べたところ、<a href="https://www.npmjs.com/package/axios">axios</a>、<a href="https://www.npmjs.com/package/superagent">SuperAgent</a>、<a href="https://www.npmjs.com/package/r2">r2</a>あたりが選択肢。
+最も人気のあるaxiosを使うことにする。</p>
+
+<pre><code class="language-cmd">yarn add axios
+</code></pre>
+
+<p>v0.18.0が入った。</p>
+
+<p><br></p>
+
+<p>REST API呼び出しのコードは<code>src/services/</code>に置く。</p>
+
+<p><code>src/services/api.js</code>:</p>
+
+<pre><code class="language-javascript">import axios from 'axios';
+
+export const HOGE_URL = 'https://httpbin.org/get';
+
+export function getHoge() {
+  return axios.get(HOGE_URL);
+}
+</code></pre>
+
+<p><code>getHoge()</code>はGETリクエストを送ってPromiseオブジェクトを返す。
+このPromiseオブジェクトはレスポンスボディやステータスコードを保持する<a href="https://github.com/axios/axios#response-schema">Response</a>オブジェクトに解決される。</p>
+
+<h1 id="rest-api呼び出しを表現するaction">REST API呼び出しを表現するAction</h1>
+
+<p>REST API呼び出しをする場合、呼び出し開始、呼び出し成功、呼び出し失敗の3種類のActionで表現するのが一つの<a href="https://redux.js.org/advanced/asyncactions">プラクティス</a>。
+これら3種類を、同一のtypeのActionのプロパティ値を変えて表現するやりかたもあるけど、ここでは別々のtypeのアクションとする。</p>
+
+<p><code>src/actions/actionTypes.js</code>:</p>
+
+<pre><code class="language-diff"> export const HOGE_BUTTON_CLICKED = 'HOGE_BUTTON_CLICKED';
++export const HOGE_FETCH_SUCCEEDED = 'HOGE_FETCH_SUCCEEDED';
++export const HOGE_FETCH_FAILED = 'HOGE_FETCH_FAILED';
+</code></pre>
+
+<p><code>src/actions/actions.js</code>:</p>
+
+<pre><code class="language-diff"> import {
+   HOGE_BUTTON_CLICKED,
++  HOGE_FETCH_SUCCEEDED,
++  HOGE_FETCH_FAILED,
+ } from './actionTypes';
+
+ export function hogeButtonClicked(payload) {
+   return {
+     type: HOGE_BUTTON_CLICKED,
+     payload,
+   };
+ }
++
++export function hogeFetchSucceeded(payload, meta) {
++  return {
++    type: HOGE_FETCH_SUCCEEDED,
++    payload,
++    meta,
++  };
++}
++
++export function hogeFetchFailed(payload) {
++  return {
++    type: HOGE_FETCH_FAILED,
++    error: true,
++    payload,
++  };
++}
+</code></pre>
+
+<h1 id="sagaの実装">Sagaの実装</h1>
+
+<p>Sagaのソースは<code>src/sagas/</code>に置く。</p>
+
+<p><code>HOGE_BUTTON_CLICKED</code>が来たら<code>getHoge()</code>を実行するSagaは以下のような感じ。</p>
+
+<p><code>src/sagas/hoge.js</code>:</p>
+
+<pre><code class="language-javascript">import { call, fork, put, take } from 'redux-saga/effects';
+import { getHoge } from '../services/apis';
+import { HOGE_BUTTON_CLICKED } from '../actions/actionTypes';
+import { hogeFetchSucceeded, hogeFetchFailed } from '../actions/actions';
+
+// Task
+function* fetchHoge() {
+  try {
+    const response = yield call(getHoge);
+    const payload = response.data;
+    const meta = { statusCode: response.status, statusText: response.statusText };
+    yield put(hogeFetchSucceeded(payload, meta));
+  } catch (ex) {
+    yield put(hogeFetchFailed(ex));
+  }
+}
+
+// Watcher
+export function* watchHogeButtonClicked(): Generator&lt;any, void, Object&gt; {
+  while (true) {
+    const action = yield take(HOGE_BUTTON_CLICKED);
+    yield fork(fetchHoge, action); // actionはfetchHogeの引数に渡される。使ってないけど…
+  }
+}
+</code></pre>
+
+<p>Watcherは<code>take</code>して<code>fork</code>するのを無限ループで回すのが常なので、これをもうちょっときれいに書けるAPIが用意されていて、以下のように書ける。</p>
+
+<pre><code class="language-javascript">import { takeEvery } from 'redux-saga/effects'
+
+// Watcher
+export function* watchHogeButtonClicked(): Generator&lt;any, void, Object&gt; {
+  yield takeEvery(HOGE_BUTTON_CLICKED, fetchHoge)
+}
+</code></pre>
+
+<p>この場合、<code>fetchHoge()</code>の最後の引数に<code>take</code>したActionオブジェクトが渡される。</p>
+
+<p><br></p>
+
+<p>で、今後Watcherはモジュールを分けていくつも書いていくことになるので、それらをまとめて起動するためのモジュール<code>rootSaga.js</code>を作って、そこで各Watcherを<code>import</code>して<code>call()</code>したい。
+<code>call()</code>はブロッキングなAPIなので、パラレルに実行するために<code>all()</code>を使う。</p>
+
+<p><code>src/sagas/rootSaga.js</code>:</p>
+
+<pre><code class="language-javascript">import { call, all } from 'redux-saga/effects';
+import { watchHogeButtonClicked } from './hoge';
+
+export default function* rootSaga() {
+  yield all([
+    call(watchHogeButtonClicked),
+    // call(watchAnotherAction),
+    // call(watchYetAnotherAction),
+  ]);
+}
+</code></pre>
+
+<p>そもそもブロッキングな<code>call()</code>を使うのがだめなので、代わりに<code>fork()</code>を使ってもいい。</p>
+
+<p><code>src/sagas/rootSaga.js</code>:</p>
+
+<pre><code class="language-javascript">import { fork } from 'redux-saga/effects';
+import { watchHogeButtonClicked } from './hoge';
+
+export default function* rootSaga() {
+  yield fork(watchHogeButtonClicked);
+  // yield fork(watchAnotherAction);
+  // yield fork(watchYetAnotherAction);
+}
+</code></pre>
+
+<p>どっちがいいんだろう。</p>
+
+<h1 id="saga-middlewareの追加と起動">Saga Middlewareの追加と起動</h1>
+
+<p>Saga Middlewareは以下のように追加して起動する。</p>
+
+<p><code>src/configureStore.js</code>:</p>
+
+<pre><code class="language-diff"> import { createStore, applyMiddleware } from 'redux';
++import createSagaMiddleware from 'redux-saga';
+ import { logger } from 'redux-logger';
++import rootSaga from './sagas/rootSaga';
+ import rootReducer from './reducers/rootReducer';
+
++const sagaMiddleware = createSagaMiddleware();
+
+ export default function configureStore(initialState = {}) {
+   const middlewares = [];
+   if (process.env.NODE_ENV === `development`) {
+     middlewares.push(logger);
+   }
++  middlewares.push(sagaMiddleware);
+
+   const store = createStore(
+     rootReducer,
+     initialState,
+     applyMiddleware(...middlewares),
+   );
++  sagaMiddleware.run(rootSaga);
+   return store;
+ }
+</code></pre>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        
+        
+
+        
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-6244473643910448"
+             data-ad-slot="1845600530"
+             data-ad-format="auto"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </aside>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f10%2f07%2fcreating-react-redux-app-from-scratch-08%2f&t=React%20%2b%20Redux%e3%82%a2%e3%83%97%e3%83%aa%e3%82%b1%e3%83%bc%e3%82%b7%e3%83%a7%e3%83%b3%e3%83%97%e3%83%ad%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e3%81%ae%e3%83%86%e3%83%b3%e3%83%97%e3%83%ac%e3%83%bc%e3%83%88%e3%82%92%e4%bd%9c%e3%82%8b%20%e2%80%95%20%e3%81%9d%e3%81%ae8%3a%20Redux-Saga" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f10%2f07%2fcreating-react-redux-app-from-scratch-08%2f&text=React%20%2b%20Redux%e3%82%a2%e3%83%97%e3%83%aa%e3%82%b1%e3%83%bc%e3%82%b7%e3%83%a7%e3%83%b3%e3%83%97%e3%83%ad%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e3%81%ae%e3%83%86%e3%83%b3%e3%83%97%e3%83%ac%e3%83%bc%e3%83%88%e3%82%92%e4%bd%9c%e3%82%8b%20%e2%80%95%20%e3%81%9d%e3%81%ae8%3a%20Redux-Saga&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f10%2f07%2fcreating-react-redux-app-from-scratch-08%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f10%2f07%2fcreating-react-redux-app-from-scratch-08%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f10%2f07%2fcreating-react-redux-app-from-scratch-08%2f&title=React%20%2b%20Redux%e3%82%a2%e3%83%97%e3%83%aa%e3%82%b1%e3%83%bc%e3%82%b7%e3%83%a7%e3%83%b3%e3%83%97%e3%83%ad%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e3%81%ae%e3%83%86%e3%83%b3%e3%83%97%e3%83%ac%e3%83%bc%e3%83%88%e3%82%92%e4%bd%9c%e3%82%8b%20%e2%80%95%20%e3%81%9d%e3%81%ae8%3a%20Redux-Saga" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://www.kaitoy.xyz/tags/react"><i class="fa fa-tags"></i> react </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/frontend"><i class="fa fa-tags"></i> frontend </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/redux"><i class="fa fa-tags"></i> redux </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/redux-saga"><i class="fa fa-tags"></i> redux-saga </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その7: React Redux</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/09/26/creating-react-redux-app-from-scratch-06/">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その6: Redux</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/09/06/creating-react-redux-app-from-scratch-05/">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その5: Material-UIとWebフォント</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/08/29/creating-react-redux-app-from-scratch-04/">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その4: CSS ModulesとPostCSSとstylelintとstyled-components</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その3: PrettierとESLint</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/08/22/creating-react-redux-app-from-scratch-02/">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その2: React</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/08/19/creating-react-redux-app-from-scratch-01/">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その1: Node.jsとYarnとBabelとwebpack</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/08/16/chronicle-of-frontend-2018/">Webアプリケーションフロントエンド年代記 - 2018年夏編</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/08/25/if-youre-a-startup-you-should-not-use-react-reflecting-on-the-bsd-patents-license/">スタートアップはReactを使うべきではない (BSD &#43; patentsライセンスを考慮して) — もし、いつか大企業に買収されたいと望むなら</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2015/12/21/hello-react/">ReactをAtomパッケージ開発に使ってみた</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/">
+                  React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その7: React Redux
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ansible">ansible</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/babel">babel</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cnn">cnn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/coursera">coursera</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/css-modules">css-modules</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/deep-learning">deep-learning</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/eslint">eslint</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/esxi">esxi</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/frontend">frontend</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/headless-browser">headless-browser</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/keras">keras</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubeadm">kubeadm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/license">license</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/machine-learning">machine-learning</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/material-ui">material-ui</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/msys2">msys2</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/neural-network">neural-network</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nlp">nlp</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/packer">packer</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/postcss">postcss</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/prettier">prettier</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/redux">redux</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/redux-saga">redux-saga</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/rnn">rnn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/selenium">selenium</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/servicenow">servicenow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/skaffold">skaffold</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/styled-components">styled-components</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/stylelint">stylelint</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/tensorflow">tensorflow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/test-framework">test-framework</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/webdriverio">webdriverio</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/webpack">webpack</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-6244473643910448"
+    data-ad-slot="1845600530"
+    data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2018  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/highlight.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dos.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/yaml.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dockerfile.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+
