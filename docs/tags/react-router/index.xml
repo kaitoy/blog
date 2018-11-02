@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>To Be Decided </title>
+    <link>https://www.kaitoy.xyz/tags/react-router/</link>
+    <language>en-us</language>
+    <author>Kaito Yamada</author>
+    <rights>(C) 2018</rights>
+    <updated>2018-11-02 13:45:56 &#43;0900 JST</updated>
+
+    
+      
+        <item>
+          <title>React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その9: React Router</title>
+          <link>https://www.kaitoy.xyz/2018/11/02/creating-react-redux-app-from-scratch-09/</link>
+          <pubDate>Fri, 02 Nov 2018 13:45:56 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2018/11/02/creating-react-redux-app-from-scratch-09/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;https://reactjs.org/&#34;&gt;React&lt;/a&gt;と&lt;a href=&#34;https://redux.js.org/&#34;&gt;Redux&lt;/a&gt;を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
+(最終的な成果は&lt;a href=&#34;https://github.com/kaitoy/react-redux-scaffold&#34;&gt;GitHub&lt;/a&gt;に置いた。)&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/&#34;&gt;前回&lt;/a&gt;は&lt;a href=&#34;https://redux-saga.js.org/&#34;&gt;Redux Saga&lt;/a&gt;をセットアップした。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h1 id=&#34;フロントエンドのルーティング&#34;&gt;フロントエンドのルーティング&lt;/h1&gt;
+
+&lt;p&gt;Webアプリケーションにおけるルーティングとは、クライアントがリクエストしたURLに対して、返すべきリソースを選択する処理。
+昔はバックエンド(i.e. サーバサイド)でやってたけど、バックエンドでリソースを返すということは、ページ遷移が発生するということなので、ネイティブアプリケーションに比べてUXが落ちてしまう。&lt;/p&gt;
+
+&lt;p&gt;一方、ページ遷移を発生させないようにAjaxでサーバとやりとりしつつ、ちまちまDOMをいじるのは大変。
+DOMをごっそり書き換えて、ページ遷移なしに画面を切り替えることはできるけど、ナイーブにやると以下のような問題がある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;URLと画面の紐づけがなく、URLを指定して直接開けない&lt;/li&gt;
+&lt;li&gt;ブラウザの進む、戻るが使えない&lt;/li&gt;
+&lt;li&gt;宣言的に書けない&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;こういった問題に対応するため、フロントエンドでのルーティング技術が生まれた。&lt;/p&gt;
+
+&lt;p&gt;フロントエンドのルーティングでは、URLが変わってもリクエストはサーバに飛ばない。
+代わりに、フロントエンドフレームワークがそのURLを見て、適切な画面を選んでレンダリングする。&lt;/p&gt;
+
+&lt;h2 id=&#34;ハッシュベースのルーティング&#34;&gt;ハッシュベースのルーティング&lt;/h2&gt;
+
+&lt;p&gt;URLが変わってもリクエストがサーバに飛ばないとは何事か。&lt;/p&gt;
+
+&lt;p&gt;それを実現するやりかたは2通りある。
+古くはハッシュ(#、&lt;a href=&#34;https://en.wikipedia.org/wiki/Fragment_identifier&#34;&gt;フラグメント識別子&lt;/a&gt;)をつかったやり方。&lt;/p&gt;
+
+&lt;p&gt;例えば、&lt;code&gt;http://example.com/&lt;/code&gt;でUIをサーブしているとすると、&lt;code&gt;http://example.com/#foo&lt;/code&gt;とか、&lt;code&gt;http://example.com/#bar&lt;/code&gt;で別々のページの状態を表現する。
+ハッシュ以降が変わってもブラウザがサーバにリクエストを投げることはないので、クライアント側でハンドリングできる。
+(因みに、ハッシュを含んだURLをブラウザのアドレスバーに入れても、ハッシュを除いたURLでリクエストが送られる。この挙動の根拠となる規格はRFCなどを調べても見つからなかったけど…)&lt;/p&gt;
+
+&lt;p&gt;ハッシュの書き換えは、JavaScriptで以下のようにしてできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;location.hash = newHash;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;こういう処理を、例えばWeb UIのボタンをクリックしたときなんかに実行してURLを変えて、その上で画面を更新してやればいい。&lt;/p&gt;
+
+&lt;p&gt;そのあと、ブラウザの戻るボタンなんかを押されると書き換える前のURLにもどるわけだけど、これを検知するために&lt;code&gt;setInterval()&lt;/code&gt;とかで定期的に&lt;code&gt;location.hash&lt;/code&gt;を監視してたりした。&lt;/p&gt;
+
+&lt;h2 id=&#34;history-apiによるルーティング&#34;&gt;History APIによるルーティング&lt;/h2&gt;
+
+&lt;p&gt;ハッシュベースのルーティングは見るからにしょぼい。
+URLのハッシュ以降しか使えないのもしょぼいし、内部の処理も泥臭い。&lt;/p&gt;
+
+&lt;p&gt;これが、HTML 5で&lt;a href=&#34;https://developer.mozilla.org/ja/docs/Web/API/History&#34;&gt;History API&lt;/a&gt;がでて変わった。
+History APIはJavaScriptのAPIで、ブラウザの履歴を操作できる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;const state = { hoge: &amp;quot;hogeee&amp;quot; };
+history.pushState(state, &amp;quot;&amp;quot;, &amp;quot;/foo/bar&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;こんな感じのを実行すると、URLが&lt;code&gt;/foo/bar&lt;/code&gt;に変わる。(が、もちろんサーバにはリクエストは飛ばない。)
+で、ブラウザの戻るボタンを押すと、&lt;a href=&#34;https://developer.mozilla.org/en-US/docs/Web/Events/popstate&#34;&gt;popstate&lt;/a&gt;イベントが発生するので、それにイベントハンドラを登録しておけば、もとのURLに戻った時にも適時画面を書き換えられる。
+popstateイベントからは、&lt;code&gt;pushState()&lt;/code&gt;に渡したstateオブジェクトを取得できる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ところで、ブラウザのアドレスバーに&lt;code&gt;/foo/bar&lt;/code&gt;を直打ちするとどうなるかというと、普通にWebサーバを設定しておくと、&lt;code&gt;/foo/bar/index.html&lt;/code&gt;を返そうとして、無いので404エラーになっちゃう。
+ので、サーバ設定では、どのURLも同じリソース(e.g. &lt;code&gt;/index.html&lt;/code&gt;)をしといて、そこからJavaScriptを呼んで、URLを読み取って、画面を描いてやればいい。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;HTML 5が普及するにつれ、このようなHistory APIを使ったフロントエンドルーティングをするフレームワークやライブラリが色々出てきた。んだろうと思う。&lt;/p&gt;
+
+&lt;h1 id=&#34;react-router&#34;&gt;React Router&lt;/h1&gt;
+
+&lt;p&gt;Reactのエコシステムとしては、&lt;a href=&#34;https://reacttraining.com/react-router/&#34;&gt;React Router&lt;/a&gt;がフロントエンドルーティングを実現してくれる。&lt;/p&gt;
+
+&lt;p&gt;React Routerは、宣言的にフロントエンドルーティングを実現できるReactコンポーネントのライブラリ。&lt;/p&gt;
+
+&lt;p&gt;Reduxとともに使う場合は、&lt;a href=&#34;https://github.com/supasate/connected-react-router&#34;&gt;Connected React Router&lt;/a&gt;を使う。
+Connected React Routerには&lt;a href=&#34;https://www.npmjs.com/package/history&#34;&gt;history&lt;/a&gt;が必要。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add react-router-dom connected-react-router history
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;React Routerはv4.3.1、Connected React Routerはv4.3.0が入った。&lt;/p&gt;
+
+&lt;h1 id=&#34;connected-react-router導入&#34;&gt;Connected React Router導入&lt;/h1&gt;
+
+&lt;p&gt;まずはConnected React Routerの&lt;a href=&#34;https://github.com/supasate/connected-react-router#usage&#34;&gt;Usage&lt;/a&gt;を参考に、ReduxのMiddlewareを追加して、historyのインスタンスをStoreとつなぐ。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/configureStore.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import { createStore, applyMiddleware } from &#39;redux&#39;;
+ import createSagaMiddleware from &#39;redux-saga&#39;;
++import { createBrowserHistory } from &#39;history&#39;;
++import { connectRouter, routerMiddleware } from &#39;connected-react-router&#39;;
+ import { logger } from &#39;redux-logger&#39;;
+ import rootSaga from &#39;./sagas/rootSaga&#39;;
+ import rootReducer from &#39;./reducers/rootReducer&#39;;
+
+ const sagaMiddleware = createSagaMiddleware();
++export const history = createBrowserHistory();
+
+ export default function configureStore(initialState = {}) {
+   const middlewares = [];
+   if (process.env.NODE_ENV === `development`) {
+     middlewares.push(logger);
+   }
++  middlewares.push(routerMiddleware(history));
+   middlewares.push(sagaMiddleware);
+
+   const store = createStore(
+-    rootReducer,
++    connectRouter(history)(rootReducer),
+     initialState,
+     applyMiddleware(...middlewares),
+   );
+   sagaMiddleware.run(rootSaga);
+   return store;
+ }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;で、Connected React RouterのConnectedRouterコンポーネントを&lt;a href=&#34;https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/#provider&#34;&gt;React ReduxのProvider&lt;/a&gt;の下に追加する。&lt;/p&gt;
+
+&lt;p&gt;src/index.jsx:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
+ import ReactDOM from &#39;react-dom&#39;;
+ import { Provider } from &#39;react-redux&#39;;
++import { ConnectedRouter } from &#39;connected-react-router&#39;;
+ import App from &#39;./components/App&#39;;
+-import configureStore from &#39;./configureStore&#39;;
++import configureStore, { history } from &#39;./configureStore&#39;;
+ import &#39;./fonts.css&#39;;
+
+ const store = configureStore();
+ const root = document.getElementById(&#39;root&#39;);
+
+ if (root) {
+   ReactDOM.render(
+-    &amp;lt;Provider store={store}&amp;gt;
+-      &amp;lt;App /&amp;gt;
+-    &amp;lt;/Provider&amp;gt;,
++    &amp;lt;Provider store={store}&amp;gt;
++      &amp;lt;ConnectedRouter history={history}&amp;gt;
++        &amp;lt;App /&amp;gt;
++      &amp;lt;/ConnectedRouter&amp;gt;
++    &amp;lt;/Provider&amp;gt;,
+     root,
+   );
+  }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これだけ。
+これで、Appコンポーネント以下でReact Routerのコンポーネントを使えるようになった。&lt;/p&gt;
+
+&lt;h1 id=&#34;react-router導入&#34;&gt;React Router導入&lt;/h1&gt;
+
+&lt;p&gt;React Routerの&lt;a href=&#34;https://reacttraining.com/react-router/core/api/Redirect&#34;&gt;Redirect&lt;/a&gt;コンポーネントと&lt;a href=&#34;https://reacttraining.com/react-router/core/api/Route&#34;&gt;Route&lt;/a&gt;コンポーネントを使って、&lt;code&gt;/&lt;/code&gt;にアクセスしたら&lt;code&gt;/home&lt;/code&gt;にリダイレクトして、&lt;code&gt;/home&lt;/code&gt;で今までと同じ画面をレンダリングするようにする。&lt;/p&gt;
+
+&lt;p&gt;まず、App.jsxをHome.jsxにリネームして、Homeコンポーネントに変える。&lt;/p&gt;
+
+&lt;p&gt;components/Home.jsx:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
+ import styled from &#39;styled-components&#39;;
+ import HogeButton from &#39;../containers/HogeButton&#39;;
+
+ const Wrapper = styled.div`
+   font-size: 5rem;
+ `;
+
+-const App = () =&amp;gt; (
++const Home = () =&amp;gt; (
+   &amp;lt;Wrapper&amp;gt;
+     &amp;lt;HogeButton variant=&amp;quot;contained&amp;quot;&amp;gt;
+       HOGE
+     &amp;lt;/HogeButton&amp;gt;
+   &amp;lt;/Wrapper&amp;gt;
+ );
+
+-export default App;
++export default Home;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;で、App.jsxはルーティングを定義するコンポーネントとして作り直す。&lt;/p&gt;
+
+&lt;p&gt;components/App.jsx:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import React from &#39;react&#39;;
+import { Route, Redirect } from &#39;react-router-dom&#39;;
+import Home from &#39;./Home&#39;;
+
+const App = (): Node =&amp;gt; (
+  &amp;lt;div&amp;gt;
+    &amp;lt;Route exact path=&amp;quot;/&amp;quot; render={() =&amp;gt; &amp;lt;Redirect to=&amp;quot;/home&amp;quot; /&amp;gt;} /&amp;gt;
+    &amp;lt;Route exact path=&amp;quot;/home&amp;quot; component={Home} /&amp;gt;
+  &amp;lt;/div&amp;gt;
+);
+
+export default App;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;こんな感じ。&lt;/p&gt;
+
+&lt;h1 id=&#34;webpack-dev-serverのhistory-api-fallback&#34;&gt;webpack-dev-serverのHistory API Fallback&lt;/h1&gt;
+
+&lt;p&gt;あとは、上に書いたような404エラーを防ぐために、webpack-dev-serverの&lt;a href=&#34;https://webpack.js.org/configuration/dev-server/#devserver-historyapifallback&#34;&gt;History API Fallback&lt;/a&gt;を有効にしてやる。&lt;/p&gt;
+
+&lt;p&gt;webpack.dev.js&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; const path = require(&#39;path&#39;);
+ const webpackMerge = require(&#39;webpack-merge&#39;);
+ const webpackCommon = require(&#39;./webpack.common.js&#39;);
+
+ module.exports = webpackMerge(webpackCommon, {
+   mode: &#39;development&#39;,
+   devServer: {
+     contentBase: path.join(__dirname, &#39;public&#39;),
+     compress: true,
+     hot: true,
+     port: 3000,
+     publicPath: &#39;http://localhost:3000/&#39;,
++    historyApiFallback: true,
+   },
+ });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;こうしておくと、&lt;code&gt;/index.html&lt;/code&gt;以外にリクエストが来た場合、404エラーを返す代わりに&lt;code&gt;/index.html&lt;/code&gt;を返してくれるようになる。&lt;/p&gt;
+</description>
+        </item>
+      
+    
+
+  </channel>
+</rss>

@@ -299,3 +299,7 @@ Saga Middlewareは以下のように追加して起動する。
    return store;
  }
 ```
+
+<br>
+
+[次回](https://www.kaitoy.xyz/2018/11/02/creating-react-redux-app-from-scratch-09/)は[React Router](https://reacttraining.com/react-router/)。
