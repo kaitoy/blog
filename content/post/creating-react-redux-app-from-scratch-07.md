@@ -187,6 +187,68 @@ export default HogeButton;
 
 reselectは重要なライブラリだとは思うけど、とりあえずほって先に進む。
 
+# HogeButtonのアプリへの組み込み
+
+作ったHogeButtonは、普通のコンポーネントと同じように使える。
+
+components/App.jsx:
+```diff
+ import React from 'react';
+ import styled from 'styled-components';
+-import Button from '@material-ui/core/Button';
++import HogeButton from '../containers/HogeButton';
+
+ const Wrapper = styled.div`
+   font-size: 5rem;
+ `;
+
+ const App = () => (
+   <Wrapper>
+-    <Button variant="contained">
++    <HogeButton variant="contained">
+       HOGE
+-    </Button>
++    </HogeButton>
+   </Wrapper>
+ );
+
+ export default App;
+```
+
+# Provider
+
+全てのContainer ComponentsがReduxのStoreの変更をサブスクライブする必要があるので、それらに[Storeを渡してやらないといけない](https://redux.js.org/basics/usagewithreact#passing-the-store)。
+
+Storeをpropsに渡して、子コンポーネントにバケツリレーさせたりして行きわたらせることも可能だけど面倒すぎる。
+ので、React Reduxがもっと簡単にやる仕組みを提供してくれている。
+それが[Provider](https://github.com/reduxjs/react-redux/blob/master/docs/api.md#provider)というコンポーネント。
+
+Providerの子コンポーネントはStoreにアクセスして`connect()`を使えるようになる。
+ざっくり全体をProviderで囲ってやるのがいい。
+
+src/index.jsx:
+```diff
+ import React from 'react';
+ import ReactDOM from 'react-dom';
++import { Provider } from 'react-redux';
+ import App from './components/App';
++import configureStore from './configureStore';
+ import './fonts.css';
+
++const store = configureStore();
+ const root = document.getElementById('root');
+
+ if (root) {
+   ReactDOM.render(
+-    <App />,
++    <Provider store={store}>
++      <App />
++    </Provider>,
+     root,
+   );
+ }
+```
+
 <br>
 
 [次回](https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/)は、ReduxにMiddlewareを追加して、非同期処理を実装する。

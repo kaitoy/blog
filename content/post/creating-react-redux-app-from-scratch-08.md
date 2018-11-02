@@ -72,7 +72,7 @@ action HOGE_BUTTON_CLICKED @ 23:19:35.190
 
 # 非同期処理
 
-非同期処理をするためのMiddlewareには[redux-thunk](https://github.com/reduxjs/redux-thunk)とか[redux-promise](https://github.com/redux-utilities/redux-promise)とかがあるけど、なかでもGitHubのスター数が一番多い[redux-saga](https://redux-saga.js.org/)を使うことにする。
+非同期処理をするためのMiddlewareには[redux-thunk](https://github.com/reduxjs/redux-thunk)とか[redux-promise](https://github.com/redux-utilities/redux-promise)とかがあるけど、なかでもGitHubのスター数が一番多い[Redux Saga](https://redux-saga.js.org/)を使うことにする。
 
 ```cmd
 yarn add redux-saga
@@ -89,9 +89,9 @@ redux-sagaはredux-thunkに比べて以下の特長を持つ。
 * コールバック地獄に悩まされることが無い
 * Actionをプレーン且つピュアに保てるのでテストしやすい
 
-# redux-sagaの使い方
+# Redux Sagaの使い方
 
-redux-sagaでは、非同期処理はSagaというコンポーネントに書く。
+Redux Sagaでは、非同期処理はSagaというコンポーネントに書く。
 Sagaでは、
 
 1. ディスパッチされるActionをWatcherが監視し、
@@ -102,7 +102,7 @@ Sagaでは、
 といった処理を実行する。
 
 これらの処理は、Saga Middlewareから呼ばれる[ジェネレータ関数](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Generator)のなかで、EffectというオブジェクトをSaga Middlewareに返すことで、Saga Middlewareに指示して実行させる。
-このEffectを生成する[API](https://redux-saga.js.org/docs/api/)がredux-sagaからいろいろ提供されている。
+このEffectを生成する[API](https://redux-saga.js.org/docs/api/)がRedux Sagaからいろいろ提供されている。
 
 上記処理の1~4はそれぞれ以下のAPIで実装できる。
 

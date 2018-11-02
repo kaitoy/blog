@@ -50,10 +50,11 @@ v1.4.1が入った。
 
 あとはパッケージに入っている色々なコンポーネントをMaterial-UIのドキュメント見ながら使えばいいだけ。
 
+components/App.jsx:
 ```diff
  import React from 'react';
  import styled from 'styled-components';
- +import Button from '@material-ui/core/Button';
++import Button from '@material-ui/core/Button';
 
  const Wrapper = styled.div`
    font-size: 5rem;

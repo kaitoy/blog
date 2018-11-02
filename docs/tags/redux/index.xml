@@ -92,7 +92,7 @@ Middlewareの仕組みについては&lt;a href=&#34;https://qiita.com/pirosikic
 
 &lt;h1 id=&#34;非同期処理&#34;&gt;非同期処理&lt;/h1&gt;
 
-&lt;p&gt;非同期処理をするためのMiddlewareには&lt;a href=&#34;https://github.com/reduxjs/redux-thunk&#34;&gt;redux-thunk&lt;/a&gt;とか&lt;a href=&#34;https://github.com/redux-utilities/redux-promise&#34;&gt;redux-promise&lt;/a&gt;とかがあるけど、なかでもGitHubのスター数が一番多い&lt;a href=&#34;https://redux-saga.js.org/&#34;&gt;redux-saga&lt;/a&gt;を使うことにする。&lt;/p&gt;
+&lt;p&gt;非同期処理をするためのMiddlewareには&lt;a href=&#34;https://github.com/reduxjs/redux-thunk&#34;&gt;redux-thunk&lt;/a&gt;とか&lt;a href=&#34;https://github.com/redux-utilities/redux-promise&#34;&gt;redux-promise&lt;/a&gt;とかがあるけど、なかでもGitHubのスター数が一番多い&lt;a href=&#34;https://redux-saga.js.org/&#34;&gt;Redux Saga&lt;/a&gt;を使うことにする。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add redux-saga
 &lt;/code&gt;&lt;/pre&gt;
@@ -110,9 +110,9 @@ redux-sagaはredux-thunkに比べて以下の特長を持つ。&lt;/p&gt;
 &lt;li&gt;Actionをプレーン且つピュアに保てるのでテストしやすい&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h1 id=&#34;redux-sagaの使い方&#34;&gt;redux-sagaの使い方&lt;/h1&gt;
+&lt;h1 id=&#34;redux-sagaの使い方&#34;&gt;Redux Sagaの使い方&lt;/h1&gt;
 
-&lt;p&gt;redux-sagaでは、非同期処理はSagaというコンポーネントに書く。
+&lt;p&gt;Redux Sagaでは、非同期処理はSagaというコンポーネントに書く。
 Sagaでは、&lt;/p&gt;
 
 &lt;ol&gt;
@@ -125,7 +125,7 @@ Sagaでは、&lt;/p&gt;
 &lt;p&gt;といった処理を実行する。&lt;/p&gt;
 
 &lt;p&gt;これらの処理は、Saga Middlewareから呼ばれる&lt;a href=&#34;https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Generator&#34;&gt;ジェネレータ関数&lt;/a&gt;のなかで、EffectというオブジェクトをSaga Middlewareに返すことで、Saga Middlewareに指示して実行させる。
-このEffectを生成する&lt;a href=&#34;https://redux-saga.js.org/docs/api/&#34;&gt;API&lt;/a&gt;がredux-sagaからいろいろ提供されている。&lt;/p&gt;
+このEffectを生成する&lt;a href=&#34;https://redux-saga.js.org/docs/api/&#34;&gt;API&lt;/a&gt;がRedux Sagaからいろいろ提供されている。&lt;/p&gt;
 
 &lt;p&gt;上記処理の1~4はそれぞれ以下のAPIで実装できる。&lt;/p&gt;
 
@@ -557,6 +557,68 @@ export default HogeButton;
 それが&lt;a href=&#34;https://github.com/reduxjs/reselect&#34;&gt;relesect&lt;/a&gt;。&lt;/p&gt;
 
 &lt;p&gt;reselectは重要なライブラリだとは思うけど、とりあえずほって先に進む。&lt;/p&gt;
+
+&lt;h1 id=&#34;hogebuttonのアプリへの組み込み&#34;&gt;HogeButtonのアプリへの組み込み&lt;/h1&gt;
+
+&lt;p&gt;作ったHogeButtonは、普通のコンポーネントと同じように使える。&lt;/p&gt;
+
+&lt;p&gt;components/App.jsx:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
+ import styled from &#39;styled-components&#39;;
+-import Button from &#39;@material-ui/core/Button&#39;;
++import HogeButton from &#39;../containers/HogeButton&#39;;
+
+ const Wrapper = styled.div`
+   font-size: 5rem;
+ `;
+
+ const App = () =&amp;gt; (
+   &amp;lt;Wrapper&amp;gt;
+-    &amp;lt;Button variant=&amp;quot;contained&amp;quot;&amp;gt;
++    &amp;lt;HogeButton variant=&amp;quot;contained&amp;quot;&amp;gt;
+       HOGE
+-    &amp;lt;/Button&amp;gt;
++    &amp;lt;/HogeButton&amp;gt;
+   &amp;lt;/Wrapper&amp;gt;
+ );
+
+ export default App;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;provider&#34;&gt;Provider&lt;/h1&gt;
+
+&lt;p&gt;全てのContainer ComponentsがReduxのStoreの変更をサブスクライブする必要があるので、それらに&lt;a href=&#34;https://redux.js.org/basics/usagewithreact#passing-the-store&#34;&gt;Storeを渡してやらないといけない&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;Storeをpropsに渡して、子コンポーネントにバケツリレーさせたりして行きわたらせることも可能だけど面倒すぎる。
+ので、React Reduxがもっと簡単にやる仕組みを提供してくれている。
+それが&lt;a href=&#34;https://github.com/reduxjs/react-redux/blob/master/docs/api.md#provider&#34;&gt;Provider&lt;/a&gt;というコンポーネント。&lt;/p&gt;
+
+&lt;p&gt;Providerの子コンポーネントはStoreにアクセスして&lt;code&gt;connect()&lt;/code&gt;を使えるようになる。
+ざっくり全体をProviderで囲ってやるのがいい。&lt;/p&gt;
+
+&lt;p&gt;src/index.jsx:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
+ import ReactDOM from &#39;react-dom&#39;;
++import { Provider } from &#39;react-redux&#39;;
+ import App from &#39;./components/App&#39;;
++import configureStore from &#39;./configureStore&#39;;
+ import &#39;./fonts.css&#39;;
+
++const store = configureStore();
+ const root = document.getElementById(&#39;root&#39;);
+
+ if (root) {
+   ReactDOM.render(
+-    &amp;lt;App /&amp;gt;,
++    &amp;lt;Provider store={store}&amp;gt;
++      &amp;lt;App /&amp;gt;
++    &amp;lt;/Provider&amp;gt;,
+     root,
+   );
+ }
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
