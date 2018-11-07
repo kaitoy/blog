@@ -185,6 +185,9 @@
       <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
       
       
+      <a href="https://www.kaitoy.xyz/tags/enzyme">enzyme</a>
+      
+      
       <a href="https://www.kaitoy.xyz/tags/eslint">eslint</a>
       
       
@@ -195,6 +198,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/flow">flow</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/frontend">frontend</a>
@@ -231,6 +237,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jest">jest</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>

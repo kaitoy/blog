@@ -1,0 +1,668 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>To Be Decided </title>
+    <link>https://www.kaitoy.xyz/tags/jest/</link>
+    <language>en-us</language>
+    <author>Kaito Yamada</author>
+    <rights>(C) 2018</rights>
+    <updated>2018-11-07 23:41:30 &#43;0900 JST</updated>
+
+    
+      
+        <item>
+          <title>React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その10: Code Splitting、Flow、Jest、Enzyme</title>
+          <link>https://www.kaitoy.xyz/2018/11/07/creating-react-redux-app-from-scratch-10/</link>
+          <pubDate>Wed, 07 Nov 2018 23:41:30 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2018/11/07/creating-react-redux-app-from-scratch-10/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;https://reactjs.org/&#34;&gt;React&lt;/a&gt;と&lt;a href=&#34;https://redux.js.org/&#34;&gt;Redux&lt;/a&gt;を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
+(最終的な成果は&lt;a href=&#34;https://github.com/kaitoy/react-redux-scaffold&#34;&gt;GitHub&lt;/a&gt;に置いた。)&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/11/02/creating-react-redux-app-from-scratch-09/&#34;&gt;前回&lt;/a&gt;は&lt;a href=&#34;https://reacttraining.com/react-router/&#34;&gt;React Router&lt;/a&gt;をセットアップした。&lt;/p&gt;
+
+&lt;p&gt;今回は残りの要素をまとめてかたづける。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h1 id=&#34;code-splitting&#34;&gt;Code Splitting&lt;/h1&gt;
+
+&lt;p&gt;webpackでリソースをバンドルすると、一回の通信でアプリの要素全てをロードできるので効率いいような気がするけど、アプリの規模が大きくなってくるとバンドルサイズが大きくなって、初期ロード時間が長くなり、つまり初期画面の表示に時間がかかるようになってしまう。
+そもそも、いつもアプリの全画面をみるとは限らないので、いつもアプリの全要素をロードするのは無駄。&lt;/p&gt;
+
+&lt;p&gt;そんな問題に対応する技術が&lt;a href=&#34;https://webpack.js.org/guides/code-splitting/&#34;&gt;Code Splitting&lt;/a&gt;。
+バンドルを分割し、(理想的には)必要な時に必要な分だけロードする技術。&lt;/p&gt;
+
+&lt;p&gt;Code Splittingのやりかたはいくつかあるが、webpackのディレクティブを使った&lt;a href=&#34;https://webpack.js.org/guides/code-splitting/#prefetching-preloading-modules&#34;&gt;プリフェッチ&lt;/a&gt;を、フォントモジュールに適用してみる。&lt;/p&gt;
+
+&lt;p&gt;src/index.jsx:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
+ import ReactDOM from &#39;react-dom&#39;;
+ import { Provider } from &#39;react-redux&#39;;
+ import { ConnectedRouter } from &#39;connected-react-router&#39;;
+ import App from &#39;./components/App&#39;;
+ import configureStore from &#39;./configureStore&#39;;
+ import configureStore, { history } from &#39;./configureStore&#39;;
+-import &#39;./fonts.css&#39;;
++import(/* webpackPrefetch: true */ &#39;./fonts&#39;);
+
+ const store = configureStore();
+ const root = document.getElementById(&#39;root&#39;);
+
+ if (root) {
+   ReactDOM.render(
+     &amp;lt;Provider store={store}&amp;gt;
+       &amp;lt;ConnectedRouter history={history}&amp;gt;
+         &amp;lt;App /&amp;gt;
+       &amp;lt;/ConnectedRouter&amp;gt;
+     &amp;lt;/Provider&amp;gt;,
+     root,
+   );
+ }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;コード変更はこれだけ。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;import()&lt;/code&gt;は&lt;a href=&#34;https://github.com/tc39/proposal-dynamic-import&#34;&gt;ダイナミックインポート&lt;/a&gt;という、ECMAScriptで現在策定中の機能。
+これを使えるようにするためには、Babelのプラグインを追加する必要がある。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D babel-plugin-syntax-dynamic-import
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;.babelrc&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; {
+   &amp;quot;presets&amp;quot;: [&amp;quot;env&amp;quot;, &amp;quot;react&amp;quot;],
+-  &amp;quot;plugins&amp;quot;: [&amp;quot;styled-components&amp;quot;]
++  &amp;quot;plugins&amp;quot;: [&amp;quot;styled-components&amp;quot;, &amp;quot;syntax-dynamic-import&amp;quot;]
+ }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ダイナミックインポートの設定も完了。
+これでフォントモジュールはメインのバンドルとは別ファイルになり、初期画面の表示時にはロードされず、ブラウザの空き時間に非同期にロードされるようになる。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Code Splittingは&lt;a href=&#34;https://reactjs.org/docs/code-splitting.html&#34;&gt;Reactのドキュメント&lt;/a&gt;でも紹介されていて、そこにはReact特有のやり方も載っている。
+&lt;a href=&#34;https://reactjs.org/docs/code-splitting.html#reactlazy&#34;&gt;React.lazy&lt;/a&gt;と&lt;a href=&#34;https://reactjs.org/docs/code-splitting.html#suspense&#34;&gt;Suspense&lt;/a&gt;を使うものがかなりナウい。&lt;/p&gt;
+
+&lt;h1 id=&#34;flow&#34;&gt;Flow&lt;/h1&gt;
+
+&lt;p&gt;Reactに限らない話だけど、JavaScriptは動的型付け言語なので、特に規模が大き目なアプリを開発するとなると保守性が悪くなりがちで辛い。
+ので、できれば静的型付けでやりたい。&lt;/p&gt;
+
+&lt;p&gt;JavaScriptを静的型付けにするには、&lt;a href=&#34;https://www.typescriptlang.org/&#34;&gt;TypeScript&lt;/a&gt;と&lt;a href=&#34;https://flow.org/&#34;&gt;Flow&lt;/a&gt;という二つの選択肢がある。
+今回、FlowがReactと同じくFacebook製なので、Reactと相性がいいかと思ってFlowを選択したけど、人気やエコシステムの充実度から見るとTypeScriptのほうがよかった気がする。
+ので、Flowについてはさらっと書く。&lt;/p&gt;
+
+&lt;h2 id=&#34;flow導入&#34;&gt;Flow導入&lt;/h2&gt;
+
+&lt;p&gt;Flowは、ソースに型情報を付けて静的型チェック可能にしつつ、実行時には型情報を取り去って普通のJavaScriptとして実行できるようにする仕組み。&lt;/p&gt;
+
+&lt;p&gt;型チェックするツールは&lt;a href=&#34;https://www.npmjs.com/package/flow-bin&#34;&gt;flow-bin&lt;/a&gt;パッケージで配布されていて、型情報の除去は&lt;a href=&#34;https://www.npmjs.com/package/babel-preset-flow&#34;&gt;babel-preset-flow&lt;/a&gt;を使ってBabelでできる。
+babel-preset-flowは、すでにインストールしたbabel-preset-reactに含まれてるので、敢えて入れる必要はない。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D flow-bin
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これで、&lt;code&gt;yarn flow&lt;/code&gt;でFlowを実行できるようになった。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;$ yarn flow version
+yarn run v1.7.0
+$ C:\Users\kaitoy\Desktop\bin\pleiades\workspace\react-redux-scaffold\node_modules\.bin\flow version
+Flow, a static type checker for JavaScript, version 0.77.0
+Done in 0.38s.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;で、&lt;code&gt;yarn flow init&lt;/code&gt;でFlowの設定ファイル&lt;code&gt;.flowconfig&lt;/code&gt;を生成して、型チェックしたいファイルの頭に&lt;code&gt;// @flow&lt;/code&gt;と書けばとりあえず機能する。&lt;/p&gt;
+
+&lt;h2 id=&#34;flowの型アノテーション&#34;&gt;Flowの型アノテーション&lt;/h2&gt;
+
+&lt;p&gt;それだけでもだいぶ型推論してくれてチェックが利くけど、&lt;a href=&#34;https://flow.org/en/docs/types/&#34;&gt;型アノテーション&lt;/a&gt;を書いていくとよりいい。
+ただ、アノテートするとESLintとけんかするので、それ対策として&lt;a href=&#34;https://github.com/gajus/eslint-plugin-flowtype&#34;&gt;eslint-plugin-flowtype&lt;/a&gt;を入れる必要がある。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D babel-eslint eslint-plugin-flowtype
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;.eslintrc.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; module.exports = {
+   env: {
+     browser: true,
+   },
++  parser: &#39;babel-eslint&#39;,
+-  extends: [&#39;airbnb&#39;, &#39;prettier&#39;],
++  extends: [&#39;airbnb&#39;, &#39;plugin:flowtype/recommended&#39;, &#39;prettier&#39;],
++  plugins: [&#39;flowtype&#39;],
+ };
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;例として、Reactコンポーネントのpropsに型を付けてみる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;// @flow
+
+import React from &#39;react&#39;;
+import Dialog from &#39;@material-ui/core/Dialog&#39;;
+import DialogTitle from &#39;@material-ui/core/DialogTitle&#39;;
+import PropTypes from &#39;prop-types&#39;;
+
+// Propsという型の定義
+// text(string型)とopen(boolean型)というプロパティを持つオブジェクト
+type Props = {
+  text: string,
+  open: boolean,
+};
+
+// Props型を受け取る関数
+const MyDialog = ({ text, open }: Props) =&amp;gt; (
+  &amp;lt;Dialog open={open}&amp;gt;
+    &amp;lt;DialogTitle&amp;gt;{text}&amp;lt;/DialogTitle&amp;gt;
+  &amp;lt;/Dialog&amp;gt;
+);
+
+MyDialog.propTypes = {
+  text: PropTypes.string.isRequired,
+  open: PropTypes.bool.isRequired,
+};
+
+export default MyDialog;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;こんな感じで型を付けておくと、MyDialogに渡すpropsを間違った場合にFlowがエラーにしてくれる。
+prop-typesによる型定義と冗長な感じに見えるけど、Flowは静的に型チェックするのに対し、prop-typesはアプリの動作中に型チェックしてくれるので、両方書いておくのがよさそう。
+(Flowの型定義からprop-typesの定義を生成してくれる&lt;a href=&#34;https://github.com/atlassian/babel-plugin-react-flow-props-to-prop-types&#34;&gt;babel-plugin-react-flow-props-to-prop-types&lt;/a&gt;というのがあるけど、サポートされていない型があるし、メンテされていないし、微妙。)&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;上のコードで、&lt;code&gt;type&lt;/code&gt;というキーワードで型を定義しているんだけど、Reactとかの3rdパーティライブラリの型情報(&lt;a href=&#34;https://flow.org/en/docs/libdefs/&#34;&gt;libdef&lt;/a&gt;と呼ばれるもの)は、ライブラリ開発者などが作ったものが公開されていて、インストールして利用できる。&lt;/p&gt;
+
+&lt;p&gt;libdefはそれようの&lt;a href=&#34;https://github.com/flow-typed/flow-typed/tree/master/definitions&#34;&gt;リポジトリ&lt;/a&gt;で管理されていて、&lt;a href=&#34;https://github.com/flow-typed/flow-typed/blob/master/README.md&#34;&gt;flow-typed&lt;/a&gt;で引っ張れる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D flow-typed
+yarn flow-typed --ignoreDeps dev install
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これで、package.jsonに書かれている依存(devDependenciesを除く)を見て、必要なlibdefをダウンロードしてきて、プロジェクトルートの&lt;code&gt;flow-typed&lt;/code&gt;というディレクトリにインストールしてくれる。&lt;/p&gt;
+
+&lt;p&gt;例えばさっきのReactコンポーネントのコードに、ReactのAPIの型の一つである&lt;code&gt;Node&lt;/code&gt;を書くと以下のようになる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; // @flow
+
+ import React from &#39;react&#39;;
++import type { Node } from &#39;react&#39;;
+ import Dialog from &#39;@material-ui/core/Dialog&#39;;
+ import DialogTitle from &#39;@material-ui/core/DialogTitle&#39;;
+ import PropTypes from &#39;prop-types&#39;;
+
+ // Propsという型の定義
+ // text(string型)とopen(boolean型)というプロパティを持つオブジェクト
+ type Props = {
+   text: string,
+   open: boolean,
+ };
+
+ // Props型を受け取る関数
+-const MyDialog = ({ text, open }: Props) =&amp;gt; (
++const MyDialog = ({ text, open }: Props): Node =&amp;gt; (
+   &amp;lt;Dialog open={open}&amp;gt;
+     &amp;lt;DialogTitle&amp;gt;{text}&amp;lt;/DialogTitle&amp;gt;
+   &amp;lt;/Dialog&amp;gt;
+ );
+
+ MyDialog.propTypes = {
+   text: PropTypes.string.isRequired,
+   open: PropTypes.bool.isRequired,
+ };
+
+ export default MyDialog;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;因みに&lt;code&gt;flow-typed&lt;/code&gt;ディレクトリの中身はコミットすることが推奨されている。
+なんか違和感あるんだけど…&lt;/p&gt;
+
+&lt;h1 id=&#34;jest&#34;&gt;Jest&lt;/h1&gt;
+
+&lt;p&gt;Reactプロジェクトでユニットテストを書くなら、&lt;a href=&#34;https://jestjs.io/ja/&#34;&gt;Jest&lt;/a&gt;一択でいいっぽい。
+JestもReactと開発元が同じFacebookで、Reactと相性がいいはずだし、Reactプロジェクト以外でもJestは人気。&lt;/p&gt;
+
+&lt;p&gt;ゼロ設定で使えるように作られていて、導入の敷居が低いのが特徴。
+また多機能で、アサーション、モック、カバレージ測定辺りは組み込まれていてすぐ使える。&lt;/p&gt;
+
+&lt;p&gt;もともとは(今も?)&lt;a href=&#34;https://jasmine.github.io/&#34;&gt;Jasmine&lt;/a&gt;ベースで、APIが似た感じなので、Jasmineとか&lt;a href=&#34;https://mochajs.org/&#34;&gt;Mocha&lt;/a&gt;に慣れた人には特に使いやすい。&lt;/p&gt;
+
+&lt;h2 id=&#34;jestインストール&#34;&gt;Jestインストール&lt;/h2&gt;
+
+&lt;p&gt;ReactプロジェクトでJestを使うには以下のパッケージを入れる。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.npmjs.com/package/jest&#34;&gt;jest&lt;/a&gt;: 本体&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.npmjs.com/package/babel-jest&#34;&gt;babel-jest&lt;/a&gt;: BabelでトランスパイルするコードをJestでテストするためのBabelプラグイン&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.npmjs.com/package/react-test-renderer&#34;&gt;react-test-renderer&lt;/a&gt;: ReactコンポーネントをピュアなJavaScriptオブジェクトにレンダリングするライブラリ。&lt;a href=&#34;https://jestjs.io/docs/en/snapshot-testing&#34;&gt;スナップショットテスト&lt;/a&gt;などに使う。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D jest babel-jest react-test-renderer
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Jestはv23.4.2が入った。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;npm scriptにjestを追加しておくといい。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;package.json&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; (前略)
+   &amp;quot;scripts&amp;quot;: {
+     &amp;quot;format&amp;quot;: &amp;quot;prettier --write **/*.jsx **/*.js **/*.css&amp;quot;,
+     &amp;quot;build&amp;quot;: &amp;quot;webpack --config webpack.prod.js&amp;quot;,
++    &amp;quot;test&amp;quot;: &amp;quot;jest&amp;quot;,
+     &amp;quot;start&amp;quot;: &amp;quot;webpack-dev-server --hot --config webpack.dev.js&amp;quot;
+   },
+ (後略)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;jestセットアップ&#34;&gt;Jestセットアップ&lt;/h2&gt;
+
+&lt;p&gt;Jestの設定ファイルである&lt;a href=&#34;https://jestjs.io/docs/en/configuration&#34;&gt;jest.config.js&lt;/a&gt;をプロジェクトルートに生成する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn test --init
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;プロンプトでいくつかのことを聞かれるが、「Choose the test environment that will be used for testing」に&lt;code&gt;jsdom&lt;/code&gt;で答えるのがポイント。ブラウザで動かすアプリなので。&lt;/p&gt;
+
+&lt;p&gt;設定ファイルはとりあえずおおむね生成されたままでいいけど、一点、v23.4.2時点では、テスト実行時に「SecurityError: localStorage is not available for opaque origins」というエラーが出る&lt;a href=&#34;https://github.com/facebook/jest/issues/6769#issuecomment-408352345&#34;&gt;問題がある&lt;/a&gt;ので、testURLを「&lt;code&gt;http://localhost/&lt;/code&gt;」に設定しておく必要がある。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;jest.config.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;// For a detailed explanation regarding each configuration property, visit:
+// https://jestjs.io/docs/en/configuration.html
+
+module.exports = {
+  // All imported modules in your tests should be mocked automatically
+  // automock: false,
+
+  // Stop running tests after the first failure
+  // bail: false,
+
+  // Respect &amp;quot;browser&amp;quot; field in package.json when resolving modules
+  // browser: false,
+
+  // The directory where Jest should store its cached dependency information
+  // cacheDirectory: &amp;quot;C:\\Users\\kaitoy\\AppData\\Local\\Temp\\jest&amp;quot;,
+
+  // Automatically clear mock calls and instances between every test
+  // clearMocks: false,
+
+  // Indicates whether the coverage information should be collected while executing the test
+  // collectCoverage: false,
+
+  // An array of glob patterns indicating a set of files for which coverage information should be collected
+  // collectCoverageFrom: null,
+
+  // The directory where Jest should output its coverage files
+  coverageDirectory: &#39;coverage&#39;,
+
+  // An array of regexp pattern strings used to skip coverage collection
+  // coveragePathIgnorePatterns: [
+  //   &amp;quot;\\\\node_modules\\\\&amp;quot;
+  // ],
+
+  // A list of reporter names that Jest uses when writing coverage reports
+  // coverageReporters: [
+  //   &amp;quot;json&amp;quot;,
+  //   &amp;quot;text&amp;quot;,
+  //   &amp;quot;lcov&amp;quot;,
+  //   &amp;quot;clover&amp;quot;
+  // ],
+
+  // An object that configures minimum threshold enforcement for coverage results
+  // coverageThreshold: null,
+
+  // Make calling deprecated APIs throw helpful error messages
+  // errorOnDeprecated: false,
+
+  // Force coverage collection from ignored files usin a array of glob patterns
+  // forceCoverageMatch: [],
+
+  // A path to a module which exports an async function that is triggered once before all test suites
+  // globalSetup: null,
+
+  // A path to a module which exports an async function that is triggered once after all test suites
+  // globalTeardown: null,
+
+  // A set of global variables that need to be available in all test environments
+  // globals: {},
+
+  // An array of directory names to be searched recursively up from the requiring module&#39;s location
+  // moduleDirectories: [
+  //   &amp;quot;node_modules&amp;quot;
+  // ],
+
+  // An array of file extensions your modules use
+  // moduleFileExtensions: [
+  //   &amp;quot;js&amp;quot;,
+  //   &amp;quot;json&amp;quot;,
+  //   &amp;quot;jsx&amp;quot;,
+  //   &amp;quot;node&amp;quot;
+  // ],
+
+  // A map from regular expressions to module names that allow to stub out resources with a single module
+  // moduleNameMapper: {},
+
+  // An array of regexp pattern strings, matched against all module paths before considered &#39;visible&#39; to the module loader
+  // modulePathIgnorePatterns: [],
+
+  // Activates notifications for test results
+  // notify: false,
+
+  // An enum that specifies notification mode. Requires { notify: true }
+  // notifyMode: &amp;quot;always&amp;quot;,
+
+  // A preset that is used as a base for Jest&#39;s configuration
+  // preset: null,
+
+  // Run tests from one or more projects
+  // projects: null,
+
+  // Use this configuration option to add custom reporters to Jest
+  // reporters: undefined,
+
+  // Automatically reset mock state between every test
+  // resetMocks: false,
+
+  // Reset the module registry before running each individual test
+  // resetModules: false,
+
+  // A path to a custom resolver
+  // resolver: null,
+
+  // Automatically restore mock state between every test
+  // restoreMocks: false,
+
+  // The root directory that Jest should scan for tests and modules within
+  // rootDir: null,
+
+  // A list of paths to directories that Jest should use to search for files in
+  // roots: [
+  //   &amp;quot;&amp;lt;rootDir&amp;gt;&amp;quot;
+  // ],
+
+  // Allows you to use a custom runner instead of Jest&#39;s default test runner
+  // runner: &amp;quot;jest-runner&amp;quot;,
+
+  // The paths to modules that run some code to configure or set up the testing environment before each test
+  // setupFiles: [],
+
+  // The path to a module that runs some code to configure or set up the testing framework before each test
+  // setupTestFrameworkScriptFile: null,
+
+  // A list of paths to snapshot serializer modules Jest should use for snapshot testing
+  // snapshotSerializers: [],
+
+  // The test environment that will be used for testing
+  // testEnvironment: &amp;quot;jest-environment-jsdom&amp;quot;,
+
+  // Options that will be passed to the testEnvironment
+  // testEnvironmentOptions: {},
+
+  // Adds a location field to test results
+  // testLocationInResults: false,
+
+  // The glob patterns Jest uses to detect test files
+  // testMatch: [
+  //   &amp;quot;**/__tests__/**/*.js?(x)&amp;quot;,
+  //   &amp;quot;**/?(*.)+(spec|test).js?(x)&amp;quot;
+  // ],
+
+  // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
+  // testPathIgnorePatterns: [
+  //   &amp;quot;\\\\node_modules\\\\&amp;quot;
+  // ],
+
+  // The regexp pattern Jest uses to detect test files
+  // testRegex: &amp;quot;&amp;quot;,
+
+  // This option allows the use of a custom results processor
+  // testResultsProcessor: null,
+
+  // This option allows use of a custom test runner
+  // testRunner: &amp;quot;jasmine2&amp;quot;,
+
+  // This option sets the URL for the jsdom environment. It is reflected in properties such as location.href
+  testURL: &#39;http://localhost/&#39;,
+
+  // Setting this value to &amp;quot;fake&amp;quot; allows the use of fake timers for functions such as &amp;quot;setTimeout&amp;quot;
+  // timers: &amp;quot;real&amp;quot;,
+
+  // A map from regular expressions to paths to transformers
+  // transform: null,
+
+  // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
+  // transformIgnorePatterns: [
+  //   &amp;quot;\\\\node_modules\\\\&amp;quot;
+  // ],
+
+  // An array of regexp pattern strings that are matched against all modules before the module loader will automatically return a mock for them
+  // unmockedModulePathPatterns: undefined,
+
+  // Indicates whether each individual test should be reported during the run
+  // verbose: null,
+
+  // An array of regexp patterns that are matched against all source file paths before re-running tests in watch mode
+  // watchPathIgnorePatterns: [],
+
+  // Whether to use watchman for file crawling
+  // watchman: true,
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;また、例によって、(主にJestのグローバル変数のために、)JestのテストコードとESLintがけんかするので、ESLintをなだめるために&lt;a href=&#34;https://www.npmjs.com/package/eslint-plugin-jest&#34;&gt;eslint-plugin-jest&lt;/a&gt;を入れる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D eslint-plugin-jest
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;.eslintrc.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; module.exports = {
+   env: {
+     browser: true,
++    &#39;jest/globals&#39;: true,
+   },
+   parser: &#39;babel-eslint&#39;,
+   extends: [&#39;airbnb&#39;, &#39;plugin:flowtype/recommended&#39;, &#39;prettier&#39;],
+-  plugins: [&#39;flowtype&#39;],
++  plugins: [&#39;flowtype&#39;, &#39;jest&#39;],
+ };
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;jestのテスト作成&#34;&gt;Jestのテスト作成&lt;/h2&gt;
+
+&lt;p&gt;Jestのテストは、&lt;code&gt;jest.config.js&lt;/code&gt;の&lt;code&gt;testMatch&lt;/code&gt;にマッチするJavaScriptファイルに書く。
+デフォルトでは&lt;code&gt;__test__&lt;/code&gt;ディレクトリ以下に置けばいい。&lt;/p&gt;
+
+&lt;p&gt;テストコードはよくある感じの&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E3%83%93%E3%83%98%E3%82%A4%E3%83%93%E3%82%A2%E9%A7%86%E5%8B%95%E9%96%8B%E7%99%BA&#34;&gt;BDD&lt;/a&gt;風に書けばいいと思う。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/__tests__/reducers/reducers.test.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import { hoge } from &#39;../../reducers/reducers&#39;;
+import { hogeButtonClicked } from &#39;../../actions/actions&#39;;
+
+const initialState = {
+  clicked: false,
+};
+
+describe(&#39;reducers&#39;, () =&amp;gt; {
+  describe(&#39;hoge()&#39;, () =&amp;gt; {
+    test(&#39;returns a state with clicked:true when the action is HOGE_BUTTON_CLICKED&#39;, () =&amp;gt; {
+      const state = hogeButtonClicked(initialState, hogeButtonClicked({}));
+      expect(state.clicked).toBe(true);
+    });
+  });
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;スナップショットテスト&#34;&gt;スナップショットテスト&lt;/h2&gt;
+
+&lt;p&gt;Jestの目玉のひとつは&lt;a href=&#34;https://jestjs.io/docs/ja/snapshot-testing&#34;&gt;スナップショットテスト&lt;/a&gt;。
+Reactコンポーネントのレンダリング結果が以前と変わってないかをテストできる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/__tests__/components/HogeButton.test.jsx&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import React from &#39;react&#39;;
+import renderer from &#39;react-test-renderer&#39;;
+import HogeButton from &#39;../../components/HogeButton&#39;;
+
+describe(&#39;components&#39;, () =&amp;gt; {
+  describe(&#39;HogeButton&#39;, () =&amp;gt; {
+    test(&#39;renders correctly&#39;, () =&amp;gt; {
+      const tree = renderer.create(
+        &amp;lt;HogeButton variant=&amp;quot;contained&amp;quot; onClick={() =&amp;gt; {}}&amp;gt;
+          HOGE
+        &amp;lt;/HogeButton&amp;gt;
+      ).toJSON();
+      expect(tree).toMatchSnapshot();
+    });
+  });
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;このテストの初回実行時には、&lt;code&gt;src/__tests__/components/__snapshots__/HogeButton.test.jsx.snap&lt;/code&gt;というスナップショットファイルが生成される。
+これはテキスト形式で、以下のような人が読み解ける内容。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/__tests__/components/__snapshots__/HogeButton.test.jsx.snap&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`components HogeButton renders correctly 1`] = `
+&amp;lt;button
+  className=&amp;quot;MuiButtonBase-root-25 MuiButton-root-1 MuiButton-contained-10 MuiButton-raised-13&amp;quot;
+  disabled={false}
+  onBlur={[Function]}
+  onClick={[Function]}
+  onFocus={[Function]}
+  onKeyDown={[Function]}
+  onKeyUp={[Function]}
+  onMouseDown={[Function]}
+  onMouseLeave={[Function]}
+  onMouseUp={[Function]}
+  onTouchEnd={[Function]}
+  onTouchMove={[Function]}
+  onTouchStart={[Function]}
+  tabIndex=&amp;quot;0&amp;quot;
+  type=&amp;quot;button&amp;quot;
+&amp;gt;
+  &amp;lt;span
+    className=&amp;quot;MuiButton-label-2&amp;quot;
+  &amp;gt;
+    HOGE
+  &amp;lt;/span&amp;gt;
+  &amp;lt;span
+    className=&amp;quot;MuiTouchRipple-root-28&amp;quot;
+  /&amp;gt;
+&amp;lt;/button&amp;gt;
+`;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;スナップショットファイルはコミットしてバージョン管理して、変更があったときには差分を確認する。&lt;/p&gt;
+
+&lt;h1 id=&#34;enzyme&#34;&gt;Enzyme&lt;/h1&gt;
+
+&lt;p&gt;Reactのユニットテストをよりいい感じに書けるようにしてくれるユーティリティライブラリが&lt;a href=&#34;https://airbnb.io/enzyme/&#34;&gt;Enzyme&lt;/a&gt;。
+Airbnb製。
+Reactコンポーネントをレンダリングして、jQueryみたいなAPIで&lt;a href=&#34;https://airbnb.io/enzyme/docs/api/selector.html&#34;&gt;セレクタ&lt;/a&gt;を指定したりしてエレメントを取得し、アサートするようなテストが書ける。&lt;/p&gt;
+
+&lt;p&gt;Enzymeによるレンダリングには以下の3種類があり、テスト内容によって使い分ける。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://airbnb.io/enzyme/docs/api/shallow.html&#34;&gt;Shallow Rendering&lt;/a&gt;: 浅くレンダリングして、子コンポーネントに影響を受けないテストができる。Reactの&lt;a href=&#34;https://reactjs.org/docs/state-and-lifecycle.html&#34;&gt;ライフサイクルメソッド&lt;/a&gt;も呼んでくれる。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://airbnb.io/enzyme/docs/api/mount.html&#34;&gt;Full Rendering&lt;/a&gt;: &lt;a href=&#34;https://github.com/jsdom/jsdom&#34;&gt;jsdom&lt;/a&gt;などを使って完全なDOMツリーとしてレンダリングする。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://airbnb.io/enzyme/docs/api/render.html&#34;&gt;Static Rendering&lt;/a&gt;: 静的なHTMLに出力して、それをパースする。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Enzymeはv3から本体とアダプタという構成になっていて、Reactのバージョンによってアダプタを使い分ける。
+(&lt;a href=&#34;https://preactjs.com/&#34;&gt;preact&lt;/a&gt;とか&lt;a href=&#34;https://infernojs.org/&#34;&gt;Inferno&lt;/a&gt;のアダプタもある。)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D enzyme enzyme-adapter-react-16
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Enzymeはv3.3.0が入った。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/FormidableLabs/enzyme-matchers/tree/master/packages/jest-enzyme&#34;&gt;jest-enzyme&lt;/a&gt;も入れるとアサーションがいい感じに書けてよりいいかもしれない。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Full Renderingをやってみる。&lt;/p&gt;
+
+&lt;p&gt;ContainedButtonがクリックされたとき、&lt;code&gt;onClick&lt;/code&gt;に指定した関数が呼ばれることを確認するテストは以下のように書ける。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/__tests__/components/HogeButton.test.jsx&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
+ import renderer from &#39;react-test-renderer&#39;;
++import Enzyme, { mount } from &#39;enzyme&#39;;
++import Adapter from &#39;enzyme-adapter-react-16&#39;;
+ import HogeButton from &#39;../../components/HogeButton&#39;;
+
++beforeAll(() =&amp;gt; {
++  Enzyme.configure({ adapter: new Adapter() });
++});
+
+ describe(&#39;components&#39;, () =&amp;gt; {
+   describe(&#39;HogeButton&#39;, () =&amp;gt; {
+     test(&#39;renders correctly&#39;, () =&amp;gt; {
+       const tree = renderer.create(
+         &amp;lt;HogeButton variant=&amp;quot;contained&amp;quot; onClick={() =&amp;gt; {}}&amp;gt;
+           HOGE
+         &amp;lt;/HogeButton&amp;gt;
+       ).toJSON();
+       expect(tree).toMatchSnapshot();
+     });
++
++    test(&amp;quot;calls the passed handler when it&#39;s clicked&amp;quot;, () =&amp;gt; {
++      const handler = jest.fn();
++      const wrapper = mount(&amp;lt;HogeButton onClick={handler} /&amp;gt;);
++      wrapper.find(&#39;button&#39;).simulate(&#39;click&#39;);
++      expect(handler).toHaveBeenCalledTimes(1);
++    });
+   });
+ });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;mount&lt;/code&gt;がFull RenderingのAPIで、内部で&lt;code&gt;react-test-renderer&lt;/code&gt;を使っているみたいなんだけど、&lt;code&gt;mount&lt;/code&gt;のために&lt;code&gt;react-test-renderer&lt;/code&gt;をimportする必要はない。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;以上で全10回に渡るReact―Redux環境のセットアップ体験記が完結。&lt;/p&gt;
+
+&lt;p&gt;だらだら書いてるうちに、&lt;a href=&#34;https://babeljs.io/blog/2018/08/27/7.0.0&#34;&gt;Babelの7が出たり&lt;/a&gt;、&lt;a href=&#34;https://reactjs.org/docs/hooks-overview.html&#34;&gt;React Hooks&lt;/a&gt;とか&lt;a href=&#34;https://logmi.jp/tech/articles/302611&#34;&gt;React Suspense&lt;/a&gt;とかが出てきてて、また大きく変わってきそう…&lt;/p&gt;
+</description>
+        </item>
+      
+    
+
+  </channel>
+</rss>

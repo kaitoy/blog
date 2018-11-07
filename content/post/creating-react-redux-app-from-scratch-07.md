@@ -70,7 +70,7 @@ React Reduxを使う場合、Reduxのstateの更新に応じてReactコンポー
 前回作ったStoreをHOGEボタン(これはPresentational Component)につなげるContainer Componentを書いてみる。
 Container Componentのソースは`src/containers/`に入れる。
 
-`src/containers/HogeButton.js`
+`src/containers/HogeButton.jsx`
 ```javascript
 import React from 'react';
 import Button from '@material-ui/core/Button';
@@ -155,7 +155,7 @@ const HogeButton = connect(
 
 まとめると、以下のように書けるということ。
 
-`src/containers/HogeButton.js`
+`src/containers/HogeButton.jsx`
 ```javascript
 import React from 'react';
 import Button from '@material-ui/core/Button';

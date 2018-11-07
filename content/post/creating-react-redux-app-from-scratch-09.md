@@ -161,7 +161,7 @@ src/index.jsx:
 +    </Provider>,
      root,
    );
-  }
+ }
 ```
 
 これだけ。
@@ -173,7 +173,7 @@ React Routerの[Redirect](https://reacttraining.com/react-router/core/api/Redire
 
 まず、App.jsxをHome.jsxにリネームして、Homeコンポーネントに変える。
 
-components/Home.jsx:
+`components/Home.jsx`:
 ```diff
  import React from 'react';
  import styled from 'styled-components';
@@ -242,3 +242,7 @@ webpack.dev.js
 ```
 
 こうしておくと、`/index.html`以外にリクエストが来た場合、404エラーを返す代わりに`/index.html`を返してくれるようになる。
+
+<br>
+
+[次回](https://www.kaitoy.xyz/2018/11/07/creating-react-redux-app-from-scratch-10/)はラストで、[Code Splitting](https://webpack.js.org/guides/code-splitting/)と[Flow](https://flow.org/)と[Jest](https://jestjs.io/ja/)と[Enzyme](https://airbnb.io/enzyme/)。
