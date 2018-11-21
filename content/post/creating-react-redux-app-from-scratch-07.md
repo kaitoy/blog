@@ -14,6 +14,8 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 
 [前回](https://www.kaitoy.xyz/2018/09/26/creating-react-redux-app-from-scratch-06/)はReduxをセットアップした。
 
+(2018/11/21更新)
+
 {{< google-adsense >}}
 
 # React Redux
@@ -27,7 +29,7 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 yarn add react-redux
 ```
 
-v5.0.7が入った。
+v5.1.1が入った。
 
 # Presentational Components と Container Components
 
@@ -191,12 +193,13 @@ reselectは重要なライブラリだとは思うけど、とりあえずほっ
 
 作ったHogeButtonは、普通のコンポーネントと同じように使える。
 
-components/App.jsx:
+`src/components/App.jsx`:
 ```diff
  import React from 'react';
  import styled from 'styled-components';
 -import Button from '@material-ui/core/Button';
 +import HogeButton from '../containers/HogeButton';
+ import Fonts from '../fonts';
 
  const Wrapper = styled.div`
    font-size: 5rem;
@@ -209,6 +212,7 @@ components/App.jsx:
        HOGE
 -    </Button>
 +    </HogeButton>
+     <Fonts />
    </Wrapper>
  );
 
@@ -226,14 +230,13 @@ Storeをpropsに渡して、子コンポーネントにバケツリレーさせ�
 Providerの子コンポーネントはStoreにアクセスして`connect()`を使えるようになる。
 ざっくり全体をProviderで囲ってやるのがいい。
 
-src/index.jsx:
+`src/index.jsx`:
 ```diff
  import React from 'react';
  import ReactDOM from 'react-dom';
 +import { Provider } from 'react-redux';
  import App from './components/App';
 +import configureStore from './configureStore';
- import './fonts.css';
 
 +const store = configureStore();
  const root = document.getElementById('root');

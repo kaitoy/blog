@@ -25,6 +25,8 @@
 
 &lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/08/16/chronicle-of-frontend-2018/&#34;&gt;前回の記事でReactが生まれた経緯を学んだ&lt;/a&gt;ので、今回から実習に入る。&lt;/p&gt;
 
+&lt;p&gt;(2018/11/21更新)&lt;/p&gt;
+
 &lt;p&gt;
 
 
@@ -113,7 +115,7 @@ Done in 40.38s.
 
 &lt;p&gt;できたのがこれ。&lt;/p&gt;
 
-&lt;p&gt;package.json:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;package.json&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{
   &amp;quot;name&amp;quot;: &amp;quot;react-redux-scaffold&amp;quot;,
@@ -136,31 +138,32 @@ Done in 40.38s.
 
 &lt;h2 id=&#34;babel&#34;&gt;Babel&lt;/h2&gt;
 
-&lt;p&gt;トランスパイラはデファクトスタンダードの&lt;a href=&#34;https://babeljs.io/&#34;&gt;Babel&lt;/a&gt;を使う。&lt;/p&gt;
+&lt;p&gt;トランスパイラはデファクトスタンダードの&lt;a href=&#34;https://babeljs.io/&#34;&gt;Babel&lt;/a&gt;を使う。
+&lt;a href=&#34;https://babeljs.io/blog/2018/08/27/7.0.0&#34;&gt;2018年8月&lt;/a&gt;に出たv７。&lt;/p&gt;
 
 &lt;p&gt;Babelのプラグインはとりあえず最低限入れるとして、以下のnpmパッケージをプロジェクトにインストールする。&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;a href=&#34;https://babeljs.io/docs/en/babel-core&#34;&gt;babel-core&lt;/a&gt;: Babel本体。&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://babeljs.io/docs/en/babel-preset-react&#34;&gt;babel-preset-react&lt;/a&gt;: Reactの&lt;a href=&#34;https://reactjs.org/docs/introducing-jsx.html&#34;&gt;JSX&lt;/a&gt;とか&lt;a href=&#34;https://flow.org/&#34;&gt;Flow&lt;/a&gt;とかを処理するプラグイン集。&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://babeljs.io/docs/en/babel-preset-env&#34;&gt;babel-preset-env&lt;/a&gt;: ES 2015+をES 5にトランスパイルするプラグイン集。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://babeljs.io/docs/en/babel-core&#34;&gt;@babel/core&lt;/a&gt;: Babel本体。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://babeljs.io/docs/en/babel-preset-react&#34;&gt;@babel/preset-react&lt;/a&gt;: Reactの&lt;a href=&#34;https://reactjs.org/docs/introducing-jsx.html&#34;&gt;JSX&lt;/a&gt;とか&lt;a href=&#34;https://flow.org/&#34;&gt;Flow&lt;/a&gt;とかを処理するプラグイン集。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://babeljs.io/docs/en/babel-preset-env&#34;&gt;@babel/preset-env&lt;/a&gt;: ES 2015+をES 5にトランスパイルするプラグイン集。&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;これらのパッケージは実行時には要らないので&lt;code&gt;yarn add -D&lt;/code&gt;コマンドで開発時依存としてインストールする。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D babel-core babel-preset-react babel-preset-env
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D @babel/core @babel/preset-react @babel/preset-env
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;Babelは6.26.3が入った。&lt;/p&gt;
+&lt;p&gt;Babelはv7.1.6が入った。&lt;/p&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
 &lt;p&gt;で、Babelの&lt;a href=&#34;https://babeljs.io/docs/en/babelrc&#34;&gt;設定ファイル&lt;/a&gt;を書いてプロジェクトルートに置いておく。&lt;/p&gt;
 
-&lt;p&gt;.babelrc:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;.babelrc&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{
-  &amp;quot;presets&amp;quot;: [&amp;quot;env&amp;quot;, &amp;quot;react&amp;quot;]
+  &amp;quot;presets&amp;quot;: [&amp;quot;@babel/preset-env&amp;quot;, &amp;quot;@babel/preset-react&amp;quot;]
 }
 &lt;/code&gt;&lt;/pre&gt;
 
@@ -171,10 +174,31 @@ Done in 40.38s.
 
 &lt;p&gt;少なくとも後で導入する&lt;a href=&#34;https://redux-saga.js.org/&#34;&gt;redux-saga&lt;/a&gt;が使う&lt;a href=&#34;https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Statements/function*&#34;&gt;ジェネレータ&lt;/a&gt;がPolyfillを必要とする(ないと&lt;code&gt;ReferenceError: regeneratorRuntime is not defined&lt;/code&gt;というエラーが出る)ので、今の時点で入れておくことにする。&lt;/p&gt;
 
-&lt;p&gt;Polyfillの実装はいくつかあるけど、定番っぽい&lt;a href=&#34;https://babeljs.io/docs/en/babel-polyfill/&#34;&gt;babel-polyfill&lt;/a&gt;を使う。
+&lt;p&gt;Polyfillの実装はいくつかあるけど、定番っぽい&lt;a href=&#34;https://babeljs.io/docs/en/babel-polyfill/&#34;&gt;@babel/polyfill&lt;/a&gt;を使う。
 こちらは実行時依存としてインストールする。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add babel-polyfill
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add @babel/polyfill
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;@babel/polyfill&lt;/code&gt;のアプリへのロード方法は&lt;a href=&#34;https://babeljs.io/docs/en/babel-polyfill#usage-in-node-browserify-webpack&#34;&gt;いくつかある&lt;/a&gt;けど、今回使うwebpack(後述)の場合、&lt;code&gt;useBuiltIns: &#39;usage&#39;&lt;/code&gt;というオプションを使うのがよさそう。
+これを使うと、ソースに&lt;code&gt;@babel/polyfill&lt;/code&gt;のimportを書かなくても、必要に応じて必要なPolifillをロードしてくれる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;.babelrc&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; {
+-  &amp;quot;presets&amp;quot;: [&amp;quot;@babel/preset-env&amp;quot;, &amp;quot;@babel/preset-react&amp;quot;]
++  &amp;quot;presets&amp;quot;: [
++    [
++      &amp;quot;@babel/preset-env&amp;quot;,
++      {
++        &amp;quot;useBuiltIns&amp;quot;: &amp;quot;usage&amp;quot;
++      }
++    ],
++    &amp;quot;@babel/preset-react&amp;quot;
++  ]
+ }
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;h2 id=&#34;webpack&#34;&gt;webpack&lt;/h2&gt;
@@ -192,7 +216,7 @@ Done in 40.38s.
 &lt;li&gt;webpack: webpack本体。&lt;/li&gt;
 &lt;li&gt;webpack-cli: webpackのコマンドラインインターフェース。&lt;/li&gt;
 &lt;li&gt;&lt;a href=&#34;https://github.com/webpack/webpack-dev-server&#34;&gt;webpack-dev-server&lt;/a&gt;: webpackから起動できる開発用 HTTP サーバ。ライブリロードしてくれる。(&lt;a href=&#34;https://github.com/webpack-contrib/webpack-serve&#34;&gt;webpack-serve&lt;/a&gt;の方がモダンではある。)&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://webpack.js.org/loaders/babel-loader/&#34;&gt;babel-loader&lt;/a&gt;: Babelを実行してくれるやつ。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://webpack.js.org/loaders/babel-loader/&#34;&gt;babel-loader&lt;/a&gt;: Babelを実行してくれるやつ。Babel 7で使うにはv8以降である必要がある。&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
@@ -200,7 +224,7 @@ Done in 40.38s.
 &lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D webpack webpack-cli webpack-dev-server babel-loader
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;webpackはv4.16.0が入った。&lt;/p&gt;
+&lt;p&gt;webpackはv4.26.0が入った。&lt;/p&gt;
 
 &lt;h3 id=&#34;webpack設定ファイル&#34;&gt;webpack設定ファイル&lt;/h3&gt;
 
@@ -210,14 +234,14 @@ Done in 40.38s.
 
 &lt;p&gt;とりあえず適当に書くとこんな感じ。&lt;/p&gt;
 
-&lt;p&gt;webpack.config.js:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;webpack.config.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;const path = require(&#39;path&#39;);
 const packageJson = require(&#39;./package.json&#39;);
 
 module.exports = {
   mode: &#39;development&#39;,
-  entry: [&#39;babel-polyfill&#39;, `./${packageJson.main}`],
+  entry: [`./${packageJson.main}`],
   output: {
     path: path.resolve(__dirname, &#39;dist&#39;),
     filename: &#39;bundle.js&#39;,
@@ -238,18 +262,19 @@ module.exports = {
 };
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;この設定の意味は、&lt;code&gt;./src/index.jsx&lt;/code&gt;を読んで、&lt;code&gt;.js&lt;/code&gt;か&lt;code&gt;.jsx&lt;/code&gt;を拡張子としたファイルとかモジュールをロードするコードがあったら、babel-loaderでBabelを呼んでトランスパイルして、バンドルした結果は&lt;code&gt;&amp;lt;プロジェクトルート&amp;gt;/dist/bundle.js&lt;/code&gt;に吐き出す。
+&lt;p&gt;この設定の意味は、&lt;code&gt;entry&lt;/code&gt;に指定された&lt;code&gt;./src/index.jsx&lt;/code&gt;を読んで、&lt;code&gt;.js&lt;/code&gt;か&lt;code&gt;.jsx&lt;/code&gt;を拡張子としたモジュールファイルやノードモジュールをロードするコードがあったら、babel-loaderでBabelを呼んでトランスパイルして、バンドルした結果は&lt;code&gt;&amp;lt;プロジェクトルート&amp;gt;/dist/bundle.js&lt;/code&gt;に吐き出す。
 というだけ。
 (&lt;a href=&#34;https://nodejs.org/docs/latest/api/modules.html#modules_dirname&#34;&gt;__dirname&lt;/a&gt;はNode.jsが値を入れてくれる変数で、webpack.config.jsのあるディレクトリの絶対パスが入ってる。)&lt;/p&gt;
 
-&lt;p&gt;ファイルをロードするコードというのは、&lt;code&gt;import App from &#39;./components/App&#39;;&lt;/code&gt;みたいなやつ。
+&lt;p&gt;モジュールファイルをロードするコードというのは、&lt;code&gt;import App from &#39;./components/App&#39;;&lt;/code&gt;みたいなやつ。
 webpackはこのコードを読んだら、&lt;code&gt;./components&lt;/code&gt;ディレクトリのなかを見て、&lt;code&gt;App&lt;/code&gt;か&lt;code&gt;App.js&lt;/code&gt;か&lt;code&gt;App.jsx&lt;/code&gt;というファイルを探してロードする。
-また、モジュールをロードするコードというのは&lt;code&gt;import React from &#39;react&#39;;&lt;/code&gt;みたいなやつで、webpackはこのコードを読んだら、プロジェクトの&lt;code&gt;node_modules/react/package.json&lt;/code&gt;の&lt;code&gt;main&lt;/code&gt;プロパティの値に書いてあるファイルをロードする。
-という挙動が上記webpack.config.jsの&lt;code&gt;resolve&lt;/code&gt;に書いてあって、その詳細は&lt;a href=&#34;https://webpack.js.org/concepts/module-resolution/&#34;&gt;公式のドキュメントのModule Resolution&lt;/a&gt;に書いてある。&lt;/p&gt;
+また、ノードモジュールをロードするコードというのは&lt;code&gt;import React from &#39;react&#39;;&lt;/code&gt;みたいなやつで、webpackはこのコードを読んだら、プロジェクトの&lt;code&gt;node_modules/react/package.json&lt;/code&gt;の&lt;code&gt;main&lt;/code&gt;プロパティの値に書いてあるファイルをロードする。
+という挙動が上記webpack.config.jsの&lt;code&gt;resolve&lt;/code&gt;に定義してある。
+(モジュールロードの詳細は&lt;a href=&#34;https://webpack.js.org/concepts/module-resolution/&#34;&gt;公式のドキュメントのModule Resolution&lt;/a&gt;に書いてある。)&lt;/p&gt;
 
-&lt;p&gt;webpack.config.jsの&lt;code&gt;entry&lt;/code&gt;には、最初に&lt;code&gt;babel-polyfill&lt;/code&gt;を書いておいて、bundle.jsの最初に一度だけPolyfillがロードされるようにしている。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;.babelrc&lt;/code&gt;に&lt;code&gt;useBuiltIns: &#39;usage&#39;&lt;/code&gt;を付けたので、webpack.config.jsに&lt;code&gt;@babel/preset-env&lt;/code&gt;を書く必要はない。&lt;/p&gt;
 
-&lt;p&gt;&lt;code&gt;mode&lt;/code&gt;は後述。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;mode&lt;/code&gt;については後述。&lt;/p&gt;
 
 &lt;h3 id=&#34;webpack-dev-server設定&#34;&gt;webpack-dev-server設定&lt;/h3&gt;
 
@@ -299,13 +324,13 @@ webpack.common.jsは、&lt;a href=&#34;https://github.com/survivejs/webpack-merg
 
 &lt;p&gt;分割したファイルは以下の感じ。全部プロジェクトルートに置いておく。&lt;/p&gt;
 
-&lt;p&gt;webpack.common.js&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;webpack.common.js&lt;/code&gt;&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;const path = require(&#39;path&#39;);
 const packageJson = require(&#39;./package.json&#39;);
 
 module.exports = {
-  entry: [&#39;babel-polyfill&#39;, `./${packageJson.main}`],
+  entry: [`./${packageJson.main}`],
   output: {
     path: path.resolve(__dirname, &#39;dist&#39;),
     filename: &#39;bundle.js&#39;,
@@ -326,7 +351,7 @@ module.exports = {
 };
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;webpack.dev.js&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;webpack.dev.js&lt;/code&gt;&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;const path = require(&#39;path&#39;);
 const webpackMerge = require(&#39;webpack-merge&#39;);
@@ -344,7 +369,7 @@ module.exports = webpackMerge(webpackCommon, {
 });
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;webpack.prod.js&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;webpack.prod.js&lt;/code&gt;&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;const webpackMerge = require(&#39;webpack-merge&#39;);
 const webpackCommon = require(&#39;./webpack.common.js&#39;);

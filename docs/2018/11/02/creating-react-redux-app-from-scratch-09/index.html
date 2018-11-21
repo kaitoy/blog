@@ -13,7 +13,7 @@
     <meta property="og:title" content="React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その9: React Router | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2018/11/02/creating-react-redux-app-from-scratch-09/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2018/11/02/creating-react-redux-app-from-scratch-09/">
-    <meta property="og:description" content="ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はRedux Sagaをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); フロントエンドのルーティング Webアプリケーションにおけるルーティングとは、クライアントがリクエストしたURLに対して、返すべきリソースを選択する処理。 昔はバックエンド(i.e. サーバサイド)でやってたけど、バックエンドでリソースを返すということは、ページ遷移が発生するということなので、ネイティブアプリケーションに比べてUXが落ちてしまう。 一方、ページ遷移を発生させないようにAjaxでサーバとやりとりしつつ、ちまちまDOMをいじるのは大変。 DOMをごっそり書き換えて、ページ遷移なしに画面を切り替えることはできるけど、ナイーブにやると以下のような問題がある。 URLと画面の紐づけがなく、URLを指定して直接開けない ブラウザの進む、戻るが使えない 宣言的に書けない こういった問題に対応するため、フロントエンドでのルーティング技術が生まれた。 フロントエンドのルーティングでは、URLが変わってもリクエストはサーバに飛ばない。 代わりに、フロントエンドフレームワークがそのURLを見て、適切な画面を選んでレンダリングする。 ハッシュベースのルーティング URLが変わってもリクエストがサーバに飛ばないとは何事か。 それを実現するやりかたは2通りある。 古くはハッシュ(#、フラグメント識別子)をつかったやり方。 例えば、http://example.com/でUIをサーブしているとすると、http://example.com/#fooとか、http://example.com/#barで別々のページの状態を表現する。 ハッシュ以降が変わってもブラウザがサーバにリクエストを投げることはないので、クライアント側でハンドリングできる。 (因みに、ハッシュを含んだURLをブラウザのアドレスバーに入れても、ハッシュを除いたURLでリクエストが送られる。この挙動の根拠となる規格はRFCなどを調べても見つからなかったけど…) ハッシュの書き換えは、JavaScriptで以下のようにしてできる。 location.hash = newHash; こういう処理を、例えばWeb UIのボタンをクリックしたときなんかに実行してURLを変えて、その上で画面を更新してやればいい。 そのあと、ブラウザの戻るボタンなんかを押されると書き換える前のURLにもどるわけだけど、これを検知するためにsetInterval()とかで定期的にlocation.hashを監視してたりした。 History APIによるルーティング ハッシュベースのルーティングは見るからにしょぼい。 URLのハッシュ以降しか使えないのもしょぼいし、内部の処理も泥臭い。 これが、HTML 5でHistory APIがでて変わった。 History APIはJavaScriptのAPIで、ブラウザの履歴を操作できる。 const state = { hoge: &quot;hogeee&quot; }; history.pushState(state, &quot;&quot;, &quot;/foo/bar&quot;); こんな感じのを実行すると、URLが/foo/barに変わる。(が、もちろんサーバにはリクエストは飛ばない。) で、ブラウザの戻るボタンを押すと、popstateイベントが発生するので、それにイベントハンドラを登録しておけば、もとのURLに戻った時にも適時画面を書き換えられる。 popstateイベントからは、pushState()に渡したstateオブジェクトを取得できる。 ところで、ブラウザのアドレスバーに/foo/barを直打ちするとどうなるかというと、普通にWebサーバを設定しておくと、/foo/bar/index.htmlを返そうとして、無いので404エラーになっちゃう。 ので、サーバ設定では、どのURLも同じリソース(e.g. /index.html)をしといて、そこからJavaScriptを呼んで、URLを読み取って、画面を描いてやればいい。 HTML 5が普及するにつれ、このようなHistory APIを使ったフロントエンドルーティングをするフレームワークやライブラリが色々出てきた。んだろうと思う。 React Router Reactのエコシステムとしては、React Routerがフロントエンドルーティングを実現してくれる。 React Routerは、宣言的にフロントエンドルーティングを実現できるReactコンポーネントのライブラリ。 Reduxとともに使う場合は、Connected">
+    <meta property="og:description" content="ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はRedux Sagaをセットアップした。 (2018/11/21更新) (adsbygoogle = window.adsbygoogle || []).push({}); フロントエンドのルーティング Webアプリケーションにおけるルーティングとは、クライアントがリクエストしたURLに対して、返すべきリソースを選択する処理。 昔はバックエンド(i.e. サーバサイド)でやってたけど、バックエンドでリソースを返すということは、ページ遷移が発生するということなので、ネイティブアプリケーションに比べてUXが落ちてしまう。 一方、ページ遷移を発生させないようにAjaxでサーバとやりとりしつつ、ちまちまDOMをいじるのは大変。 DOMをごっそり書き換えて、ページ遷移なしに画面を切り替えることはできるけど、ナイーブにやると以下のような問題がある。 URLと画面の紐づけがなく、URLを指定して直接開けない ブラウザの進む、戻るが使えない 宣言的に書けない こういった問題に対応するため、フロントエンドでのルーティング技術が生まれた。 フロントエンドのルーティングでは、URLが変わってもリクエストはサーバに飛ばない。 代わりに、フロントエンドフレームワークがそのURLを見て、適切な画面を選んでレンダリングする。 ハッシュベースのルーティング URLが変わってもリクエストがサーバに飛ばないとは何事か。 それを実現するやりかたは2通りある。 古くはハッシュ(#、フラグメント識別子)をつかったやり方。 例えば、http://example.com/でUIをサーブしているとすると、http://example.com/#fooとか、http://example.com/#barで別々のページの状態を表現する。 ハッシュ以降が変わってもブラウザがサーバにリクエストを投げることはないので、クライアント側でハンドリングできる。 (因みに、ハッシュを含んだURLをブラウザのアドレスバーに入れても、ハッシュを除いたURLでリクエストが送られる。この挙動の根拠となる規格はRFCなどを調べても見つからなかったけど…) ハッシュの書き換えは、JavaScriptで以下のようにしてできる。 location.hash = newHash; こういう処理を、例えばWeb UIのボタンをクリックしたときなんかに実行してURLを変えて、その上で画面を更新してやればいい。 そのあと、ブラウザの戻るボタンなんかを押されると書き換える前のURLにもどるわけだけど、これを検知するためにsetInterval()とかで定期的にlocation.hashを監視してたりした。 History APIによるルーティング ハッシュベースのルーティングは見るからにしょぼい。 URLのハッシュ以降しか使えないのもしょぼいし、内部の処理も泥臭い。 これが、HTML 5でHistory APIがでて変わった。 History APIはJavaScriptのAPIで、ブラウザの履歴を操作できる。 const state = { hoge: &quot;hogeee&quot; }; history.pushState(state, &quot;&quot;, &quot;/foo/bar&quot;); こんな感じのを実行すると、URLが/foo/barに変わる。(が、もちろんサーバにはリクエストは飛ばない。) で、ブラウザの戻るボタンを押すと、popstateイベントが発生するので、それにイベントハンドラを登録しておけば、もとのURLに戻った時にも適時画面を書き換えられる。 popstateイベントからは、pushState()に渡したstateオブジェクトを取得できる。 ところで、ブラウザのアドレスバーに/foo/barを直打ちするとどうなるかというと、普通にWebサーバを設定しておくと、/foo/bar/index.htmlを返そうとして、無いので404エラーになっちゃう。 ので、サーバ設定では、どのURLも同じリソース(e.g. /index.html)をしといて、そこからJavaScriptを呼んで、URLを読み取って、画面を描いてやればいい。 HTML 5が普及するにつれ、このようなHistory APIを使ったフロントエンドルーティングをするフレームワークやライブラリが色々出てきた。んだろうと思う。 React Router Reactのエコシステムとしては、React Routerがフロントエンドルーティングを実現してくれる。 React Routerは、宣言的にフロントエンドルーティングを実現できるReactコンポーネントのライブラリ。">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/react-router-seeklogo.com.svg">
     
@@ -88,6 +88,8 @@
 (最終的な成果は<a href="https://github.com/kaitoy/react-redux-scaffold">GitHub</a>に置いた。)</p>
 
 <p><a href="https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/">前回</a>は<a href="https://redux-saga.js.org/">Redux Saga</a>をセットアップした。</p>
+
+<p>(2018/11/21更新)</p>
 
 <p>
 
@@ -180,21 +182,38 @@ Connected React Routerには<a href="https://www.npmjs.com/package/history">hist
 <pre><code class="language-cmd">yarn add react-router-dom connected-react-router history
 </code></pre>
 
-<p>React Routerはv4.3.1、Connected React Routerはv4.3.0が入った。</p>
+<p>React Routerはv4.3.1、Connected React Routerはv5.0.1が入った。</p>
 
 <h1 id="connected-react-router導入">Connected React Router導入</h1>
 
-<p>まずはConnected React Routerの<a href="https://github.com/supasate/connected-react-router#usage">Usage</a>を参考に、ReduxのMiddlewareを追加して、historyのインスタンスをStoreとつなぐ。</p>
+<p>まずはConnected React Routerの<a href="https://github.com/supasate/connected-react-router#usage">Usage</a>を参考に、ReduxのReducerにrouterを追加し、MiddlewareにrouterMiddlewareを追加して、historyのインスタンスをStoreとつなぐ。</p>
+
+<p><code>src/reducers/rootReducer.js</code>:</p>
+
+<pre><code class="language-diff"> import { combineReducers } from 'redux';
++import { connectRouter } from 'connected-react-router';
+ import * as reducers from './reducers';
+
+-const rootReducer = combineReducers(reducers);
+-export default rootReducer;
++const createRootReducer = (history) =&gt;
++  combineReducers({
++    router: connectRouter(history),
++    ...reducers,
++  });
++export default createRootReducer;
+</code></pre>
 
 <p><code>src/configureStore.js</code>:</p>
 
 <pre><code class="language-diff"> import { createStore, applyMiddleware } from 'redux';
  import createSagaMiddleware from 'redux-saga';
 +import { createBrowserHistory } from 'history';
-+import { connectRouter, routerMiddleware } from 'connected-react-router';
++import { routerMiddleware } from 'connected-react-router';
  import { logger } from 'redux-logger';
  import rootSaga from './sagas/rootSaga';
- import rootReducer from './reducers/rootReducer';
+-import rootReducer from './reducers/rootReducer';
++import createRootReducer from './reducers/rootReducer';
 
  const sagaMiddleware = createSagaMiddleware();
 +export const history = createBrowserHistory();
@@ -209,7 +228,7 @@ Connected React Routerには<a href="https://www.npmjs.com/package/history">hist
 
    const store = createStore(
 -    rootReducer,
-+    connectRouter(history)(rootReducer),
++    createRootReducer(history),
      initialState,
      applyMiddleware(...middlewares),
    );
@@ -222,7 +241,7 @@ Connected React Routerには<a href="https://www.npmjs.com/package/history">hist
 
 <p>で、Connected React RouterのConnectedRouterコンポーネントを<a href="https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/#provider">React ReduxのProvider</a>の下に追加する。</p>
 
-<p>src/index.jsx:</p>
+<p><code>src/index.jsx</code>:</p>
 
 <pre><code class="language-diff"> import React from 'react';
  import ReactDOM from 'react-dom';
@@ -231,21 +250,18 @@ Connected React Routerには<a href="https://www.npmjs.com/package/history">hist
  import App from './components/App';
 -import configureStore from './configureStore';
 +import configureStore, { history } from './configureStore';
- import './fonts.css';
 
  const store = configureStore();
  const root = document.getElementById('root');
 
  if (root) {
    ReactDOM.render(
--    &lt;Provider store={store}&gt;
+     &lt;Provider store={store}&gt;
 -      &lt;App /&gt;
--    &lt;/Provider&gt;,
-+    &lt;Provider store={store}&gt;
 +      &lt;ConnectedRouter history={history}&gt;
 +        &lt;App /&gt;
 +      &lt;/ConnectedRouter&gt;
-+    &lt;/Provider&gt;,
+     &lt;/Provider&gt;,
      root,
    );
  }
@@ -260,11 +276,12 @@ Connected React Routerには<a href="https://www.npmjs.com/package/history">hist
 
 <p>まず、App.jsxをHome.jsxにリネームして、Homeコンポーネントに変える。</p>
 
-<p><code>components/Home.jsx</code>:</p>
+<p><code>src/components/Home.jsx</code>:</p>
 
 <pre><code class="language-diff"> import React from 'react';
  import styled from 'styled-components';
  import HogeButton from '../containers/HogeButton';
+-import Fonts from '../fonts';
 
  const Wrapper = styled.div`
    font-size: 5rem;
@@ -276,6 +293,7 @@ Connected React Routerには<a href="https://www.npmjs.com/package/history">hist
      &lt;HogeButton variant=&quot;contained&quot;&gt;
        HOGE
      &lt;/HogeButton&gt;
+-    &lt;Fonts /&gt;
    &lt;/Wrapper&gt;
  );
 
@@ -287,16 +305,18 @@ Connected React Routerには<a href="https://www.npmjs.com/package/history">hist
 
 <p>で、App.jsxはルーティングを定義するコンポーネントとして作り直す。</p>
 
-<p>components/App.jsx:</p>
+<p><code>src/components/App.jsx</code>:</p>
 
 <pre><code class="language-javascript">import React from 'react';
 import { Route, Redirect } from 'react-router-dom';
 import Home from './Home';
+import Fonts from '../fonts';
 
-const App = (): Node =&gt; (
+const App = () =&gt; (
   &lt;div&gt;
     &lt;Route exact path=&quot;/&quot; render={() =&gt; &lt;Redirect to=&quot;/home&quot; /&gt;} /&gt;
     &lt;Route exact path=&quot;/home&quot; component={Home} /&gt;
+    &lt;Fonts /&gt;
   &lt;/div&gt;
 );
 

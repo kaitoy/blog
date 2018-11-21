@@ -16,6 +16,8 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 
 今回は残りの要素をまとめてかたづける。
 
+(2018/11/21更新)
+
 {{< google-adsense >}}
 
 # Code Splitting
@@ -26,50 +28,55 @@ webpackでリソースをバンドルすると、一回の通信でアプリの�
 そんな問題に対応する技術が[Code Splitting](https://webpack.js.org/guides/code-splitting/)。
 バンドルを分割し、(理想的には)必要な時に必要な分だけロードする技術。
 
-Code Splittingのやりかたはいくつかあるが、webpackのディレクティブを使った[プリフェッチ](https://webpack.js.org/guides/code-splitting/#prefetching-preloading-modules)を、フォントモジュールに適用してみる。
+Code Splittingのやりかたはいくつかあるが、[ダイナミックインポート](https://reactjs.org/docs/code-splitting.html#import)と[React.lazy](https://reactjs.org/docs/code-splitting.html#reactlazy)と[React Suspense](https://reactjs.org/docs/code-splitting.html#suspense)とwebpackの[プリフェッチディレクティブ](https://webpack.js.org/guides/code-splitting/#prefetching-preloading-modules)を使ったやつを、フォントモジュールに適用してみる。
 
-src/index.jsx:
+`src/components/App.jsx`:
 ```diff
- import React from 'react';
- import ReactDOM from 'react-dom';
- import { Provider } from 'react-redux';
- import { ConnectedRouter } from 'connected-react-router';
- import App from './components/App';
- import configureStore from './configureStore';
- import configureStore, { history } from './configureStore';
--import './fonts.css';
-+import(/* webpackPrefetch: true */ './fonts');
+-import React from 'react';
++import React, { Suspense } from 'react';
+ import { Route, Redirect } from 'react-router-dom';
+ import Home from './Home';
+-import Fonts from '../fonts';
 
- const store = configureStore();
- const root = document.getElementById('root');
++const Fonts = React.lazy(() => import(/* webpackPrefetch: true */ '../fonts'));
 
- if (root) {
-   ReactDOM.render(
-     <Provider store={store}>
-       <ConnectedRouter history={history}>
-         <App />
-       </ConnectedRouter>
-     </Provider>,
-     root,
-   );
- }
+ const App = () => (
+   <div>
+     <Route exact path="/" render={() => <Redirect to="/home" />} />
+     <Route exact path="/home" component={Home} />
+-    <Fonts />
++    <Suspense fallback={<div />}>
++      <Fonts />
++    </Suspense>
+   </div>
+ );
+
+ export default App;
 ```
 
 コード変更はこれだけ。
 
-`import()`は[ダイナミックインポート](https://github.com/tc39/proposal-dynamic-import)という、ECMAScriptで現在策定中の機能。
+`import()`がダイナミックインポートで、[ECMAScriptで現在策定中](https://github.com/tc39/proposal-dynamic-import)の機能。
 これを使えるようにするためには、Babelのプラグインを追加する必要がある。
 
 ```cmd
-yarn add -D babel-plugin-syntax-dynamic-import
+yarn add -D @babel/plugin-syntax-dynamic-import
 ```
 
-.babelrc
+`.babelrc`:
 ```diff
  {
-   "presets": ["env", "react"],
+   "presets": [
+     [
+       "@babel/preset-env",
+       {
+         "useBuiltIns": "usage"
+       }
+     ],
+     "@babel/preset-react"
+   ],
 -  "plugins": ["styled-components"]
-+  "plugins": ["styled-components", "syntax-dynamic-import"]
++  "plugins": ["styled-components", "@babel/plugin-syntax-dynamic-import"]
  }
 ```
 
@@ -77,9 +84,6 @@ yarn add -D babel-plugin-syntax-dynamic-import
 これでフォントモジュールはメインのバンドルとは別ファイルになり、初期画面の表示時にはロードされず、ブラウザの空き時間に非同期にロードされるようになる。
 
 <br>
-
-Code Splittingは[Reactのドキュメント](https://reactjs.org/docs/code-splitting.html)でも紹介されていて、そこにはReact特有のやり方も載っている。
-[React.lazy](https://reactjs.org/docs/code-splitting.html#reactlazy)と[Suspense](https://reactjs.org/docs/code-splitting.html#suspense)を使うものがかなりナウい。
 
 # Flow
 
@@ -94,11 +98,27 @@ JavaScriptを静的型付けにするには、[TypeScript](https://www.typescrip
 
 Flowは、ソースに型情報を付けて静的型チェック可能にしつつ、実行時には型情報を取り去って普通のJavaScriptとして実行できるようにする仕組み。
 
-型チェックするツールは[flow-bin](https://www.npmjs.com/package/flow-bin)パッケージで配布されていて、型情報の除去は[babel-preset-flow](https://www.npmjs.com/package/babel-preset-flow)を使ってBabelでできる。
-babel-preset-flowは、すでにインストールしたbabel-preset-reactに含まれてるので、敢えて入れる必要はない。
+型チェックするツールは[flow-bin](https://www.npmjs.com/package/flow-bin)パッケージで配布されていて、型情報の除去は[@babel/preset-flow](https://www.npmjs.com/package/babel-preset-flow)を使ってBabelでできる。
 
 ```cmd
-yarn add -D flow-bin
+yarn add -D flow-bin @babel/preset-flow
+```
+
+`.babelrc`:
+```diff
+ {
+   "presets": [
+     [
+       "@babel/preset-env",
+       {
+         "useBuiltIns": "usage"
+       }
+     ],
++    "@babel/preset-flow",
+     "@babel/preset-react"
+   ],
+   "plugins": ["styled-components", "@babel/plugin-syntax-dynamic-import"]
+ }
 ```
 
 これで、`yarn flow`でFlowを実行できるようになった。
@@ -242,12 +262,13 @@ ReactプロジェクトでJestを使うには以下のパッケージを入れ�
 * [jest](https://www.npmjs.com/package/jest): 本体
 * [babel-jest](https://www.npmjs.com/package/babel-jest): BabelでトランスパイルするコードをJestでテストするためのBabelプラグイン
 * [react-test-renderer](https://www.npmjs.com/package/react-test-renderer): ReactコンポーネントをピュアなJavaScriptオブジェクトにレンダリングするライブラリ。[スナップショットテスト](https://jestjs.io/docs/en/snapshot-testing)などに使う。
+* [babel-core@^7.0.0-bridge](https://www.npmjs.com/package/babel-core/v/7.0.0-bridge.0): babel-jestをBabel 7で使うためのモジュール。[現時点では必要](https://github.com/facebook/jest/tree/master/packages/babel-jest#usage)だけど、その内いらなくなるであろう。
 
 ```cmd
-yarn add -D jest babel-jest react-test-renderer
+yarn add -D jest babel-jest react-test-renderer babel-core@^7.0.0-bridge
 ```
 
-Jestはv23.4.2が入った。
+Jestはv23.6.0が入った。
 
 <br>
 
@@ -595,7 +616,7 @@ Enzymeはv3から本体とアダプタという構成になっていて、React�
 yarn add -D enzyme enzyme-adapter-react-16
 ```
 
-Enzymeはv3.3.0が入った。
+Enzymeはv3.7.0が入った。
 
 [jest-enzyme](https://github.com/FormidableLabs/enzyme-matchers/tree/master/packages/jest-enzyme)も入れるとアサーションがいい感じに書けてよりいいかもしれない。
 
@@ -644,4 +665,4 @@ ContainedButtonがクリックされたとき、`onClick`に指定した関数�
 
 以上で全10回に渡るReact―Redux環境のセットアップ体験記が完結。
 
-だらだら書いてるうちに、[Babelの7が出たり](https://babeljs.io/blog/2018/08/27/7.0.0)、[React Hooks](https://reactjs.org/docs/hooks-overview.html)とか[React Suspense](https://logmi.jp/tech/articles/302611)とかが出てきてて、また大きく変わってきそう…
+だらだら書いてるうちに、[Babelの7が出たり](https://babeljs.io/blog/2018/08/27/7.0.0)、[React Hooks](https://reactjs.org/docs/hooks-overview.html)とかのReact APIの新しいのが出てきて、また大きく変わってきそう…

@@ -14,6 +14,8 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 
 [前回](https://www.kaitoy.xyz/2018/08/22/creating-react-redux-app-from-scratch-02/)はReactをセットアップした。
 
+(2018/11/21更新)
+
 {{< google-adsense >}}
 
 # フォーマッタとリンタ
@@ -49,13 +51,13 @@ JavaScriptの他、JSX、CSS、Markdown、GraphQLのフォーマットにも対�
 yarn add -D prettier
 ```
 
-v1.14.0が入った。
+v1.15.2が入った。
 
 <br>
 
 [設定](https://prettier.io/docs/en/options.html)は`prettier.config.js`という[ファイル](https://prettier.io/docs/en/configuration.html)を書いてプロジェクトルートに置けばいい。
 
-prettier.config.js:
+`prettier.config.js`:
 ```javascript
 module.exports = {
   printWidth: 100, // 行の最大長
@@ -69,7 +71,7 @@ module.exports = {
 
 また、フォーマット対象外のファイルを指定するファイルである`.prettierignore`をプロジェクトルートに置く。
 
-.prettierignore:
+`.prettierignore`:
 ```
 node_modules/
 dist/
@@ -84,7 +86,7 @@ node_modulesはnpmパッケージが入るディレクトリ。
 
 最後に、npmスクリプトを書く。
 
-package.json:
+`package.json`:
 ```diff
  (前略)
    "scripts": {
@@ -136,7 +138,7 @@ ESlintはv4.19.1が入った。
 
 [ESlintの設定](https://eslint.org/docs/user-guide/configuring)は、設定ファイルである`.eslintrc.js`をプロジェクトルートに置けばいい。
 
-.eslintrc.js:
+`.eslintrc.js`:
 ```javascript
 module.exports = {
   env: {
@@ -156,7 +158,7 @@ module.exports = {
 
 また、[リンティング対象外のファイルを指定するファイル](https://eslint.org/docs/user-guide/configuring#ignoring-files-and-directories)をプロジェクトルートに置く。
 
-.eslintignore:
+`.eslintignore`:
 ```
 node_modules/*
 dist/*
@@ -171,7 +173,7 @@ node_modulesはnpmパッケージが入るディレクトリ。
 
 webpackからESLintを実行し、エラーがなくならない限りビルド成功できないようにする。
 
-webpack.common.js:
+`webpack.common.js`:
 ```diff
  (前略)
    module: {
@@ -200,7 +202,7 @@ webpack.common.js:
 
 あとはnpmスクリプト書くだけ。
 
-package.json:
+`package.json`:
 ```diff
  (前略)
    "scripts": {

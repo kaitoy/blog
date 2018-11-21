@@ -16,6 +16,8 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 
 [前回の記事でReactが生まれた経緯を学んだ](https://www.kaitoy.xyz/2018/08/16/chronicle-of-frontend-2018/)ので、今回から実習に入る。
 
+(2018/11/21更新)
+
 {{< google-adsense >}}
 
 # プロジェクト作成
@@ -93,7 +95,7 @@ Done in 40.38s.
 
 できたのがこれ。
 
-package.json:
+`package.json`:
 ```json
 {
   "name": "react-redux-scaffold",
@@ -117,29 +119,30 @@ package.json:
 ## Babel
 
 トランスパイラはデファクトスタンダードの[Babel](https://babeljs.io/)を使う。
+[2018年8月](https://babeljs.io/blog/2018/08/27/7.0.0)に出たv７。
 
 Babelのプラグインはとりあえず最低限入れるとして、以下のnpmパッケージをプロジェクトにインストールする。
 
-* [babel-core](https://babeljs.io/docs/en/babel-core): Babel本体。
-* [babel-preset-react](https://babeljs.io/docs/en/babel-preset-react): Reactの[JSX](https://reactjs.org/docs/introducing-jsx.html)とか[Flow](https://flow.org/)とかを処理するプラグイン集。
-* [babel-preset-env](https://babeljs.io/docs/en/babel-preset-env): ES 2015+をES 5にトランスパイルするプラグイン集。
+* [@babel/core](https://babeljs.io/docs/en/babel-core): Babel本体。
+* [@babel/preset-react](https://babeljs.io/docs/en/babel-preset-react): Reactの[JSX](https://reactjs.org/docs/introducing-jsx.html)とか[Flow](https://flow.org/)とかを処理するプラグイン集。
+* [@babel/preset-env](https://babeljs.io/docs/en/babel-preset-env): ES 2015+をES 5にトランスパイルするプラグイン集。
 
 これらのパッケージは実行時には要らないので`yarn add -D`コマンドで開発時依存としてインストールする。
 
 ```cmd
-yarn add -D babel-core babel-preset-react babel-preset-env
+yarn add -D @babel/core @babel/preset-react @babel/preset-env
 ```
 
-Babelは6.26.3が入った。
+Babelはv7.1.6が入った。
 
 <br>
 
 で、Babelの[設定ファイル](https://babeljs.io/docs/en/babelrc)を書いてプロジェクトルートに置いておく。
 
-.babelrc:
+`.babelrc`:
 ```json
 {
-  "presets": ["env", "react"]
+  "presets": ["@babel/preset-env", "@babel/preset-react"]
 }
 ```
 
@@ -150,11 +153,32 @@ BabelはES 2015+で追加された構文の変換はしてくれるけど、追�
 
 少なくとも後で導入する[redux-saga](https://redux-saga.js.org/)が使う[ジェネレータ](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Statements/function*)がPolyfillを必要とする(ないと`ReferenceError: regeneratorRuntime is not defined`というエラーが出る)ので、今の時点で入れておくことにする。
 
-Polyfillの実装はいくつかあるけど、定番っぽい[babel-polyfill](https://babeljs.io/docs/en/babel-polyfill/)を使う。
+Polyfillの実装はいくつかあるけど、定番っぽい[@babel/polyfill](https://babeljs.io/docs/en/babel-polyfill/)を使う。
 こちらは実行時依存としてインストールする。
 
 ```cmd
-yarn add babel-polyfill
+yarn add @babel/polyfill
+```
+
+<br>
+
+`@babel/polyfill`のアプリへのロード方法は[いくつかある](https://babeljs.io/docs/en/babel-polyfill#usage-in-node-browserify-webpack)けど、今回使うwebpack(後述)の場合、`useBuiltIns: 'usage'`というオプションを使うのがよさそう。
+これを使うと、ソースに`@babel/polyfill`のimportを書かなくても、必要に応じて必要なPolifillをロードしてくれる。
+
+`.babelrc`:
+```diff
+ {
+-  "presets": ["@babel/preset-env", "@babel/preset-react"]
++  "presets": [
++    [
++      "@babel/preset-env",
++      {
++        "useBuiltIns": "usage"
++      }
++    ],
++    "@babel/preset-react"
++  ]
+ }
 ```
 
 ## webpack
@@ -171,7 +195,7 @@ webpackは、タスクランナーの機能も備えたモジュールバンド�
 * webpack: webpack本体。
 * webpack-cli: webpackのコマンドラインインターフェース。
 * [webpack-dev-server](https://github.com/webpack/webpack-dev-server): webpackから起動できる開発用 HTTP サーバ。ライブリロードしてくれる。([webpack-serve](https://github.com/webpack-contrib/webpack-serve)の方がモダンではある。)
-* [babel-loader](https://webpack.js.org/loaders/babel-loader/): Babelを実行してくれるやつ。
+* [babel-loader](https://webpack.js.org/loaders/babel-loader/): Babelを実行してくれるやつ。Babel 7で使うにはv8以降である必要がある。
 
 <br>
 
@@ -179,7 +203,7 @@ webpackは、タスクランナーの機能も備えたモジュールバンド�
 yarn add -D webpack webpack-cli webpack-dev-server babel-loader
 ```
 
-webpackはv4.16.0が入った。
+webpackはv4.26.0が入った。
 
 ### webpack設定ファイル
 
@@ -189,14 +213,14 @@ webpackの設定は[設定ファイル](https://webpack.js.org/configuration/)�
 
 とりあえず適当に書くとこんな感じ。
 
-webpack.config.js:
+`webpack.config.js`:
 ```javascript
 const path = require('path');
 const packageJson = require('./package.json');
 
 module.exports = {
   mode: 'development',
-  entry: ['babel-polyfill', `./${packageJson.main}`],
+  entry: [`./${packageJson.main}`],
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'bundle.js',
@@ -217,18 +241,19 @@ module.exports = {
 };
 ```
 
-この設定の意味は、`./src/index.jsx`を読んで、`.js`か`.jsx`を拡張子としたファイルとかモジュールをロードするコードがあったら、babel-loaderでBabelを呼んでトランスパイルして、バンドルした結果は`<プロジェクトルート>/dist/bundle.js`に吐き出す。
+この設定の意味は、`entry`に指定された`./src/index.jsx`を読んで、`.js`か`.jsx`を拡張子としたモジュールファイルやノードモジュールをロードするコードがあったら、babel-loaderでBabelを呼んでトランスパイルして、バンドルした結果は`<プロジェクトルート>/dist/bundle.js`に吐き出す。
 というだけ。
 ([__dirname](https://nodejs.org/docs/latest/api/modules.html#modules_dirname)はNode.jsが値を入れてくれる変数で、webpack.config.jsのあるディレクトリの絶対パスが入ってる。)
 
-ファイルをロードするコードというのは、`import App from './components/App';`みたいなやつ。
+モジュールファイルをロードするコードというのは、`import App from './components/App';`みたいなやつ。
 webpackはこのコードを読んだら、`./components`ディレクトリのなかを見て、`App`か`App.js`か`App.jsx`というファイルを探してロードする。
-また、モジュールをロードするコードというのは`import React from 'react';`みたいなやつで、webpackはこのコードを読んだら、プロジェクトの`node_modules/react/package.json`の`main`プロパティの値に書いてあるファイルをロードする。
-という挙動が上記webpack.config.jsの`resolve`に書いてあって、その詳細は[公式のドキュメントのModule Resolution](https://webpack.js.org/concepts/module-resolution/)に書いてある。
+また、ノードモジュールをロードするコードというのは`import React from 'react';`みたいなやつで、webpackはこのコードを読んだら、プロジェクトの`node_modules/react/package.json`の`main`プロパティの値に書いてあるファイルをロードする。
+という挙動が上記webpack.config.jsの`resolve`に定義してある。
+(モジュールロードの詳細は[公式のドキュメントのModule Resolution](https://webpack.js.org/concepts/module-resolution/)に書いてある。)
 
-webpack.config.jsの`entry`には、最初に`babel-polyfill`を書いておいて、bundle.jsの最初に一度だけPolyfillがロードされるようにしている。
+`.babelrc`に`useBuiltIns: 'usage'`を付けたので、webpack.config.jsに`@babel/preset-env`を書く必要はない。
 
-`mode`は後述。
+`mode`については後述。
 
 ### webpack-dev-server設定
 
@@ -280,13 +305,13 @@ yarn add -D webpack-merge
 
 分割したファイルは以下の感じ。全部プロジェクトルートに置いておく。
 
-webpack.common.js
+`webpack.common.js`
 ```javascript
 const path = require('path');
 const packageJson = require('./package.json');
 
 module.exports = {
-  entry: ['babel-polyfill', `./${packageJson.main}`],
+  entry: [`./${packageJson.main}`],
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'bundle.js',
@@ -307,7 +332,7 @@ module.exports = {
 };
 ```
 
-webpack.dev.js
+`webpack.dev.js`
 ```javascript
 const path = require('path');
 const webpackMerge = require('webpack-merge');
@@ -325,7 +350,7 @@ module.exports = webpackMerge(webpackCommon, {
 });
 ```
 
-webpack.prod.js
+`webpack.prod.js`
 ```javascript
 const webpackMerge = require('webpack-merge');
 const webpackCommon = require('./webpack.common.js');

@@ -23,6 +23,8 @@
 
 &lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/&#34;&gt;前回&lt;/a&gt;はPrettierとESLintをセットアップした。&lt;/p&gt;
 
+&lt;p&gt;(2018/11/21更新)&lt;/p&gt;
+
 &lt;p&gt;
 
 
@@ -92,7 +94,7 @@ style-loaderは、読み込んだCSSを&lt;code&gt;&amp;lt;style&amp;gt;&lt;/cod
 
 &lt;p&gt;PostCSSとstylelintの設定は、それぞれpostcss.config.jsとstylelint.config.jsを書いてプロジェクトルートに置けばいい。&lt;/p&gt;
 
-&lt;p&gt;postcss.config.js:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;postcss.config.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;module.exports = {
   plugins: {
@@ -105,7 +107,7 @@ style-loaderは、読み込んだCSSを&lt;code&gt;&amp;lt;style&amp;gt;&lt;/cod
 };
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;stylelint.config.js:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;stylelint.config.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;module.exports = {
   extends: [&#39;stylelint-config-standard&#39;, &#39;stylelint-config-prettier&#39;],
@@ -120,7 +122,7 @@ style-loaderは、読み込んだCSSを&lt;code&gt;&amp;lt;style&amp;gt;&lt;/cod
 
 &lt;p&gt;webpackにもローダの設定を追加する。&lt;/p&gt;
 
-&lt;p&gt;webpack.common.js:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;webpack.common.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; (前略)
        {
@@ -153,14 +155,14 @@ style-loaderは、読み込んだCSSを&lt;code&gt;&amp;lt;style&amp;gt;&lt;/cod
 
 &lt;p&gt;実際のCSSは普通に書いて、JavaScriptからimportしてやればいい。&lt;/p&gt;
 
-&lt;p&gt;components/App.css:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/App.css&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-css&#34;&gt;.normal {
   font-size: 5rem;
 }
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;components/App.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/App.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
 +import &#39;./App.css&#39;
@@ -203,11 +205,19 @@ UIコンポーネントの構造とスタイルの構造を1対1対応させる�
 
 &lt;p&gt;Babelの設定を修正してインストールしたbabel-plugin-react-css-modulesを使うようにする。&lt;/p&gt;
 
-&lt;p&gt;.babelrc&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;.babelrc&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; {
--  &amp;quot;presets&amp;quot;: [&amp;quot;env&amp;quot;, &amp;quot;react&amp;quot;]
-+  &amp;quot;presets&amp;quot;: [&amp;quot;env&amp;quot;, &amp;quot;react&amp;quot;],
+   &amp;quot;presets&amp;quot;: [
+     [
+       &amp;quot;@babel/preset-env&amp;quot;,
+       {
+         &amp;quot;useBuiltIns&amp;quot;: &amp;quot;usage&amp;quot;
+       }
+     ],
+     &amp;quot;@babel/preset-react&amp;quot;
+-  ]
++  ],
 +  &amp;quot;plugins&amp;quot;: [&amp;quot;react-css-modules&amp;quot;]
  }
 &lt;/code&gt;&lt;/pre&gt;
@@ -216,7 +226,7 @@ UIコンポーネントの構造とスタイルの構造を1対1対応させる�
 
 &lt;p&gt;webpackのcss-loaderのオプションを追加して、CSS Modulesを有効にする。&lt;/p&gt;
 
-&lt;p&gt;webpack.common.js:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;webpack.common.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; (前略)
        {
@@ -245,7 +255,7 @@ UIコンポーネントの構造とスタイルの構造を1対1対応させる�
 
 &lt;p&gt;あとは、コンポーネントの方で&lt;code&gt;className&lt;/code&gt;プロパティを&lt;code&gt;styleName&lt;/code&gt;プロパティに変えればいい。&lt;/p&gt;
 
-&lt;p&gt;components/App.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/App.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
  import &#39;./App.css&#39;
@@ -288,17 +298,25 @@ SassやPostCSSなど既存のCSSエコシステムを切り捨てているのと
 yarn add -D babel-plugin-styled-components
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;styled-componentsはv3.4.4が入った。&lt;/p&gt;
+&lt;p&gt;styled-componentsはv4.1.1が入った。&lt;/p&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
 &lt;p&gt;Babelの設定は以下のように修正する。&lt;/p&gt;
 
-&lt;p&gt;.babelrc&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;.babelrc&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; {
--  &amp;quot;presets&amp;quot;: [&amp;quot;env&amp;quot;, &amp;quot;react&amp;quot;]
-+  &amp;quot;presets&amp;quot;: [&amp;quot;env&amp;quot;, &amp;quot;react&amp;quot;],
+   &amp;quot;presets&amp;quot;: [
+     [
+       &amp;quot;@babel/preset-env&amp;quot;,
+       {
+         &amp;quot;useBuiltIns&amp;quot;: &amp;quot;usage&amp;quot;
+       }
+     ],
+     &amp;quot;@babel/preset-react&amp;quot;
+-  ]
++  ],
 +  &amp;quot;plugins&amp;quot;: [&amp;quot;styled-components&amp;quot;]
  }
 &lt;/code&gt;&lt;/pre&gt;
@@ -307,7 +325,7 @@ yarn add -D babel-plugin-styled-components
 
 &lt;p&gt;App.jsxは、styled-componentsのstyledというAPIを使ってWrapperコンポーネント(スタイル付きdiv)を定義し、これをdivと置き換える。&lt;/p&gt;
 
-&lt;p&gt;components/App.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/App.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
 +import styled from &#39;styled-components&#39;;
@@ -353,7 +371,7 @@ JavaScriptの構文としては単なる文字列なので、変数を使った�
 
 &lt;p&gt;stylelintの設定は以下。&lt;/p&gt;
 
-&lt;p&gt;stylelint.config.js:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;stylelint.config.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;module.exports = {
   processors: [&#39;stylelint-processor-styled-components&#39;],
@@ -365,7 +383,7 @@ JavaScriptの構文としては単なる文字列なので、変数を使った�
 
 &lt;p&gt;webpackの設定にstylelint-custom-processor-loaderの設定を追加する。&lt;/p&gt;
 
-&lt;p&gt;webpack.common.js:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;webpack.common.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; (前略)
        {

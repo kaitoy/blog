@@ -14,6 +14,8 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 
 [前回](https://www.kaitoy.xyz/2018/08/19/creating-react-redux-app-from-scratch-01/)はNode.jsとYarnとBabelとwebpackをセットアップした。
 
+(2018/11/21更新)
+
 {{< google-adsense >}}
 
 # Reactとは
@@ -136,7 +138,7 @@ Welcome.propTypes = {
 yarn add react react-dom prop-types
 ```
 
-Reactはv16.4.1が入った。
+Reactはv16.6.3が入った。
 
 # ソース構成
 
@@ -166,7 +168,7 @@ Reactはv16.4.1が入った。
 
 最初のReactコンポーネントとして、適当なものを作る。
 
-components/App.jsx:
+`src/components/App.jsx`:
 ```javascript
 import React from 'react';
 
@@ -181,7 +183,7 @@ export default App;
 
 で、これを`index.jsx`でインポートしてレンダリングしてやる。
 
-src/index.jsx:
+`src/index.jsx`:
 ```javascript
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -212,7 +214,7 @@ HTMLファイルを書くときは、「[普通のHTMLの書き方](https://hail
 
 内容は以下。
 
-public/index.html:
+`public/index.html`:
 ```html
 <!doctype html>
 <html lang="en">

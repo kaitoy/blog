@@ -13,7 +13,7 @@
     <meta property="og:title" content="React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その4: CSS ModulesとPostCSSとstylelintとstyled-components | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2018/08/29/creating-react-redux-app-from-scratch-04/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2018/08/29/creating-react-redux-app-from-scratch-04/">
-    <meta property="og:description" content="ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はPrettierとESLintをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); CSS 前回までで作った環境で、Reactを使ってHTMLのDOMツリーを構築することができるようになったが、これは基本的にUIに表示する情報の構造しか定義しない。 UIの見た目(スタイル)を決めるのはCSSなので、それをアプリに組み込むことを考えないといけない。 組み込み方には現時点で大きく3通りある。 CSSを別途設計する 一つ目はCSSを別途設計する方法。 Reactコンポーネントからレンダリングされる要素にclassが付くようにしておいて、設計したCSSをbundle.jsとは別途読み込んでスタイルを適用することにはる。 この場合、CSSのスタイル定義はすべてグローバルなので、設計効率やメンテナンス効率を維持しつつ、各コンポーネントに意図したスタイルが適用されるようにするため、テクニックを凝らしてCSSクラスを設計する必要がある。 例えばBEM (2009年3月誕生)、OOCSS (2009年3月誕生)、SMACSS (2011年9月誕生)、FLOCSS (2014年4月誕生)など。 CSS自体は、素のCSSを書くことはあまりなく、普通はSassなどのAltCSSやPostCSSを使って書く。 さらに、stylelintでリンティングすることで、CSSの品質を上げられる。 リンティングルールは、stylelintプロジェクトから提供されているstylelint-config-recommendedかstylelint-config-standardを使えば十分。 後者がGoogleやAirbnbのCSSスタイルガイドを反映していていい感じ。 書いたCSSは、webpackのcss-loaderで読み込める。 webpackはJavaScriptのimport &#39;./App.css&#39;;みたいなコードを見つけると、css-loaderに処理を渡す。 css-loaderは、import文で指定されたCSSファイルだけでなく、@importやurl()で定義される依存関係をたどって関連するCSSを一通り読み込む。 読み込んだCSSは、webpackのstyle-loaderを使ってDOMに適用できる。 style-loaderは、読み込んだCSSを&lt;style&gt;タグで囲ってHTMLのヘッダに挿入してくれる。 CSSの処理にはPostCSSを使うとして、プロジェクトに以下のパッケージを追加する。 (PostCSSについてはQiitaの記事が参考になった。) css-loader: CSSを読み込むためのwebpackのローダ。 style-loader: CSSをDOMに追加するためのwebpackのローダ。 postcss-loader: PostCSSを実行するためのwebpackのローダ。 postcss-preset-env: CSSのエッジな機能を使うためのPostCSSプラグイン。 autoprefixer: CSSプロパティにベンダプレフィックスを追加してくれるPostCSSプラグイン。 postcss-flexbugs-fixes: Flexboxのバグを修正してくれるPostCSSプラグイン。 cssnano: CSSをミニファイしてくれるPostCSSプラグイン。 stylelint: CSSのリンタ。 stylelint-config-standard: stylelintのルール設定集。 stylelint-config-prettier: Prettierが施すコード整形とコンフリクトするルールを無効にするstylelintルール設定集。 yarn add -D css-loader style-loader postcss-loader postcss-preset-env autoprefixer postcss-flexbugs-fixes cssnano stylelint stylelint-config-standard stylelint-config-prettier PostCSSとstylelintの設定は、それぞれpostcss.config.jsとstylelint.config.jsを書いてプロジェクトルートに置けばいい。 postcss.config.js: module.exports =">
+    <meta property="og:description" content="ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はPrettierとESLintをセットアップした。 (2018/11/21更新) (adsbygoogle = window.adsbygoogle || []).push({}); CSS 前回までで作った環境で、Reactを使ってHTMLのDOMツリーを構築することができるようになったが、これは基本的にUIに表示する情報の構造しか定義しない。 UIの見た目(スタイル)を決めるのはCSSなので、それをアプリに組み込むことを考えないといけない。 組み込み方には現時点で大きく3通りある。 CSSを別途設計する 一つ目はCSSを別途設計する方法。 Reactコンポーネントからレンダリングされる要素にclassが付くようにしておいて、設計したCSSをbundle.jsとは別途読み込んでスタイルを適用することにはる。 この場合、CSSのスタイル定義はすべてグローバルなので、設計効率やメンテナンス効率を維持しつつ、各コンポーネントに意図したスタイルが適用されるようにするため、テクニックを凝らしてCSSクラスを設計する必要がある。 例えばBEM (2009年3月誕生)、OOCSS (2009年3月誕生)、SMACSS (2011年9月誕生)、FLOCSS (2014年4月誕生)など。 CSS自体は、素のCSSを書くことはあまりなく、普通はSassなどのAltCSSやPostCSSを使って書く。 さらに、stylelintでリンティングすることで、CSSの品質を上げられる。 リンティングルールは、stylelintプロジェクトから提供されているstylelint-config-recommendedかstylelint-config-standardを使えば十分。 後者がGoogleやAirbnbのCSSスタイルガイドを反映していていい感じ。 書いたCSSは、webpackのcss-loaderで読み込める。 webpackはJavaScriptのimport &#39;./App.css&#39;;みたいなコードを見つけると、css-loaderに処理を渡す。 css-loaderは、import文で指定されたCSSファイルだけでなく、@importやurl()で定義される依存関係をたどって関連するCSSを一通り読み込む。 読み込んだCSSは、webpackのstyle-loaderを使ってDOMに適用できる。 style-loaderは、読み込んだCSSを&lt;style&gt;タグで囲ってHTMLのヘッダに挿入してくれる。 CSSの処理にはPostCSSを使うとして、プロジェクトに以下のパッケージを追加する。 (PostCSSについてはQiitaの記事が参考になった。) css-loader: CSSを読み込むためのwebpackのローダ。 style-loader: CSSをDOMに追加するためのwebpackのローダ。 postcss-loader: PostCSSを実行するためのwebpackのローダ。 postcss-preset-env: CSSのエッジな機能を使うためのPostCSSプラグイン。 autoprefixer: CSSプロパティにベンダプレフィックスを追加してくれるPostCSSプラグイン。 postcss-flexbugs-fixes: Flexboxのバグを修正してくれるPostCSSプラグイン。 cssnano: CSSをミニファイしてくれるPostCSSプラグイン。 stylelint: CSSのリンタ。 stylelint-config-standard: stylelintのルール設定集。 stylelint-config-prettier: Prettierが施すコード整形とコンフリクトするルールを無効にするstylelintルール設定集。 yarn add -D css-loader style-loader postcss-loader postcss-preset-env autoprefixer postcss-flexbugs-fixes cssnano stylelint stylelint-config-standard stylelint-config-prettier PostCSSとstylelintの設定は、それぞれpostcss.config.jsとstylelint.config.jsを書いてプロジェクトルートに置けばいい。 postcss.config.js: module.exports">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/css-modules-postcss-stylelint-styled-components.png">
     
@@ -89,6 +89,8 @@
 
 <p><a href="https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/">前回</a>はPrettierとESLintをセットアップした。</p>
 
+<p>(2018/11/21更新)</p>
+
 <p>
 
 
@@ -158,7 +160,7 @@ style-loaderは、読み込んだCSSを<code>&lt;style&gt;</code>タグで囲っ
 
 <p>PostCSSとstylelintの設定は、それぞれpostcss.config.jsとstylelint.config.jsを書いてプロジェクトルートに置けばいい。</p>
 
-<p>postcss.config.js:</p>
+<p><code>postcss.config.js</code>:</p>
 
 <pre><code class="language-javascript">module.exports = {
   plugins: {
@@ -171,7 +173,7 @@ style-loaderは、読み込んだCSSを<code>&lt;style&gt;</code>タグで囲っ
 };
 </code></pre>
 
-<p>stylelint.config.js:</p>
+<p><code>stylelint.config.js</code>:</p>
 
 <pre><code class="language-javascript">module.exports = {
   extends: ['stylelint-config-standard', 'stylelint-config-prettier'],
@@ -186,7 +188,7 @@ style-loaderは、読み込んだCSSを<code>&lt;style&gt;</code>タグで囲っ
 
 <p>webpackにもローダの設定を追加する。</p>
 
-<p>webpack.common.js:</p>
+<p><code>webpack.common.js</code>:</p>
 
 <pre><code class="language-diff"> (前略)
        {
@@ -219,14 +221,14 @@ style-loaderは、読み込んだCSSを<code>&lt;style&gt;</code>タグで囲っ
 
 <p>実際のCSSは普通に書いて、JavaScriptからimportしてやればいい。</p>
 
-<p>components/App.css:</p>
+<p><code>src/components/App.css</code>:</p>
 
 <pre><code class="language-css">.normal {
   font-size: 5rem;
 }
 </code></pre>
 
-<p>components/App.jsx:</p>
+<p><code>src/components/App.jsx</code>:</p>
 
 <pre><code class="language-diff"> import React from 'react';
 +import './App.css'
@@ -269,11 +271,19 @@ UIコンポーネントの構造とスタイルの構造を1対1対応させる�
 
 <p>Babelの設定を修正してインストールしたbabel-plugin-react-css-modulesを使うようにする。</p>
 
-<p>.babelrc</p>
+<p><code>.babelrc</code>:</p>
 
 <pre><code class="language-diff"> {
--  &quot;presets&quot;: [&quot;env&quot;, &quot;react&quot;]
-+  &quot;presets&quot;: [&quot;env&quot;, &quot;react&quot;],
+   &quot;presets&quot;: [
+     [
+       &quot;@babel/preset-env&quot;,
+       {
+         &quot;useBuiltIns&quot;: &quot;usage&quot;
+       }
+     ],
+     &quot;@babel/preset-react&quot;
+-  ]
++  ],
 +  &quot;plugins&quot;: [&quot;react-css-modules&quot;]
  }
 </code></pre>
@@ -282,7 +292,7 @@ UIコンポーネントの構造とスタイルの構造を1対1対応させる�
 
 <p>webpackのcss-loaderのオプションを追加して、CSS Modulesを有効にする。</p>
 
-<p>webpack.common.js:</p>
+<p><code>webpack.common.js</code>:</p>
 
 <pre><code class="language-diff"> (前略)
        {
@@ -311,7 +321,7 @@ UIコンポーネントの構造とスタイルの構造を1対1対応させる�
 
 <p>あとは、コンポーネントの方で<code>className</code>プロパティを<code>styleName</code>プロパティに変えればいい。</p>
 
-<p>components/App.jsx:</p>
+<p><code>src/components/App.jsx</code>:</p>
 
 <pre><code class="language-diff"> import React from 'react';
  import './App.css'
@@ -354,17 +364,25 @@ SassやPostCSSなど既存のCSSエコシステムを切り捨てているのと
 yarn add -D babel-plugin-styled-components
 </code></pre>
 
-<p>styled-componentsはv3.4.4が入った。</p>
+<p>styled-componentsはv4.1.1が入った。</p>
 
 <p><br></p>
 
 <p>Babelの設定は以下のように修正する。</p>
 
-<p>.babelrc</p>
+<p><code>.babelrc</code>:</p>
 
 <pre><code class="language-diff"> {
--  &quot;presets&quot;: [&quot;env&quot;, &quot;react&quot;]
-+  &quot;presets&quot;: [&quot;env&quot;, &quot;react&quot;],
+   &quot;presets&quot;: [
+     [
+       &quot;@babel/preset-env&quot;,
+       {
+         &quot;useBuiltIns&quot;: &quot;usage&quot;
+       }
+     ],
+     &quot;@babel/preset-react&quot;
+-  ]
++  ],
 +  &quot;plugins&quot;: [&quot;styled-components&quot;]
  }
 </code></pre>
@@ -373,7 +391,7 @@ yarn add -D babel-plugin-styled-components
 
 <p>App.jsxは、styled-componentsのstyledというAPIを使ってWrapperコンポーネント(スタイル付きdiv)を定義し、これをdivと置き換える。</p>
 
-<p>components/App.jsx:</p>
+<p><code>src/components/App.jsx</code>:</p>
 
 <pre><code class="language-diff"> import React from 'react';
 +import styled from 'styled-components';
@@ -419,7 +437,7 @@ JavaScriptの構文としては単なる文字列なので、変数を使った�
 
 <p>stylelintの設定は以下。</p>
 
-<p>stylelint.config.js:</p>
+<p><code>stylelint.config.js</code>:</p>
 
 <pre><code class="language-javascript">module.exports = {
   processors: ['stylelint-processor-styled-components'],
@@ -431,7 +449,7 @@ JavaScriptの構文としては単なる文字列なので、変数を使った�
 
 <p>webpackの設定にstylelint-custom-processor-loaderの設定を追加する。</p>
 
-<p>webpack.common.js:</p>
+<p><code>webpack.common.js</code>:</p>
 
 <pre><code class="language-diff"> (前略)
        {

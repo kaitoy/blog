@@ -14,6 +14,8 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 
 [前回](https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/)は[Redux Saga](https://redux-saga.js.org/)をセットアップした。
 
+(2018/11/21更新)
+
 {{< google-adsense >}}
 
 # フロントエンドのルーティング
@@ -93,21 +95,38 @@ Connected React Routerには[history](https://www.npmjs.com/package/history)が�
 yarn add react-router-dom connected-react-router history
 ```
 
-React Routerはv4.3.1、Connected React Routerはv4.3.0が入った。
+React Routerはv4.3.1、Connected React Routerはv5.0.1が入った。
 
 # Connected React Router導入
 
-まずはConnected React Routerの[Usage](https://github.com/supasate/connected-react-router#usage)を参考に、ReduxのMiddlewareを追加して、historyのインスタンスをStoreとつなぐ。
+まずはConnected React Routerの[Usage](https://github.com/supasate/connected-react-router#usage)を参考に、ReduxのReducerにrouterを追加し、MiddlewareにrouterMiddlewareを追加して、historyのインスタンスをStoreとつなぐ。
+
+`src/reducers/rootReducer.js`:
+```diff
+ import { combineReducers } from 'redux';
++import { connectRouter } from 'connected-react-router';
+ import * as reducers from './reducers';
+
+-const rootReducer = combineReducers(reducers);
+-export default rootReducer;
++const createRootReducer = (history) =>
++  combineReducers({
++    router: connectRouter(history),
++    ...reducers,
++  });
++export default createRootReducer;
+```
 
 `src/configureStore.js`:
 ```diff
  import { createStore, applyMiddleware } from 'redux';
  import createSagaMiddleware from 'redux-saga';
 +import { createBrowserHistory } from 'history';
-+import { connectRouter, routerMiddleware } from 'connected-react-router';
++import { routerMiddleware } from 'connected-react-router';
  import { logger } from 'redux-logger';
  import rootSaga from './sagas/rootSaga';
- import rootReducer from './reducers/rootReducer';
+-import rootReducer from './reducers/rootReducer';
++import createRootReducer from './reducers/rootReducer';
 
  const sagaMiddleware = createSagaMiddleware();
 +export const history = createBrowserHistory();
@@ -122,7 +141,7 @@ React Routerはv4.3.1、Connected React Routerはv4.3.0が入った。
 
    const store = createStore(
 -    rootReducer,
-+    connectRouter(history)(rootReducer),
++    createRootReducer(history),
      initialState,
      applyMiddleware(...middlewares),
    );
@@ -135,7 +154,7 @@ React Routerはv4.3.1、Connected React Routerはv4.3.0が入った。
 
 で、Connected React RouterのConnectedRouterコンポーネントを[React ReduxのProvider](https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/#provider)の下に追加する。
 
-src/index.jsx:
+`src/index.jsx`:
 ```diff
  import React from 'react';
  import ReactDOM from 'react-dom';
@@ -144,21 +163,18 @@ src/index.jsx:
  import App from './components/App';
 -import configureStore from './configureStore';
 +import configureStore, { history } from './configureStore';
- import './fonts.css';
 
  const store = configureStore();
  const root = document.getElementById('root');
 
  if (root) {
    ReactDOM.render(
--    <Provider store={store}>
+     <Provider store={store}>
 -      <App />
--    </Provider>,
-+    <Provider store={store}>
 +      <ConnectedRouter history={history}>
 +        <App />
 +      </ConnectedRouter>
-+    </Provider>,
+     </Provider>,
      root,
    );
  }
@@ -173,11 +189,12 @@ React Routerの[Redirect](https://reacttraining.com/react-router/core/api/Redire
 
 まず、App.jsxをHome.jsxにリネームして、Homeコンポーネントに変える。
 
-`components/Home.jsx`:
+`src/components/Home.jsx`:
 ```diff
  import React from 'react';
  import styled from 'styled-components';
  import HogeButton from '../containers/HogeButton';
+-import Fonts from '../fonts';
 
  const Wrapper = styled.div`
    font-size: 5rem;
@@ -189,6 +206,7 @@ React Routerの[Redirect](https://reacttraining.com/react-router/core/api/Redire
      <HogeButton variant="contained">
        HOGE
      </HogeButton>
+-    <Fonts />
    </Wrapper>
  );
 
@@ -200,16 +218,18 @@ React Routerの[Redirect](https://reacttraining.com/react-router/core/api/Redire
 
 で、App.jsxはルーティングを定義するコンポーネントとして作り直す。
 
-components/App.jsx:
+`src/components/App.jsx`:
 ```javascript
 import React from 'react';
 import { Route, Redirect } from 'react-router-dom';
 import Home from './Home';
+import Fonts from '../fonts';
 
-const App = (): Node => (
+const App = () => (
   <div>
     <Route exact path="/" render={() => <Redirect to="/home" />} />
     <Route exact path="/home" component={Home} />
+    <Fonts />
   </div>
 );
 

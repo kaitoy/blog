@@ -14,6 +14,8 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 
 [前回](https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/)は[React Redux](https://redux.js.org/basics/usagewithreact)をセットアップした。
 
+(2018/11/21更新)
+
 {{< google-adsense >}}
 
 # ReduxのMiddleware
@@ -78,7 +80,7 @@ action HOGE_BUTTON_CLICKED @ 23:19:35.190
 yarn add redux-saga
 ```
 
-v0.16.0が入った。
+v0.16.2が入った。
 
 <br>
 

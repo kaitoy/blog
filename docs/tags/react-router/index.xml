@@ -23,6 +23,8 @@
 
 &lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/&#34;&gt;前回&lt;/a&gt;は&lt;a href=&#34;https://redux-saga.js.org/&#34;&gt;Redux Saga&lt;/a&gt;をセットアップした。&lt;/p&gt;
 
+&lt;p&gt;(2018/11/21更新)&lt;/p&gt;
+
 &lt;p&gt;
 
 
@@ -114,21 +116,38 @@ Connected React Routerには&lt;a href=&#34;https://www.npmjs.com/package/histor
 &lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add react-router-dom connected-react-router history
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;React Routerはv4.3.1、Connected React Routerはv4.3.0が入った。&lt;/p&gt;
+&lt;p&gt;React Routerはv4.3.1、Connected React Routerはv5.0.1が入った。&lt;/p&gt;
 
 &lt;h1 id=&#34;connected-react-router導入&#34;&gt;Connected React Router導入&lt;/h1&gt;
 
-&lt;p&gt;まずはConnected React Routerの&lt;a href=&#34;https://github.com/supasate/connected-react-router#usage&#34;&gt;Usage&lt;/a&gt;を参考に、ReduxのMiddlewareを追加して、historyのインスタンスをStoreとつなぐ。&lt;/p&gt;
+&lt;p&gt;まずはConnected React Routerの&lt;a href=&#34;https://github.com/supasate/connected-react-router#usage&#34;&gt;Usage&lt;/a&gt;を参考に、ReduxのReducerにrouterを追加し、MiddlewareにrouterMiddlewareを追加して、historyのインスタンスをStoreとつなぐ。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/reducers/rootReducer.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import { combineReducers } from &#39;redux&#39;;
++import { connectRouter } from &#39;connected-react-router&#39;;
+ import * as reducers from &#39;./reducers&#39;;
+
+-const rootReducer = combineReducers(reducers);
+-export default rootReducer;
++const createRootReducer = (history) =&amp;gt;
++  combineReducers({
++    router: connectRouter(history),
++    ...reducers,
++  });
++export default createRootReducer;
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;&lt;code&gt;src/configureStore.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import { createStore, applyMiddleware } from &#39;redux&#39;;
  import createSagaMiddleware from &#39;redux-saga&#39;;
 +import { createBrowserHistory } from &#39;history&#39;;
-+import { connectRouter, routerMiddleware } from &#39;connected-react-router&#39;;
++import { routerMiddleware } from &#39;connected-react-router&#39;;
  import { logger } from &#39;redux-logger&#39;;
  import rootSaga from &#39;./sagas/rootSaga&#39;;
- import rootReducer from &#39;./reducers/rootReducer&#39;;
+-import rootReducer from &#39;./reducers/rootReducer&#39;;
++import createRootReducer from &#39;./reducers/rootReducer&#39;;
 
  const sagaMiddleware = createSagaMiddleware();
 +export const history = createBrowserHistory();
@@ -143,7 +162,7 @@ Connected React Routerには&lt;a href=&#34;https://www.npmjs.com/package/histor
 
    const store = createStore(
 -    rootReducer,
-+    connectRouter(history)(rootReducer),
++    createRootReducer(history),
      initialState,
      applyMiddleware(...middlewares),
    );
@@ -156,7 +175,7 @@ Connected React Routerには&lt;a href=&#34;https://www.npmjs.com/package/histor
 
 &lt;p&gt;で、Connected React RouterのConnectedRouterコンポーネントを&lt;a href=&#34;https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/#provider&#34;&gt;React ReduxのProvider&lt;/a&gt;の下に追加する。&lt;/p&gt;
 
-&lt;p&gt;src/index.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/index.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
  import ReactDOM from &#39;react-dom&#39;;
@@ -165,21 +184,18 @@ Connected React Routerには&lt;a href=&#34;https://www.npmjs.com/package/histor
  import App from &#39;./components/App&#39;;
 -import configureStore from &#39;./configureStore&#39;;
 +import configureStore, { history } from &#39;./configureStore&#39;;
- import &#39;./fonts.css&#39;;
 
  const store = configureStore();
  const root = document.getElementById(&#39;root&#39;);
 
  if (root) {
    ReactDOM.render(
--    &amp;lt;Provider store={store}&amp;gt;
+     &amp;lt;Provider store={store}&amp;gt;
 -      &amp;lt;App /&amp;gt;
--    &amp;lt;/Provider&amp;gt;,
-+    &amp;lt;Provider store={store}&amp;gt;
 +      &amp;lt;ConnectedRouter history={history}&amp;gt;
 +        &amp;lt;App /&amp;gt;
 +      &amp;lt;/ConnectedRouter&amp;gt;
-+    &amp;lt;/Provider&amp;gt;,
+     &amp;lt;/Provider&amp;gt;,
      root,
    );
  }
@@ -194,11 +210,12 @@ Connected React Routerには&lt;a href=&#34;https://www.npmjs.com/package/histor
 
 &lt;p&gt;まず、App.jsxをHome.jsxにリネームして、Homeコンポーネントに変える。&lt;/p&gt;
 
-&lt;p&gt;&lt;code&gt;components/Home.jsx&lt;/code&gt;:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/Home.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
  import styled from &#39;styled-components&#39;;
  import HogeButton from &#39;../containers/HogeButton&#39;;
+-import Fonts from &#39;../fonts&#39;;
 
  const Wrapper = styled.div`
    font-size: 5rem;
@@ -210,6 +227,7 @@ Connected React Routerには&lt;a href=&#34;https://www.npmjs.com/package/histor
      &amp;lt;HogeButton variant=&amp;quot;contained&amp;quot;&amp;gt;
        HOGE
      &amp;lt;/HogeButton&amp;gt;
+-    &amp;lt;Fonts /&amp;gt;
    &amp;lt;/Wrapper&amp;gt;
  );
 
@@ -221,16 +239,18 @@ Connected React Routerには&lt;a href=&#34;https://www.npmjs.com/package/histor
 
 &lt;p&gt;で、App.jsxはルーティングを定義するコンポーネントとして作り直す。&lt;/p&gt;
 
-&lt;p&gt;components/App.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/App.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import React from &#39;react&#39;;
 import { Route, Redirect } from &#39;react-router-dom&#39;;
 import Home from &#39;./Home&#39;;
+import Fonts from &#39;../fonts&#39;;
 
-const App = (): Node =&amp;gt; (
+const App = () =&amp;gt; (
   &amp;lt;div&amp;gt;
     &amp;lt;Route exact path=&amp;quot;/&amp;quot; render={() =&amp;gt; &amp;lt;Redirect to=&amp;quot;/home&amp;quot; /&amp;gt;} /&amp;gt;
     &amp;lt;Route exact path=&amp;quot;/home&amp;quot; component={Home} /&amp;gt;
+    &amp;lt;Fonts /&amp;gt;
   &amp;lt;/div&amp;gt;
 );
 

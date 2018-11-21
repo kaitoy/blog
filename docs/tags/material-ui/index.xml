@@ -23,6 +23,8 @@
 
 &lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/08/29/creating-react-redux-app-from-scratch-04/&#34;&gt;前回&lt;/a&gt;はCSS周りの処理系をセットアップした。&lt;/p&gt;
 
+&lt;p&gt;(2018/11/21更新)&lt;/p&gt;
+
 &lt;p&gt;
 
 
@@ -67,13 +69,13 @@
 &lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add @material-ui/core
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;v1.4.1が入った。&lt;/p&gt;
+&lt;p&gt;v3.5.1が入った。&lt;/p&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
 &lt;p&gt;あとはパッケージに入っている色々なコンポーネントをMaterial-UIのドキュメント見ながら使えばいいだけ。&lt;/p&gt;
 
-&lt;p&gt;components/App.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/App.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
  import styled from &#39;styled-components&#39;;
@@ -128,6 +130,8 @@ Material-UIは&lt;a href=&#34;https://fonts.google.com/specimen/Roboto&#34;&gt;R
 
 &lt;p&gt;webpackのローダ設定は以下のようなのを追加すればいい。&lt;/p&gt;
 
+&lt;p&gt;&lt;code&gt;webpack.common.js&lt;/code&gt;:&lt;/p&gt;
+
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt;(前略)
    module: {
      rules: [
@@ -152,21 +156,21 @@ Material-UIは&lt;a href=&#34;https://fonts.google.com/specimen/Roboto&#34;&gt;R
 &lt;p&gt;あとは、typeface-robotoパッケージ内のフォントファイルを指すようにCSSに@font-faceを書けばいい。
 例えば、weightが300のWOFFファイルを読むなら以下のような感じ。&lt;/p&gt;
 
-&lt;p&gt;src/fonts.css:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/fonts.css&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-css&#34;&gt;@font-face {
   font-family: &#39;Roboto&#39;;
   font-style: normal;
   font-display: swap;
   font-weight: 300;
-  src: local(&#39;Roboto Light &#39;), local(&#39;Roboto-Light&#39;),
+  src: local(&#39;Roboto Light&#39;), local(&#39;Roboto-Light&#39;),
     url(&#39;../node_modules/typeface-roboto/files/roboto-latin-300.woff&#39;) format(&#39;woff&#39;);
 }
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;これをどこかのJavaScriptでインポートしてやればいい。&lt;/p&gt;
 
-&lt;p&gt;src/index.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/index.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
  import ReactDOM from &#39;react-dom&#39;;
@@ -198,6 +202,8 @@ Material-UIは&lt;a href=&#34;https://fonts.google.com/specimen/Roboto&#34;&gt;R
 
 &lt;p&gt;webpackのローダ設定は以下のようなのを追加すればいい。&lt;/p&gt;
 
+&lt;p&gt;&lt;code&gt;webpack.common.js&lt;/code&gt;:&lt;/p&gt;
+
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt;(前略)
    module: {
      rules: [
@@ -216,14 +222,14 @@ Material-UIは&lt;a href=&#34;https://fonts.google.com/specimen/Roboto&#34;&gt;R
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
-&lt;p&gt;で、&lt;a href=&#34;https://github.com/styled-components/styled-components/issues/233&#34;&gt;ここ&lt;/a&gt;にある通り、styled-componentsの&lt;a href=&#34;https://www.styled-components.com/docs/api#injectglobal&#34;&gt;injectGlobal&lt;/a&gt;というAPIを使って、以下のようにフォントファイルを読み込む。&lt;/p&gt;
+&lt;p&gt;で、&lt;a href=&#34;https://github.com/styled-components/styled-components/issues/233&#34;&gt;ここ&lt;/a&gt;を参考にしてフォントファイルを読みこむ。injectGlobalというstyled-componentsのAPIを使えとあるけど、injectGlobalはstyled-components v4で&lt;a href=&#34;https://www.styled-components.com/docs/api#createglobalstyle&#34;&gt;createGlobalStyle&lt;/a&gt;に代わったので、以下のように書く。&lt;/p&gt;
 
-&lt;p&gt;src/font.js:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/fonts.js&lt;/code&gt;:&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import { injectGlobal } from &#39;styled-components&#39;;
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import { createGlobalStyle } from &#39;styled-components&#39;;
 import roboto300 from &#39;../node_modules/typeface-roboto/files/roboto-latin-300.woff&#39;;
 
-injectGlobal`
+const Fonts = createGlobalStyle`
   /* roboto-300normal - latin */
   @font-face {
     font-family: &#39;Roboto&#39;;
@@ -236,27 +242,33 @@ injectGlobal`
       url(&#39;${roboto300}&#39;) format(&#39;woff&#39;);
   }
 `;
+
+export default Fonts;
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;p&gt;ここでexportされる&lt;code&gt;Fonts&lt;/code&gt;はReactコンポーネントになっているので、それをどこかのJSXに追加してやればいい。&lt;/p&gt;
 
-&lt;p&gt;あとはこれをどこかのJavaScriptでインポートしてやればいい。&lt;/p&gt;
-
-&lt;p&gt;src/index.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/App.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
- import ReactDOM from &#39;react-dom&#39;;
- import App from &#39;./components/App&#39;;
-+import &#39;./fonts&#39;;
+ import styled from &#39;styled-components&#39;;
+ import Button from &#39;@material-ui/core/Button&#39;;
++import Fonts from &#39;../fonts&#39;;
 
- const root = document.getElementById(&#39;root&#39;);
+ const Wrapper = styled.div`
+   font-size: 5rem;
+ `;
 
- if (root) {
-   ReactDOM.render(
-     &amp;lt;App /&amp;gt;,
-     root,
-   );
- }
+ const App = () =&amp;gt; (
+   &amp;lt;Wrapper&amp;gt;
+     &amp;lt;Button variant=&amp;quot;contained&amp;quot;&amp;gt;
+       HOGE
+     &amp;lt;/Button&amp;gt;
++    &amp;lt;Fonts /&amp;gt;
+   &amp;lt;/Wrapper&amp;gt;
+ );
+
+ export default App;
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;

@@ -14,6 +14,8 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 
 [前回](https://www.kaitoy.xyz/2018/09/06/creating-react-redux-app-from-scratch-05/)はMaterial-UIをセットアップした。
 
+(2018/11/21更新)
+
 {{< google-adsense >}}
 
 # Reactの状態管理
@@ -53,7 +55,7 @@ ReduxとReact Reduxについては、Qiitaの「[たぶんこれが一番分か�
 yarn add redux
 ```
 
-Redux v4.0.0が入った。
+Redux v4.0.1が入った。
 
 以降、現時点で唯一のUIコンポーネントであるHOGEボタンの状態管理を実装してみる。
 

@@ -13,6 +13,8 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 
 [前回](https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/)はPrettierとESLintをセットアップした。
 
+(2018/11/21更新)
+
 {{< google-adsense >}}
 
 # CSS
@@ -68,7 +70,7 @@ yarn add -D css-loader style-loader postcss-loader postcss-preset-env autoprefix
 
 PostCSSとstylelintの設定は、それぞれpostcss.config.jsとstylelint.config.jsを書いてプロジェクトルートに置けばいい。
 
-postcss.config.js:
+`postcss.config.js`:
 ```javascript
 module.exports = {
   plugins: {
@@ -81,7 +83,7 @@ module.exports = {
 };
 ```
 
-stylelint.config.js:
+`stylelint.config.js`:
 ```javascript
 module.exports = {
   extends: ['stylelint-config-standard', 'stylelint-config-prettier'],
@@ -96,7 +98,7 @@ stylelint.config.jsで、stylelint-config-prettierはextendsの最後に書く�
 
 webpackにもローダの設定を追加する。
 
-webpack.common.js:
+`webpack.common.js`:
 ```diff
  (前略)
        {
@@ -129,14 +131,14 @@ webpack.common.js:
 
 実際のCSSは普通に書いて、JavaScriptからimportしてやればいい。
 
-components/App.css:
+`src/components/App.css`:
 ```css
 .normal {
   font-size: 5rem;
 }
 ```
 
-components/App.jsx:
+`src/components/App.jsx`:
 ```diff
  import React from 'react';
 +import './App.css'
@@ -180,11 +182,19 @@ yarn add -D babel-plugin-react-css-modules
 
 Babelの設定を修正してインストールしたbabel-plugin-react-css-modulesを使うようにする。
 
-.babelrc
+`.babelrc`:
 ```diff
  {
--  "presets": ["env", "react"]
-+  "presets": ["env", "react"],
+   "presets": [
+     [
+       "@babel/preset-env",
+       {
+         "useBuiltIns": "usage"
+       }
+     ],
+     "@babel/preset-react"
+-  ]
++  ],
 +  "plugins": ["react-css-modules"]
  }
 ```
@@ -193,7 +203,7 @@ Babelの設定を修正してインストールしたbabel-plugin-react-css-modu
 
 webpackのcss-loaderのオプションを追加して、CSS Modulesを有効にする。
 
-webpack.common.js:
+`webpack.common.js`:
 ```diff
  (前略)
        {
@@ -222,7 +232,7 @@ webpack.common.js:
 
 あとは、コンポーネントの方で`className`プロパティを`styleName`プロパティに変えればいい。
 
-components/App.jsx:
+`src/components/App.jsx`:
 ```diff
  import React from 'react';
  import './App.css'
@@ -264,17 +274,25 @@ yarn add styled-components
 yarn add -D babel-plugin-styled-components
 ```
 
-styled-componentsはv3.4.4が入った。
+styled-componentsはv4.1.1が入った。
 
 <br>
 
 Babelの設定は以下のように修正する。
 
-.babelrc
+`.babelrc`:
 ```diff
  {
--  "presets": ["env", "react"]
-+  "presets": ["env", "react"],
+   "presets": [
+     [
+       "@babel/preset-env",
+       {
+         "useBuiltIns": "usage"
+       }
+     ],
+     "@babel/preset-react"
+-  ]
++  ],
 +  "plugins": ["styled-components"]
  }
 ```
@@ -283,7 +301,7 @@ Babelの設定は以下のように修正する。
 
 App.jsxは、styled-componentsのstyledというAPIを使ってWrapperコンポーネント(スタイル付きdiv)を定義し、これをdivと置き換える。
 
-components/App.jsx:
+`src/components/App.jsx`:
 ```diff
  import React from 'react';
 +import styled from 'styled-components';
@@ -328,7 +346,7 @@ yarn add -D stylelint stylelint-config-standard stylelint-processor-styled-compo
 
 stylelintの設定は以下。
 
-stylelint.config.js:
+`stylelint.config.js`:
 ```javascript
 module.exports = {
   processors: ['stylelint-processor-styled-components'],
@@ -340,7 +358,7 @@ module.exports = {
 
 webpackの設定にstylelint-custom-processor-loaderの設定を追加する。
 
-webpack.common.js:
+`webpack.common.js`:
 ```diff
  (前略)
        {

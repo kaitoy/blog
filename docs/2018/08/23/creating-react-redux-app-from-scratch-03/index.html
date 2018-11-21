@@ -13,7 +13,7 @@
     <meta property="og:title" content="React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その3: PrettierとESLint | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/">
-    <meta property="og:description" content="ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はReactをセットアップした。 (adsbygoogle = window.adsbygoogle || []).push({}); フォーマッタとリンタ プロジェクトにフォーマッタとリンタを導入する。 フォーマッタはソースの体裁を整えるツール。 フォーマッタを使うことで体裁が統一され、ソースが読みやすくなり、品質向上につながる。 リンタはソースを静的解析して、潜在的なバグ、構造的な問題、体裁の問題を検出して警告してくれるツール。 フォーマッタは体裁だけ整えるのに対し、リンタは論理構造にも制約を課せるので、コーディングスタイルがより統一できたり、ミスをしやすい論理構造が無くなったりして、品質向上につながる。 JavaScriptのような動的型付け言語では、実行時まで顕在化しないバグを作りこみやすく、また実行時エラーの原因解析が静的型付け言語に比べて難しいので、フォーマッタとリンタでプログラム実行前に問題をできるだけ取り除いておくのが重要。 またチーム開発では、コードレビューでコーディンスタイルを見る必要がなくなり、効率化につながる。 Prettier フォーマッタにはPrettierを使う。 Prettierは2017年1月にリリースされた新しいツール。 構文解析をしてASTを構築し、そこからフォーマット済みコードを出力するので、従来のツールよりも厳密な整形(e.g. 行の最大長を考慮した整形)ができる。 また、opinionated(独断的)であることも特徴で、Prettierプロジェクトが推奨するフォーマットをほぼ強制し、設定がほとんどない。 このため導入が簡単だけど、かゆいところに手が届かないこともある。 JavaScriptの他、JSX、CSS、Markdown、GraphQLのフォーマットにも対応している。 まずプロジェクトにインストールする。 yarn add -D prettier v1.14.0が入った。 設定はprettier.config.jsというファイルを書いてプロジェクトルートに置けばいい。 prettier.config.js: module.exports = { printWidth: 100, // 行の最大長 tabWidth: 2, // インデント長 singleQuote: true, // 文字列をシングルクオートで囲う trailingComma: &#39;all&#39;, // オブジェクトのプロパティとか関数の引数を複数行で書いたときに、全行の末尾にカンマをつける }; また、フォーマット対象外のファイルを指定するファイルである.prettierignoreをプロジェクトルートに置く。 .prettierignore: node_modules/ dist/ node_modulesはnpmパッケージが入るディレクトリ。 実際はnode_modulesはデフォルトで無視されるから書かなくていいんだけど。 prettier-ignoreコメントを書くことで、ソースを部分的にフォーマット対象外とすることもできる。 最後に、npmスクリプトを書く。 package.json: (前略) &quot;scripts&quot;: { &#43; &quot;format&quot;: &quot;prettier --write **/*.jsx **/*.js **/*.css&quot;, &quot;build&quot;: &quot;webpack --config webpack.prod.js&quot;, &quot;start&quot;: &quot;webpack-dev-server --hot --config webpack.dev.js&quot; }, (後略) これで、yarn formatを実行するとプロジェクト内ソースを一通りフォーマットできる。 ESLint リンタにはデファクトスタンダードのESLintを使う。 ESLintは2013年6月にリリースされたそこそこ歴史のあるツール。 リンティングルールがプラガブルで、豊富なルールを細かく制御できるのが特徴。 フォーマッタとしての機能もあるけど、そこはPrettierにまかせることにする。 JavaScriptもJSXもリンティングできる。 リンティングルールはAirbnbによるeslint-config-airbnbが有名なのでこれを使う。 ESLintを導入するために、以下のパッケージをプロジェクトにインストールする。 eslint: ESLint本体。 eslint-loader: webpackからESLintを実行するやつ。 eslint-config-airbnb: ESLintルール設定集。 eslint-plugin-import: eslint-config-airbnbのピア依存。import文を処理するためのESLintプラグイン。 eslint-plugin-jsx-a11y: eslint-config-airbnbのピア依存。JSXを処理するためのESLintプラグイン。 eslint-plugin-react: eslint-config-airbnbのピア依存。React特有のリンティングルールを追加するESLintプラグイン。 eslint-config-prettier: Prettierが施すコード整形とコンフリクトするルールを無効にするESLintルール設定集。 ピア依存をインストールするのにはちょっとコツがいるので、eslint-config-airbnbのドキュメントを参照すべし。 今回は以下のコマンドでインストールした。 yarn add -D &quot;eslint@&gt;=1.6.0 &lt;5.0.0&quot; eslint-loader eslint-config-airbnb &quot;eslint-plugin-import@^2.12.0&quot; &quot;eslint-plugin-jsx-a11y@^6.0.3&quot; &quot;eslint-plugin-react@^7.9.1&quot; eslint-config-prettier ESlintはv4.19.1が入った。 ESlintの設定は、設定ファイルである.eslintrc.jsをプロジェクトルートに置けばいい。 .eslintrc.js: module.exports = { env: { browser: true, }, extends: [&#39;airbnb&#39;, &#39;prettier&#39;], }; アプリの実行環境はブラウザなのでenv.browserをtrueにしている。 これにより、ブラウザ環境でデフォルトで使えるグローバル変数(e.g.">
+    <meta property="og:description" content="ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はReactをセットアップした。 (2018/11/21更新) (adsbygoogle = window.adsbygoogle || []).push({}); フォーマッタとリンタ プロジェクトにフォーマッタとリンタを導入する。 フォーマッタはソースの体裁を整えるツール。 フォーマッタを使うことで体裁が統一され、ソースが読みやすくなり、品質向上につながる。 リンタはソースを静的解析して、潜在的なバグ、構造的な問題、体裁の問題を検出して警告してくれるツール。 フォーマッタは体裁だけ整えるのに対し、リンタは論理構造にも制約を課せるので、コーディングスタイルがより統一できたり、ミスをしやすい論理構造が無くなったりして、品質向上につながる。 JavaScriptのような動的型付け言語では、実行時まで顕在化しないバグを作りこみやすく、また実行時エラーの原因解析が静的型付け言語に比べて難しいので、フォーマッタとリンタでプログラム実行前に問題をできるだけ取り除いておくのが重要。 またチーム開発では、コードレビューでコーディンスタイルを見る必要がなくなり、効率化につながる。 Prettier フォーマッタにはPrettierを使う。 Prettierは2017年1月にリリースされた新しいツール。 構文解析をしてASTを構築し、そこからフォーマット済みコードを出力するので、従来のツールよりも厳密な整形(e.g. 行の最大長を考慮した整形)ができる。 また、opinionated(独断的)であることも特徴で、Prettierプロジェクトが推奨するフォーマットをほぼ強制し、設定がほとんどない。 このため導入が簡単だけど、かゆいところに手が届かないこともある。 JavaScriptの他、JSX、CSS、Markdown、GraphQLのフォーマットにも対応している。 まずプロジェクトにインストールする。 yarn add -D prettier v1.15.2が入った。 設定はprettier.config.jsというファイルを書いてプロジェクトルートに置けばいい。 prettier.config.js: module.exports = { printWidth: 100, // 行の最大長 tabWidth: 2, // インデント長 singleQuote: true, // 文字列をシングルクオートで囲う trailingComma: &#39;all&#39;, // オブジェクトのプロパティとか関数の引数を複数行で書いたときに、全行の末尾にカンマをつける }; また、フォーマット対象外のファイルを指定するファイルである.prettierignoreをプロジェクトルートに置く。 .prettierignore: node_modules/ dist/ node_modulesはnpmパッケージが入るディレクトリ。 実際はnode_modulesはデフォルトで無視されるから書かなくていいんだけど。 prettier-ignoreコメントを書くことで、ソースを部分的にフォーマット対象外とすることもできる。 最後に、npmスクリプトを書く。 package.json: (前略) &quot;scripts&quot;: { &#43; &quot;format&quot;: &quot;prettier --write **/*.jsx **/*.js **/*.css&quot;, &quot;build&quot;: &quot;webpack --config webpack.prod.js&quot;, &quot;start&quot;: &quot;webpack-dev-server --hot --config webpack.dev.js&quot; }, (後略) これで、yarn formatを実行するとプロジェクト内ソースを一通りフォーマットできる。 ESLint リンタにはデファクトスタンダードのESLintを使う。 ESLintは2013年6月にリリースされたそこそこ歴史のあるツール。 リンティングルールがプラガブルで、豊富なルールを細かく制御できるのが特徴。 フォーマッタとしての機能もあるけど、そこはPrettierにまかせることにする。 JavaScriptもJSXもリンティングできる。 リンティングルールはAirbnbによるeslint-config-airbnbが有名なのでこれを使う。 ESLintを導入するために、以下のパッケージをプロジェクトにインストールする。 eslint: ESLint本体。 eslint-loader: webpackからESLintを実行するやつ。 eslint-config-airbnb: ESLintルール設定集。 eslint-plugin-import: eslint-config-airbnbのピア依存。import文を処理するためのESLintプラグイン。 eslint-plugin-jsx-a11y: eslint-config-airbnbのピア依存。JSXを処理するためのESLintプラグイン。 eslint-plugin-react: eslint-config-airbnbのピア依存。React特有のリンティングルールを追加するESLintプラグイン。 eslint-config-prettier: Prettierが施すコード整形とコンフリクトするルールを無効にするESLintルール設定集。 ピア依存をインストールするのにはちょっとコツがいるので、eslint-config-airbnbのドキュメントを参照すべし。 今回は以下のコマンドでインストールした。 yarn add -D &quot;eslint@&gt;=1.6.0 &lt;5.0.0&quot; eslint-loader eslint-config-airbnb &quot;eslint-plugin-import@^2.12.0&quot; &quot;eslint-plugin-jsx-a11y@^6.0.3&quot; &quot;eslint-plugin-react@^7.9.1&quot; eslint-config-prettier ESlintはv4.19.1が入った。 ESlintの設定は、設定ファイルである.eslintrc.jsをプロジェクトルートに置けばいい。 .eslintrc.js: module.exports = { env: { browser: true, }, extends: [&#39;airbnb&#39;, &#39;prettier&#39;], }; アプリの実行環境はブラウザなのでenv.browserをtrueにしている。 これにより、ブラウザ環境でデフォルトで使えるグローバル変数(e.g.">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/prettier-eslint.png">
     
@@ -89,6 +89,8 @@
 
 <p><a href="https://www.kaitoy.xyz/2018/08/22/creating-react-redux-app-from-scratch-02/">前回</a>はReactをセットアップした。</p>
 
+<p>(2018/11/21更新)</p>
+
 <p>
 
 
@@ -136,13 +138,13 @@
 <pre><code class="language-cmd">yarn add -D prettier
 </code></pre>
 
-<p>v1.14.0が入った。</p>
+<p>v1.15.2が入った。</p>
 
 <p><br></p>
 
 <p><a href="https://prettier.io/docs/en/options.html">設定</a>は<code>prettier.config.js</code>という<a href="https://prettier.io/docs/en/configuration.html">ファイル</a>を書いてプロジェクトルートに置けばいい。</p>
 
-<p>prettier.config.js:</p>
+<p><code>prettier.config.js</code>:</p>
 
 <pre><code class="language-javascript">module.exports = {
   printWidth: 100, // 行の最大長
@@ -156,7 +158,7 @@
 
 <p>また、フォーマット対象外のファイルを指定するファイルである<code>.prettierignore</code>をプロジェクトルートに置く。</p>
 
-<p>.prettierignore:</p>
+<p><code>.prettierignore</code>:</p>
 
 <pre><code>node_modules/
 dist/
@@ -171,7 +173,7 @@ dist/
 
 <p>最後に、npmスクリプトを書く。</p>
 
-<p>package.json:</p>
+<p><code>package.json</code>:</p>
 
 <pre><code class="language-diff"> (前略)
    &quot;scripts&quot;: {
@@ -223,7 +225,7 @@ dist/
 
 <p><a href="https://eslint.org/docs/user-guide/configuring">ESlintの設定</a>は、設定ファイルである<code>.eslintrc.js</code>をプロジェクトルートに置けばいい。</p>
 
-<p>.eslintrc.js:</p>
+<p><code>.eslintrc.js</code>:</p>
 
 <pre><code class="language-javascript">module.exports = {
   env: {
@@ -243,7 +245,7 @@ dist/
 
 <p>また、<a href="https://eslint.org/docs/user-guide/configuring#ignoring-files-and-directories">リンティング対象外のファイルを指定するファイル</a>をプロジェクトルートに置く。</p>
 
-<p>.eslintignore:</p>
+<p><code>.eslintignore</code>:</p>
 
 <pre><code>node_modules/*
 dist/*
@@ -258,7 +260,7 @@ dist/*
 
 <p>webpackからESLintを実行し、エラーがなくならない限りビルド成功できないようにする。</p>
 
-<p>webpack.common.js:</p>
+<p><code>webpack.common.js</code>:</p>
 
 <pre><code class="language-diff"> (前略)
    module: {
@@ -287,7 +289,7 @@ dist/*
 
 <p>あとはnpmスクリプト書くだけ。</p>
 
-<p>package.json:</p>
+<p><code>package.json</code>:</p>
 
 <pre><code class="language-diff"> (前略)
    &quot;scripts&quot;: {

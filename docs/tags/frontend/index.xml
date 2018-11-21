@@ -25,6 +25,8 @@
 
 &lt;p&gt;今回は残りの要素をまとめてかたづける。&lt;/p&gt;
 
+&lt;p&gt;(2018/11/21更新)&lt;/p&gt;
+
 &lt;p&gt;
 
 
@@ -48,49 +50,54 @@
 &lt;p&gt;そんな問題に対応する技術が&lt;a href=&#34;https://webpack.js.org/guides/code-splitting/&#34;&gt;Code Splitting&lt;/a&gt;。
 バンドルを分割し、(理想的には)必要な時に必要な分だけロードする技術。&lt;/p&gt;
 
-&lt;p&gt;Code Splittingのやりかたはいくつかあるが、webpackのディレクティブを使った&lt;a href=&#34;https://webpack.js.org/guides/code-splitting/#prefetching-preloading-modules&#34;&gt;プリフェッチ&lt;/a&gt;を、フォントモジュールに適用してみる。&lt;/p&gt;
+&lt;p&gt;Code Splittingのやりかたはいくつかあるが、&lt;a href=&#34;https://reactjs.org/docs/code-splitting.html#import&#34;&gt;ダイナミックインポート&lt;/a&gt;と&lt;a href=&#34;https://reactjs.org/docs/code-splitting.html#reactlazy&#34;&gt;React.lazy&lt;/a&gt;と&lt;a href=&#34;https://reactjs.org/docs/code-splitting.html#suspense&#34;&gt;React Suspense&lt;/a&gt;とwebpackの&lt;a href=&#34;https://webpack.js.org/guides/code-splitting/#prefetching-preloading-modules&#34;&gt;プリフェッチディレクティブ&lt;/a&gt;を使ったやつを、フォントモジュールに適用してみる。&lt;/p&gt;
 
-&lt;p&gt;src/index.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/App.jsx&lt;/code&gt;:&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
- import ReactDOM from &#39;react-dom&#39;;
- import { Provider } from &#39;react-redux&#39;;
- import { ConnectedRouter } from &#39;connected-react-router&#39;;
- import App from &#39;./components/App&#39;;
- import configureStore from &#39;./configureStore&#39;;
- import configureStore, { history } from &#39;./configureStore&#39;;
--import &#39;./fonts.css&#39;;
-+import(/* webpackPrefetch: true */ &#39;./fonts&#39;);
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt;-import React from &#39;react&#39;;
++import React, { Suspense } from &#39;react&#39;;
+ import { Route, Redirect } from &#39;react-router-dom&#39;;
+ import Home from &#39;./Home&#39;;
+-import Fonts from &#39;../fonts&#39;;
 
- const store = configureStore();
- const root = document.getElementById(&#39;root&#39;);
++const Fonts = React.lazy(() =&amp;gt; import(/* webpackPrefetch: true */ &#39;../fonts&#39;));
 
- if (root) {
-   ReactDOM.render(
-     &amp;lt;Provider store={store}&amp;gt;
-       &amp;lt;ConnectedRouter history={history}&amp;gt;
-         &amp;lt;App /&amp;gt;
-       &amp;lt;/ConnectedRouter&amp;gt;
-     &amp;lt;/Provider&amp;gt;,
-     root,
-   );
- }
+ const App = () =&amp;gt; (
+   &amp;lt;div&amp;gt;
+     &amp;lt;Route exact path=&amp;quot;/&amp;quot; render={() =&amp;gt; &amp;lt;Redirect to=&amp;quot;/home&amp;quot; /&amp;gt;} /&amp;gt;
+     &amp;lt;Route exact path=&amp;quot;/home&amp;quot; component={Home} /&amp;gt;
+-    &amp;lt;Fonts /&amp;gt;
++    &amp;lt;Suspense fallback={&amp;lt;div /&amp;gt;}&amp;gt;
++      &amp;lt;Fonts /&amp;gt;
++    &amp;lt;/Suspense&amp;gt;
+   &amp;lt;/div&amp;gt;
+ );
+
+ export default App;
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;コード変更はこれだけ。&lt;/p&gt;
 
-&lt;p&gt;&lt;code&gt;import()&lt;/code&gt;は&lt;a href=&#34;https://github.com/tc39/proposal-dynamic-import&#34;&gt;ダイナミックインポート&lt;/a&gt;という、ECMAScriptで現在策定中の機能。
+&lt;p&gt;&lt;code&gt;import()&lt;/code&gt;がダイナミックインポートで、&lt;a href=&#34;https://github.com/tc39/proposal-dynamic-import&#34;&gt;ECMAScriptで現在策定中&lt;/a&gt;の機能。
 これを使えるようにするためには、Babelのプラグインを追加する必要がある。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D babel-plugin-syntax-dynamic-import
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D @babel/plugin-syntax-dynamic-import
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;.babelrc&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;.babelrc&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; {
-   &amp;quot;presets&amp;quot;: [&amp;quot;env&amp;quot;, &amp;quot;react&amp;quot;],
+   &amp;quot;presets&amp;quot;: [
+     [
+       &amp;quot;@babel/preset-env&amp;quot;,
+       {
+         &amp;quot;useBuiltIns&amp;quot;: &amp;quot;usage&amp;quot;
+       }
+     ],
+     &amp;quot;@babel/preset-react&amp;quot;
+   ],
 -  &amp;quot;plugins&amp;quot;: [&amp;quot;styled-components&amp;quot;]
-+  &amp;quot;plugins&amp;quot;: [&amp;quot;styled-components&amp;quot;, &amp;quot;syntax-dynamic-import&amp;quot;]
++  &amp;quot;plugins&amp;quot;: [&amp;quot;styled-components&amp;quot;, &amp;quot;@babel/plugin-syntax-dynamic-import&amp;quot;]
  }
 &lt;/code&gt;&lt;/pre&gt;
 
@@ -98,9 +105,6 @@
 これでフォントモジュールはメインのバンドルとは別ファイルになり、初期画面の表示時にはロードされず、ブラウザの空き時間に非同期にロードされるようになる。&lt;/p&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;Code Splittingは&lt;a href=&#34;https://reactjs.org/docs/code-splitting.html&#34;&gt;Reactのドキュメント&lt;/a&gt;でも紹介されていて、そこにはReact特有のやり方も載っている。
-&lt;a href=&#34;https://reactjs.org/docs/code-splitting.html#reactlazy&#34;&gt;React.lazy&lt;/a&gt;と&lt;a href=&#34;https://reactjs.org/docs/code-splitting.html#suspense&#34;&gt;Suspense&lt;/a&gt;を使うものがかなりナウい。&lt;/p&gt;
 
 &lt;h1 id=&#34;flow&#34;&gt;Flow&lt;/h1&gt;
 
@@ -115,10 +119,26 @@
 
 &lt;p&gt;Flowは、ソースに型情報を付けて静的型チェック可能にしつつ、実行時には型情報を取り去って普通のJavaScriptとして実行できるようにする仕組み。&lt;/p&gt;
 
-&lt;p&gt;型チェックするツールは&lt;a href=&#34;https://www.npmjs.com/package/flow-bin&#34;&gt;flow-bin&lt;/a&gt;パッケージで配布されていて、型情報の除去は&lt;a href=&#34;https://www.npmjs.com/package/babel-preset-flow&#34;&gt;babel-preset-flow&lt;/a&gt;を使ってBabelでできる。
-babel-preset-flowは、すでにインストールしたbabel-preset-reactに含まれてるので、敢えて入れる必要はない。&lt;/p&gt;
+&lt;p&gt;型チェックするツールは&lt;a href=&#34;https://www.npmjs.com/package/flow-bin&#34;&gt;flow-bin&lt;/a&gt;パッケージで配布されていて、型情報の除去は&lt;a href=&#34;https://www.npmjs.com/package/babel-preset-flow&#34;&gt;@babel/preset-flow&lt;/a&gt;を使ってBabelでできる。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D flow-bin
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D flow-bin @babel/preset-flow
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;.babelrc&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; {
+   &amp;quot;presets&amp;quot;: [
+     [
+       &amp;quot;@babel/preset-env&amp;quot;,
+       {
+         &amp;quot;useBuiltIns&amp;quot;: &amp;quot;usage&amp;quot;
+       }
+     ],
++    &amp;quot;@babel/preset-flow&amp;quot;,
+     &amp;quot;@babel/preset-react&amp;quot;
+   ],
+   &amp;quot;plugins&amp;quot;: [&amp;quot;styled-components&amp;quot;, &amp;quot;@babel/plugin-syntax-dynamic-import&amp;quot;]
+ }
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;これで、&lt;code&gt;yarn flow&lt;/code&gt;でFlowを実行できるようになった。&lt;/p&gt;
@@ -258,12 +278,13 @@ JestもReactと開発元が同じFacebookで、Reactと相性がいいはずだ�
 &lt;li&gt;&lt;a href=&#34;https://www.npmjs.com/package/jest&#34;&gt;jest&lt;/a&gt;: 本体&lt;/li&gt;
 &lt;li&gt;&lt;a href=&#34;https://www.npmjs.com/package/babel-jest&#34;&gt;babel-jest&lt;/a&gt;: BabelでトランスパイルするコードをJestでテストするためのBabelプラグイン&lt;/li&gt;
 &lt;li&gt;&lt;a href=&#34;https://www.npmjs.com/package/react-test-renderer&#34;&gt;react-test-renderer&lt;/a&gt;: ReactコンポーネントをピュアなJavaScriptオブジェクトにレンダリングするライブラリ。&lt;a href=&#34;https://jestjs.io/docs/en/snapshot-testing&#34;&gt;スナップショットテスト&lt;/a&gt;などに使う。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.npmjs.com/package/babel-core/v/7.0.0-bridge.0&#34;&gt;babel-core@^7.0.0-bridge&lt;/a&gt;: babel-jestをBabel 7で使うためのモジュール。&lt;a href=&#34;https://github.com/facebook/jest/tree/master/packages/babel-jest#usage&#34;&gt;現時点では必要&lt;/a&gt;だけど、その内いらなくなるであろう。&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D jest babel-jest react-test-renderer
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D jest babel-jest react-test-renderer babel-core@^7.0.0-bridge
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;Jestはv23.4.2が入った。&lt;/p&gt;
+&lt;p&gt;Jestはv23.6.0が入った。&lt;/p&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
@@ -609,7 +630,7 @@ Reactコンポーネントをレンダリングして、jQueryみたいなAPIで
 &lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D enzyme enzyme-adapter-react-16
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;Enzymeはv3.3.0が入った。&lt;/p&gt;
+&lt;p&gt;Enzymeはv3.7.0が入った。&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://github.com/FormidableLabs/enzyme-matchers/tree/master/packages/jest-enzyme&#34;&gt;jest-enzyme&lt;/a&gt;も入れるとアサーションがいい感じに書けてよりいいかもしれない。&lt;/p&gt;
 
@@ -658,7 +679,7 @@ Reactコンポーネントをレンダリングして、jQueryみたいなAPIで
 
 &lt;p&gt;以上で全10回に渡るReact―Redux環境のセットアップ体験記が完結。&lt;/p&gt;
 
-&lt;p&gt;だらだら書いてるうちに、&lt;a href=&#34;https://babeljs.io/blog/2018/08/27/7.0.0&#34;&gt;Babelの7が出たり&lt;/a&gt;、&lt;a href=&#34;https://reactjs.org/docs/hooks-overview.html&#34;&gt;React Hooks&lt;/a&gt;とか&lt;a href=&#34;https://logmi.jp/tech/articles/302611&#34;&gt;React Suspense&lt;/a&gt;とかが出てきてて、また大きく変わってきそう…&lt;/p&gt;
+&lt;p&gt;だらだら書いてるうちに、&lt;a href=&#34;https://babeljs.io/blog/2018/08/27/7.0.0&#34;&gt;Babelの7が出たり&lt;/a&gt;、&lt;a href=&#34;https://reactjs.org/docs/hooks-overview.html&#34;&gt;React Hooks&lt;/a&gt;とかのReact APIの新しいのが出てきて、また大きく変わってきそう…&lt;/p&gt;
 </description>
         </item>
       
@@ -676,6 +697,8 @@ Reactコンポーネントをレンダリングして、jQueryみたいなAPIで
 (最終的な成果は&lt;a href=&#34;https://github.com/kaitoy/react-redux-scaffold&#34;&gt;GitHub&lt;/a&gt;に置いた。)&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/&#34;&gt;前回&lt;/a&gt;は&lt;a href=&#34;https://redux-saga.js.org/&#34;&gt;Redux Saga&lt;/a&gt;をセットアップした。&lt;/p&gt;
+
+&lt;p&gt;(2018/11/21更新)&lt;/p&gt;
 
 &lt;p&gt;
 
@@ -768,21 +791,38 @@ Connected React Routerには&lt;a href=&#34;https://www.npmjs.com/package/histor
 &lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add react-router-dom connected-react-router history
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;React Routerはv4.3.1、Connected React Routerはv4.3.0が入った。&lt;/p&gt;
+&lt;p&gt;React Routerはv4.3.1、Connected React Routerはv5.0.1が入った。&lt;/p&gt;
 
 &lt;h1 id=&#34;connected-react-router導入&#34;&gt;Connected React Router導入&lt;/h1&gt;
 
-&lt;p&gt;まずはConnected React Routerの&lt;a href=&#34;https://github.com/supasate/connected-react-router#usage&#34;&gt;Usage&lt;/a&gt;を参考に、ReduxのMiddlewareを追加して、historyのインスタンスをStoreとつなぐ。&lt;/p&gt;
+&lt;p&gt;まずはConnected React Routerの&lt;a href=&#34;https://github.com/supasate/connected-react-router#usage&#34;&gt;Usage&lt;/a&gt;を参考に、ReduxのReducerにrouterを追加し、MiddlewareにrouterMiddlewareを追加して、historyのインスタンスをStoreとつなぐ。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/reducers/rootReducer.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import { combineReducers } from &#39;redux&#39;;
++import { connectRouter } from &#39;connected-react-router&#39;;
+ import * as reducers from &#39;./reducers&#39;;
+
+-const rootReducer = combineReducers(reducers);
+-export default rootReducer;
++const createRootReducer = (history) =&amp;gt;
++  combineReducers({
++    router: connectRouter(history),
++    ...reducers,
++  });
++export default createRootReducer;
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;&lt;code&gt;src/configureStore.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import { createStore, applyMiddleware } from &#39;redux&#39;;
  import createSagaMiddleware from &#39;redux-saga&#39;;
 +import { createBrowserHistory } from &#39;history&#39;;
-+import { connectRouter, routerMiddleware } from &#39;connected-react-router&#39;;
++import { routerMiddleware } from &#39;connected-react-router&#39;;
  import { logger } from &#39;redux-logger&#39;;
  import rootSaga from &#39;./sagas/rootSaga&#39;;
- import rootReducer from &#39;./reducers/rootReducer&#39;;
+-import rootReducer from &#39;./reducers/rootReducer&#39;;
++import createRootReducer from &#39;./reducers/rootReducer&#39;;
 
  const sagaMiddleware = createSagaMiddleware();
 +export const history = createBrowserHistory();
@@ -797,7 +837,7 @@ Connected React Routerには&lt;a href=&#34;https://www.npmjs.com/package/histor
 
    const store = createStore(
 -    rootReducer,
-+    connectRouter(history)(rootReducer),
++    createRootReducer(history),
      initialState,
      applyMiddleware(...middlewares),
    );
@@ -810,7 +850,7 @@ Connected React Routerには&lt;a href=&#34;https://www.npmjs.com/package/histor
 
 &lt;p&gt;で、Connected React RouterのConnectedRouterコンポーネントを&lt;a href=&#34;https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/#provider&#34;&gt;React ReduxのProvider&lt;/a&gt;の下に追加する。&lt;/p&gt;
 
-&lt;p&gt;src/index.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/index.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
  import ReactDOM from &#39;react-dom&#39;;
@@ -819,21 +859,18 @@ Connected React Routerには&lt;a href=&#34;https://www.npmjs.com/package/histor
  import App from &#39;./components/App&#39;;
 -import configureStore from &#39;./configureStore&#39;;
 +import configureStore, { history } from &#39;./configureStore&#39;;
- import &#39;./fonts.css&#39;;
 
  const store = configureStore();
  const root = document.getElementById(&#39;root&#39;);
 
  if (root) {
    ReactDOM.render(
--    &amp;lt;Provider store={store}&amp;gt;
+     &amp;lt;Provider store={store}&amp;gt;
 -      &amp;lt;App /&amp;gt;
--    &amp;lt;/Provider&amp;gt;,
-+    &amp;lt;Provider store={store}&amp;gt;
 +      &amp;lt;ConnectedRouter history={history}&amp;gt;
 +        &amp;lt;App /&amp;gt;
 +      &amp;lt;/ConnectedRouter&amp;gt;
-+    &amp;lt;/Provider&amp;gt;,
+     &amp;lt;/Provider&amp;gt;,
      root,
    );
  }
@@ -848,11 +885,12 @@ Connected React Routerには&lt;a href=&#34;https://www.npmjs.com/package/histor
 
 &lt;p&gt;まず、App.jsxをHome.jsxにリネームして、Homeコンポーネントに変える。&lt;/p&gt;
 
-&lt;p&gt;&lt;code&gt;components/Home.jsx&lt;/code&gt;:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/Home.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
  import styled from &#39;styled-components&#39;;
  import HogeButton from &#39;../containers/HogeButton&#39;;
+-import Fonts from &#39;../fonts&#39;;
 
  const Wrapper = styled.div`
    font-size: 5rem;
@@ -864,6 +902,7 @@ Connected React Routerには&lt;a href=&#34;https://www.npmjs.com/package/histor
      &amp;lt;HogeButton variant=&amp;quot;contained&amp;quot;&amp;gt;
        HOGE
      &amp;lt;/HogeButton&amp;gt;
+-    &amp;lt;Fonts /&amp;gt;
    &amp;lt;/Wrapper&amp;gt;
  );
 
@@ -875,16 +914,18 @@ Connected React Routerには&lt;a href=&#34;https://www.npmjs.com/package/histor
 
 &lt;p&gt;で、App.jsxはルーティングを定義するコンポーネントとして作り直す。&lt;/p&gt;
 
-&lt;p&gt;components/App.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/App.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import React from &#39;react&#39;;
 import { Route, Redirect } from &#39;react-router-dom&#39;;
 import Home from &#39;./Home&#39;;
+import Fonts from &#39;../fonts&#39;;
 
-const App = (): Node =&amp;gt; (
+const App = () =&amp;gt; (
   &amp;lt;div&amp;gt;
     &amp;lt;Route exact path=&amp;quot;/&amp;quot; render={() =&amp;gt; &amp;lt;Redirect to=&amp;quot;/home&amp;quot; /&amp;gt;} /&amp;gt;
     &amp;lt;Route exact path=&amp;quot;/home&amp;quot; component={Home} /&amp;gt;
+    &amp;lt;Fonts /&amp;gt;
   &amp;lt;/div&amp;gt;
 );
 
@@ -938,6 +979,8 @@ export default App;
 (最終的な成果は&lt;a href=&#34;https://github.com/kaitoy/react-redux-scaffold&#34;&gt;GitHub&lt;/a&gt;に置いた。)&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/&#34;&gt;前回&lt;/a&gt;は&lt;a href=&#34;https://redux.js.org/basics/usagewithreact&#34;&gt;React Redux&lt;/a&gt;をセットアップした。&lt;/p&gt;
+
+&lt;p&gt;(2018/11/21更新)&lt;/p&gt;
 
 &lt;p&gt;
 
@@ -1013,7 +1056,7 @@ Middlewareの仕組みについては&lt;a href=&#34;https://qiita.com/pirosikic
 &lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add redux-saga
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;v0.16.0が入った。&lt;/p&gt;
+&lt;p&gt;v0.16.2が入った。&lt;/p&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
@@ -1260,6 +1303,8 @@ export default function* rootSaga() {
 
 &lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/09/26/creating-react-redux-app-from-scratch-06/&#34;&gt;前回&lt;/a&gt;はReduxをセットアップした。&lt;/p&gt;
 
+&lt;p&gt;(2018/11/21更新)&lt;/p&gt;
+
 &lt;p&gt;
 
 
@@ -1285,7 +1330,7 @@ export default function* rootSaga() {
 &lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add react-redux
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;v5.0.7が入った。&lt;/p&gt;
+&lt;p&gt;v5.1.1が入った。&lt;/p&gt;
 
 &lt;h1 id=&#34;presentational-components-と-container-components&#34;&gt;Presentational Components と Container Components&lt;/h1&gt;
 
@@ -1482,12 +1527,13 @@ export default HogeButton;
 
 &lt;p&gt;作ったHogeButtonは、普通のコンポーネントと同じように使える。&lt;/p&gt;
 
-&lt;p&gt;components/App.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/App.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
  import styled from &#39;styled-components&#39;;
 -import Button from &#39;@material-ui/core/Button&#39;;
 +import HogeButton from &#39;../containers/HogeButton&#39;;
+ import Fonts from &#39;../fonts&#39;;
 
  const Wrapper = styled.div`
    font-size: 5rem;
@@ -1500,6 +1546,7 @@ export default HogeButton;
        HOGE
 -    &amp;lt;/Button&amp;gt;
 +    &amp;lt;/HogeButton&amp;gt;
+     &amp;lt;Fonts /&amp;gt;
    &amp;lt;/Wrapper&amp;gt;
  );
 
@@ -1517,14 +1564,13 @@ export default HogeButton;
 &lt;p&gt;Providerの子コンポーネントはStoreにアクセスして&lt;code&gt;connect()&lt;/code&gt;を使えるようになる。
 ざっくり全体をProviderで囲ってやるのがいい。&lt;/p&gt;
 
-&lt;p&gt;src/index.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/index.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
  import ReactDOM from &#39;react-dom&#39;;
 +import { Provider } from &#39;react-redux&#39;;
  import App from &#39;./components/App&#39;;
 +import configureStore from &#39;./configureStore&#39;;
- import &#39;./fonts.css&#39;;
 
 +const store = configureStore();
  const root = document.getElementById(&#39;root&#39;);
@@ -1560,6 +1606,8 @@ export default HogeButton;
 (最終的な成果は&lt;a href=&#34;https://github.com/kaitoy/react-redux-scaffold&#34;&gt;GitHub&lt;/a&gt;に置いた。)&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/09/06/creating-react-redux-app-from-scratch-05/&#34;&gt;前回&lt;/a&gt;はMaterial-UIをセットアップした。&lt;/p&gt;
+
+&lt;p&gt;(2018/11/21更新)&lt;/p&gt;
 
 &lt;p&gt;
 
@@ -1613,7 +1661,7 @@ ReactコンポーネントのイベントハンドラからActionオブジェク
 &lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add redux
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;Redux v4.0.0が入った。&lt;/p&gt;
+&lt;p&gt;Redux v4.0.1が入った。&lt;/p&gt;
 
 &lt;p&gt;以降、現時点で唯一のUIコンポーネントであるHOGEボタンの状態管理を実装してみる。&lt;/p&gt;
 
@@ -1893,6 +1941,8 @@ store.dispatch(hogeButtonClicked()); // =&amp;gt; { hoge: {clicked: true} }
 
 &lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/08/29/creating-react-redux-app-from-scratch-04/&#34;&gt;前回&lt;/a&gt;はCSS周りの処理系をセットアップした。&lt;/p&gt;
 
+&lt;p&gt;(2018/11/21更新)&lt;/p&gt;
+
 &lt;p&gt;
 
 
@@ -1937,13 +1987,13 @@ store.dispatch(hogeButtonClicked()); // =&amp;gt; { hoge: {clicked: true} }
 &lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add @material-ui/core
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;v1.4.1が入った。&lt;/p&gt;
+&lt;p&gt;v3.5.1が入った。&lt;/p&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
 &lt;p&gt;あとはパッケージに入っている色々なコンポーネントをMaterial-UIのドキュメント見ながら使えばいいだけ。&lt;/p&gt;
 
-&lt;p&gt;components/App.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/App.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
  import styled from &#39;styled-components&#39;;
@@ -1998,6 +2048,8 @@ Material-UIは&lt;a href=&#34;https://fonts.google.com/specimen/Roboto&#34;&gt;R
 
 &lt;p&gt;webpackのローダ設定は以下のようなのを追加すればいい。&lt;/p&gt;
 
+&lt;p&gt;&lt;code&gt;webpack.common.js&lt;/code&gt;:&lt;/p&gt;
+
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt;(前略)
    module: {
      rules: [
@@ -2022,21 +2074,21 @@ Material-UIは&lt;a href=&#34;https://fonts.google.com/specimen/Roboto&#34;&gt;R
 &lt;p&gt;あとは、typeface-robotoパッケージ内のフォントファイルを指すようにCSSに@font-faceを書けばいい。
 例えば、weightが300のWOFFファイルを読むなら以下のような感じ。&lt;/p&gt;
 
-&lt;p&gt;src/fonts.css:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/fonts.css&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-css&#34;&gt;@font-face {
   font-family: &#39;Roboto&#39;;
   font-style: normal;
   font-display: swap;
   font-weight: 300;
-  src: local(&#39;Roboto Light &#39;), local(&#39;Roboto-Light&#39;),
+  src: local(&#39;Roboto Light&#39;), local(&#39;Roboto-Light&#39;),
     url(&#39;../node_modules/typeface-roboto/files/roboto-latin-300.woff&#39;) format(&#39;woff&#39;);
 }
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;これをどこかのJavaScriptでインポートしてやればいい。&lt;/p&gt;
 
-&lt;p&gt;src/index.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/index.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
  import ReactDOM from &#39;react-dom&#39;;
@@ -2068,6 +2120,8 @@ Material-UIは&lt;a href=&#34;https://fonts.google.com/specimen/Roboto&#34;&gt;R
 
 &lt;p&gt;webpackのローダ設定は以下のようなのを追加すればいい。&lt;/p&gt;
 
+&lt;p&gt;&lt;code&gt;webpack.common.js&lt;/code&gt;:&lt;/p&gt;
+
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt;(前略)
    module: {
      rules: [
@@ -2086,14 +2140,14 @@ Material-UIは&lt;a href=&#34;https://fonts.google.com/specimen/Roboto&#34;&gt;R
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
-&lt;p&gt;で、&lt;a href=&#34;https://github.com/styled-components/styled-components/issues/233&#34;&gt;ここ&lt;/a&gt;にある通り、styled-componentsの&lt;a href=&#34;https://www.styled-components.com/docs/api#injectglobal&#34;&gt;injectGlobal&lt;/a&gt;というAPIを使って、以下のようにフォントファイルを読み込む。&lt;/p&gt;
+&lt;p&gt;で、&lt;a href=&#34;https://github.com/styled-components/styled-components/issues/233&#34;&gt;ここ&lt;/a&gt;を参考にしてフォントファイルを読みこむ。injectGlobalというstyled-componentsのAPIを使えとあるけど、injectGlobalはstyled-components v4で&lt;a href=&#34;https://www.styled-components.com/docs/api#createglobalstyle&#34;&gt;createGlobalStyle&lt;/a&gt;に代わったので、以下のように書く。&lt;/p&gt;
 
-&lt;p&gt;src/font.js:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/fonts.js&lt;/code&gt;:&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import { injectGlobal } from &#39;styled-components&#39;;
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import { createGlobalStyle } from &#39;styled-components&#39;;
 import roboto300 from &#39;../node_modules/typeface-roboto/files/roboto-latin-300.woff&#39;;
 
-injectGlobal`
+const Fonts = createGlobalStyle`
   /* roboto-300normal - latin */
   @font-face {
     font-family: &#39;Roboto&#39;;
@@ -2106,27 +2160,33 @@ injectGlobal`
       url(&#39;${roboto300}&#39;) format(&#39;woff&#39;);
   }
 `;
+
+export default Fonts;
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;p&gt;ここでexportされる&lt;code&gt;Fonts&lt;/code&gt;はReactコンポーネントになっているので、それをどこかのJSXに追加してやればいい。&lt;/p&gt;
 
-&lt;p&gt;あとはこれをどこかのJavaScriptでインポートしてやればいい。&lt;/p&gt;
-
-&lt;p&gt;src/index.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/App.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
- import ReactDOM from &#39;react-dom&#39;;
- import App from &#39;./components/App&#39;;
-+import &#39;./fonts&#39;;
+ import styled from &#39;styled-components&#39;;
+ import Button from &#39;@material-ui/core/Button&#39;;
++import Fonts from &#39;../fonts&#39;;
 
- const root = document.getElementById(&#39;root&#39;);
+ const Wrapper = styled.div`
+   font-size: 5rem;
+ `;
 
- if (root) {
-   ReactDOM.render(
-     &amp;lt;App /&amp;gt;,
-     root,
-   );
- }
+ const App = () =&amp;gt; (
+   &amp;lt;Wrapper&amp;gt;
+     &amp;lt;Button variant=&amp;quot;contained&amp;quot;&amp;gt;
+       HOGE
+     &amp;lt;/Button&amp;gt;
++    &amp;lt;Fonts /&amp;gt;
+   &amp;lt;/Wrapper&amp;gt;
+ );
+
+ export default App;
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
@@ -2149,6 +2209,8 @@ injectGlobal`
 (最終的な成果は&lt;a href=&#34;https://github.com/kaitoy/react-redux-scaffold&#34;&gt;GitHub&lt;/a&gt;に置いた。)&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/&#34;&gt;前回&lt;/a&gt;はPrettierとESLintをセットアップした。&lt;/p&gt;
+
+&lt;p&gt;(2018/11/21更新)&lt;/p&gt;
 
 &lt;p&gt;
 
@@ -2219,7 +2281,7 @@ style-loaderは、読み込んだCSSを&lt;code&gt;&amp;lt;style&amp;gt;&lt;/cod
 
 &lt;p&gt;PostCSSとstylelintの設定は、それぞれpostcss.config.jsとstylelint.config.jsを書いてプロジェクトルートに置けばいい。&lt;/p&gt;
 
-&lt;p&gt;postcss.config.js:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;postcss.config.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;module.exports = {
   plugins: {
@@ -2232,7 +2294,7 @@ style-loaderは、読み込んだCSSを&lt;code&gt;&amp;lt;style&amp;gt;&lt;/cod
 };
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;stylelint.config.js:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;stylelint.config.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;module.exports = {
   extends: [&#39;stylelint-config-standard&#39;, &#39;stylelint-config-prettier&#39;],
@@ -2247,7 +2309,7 @@ style-loaderは、読み込んだCSSを&lt;code&gt;&amp;lt;style&amp;gt;&lt;/cod
 
 &lt;p&gt;webpackにもローダの設定を追加する。&lt;/p&gt;
 
-&lt;p&gt;webpack.common.js:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;webpack.common.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; (前略)
        {
@@ -2280,14 +2342,14 @@ style-loaderは、読み込んだCSSを&lt;code&gt;&amp;lt;style&amp;gt;&lt;/cod
 
 &lt;p&gt;実際のCSSは普通に書いて、JavaScriptからimportしてやればいい。&lt;/p&gt;
 
-&lt;p&gt;components/App.css:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/App.css&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-css&#34;&gt;.normal {
   font-size: 5rem;
 }
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;components/App.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/App.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
 +import &#39;./App.css&#39;
@@ -2330,11 +2392,19 @@ UIコンポーネントの構造とスタイルの構造を1対1対応させる�
 
 &lt;p&gt;Babelの設定を修正してインストールしたbabel-plugin-react-css-modulesを使うようにする。&lt;/p&gt;
 
-&lt;p&gt;.babelrc&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;.babelrc&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; {
--  &amp;quot;presets&amp;quot;: [&amp;quot;env&amp;quot;, &amp;quot;react&amp;quot;]
-+  &amp;quot;presets&amp;quot;: [&amp;quot;env&amp;quot;, &amp;quot;react&amp;quot;],
+   &amp;quot;presets&amp;quot;: [
+     [
+       &amp;quot;@babel/preset-env&amp;quot;,
+       {
+         &amp;quot;useBuiltIns&amp;quot;: &amp;quot;usage&amp;quot;
+       }
+     ],
+     &amp;quot;@babel/preset-react&amp;quot;
+-  ]
++  ],
 +  &amp;quot;plugins&amp;quot;: [&amp;quot;react-css-modules&amp;quot;]
  }
 &lt;/code&gt;&lt;/pre&gt;
@@ -2343,7 +2413,7 @@ UIコンポーネントの構造とスタイルの構造を1対1対応させる�
 
 &lt;p&gt;webpackのcss-loaderのオプションを追加して、CSS Modulesを有効にする。&lt;/p&gt;
 
-&lt;p&gt;webpack.common.js:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;webpack.common.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; (前略)
        {
@@ -2372,7 +2442,7 @@ UIコンポーネントの構造とスタイルの構造を1対1対応させる�
 
 &lt;p&gt;あとは、コンポーネントの方で&lt;code&gt;className&lt;/code&gt;プロパティを&lt;code&gt;styleName&lt;/code&gt;プロパティに変えればいい。&lt;/p&gt;
 
-&lt;p&gt;components/App.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/App.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
  import &#39;./App.css&#39;
@@ -2415,17 +2485,25 @@ SassやPostCSSなど既存のCSSエコシステムを切り捨てているのと
 yarn add -D babel-plugin-styled-components
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;styled-componentsはv3.4.4が入った。&lt;/p&gt;
+&lt;p&gt;styled-componentsはv4.1.1が入った。&lt;/p&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
 &lt;p&gt;Babelの設定は以下のように修正する。&lt;/p&gt;
 
-&lt;p&gt;.babelrc&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;.babelrc&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; {
--  &amp;quot;presets&amp;quot;: [&amp;quot;env&amp;quot;, &amp;quot;react&amp;quot;]
-+  &amp;quot;presets&amp;quot;: [&amp;quot;env&amp;quot;, &amp;quot;react&amp;quot;],
+   &amp;quot;presets&amp;quot;: [
+     [
+       &amp;quot;@babel/preset-env&amp;quot;,
+       {
+         &amp;quot;useBuiltIns&amp;quot;: &amp;quot;usage&amp;quot;
+       }
+     ],
+     &amp;quot;@babel/preset-react&amp;quot;
+-  ]
++  ],
 +  &amp;quot;plugins&amp;quot;: [&amp;quot;styled-components&amp;quot;]
  }
 &lt;/code&gt;&lt;/pre&gt;
@@ -2434,7 +2512,7 @@ yarn add -D babel-plugin-styled-components
 
 &lt;p&gt;App.jsxは、styled-componentsのstyledというAPIを使ってWrapperコンポーネント(スタイル付きdiv)を定義し、これをdivと置き換える。&lt;/p&gt;
 
-&lt;p&gt;components/App.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/App.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
 +import styled from &#39;styled-components&#39;;
@@ -2480,7 +2558,7 @@ JavaScriptの構文としては単なる文字列なので、変数を使った�
 
 &lt;p&gt;stylelintの設定は以下。&lt;/p&gt;
 
-&lt;p&gt;stylelint.config.js:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;stylelint.config.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;module.exports = {
   processors: [&#39;stylelint-processor-styled-components&#39;],
@@ -2492,7 +2570,7 @@ JavaScriptの構文としては単なる文字列なので、変数を使った�
 
 &lt;p&gt;webpackの設定にstylelint-custom-processor-loaderの設定を追加する。&lt;/p&gt;
 
-&lt;p&gt;webpack.common.js:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;webpack.common.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; (前略)
        {
@@ -2531,6 +2609,8 @@ JavaScriptの構文としては単なる文字列なので、変数を使った�
 (最終的な成果は&lt;a href=&#34;https://github.com/kaitoy/react-redux-scaffold&#34;&gt;GitHub&lt;/a&gt;に置いた。)&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/08/22/creating-react-redux-app-from-scratch-02/&#34;&gt;前回&lt;/a&gt;はReactをセットアップした。&lt;/p&gt;
+
+&lt;p&gt;(2018/11/21更新)&lt;/p&gt;
 
 &lt;p&gt;
 
@@ -2579,13 +2659,13 @@ JavaScriptの構文としては単なる文字列なので、変数を使った�
 &lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D prettier
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;v1.14.0が入った。&lt;/p&gt;
+&lt;p&gt;v1.15.2が入った。&lt;/p&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://prettier.io/docs/en/options.html&#34;&gt;設定&lt;/a&gt;は&lt;code&gt;prettier.config.js&lt;/code&gt;という&lt;a href=&#34;https://prettier.io/docs/en/configuration.html&#34;&gt;ファイル&lt;/a&gt;を書いてプロジェクトルートに置けばいい。&lt;/p&gt;
 
-&lt;p&gt;prettier.config.js:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;prettier.config.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;module.exports = {
   printWidth: 100, // 行の最大長
@@ -2599,7 +2679,7 @@ JavaScriptの構文としては単なる文字列なので、変数を使った�
 
 &lt;p&gt;また、フォーマット対象外のファイルを指定するファイルである&lt;code&gt;.prettierignore&lt;/code&gt;をプロジェクトルートに置く。&lt;/p&gt;
 
-&lt;p&gt;.prettierignore:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;.prettierignore&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;node_modules/
 dist/
@@ -2614,7 +2694,7 @@ dist/
 
 &lt;p&gt;最後に、npmスクリプトを書く。&lt;/p&gt;
 
-&lt;p&gt;package.json:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;package.json&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; (前略)
    &amp;quot;scripts&amp;quot;: {
@@ -2666,7 +2746,7 @@ dist/
 
 &lt;p&gt;&lt;a href=&#34;https://eslint.org/docs/user-guide/configuring&#34;&gt;ESlintの設定&lt;/a&gt;は、設定ファイルである&lt;code&gt;.eslintrc.js&lt;/code&gt;をプロジェクトルートに置けばいい。&lt;/p&gt;
 
-&lt;p&gt;.eslintrc.js:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;.eslintrc.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;module.exports = {
   env: {
@@ -2686,7 +2766,7 @@ dist/
 
 &lt;p&gt;また、&lt;a href=&#34;https://eslint.org/docs/user-guide/configuring#ignoring-files-and-directories&#34;&gt;リンティング対象外のファイルを指定するファイル&lt;/a&gt;をプロジェクトルートに置く。&lt;/p&gt;
 
-&lt;p&gt;.eslintignore:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;.eslintignore&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;node_modules/*
 dist/*
@@ -2701,7 +2781,7 @@ dist/*
 
 &lt;p&gt;webpackからESLintを実行し、エラーがなくならない限りビルド成功できないようにする。&lt;/p&gt;
 
-&lt;p&gt;webpack.common.js:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;webpack.common.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; (前略)
    module: {
@@ -2730,7 +2810,7 @@ dist/*
 
 &lt;p&gt;あとはnpmスクリプト書くだけ。&lt;/p&gt;
 
-&lt;p&gt;package.json:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;package.json&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; (前略)
    &amp;quot;scripts&amp;quot;: {
@@ -2766,6 +2846,8 @@ dist/*
 (最終的な成果は&lt;a href=&#34;https://github.com/kaitoy/react-redux-scaffold&#34;&gt;GitHub&lt;/a&gt;に置いた。)&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/08/19/creating-react-redux-app-from-scratch-01/&#34;&gt;前回&lt;/a&gt;はNode.jsとYarnとBabelとwebpackをセットアップした。&lt;/p&gt;
+
+&lt;p&gt;(2018/11/21更新)&lt;/p&gt;
 
 &lt;p&gt;
 
@@ -2895,7 +2977,7 @@ Welcome.propTypes = {
 &lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add react react-dom prop-types
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;Reactはv16.4.1が入った。&lt;/p&gt;
+&lt;p&gt;Reactはv16.6.3が入った。&lt;/p&gt;
 
 &lt;h1 id=&#34;ソース構成&#34;&gt;ソース構成&lt;/h1&gt;
 
@@ -2933,7 +3015,7 @@ Welcome.propTypes = {
 
 &lt;p&gt;最初のReactコンポーネントとして、適当なものを作る。&lt;/p&gt;
 
-&lt;p&gt;components/App.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/App.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import React from &#39;react&#39;;
 
@@ -2948,7 +3030,7 @@ export default App;
 
 &lt;p&gt;で、これを&lt;code&gt;index.jsx&lt;/code&gt;でインポートしてレンダリングしてやる。&lt;/p&gt;
 
-&lt;p&gt;src/index.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/index.jsx&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import React from &#39;react&#39;;
 import ReactDOM from &#39;react-dom&#39;;
@@ -2979,7 +3061,7 @@ if (root) {
 
 &lt;p&gt;内容は以下。&lt;/p&gt;
 
-&lt;p&gt;public/index.html:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;public/index.html&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-html&#34;&gt;&amp;lt;!doctype html&amp;gt;
 &amp;lt;html lang=&amp;quot;en&amp;quot;&amp;gt;
@@ -3040,6 +3122,8 @@ if (root) {
 今一番人気のフロントエンドフレームワークで、&lt;a href=&#34;https://www.kaitoy.xyz/2015/12/21/hello-react/&#34;&gt;昔触ったこともある&lt;/a&gt;ので。&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/08/16/chronicle-of-frontend-2018/&#34;&gt;前回の記事でReactが生まれた経緯を学んだ&lt;/a&gt;ので、今回から実習に入る。&lt;/p&gt;
+
+&lt;p&gt;(2018/11/21更新)&lt;/p&gt;
 
 &lt;p&gt;
 
@@ -3129,7 +3213,7 @@ Done in 40.38s.
 
 &lt;p&gt;できたのがこれ。&lt;/p&gt;
 
-&lt;p&gt;package.json:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;package.json&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{
   &amp;quot;name&amp;quot;: &amp;quot;react-redux-scaffold&amp;quot;,
@@ -3152,31 +3236,32 @@ Done in 40.38s.
 
 &lt;h2 id=&#34;babel&#34;&gt;Babel&lt;/h2&gt;
 
-&lt;p&gt;トランスパイラはデファクトスタンダードの&lt;a href=&#34;https://babeljs.io/&#34;&gt;Babel&lt;/a&gt;を使う。&lt;/p&gt;
+&lt;p&gt;トランスパイラはデファクトスタンダードの&lt;a href=&#34;https://babeljs.io/&#34;&gt;Babel&lt;/a&gt;を使う。
+&lt;a href=&#34;https://babeljs.io/blog/2018/08/27/7.0.0&#34;&gt;2018年8月&lt;/a&gt;に出たv７。&lt;/p&gt;
 
 &lt;p&gt;Babelのプラグインはとりあえず最低限入れるとして、以下のnpmパッケージをプロジェクトにインストールする。&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;a href=&#34;https://babeljs.io/docs/en/babel-core&#34;&gt;babel-core&lt;/a&gt;: Babel本体。&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://babeljs.io/docs/en/babel-preset-react&#34;&gt;babel-preset-react&lt;/a&gt;: Reactの&lt;a href=&#34;https://reactjs.org/docs/introducing-jsx.html&#34;&gt;JSX&lt;/a&gt;とか&lt;a href=&#34;https://flow.org/&#34;&gt;Flow&lt;/a&gt;とかを処理するプラグイン集。&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://babeljs.io/docs/en/babel-preset-env&#34;&gt;babel-preset-env&lt;/a&gt;: ES 2015+をES 5にトランスパイルするプラグイン集。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://babeljs.io/docs/en/babel-core&#34;&gt;@babel/core&lt;/a&gt;: Babel本体。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://babeljs.io/docs/en/babel-preset-react&#34;&gt;@babel/preset-react&lt;/a&gt;: Reactの&lt;a href=&#34;https://reactjs.org/docs/introducing-jsx.html&#34;&gt;JSX&lt;/a&gt;とか&lt;a href=&#34;https://flow.org/&#34;&gt;Flow&lt;/a&gt;とかを処理するプラグイン集。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://babeljs.io/docs/en/babel-preset-env&#34;&gt;@babel/preset-env&lt;/a&gt;: ES 2015+をES 5にトランスパイルするプラグイン集。&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;これらのパッケージは実行時には要らないので&lt;code&gt;yarn add -D&lt;/code&gt;コマンドで開発時依存としてインストールする。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D babel-core babel-preset-react babel-preset-env
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D @babel/core @babel/preset-react @babel/preset-env
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;Babelは6.26.3が入った。&lt;/p&gt;
+&lt;p&gt;Babelはv7.1.6が入った。&lt;/p&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
 &lt;p&gt;で、Babelの&lt;a href=&#34;https://babeljs.io/docs/en/babelrc&#34;&gt;設定ファイル&lt;/a&gt;を書いてプロジェクトルートに置いておく。&lt;/p&gt;
 
-&lt;p&gt;.babelrc:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;.babelrc&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{
-  &amp;quot;presets&amp;quot;: [&amp;quot;env&amp;quot;, &amp;quot;react&amp;quot;]
+  &amp;quot;presets&amp;quot;: [&amp;quot;@babel/preset-env&amp;quot;, &amp;quot;@babel/preset-react&amp;quot;]
 }
 &lt;/code&gt;&lt;/pre&gt;
 
@@ -3187,10 +3272,31 @@ Done in 40.38s.
 
 &lt;p&gt;少なくとも後で導入する&lt;a href=&#34;https://redux-saga.js.org/&#34;&gt;redux-saga&lt;/a&gt;が使う&lt;a href=&#34;https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Statements/function*&#34;&gt;ジェネレータ&lt;/a&gt;がPolyfillを必要とする(ないと&lt;code&gt;ReferenceError: regeneratorRuntime is not defined&lt;/code&gt;というエラーが出る)ので、今の時点で入れておくことにする。&lt;/p&gt;
 
-&lt;p&gt;Polyfillの実装はいくつかあるけど、定番っぽい&lt;a href=&#34;https://babeljs.io/docs/en/babel-polyfill/&#34;&gt;babel-polyfill&lt;/a&gt;を使う。
+&lt;p&gt;Polyfillの実装はいくつかあるけど、定番っぽい&lt;a href=&#34;https://babeljs.io/docs/en/babel-polyfill/&#34;&gt;@babel/polyfill&lt;/a&gt;を使う。
 こちらは実行時依存としてインストールする。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add babel-polyfill
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add @babel/polyfill
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;@babel/polyfill&lt;/code&gt;のアプリへのロード方法は&lt;a href=&#34;https://babeljs.io/docs/en/babel-polyfill#usage-in-node-browserify-webpack&#34;&gt;いくつかある&lt;/a&gt;けど、今回使うwebpack(後述)の場合、&lt;code&gt;useBuiltIns: &#39;usage&#39;&lt;/code&gt;というオプションを使うのがよさそう。
+これを使うと、ソースに&lt;code&gt;@babel/polyfill&lt;/code&gt;のimportを書かなくても、必要に応じて必要なPolifillをロードしてくれる。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;.babelrc&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; {
+-  &amp;quot;presets&amp;quot;: [&amp;quot;@babel/preset-env&amp;quot;, &amp;quot;@babel/preset-react&amp;quot;]
++  &amp;quot;presets&amp;quot;: [
++    [
++      &amp;quot;@babel/preset-env&amp;quot;,
++      {
++        &amp;quot;useBuiltIns&amp;quot;: &amp;quot;usage&amp;quot;
++      }
++    ],
++    &amp;quot;@babel/preset-react&amp;quot;
++  ]
+ }
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;h2 id=&#34;webpack&#34;&gt;webpack&lt;/h2&gt;
@@ -3208,7 +3314,7 @@ Done in 40.38s.
 &lt;li&gt;webpack: webpack本体。&lt;/li&gt;
 &lt;li&gt;webpack-cli: webpackのコマンドラインインターフェース。&lt;/li&gt;
 &lt;li&gt;&lt;a href=&#34;https://github.com/webpack/webpack-dev-server&#34;&gt;webpack-dev-server&lt;/a&gt;: webpackから起動できる開発用 HTTP サーバ。ライブリロードしてくれる。(&lt;a href=&#34;https://github.com/webpack-contrib/webpack-serve&#34;&gt;webpack-serve&lt;/a&gt;の方がモダンではある。)&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://webpack.js.org/loaders/babel-loader/&#34;&gt;babel-loader&lt;/a&gt;: Babelを実行してくれるやつ。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://webpack.js.org/loaders/babel-loader/&#34;&gt;babel-loader&lt;/a&gt;: Babelを実行してくれるやつ。Babel 7で使うにはv8以降である必要がある。&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
@@ -3216,7 +3322,7 @@ Done in 40.38s.
 &lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D webpack webpack-cli webpack-dev-server babel-loader
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;webpackはv4.16.0が入った。&lt;/p&gt;
+&lt;p&gt;webpackはv4.26.0が入った。&lt;/p&gt;
 
 &lt;h3 id=&#34;webpack設定ファイル&#34;&gt;webpack設定ファイル&lt;/h3&gt;
 
@@ -3226,14 +3332,14 @@ Done in 40.38s.
 
 &lt;p&gt;とりあえず適当に書くとこんな感じ。&lt;/p&gt;
 
-&lt;p&gt;webpack.config.js:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;webpack.config.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;const path = require(&#39;path&#39;);
 const packageJson = require(&#39;./package.json&#39;);
 
 module.exports = {
   mode: &#39;development&#39;,
-  entry: [&#39;babel-polyfill&#39;, `./${packageJson.main}`],
+  entry: [`./${packageJson.main}`],
   output: {
     path: path.resolve(__dirname, &#39;dist&#39;),
     filename: &#39;bundle.js&#39;,
@@ -3254,18 +3360,19 @@ module.exports = {
 };
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;この設定の意味は、&lt;code&gt;./src/index.jsx&lt;/code&gt;を読んで、&lt;code&gt;.js&lt;/code&gt;か&lt;code&gt;.jsx&lt;/code&gt;を拡張子としたファイルとかモジュールをロードするコードがあったら、babel-loaderでBabelを呼んでトランスパイルして、バンドルした結果は&lt;code&gt;&amp;lt;プロジェクトルート&amp;gt;/dist/bundle.js&lt;/code&gt;に吐き出す。
+&lt;p&gt;この設定の意味は、&lt;code&gt;entry&lt;/code&gt;に指定された&lt;code&gt;./src/index.jsx&lt;/code&gt;を読んで、&lt;code&gt;.js&lt;/code&gt;か&lt;code&gt;.jsx&lt;/code&gt;を拡張子としたモジュールファイルやノードモジュールをロードするコードがあったら、babel-loaderでBabelを呼んでトランスパイルして、バンドルした結果は&lt;code&gt;&amp;lt;プロジェクトルート&amp;gt;/dist/bundle.js&lt;/code&gt;に吐き出す。
 というだけ。
 (&lt;a href=&#34;https://nodejs.org/docs/latest/api/modules.html#modules_dirname&#34;&gt;__dirname&lt;/a&gt;はNode.jsが値を入れてくれる変数で、webpack.config.jsのあるディレクトリの絶対パスが入ってる。)&lt;/p&gt;
 
-&lt;p&gt;ファイルをロードするコードというのは、&lt;code&gt;import App from &#39;./components/App&#39;;&lt;/code&gt;みたいなやつ。
+&lt;p&gt;モジュールファイルをロードするコードというのは、&lt;code&gt;import App from &#39;./components/App&#39;;&lt;/code&gt;みたいなやつ。
 webpackはこのコードを読んだら、&lt;code&gt;./components&lt;/code&gt;ディレクトリのなかを見て、&lt;code&gt;App&lt;/code&gt;か&lt;code&gt;App.js&lt;/code&gt;か&lt;code&gt;App.jsx&lt;/code&gt;というファイルを探してロードする。
-また、モジュールをロードするコードというのは&lt;code&gt;import React from &#39;react&#39;;&lt;/code&gt;みたいなやつで、webpackはこのコードを読んだら、プロジェクトの&lt;code&gt;node_modules/react/package.json&lt;/code&gt;の&lt;code&gt;main&lt;/code&gt;プロパティの値に書いてあるファイルをロードする。
-という挙動が上記webpack.config.jsの&lt;code&gt;resolve&lt;/code&gt;に書いてあって、その詳細は&lt;a href=&#34;https://webpack.js.org/concepts/module-resolution/&#34;&gt;公式のドキュメントのModule Resolution&lt;/a&gt;に書いてある。&lt;/p&gt;
+また、ノードモジュールをロードするコードというのは&lt;code&gt;import React from &#39;react&#39;;&lt;/code&gt;みたいなやつで、webpackはこのコードを読んだら、プロジェクトの&lt;code&gt;node_modules/react/package.json&lt;/code&gt;の&lt;code&gt;main&lt;/code&gt;プロパティの値に書いてあるファイルをロードする。
+という挙動が上記webpack.config.jsの&lt;code&gt;resolve&lt;/code&gt;に定義してある。
+(モジュールロードの詳細は&lt;a href=&#34;https://webpack.js.org/concepts/module-resolution/&#34;&gt;公式のドキュメントのModule Resolution&lt;/a&gt;に書いてある。)&lt;/p&gt;
 
-&lt;p&gt;webpack.config.jsの&lt;code&gt;entry&lt;/code&gt;には、最初に&lt;code&gt;babel-polyfill&lt;/code&gt;を書いておいて、bundle.jsの最初に一度だけPolyfillがロードされるようにしている。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;.babelrc&lt;/code&gt;に&lt;code&gt;useBuiltIns: &#39;usage&#39;&lt;/code&gt;を付けたので、webpack.config.jsに&lt;code&gt;@babel/preset-env&lt;/code&gt;を書く必要はない。&lt;/p&gt;
 
-&lt;p&gt;&lt;code&gt;mode&lt;/code&gt;は後述。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;mode&lt;/code&gt;については後述。&lt;/p&gt;
 
 &lt;h3 id=&#34;webpack-dev-server設定&#34;&gt;webpack-dev-server設定&lt;/h3&gt;
 
@@ -3315,13 +3422,13 @@ webpack.common.jsは、&lt;a href=&#34;https://github.com/survivejs/webpack-merg
 
 &lt;p&gt;分割したファイルは以下の感じ。全部プロジェクトルートに置いておく。&lt;/p&gt;
 
-&lt;p&gt;webpack.common.js&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;webpack.common.js&lt;/code&gt;&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;const path = require(&#39;path&#39;);
 const packageJson = require(&#39;./package.json&#39;);
 
 module.exports = {
-  entry: [&#39;babel-polyfill&#39;, `./${packageJson.main}`],
+  entry: [`./${packageJson.main}`],
   output: {
     path: path.resolve(__dirname, &#39;dist&#39;),
     filename: &#39;bundle.js&#39;,
@@ -3342,7 +3449,7 @@ module.exports = {
 };
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;webpack.dev.js&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;webpack.dev.js&lt;/code&gt;&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;const path = require(&#39;path&#39;);
 const webpackMerge = require(&#39;webpack-merge&#39;);
@@ -3360,7 +3467,7 @@ module.exports = webpackMerge(webpackCommon, {
 });
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;webpack.prod.js&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;webpack.prod.js&lt;/code&gt;&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;const webpackMerge = require(&#39;webpack-merge&#39;);
 const webpackCommon = require(&#39;./webpack.common.js&#39;);

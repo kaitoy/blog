@@ -25,6 +25,8 @@
 
 &lt;p&gt;今回は残りの要素をまとめてかたづける。&lt;/p&gt;
 
+&lt;p&gt;(2018/11/21更新)&lt;/p&gt;
+
 &lt;p&gt;
 
 
@@ -48,49 +50,54 @@
 &lt;p&gt;そんな問題に対応する技術が&lt;a href=&#34;https://webpack.js.org/guides/code-splitting/&#34;&gt;Code Splitting&lt;/a&gt;。
 バンドルを分割し、(理想的には)必要な時に必要な分だけロードする技術。&lt;/p&gt;
 
-&lt;p&gt;Code Splittingのやりかたはいくつかあるが、webpackのディレクティブを使った&lt;a href=&#34;https://webpack.js.org/guides/code-splitting/#prefetching-preloading-modules&#34;&gt;プリフェッチ&lt;/a&gt;を、フォントモジュールに適用してみる。&lt;/p&gt;
+&lt;p&gt;Code Splittingのやりかたはいくつかあるが、&lt;a href=&#34;https://reactjs.org/docs/code-splitting.html#import&#34;&gt;ダイナミックインポート&lt;/a&gt;と&lt;a href=&#34;https://reactjs.org/docs/code-splitting.html#reactlazy&#34;&gt;React.lazy&lt;/a&gt;と&lt;a href=&#34;https://reactjs.org/docs/code-splitting.html#suspense&#34;&gt;React Suspense&lt;/a&gt;とwebpackの&lt;a href=&#34;https://webpack.js.org/guides/code-splitting/#prefetching-preloading-modules&#34;&gt;プリフェッチディレクティブ&lt;/a&gt;を使ったやつを、フォントモジュールに適用してみる。&lt;/p&gt;
 
-&lt;p&gt;src/index.jsx:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;src/components/App.jsx&lt;/code&gt;:&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
- import ReactDOM from &#39;react-dom&#39;;
- import { Provider } from &#39;react-redux&#39;;
- import { ConnectedRouter } from &#39;connected-react-router&#39;;
- import App from &#39;./components/App&#39;;
- import configureStore from &#39;./configureStore&#39;;
- import configureStore, { history } from &#39;./configureStore&#39;;
--import &#39;./fonts.css&#39;;
-+import(/* webpackPrefetch: true */ &#39;./fonts&#39;);
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt;-import React from &#39;react&#39;;
++import React, { Suspense } from &#39;react&#39;;
+ import { Route, Redirect } from &#39;react-router-dom&#39;;
+ import Home from &#39;./Home&#39;;
+-import Fonts from &#39;../fonts&#39;;
 
- const store = configureStore();
- const root = document.getElementById(&#39;root&#39;);
++const Fonts = React.lazy(() =&amp;gt; import(/* webpackPrefetch: true */ &#39;../fonts&#39;));
 
- if (root) {
-   ReactDOM.render(
-     &amp;lt;Provider store={store}&amp;gt;
-       &amp;lt;ConnectedRouter history={history}&amp;gt;
-         &amp;lt;App /&amp;gt;
-       &amp;lt;/ConnectedRouter&amp;gt;
-     &amp;lt;/Provider&amp;gt;,
-     root,
-   );
- }
+ const App = () =&amp;gt; (
+   &amp;lt;div&amp;gt;
+     &amp;lt;Route exact path=&amp;quot;/&amp;quot; render={() =&amp;gt; &amp;lt;Redirect to=&amp;quot;/home&amp;quot; /&amp;gt;} /&amp;gt;
+     &amp;lt;Route exact path=&amp;quot;/home&amp;quot; component={Home} /&amp;gt;
+-    &amp;lt;Fonts /&amp;gt;
++    &amp;lt;Suspense fallback={&amp;lt;div /&amp;gt;}&amp;gt;
++      &amp;lt;Fonts /&amp;gt;
++    &amp;lt;/Suspense&amp;gt;
+   &amp;lt;/div&amp;gt;
+ );
+
+ export default App;
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;コード変更はこれだけ。&lt;/p&gt;
 
-&lt;p&gt;&lt;code&gt;import()&lt;/code&gt;は&lt;a href=&#34;https://github.com/tc39/proposal-dynamic-import&#34;&gt;ダイナミックインポート&lt;/a&gt;という、ECMAScriptで現在策定中の機能。
+&lt;p&gt;&lt;code&gt;import()&lt;/code&gt;がダイナミックインポートで、&lt;a href=&#34;https://github.com/tc39/proposal-dynamic-import&#34;&gt;ECMAScriptで現在策定中&lt;/a&gt;の機能。
 これを使えるようにするためには、Babelのプラグインを追加する必要がある。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D babel-plugin-syntax-dynamic-import
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D @babel/plugin-syntax-dynamic-import
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;.babelrc&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;.babelrc&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; {
-   &amp;quot;presets&amp;quot;: [&amp;quot;env&amp;quot;, &amp;quot;react&amp;quot;],
+   &amp;quot;presets&amp;quot;: [
+     [
+       &amp;quot;@babel/preset-env&amp;quot;,
+       {
+         &amp;quot;useBuiltIns&amp;quot;: &amp;quot;usage&amp;quot;
+       }
+     ],
+     &amp;quot;@babel/preset-react&amp;quot;
+   ],
 -  &amp;quot;plugins&amp;quot;: [&amp;quot;styled-components&amp;quot;]
-+  &amp;quot;plugins&amp;quot;: [&amp;quot;styled-components&amp;quot;, &amp;quot;syntax-dynamic-import&amp;quot;]
++  &amp;quot;plugins&amp;quot;: [&amp;quot;styled-components&amp;quot;, &amp;quot;@babel/plugin-syntax-dynamic-import&amp;quot;]
  }
 &lt;/code&gt;&lt;/pre&gt;
 
@@ -98,9 +105,6 @@
 これでフォントモジュールはメインのバンドルとは別ファイルになり、初期画面の表示時にはロードされず、ブラウザの空き時間に非同期にロードされるようになる。&lt;/p&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;Code Splittingは&lt;a href=&#34;https://reactjs.org/docs/code-splitting.html&#34;&gt;Reactのドキュメント&lt;/a&gt;でも紹介されていて、そこにはReact特有のやり方も載っている。
-&lt;a href=&#34;https://reactjs.org/docs/code-splitting.html#reactlazy&#34;&gt;React.lazy&lt;/a&gt;と&lt;a href=&#34;https://reactjs.org/docs/code-splitting.html#suspense&#34;&gt;Suspense&lt;/a&gt;を使うものがかなりナウい。&lt;/p&gt;
 
 &lt;h1 id=&#34;flow&#34;&gt;Flow&lt;/h1&gt;
 
@@ -115,10 +119,26 @@
 
 &lt;p&gt;Flowは、ソースに型情報を付けて静的型チェック可能にしつつ、実行時には型情報を取り去って普通のJavaScriptとして実行できるようにする仕組み。&lt;/p&gt;
 
-&lt;p&gt;型チェックするツールは&lt;a href=&#34;https://www.npmjs.com/package/flow-bin&#34;&gt;flow-bin&lt;/a&gt;パッケージで配布されていて、型情報の除去は&lt;a href=&#34;https://www.npmjs.com/package/babel-preset-flow&#34;&gt;babel-preset-flow&lt;/a&gt;を使ってBabelでできる。
-babel-preset-flowは、すでにインストールしたbabel-preset-reactに含まれてるので、敢えて入れる必要はない。&lt;/p&gt;
+&lt;p&gt;型チェックするツールは&lt;a href=&#34;https://www.npmjs.com/package/flow-bin&#34;&gt;flow-bin&lt;/a&gt;パッケージで配布されていて、型情報の除去は&lt;a href=&#34;https://www.npmjs.com/package/babel-preset-flow&#34;&gt;@babel/preset-flow&lt;/a&gt;を使ってBabelでできる。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D flow-bin
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D flow-bin @babel/preset-flow
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;.babelrc&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; {
+   &amp;quot;presets&amp;quot;: [
+     [
+       &amp;quot;@babel/preset-env&amp;quot;,
+       {
+         &amp;quot;useBuiltIns&amp;quot;: &amp;quot;usage&amp;quot;
+       }
+     ],
++    &amp;quot;@babel/preset-flow&amp;quot;,
+     &amp;quot;@babel/preset-react&amp;quot;
+   ],
+   &amp;quot;plugins&amp;quot;: [&amp;quot;styled-components&amp;quot;, &amp;quot;@babel/plugin-syntax-dynamic-import&amp;quot;]
+ }
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;これで、&lt;code&gt;yarn flow&lt;/code&gt;でFlowを実行できるようになった。&lt;/p&gt;
@@ -258,12 +278,13 @@ JestもReactと開発元が同じFacebookで、Reactと相性がいいはずだ�
 &lt;li&gt;&lt;a href=&#34;https://www.npmjs.com/package/jest&#34;&gt;jest&lt;/a&gt;: 本体&lt;/li&gt;
 &lt;li&gt;&lt;a href=&#34;https://www.npmjs.com/package/babel-jest&#34;&gt;babel-jest&lt;/a&gt;: BabelでトランスパイルするコードをJestでテストするためのBabelプラグイン&lt;/li&gt;
 &lt;li&gt;&lt;a href=&#34;https://www.npmjs.com/package/react-test-renderer&#34;&gt;react-test-renderer&lt;/a&gt;: ReactコンポーネントをピュアなJavaScriptオブジェクトにレンダリングするライブラリ。&lt;a href=&#34;https://jestjs.io/docs/en/snapshot-testing&#34;&gt;スナップショットテスト&lt;/a&gt;などに使う。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.npmjs.com/package/babel-core/v/7.0.0-bridge.0&#34;&gt;babel-core@^7.0.0-bridge&lt;/a&gt;: babel-jestをBabel 7で使うためのモジュール。&lt;a href=&#34;https://github.com/facebook/jest/tree/master/packages/babel-jest#usage&#34;&gt;現時点では必要&lt;/a&gt;だけど、その内いらなくなるであろう。&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D jest babel-jest react-test-renderer
+&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D jest babel-jest react-test-renderer babel-core@^7.0.0-bridge
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;Jestはv23.4.2が入った。&lt;/p&gt;
+&lt;p&gt;Jestはv23.6.0が入った。&lt;/p&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
@@ -609,7 +630,7 @@ Reactコンポーネントをレンダリングして、jQueryみたいなAPIで
 &lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;yarn add -D enzyme enzyme-adapter-react-16
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;Enzymeはv3.3.0が入った。&lt;/p&gt;
+&lt;p&gt;Enzymeはv3.7.0が入った。&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://github.com/FormidableLabs/enzyme-matchers/tree/master/packages/jest-enzyme&#34;&gt;jest-enzyme&lt;/a&gt;も入れるとアサーションがいい感じに書けてよりいいかもしれない。&lt;/p&gt;
 
@@ -658,7 +679,7 @@ Reactコンポーネントをレンダリングして、jQueryみたいなAPIで
 
 &lt;p&gt;以上で全10回に渡るReact―Redux環境のセットアップ体験記が完結。&lt;/p&gt;
 
-&lt;p&gt;だらだら書いてるうちに、&lt;a href=&#34;https://babeljs.io/blog/2018/08/27/7.0.0&#34;&gt;Babelの7が出たり&lt;/a&gt;、&lt;a href=&#34;https://reactjs.org/docs/hooks-overview.html&#34;&gt;React Hooks&lt;/a&gt;とか&lt;a href=&#34;https://logmi.jp/tech/articles/302611&#34;&gt;React Suspense&lt;/a&gt;とかが出てきてて、また大きく変わってきそう…&lt;/p&gt;
+&lt;p&gt;だらだら書いてるうちに、&lt;a href=&#34;https://babeljs.io/blog/2018/08/27/7.0.0&#34;&gt;Babelの7が出たり&lt;/a&gt;、&lt;a href=&#34;https://reactjs.org/docs/hooks-overview.html&#34;&gt;React Hooks&lt;/a&gt;とかのReact APIの新しいのが出てきて、また大きく変わってきそう…&lt;/p&gt;
 </description>
         </item>
       

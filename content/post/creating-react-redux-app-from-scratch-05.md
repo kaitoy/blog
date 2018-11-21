@@ -14,6 +14,8 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 
 [前回](https://www.kaitoy.xyz/2018/08/29/creating-react-redux-app-from-scratch-04/)はCSS周りの処理系をセットアップした。
 
+(2018/11/21更新)
+
 {{< google-adsense >}}
 
 # 既成Reactコンポーネント
@@ -44,13 +46,13 @@ Material-UIは簡単に使える。
 yarn add @material-ui/core
 ```
 
-v1.4.1が入った。
+v3.5.1が入った。
 
 <br>
 
 あとはパッケージに入っている色々なコンポーネントをMaterial-UIのドキュメント見ながら使えばいいだけ。
 
-components/App.jsx:
+`src/components/App.jsx`:
 ```diff
  import React from 'react';
  import styled from 'styled-components';
@@ -107,6 +109,7 @@ yarn add -D url-loader file-loader
 
 webpackのローダ設定は以下のようなのを追加すればいい。
 
+`webpack.common.js`:
 ```diff
 (前略)
    module: {
@@ -132,21 +135,21 @@ webpackのローダ設定は以下のようなのを追加すればいい。
 あとは、typeface-robotoパッケージ内のフォントファイルを指すようにCSSに@font-faceを書けばいい。
 例えば、weightが300のWOFFファイルを読むなら以下のような感じ。
 
-src/fonts.css:
+`src/fonts.css`:
 ```css
 @font-face {
   font-family: 'Roboto';
   font-style: normal;
   font-display: swap;
   font-weight: 300;
-  src: local('Roboto Light '), local('Roboto-Light'),
+  src: local('Roboto Light'), local('Roboto-Light'),
     url('../node_modules/typeface-roboto/files/roboto-latin-300.woff') format('woff');
 }
 ```
 
 これをどこかのJavaScriptでインポートしてやればいい。
 
-src/index.jsx:
+`src/index.jsx`:
 ```diff
  import React from 'react';
  import ReactDOM from 'react-dom';
@@ -179,6 +182,7 @@ yarn add -D file-loader
 
 webpackのローダ設定は以下のようなのを追加すればいい。
 
+`webpack.common.js`:
 ```diff
 (前略)
    module: {
@@ -198,14 +202,14 @@ webpackのローダ設定は以下のようなのを追加すればいい。
 
 <br>
 
-で、[ここ](https://github.com/styled-components/styled-components/issues/233)にある通り、styled-componentsの[injectGlobal](https://www.styled-components.com/docs/api#injectglobal)というAPIを使って、以下のようにフォントファイルを読み込む。
+で、[ここ](https://github.com/styled-components/styled-components/issues/233)を参考にしてフォントファイルを読みこむ。injectGlobalというstyled-componentsのAPIを使えとあるけど、injectGlobalはstyled-components v4で[createGlobalStyle](https://www.styled-components.com/docs/api#createglobalstyle)に代わったので、以下のように書く。
 
-src/font.js:
+`src/fonts.js`:
 ```javascript
-import { injectGlobal } from 'styled-components';
+import { createGlobalStyle } from 'styled-components';
 import roboto300 from '../node_modules/typeface-roboto/files/roboto-latin-300.woff';
 
-injectGlobal`
+const Fonts = createGlobalStyle`
   /* roboto-300normal - latin */
   @font-face {
     font-family: 'Roboto';
@@ -218,27 +222,33 @@ injectGlobal`
       url('${roboto300}') format('woff');
   }
 `;
+
+export default Fonts;
 ```
 
-<br>
+ここでexportされる`Fonts`はReactコンポーネントになっているので、それをどこかのJSXに追加してやればいい。
 
-あとはこれをどこかのJavaScriptでインポートしてやればいい。
-
-src/index.jsx:
+`src/components/App.jsx`:
 ```diff
  import React from 'react';
- import ReactDOM from 'react-dom';
- import App from './components/App';
-+import './fonts';
+ import styled from 'styled-components';
+ import Button from '@material-ui/core/Button';
++import Fonts from '../fonts';
 
- const root = document.getElementById('root');
+ const Wrapper = styled.div`
+   font-size: 5rem;
+ `;
 
- if (root) {
-   ReactDOM.render(
-     <App />,
-     root,
-   );
- }
+ const App = () => (
+   <Wrapper>
+     <Button variant="contained">
+       HOGE
+     </Button>
++    <Fonts />
+   </Wrapper>
+ );
+
+ export default App;
 ```
 
 <br>
