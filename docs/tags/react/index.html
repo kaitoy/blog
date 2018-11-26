@@ -74,6 +74,27 @@
         
         <div class="col-sm-6">
           <article>
+            <a href="https://www.kaitoy.xyz/2018/11/26/creating-react-redux-app-from-scratch-11/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="/images/typescript.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Mon, Nov 26, 2018</span>
+              </div>
+              <h2 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その11: FlowからTypeScriptへ移行</h2>
+              <div class="summary">
+                ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はCode Splitting、Flow、Jest、Enzymeをセットアップした。 前回でこのシリーズを終わりにするつもりだったけど、型システムをFlowからTypeScriptに移行したのでそれについて書く。 (adsbygoogle = window.adsbygoogle || []).push({}); TypeScript TypeScriptはMicrosoft製のAltJS。 もともとはCoffeeScriptのように言語の機能面(e.g. class構文やアロー関数)を補強しつつ、静的型付けをサポートする言語だったが、最近はECMAScriptが前者をカバーしてるので、後者を主な目的として使う人が多い。 2012年に誕生した言語で、同様に静的型付けをサポートするFlowよりも2歳ほど年上。 TypeScript vs Flow 個人的には、静的型付けだけを目的にするならAltJSである必要はなく、静的型付けだけを補完するFlowのほうが筋がいいような気がする。 TypeScriptはECMAScriptの進化に追従すべく、追加される機能や構文をサポートするためのエンハンスを繰り返しているが、そこはBabelに任せて静的型付けに注力したらいいような。 とはいえ、以下のような点を鑑み、結局TypeScriptを選択した。 TypeScriptの方が人気 GitHubのプロジェクトのスター数はTypeScriptが4万超えでFlowが2万弱。 観測している限り、FlowからTypeScriptへ移行したというのは聞くが、逆は聞かない。 人気があるということはコミュニティやエコシステムが大きいということ。 TypeScriptがノってる BabelやCreate React AppがTypeScriptをサポートして来ていて、なんだか時流にのっている。 Flowは型定義ファイルの管理方法が微妙 Flowはflow-typedという専用のツールを使ってファイルをダウンロードし、ダウンロードしたものをGitとかのVCSでバージョン管理するというやりかた。 TypeScriptはnpmで管理されてるので、Yarnでダウンロードもバージョン管理もできる。VCSのリポジトリに自前のコードしか入れないで済むのもいい。 TypeScriptの方が型定義ファイルが沢山提供されてる Flowの10倍くらいある。 TypeScriptの方がエラーメッセージが分かりやすい というのをどこかで聞いた。 Flowの方が段階的に型を導入できる、というのは昔の話 今はTypeScriptもオプションによって段階的に導入できるというのが定評。 そもそも最初から型付けするならどうでもいい。 Flowの方が厳密な型チェックしてくれる、というのも昔の話 TypeScriptが追い付いてきて、今はほぼ同程度らしい。 TypeScript+VSCodeの開発体験が最高すぎるらしい どっちもMicrosoft製なので。 TypeScriptの方がドキュメントが充実してる TypeScriptの方が、いざというときにソースが読みやすい TypeScriptはTypeScriptで実装されてて、FlowはOCamlで実装されてる。 参考: https://github.com/niieani/typescript-vs-flowtype https://texta.pixta.jp/entry/2018/06/07/120000 https://narinymous.hatenablog.com/entry/2018/03/02/032130 https://base.terrasky.co.jp/articles/zuUtT 前回の記事ではFlowを導入したんだけどTypeScriptに移行する羽目に。 FlowとTypeScriptとで型の表現方式や表現力にあまり差はなかったのでそこはまあ手間ではなかったんだけど、以下のような問題に対応する必要があった。 ビルド時にTypeScriptの方が時間がかかる。 TypeScriptのリンタであるTSLintが、FlowのESLintよりルールが貧弱 TypeScriptのコンパイラがチェックしてくれるからいいのかもしれないけど。 TypeScriptはAltJSなので、何かと連携するときに何かと面倒 Jestでユニットテストするときはどうするんだっけとか プレーンJavaScriptと混在した環境ではTSLintとESLint併用しなければいけないんだっけとか FlowからTypeScriptへの移行 脱Flow とりあえずFlowを取り除く。 $ yarn remove flow-bin flow-typed @babel/preset-flow eslint-plugin-flowtype babel-eslint $ rm -f .flowconfig .babelrc: { &quot;presets&quot;: [ [ &quot;@babel/preset-env&quot;, { &quot;useBuiltIns&quot;: &quot;usage&quot; } ], - &quot;@babel/preset-flow&quot;, &quot;@babel/preset-react&quot; ], &quot;plugins&quot;: [&quot;styled-components&quot;, &quot;@babel/plugin-syntax-dynamic-import&quot;] } .eslintrc.js: module.exports = { env: { browser: true, 'jest/globals': true, }, - parser: 'babel-eslint', - extends: ['airbnb', 'plugin:flowtype/recommended', 'prettier'], - plugins: ['flowtype', 'jest'], + extends: ['airbnb', 'prettier'], + plugins: ['jest'], }; 環境はこれでよくて、あとは各.jsファイルと.jsxファイルから// @flowを消して、型情報も消す。 (型情報はTypeScriptでも同じようなのを書くので残しておいてもいい。) TypeScript導入 パッケージインストール 以下のパッケージを入れる。 typescript: TypeScript本体。コンパイラ(tsc)等を含む。 @types/*: 各3rdパーティライブラリの型定義ファイル(DefinitelyTyped)。(型定義はライブラリ本体のパッケージに含まれている場合もある。) awesome-typescript-loader: TypeScriptを処理するためのwebpackのローダ。他の選択肢としてts-loaderがあるが、公式のチュートリアルがawesome-typescript-loaderをメインで紹介してるのでこっちにする。 $ yarn add -D typescript @types/react @types/react-dom @types/react-redux @types/redux-logger @types/history @types/react-router-dom @types/uuid @types/styled-components awesome-typescript-loader TypeScriptはv3.1.6、awesome-typescript-loaderはv5.2.1が入った。 TypeScriptの設定 TypeScriptの設定ファイルであるtsconfig.jsonはtscコマンドでテンプレートを生成できる。 $ yarn tsc --init 生成されたファイルをプロジェクトルートに置いて、ちょっといじって以下の感じに。 (jsonなのにコメント書ける…) tsconfig.json: { &quot;compilerOptions&quot;: { /* Basic Options */ &quot;target&quot;: &quot;es5&quot; /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
             <a href="https://www.kaitoy.xyz/2018/11/07/creating-react-redux-app-from-scratch-10/" class="post post-topix">
               <header class="eyecatch text-center">
                 <img src="/images/flow-jest-enzyme.png" alt="eyecatch">
@@ -135,19 +156,16 @@
         
         
         
-        <div class="col-sm-6">
+        <div class="col-md-3 col-sm-4 col-xs-6">
           <article>
-            <a href="https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/" class="post post-topix">
+            <a href="https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/" class="post">
               <header class="eyecatch text-center">
                 <img src="/images/redux.png" alt="eyecatch">
               </header>
               <div class="date text-center">
                 <span>Mon, Oct 1, 2018</span>
               </div>
-              <h2 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その7: React Redux</h2>
-              <div class="summary">
-                ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はReduxをセットアップした。 (2018/11/21更新) (adsbygoogle = window.adsbygoogle || []).push({}); React Redux 前回はReduxをセットアップして、ActionをStoreにディスパッチしてstateを更新できるようになった。 今回はこれをReactにつなぐ。 使うのはReact Redux。 yarn add react-redux v5.1.1が入った。 Presentational Components と Container Components React Reduxの使い方を理解するには、Presentational Components と Container Components という概念を知らないといけない。 これはReactコンポーネントを役割別に分ける考え方で、それぞれ以下のような特徴をもつ。 Presentational Components Container Components 主な役割 DOMをレンダリングする データを取得したりstateを更新したりする(Reduxとつなぐ) Reduxとの関連 無し 有り データの読み込み propsから読む Reduxのstateオブジェクトから読む データの更新 propsで渡されたコールバックを呼ぶ ReduxのActionをディスパッチする 作り方 自前で書く React Reduxで生成する 要するに、普通にReactで作ったUIコンポーネントを、React Reduxで生成するContainer ComponentでラップしてやることでReduxのStoreとつなぐことができる。 connect() Container Componentの生成にはReact Reduxのconnect()というAPIを使う。 React Reduxを使う場合、Reduxのstateの更新に応じてReactコンポーネントに新しいpropsを渡して再レンダリングすることになるが、この新しいpropsを作ってコンポーネントに渡す処理を定義するのがconnect()。 connect()の第一引数には、ReduxのstateのプロパティとReactコンポーネントのpropsのプロパティとのマッピングをする関数であるmapStateToProps()を渡す。 mapStateToProps()はstateの更新に応じて呼び出され、引数にstate(と現在のprops)が渡される。 mapStateToProps()が返すオブジェクトはReactコンポーネントに渡されるpropsにマージされる。 connect()の第二引数には、Storeのdispatch()を呼び出す処理とReactコンポーネントのpropsのプロパティとのマッピングをする関数であるmapDispatchToProps()を渡す。 mapDispatchToProps()の引数にはdispatch()が渡される。 mapDispatchToProps()が返すオブジェクトはReactコンポーネントに渡されるpropsにマージされる。 (mapDispatchToProps()は第二引数にpropsを受け取ることもできて、この場合、propsの更新に反応して呼び出されるコールバックになる。) connect()を実行すると関数が返ってくる。 この関数にReactコンポーネント(Presentational
-              </div>
+              <h3 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その7: React Redux</h3>
             </a>
           </article>
         </div>
@@ -582,6 +600,9 @@
       
       
       <a href="https://www.kaitoy.xyz/tags/test-framework">test-framework</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/typescript">typescript</a>
       
       
       <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>

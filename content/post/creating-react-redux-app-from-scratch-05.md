@@ -217,7 +217,7 @@ const Fonts = createGlobalStyle`
     font-display: swap;
     font-weight: 300;
     src:
-      local('Roboto Light '),
+      local('Roboto Light'),
       local('Roboto-Light'),
       url('${roboto300}') format('woff');
   }

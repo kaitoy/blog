@@ -242,7 +242,7 @@ export default App;
 
 あとは、上に書いたような404エラーを防ぐために、webpack-dev-serverの[History API Fallback](https://webpack.js.org/configuration/dev-server/#devserver-historyapifallback)を有効にしてやる。
 
-webpack.dev.js
+`webpack.dev.js`:
 ```diff
  const path = require('path');
  const webpackMerge = require('webpack-merge');
@@ -265,4 +265,4 @@ webpack.dev.js
 
 <br>
 
-[次回](https://www.kaitoy.xyz/2018/11/07/creating-react-redux-app-from-scratch-10/)はラストで、[Code Splitting](https://webpack.js.org/guides/code-splitting/)と[Flow](https://flow.org/)と[Jest](https://jestjs.io/ja/)と[Enzyme](https://airbnb.io/enzyme/)。
+[次回](https://www.kaitoy.xyz/2018/11/07/creating-react-redux-app-from-scratch-10/)は[Code Splitting](https://webpack.js.org/guides/code-splitting/)と[Flow](https://flow.org/)と[Jest](https://jestjs.io/ja/)と[Enzyme](https://airbnb.io/enzyme/)。

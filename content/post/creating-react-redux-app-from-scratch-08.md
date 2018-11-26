@@ -165,10 +165,9 @@ REST API呼び出しをする場合、呼び出し開始、呼び出し成功、
 +  HOGE_FETCH_FAILED,
  } from './actionTypes';
 
- export function hogeButtonClicked(payload) {
+ export function hogeButtonClicked() {
    return {
      type: HOGE_BUTTON_CLICKED,
-     payload,
    };
  }
 +

@@ -6,8 +6,957 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2018</rights>
-    <updated>2018-11-07 23:41:30 &#43;0900 JST</updated>
+    <updated>2018-11-26 16:09:14 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その11: FlowからTypeScriptへ移行</title>
+          <link>https://www.kaitoy.xyz/2018/11/26/creating-react-redux-app-from-scratch-11/</link>
+          <pubDate>Mon, 26 Nov 2018 16:09:14 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2018/11/26/creating-react-redux-app-from-scratch-11/</guid>
+          <description>
+
+&lt;p&gt;&lt;a href=&#34;https://reactjs.org/&#34;&gt;React&lt;/a&gt;と&lt;a href=&#34;https://redux.js.org/&#34;&gt;Redux&lt;/a&gt;を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
+(最終的な成果は&lt;a href=&#34;https://github.com/kaitoy/react-redux-scaffold&#34;&gt;GitHub&lt;/a&gt;に置いた。)&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/11/07/creating-react-redux-app-from-scratch-10/&#34;&gt;前回&lt;/a&gt;は&lt;a href=&#34;https://reactjs.org/docs/code-splitting.html&#34;&gt;Code Splitting&lt;/a&gt;、&lt;a href=&#34;https://flow.org/&#34;&gt;Flow&lt;/a&gt;、&lt;a href=&#34;https://jestjs.io/ja/&#34;&gt;Jest&lt;/a&gt;、&lt;a href=&#34;https://airbnb.io/enzyme/&#34;&gt;Enzyme&lt;/a&gt;をセットアップした。&lt;/p&gt;
+
+&lt;p&gt;前回でこのシリーズを終わりにするつもりだったけど、型システムをFlowから&lt;a href=&#34;https://www.typescriptlang.org/&#34;&gt;TypeScript&lt;/a&gt;に移行したのでそれについて書く。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h1 id=&#34;typescript&#34;&gt;TypeScript&lt;/h1&gt;
+
+&lt;p&gt;TypeScriptはMicrosoft製のAltJS。
+もともとは&lt;a href=&#34;https://coffeescript.org/&#34;&gt;CoffeeScript&lt;/a&gt;のように言語の機能面(e.g. class構文やアロー関数)を補強しつつ、静的型付けをサポートする言語だったが、最近はECMAScriptが前者をカバーしてるので、後者を主な目的として使う人が多い。&lt;/p&gt;
+
+&lt;p&gt;2012年に誕生した言語で、同様に静的型付けをサポートするFlowよりも2歳ほど年上。&lt;/p&gt;
+
+&lt;h1 id=&#34;typescript-vs-flow&#34;&gt;TypeScript vs Flow&lt;/h1&gt;
+
+&lt;p&gt;個人的には、静的型付けだけを目的にするならAltJSである必要はなく、静的型付けだけを補完するFlowのほうが筋がいいような気がする。
+TypeScriptはECMAScriptの進化に追従すべく、追加される機能や構文をサポートするためのエンハンスを繰り返しているが、そこはBabelに任せて静的型付けに注力したらいいような。&lt;/p&gt;
+
+&lt;p&gt;とはいえ、以下のような点を鑑み、結局TypeScriptを選択した。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;TypeScriptの方が人気
+
+&lt;ul&gt;
+&lt;li&gt;GitHubのプロジェクトのスター数はTypeScriptが4万超えでFlowが2万弱。&lt;/li&gt;
+&lt;li&gt;観測している限り、FlowからTypeScriptへ移行したというのは聞くが、逆は聞かない。&lt;/li&gt;
+&lt;li&gt;人気があるということはコミュニティやエコシステムが大きいということ。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;TypeScriptがノってる
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/babel/babylon/pull/523&#34;&gt;Babel&lt;/a&gt;や&lt;a href=&#34;https://github.com/facebook/create-react-app/pull/4837&#34;&gt;Create React App&lt;/a&gt;がTypeScriptをサポートして来ていて、なんだか時流にのっている。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Flowは型定義ファイルの管理方法が微妙
+
+&lt;ul&gt;
+&lt;li&gt;Flowはflow-typedという専用のツールを使ってファイルをダウンロードし、ダウンロードしたものをGitとかのVCSでバージョン管理するというやりかた。&lt;/li&gt;
+&lt;li&gt;TypeScriptはnpmで管理されてるので、Yarnでダウンロードもバージョン管理もできる。VCSのリポジトリに自前のコードしか入れないで済むのもいい。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;TypeScriptの方が型定義ファイルが沢山提供されてる
+
+&lt;ul&gt;
+&lt;li&gt;Flowの10倍くらいある。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;TypeScriptの方がエラーメッセージが分かりやすい
+
+&lt;ul&gt;
+&lt;li&gt;というのをどこかで聞いた。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Flowの方が段階的に型を導入できる、というのは昔の話
+
+&lt;ul&gt;
+&lt;li&gt;今はTypeScriptもオプションによって段階的に導入できるというのが定評。&lt;/li&gt;
+&lt;li&gt;そもそも最初から型付けするならどうでもいい。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Flowの方が厳密な型チェックしてくれる、というのも昔の話
+
+&lt;ul&gt;
+&lt;li&gt;TypeScriptが追い付いてきて、今はほぼ同程度らしい。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;TypeScript+&lt;a href=&#34;https://code.visualstudio.com/&#34;&gt;VSCode&lt;/a&gt;の開発体験が最高すぎるらしい
+
+&lt;ul&gt;
+&lt;li&gt;どっちもMicrosoft製なので。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;TypeScriptの方がドキュメントが充実してる&lt;/li&gt;
+&lt;li&gt;TypeScriptの方が、いざというときにソースが読みやすい
+
+&lt;ul&gt;
+&lt;li&gt;TypeScriptはTypeScriptで実装されてて、Flowは&lt;a href=&#34;https://ocaml.org/&#34;&gt;OCaml&lt;/a&gt;で実装されてる。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;参考:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/niieani/typescript-vs-flowtype&#34;&gt;https://github.com/niieani/typescript-vs-flowtype&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://texta.pixta.jp/entry/2018/06/07/120000&#34;&gt;https://texta.pixta.jp/entry/2018/06/07/120000&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://narinymous.hatenablog.com/entry/2018/03/02/032130&#34;&gt;https://narinymous.hatenablog.com/entry/2018/03/02/032130&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://base.terrasky.co.jp/articles/zuUtT&#34;&gt;https://base.terrasky.co.jp/articles/zuUtT&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;前回の記事ではFlowを導入したんだけどTypeScriptに移行する羽目に。
+FlowとTypeScriptとで型の表現方式や表現力にあまり差はなかったのでそこはまあ手間ではなかったんだけど、以下のような問題に対応する必要があった。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;ビルド時にTypeScriptの方が時間がかかる。&lt;/li&gt;
+&lt;li&gt;TypeScriptのリンタである&lt;a href=&#34;https://palantir.github.io/tslint/&#34;&gt;TSLint&lt;/a&gt;が、FlowのESLintよりルールが貧弱
+
+&lt;ul&gt;
+&lt;li&gt;TypeScriptのコンパイラがチェックしてくれるからいいのかもしれないけど。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;TypeScriptはAltJSなので、何かと連携するときに何かと面倒
+
+&lt;ul&gt;
+&lt;li&gt;Jestでユニットテストするときはどうするんだっけとか&lt;/li&gt;
+&lt;li&gt;プレーンJavaScriptと混在した環境ではTSLintとESLint併用しなければいけないんだっけとか&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;flowからtypescriptへの移行&#34;&gt;FlowからTypeScriptへの移行&lt;/h1&gt;
+
+&lt;h2 id=&#34;脱flow&#34;&gt;脱Flow&lt;/h2&gt;
+
+&lt;p&gt;とりあえずFlowを取り除く。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ yarn remove flow-bin flow-typed @babel/preset-flow eslint-plugin-flowtype babel-eslint
+$ rm -f .flowconfig
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;.babelrc&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; {
+   &amp;quot;presets&amp;quot;: [
+     [
+       &amp;quot;@babel/preset-env&amp;quot;,
+       {
+         &amp;quot;useBuiltIns&amp;quot;: &amp;quot;usage&amp;quot;
+       }
+     ],
+-    &amp;quot;@babel/preset-flow&amp;quot;,
+     &amp;quot;@babel/preset-react&amp;quot;
+   ],
+   &amp;quot;plugins&amp;quot;: [&amp;quot;styled-components&amp;quot;, &amp;quot;@babel/plugin-syntax-dynamic-import&amp;quot;]
+ }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;.eslintrc.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; module.exports = {
+   env: {
+     browser: true,
+     &#39;jest/globals&#39;: true,
+   },
+-  parser: &#39;babel-eslint&#39;,
+-  extends: [&#39;airbnb&#39;, &#39;plugin:flowtype/recommended&#39;, &#39;prettier&#39;],
+-  plugins: [&#39;flowtype&#39;, &#39;jest&#39;],
++  extends: [&#39;airbnb&#39;, &#39;prettier&#39;],
++  plugins: [&#39;jest&#39;],
+ };
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;環境はこれでよくて、あとは各&lt;code&gt;.js&lt;/code&gt;ファイルと&lt;code&gt;.jsx&lt;/code&gt;ファイルから&lt;code&gt;// @flow&lt;/code&gt;を消して、型情報も消す。
+(型情報はTypeScriptでも同じようなのを書くので残しておいてもいい。)&lt;/p&gt;
+
+&lt;h2 id=&#34;typescript導入&#34;&gt;TypeScript導入&lt;/h2&gt;
+
+&lt;h3 id=&#34;パッケージインストール&#34;&gt;パッケージインストール&lt;/h3&gt;
+
+&lt;p&gt;以下のパッケージを入れる。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.npmjs.com/package/typescript&#34;&gt;typescript&lt;/a&gt;: TypeScript本体。コンパイラ(tsc)等を含む。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;@types/*&lt;/code&gt;: 各3rdパーティライブラリの&lt;a href=&#34;https://github.com/DefinitelyTyped/DefinitelyTyped&#34;&gt;型定義ファイル(DefinitelyTyped)&lt;/a&gt;。(型定義はライブラリ本体のパッケージに含まれている場合もある。)&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/s-panferov/awesome-typescript-loader&#34;&gt;awesome-typescript-loader&lt;/a&gt;: TypeScriptを処理するためのwebpackのローダ。他の選択肢として&lt;a href=&#34;https://github.com/TypeStrong/ts-loader&#34;&gt;ts-loader&lt;/a&gt;があるが、&lt;a href=&#34;https://www.typescriptlang.org/docs/handbook/react-&amp;amp;-webpack.html&#34;&gt;公式のチュートリアル&lt;/a&gt;がawesome-typescript-loaderをメインで紹介してるのでこっちにする。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ yarn add -D typescript @types/react @types/react-dom @types/react-redux @types/redux-logger @types/history @types/react-router-dom @types/uuid @types/styled-components awesome-typescript-loader
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;TypeScriptはv3.1.6、awesome-typescript-loaderはv5.2.1が入った。&lt;/p&gt;
+
+&lt;h3 id=&#34;typescriptの設定&#34;&gt;TypeScriptの設定&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.typescriptlang.org/docs/handbook/tsconfig-json.html&#34;&gt;TypeScriptの設定ファイル&lt;/a&gt;であるtsconfig.jsonはtscコマンドでテンプレートを生成できる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ yarn tsc --init
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;生成されたファイルをプロジェクトルートに置いて、ちょっといじって以下の感じに。
+(jsonなのにコメント書ける…)&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;tsconfig.json&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;{
+  &amp;quot;compilerOptions&amp;quot;: {
+    /* Basic Options */
+    &amp;quot;target&amp;quot;: &amp;quot;es5&amp;quot; /* Specify ECMAScript target version: &#39;ES3&#39; (default), &#39;ES5&#39;, &#39;ES2015&#39;, &#39;ES2016&#39;, &#39;ES2017&#39;,&#39;ES2018&#39; or &#39;ESNEXT&#39;. */,
+    &amp;quot;module&amp;quot;: &amp;quot;esnext&amp;quot; /* Specify module code generation: &#39;none&#39;, &#39;commonjs&#39;, &#39;amd&#39;, &#39;system&#39;, &#39;umd&#39;, &#39;es2015&#39;, or &#39;ESNext&#39;. */,
+    &amp;quot;lib&amp;quot;: [&amp;quot;es2015&amp;quot;, &amp;quot;dom&amp;quot;] /* Specify library files to be included in the compilation. */,
+    // &amp;quot;allowJs&amp;quot;: true,                       /* Allow javascript files to be compiled. */
+    // &amp;quot;checkJs&amp;quot;: true,                       /* Report errors in .js files. */
+    &amp;quot;jsx&amp;quot;: &amp;quot;react&amp;quot; /* Specify JSX code generation: &#39;preserve&#39;, &#39;react-native&#39;, or &#39;react&#39;. */,
+    // &amp;quot;declaration&amp;quot;: true,                   /* Generates corresponding &#39;.d.ts&#39; file. */
+    // &amp;quot;declarationMap&amp;quot;: true,                /* Generates a sourcemap for each corresponding &#39;.d.ts&#39; file. */
+    &amp;quot;sourceMap&amp;quot;: true /* Generates corresponding &#39;.map&#39; file. */,
+    // &amp;quot;outFile&amp;quot;: &amp;quot;./&amp;quot;,                       /* Concatenate and emit output to single file. */
+    // &amp;quot;outDir&amp;quot;: &amp;quot;./&amp;quot;,                        /* Redirect output structure to the directory. */
+    // &amp;quot;rootDir&amp;quot;: &amp;quot;./&amp;quot;,                       /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
+    // &amp;quot;composite&amp;quot;: true,                     /* Enable project compilation */
+    &amp;quot;removeComments&amp;quot;: true /* Do not emit comments to output. */,
+    // &amp;quot;noEmit&amp;quot;: true,                        /* Do not emit outputs. */
+    // &amp;quot;importHelpers&amp;quot;: true,                 /* Import emit helpers from &#39;tslib&#39;. */
+    // &amp;quot;downlevelIteration&amp;quot;: true,            /* Provide full support for iterables in &#39;for-of&#39;, spread, and destructuring when targeting &#39;ES5&#39; or &#39;ES3&#39;. */
+    // &amp;quot;isolatedModules&amp;quot;: true,               /* Transpile each file as a separate module (similar to &#39;ts.transpileModule&#39;). */
+
+    /* Strict Type-Checking Options */
+    &amp;quot;strict&amp;quot;: true /* Enable all strict type-checking options. */,
+    &amp;quot;noImplicitAny&amp;quot;: true /* Raise error on expressions and declarations with an implied &#39;any&#39; type. */,
+    &amp;quot;strictNullChecks&amp;quot;: true /* Enable strict null checks. */,
+    &amp;quot;strictFunctionTypes&amp;quot;: true /* Enable strict checking of function types. */,
+    &amp;quot;strictPropertyInitialization&amp;quot;: true /* Enable strict checking of property initialization in classes. */,
+    &amp;quot;noImplicitThis&amp;quot;: true /* Raise error on &#39;this&#39; expressions with an implied &#39;any&#39; type. */,
+    &amp;quot;alwaysStrict&amp;quot;: true /* Parse in strict mode and emit &amp;quot;use strict&amp;quot; for each source file. */,
+
+    /* Additional Checks */
+    &amp;quot;noUnusedLocals&amp;quot;: true /* Report errors on unused locals. */,
+    &amp;quot;noUnusedParameters&amp;quot;: true /* Report errors on unused parameters. */,
+    &amp;quot;noImplicitReturns&amp;quot;: true /* Report error when not all code paths in function return a value. */,
+    &amp;quot;noFallthroughCasesInSwitch&amp;quot;: true /* Report errors for fallthrough cases in switch statement. */,
+
+    /* Module Resolution Options */
+    &amp;quot;moduleResolution&amp;quot;: &amp;quot;node&amp;quot; /* Specify module resolution strategy: &#39;node&#39; (Node.js) or &#39;classic&#39; (TypeScript pre-1.6). */,
+    // &amp;quot;baseUrl&amp;quot;: &amp;quot;./&amp;quot;,                       /* Base directory to resolve non-absolute module names. */
+    // &amp;quot;paths&amp;quot;: {},                           /* A series of entries which re-map imports to lookup locations relative to the &#39;baseUrl&#39;. */
+    // &amp;quot;rootDirs&amp;quot;: [],                        /* List of root folders whose combined content represents the structure of the project at runtime. */
+    // &amp;quot;typeRoots&amp;quot;: [],                       /* List of folders to include type definitions from. */
+    &amp;quot;types&amp;quot;: [] /* Type declaration files to be included in compilation. */,
+    // &amp;quot;allowSyntheticDefaultImports&amp;quot;: true,  /* Allow default imports from modules with no default export. This does not affect code emit, just typechecking. */
+    &amp;quot;esModuleInterop&amp;quot;: true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies &#39;allowSyntheticDefaultImports&#39;. */
+    // &amp;quot;preserveSymlinks&amp;quot;: true,              /* Do not resolve the real path of symlinks. */
+
+    /* Source Map Options */
+    // &amp;quot;sourceRoot&amp;quot;: &amp;quot;&amp;quot;,                      /* Specify the location where debugger should locate TypeScript files instead of source locations. */
+    // &amp;quot;mapRoot&amp;quot;: &amp;quot;&amp;quot;,                         /* Specify the location where debugger should locate map files instead of generated locations. */
+    // &amp;quot;inlineSourceMap&amp;quot;: true,               /* Emit a single file with source maps instead of having a separate file. */
+    // &amp;quot;inlineSources&amp;quot;: true,                 /* Emit the source alongside the sourcemaps within a single file; requires &#39;--inlineSourceMap&#39; or &#39;--sourceMap&#39; to be set. */
+
+    /* Experimental Options */
+    // &amp;quot;experimentalDecorators&amp;quot;: true,        /* Enables experimental support for ES7 decorators. */
+    // &amp;quot;emitDecoratorMetadata&amp;quot;: true,         /* Enables experimental support for emitting type metadata for decorators. */
+  },
+  &amp;quot;files&amp;quot;: [&amp;quot;src/index.tsx&amp;quot;],
+  &amp;quot;awesomeTypescriptLoaderOptions&amp;quot;: {
+    &amp;quot;useCache&amp;quot;: true,
+    &amp;quot;reportFiles&amp;quot;: [&amp;quot;src/**/*.{ts,tsx}&amp;quot;],
+    &amp;quot;forceIsolatedModules&amp;quot;: true
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;この設定ファイルのポイントは以下。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;compilerOptions&lt;/code&gt;: tscのオプション。
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;target&lt;/code&gt;: コード生成方法をアプリを動作させる環境に合わせて設定するオプション。IE11を含むブラウザを想定して&lt;code&gt;es5&lt;/code&gt;を設定。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;module&lt;/code&gt;: モジュールコード(importとかexportとか?)の生成方法をアプリを動作させる環境に合わせて設定するオプション。大抵は&lt;code&gt;commonjs&lt;/code&gt;でいいけど、&lt;a href=&#34;https://github.com/tc39/proposal-dynamic-import&#34;&gt;ダイナミックインポート&lt;/a&gt;を使うために&lt;code&gt;esnext&lt;/code&gt;を設定。(参考: &lt;a href=&#34;https://stackoverflow.com/questions/45149091/typescript-use-dynamic-import-in-es5-with-bluebird&#34;&gt;https://stackoverflow.com/questions/45149091/typescript-use-dynamic-import-in-es5-with-bluebird&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;lib&lt;/code&gt;: コンパイル時に取り込むライブラリを設定するオプション。ターゲットが&lt;code&gt;es5&lt;/code&gt;の場合はデフォルトで&lt;code&gt;[dom,es5,ScriptHost]&lt;/code&gt;が設定されるけど、それだとジェネレータとかダイナミックインポートを使う場合に「&lt;code&gt;ERROR in [at-loader] TS2468: Cannot find global value &#39;Promise&#39;.&lt;/code&gt;」というエラーがでる。ので&lt;code&gt;es2015&lt;/code&gt;を追加する必要がある。&lt;code&gt;document.getElementById()&lt;/code&gt;をするのに&lt;code&gt;dom&lt;/code&gt;も必要だけど、&lt;code&gt;ScriptHost&lt;/code&gt;は無くてもなんだかビルドできるので、&lt;code&gt;[&amp;quot;es2015&amp;quot;, &amp;quot;dom&amp;quot;]&lt;/code&gt;を設定。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;allowJs&lt;/code&gt;: デフォルトではTypeScript(i.e. &lt;code&gt;.ts&lt;/code&gt;ファイルと&lt;code&gt;.tsx&lt;/code&gt;ファイル)以外があるとエラーになるけど、このオプションを&lt;code&gt;true&lt;/code&gt;にするとJavaScript(i.e. &lt;code&gt;.js&lt;/code&gt;ファイルと&lt;code&gt;.jsx&lt;/code&gt;ファイル)も混在させられる。とりあえずデフォルトの&lt;code&gt;false&lt;/code&gt;のままにしておく。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;checkJs&lt;/code&gt;: allowJsを&lt;code&gt;true&lt;/code&gt;にしていた場合、JavaScriptファイルのエラーチェックをするかを設定するオプション。エラーチェックをするかは、Flowみたいに&lt;a href=&#34;https://www.typescriptlang.org/docs/handbook/type-checking-javascript-files.html&#34;&gt;ソースごとにコメントで制御することもできる&lt;/a&gt;。&lt;code&gt;allowJs&lt;/code&gt;は&lt;code&gt;false&lt;/code&gt;にするので関係なし。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;jsx&lt;/code&gt;: &lt;a href=&#34;https://www.typescriptlang.org/docs/handbook/jsx.html&#34;&gt;JSXのコードをどう処理するかを設定するオプション&lt;/a&gt;。プレーンなJavaScriptに変換してほしいので、&lt;code&gt;react&lt;/code&gt;を設定。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;moduleResolution&lt;/code&gt;: &lt;a href=&#34;https://www.typescriptlang.org/docs/handbook/module-resolution.html&#34;&gt;モジュールの検索方法を設定するオプション&lt;/a&gt;。npmのパッケージ(i.e. &lt;code&gt;node_modules&lt;/code&gt;ディレクトリ内のモジュール)を使うので&lt;code&gt;node&lt;/code&gt;を設定。(&lt;code&gt;node&lt;/code&gt;以外にするケースはほとんどなさそう。)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;types&lt;/code&gt;: &lt;a href=&#34;https://www.typescriptlang.org/docs/handbook/tsconfig-json.html#types-typeroots-and-types&#34;&gt;コンパイル時に自動で取り込む型定義ファイルを設定するオプション&lt;/a&gt;。明示的にimportするものはここに書かなくてもいい。(ソースに&lt;code&gt;import &#39;hoge&#39;&lt;/code&gt;と書けば&lt;code&gt;node_modules/&lt;/code&gt;と&lt;code&gt;node_modules/@types/&lt;/code&gt;内からhogeパッケージが検索される。)とりあえず自動で取り込むようなものはないので&lt;code&gt;[]&lt;/code&gt;を設定。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;esModuleInterop&lt;/code&gt;: Babel界との調停のための&lt;code&gt;true&lt;/code&gt;にしておくべきオプション。正直よくわからないが、Babelも併用するし、&lt;a href=&#34;https://qiita.com/karak/items/29ff148788f5abb15331&#34;&gt;積極的に有効にすべき&lt;/a&gt;らしいので&lt;code&gt;true&lt;/code&gt;に設定。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;files: &lt;code&gt;include&lt;/code&gt;と&lt;code&gt;exclude&lt;/code&gt;と合わせて、コンパイル対象ファイルを指定するオプション。指定したファイルがimportするファイルは自動でコンパイル対象になる。ので、webpack設定の&lt;code&gt;entry&lt;/code&gt;に設定しているもの(i.e. &lt;code&gt;[&amp;quot;src/index.tsx&amp;quot;]&lt;/code&gt;)を&lt;code&gt;files&lt;/code&gt;に設定。(大抵のケースはこれでいいはず。)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;awesomeTypescriptLoaderOptions&lt;/code&gt;: awesome-typescript-loaderのオプション。
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;useCache&lt;/code&gt;: &lt;a href=&#34;https://github.com/s-panferov/awesome-typescript-loader#performance-issues&#34;&gt;ビルド速度向上のために&lt;/a&gt;&lt;code&gt;true&lt;/code&gt;を設定してファイルキャッシュを有効にする。キャッシュはプロジェクトルートの&lt;code&gt;.awcache&lt;/code&gt;ディレクトリに保存されるので、これを.gitignoreに追加。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;reportFiles&lt;/code&gt;: エラーチェックするファイルを設定するオプション。自分が書いたソースだけ見てくれればいいので、&lt;code&gt;src/&lt;/code&gt;以下を設定。ちゃんと設定しておかないと&lt;code&gt;node_modules/&lt;/code&gt;以下のファイルのエラーチェックもしちゃう。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;forceIsolatedModules&lt;/code&gt;: &lt;a href=&#34;https://github.com/s-panferov/awesome-typescript-loader#performance-issues&#34;&gt;ビルド速度向上のために&lt;/a&gt;&lt;code&gt;true&lt;/code&gt;を設定してモジュールのリコンパイルを抑制する。モジュールがプレーンJavaScriptに変換済みのものだけならこれで問題ないはず。(つまり大抵はこれでいいはず。)&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;webpackの設定&#34;&gt;webpackの設定&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/s-panferov/awesome-typescript-loader#configuration&#34;&gt;awesome-typescript-loaderのドキュメント&lt;/a&gt;の通りにwebpackを設定する。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;webpack.common.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; const path = require(&#39;path&#39;);
++const { CheckerPlugin } = require(&#39;awesome-typescript-loader&#39;);
+ const packageJson = require(&#39;./package.json&#39;);
+
+ module.exports = {
+   entry: [`./${packageJson.main}`],
+   output: {
+     path: path.resolve(__dirname, &#39;dist&#39;),
+     filename: &#39;bundle.js&#39;,
+   },
+   module: {
+     rules: [
+       {
+         test: /\.(js|jsx)$/,
+         include: [path.resolve(__dirname, &#39;src&#39;)],
+         enforce: &#39;pre&#39;,
+         loader: &#39;eslint-loader&#39;,
+         options: {
+           configFile: &#39;./.eslintrc.js&#39;,
+           failOnError: true,
+         },
+       },
+       {
+         test: /\.(js|jsx)$/,
+         include: [path.resolve(__dirname, &#39;src&#39;)],
+         enforce: &#39;pre&#39;,
+         loader: &#39;stylelint-custom-processor-loader&#39;,
+       },
+       {
+         test: /\.(js|jsx)$/,
+         include: [path.resolve(__dirname, &#39;src&#39;)],
+         loader: &#39;babel-loader&#39;,
+       },
++      {
++        test: /\.(ts|tsx)$/,
++        include: [path.resolve(__dirname, &#39;src&#39;)],
++        loader: &#39;awesome-typescript-loader&#39;,
++      },
+       {
+         test: /\.(png|woff|woff2|eot|ttf|svg)$/,
+         include: [path.resolve(__dirname, &#39;node_modules&#39;)],
+         loader: &#39;file-loader&#39;,
+       },
+     ],
+   },
+   resolve: {
+-    extensions: [&#39;*&#39;, &#39;.js&#39;, &#39;.jsx&#39;],
++    extensions: [&#39;*&#39;, &#39;.ts&#39;, &#39;.tsx&#39;, &#39;.js&#39;, &#39;.jsx&#39;],
+     modules: [&#39;node_modules&#39;],
+   },
++  plugins: [
++    new CheckerPlugin(),
++  ],
+ };
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;とくにコメントなし。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;awesome-typescript-loaderのドキュメントで推奨されている&lt;a href=&#34;https://github.com/mzgoddard/hard-source-webpack-plugin&#34;&gt;HardSourceWebpackPlugin&lt;/a&gt;も導入しておく。
+これを使うと、モジュールの中間キャッシュを生成して、二回目以降のビルドを高速化してくれる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ yarn add -D hard-source-webpack-plugin
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;webpack.dev.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; const path = require(&#39;path&#39;);
+ const webpackMerge = require(&#39;webpack-merge&#39;);
++const HardSourceWebpackPlugin = require(&#39;hard-source-webpack-plugin&#39;);
+ const webpackCommon = require(&#39;./webpack.common.js&#39;);
+
+ module.exports = webpackMerge(webpackCommon, {
+   mode: &#39;development&#39;,
+   devServer: {
+     contentBase: path.join(__dirname, &#39;public&#39;),
+     compress: true,
+     hot: true,
+     port: 3000,
+     publicPath: &#39;http://localhost:3000/&#39;,
+     historyApiFallback: true,
+   },
++  plugins: [ new HardSourceWebpackPlugin() ],
+ });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;キャッシュは&lt;code&gt;node_modules/.cache/hard-source/&lt;/code&gt;に保存される。
+たまにキャッシュのせいでビルド時とか動作時に問題が起こるので、そんなときはこれを消す。&lt;/p&gt;
+
+&lt;h3 id=&#34;フォーマッタの設定&#34;&gt;フォーマッタの設定&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://prettier.io/docs/en/index.html&#34;&gt;Prettier&lt;/a&gt;は普通にTypeScriptをサポートしてるので、TypeScriptのファイルをフォーマット対象に加えるだけでいい。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;package.json&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; (前略)
+   &amp;quot;scripts&amp;quot;: {
+-    &amp;quot;format&amp;quot;: &amp;quot;prettier --write **/*.jsx **/*.js **/*.css&amp;quot;,
++    &amp;quot;format&amp;quot;: &amp;quot;prettier --write **/*.jsx **/*.js **/*.tsx **/*.ts **/*.css&amp;quot;,
+     &amp;quot;build&amp;quot;: &amp;quot;webpack --config webpack.prod.js&amp;quot;,
+     &amp;quot;test&amp;quot;: &amp;quot;jest&amp;quot;,
+     &amp;quot;start&amp;quot;: &amp;quot;webpack-dev-server --hot --config webpack.dev.js&amp;quot;
+   },
+ (後略)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;リンタの設定&#34;&gt;リンタの設定&lt;/h3&gt;
+
+&lt;p&gt;TypeScriptのリンティングは普通はTSLintを使う。
+けど、すでに&lt;a href=&#34;https://eslint.org/&#34;&gt;ESLint&lt;/a&gt;を&lt;a href=&#34;https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/#eslint&#34;&gt;がっつりセットアップ&lt;/a&gt;してしまったのでTSLintに移行するのが面倒。
+また、将来的にJavaScriptのコードも混在させるかもしれないので、そのときESLintとTSLintの設定(ルール)を同時にメンテするのは面倒。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://hokaccha.hatenablog.com/entry/2018/01/23/232625&#34;&gt;この記事&lt;/a&gt;によれば、&lt;a href=&#34;https://github.com/eslint/typescript-eslint-parser&#34;&gt;typescript-eslint-parser&lt;/a&gt;を使えばそれらの面倒を回避できる。
+typescript-eslint-parserはESLintのカスタムパーサで、TypeScriptのコードをESLintでリンティングすることを可能にする。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ yarn add -D typescript-eslint-parser
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;typescript-eslint-parserはv21.0.1が入った。
+これを使うようにESLintを設定する。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;.eslintrc.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; module.exports = {
+   env: {
+     browser: true,
+     &#39;jest/globals&#39;: true,
+   },
++  parser: &#39;typescript-eslint-parser&#39;,
++  parserOptions: {
++    jsx: true,
++    useJSXTextNode: false,
++  },
+   extends: [&#39;airbnb&#39;, &#39;prettier&#39;],
+   plugins: [&#39;jest&#39;],
++  settings: {
++    &#39;import/resolver&#39;: {
++      node: {
++        extensions: [&#39;.js&#39;, &#39;.jsx&#39;, &#39;.ts&#39;, &#39;.tsx&#39;],
++      },
++    },
++  },
++  rules: {
++    &#39;react/jsx-filename-extension&#39;: [&#39;error&#39;, { extensions: [&#39;.tsx&#39;, &#39;.jsx&#39;] }],
++  },
++  overrides: [
++    {
++      files: [&#39;**/*.ts&#39;, &#39;**/*.tsx&#39;],
++      rules: {
++        // Set &#39;no-unused-vars&#39; to off to suppress errors on importing types.
++        // (e.g. error  &#39;FunctionComponent&#39; is defined but never used  no-unused-vars)
++        // Unused vars are checked by TypeScript compiler (at-loader) instead.
++        &#39;no-unused-vars&#39;: &#39;off&#39;,
++      },
++    },
++  ],
+ };
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;設定のポイントは以下。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;parser&lt;/code&gt;にtypescript-eslint-parserを指定。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;parserOptions.jsx&lt;/code&gt;を&lt;code&gt;true&lt;/code&gt;にするのはtypescript-eslint-parserの&lt;a href=&#34;https://github.com/eslint/typescript-eslint-parser#configuration&#34;&gt;要件&lt;/a&gt;。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;parserOptions.useJSXTextNode&lt;/code&gt;を&lt;code&gt;false&lt;/code&gt;にするのはESLintのv4を使う場合のtypescript-eslint-parserの&lt;a href=&#34;https://github.com/eslint/typescript-eslint-parser#configuration&#34;&gt;要件&lt;/a&gt;。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;settings[import/resolver].node.extensions&lt;/code&gt;は、importするモジュールのパス解決の設定。デフォルトではJavaScriptの拡張子しか検索しないので、TypeScriptのモジュールが見つからなくてESLintが「&lt;code&gt;Unable to resolve path to module &#39;./components/App&#39;  import/no-unresolved&lt;/code&gt;」みたいなエラーを吐く。これを防ぐためにTypeScriptの拡張子を追加する。(webpack.common.jsの&lt;code&gt;resolve.extensions&lt;/code&gt;と同じ拡張子を設定しておく。)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;rules&lt;/code&gt;では、JSXファイルの拡張子名を制限するルール&lt;code&gt;react/jsx-filename-extension&lt;/code&gt;を定義している。&lt;code&gt;extends&lt;/code&gt;している&lt;code&gt;airbnb&lt;/code&gt;の設定では&lt;code&gt;.jsx&lt;/code&gt;だけになっているので&lt;code&gt;.tsx&lt;/code&gt;を追加する意図。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;overrides&lt;/code&gt;では、宣言だけして使っていない変数をエラーにするルール&lt;code&gt;no-unused-vars&lt;/code&gt;をTypeScriptに対して無効にしている。型をimportして使うコードを書くとエラーになっちゃうことがあるので。同様のチェックはTypeScriptのコンパイラがしてくれるので問題なし。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;CSS(というか&lt;a href=&#34;https://github.com/styled-components/styled-components&#34;&gt;styled-components&lt;/a&gt;)のリンタの&lt;a href=&#34;https://github.com/stylelint/stylelint&#34;&gt;stylelint&lt;/a&gt;は&lt;a href=&#34;https://github.com/styled-components/stylelint-processor-styled-components#setup&#34;&gt;TypeScriptに対応している&lt;/a&gt;のでケアする必要なし。&lt;/p&gt;
+
+&lt;h3 id=&#34;javascriptをtypescriptへ書き換える&#34;&gt;JavaScriptをTypeScriptへ書き換える&lt;/h3&gt;
+
+&lt;p&gt;とりあえず、&lt;code&gt;src/&lt;/code&gt;以下の全ファイル(&lt;code&gt;src/__tests__/&lt;/code&gt;以下は除く)について、拡張子を&lt;code&gt;.js&lt;/code&gt;と&lt;code&gt;.jsx&lt;/code&gt;から&lt;code&gt;.ts&lt;/code&gt;と&lt;code&gt;.tsx&lt;/code&gt;に変える。&lt;/p&gt;
+
+&lt;p&gt;型付けについては、&lt;a href=&#34;https://www.typescriptlang.org/docs/handbook/basic-types.html&#34;&gt;TypeScriptのドキュメント&lt;/a&gt;の他、以下の記事を参考にした。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://speakerdeck.com/lemon/typescript-fsanilai-ranaireact-x-redux&#34;&gt;typescript-fsaに頼らないReact × Redux&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://qiita.com/terrierscript/items/b3f9dd95a4c7afe0b102&#34;&gt;TypeScript + Reduxはもうぼちぼちサードライブラリに頼らなくてもある程度はいい感じに補完してくれる&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://piotrwitek.github.io/react-redux-typescript-guide/&#34;&gt;react-redux-typescript-guide&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;reactコンポーネントの型&#34;&gt;Reactコンポーネントの型&lt;/h4&gt;
+
+&lt;p&gt;Function Componentは、propsの型を&lt;a href=&#34;https://www.typescriptlang.org/docs/handbook/interfaces.html&#34;&gt;interface&lt;/a&gt;で作って、&lt;code&gt;React.FunctionComponent&lt;/code&gt;で型付ける。
+&lt;a href=&#34;https://www.typescriptlang.org/docs/handbook/advanced-types.html#type-aliases&#34;&gt;型エイリアス&lt;/a&gt;の&lt;code&gt;type&lt;/code&gt;じゃなくて&lt;code&gt;interface&lt;/code&gt;を使うのは、&lt;a href=&#34;https://www.typescriptlang.org/docs/handbook/advanced-types.html#interfaces-vs-type-aliases&#34;&gt;公式が基本はinterfaceを使え&lt;/a&gt;と言ってるので。
+因みに&lt;code&gt;React.FunctionComponent&lt;/code&gt;の代わりに&lt;code&gt;React.SFC&lt;/code&gt;を使ってるのをよく見るが、それは古い書き方。&lt;/p&gt;
+
+&lt;p&gt;例えば&lt;a href=&#34;https://www.kaitoy.xyz/2018/11/07/creating-react-redux-app-from-scratch-10/&#34;&gt;前回&lt;/a&gt;書いた&lt;code&gt;MyDialog&lt;/code&gt;は以下のように書ける。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import React, { FunctionComponent } from &#39;react&#39;;
+import Dialog from &#39;@material-ui/core/Dialog&#39;;
+import DialogTitle from &#39;@material-ui/core/DialogTitle&#39;;
+import PropTypes from &#39;prop-types&#39;;
+
+// Props型の定義
+interface Props {
+  text: string;
+  open: boolean;
+}
+
+// Function Componentの定義
+const MyDialog: FunctionComponent&amp;lt;Props&amp;gt; = ({ text, open }) =&amp;gt; (
+  &amp;lt;Dialog open={open}&amp;gt;
+    &amp;lt;DialogTitle&amp;gt;{text}&amp;lt;/DialogTitle&amp;gt;
+  &amp;lt;/Dialog&amp;gt;
+);
+
+MyDialog.propTypes = {
+  text: PropTypes.string.isRequired,
+  open: PropTypes.bool.isRequired,
+};
+
+export default MyDialog;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Container Componentは、Store型を&lt;code&gt;configureStore.ts&lt;/code&gt;辺りで定義しておいて、それを&lt;code&gt;connect&lt;/code&gt;するときの&lt;code&gt;mapStateToProps&lt;/code&gt;で使う。
+Storeのプロパティは、Reducerの型付け(後述)のためにそれぞれStateとして型付けしておく。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/09/26/creating-react-redux-app-from-scratch-06/#reducer&#34;&gt;以前&lt;/a&gt;書いた&lt;code&gt;state&lt;/code&gt;をStore型として定義すると以下のようになる。&lt;/p&gt;
+
+&lt;p&gt;Store型:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;export interface HogeState {
+  clicked: boolean;
+}
+
+export interface Store {
+  hoge: HogeState;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これを使うコードは以下。
+(&lt;a href=&#34;https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/#connect-%E3%81%AE%E3%82%B7%E3%83%B3%E3%83%97%E3%83%AB%E3%81%AA%E6%9B%B8%E3%81%8D%E6%96%B9&#34;&gt;以前の記事&lt;/a&gt;で書いた&lt;code&gt;HogeButton&lt;/code&gt;からの差分。)&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/containers/HogeButton.ts&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import React from &#39;react&#39;;
+ import Button from &#39;@material-ui/core/Button&#39;;
+ import { connect } from &#39;react-redux&#39;;
+ import { hogeButtonClicked } from &#39;../actions/actions&#39;;
++import { Store } from &#39;../configureStore&#39;;
+
+ const HogeButton = connect(
+-  ({hoge}) =&amp;gt; ({
++  ({hoge}: Store) =&amp;gt; ({
+     clicked: hoge.clicked
+   }),
+   {
+     onClick: hogeButtonClicked,
+   },
+ )(Button);
+
+ export default HogeButton;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Class Componentの型付け方法は&lt;a href=&#34;https://speakerdeck.com/lemon/typescript-fsanilai-ranaireact-x-redux?slide=7&#34;&gt;typescript-fsaに頼らないReact × Redux&lt;/a&gt;の通りでよさそう。
+正直あまり考えてない…。
+Class Componentはまだ書いてないし、&lt;a href=&#34;https://reactjs.org/docs/hooks-intro.html&#34;&gt;React Hooks&lt;/a&gt;が出てきて、Class Componentは非推奨になりそうでもあるし。&lt;/p&gt;
+
+&lt;h4 id=&#34;reduxのactionの型&#34;&gt;ReduxのActionの型&lt;/h4&gt;
+
+&lt;p&gt;Actionの型は、&lt;code&gt;redux&lt;/code&gt;パッケージに基本的な型が定義されているのでそれを拡張して作る。
+&lt;code&gt;redux&lt;/code&gt;パッケージのは&lt;code&gt;string&lt;/code&gt;の&lt;code&gt;type&lt;/code&gt;プロパティだけがある型なので、&lt;a href=&#34;https://github.com/redux-utilities/flux-standard-action&#34;&gt;Flux Standard Action&lt;/a&gt;(FSA)的な形にするために、&lt;code&gt;error&lt;/code&gt;、&lt;code&gt;payload&lt;/code&gt;、&lt;code&gt;meta&lt;/code&gt;の3つのプロパティを&lt;a href=&#34;https://www.typescriptlang.org/docs/handbook/advanced-types.html#optional-parameters-and-properties&#34;&gt;オプショナル&lt;/a&gt;で追加する。
+&lt;code&gt;error&lt;/code&gt;は&lt;code&gt;boolean&lt;/code&gt;で、&lt;code&gt;payload&lt;/code&gt;と&lt;code&gt;meta&lt;/code&gt;は&lt;a href=&#34;https://www.typescriptlang.org/docs/handbook/generics.html&#34;&gt;ジェネリクス&lt;/a&gt;で型を指定する。&lt;/p&gt;
+
+&lt;p&gt;このAction型から、&lt;code&gt;type&lt;/code&gt;、&lt;code&gt;payload&lt;/code&gt;、&lt;code&gt;meta&lt;/code&gt;の型を指定した型エイリアスを作ったり、&lt;a href=&#34;https://www.typescriptlang.org/docs/handbook/interfaces.html#extending-interfaces&#34;&gt;extends&lt;/a&gt;したりして、個々のActionごとに具体的な型を作る。
+&lt;code&gt;type&lt;/code&gt;プロパティは、&lt;a href=&#34;https://www.typescriptlang.org/docs/handbook/advanced-types.html#string-literal-types&#34;&gt;文字列リテラル型&lt;/a&gt;としてAction Typeで型付ける。&lt;/p&gt;
+
+&lt;p&gt;例えば、&lt;a href=&#34;https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/#rest-api%E5%91%BC%E3%81%B3%E5%87%BA%E3%81%97%E3%82%92%E8%A1%A8%E7%8F%BE%E3%81%99%E3%82%8Baction&#34;&gt;以前&lt;/a&gt;書いたAction Creatorは以下のように型付ける。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/actions/actions.ts&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt;+import Redux from &#39;redux&#39;;
+
+ import {
+   HOGE_BUTTON_CLICKED,
+   HOGE_FETCH_SUCCEEDED,
+   HOGE_FETCH_FAILED,
+ } from &#39;./actionTypes&#39;;
+
++// Action型の定義。
++export interface HogeAction&amp;lt;Type, Payload = undefined, Meta = undefined&amp;gt;
++  extends Redux.Action&amp;lt;Type&amp;gt; {
++  error?: boolean;
++  payload?: Payload;
++  meta?: Meta;
++}
+
++// 型エイリアスによるAction型の具体化。
++// 「typeof HOGE_BUTTON_CLICKED」で文字列リテラル型を指定している。
++export type HogeButtonClicked = HogeAction&amp;lt;typeof HOGE_BUTTON_CLICKED&amp;gt;;
+-export function hogeButtonClicked() {
++export function hogeButtonClicked(): HogeButtonClicked {
+   return {
+     type: HOGE_BUTTON_CLICKED,
+   };
+ }
+
++// payloadの型の定義。
++interface HogeFetchSucceededPayload {
++  hoge: string;
++}
++// インターフェースによるAction型の具体化。payloadプロパティを必須化している。
++export interface HogeFetchSucceeded
++  extends HogeAction&amp;lt;typeof HOGE_FETCH_SUCCEEDED, HogeFetchSucceededPayload, Object&amp;gt; {
++  payload: HogeFetchSucceededPayload;
++}
+-export function hogeFetchSucceeded(payload, meta) {
++export function hogeFetchSucceeded(
++  payload: HogeFetchSucceededPayload,
++  meta: Object,
++): HogeFetchSucceeded {
+   return {
+     type: HOGE_FETCH_SUCCEEDED,
+     payload,
+     meta,
+   };
+ }
+
++export type HogeFetchFailed = HogeAction&amp;lt;typeof HOGE_FETCH_FAILED, Object&amp;gt;;
+-export function hogeFetchFailed(payload) {
++export function hogeFetchFailed(payload: Object): HogeFetchFailed {
+   return {
+     type: HOGE_FETCH_FAILED,
+     error: true,
+     payload,
+   };
+ }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;reduxのreducerの型&#34;&gt;ReduxのReducerの型&lt;/h4&gt;
+
+&lt;p&gt;Reducerの型は&lt;code&gt;redux&lt;/code&gt;パッケージの&lt;code&gt;Reducer&lt;/code&gt;型を使う。
+この&lt;code&gt;Reducer&lt;/code&gt;型がジェネリクスで、引数の&lt;code&gt;state&lt;/code&gt;と&lt;code&gt;action&lt;/code&gt;の型を受けるので、すでに定義したState型と具体Action型をimportして渡す。&lt;/p&gt;
+
+&lt;p&gt;例えば、&lt;a href=&#34;https://www.kaitoy.xyz/2018/09/26/creating-react-redux-app-from-scratch-06/#reducer&#34;&gt;以前&lt;/a&gt;書いたReducerは以下のように型付ける。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/reducers/reducers.ts&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt;+import { Reducer } from &#39;redux&#39;;
++import { HogeState } from &#39;../configureStore&#39;;
+ import { HOGE_BUTTON_CLICKED } from &#39;../actions/actionTypes&#39;;
++import { HogeButtonClicked } from &#39;../actions/actions&#39;;
+
+-export const hoge = (state = { clicked: false }, action) =&amp;gt; {
++export const hoge: Reducer&amp;lt;HogeState, HogeButtonClicked&amp;gt; = (
++  state = { clicked: false },
++  action,
++) =&amp;gt; {
+   switch (action.type) {
+     case HOGE_BUTTON_CLICKED:
+       const newHoge = {
+         clicked: true,
+       };
+       return Object.assign({}, state, newHoge);
+     default:
+       return state;
+   }
+ }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;スクリプト以外をimportするコードを修正&#34;&gt;スクリプト以外をimportするコードを修正&lt;/h4&gt;
+
+&lt;p&gt;JavaScriptやTypeScript以外のファイルをimportするコードを書くと、コンパイル時にエラーになる。&lt;/p&gt;
+
+&lt;p&gt;今まで書いた中で該当するのは&lt;code&gt;src/fonts.ts&lt;/code&gt;でフォントファイルをimportしている箇所で、「&lt;code&gt;TS2307: Cannot find module &#39;../node_modules/typeface-roboto/files/roboto-lat
+in-300.woff&#39;.&lt;/code&gt;」といったエラーが出る。&lt;/p&gt;
+
+&lt;p&gt;原因は&lt;a href=&#34;https://stackoverflow.com/questions/36148639/webpack-not-able-to-import-images-using-express-and-angular2-in-typescript&#34;&gt;webpackでロードすべきものをtscでロードしちゃってる&lt;/a&gt;から。
+フォントファイルはwebpack(のfile-loader)でロードすべき。&lt;/p&gt;
+
+&lt;p&gt;解決策は、&lt;code&gt;import&lt;/code&gt;文はtscが処理しちゃうので、代わりに&lt;code&gt;require&lt;/code&gt;関数を使うこと。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;src/fonts.ts&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; import { createGlobalStyle } from &#39;styled-components&#39;;
+-import roboto300 from &#39;../node_modules/typeface-roboto/files/roboto-latin-300.woff&#39;;
++const roboto300 = require(&#39;../node_modules/typeface-roboto/files/roboto-latin-300.woff&#39;);
+
+ const Fonts = createGlobalStyle`
+   /* roboto-300normal - latin */
+   @font-face {
+     font-family: &#39;Roboto&#39;;
+     font-style: normal;
+     font-display: swap;
+     font-weight: 300;
+     src:
+       local(&#39;Roboto Light&#39;),
+       local(&#39;Roboto-Light&#39;),
+       url(&#39;${roboto300}&#39;) format(&#39;woff&#39;);
+   }
+ `;
+
+ export default Fonts;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これだけ。&lt;/p&gt;
+
+&lt;h3 id=&#34;jestの設定&#34;&gt;Jestの設定&lt;/h3&gt;
+
+&lt;p&gt;Jestを実行するときはwebpackを介さないので、別途TypeScript対応する必要がある。
+純粋なTypeScriptプロジェクトでは普通&lt;a href=&#34;https://kulshekhar.github.io/ts-jest/&#34;&gt;ts-jest
+&lt;/a&gt;を使うみたいだけど、&lt;a href=&#34;https://www.kaitoy.xyz/2018/11/07/creating-react-redux-app-from-scratch-10/&#34;&gt;前回&lt;/a&gt;入れた&lt;a href=&#34;https://www.npmjs.com/package/babel-jest&#34;&gt;babel-jest&lt;/a&gt;で事足りるようなのでこっちを使う。&lt;/p&gt;
+
+&lt;p&gt;babel-jestは、Jest実行時にテストコードと関連モジュールをBabelで処理してピュアなJavaScriptにしてくれるやつ。
+TypeScriptをBabelで処理できるようにするには、&lt;a href=&#34;https://babeljs.io/docs/en/babel-preset-typescript&#34;&gt;@babel/preset-typescript&lt;/a&gt;を入れておく必要がある。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ yarn add -D @babel/preset-typescript
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;.babelrc&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; {
+   &amp;quot;presets&amp;quot;: [
+     [
+       &amp;quot;@babel/preset-env&amp;quot;,
+       {
+         &amp;quot;useBuiltIns&amp;quot;: &amp;quot;usage&amp;quot;
+       }
+     ],
++    &amp;quot;@babel/preset-typescript&amp;quot;,
+     &amp;quot;@babel/preset-react&amp;quot;
+   ],
+   &amp;quot;plugins&amp;quot;: [&amp;quot;styled-components&amp;quot;, &amp;quot;@babel/plugin-syntax-dynamic-import&amp;quot;]
+ }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;で、jest.config.jsを二か所いじる。&lt;/p&gt;
+
+&lt;p&gt;一つは、JestがTypeScriptの拡張子を認識するように、&lt;code&gt;moduleFileExtensions&lt;/code&gt;に&lt;code&gt;ts&lt;/code&gt;と&lt;code&gt;tsx&lt;/code&gt;を追加する。
+もう一つは、Jestがbabel-jestを呼び出すように、&lt;code&gt;transform&lt;/code&gt;にパターンを追加する。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;jest.config.js&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; // For a detailed explanation regarding each configuration property, visit:
+ // https://jestjs.io/docs/en/configuration.html
+
+ module.exports = {
+   // All imported modules in your tests should be mocked automatically
+   // automock: false,
+
+   // Stop running tests after the first failure
+   // bail: false,
+
+   // Respect &amp;quot;browser&amp;quot; field in package.json when resolving modules
+   // browser: false,
+
+   // The directory where Jest should store its cached dependency information
+   // cacheDirectory: &amp;quot;C:\\Users\\kaitoy\\AppData\\Local\\Temp\\jest&amp;quot;,
+
+   // Automatically clear mock calls and instances between every test
+   // clearMocks: false,
+
+   // Indicates whether the coverage information should be collected while executing the test
+   // collectCoverage: false,
+
+   // An array of glob patterns indicating a set of files for which coverage information should be collected
+   // collectCoverageFrom: null,
+
+   // The directory where Jest should output its coverage files
+   coverageDirectory: &#39;coverage&#39;,
+
+   // An array of regexp pattern strings used to skip coverage collection
+   // coveragePathIgnorePatterns: [
+   //   &amp;quot;\\\\node_modules\\\\&amp;quot;
+   // ],
+
+   // A list of reporter names that Jest uses when writing coverage reports
+   // coverageReporters: [
+   //   &amp;quot;json&amp;quot;,
+   //   &amp;quot;text&amp;quot;,
+   //   &amp;quot;lcov&amp;quot;,
+   //   &amp;quot;clover&amp;quot;
+   // ],
+
+   // An object that configures minimum threshold enforcement for coverage results
+   // coverageThreshold: null,
+
+   // Make calling deprecated APIs throw helpful error messages
+   // errorOnDeprecated: false,
+
+   // Force coverage collection from ignored files usin a array of glob patterns
+   // forceCoverageMatch: [],
+
+   // A path to a module which exports an async function that is triggered once before all test suites
+   // globalSetup: null,
+
+   // A path to a module which exports an async function that is triggered once after all test suites
+   // globalTeardown: null,
+
+   // A set of global variables that need to be available in all test environments
+   // globals: {},
+
+   // An array of directory names to be searched recursively up from the requiring module&#39;s location
+   // moduleDirectories: [
+   //   &amp;quot;node_modules&amp;quot;
+   // ],
+
+   // An array of file extensions your modules use
+-  // moduleFileExtensions: [
+-  //   &amp;quot;js&amp;quot;,
+-  //   &amp;quot;json&amp;quot;,
+-  //   &amp;quot;jsx&amp;quot;,
+-  //   &amp;quot;node&amp;quot;
+-  // ],
++  moduleFileExtensions: [
++    &amp;quot;ts&amp;quot;,
++    &amp;quot;tsx&amp;quot;,
++    &amp;quot;js&amp;quot;,
++    &amp;quot;json&amp;quot;,
++    &amp;quot;jsx&amp;quot;,
++    &amp;quot;node&amp;quot;
++  ],
+
+   // A map from regular expressions to module names that allow to stub out resources with a single module
+   // moduleNameMapper: {},
+
+   // An array of regexp pattern strings, matched against all module paths before considered &#39;visible&#39; to the module loader
+   // modulePathIgnorePatterns: [],
+
+   // Activates notifications for test results
+   // notify: false,
+
+   // An enum that specifies notification mode. Requires { notify: true }
+   // notifyMode: &amp;quot;always&amp;quot;,
+
+   // A preset that is used as a base for Jest&#39;s configuration
+   // preset: null,
+
+   // Run tests from one or more projects
+   // projects: null,
+
+   // Use this configuration option to add custom reporters to Jest
+   // reporters: undefined,
+
+   // Automatically reset mock state between every test
+   // resetMocks: false,
+
+   // Reset the module registry before running each individual test
+   // resetModules: false,
+
+   // A path to a custom resolver
+   // resolver: null,
+
+   // Automatically restore mock state between every test
+   // restoreMocks: false,
+
+   // The root directory that Jest should scan for tests and modules within
+   // rootDir: null,
+
+   // A list of paths to directories that Jest should use to search for files in
+   // roots: [
+   //   &amp;quot;&amp;lt;rootDir&amp;gt;&amp;quot;
+   // ],
+
+   // Allows you to use a custom runner instead of Jest&#39;s default test runner
+   // runner: &amp;quot;jest-runner&amp;quot;,
+
+   // The paths to modules that run some code to configure or set up the testing environment before each test
+   // setupFiles: [],
+
+   // The path to a module that runs some code to configure or set up the testing framework before each test
+   // setupTestFrameworkScriptFile: null,
+
+   // A list of paths to snapshot serializer modules Jest should use for snapshot testing
+   // snapshotSerializers: [],
+
+   // The test environment that will be used for testing
+   // testEnvironment: &amp;quot;jest-environment-jsdom&amp;quot;,
+
+   // Options that will be passed to the testEnvironment
+   // testEnvironmentOptions: {},
+
+   // Adds a location field to test results
+   // testLocationInResults: false,
+
+   // The glob patterns Jest uses to detect test files
+   // testMatch: [
+   //   &amp;quot;**/__tests__/**/*.js?(x)&amp;quot;,
+   //   &amp;quot;**/?(*.)+(spec|test).js?(x)&amp;quot;
+   // ],
+
+   // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
+   // testPathIgnorePatterns: [
+   //   &amp;quot;\\\\node_modules\\\\&amp;quot;
+   // ],
+
+   // The regexp pattern Jest uses to detect test files
+   // testRegex: &amp;quot;&amp;quot;,
+
+   // This option allows the use of a custom results processor
+   // testResultsProcessor: null,
+
+   // This option allows use of a custom test runner
+   // testRunner: &amp;quot;jasmine2&amp;quot;,
+
+   // This option sets the URL for the jsdom environment. It is reflected in properties such as location.href
+   testURL: &#39;http://localhost/&#39;,
+
+   // Setting this value to &amp;quot;fake&amp;quot; allows the use of fake timers for functions such as &amp;quot;setTimeout&amp;quot;
+   // timers: &amp;quot;real&amp;quot;,
+
+   // A map from regular expressions to paths to transformers
+-  // transform: null,
++  transform: {
++    &#39;^.+\\.jsx?$&#39;: &#39;babel-jest&#39;,
++    &#39;^.+\\.tsx?$&#39;: &#39;babel-jest&#39;,
++  },
+
+   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
+   // transformIgnorePatterns: [
+   //   &amp;quot;\\\\node_modules\\\\&amp;quot;
+   // ],
+
+   // An array of regexp pattern strings that are matched against all modules before the module loader will automatically return a mock for them
+   // unmockedModulePathPatterns: undefined,
+
+   // Indicates whether each individual test should be reported during the run
+   // verbose: null,
+
+   // An array of regexp patterns that are matched against all source file paths before re-running tests in watch mode
+   // watchPathIgnorePatterns: [],
+
+   // Whether to use watchman for file crawling
+   // watchman: true,
+ };
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;以上でTypeScriptへの移行完了。&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -537,7 +1486,7 @@ const initialState = {
 describe(&#39;reducers&#39;, () =&amp;gt; {
   describe(&#39;hoge()&#39;, () =&amp;gt; {
     test(&#39;returns a state with clicked:true when the action is HOGE_BUTTON_CLICKED&#39;, () =&amp;gt; {
-      const state = hogeButtonClicked(initialState, hogeButtonClicked({}));
+      const state = hogeButtonClicked(initialState, hogeButtonClicked());
       expect(state.clicked).toBe(true);
     });
   });
@@ -677,9 +1626,8 @@ Reactコンポーネントをレンダリングして、jQueryみたいなAPIで
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
-&lt;p&gt;以上で全10回に渡るReact―Redux環境のセットアップ体験記が完結。&lt;/p&gt;
-
-&lt;p&gt;だらだら書いてるうちに、&lt;a href=&#34;https://babeljs.io/blog/2018/08/27/7.0.0&#34;&gt;Babelの7が出たり&lt;/a&gt;、&lt;a href=&#34;https://reactjs.org/docs/hooks-overview.html&#34;&gt;React Hooks&lt;/a&gt;とかのReact APIの新しいのが出てきて、また大きく変わってきそう…&lt;/p&gt;
+&lt;p&gt;以上で全10回に渡るReact―Redux環境のセットアップ体験記が完結。
+の予定だったけど、&lt;a href=&#34;https://www.kaitoy.xyz/2018/11/26/creating-react-redux-app-from-scratch-11/&#34;&gt;次回&lt;/a&gt;&lt;a href=&#34;https://www.typescriptlang.org/&#34;&gt;TypeScript&lt;/a&gt;をやる。&lt;/p&gt;
 </description>
         </item>
       
@@ -938,7 +1886,7 @@ export default App;
 
 &lt;p&gt;あとは、上に書いたような404エラーを防ぐために、webpack-dev-serverの&lt;a href=&#34;https://webpack.js.org/configuration/dev-server/#devserver-historyapifallback&#34;&gt;History API Fallback&lt;/a&gt;を有効にしてやる。&lt;/p&gt;
 
-&lt;p&gt;webpack.dev.js&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;webpack.dev.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; const path = require(&#39;path&#39;);
  const webpackMerge = require(&#39;webpack-merge&#39;);
@@ -961,7 +1909,7 @@ export default App;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/11/07/creating-react-redux-app-from-scratch-10/&#34;&gt;次回&lt;/a&gt;はラストで、&lt;a href=&#34;https://webpack.js.org/guides/code-splitting/&#34;&gt;Code Splitting&lt;/a&gt;と&lt;a href=&#34;https://flow.org/&#34;&gt;Flow&lt;/a&gt;と&lt;a href=&#34;https://jestjs.io/ja/&#34;&gt;Jest&lt;/a&gt;と&lt;a href=&#34;https://airbnb.io/enzyme/&#34;&gt;Enzyme&lt;/a&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/11/07/creating-react-redux-app-from-scratch-10/&#34;&gt;次回&lt;/a&gt;は&lt;a href=&#34;https://webpack.js.org/guides/code-splitting/&#34;&gt;Code Splitting&lt;/a&gt;と&lt;a href=&#34;https://flow.org/&#34;&gt;Flow&lt;/a&gt;と&lt;a href=&#34;https://jestjs.io/ja/&#34;&gt;Jest&lt;/a&gt;と&lt;a href=&#34;https://airbnb.io/enzyme/&#34;&gt;Enzyme&lt;/a&gt;。&lt;/p&gt;
 </description>
         </item>
       
@@ -1146,10 +2094,9 @@ export function getHoge() {
 +  HOGE_FETCH_FAILED,
  } from &#39;./actionTypes&#39;;
 
- export function hogeButtonClicked(payload) {
+ export function hogeButtonClicked() {
    return {
      type: HOGE_BUTTON_CLICKED,
-     payload,
    };
  }
 +
@@ -1694,10 +2641,9 @@ FSAは以下のプロパティを持つプレーンオブジェクト。&lt;/p&g
   HOGE_BUTTON_CLICKED,
 } from &#39;./actionTypes&#39;;
 
-export function hogeButtonClicked(payload) {
+export function hogeButtonClicked() {
   return {
     type: HOGE_BUTTON_CLICKED,
-    payload,
   };
 }
 &lt;/code&gt;&lt;/pre&gt;
@@ -1752,7 +2698,7 @@ const initialState = {
   },
 };
 
-export function hoge(state = initialState, action) {
+export const hoge = (state = initialState, action) =&amp;gt; {
   switch (action.type) {
     case HOGE_BUTTON_CLICKED:
       const newHoge = {
@@ -1809,8 +2755,8 @@ export function hoge(state = initialState, action) {
 -  },
 -};
 
--export function hoge(state = initialState, action) {
-+export function hoge(state = { clicked: false }, action) {
+-export const hoge = (state = initialState, action) =&amp;gt; {
++export const hoge = (state = { clicked: false }, action) =&amp;gt; {
    switch (action.type) {
      case HOGE_BUTTON_CLICKED:
        const newHoge = {
@@ -1825,20 +2771,20 @@ export function hoge(state = initialState, action) {
    }
  }
 
-+export function rootReducer(state = {}, action) {
++export const rootReducer = (state = {}, action) =&amp;gt; {
 +  return {
 +    hoge: hoge(state.hoge, action),
 +  }
 +}
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;こんな感じで、&lt;code&gt;rootReducer()&lt;/code&gt;がstateオブジェクトを分割して子Reducerを呼び出す。
+&lt;p&gt;こんな感じで、&lt;code&gt;rootReducer&lt;/code&gt;がstateオブジェクトを分割して子Reducerを呼び出す。
 孫Reducerとか曾孫Reducerとかがあってもいい。&lt;/p&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
-&lt;p&gt;&lt;code&gt;rootReducer()&lt;/code&gt;は別のファイルに書くと見やすくなるし、Reduxの&lt;a href=&#34;https://redux.js.org/api/combinereducers&#34;&gt;combineReducers()&lt;/a&gt;というヘルパー関数を使うともっと楽に書ける。
-上記&lt;code&gt;reducers.js&lt;/code&gt;からは&lt;code&gt;rootReducer()&lt;/code&gt;を削除して、&lt;code&gt;rootReducer.js&lt;/code&gt;に以下のように書く。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;rootReducer&lt;/code&gt;は別のファイルに書くと見やすくなるし、Reduxの&lt;a href=&#34;https://redux.js.org/api/combinereducers&#34;&gt;combineReducers()&lt;/a&gt;というヘルパー関数を使うともっと楽に書ける。
+上記&lt;code&gt;reducers.js&lt;/code&gt;からは&lt;code&gt;rootReducer&lt;/code&gt;を削除して、&lt;code&gt;rootReducer.js&lt;/code&gt;に以下のように書く。&lt;/p&gt;
 
 &lt;p&gt;&lt;code&gt;src/reducers/rootReducer.js&lt;/code&gt;:&lt;/p&gt;
 
@@ -2155,7 +3101,7 @@ const Fonts = createGlobalStyle`
     font-display: swap;
     font-weight: 300;
     src:
-      local(&#39;Roboto Light &#39;),
+      local(&#39;Roboto Light&#39;),
       local(&#39;Roboto-Light&#39;),
       url(&#39;${roboto300}&#39;) format(&#39;woff&#39;);
   }
@@ -2929,6 +3875,9 @@ ReactDOM.render(
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;関数による定義とclassによる定義はおおむね変わらないが、&lt;a href=&#34;https://reactjs.org/docs/state-and-lifecycle.html&#34;&gt;stateとライフサイクルメソッド&lt;/a&gt;を使いたいときはclassにする必要がある。&lt;/p&gt;
+
+&lt;p&gt;関数で定義したコンポーネントをFunction Component、クラスのものをClass Componentと呼ぶ。
+(前者は昔はStateless Functional ComponentとかSFCとかFunctional Componentと呼ばれていた。後者はStateful Componentと呼ばれることもあるけど、&lt;a href=&#34;https://reactjs.org/docs/hooks-intro.html&#34;&gt;React Hooks&lt;/a&gt;が出た今、Class Componentの方が適切な呼び方だろう。)&lt;/p&gt;
 
 &lt;h2 id=&#34;props&#34;&gt;props&lt;/h2&gt;
 

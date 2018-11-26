@@ -86,10 +86,9 @@ import {
   HOGE_BUTTON_CLICKED,
 } from './actionTypes';
 
-export function hogeButtonClicked(payload) {
+export function hogeButtonClicked() {
   return {
     type: HOGE_BUTTON_CLICKED,
-    payload,
   };
 }
 ```
@@ -143,7 +142,7 @@ const initialState = {
   },
 };
 
-export function hoge(state = initialState, action) {
+export const hoge = (state = initialState, action) => {
   switch (action.type) {
     case HOGE_BUTTON_CLICKED:
       const newHoge = {
@@ -189,8 +188,8 @@ export function hoge(state = initialState, action) {
 -  },
 -};
 
--export function hoge(state = initialState, action) {
-+export function hoge(state = { clicked: false }, action) {
+-export const hoge = (state = initialState, action) => {
++export const hoge = (state = { clicked: false }, action) => {
    switch (action.type) {
      case HOGE_BUTTON_CLICKED:
        const newHoge = {
@@ -205,20 +204,20 @@ export function hoge(state = initialState, action) {
    }
  }
 
-+export function rootReducer(state = {}, action) {
++export const rootReducer = (state = {}, action) => {
 +  return {
 +    hoge: hoge(state.hoge, action),
 +  }
 +}
 ```
 
-こんな感じで、`rootReducer()`がstateオブジェクトを分割して子Reducerを呼び出す。
+こんな感じで、`rootReducer`がstateオブジェクトを分割して子Reducerを呼び出す。
 孫Reducerとか曾孫Reducerとかがあってもいい。
 
 <br>
 
-`rootReducer()`は別のファイルに書くと見やすくなるし、Reduxの[combineReducers()](https://redux.js.org/api/combinereducers)というヘルパー関数を使うともっと楽に書ける。
-上記`reducers.js`からは`rootReducer()`を削除して、`rootReducer.js`に以下のように書く。
+`rootReducer`は別のファイルに書くと見やすくなるし、Reduxの[combineReducers()](https://redux.js.org/api/combinereducers)というヘルパー関数を使うともっと楽に書ける。
+上記`reducers.js`からは`rootReducer`を削除して、`rootReducer.js`に以下のように書く。
 
 `src/reducers/rootReducer.js`:
 ```javascript

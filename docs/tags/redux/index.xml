@@ -263,7 +263,7 @@ export default App;
 
 &lt;p&gt;あとは、上に書いたような404エラーを防ぐために、webpack-dev-serverの&lt;a href=&#34;https://webpack.js.org/configuration/dev-server/#devserver-historyapifallback&#34;&gt;History API Fallback&lt;/a&gt;を有効にしてやる。&lt;/p&gt;
 
-&lt;p&gt;webpack.dev.js&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;webpack.dev.js&lt;/code&gt;:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; const path = require(&#39;path&#39;);
  const webpackMerge = require(&#39;webpack-merge&#39;);
@@ -286,7 +286,7 @@ export default App;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/11/07/creating-react-redux-app-from-scratch-10/&#34;&gt;次回&lt;/a&gt;はラストで、&lt;a href=&#34;https://webpack.js.org/guides/code-splitting/&#34;&gt;Code Splitting&lt;/a&gt;と&lt;a href=&#34;https://flow.org/&#34;&gt;Flow&lt;/a&gt;と&lt;a href=&#34;https://jestjs.io/ja/&#34;&gt;Jest&lt;/a&gt;と&lt;a href=&#34;https://airbnb.io/enzyme/&#34;&gt;Enzyme&lt;/a&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/11/07/creating-react-redux-app-from-scratch-10/&#34;&gt;次回&lt;/a&gt;は&lt;a href=&#34;https://webpack.js.org/guides/code-splitting/&#34;&gt;Code Splitting&lt;/a&gt;と&lt;a href=&#34;https://flow.org/&#34;&gt;Flow&lt;/a&gt;と&lt;a href=&#34;https://jestjs.io/ja/&#34;&gt;Jest&lt;/a&gt;と&lt;a href=&#34;https://airbnb.io/enzyme/&#34;&gt;Enzyme&lt;/a&gt;。&lt;/p&gt;
 </description>
         </item>
       
@@ -471,10 +471,9 @@ export function getHoge() {
 +  HOGE_FETCH_FAILED,
  } from &#39;./actionTypes&#39;;
 
- export function hogeButtonClicked(payload) {
+ export function hogeButtonClicked() {
    return {
      type: HOGE_BUTTON_CLICKED,
-     payload,
    };
  }
 +
@@ -1019,10 +1018,9 @@ FSAは以下のプロパティを持つプレーンオブジェクト。&lt;/p&g
   HOGE_BUTTON_CLICKED,
 } from &#39;./actionTypes&#39;;
 
-export function hogeButtonClicked(payload) {
+export function hogeButtonClicked() {
   return {
     type: HOGE_BUTTON_CLICKED,
-    payload,
   };
 }
 &lt;/code&gt;&lt;/pre&gt;
@@ -1077,7 +1075,7 @@ const initialState = {
   },
 };
 
-export function hoge(state = initialState, action) {
+export const hoge = (state = initialState, action) =&amp;gt; {
   switch (action.type) {
     case HOGE_BUTTON_CLICKED:
       const newHoge = {
@@ -1134,8 +1132,8 @@ export function hoge(state = initialState, action) {
 -  },
 -};
 
--export function hoge(state = initialState, action) {
-+export function hoge(state = { clicked: false }, action) {
+-export const hoge = (state = initialState, action) =&amp;gt; {
++export const hoge = (state = { clicked: false }, action) =&amp;gt; {
    switch (action.type) {
      case HOGE_BUTTON_CLICKED:
        const newHoge = {
@@ -1150,20 +1148,20 @@ export function hoge(state = initialState, action) {
    }
  }
 
-+export function rootReducer(state = {}, action) {
++export const rootReducer = (state = {}, action) =&amp;gt; {
 +  return {
 +    hoge: hoge(state.hoge, action),
 +  }
 +}
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;こんな感じで、&lt;code&gt;rootReducer()&lt;/code&gt;がstateオブジェクトを分割して子Reducerを呼び出す。
+&lt;p&gt;こんな感じで、&lt;code&gt;rootReducer&lt;/code&gt;がstateオブジェクトを分割して子Reducerを呼び出す。
 孫Reducerとか曾孫Reducerとかがあってもいい。&lt;/p&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
-&lt;p&gt;&lt;code&gt;rootReducer()&lt;/code&gt;は別のファイルに書くと見やすくなるし、Reduxの&lt;a href=&#34;https://redux.js.org/api/combinereducers&#34;&gt;combineReducers()&lt;/a&gt;というヘルパー関数を使うともっと楽に書ける。
-上記&lt;code&gt;reducers.js&lt;/code&gt;からは&lt;code&gt;rootReducer()&lt;/code&gt;を削除して、&lt;code&gt;rootReducer.js&lt;/code&gt;に以下のように書く。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;rootReducer&lt;/code&gt;は別のファイルに書くと見やすくなるし、Reduxの&lt;a href=&#34;https://redux.js.org/api/combinereducers&#34;&gt;combineReducers()&lt;/a&gt;というヘルパー関数を使うともっと楽に書ける。
+上記&lt;code&gt;reducers.js&lt;/code&gt;からは&lt;code&gt;rootReducer&lt;/code&gt;を削除して、&lt;code&gt;rootReducer.js&lt;/code&gt;に以下のように書く。&lt;/p&gt;
 
 &lt;p&gt;&lt;code&gt;src/reducers/rootReducer.js&lt;/code&gt;:&lt;/p&gt;
 

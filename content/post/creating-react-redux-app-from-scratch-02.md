@@ -88,6 +88,9 @@ class Welcome extends React.Component {
 
 関数による定義とclassによる定義はおおむね変わらないが、[stateとライフサイクルメソッド](https://reactjs.org/docs/state-and-lifecycle.html)を使いたいときはclassにする必要がある。
 
+関数で定義したコンポーネントをFunction Component、クラスのものをClass Componentと呼ぶ。
+(前者は昔はStateless Functional ComponentとかSFCとかFunctional Componentと呼ばれていた。後者はStateful Componentと呼ばれることもあるけど、[React Hooks](https://reactjs.org/docs/hooks-intro.html)が出た今、Class Componentの方が適切な呼び方だろう。)
+
 ## props
 
 コンポーネントはレンダリングの際に`props`というパラメータを受け取って使うことができるので、上手く設計すれば汎用的なコンポーネントが書ける。

@@ -523,7 +523,7 @@ const initialState = {
 describe('reducers', () => {
   describe('hoge()', () => {
     test('returns a state with clicked:true when the action is HOGE_BUTTON_CLICKED', () => {
-      const state = hogeButtonClicked(initialState, hogeButtonClicked({}));
+      const state = hogeButtonClicked(initialState, hogeButtonClicked());
       expect(state.clicked).toBe(true);
     });
   });
@@ -664,5 +664,4 @@ ContainedButtonがクリックされたとき、`onClick`に指定した関数�
 <br>
 
 以上で全10回に渡るReact―Redux環境のセットアップ体験記が完結。
-
-だらだら書いてるうちに、[Babelの7が出たり](https://babeljs.io/blog/2018/08/27/7.0.0)、[React Hooks](https://reactjs.org/docs/hooks-overview.html)とかのReact APIの新しいのが出てきて、また大きく変わってきそう…
+の予定だったけど、[次回](https://www.kaitoy.xyz/2018/11/26/creating-react-redux-app-from-scratch-11/)[TypeScript](https://www.typescriptlang.org/)をやる。
