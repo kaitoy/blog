@@ -381,6 +381,7 @@ CoffeeScriptは、RubyやPythonみたいな簡潔で機能的な構文を備え�
 クラス構文とか、アロー関数とか、配列内包表記とか、インデントによるブロック構造とかを実現してて書き心地がかなりよかったのと、Ruby on Railsに採用されたというのもあって、__2010年代中盤__ くらいまで結構流行った。
 
 CoffeeScriptのように、JavaScriptの代替として使い、JavaScriptに変換して実行するのを主なユースケースとする言語を、AltJS (Alternative JavaScript)と呼ぶ。
+(なので、[Kotlin](https://kotlinlang.org/)とか[Clojure(Script)](https://clojurescript.org/)とか[Haxe](https://haxe.org/)なんかはJavaScriptにもコンパイルできるけど、ここではAltJSとして扱わない。)
 CoffeeScriptの最大の功績は、このAltJSという分野を切り開き、JavaScriptフロントエンドにコンパイルという概念を持ち込んだことだったと思う。
 
 CoffeeScript自体はその後、__2015年__ に発行されたECMAScript 2015がその仕様を取り込んだことで役目を終えた。
@@ -406,6 +407,11 @@ AltJSには他に以下のようなものがあるが、ほぼTypeScriptしか�
     * DeNA製。
     * 名前がReactの[JSX](https://reactjs.org/docs/introducing-jsx.html)と紛らわしい。
     * 誰も使ってないし、__2014年__ くらいから開発止まってる。
+* [Flow](https://flow.org/)
+    * __2014年11月__ 初版リリース。
+    * Facebook製。
+    * AltJSというべきものかは微妙。JavaScriptに静的な型情報を付加するためのもの。
+    * ReactなどのFacebookのプロジェクトや[Vue.js](https://jp.vuejs.org/index.html)で使われていてそれなりに存在感があるが、TypeScriptに押され気味。
 
 ### AltCSS
 
@@ -467,21 +473,28 @@ __2018年現在__、Babel無しでフロントエンド開発をすることは�
 第2世代は第1世代から正統な進化を遂げた感じで、あいかわらずMVW (i.e. MV*)だった。
 主要なのは以下。
 
+* [Polymer](https://polymer-library.polymer-project.org/)
+    * __2013年11月__ に誕生。
+    * Googleのエンジニア達が作った。
+    * 最初は単なる[Polyfill](https://en.wikipedia.org/wiki/Polyfill_%28programming%29)ライブラリとして世に出て、徐々に機能を増やし、[マテリアルデザイン](https://material.io/design/)の標準実装となり、さらに膨らんできている。
+    * [Web Component](https://developer.mozilla.org/ja/docs/Web/Web_Components)とか[Service Worker](https://developer.mozilla.org/ja/docs/Web/API/ServiceWorker_API)といったエッジなWeb標準技術を取り入れた軽くて強力なフレームワーク。
+    * 2-wayバインディングもできる。
+
 * [Vue.js](https://vuejs.org/) v1
     * __2013年12月__ に誕生。
     * Googleのエンジニア(個人)製。
     * MVVMアーキテクチャ。
     * [軽量AngularJS](https://mizchi.hatenablog.com/entry/2014/02/13/153742)な感じらしい。
 
-* [Aurelia](https://aurelia.io/)
-    * __2015年11月__ に誕生。
-    * AngularJSっぽいフルスタックフレームワークで、EcmaScript 2015+とかWeb Componentsとかの先端技術を取り入れていることが売り。
-    * 2-wayバインディング推しで、あまり流行らなかった。
-
 * [Riot](https://riot.js.org/)
     * __2014年6月__ に誕生。
     * AngularJSもReactも複雑すぎ。フロントエンド開発に必要十分なコンパクトな機能を提供するぜ、というフレームワーク。
     * Aureliaよりかは使われていそう。
+
+* [Aurelia](https://aurelia.io/)
+    * __2015年11月__ に誕生。
+    * AngularJSっぽいフルスタックフレームワークで、EcmaScript 2015+とかWeb Componentsとかの先端技術を取り入れていることが売り。
+    * 2-wayバインディング推しで、あまり流行らなかった。
 
 * [Angular](https://angular.io/)
     * __2016年9月__ に誕生。
@@ -541,6 +554,14 @@ Fluxの実装も、Facebook自身による[Flux](https://github.com/facebook/flu
     * __2016年10月__ リリース。
     * [snabbdom](https://github.com/snabbdom/snabbdom)ベースのVirtual DOM実装を搭載。
     * 2017年頭位からかなりの勢いで流行ってきている。
+
+* [Svelte](https://svelte.technology/)
+    * __2016年11月__ に誕生。
+    * [Rich Harris](https://twitter.com/rich_harris)という個人が開発。
+    * フレームワークレスとか消えるフレームワークなどと呼ばれる一風変わったフレームワーク。
+    * Virtual DOMではない。
+    * コンパイルするとピュアなHTMLとCSSとJavaScriptが生成される。Webフロントエンド言語と呼んだほうがいいのかも。
+    * 海外ではぼちぼち使われている模様。
 
 * [Hyperapp](https://hyperapp.js.org/)
     * __2017年1月__ に誕生。
