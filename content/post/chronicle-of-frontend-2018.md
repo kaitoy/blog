@@ -401,8 +401,9 @@ AltJSには他に以下のようなものがあるが、ほぼTypeScriptしか�
 * [Dart](https://www.dartlang.org/)
     * __2011年10月__ 初版リリース。
     * Google製。
-    * 全く流行らなかったし、Google自身も社内標準プログラミング言語にTypeScriptを採用したので、だれも使ってなくてよくわからない。
-    * __2018年8月__ にバージョン2がリリースされ、再起を図ってはいる。
+    * 全く流行らなかったし、Google自身も社内標準プログラミング言語にTypeScriptを採用したので、あまりだれも使ってなくてよくわからない。
+        * [Fuchsia](https://fuchsia.googlesource.com/)のUIに使われているらしい。
+    * __2018年8月__ にバージョン2がリリースされ、[Flutter](https://flutter.io/)(__2017年5月__ 初版リリース)の人気の高まりもあって、モバイルアプリ開発者を中心にユーザを増やしてきているらしい。
 * [JSX](https://jsx.github.io/)
     * DeNA製。
     * 名前がReactの[JSX](https://reactjs.org/docs/introducing-jsx.html)と紛らわしい。
