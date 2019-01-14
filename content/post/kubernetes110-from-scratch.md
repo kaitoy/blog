@@ -258,7 +258,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/kube-proxy.key
         # chown kubernetes:kubernetes /etc/kubernetes/pki/kube-proxy.key
         # chmod 0600 /etc/kubernetes/pki/kube-proxy.key
-        # openssl req -new -sha256 -key /etc/kubernetes/pki/kube-proxy.key -subj "/CN=system:kube-proxy" | openssl x509 -req -sha256 -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out /etc/kubernetes/pki/kube-proxy.crt -days $PROXY_DAYS -extensions v3_req_client -extfile /etc/kubernetes/pki/openssl.cnf
+        # openssl req -new -sha256 -key /etc/kubernetes/pki/kube-proxy.key -subj "/CN=system:kube-proxy/O=system:node-proxier" | openssl x509 -req -sha256 -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out /etc/kubernetes/pki/kube-proxy.crt -days $PROXY_DAYS -extensions v3_req_client -extfile /etc/kubernetes/pki/openssl.cnf
         ```
 
     8. front proxy CA証明書生成
@@ -1234,12 +1234,6 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
         ```sh
         # kubectl config view --kubeconfig=${KCONFIG}
-        ```
-
-        Service Accountのkube-proxyに`system:node-proxier`というClusterRoleを付ける。
-
-        ```sh
-        # kubectl create clusterrolebinding kubeadm:node-proxier --clusterrole system:node-proxier --serviceaccount kube-system:kube-proxy
         ```
 
         systemdのユニットファイルを書いてサービス化。

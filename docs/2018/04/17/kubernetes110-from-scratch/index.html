@@ -363,7 +363,7 @@ EOF
 # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/kube-proxy.key
 # chown kubernetes:kubernetes /etc/kubernetes/pki/kube-proxy.key
 # chmod 0600 /etc/kubernetes/pki/kube-proxy.key
-# openssl req -new -sha256 -key /etc/kubernetes/pki/kube-proxy.key -subj &quot;/CN=system:kube-proxy&quot; | openssl x509 -req -sha256 -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out /etc/kubernetes/pki/kube-proxy.crt -days $PROXY_DAYS -extensions v3_req_client -extfile /etc/kubernetes/pki/openssl.cnf
+# openssl req -new -sha256 -key /etc/kubernetes/pki/kube-proxy.key -subj &quot;/CN=system:kube-proxy/O=system:node-proxier&quot; | openssl x509 -req -sha256 -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out /etc/kubernetes/pki/kube-proxy.crt -days $PROXY_DAYS -extensions v3_req_client -extfile /etc/kubernetes/pki/openssl.cnf
 </code></pre></li>
 
 <li><p>front proxy CA証明書生成</p>
@@ -1334,11 +1334,6 @@ EOF
 <p>確認。</p>
 
 <pre><code class="language-sh"># kubectl config view --kubeconfig=${KCONFIG}
-</code></pre>
-
-<p>Service Accountのkube-proxyに<code>system:node-proxier</code>というClusterRoleを付ける。</p>
-
-<pre><code class="language-sh"># kubectl create clusterrolebinding kubeadm:node-proxier --clusterrole system:node-proxier --serviceaccount kube-system:kube-proxy
 </code></pre>
 
 <p>systemdのユニットファイルを書いてサービス化。</p>
