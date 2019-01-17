@@ -806,6 +806,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         `--experimental-cluster-signing-duration`は、Certificate Rotationのための設定で、自動発行する証明書の期限を1年に指定している。
 
         `--use-service-account-credentials`をつけると、[各コントローラが別々のService Accountで動く](https://kubernetes.io/docs/admin/authorization/rbac/#controller-roles)。
+        (`--service-account-private-key-file`はk8s 1.11で廃止になった。)
 
         `--secure-port`や`--tls-*`は、ヘルスチェックAPIをHTTPSにするだけで意味が無いし、設定すると`kubectl get componentstatuses`でエラーが出るようになるので、設定しないほうがいい。
         (k8s 1.12からは設定できるようになった。)
