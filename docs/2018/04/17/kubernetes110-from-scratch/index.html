@@ -13,7 +13,7 @@
     <meta property="og:title" content="Kubernetes 1.10をスクラッチから全手動で構築 | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">
-    <meta property="og:description" content="Oracle Linux 7.4.0のVMでKubernetes1.10.0のクラスタをスクラッチから全手動で作った。 参考にしたのは主に以下。 https://nixaid.com/deploying-kubernetes-cluster-from-scratch/ https://github.com/kubernetes/kubeadm/blob/master/docs/design/design_v1.10.md https://kubernetes.io/docs/getting-started-guides/scratch/ https://kubernetes.io/docs/reference/setup-tools/kubeadm/implementation-details/ https://ulam.io/blog/kubernetes-scratch/ https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master (adsbygoogle = window.adsbygoogle || []).push({}); 構成 マシン: Windows 10 Homeのラップトップの上のVMware PlayerのVM CPU: 2コア メモリ: 4GB NIF: NATのを一つ OS: Oracle Linux 7.4.0 Minimalインストール IPアドレス: 192.168.171.200、静的割り当て ホスト名: k8s-master (hostsで解決) Docker: Oracle Container Runtime for Docker (docker-engine) 17.06.2 Kubernetes: バージョン1.10.0 単一ノード 全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e. 非コンテナ) kubeletとkube-proxy以外は非rootユーザ kubeletは現時点でrootで動かす必要がある kube-proxyはiptableいじったりする都合上rootで動かす必要があるっぽい。 コンポーネント間通信とkubectlの通信をTLSで暗号化 TLS 1.2 セキュアなCipher Suites コンポーネント間通信とkubectlの通信の認証はx509クライアント証明書 TLS Bootstrapping Bootstrap token使用 CSR自動承認 Certificate Rotation有効 etcd 3.1.12 flannel 0.10.0 CoreDNS 1.1.1 SERVICE_CLUSTER_IP_RANGE (Serviceに割り当てるIPの範囲) は10.0.0.0/16 kube-apiserverのIPはこの範囲の最初のIP(i.e.">
+    <meta property="og:description" content="Oracle Linux 7.4.0のVMでKubernetes 1.10.0のクラスタをスクラッチから全手動で作った。 参考にしたのは主に以下。 https://nixaid.com/deploying-kubernetes-cluster-from-scratch/ https://github.com/kubernetes/kubeadm/blob/master/docs/design/design_v1.10.md https://kubernetes.io/docs/getting-started-guides/scratch/ https://kubernetes.io/docs/reference/setup-tools/kubeadm/implementation-details/ https://ulam.io/blog/kubernetes-scratch/ https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master (2019/1/17追記: クラスタ全手動構築手順はKubernetes 1.13になってもほとんど変わっていない。ユニットファイルに指定するオプションが多少減ったりしたくらい。 また、ホストがRHELでもほとんど変わらない。インストールするDockerがDocker-CEに変わるくらい。) (adsbygoogle = window.adsbygoogle || []).push({}); 構成 マシン: Windows 10 Homeのラップトップの上のVMware PlayerのVM CPU: 2コア メモリ: 4GB NIF: NATのを一つ OS: Oracle Linux 7.4.0 Minimalインストール IPアドレス: 192.168.171.200、静的割り当て ホスト名: k8s-master (hostsで解決) Docker: Oracle Container Runtime for Docker (docker-engine) 17.06.2 Kubernetes: バージョン1.10.0 単一ノード 全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e. 非コンテナ) kubeletとkube-proxy以外は非rootユーザ kubeletは現時点でrootで動かす必要がある kube-proxyはiptableいじったりする都合上rootで動かす必要があるっぽい。 コンポーネント間通信とkubectlの通信をTLSで暗号化 TLS 1.2 セキュアなCipher Suites コンポーネント間通信とkubectlの通信の認証はx509クライアント証明書 TLS Bootstrapping Bootstrap token使用 CSR自動承認 Certificate Rotation有効 etcd 3.1.12 flannel 0.10.0 CoreDNS 1.1.1 SERVICE_CLUSTER_IP_RANGE (Serviceに割り当てるIPの範囲) は10.0.0.0/16 kube-apiserverのIPはこの範囲の最初のIP(i.e.">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
     
@@ -84,7 +84,7 @@
       <div class="content">
         
 
-<p>Oracle Linux 7.4.0のVMでKubernetes1.10.0のクラスタをスクラッチから全手動で作った。
+<p>Oracle Linux 7.4.0のVMでKubernetes 1.10.0のクラスタをスクラッチから全手動で作った。
 参考にしたのは主に以下。</p>
 
 <ul>
@@ -96,7 +96,9 @@
 <li><a href="https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master">https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master</a></li>
 </ul>
 
-<p>
+<p>(2019/1/17追記: クラスタ全手動構築手順はKubernetes 1.13になってもほとんど変わっていない。ユニットファイルに指定するオプションが多少減ったりしたくらい。
+また、ホストがRHELでもほとんど変わらない。インストールするDockerがDocker-CEに変わるくらい。)
+
 
 
 
@@ -830,7 +832,7 @@ EOF
 <p><code>--authorization-mode</code>にはRBACを指定するのが標準。
 後述のTLS Bootstrappingをするなら、Nodeも要る。</p>
 
-<p><code>--experimental-encryption-provider-config</code>は<a href="https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/">Secretを暗号化する</a>ための設定。
+<p><code>--experimental-encryption-provider-config</code>は<a href="https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/">Secretを暗号化する</a>ための設定。(k8s 1.13でexperimentalじゃなくなった。)
 暗号化のキーをローテーションすることもできるけど、それはやってない。</p>
 
 <p><code>--tls-min-version</code>と<code>--tls-cipher-suites</code>は<a href="https://www.lambdanote.com/blogs/news/openssl-cookbook">OpenSSLクックブック</a>と<a href="https://golang.org/pkg/crypto/tls/#pkg-constants">Goのtlsパッケージドキュメント</a>を参考に設定。
@@ -844,7 +846,8 @@ RSA鍵交換はNG、RC4と3DESもNG、AESの鍵長は128ビット以上、SHA1�
 
 <p><code>--audit-*</code>は監査ログ設定。
 100MB3面のログを30日間保持する。
-ログポリシーは<a href="https://kubernetes.io/docs/tasks/debug-application-cluster/audit/">公式のサンプル</a>そのまま。</p>
+ログポリシーは<a href="https://kubernetes.io/docs/tasks/debug-application-cluster/audit/">公式のサンプル</a>そのまま。
+(ログポリシーのAPIバージョンはk8s 1.12で<code>audit.k8s.io/v1</code>になった。)</p>
 
 <p><code>--feature-gates</code>でRotateKubeletServerCertificateを有効にして、kubeletのサーバ証明書を自動更新するようにしている。
 因みに、クライアント証明書を自動更新するRotateKubeletClientCertificateはデフォルトで有効。
@@ -921,7 +924,8 @@ EOF
 
 <p><code>--use-service-account-credentials</code>をつけると、<a href="https://kubernetes.io/docs/admin/authorization/rbac/#controller-roles">各コントローラが別々のService Accountで動く</a>。</p>
 
-<p><code>--secure-port</code>や<code>--tls-*</code>は、ヘルスチェックAPIをHTTPSにするだけで意味が無いし、設定すると<code>kubectl get componentstatuses</code>でエラーが出るようになるので、設定しないほうがいい。</p>
+<p><code>--secure-port</code>や<code>--tls-*</code>は、ヘルスチェックAPIをHTTPSにするだけで意味が無いし、設定すると<code>kubectl get componentstatuses</code>でエラーが出るようになるので、設定しないほうがいい。
+(k8s 1.12からは設定できるようになった。)</p>
 
 <p>確認。</p>
 
@@ -1180,7 +1184,7 @@ EOF
 
 <p>(実際は、systemctl start kubeletするまえに、後述のNode CSR自動承認設定をすべし。)</p>
 
-<p><code>--allow-privileged</code>はflannelなどに必要。</p>
+<p><code>--allow-privileged</code>はflannelなどに必要。(k8s 1.11以降は指定不要になった。)</p>
 
 <p><code>--pod-infra-container-image</code>では<a href="https://github.com/kubernetes/kubernetes/tree/master/build/pause">pause</a>コンテナイメージを指定する。
 このコンテナはPod毎に起動され、Podネットワークの名前空間を保持するために使われるらしい。

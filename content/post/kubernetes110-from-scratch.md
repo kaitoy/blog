@@ -9,7 +9,7 @@ title = "Kubernetes 1.10をスクラッチから全手動で構築"
 
 +++
 
-Oracle Linux 7.4.0のVMでKubernetes1.10.0のクラスタをスクラッチから全手動で作った。
+Oracle Linux 7.4.0のVMでKubernetes 1.10.0のクラスタをスクラッチから全手動で作った。
 参考にしたのは主に以下。
 
 * https://nixaid.com/deploying-kubernetes-cluster-from-scratch/
@@ -19,6 +19,9 @@ Oracle Linux 7.4.0のVMでKubernetes1.10.0のクラスタをスクラッチか�
 * https://ulam.io/blog/kubernetes-scratch/
 * https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master
 
+
+(2019/1/17追記: クラスタ全手動構築手順はKubernetes 1.13になってもほとんど変わっていない。ユニットファイルに指定するオプションが多少減ったりしたくらい。
+また、ホストがRHELでもほとんど変わらない。インストールするDockerがDocker-CEに変わるくらい。)
 {{< google-adsense >}}
 
 ## 構成
@@ -712,7 +715,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         `--authorization-mode`にはRBACを指定するのが標準。
         後述のTLS Bootstrappingをするなら、Nodeも要る。
 
-        `--experimental-encryption-provider-config`は[Secretを暗号化する](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/)ための設定。
+        `--experimental-encryption-provider-config`は[Secretを暗号化する](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/)ための設定。(k8s 1.13でexperimentalじゃなくなった。)
         暗号化のキーをローテーションすることもできるけど、それはやってない。
 
         `--tls-min-version`と`--tls-cipher-suites`は[OpenSSLクックブック](https://www.lambdanote.com/blogs/news/openssl-cookbook)と[Goのtlsパッケージドキュメント](https://golang.org/pkg/crypto/tls/#pkg-constants)を参考に設定。
@@ -727,6 +730,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         `--audit-*`は監査ログ設定。
         100MB3面のログを30日間保持する。
         ログポリシーは[公式のサンプル](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/)そのまま。
+        (ログポリシーのAPIバージョンはk8s 1.12で`audit.k8s.io/v1`になった。)
 
         `--feature-gates`でRotateKubeletServerCertificateを有効にして、kubeletのサーバ証明書を自動更新するようにしている。
         因みに、クライアント証明書を自動更新するRotateKubeletClientCertificateはデフォルトで有効。
@@ -804,6 +808,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         `--use-service-account-credentials`をつけると、[各コントローラが別々のService Accountで動く](https://kubernetes.io/docs/admin/authorization/rbac/#controller-roles)。
 
         `--secure-port`や`--tls-*`は、ヘルスチェックAPIをHTTPSにするだけで意味が無いし、設定すると`kubectl get componentstatuses`でエラーが出るようになるので、設定しないほうがいい。
+        (k8s 1.12からは設定できるようになった。)
 
         確認。
 
@@ -1075,7 +1080,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
         (実際は、systemctl start kubeletするまえに、後述のNode CSR自動承認設定をすべし。)
 
-        `--allow-privileged`はflannelなどに必要。
+        `--allow-privileged`はflannelなどに必要。(k8s 1.11以降は指定不要になった。)
 
         `--pod-infra-container-image`では[pause](https://github.com/kubernetes/kubernetes/tree/master/build/pause)コンテナイメージを指定する。
         このコンテナはPod毎に起動され、Podネットワークの名前空間を保持するために使われるらしい。

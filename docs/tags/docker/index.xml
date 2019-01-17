@@ -960,7 +960,7 @@ EOF
           <guid>https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/</guid>
           <description>
 
-&lt;p&gt;Oracle Linux 7.4.0のVMでKubernetes1.10.0のクラスタをスクラッチから全手動で作った。
+&lt;p&gt;Oracle Linux 7.4.0のVMでKubernetes 1.10.0のクラスタをスクラッチから全手動で作った。
 参考にしたのは主に以下。&lt;/p&gt;
 
 &lt;ul&gt;
@@ -972,7 +972,9 @@ EOF
 &lt;li&gt;&lt;a href=&#34;https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master&#34;&gt;https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;
+&lt;p&gt;(2019/1/17追記: クラスタ全手動構築手順はKubernetes 1.13になってもほとんど変わっていない。ユニットファイルに指定するオプションが多少減ったりしたくらい。
+また、ホストがRHELでもほとんど変わらない。インストールするDockerがDocker-CEに変わるくらい。)
+
 
 
 
@@ -1706,7 +1708,7 @@ EOF
 &lt;p&gt;&lt;code&gt;--authorization-mode&lt;/code&gt;にはRBACを指定するのが標準。
 後述のTLS Bootstrappingをするなら、Nodeも要る。&lt;/p&gt;
 
-&lt;p&gt;&lt;code&gt;--experimental-encryption-provider-config&lt;/code&gt;は&lt;a href=&#34;https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/&#34;&gt;Secretを暗号化する&lt;/a&gt;ための設定。
+&lt;p&gt;&lt;code&gt;--experimental-encryption-provider-config&lt;/code&gt;は&lt;a href=&#34;https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/&#34;&gt;Secretを暗号化する&lt;/a&gt;ための設定。(k8s 1.13でexperimentalじゃなくなった。)
 暗号化のキーをローテーションすることもできるけど、それはやってない。&lt;/p&gt;
 
 &lt;p&gt;&lt;code&gt;--tls-min-version&lt;/code&gt;と&lt;code&gt;--tls-cipher-suites&lt;/code&gt;は&lt;a href=&#34;https://www.lambdanote.com/blogs/news/openssl-cookbook&#34;&gt;OpenSSLクックブック&lt;/a&gt;と&lt;a href=&#34;https://golang.org/pkg/crypto/tls/#pkg-constants&#34;&gt;Goのtlsパッケージドキュメント&lt;/a&gt;を参考に設定。
@@ -1720,7 +1722,8 @@ RSA鍵交換はNG、RC4と3DESもNG、AESの鍵長は128ビット以上、SHA1�
 
 &lt;p&gt;&lt;code&gt;--audit-*&lt;/code&gt;は監査ログ設定。
 100MB3面のログを30日間保持する。
-ログポリシーは&lt;a href=&#34;https://kubernetes.io/docs/tasks/debug-application-cluster/audit/&#34;&gt;公式のサンプル&lt;/a&gt;そのまま。&lt;/p&gt;
+ログポリシーは&lt;a href=&#34;https://kubernetes.io/docs/tasks/debug-application-cluster/audit/&#34;&gt;公式のサンプル&lt;/a&gt;そのまま。
+(ログポリシーのAPIバージョンはk8s 1.12で&lt;code&gt;audit.k8s.io/v1&lt;/code&gt;になった。)&lt;/p&gt;
 
 &lt;p&gt;&lt;code&gt;--feature-gates&lt;/code&gt;でRotateKubeletServerCertificateを有効にして、kubeletのサーバ証明書を自動更新するようにしている。
 因みに、クライアント証明書を自動更新するRotateKubeletClientCertificateはデフォルトで有効。
@@ -1797,7 +1800,8 @@ EOF
 
 &lt;p&gt;&lt;code&gt;--use-service-account-credentials&lt;/code&gt;をつけると、&lt;a href=&#34;https://kubernetes.io/docs/admin/authorization/rbac/#controller-roles&#34;&gt;各コントローラが別々のService Accountで動く&lt;/a&gt;。&lt;/p&gt;
 
-&lt;p&gt;&lt;code&gt;--secure-port&lt;/code&gt;や&lt;code&gt;--tls-*&lt;/code&gt;は、ヘルスチェックAPIをHTTPSにするだけで意味が無いし、設定すると&lt;code&gt;kubectl get componentstatuses&lt;/code&gt;でエラーが出るようになるので、設定しないほうがいい。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;--secure-port&lt;/code&gt;や&lt;code&gt;--tls-*&lt;/code&gt;は、ヘルスチェックAPIをHTTPSにするだけで意味が無いし、設定すると&lt;code&gt;kubectl get componentstatuses&lt;/code&gt;でエラーが出るようになるので、設定しないほうがいい。
+(k8s 1.12からは設定できるようになった。)&lt;/p&gt;
 
 &lt;p&gt;確認。&lt;/p&gt;
 
@@ -2056,7 +2060,7 @@ EOF
 
 &lt;p&gt;(実際は、systemctl start kubeletするまえに、後述のNode CSR自動承認設定をすべし。)&lt;/p&gt;
 
-&lt;p&gt;&lt;code&gt;--allow-privileged&lt;/code&gt;はflannelなどに必要。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;--allow-privileged&lt;/code&gt;はflannelなどに必要。(k8s 1.11以降は指定不要になった。)&lt;/p&gt;
 
 &lt;p&gt;&lt;code&gt;--pod-infra-container-image&lt;/code&gt;では&lt;a href=&#34;https://github.com/kubernetes/kubernetes/tree/master/build/pause&#34;&gt;pause&lt;/a&gt;コンテナイメージを指定する。
 このコンテナはPod毎に起動され、Podネットワークの名前空間を保持するために使われるらしい。
