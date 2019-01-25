@@ -13,7 +13,7 @@
     <meta property="og:title" content="Kubernetes 1.10をスクラッチから全手動で構築 | To Be Decided">
     <meta property="og:url" content="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">
     <link rel="canonical" href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">
-    <meta property="og:description" content="Oracle Linux 7.4.0のVMでKubernetes 1.10.0のクラスタをスクラッチから全手動で作った。 参考にしたのは主に以下。 https://nixaid.com/deploying-kubernetes-cluster-from-scratch/ https://github.com/kubernetes/kubeadm/blob/master/docs/design/design_v1.10.md https://kubernetes.io/docs/getting-started-guides/scratch/ https://kubernetes.io/docs/reference/setup-tools/kubeadm/implementation-details/ https://ulam.io/blog/kubernetes-scratch/ https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master (2019/1/17追記: クラスタ全手動構築手順はKubernetes 1.13になってもほとんど変わっていない。ユニットファイルに指定するオプションが多少減ったりしたくらい。 また、ホストがRHELでもほとんど変わらない。インストールするDockerがDocker-CEに変わるくらい。) (adsbygoogle = window.adsbygoogle || []).push({}); 構成 マシン: Windows 10 Homeのラップトップの上のVMware PlayerのVM CPU: 2コア メモリ: 4GB NIF: NATのを一つ OS: Oracle Linux 7.4.0 Minimalインストール IPアドレス: 192.168.171.200、静的割り当て ホスト名: k8s-master (hostsで解決) Docker: Oracle Container Runtime for Docker (docker-engine) 17.06.2 Kubernetes: バージョン1.10.0 単一ノード 全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e. 非コンテナ) kubeletとkube-proxy以外は非rootユーザ kubeletは現時点でrootで動かす必要がある kube-proxyはiptableいじったりする都合上rootで動かす必要があるっぽい。 コンポーネント間通信とkubectlの通信をTLSで暗号化 TLS 1.2 セキュアなCipher Suites コンポーネント間通信とkubectlの通信の認証はx509クライアント証明書 TLS Bootstrapping Bootstrap token使用 CSR自動承認 Certificate Rotation有効 etcd 3.1.12 flannel 0.10.0 CoreDNS 1.1.1 SERVICE_CLUSTER_IP_RANGE (Serviceに割り当てるIPの範囲) は10.0.0.0/16 kube-apiserverのIPはこの範囲の最初のIP(i.e.">
+    <meta property="og:description" content="Oracle Linux 7.4.0のVMでKubernetes 1.10.0のクラスタをスクラッチから全手動で作った。 参考にしたのは主に以下。 https://nixaid.com/deploying-kubernetes-cluster-from-scratch/ https://github.com/kubernetes/kubeadm/blob/master/docs/design/design_v1.10.md https://kubernetes.io/docs/getting-started-guides/scratch/ https://kubernetes.io/docs/reference/setup-tools/kubeadm/implementation-details/ https://ulam.io/blog/kubernetes-scratch/ https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master (2019/1/17追記: クラスタ全手動構築手順はKubernetes 1.13になってもほとんど変わっていない。ユニットファイルに指定するオプションが多少減ったりしたくらい。 また、ホストがRHELでもほとんど変わらない。インストールするDockerがDocker-CE(もしくはRedhatのやつ)に変わるくらいで、あとはkubeletの--cgroup-driverをsystemdにしないといけなかったかも。) (adsbygoogle = window.adsbygoogle || []).push({}); 構成 マシン: Windows 10 Homeのラップトップの上のVMware PlayerのVM CPU: 2コア メモリ: 4GB NIF: NATのを一つ OS: Oracle Linux 7.4.0 Minimalインストール IPアドレス: 192.168.171.200、静的割り当て ホスト名: k8s-master (hostsで解決) Docker: Oracle Container Runtime for Docker (docker-engine) 17.06.2 Kubernetes: バージョン1.10.0 単一ノード 全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e. 非コンテナ) kubeletとkube-proxy以外は非rootユーザ kubeletは現時点でrootで動かす必要がある kube-proxyはiptableいじったりする都合上rootで動かす必要があるっぽい。 コンポーネント間通信とkubectlの通信をTLSで暗号化 TLS 1.2 セキュアなCipher Suites コンポーネント間通信とkubectlの通信の認証はx509クライアント証明書 TLS Bootstrapping Bootstrap token使用 CSR自動承認 Certificate Rotation有効 etcd 3.1.12 flannel 0.10.0 CoreDNS 1.1.1 SERVICE_CLUSTER_IP_RANGE (Serviceに割り当てるIPの範囲) は10.0.0.0/16 kube-apiserverのIPはこの範囲の最初のIP(i.e.">
     
     <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
     
@@ -97,7 +97,7 @@
 </ul>
 
 <p>(2019/1/17追記: クラスタ全手動構築手順はKubernetes 1.13になってもほとんど変わっていない。ユニットファイルに指定するオプションが多少減ったりしたくらい。
-また、ホストがRHELでもほとんど変わらない。インストールするDockerがDocker-CEに変わるくらい。)
+また、ホストがRHELでもほとんど変わらない。インストールするDockerがDocker-CE(もしくはRedhatのやつ)に変わるくらいで、あとはkubeletの<code>--cgroup-driver</code>を<code>systemd</code>にしないといけなかったかも。)
 
 
 
@@ -1146,6 +1146,8 @@ Requires=docker.service
 
 
 [Service]
+CPUAccounting=true
+MemoryAccounting=true
 User=root
 Group=root
 ExecStart=/usr/bin/kubelet \\
@@ -1183,6 +1185,8 @@ EOF
 </code></pre>
 
 <p>(実際は、systemctl start kubeletするまえに、後述のNode CSR自動承認設定をすべし。)</p>
+
+<p><code>CPUAccounting=true</code>と<code>MemoryAccounting=true</code>は、Redhat系Linuxで<a href="https://github.com/kontena/pharos-cluster/issues/440">kubeletとdockerプロセスのメモリとCPUのcgroupが妙になる問題</a>の対応。</p>
 
 <p><code>--allow-privileged</code>はflannelなどに必要。(k8s 1.11以降は指定不要になった。)</p>
 

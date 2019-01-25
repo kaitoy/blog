@@ -414,6 +414,8 @@ typescript-eslint-parserはv21.0.1が入った。
 * `rules`では、JSXファイルの拡張子名を制限するルール`react/jsx-filename-extension`を定義している。`extends`している`airbnb`の設定では`.jsx`だけになっているので`.tsx`を追加する意図。
 * `overrides`では、宣言だけして使っていない変数をエラーにするルール`no-unused-vars`をTypeScriptに対して無効にしている。型をimportして使うコードを書くとエラーになっちゃうことがあるので。同様のチェックはTypeScriptのコンパイラがしてくれるので問題なし。
 
+(2019/1/25追記: TypeScriptチームがTSLintからESLintに移行することが[発表された](https://qiita.com/mysticatea/items/aaf677928e965abe093d)。今後はTypeScriptはESLintでチェックするのがスタンダードになる。それに伴ってtypescript-eslint-parserは[ @typescript-eslint/parser](https://www.npmjs.com/package/@typescript-eslint/parser)に置き換えられる。)
+
 <br>
 
 CSS(というか[styled-components](https://github.com/styled-components/styled-components))のリンタの[stylelint](https://github.com/stylelint/stylelint)は[TypeScriptに対応している](https://github.com/styled-components/stylelint-processor-styled-components#setup)のでケアする必要なし。

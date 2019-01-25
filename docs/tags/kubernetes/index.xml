@@ -973,7 +973,7 @@ EOF
 &lt;/ul&gt;
 
 &lt;p&gt;(2019/1/17追記: クラスタ全手動構築手順はKubernetes 1.13になってもほとんど変わっていない。ユニットファイルに指定するオプションが多少減ったりしたくらい。
-また、ホストがRHELでもほとんど変わらない。インストールするDockerがDocker-CEに変わるくらい。)
+また、ホストがRHELでもほとんど変わらない。インストールするDockerがDocker-CE(もしくはRedhatのやつ)に変わるくらいで、あとはkubeletの&lt;code&gt;--cgroup-driver&lt;/code&gt;を&lt;code&gt;systemd&lt;/code&gt;にしないといけなかったかも。)
 
 
 
@@ -2022,6 +2022,8 @@ Requires=docker.service
 
 
 [Service]
+CPUAccounting=true
+MemoryAccounting=true
 User=root
 Group=root
 ExecStart=/usr/bin/kubelet \\
@@ -2059,6 +2061,8 @@ EOF
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;(実際は、systemctl start kubeletするまえに、後述のNode CSR自動承認設定をすべし。)&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;CPUAccounting=true&lt;/code&gt;と&lt;code&gt;MemoryAccounting=true&lt;/code&gt;は、Redhat系Linuxで&lt;a href=&#34;https://github.com/kontena/pharos-cluster/issues/440&#34;&gt;kubeletとdockerプロセスのメモリとCPUのcgroupが妙になる問題&lt;/a&gt;の対応。&lt;/p&gt;
 
 &lt;p&gt;&lt;code&gt;--allow-privileged&lt;/code&gt;はflannelなどに必要。(k8s 1.11以降は指定不要になった。)&lt;/p&gt;
 

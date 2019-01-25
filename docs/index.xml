@@ -482,6 +482,8 @@ typescript-eslint-parserはESLintのカスタムパーサで、TypeScriptのコ�
 &lt;li&gt;&lt;code&gt;overrides&lt;/code&gt;では、宣言だけして使っていない変数をエラーにするルール&lt;code&gt;no-unused-vars&lt;/code&gt;をTypeScriptに対して無効にしている。型をimportして使うコードを書くとエラーになっちゃうことがあるので。同様のチェックはTypeScriptのコンパイラがしてくれるので問題なし。&lt;/li&gt;
 &lt;/ul&gt;
 
+&lt;p&gt;(2019/1/25追記: TypeScriptチームがTSLintからESLintに移行することが&lt;a href=&#34;https://qiita.com/mysticatea/items/aaf677928e965abe093d&#34;&gt;発表された&lt;/a&gt;。今後はTypeScriptはESLintでチェックするのがスタンダードになる。それに伴ってtypescript-eslint-parserは&lt;a href=&#34;https://www.npmjs.com/package/@typescript-eslint/parser&#34;&gt; @typescript-eslint/parser&lt;/a&gt;に置き換えられる。)&lt;/p&gt;
+
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
 &lt;p&gt;CSS(というか&lt;a href=&#34;https://github.com/styled-components/styled-components&#34;&gt;styled-components&lt;/a&gt;)のリンタの&lt;a href=&#34;https://github.com/stylelint/stylelint&#34;&gt;stylelint&lt;/a&gt;は&lt;a href=&#34;https://github.com/styled-components/stylelint-processor-styled-components#setup&#34;&gt;TypeScriptに対応している&lt;/a&gt;のでケアする必要なし。&lt;/p&gt;
@@ -6262,7 +6264,7 @@ EOF
 &lt;/ul&gt;
 
 &lt;p&gt;(2019/1/17追記: クラスタ全手動構築手順はKubernetes 1.13になってもほとんど変わっていない。ユニットファイルに指定するオプションが多少減ったりしたくらい。
-また、ホストがRHELでもほとんど変わらない。インストールするDockerがDocker-CEに変わるくらい。)
+また、ホストがRHELでもほとんど変わらない。インストールするDockerがDocker-CE(もしくはRedhatのやつ)に変わるくらいで、あとはkubeletの&lt;code&gt;--cgroup-driver&lt;/code&gt;を&lt;code&gt;systemd&lt;/code&gt;にしないといけなかったかも。)
 
 
 
@@ -7311,6 +7313,8 @@ Requires=docker.service
 
 
 [Service]
+CPUAccounting=true
+MemoryAccounting=true
 User=root
 Group=root
 ExecStart=/usr/bin/kubelet \\
@@ -7348,6 +7352,8 @@ EOF
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;(実際は、systemctl start kubeletするまえに、後述のNode CSR自動承認設定をすべし。)&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;CPUAccounting=true&lt;/code&gt;と&lt;code&gt;MemoryAccounting=true&lt;/code&gt;は、Redhat系Linuxで&lt;a href=&#34;https://github.com/kontena/pharos-cluster/issues/440&#34;&gt;kubeletとdockerプロセスのメモリとCPUのcgroupが妙になる問題&lt;/a&gt;の対応。&lt;/p&gt;
 
 &lt;p&gt;&lt;code&gt;--allow-privileged&lt;/code&gt;はflannelなどに必要。(k8s 1.11以降は指定不要になった。)&lt;/p&gt;
 

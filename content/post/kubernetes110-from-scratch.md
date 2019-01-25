@@ -21,7 +21,7 @@ Oracle Linux 7.4.0のVMでKubernetes 1.10.0のクラスタをスクラッチか�
 
 
 (2019/1/17追記: クラスタ全手動構築手順はKubernetes 1.13になってもほとんど変わっていない。ユニットファイルに指定するオプションが多少減ったりしたくらい。
-また、ホストがRHELでもほとんど変わらない。インストールするDockerがDocker-CEに変わるくらい。)
+また、ホストがRHELでもほとんど変わらない。インストールするDockerがDocker-CE(もしくはRedhatのやつ)に変わるくらいで、あとはkubeletの`--cgroup-driver`を`systemd`にしないといけなかったかも。)
 {{< google-adsense >}}
 
 ## 構成
@@ -1043,6 +1043,8 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         Requires=docker.service
 
         [Service]
+        CPUAccounting=true
+        MemoryAccounting=true
         User=root
         Group=root
         ExecStart=/usr/bin/kubelet \\
@@ -1079,6 +1081,8 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
         ```
 
         (実際は、systemctl start kubeletするまえに、後述のNode CSR自動承認設定をすべし。)
+
+        `CPUAccounting=true`と`MemoryAccounting=true`は、Redhat系Linuxで[kubeletとdockerプロセスのメモリとCPUのcgroupが妙になる問題](https://github.com/kontena/pharos-cluster/issues/440)の対応。
 
         `--allow-privileged`はflannelなどに必要。(k8s 1.11以降は指定不要になった。)
 
