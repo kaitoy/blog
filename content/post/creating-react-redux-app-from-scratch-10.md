@@ -263,6 +263,7 @@ ReactプロジェクトでJestを使うには以下のパッケージを入れ�
 * [babel-jest](https://www.npmjs.com/package/babel-jest): BabelでトランスパイルするコードをJestでテストするためのBabelプラグイン
 * [react-test-renderer](https://www.npmjs.com/package/react-test-renderer): ReactコンポーネントをピュアなJavaScriptオブジェクトにレンダリングするライブラリ。[スナップショットテスト](https://jestjs.io/docs/en/snapshot-testing)などに使う。
 * [babel-core@^7.0.0-bridge](https://www.npmjs.com/package/babel-core/v/7.0.0-bridge.0): babel-jestをBabel 7で使うためのモジュール。[現時点では必要](https://github.com/facebook/jest/tree/master/packages/babel-jest#usage)だけど、その内いらなくなるであろう。
+(2019/1/27追記: [Jest v24でBabel 7にネイティブ対応して、bridgeは不要になった](https://jestjs.io/blog/2019/01/25/jest-24-refreshing-polished-typescript-friendly)。)
 
 ```cmd
 yarn add -D jest babel-jest react-test-renderer babel-core@^7.0.0-bridge
