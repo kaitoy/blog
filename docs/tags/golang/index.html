@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:title" content="To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz">
+    <link rel="canonical" href="https://www.kaitoy.xyz">
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      golang | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+    
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-6244473643910448",
+        enable_page_level_ads: true
+      });
+    </script>
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+
+<div class="row">
+  <div class="col-md-9">
+    <div id="posts">
+      <div class="row">
+        
+        
+        
+        <div class="col-sm-6">
+          <article>
+            <a href="https://www.kaitoy.xyz/2019/03/08/k8s-zundoko-operator/" class="post post-topix">
+              <header class="eyecatch text-center">
+                <img src="/images/kubernetes.png" alt="eyecatch">
+              </header>
+              <div class="date text-center">
+                <span>Fri, Mar 8, 2019</span>
+              </div>
+              <h2 class="title">ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</h2>
+              <div class="summary">
+                Javaの講義、試験が「自作関数を作り記述しなさい」って問題だったから 「ズン」「ドコ」のいずれかをランダムで出力し続けて「ズン」「ズン」「ズン」「ズン」「ドコ」の配列が出たら「キ・ヨ・シ！」って出力した後終了って関数作ったら満点で単位貰ってた &mdash; てくも (@kumiromilk) 2016年3月9日 久しぶりにズンドコしたくなったので、Kubebuilderを使って、KubernetesのOperatorとして動くZundoko Operatorを作ってみた。 (adsbygoogle = window.adsbygoogle || []).push({}); Kubernetes Operatorとは KubernetesのOperatorというのはCoreOS社(現Red Hat)によって提唱された概念(実装パターン)で、KubernetesのAPIで登録されるKubernetesオブジェクトの内容に従って何らかの処理をするController (e.g. Deployment Controller)の一種。 Controllerが汎用的なのに対して、特定のアプリケーションに特化しているのが特徴。 アプリケーションごとの細かな設定をKubernetesオブジェクトで表現するために、KubernetesのAPIを拡張する。 APIを拡張するにはAPI Aggregationを使う方法とCustom Resource Definition (CRD)を使う方法がある。 API Aggregationは、Kubernetesオブジェクトをetcd以外で管理したり、WebSocketを使ったり、Kubernetesクラスタ外のAPIサーバを使う場合など、特殊な場合にも対応できる高度なやりかたで、大抵のユースケースではCRDで事足りる。 Operatorも普通はCRDを使う。(というかCRDを使うのがOperatorという人もいる。) CRDとは KubernetesのAPIを簡単に拡張できる仕組みで、Kubernetesオブジェクト(リソース)を定義するKubernetesオブジェクト。 YAMLで、定義したいリソースの名前や型やバリデーションなんかを書いてkubectl applyすれば、そのリソースをKubernetesのREST APIとかkubectlで作成したり取得したりできるようになる。 Operatorの仕組み Operatorは、CRDで定義されたリソース(など)の作成、更新、削除を監視(watch)して、リソースの内容に応じた何らかの処理をするReconciliationループを回すPod。 普通、リソースはOperatorの管理対象のアプリケーションの状態を表す。 で、Operatorはリソースの内容とアプリケーションの状態が同じになるように、Reconciliationループ内でDeploymentを作ったりアプリケーションのAPIを叩いたりする。 ユーザとしては、アプリケーションの構成や設定をKubernetesのAPIで宣言的に統一的に管理できるようになって幸せになれる。 Operator作成ツール Operatorを作るツールとして以下がある。 ツール Operator SDK Kubebuilder Metacontroller 開発元 Kubernetesコミュニティ製 CoreOS社製 GKEチーム製 GitHubスター数 1459 1009 506 開発言語 Go、Ansible、Helm Go 任意 特徴 プロジェクトテンプレート生成、ビルド、デプロイをするCLIツール。AnsibleでもOperatorを書けるのが面白い。Operator FrameworkとしてLifecycle Managerなどが提供されていたり、OperatorHub.ioというコミュニティサイトがあったり、エコシステムが充実している。 プロジェクトテンプレート生成、ビルド、デプロイをするCLIツール。3つの中で一番シンプル。Goでしか開発できない。 他の2つと毛色が違って、Metacontroller自体が汎用的にOperatorを管理するKubernetesアプリ。Operatorの定義をJSONを投げて登録すると、Reconciliationループを回してその中でWebフックを実行してくるので、それを受けて任意の処理をするサーバを任意の言語で書ける。 この中では、Operator SDKが数歩リードしている感じ。 (CoreOS社を買収した)Red Hatが後ろ盾ているし、OperatorHub.ioはGCPとAWSとAzureが協力している。 けど、この記事のネタを書き始めたときにはまだOperatorHub.ioが発表されていなくて、単純にKubebuilderがシンプルでいいと思って採用してしまった。 まあOperator SDKもKubebuilderも下回りのライブラリは同じものを使っているので、だいたい同じだろうし、Operator Frameworkへの移行も難しくなかろう。 Zundoko Operator Kubebuilderで今回作ったのはZundoko Operator。 CRDで定義したリソースは以下。 Hikawa: 作るとズンドコきよしを開始する。 Zundoko: 「ズン」と「ドコ」を表す。Hikawaに管理される。 Kiyoshi: 「キ・ヨ・シ！」を表す。Hikawaに管理される。 Zundoko Operatorは、HikawaとZundokoをwatchする。 Hikawaが作成されると、一定間隔で、ランダムに「ズン」か「ドコ」をセットしたZundokoを作成する。 「ズン」を4つ作ったあとに「ドコ」を作ったら、Kiyoshiを作成して、Zundokoの作成を止める。 Kubebuilderの使い方 Quick Startを参考に。 Kuberbuilderを使うにはGo、depとkustomizeとDockerが必要で、Linuxしかサポートしていない。 自分のPCがWindows 10なので、WSL (Ubuntu 18.04)で環境を作ったんだけど、結局Dockerビルドとかテストとかが上手く動かなかったので、VMとかのLinuxで動かしたほうがよさそう。 Kubebuilderセットアップ Goインストール Goは公式サイトからLinux用アーカイブをダウンロードして展開して、そのbinディレクトリにPATH通すだけでインストールできる。 $ go version go version go1.11.4 linux/amd64 あと、作業ディレクトリを作ってGOPATHを設定しておく。 ~/go/を作業ディレクトリとする。 $ export GOPATH=$HOME/go $ echo 'export GOPATH=$HOME/go' &gt;&gt; ~/.profile $ mkdir $GOPATH/bin $ mkdir $GOPATH/src で、$GOPATH/binにもPATH通しておく。 depインストール Go公式の依存ライブラリ管理ツール。 コマンド一発でインストールできる。 $ curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh kustomizeインストール バイナリをPATHの通ったところにダウンロードするだけ。 $ curl -L https://github.com/kubernetes-sigs/kustomize/releases/download/v2.0.3/kustomize_2.0.3_linux_amd64 -o /usr/local/bin/kustomize $ chmod +x /usr/local/bin/kustomize kubebuilderインストール GitHubのReleasesからアーカイブをダウンロードして展開してPATH通すだけ。 $ version=1.0.6 $ arch=amd64 $ curl -LO https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${version}/kubebuilder_${version}_linux_${arch}.tar.gz $ tar -zxvf kubebuilder_${version}_linux_${arch}.tar.gz $ sudo mv kubebuilder_${version}_linux_${arch} /usr/local/kubebuilder $ export PATH=$PATH:/usr/local/kubebuilder/bin $ echo 'export PATH=$PATH:/usr/local/kubebuilder/bin' &gt;&gt; ~/.profile Dockerインストール は適当に… Kubebuilderプロジェクト生成 Zundoko Operatorのプロジェクトを生成する。 $ mkdir -p $GOPATH/src/github.com/kaitoy/zundoko-operator $ cd $GOPATH/src/github.com/kaitoy/zundoko-operator $ kubebuilder init --owner kaitoy dep ensureを実行するかを聞かれるのでyesで回答すると、依存ライブラリがダウンロードされ、プロジェクトのビルドが走る。 デフォルトではCRDなどの名前空間がk8s.ioになっているので、kaitoy.github.comに変えるべく、zundoko-operator/PROJECTを編集する。 zundoko-operator/PROJECT: version: &quot;1&quot; -domain: k8s.io +domain: kaitoy.github.com repo: github.com/kaitoy/zundoko-operator CRDとController生成 HikawaとZundokoとKiyoshiのCRDを生成する。 $ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Hikawa $ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Zundoko $ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Kiyoshi それぞれ、リソースを作成するか (Create Resource under pkg/apis [y/n]?) と、Controllerを作成するか (Create Controller under pkg/controller [y/n]?) を聞かれる。 リソースはそれぞれ作成して、ControllerはHikawaにだけ作成した。 生成されたのは以下のファイル。 API定義とそのテスト: zundoko-operator/pkg/apis/zundokokiyoshi/v1beta1/*.go CRD: zundoko-operator/config/crds/config/crds/*.yaml Hikawa Controllerとそのテスト: zundoko-operator/pkg/controller/hikawa/*.go リソースのマニフェストのサンプル: zundoko-operator/config/crds/config/samples/*.yaml これらの内、CRDと zundoko-operator/pkg/apis/zundokokiyoshi/v1beta1/zz_generated.deepcopy.go はAPI定義をもとに生成されるので、API定義を書いた後生成しなおすことになる。 API定義記述 リソースがどのような属性をもつかをGoで定義する。 テンプレートは生成されているので、ちょっと書き足すだけでできる。 以下はHikawaのAPI定義。 zundoko-operator/pkg/apis/zundokokiyoshi/v1beta1/hikawa_types.go: package v1beta1 import ( &quot;time&quot; metav1 &quot;k8s.io/apimachinery/pkg/apis/meta/v1&quot; ) // HikawaSpec defines the desired state of Hikawa type HikawaSpec struct { IntervalMillis time.Duration `json:&quot;intervalMillis&quot;` NumZundokos int `json:&quot;numZundokos,omitempty&quot;` SayKiyoshi bool `json:&quot;sayKiyoshi,omitempty&quot;` } // HikawaStatus defines the observed state of Hikawa type HikawaStatus struct { NumZundokosSaid int `json:&quot;numZundokosSaid&quot;` Kiyoshied bool `json:&quot;kiyoshied&quot;` } // +genclient // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object // Hikawa is the Schema for the hikawas API // +k8s:openapi-gen=true type Hikawa struct { metav1.TypeMeta `json:&quot;,inline&quot;` metav1.ObjectMeta `json:&quot;metadata,omitempty&quot;` Spec HikawaSpec `json:&quot;spec,omitempty&quot;` Status HikawaStatus `json:&quot;status,omitempty&quot;` } // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object // HikawaList contains a list of Hikawa type HikawaList struct { metav1.TypeMeta `json:&quot;,inline&quot;` metav1.ListMeta `json:&quot;metadata,omitempty&quot;` Items []Hikawa `json:&quot;items&quot;` } func init() { SchemeBuilder.Register(&amp;Hikawa{}, &amp;HikawaList{}) } 自分で書いたのはHikawaSpecとHikawaStatusの中だけ。 Specの方には期待する状態、Statusの方には現在の実際の状態を表すフィールドを定義するのがパターン。 例えば、HikawaSpec.NumZundokosが期待するZundokoの数で、HikawaStatus.NumZundokosSaidが実際に作成されたZundokono数。 Hikawa ControllerはReconciliationループの中で、SpecとStateが同じになるように処理をすることになる。 ZundokoとKiyoshiのAPI定義は、Specに「Zun」、「Doko」、または「Kiyoshi!」を入れるためのSayフィールドだけを書いた。 Hikawa Controller記述 Hikawa Controllerもテンプレートが生成されているので、それを参考に書ける。 まずはどのリソースをwatchするかを書く。 zundoko-operator/pkg/controller/hikawa/hikawa_controller.go前半抜粋: func add(mgr manager.Manager, r reconcile.Reconciler) error { // Create a new controller c, err := controller.New(&quot;hikawa-controller&quot;, mgr, controller.Options{Reconciler: r}) if err != nil { return err } // Watch for changes to Hikawa err = c.Watch(&amp;source.Kind{Type: &amp;zundokokiyoshiv1beta1.Hikawa{}}, &amp;handler.EnqueueRequestForObject{}) if err != nil { return err } err = c.Watch(&amp;source.Kind{Type: &amp;zundokokiyoshiv1beta1.Zundoko{}}, &amp;handler.EnqueueRequestForOwner{ IsController: true, OwnerType: &amp;zundokokiyoshiv1beta1.Hikawa{}, }) if err != nil { return err } return nil } Hikawaは普通にwatchして、Zundokoはownしているリソースとしてwatchしている。 Reconciliationループは以下のように書いた。 zundoko-operator/pkg/controller/hikawa/hikawa_controller.go後半抜粋: // +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=hikawas,verbs=get;list;watch;create;update;patch;delete // +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=hikawas/status,verbs=get;update;patch // +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=zundokos,verbs=get;list;watch;create;update;patch;delete // +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=zundokos/status,verbs=get;update;patch // +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=kiyoshis,verbs=get;list;watch;create;update;patch;delete // +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=kiyoshis/status,verbs=get;update;patch func (r *ReconcileHikawa) Reconcile(request reconcile.Request) (reconcile.Result, error) { instanceName := request.NamespacedName.String() log.Info(&quot;Reconciling a Hikawa: &quot; + instanceName) // Fetch the Hikawa instance instance := &amp;zundokokiyoshiv1beta1.Hikawa{} err := r.Get(context.TODO(), request.NamespacedName, instance) if err != nil { if errors.IsNotFound(err) { // Object not found, return.
+              </div>
+            </a>
+          </article>
+        </div>
+        
+        
+        
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ansible">ansible</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/babel">babel</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cnn">cnn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/coursera">coursera</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/css-modules">css-modules</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/deep-learning">deep-learning</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/enzyme">enzyme</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/eslint">eslint</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/esxi">esxi</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/flow">flow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/frontend">frontend</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/golang">golang</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/headless-browser">headless-browser</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jest">jest</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/keras">keras</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubeadm">kubeadm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubebuilder">kubebuilder</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/license">license</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/machine-learning">machine-learning</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/material-ui">material-ui</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/msys2">msys2</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/neural-network">neural-network</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nlp">nlp</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/packer">packer</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/postcss">postcss</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/prettier">prettier</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react-router">react-router</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/redux">redux</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/redux-saga">redux-saga</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/rnn">rnn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/selenium">selenium</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/servicenow">servicenow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/skaffold">skaffold</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/styled-components">styled-components</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/stylelint">stylelint</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/tensorflow">tensorflow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/test-framework">test-framework</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/typescript">typescript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/webdriverio">webdriverio</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/webpack">webpack</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-6244473643910448"
+    data-ad-slot="1845600530"
+    data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2019  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/highlight.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dos.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/yaml.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dockerfile.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/go.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

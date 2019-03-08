@@ -5,9 +5,561 @@
     <link>https://www.kaitoy.xyz/</link>
     <language>en-us</language>
     <author>Kaito Yamada</author>
-    <rights>(C) 2018</rights>
-    <updated>2018-11-26 16:09:14 &#43;0900 JST</updated>
+    <rights>(C) 2019</rights>
+    <updated>2019-03-08 17:29:16 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</title>
+          <link>https://www.kaitoy.xyz/2019/03/08/k8s-zundoko-operator/</link>
+          <pubDate>Fri, 08 Mar 2019 17:29:16 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2019/03/08/k8s-zundoko-operator/</guid>
+          <description>
+
+&lt;p&gt;&lt;blockquote class=&#34;twitter-tweet&#34; data-lang=&#34;ja&#34;&gt;&lt;p lang=&#34;ja&#34; dir=&#34;ltr&#34;&gt;Javaの講義、試験が「自作関数を作り記述しなさい」って問題だったから&lt;br&gt;「ズン」「ドコ」のいずれかをランダムで出力し続けて「ズン」「ズン」「ズン」「ズン」「ドコ」の配列が出たら「キ・ヨ・シ！」って出力した後終了って関数作ったら満点で単位貰ってた&lt;/p&gt;&amp;mdash; てくも (@kumiromilk) &lt;a href=&#34;https://twitter.com/kumiromilk/status/707437861881180160&#34;&gt;2016年3月9日&lt;/a&gt;&lt;/blockquote&gt;
+&lt;script async src=&#34;//platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;久しぶりにズンドコしたくなったので、&lt;a href=&#34;https://book.kubebuilder.io/&#34;&gt;Kubebuilder&lt;/a&gt;を使って、&lt;a href=&#34;https://kubernetes.io/&#34;&gt;Kubernetes&lt;/a&gt;の&lt;a href=&#34;https://coreos.com/operators/&#34;&gt;Operator&lt;/a&gt;として動く&lt;a href=&#34;https://github.com/kaitoy/zundoko-operator&#34;&gt;Zundoko Operator&lt;/a&gt;を作ってみた。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h1 id=&#34;kubernetes-operatorとは&#34;&gt;Kubernetes Operatorとは&lt;/h1&gt;
+
+&lt;p&gt;KubernetesのOperatorというのは&lt;a href=&#34;https://coreos.com/&#34;&gt;CoreOS社&lt;/a&gt;(現Red Hat)によって提唱された概念(実装パターン)で、KubernetesのAPIで登録される&lt;a href=&#34;https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/#understanding-kubernetes-objects&#34;&gt;Kubernetesオブジェクト&lt;/a&gt;の内容に従って何らかの処理をするController (e.g. &lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/controllers/deployment/&#34;&gt;Deployment Controller&lt;/a&gt;)の一種。&lt;/p&gt;
+
+&lt;p&gt;Controllerが汎用的なのに対して、特定のアプリケーションに特化しているのが特徴。
+アプリケーションごとの細かな設定をKubernetesオブジェクトで表現するために、KubernetesのAPIを拡張する。&lt;/p&gt;
+
+&lt;p&gt;APIを拡張するには&lt;a href=&#34;https://kubernetes.io/docs/tasks/access-kubernetes-api/configure-aggregation-layer/&#34;&gt;API Aggregation&lt;/a&gt;を使う方法と&lt;a href=&#34;https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/&#34;&gt;Custom Resource Definition (CRD)&lt;/a&gt;を使う方法がある。
+API Aggregationは、Kubernetesオブジェクトを&lt;a href=&#34;https://github.com/etcd-io/etcd&#34;&gt;etcd&lt;/a&gt;以外で管理したり、&lt;a href=&#34;https://ja.wikipedia.org/wiki/WebSocket&#34;&gt;WebSocket&lt;/a&gt;を使ったり、Kubernetesクラスタ外のAPIサーバを使う場合など、特殊な場合にも対応できる高度なやりかたで、大抵のユースケースではCRDで事足りる。
+Operatorも普通はCRDを使う。(というかCRDを使うのがOperatorという人もいる。)&lt;/p&gt;
+
+&lt;h1 id=&#34;crdとは&#34;&gt;CRDとは&lt;/h1&gt;
+
+&lt;p&gt;KubernetesのAPIを簡単に拡張できる仕組みで、Kubernetesオブジェクト(リソース)を定義するKubernetesオブジェクト。&lt;/p&gt;
+
+&lt;p&gt;YAMLで、定義したいリソースの名前や型やバリデーションなんかを書いて&lt;code&gt;kubectl apply&lt;/code&gt;すれば、そのリソースをKubernetesのREST APIとかkubectlで作成したり取得したりできるようになる。&lt;/p&gt;
+
+&lt;h1 id=&#34;operatorの仕組み&#34;&gt;Operatorの仕組み&lt;/h1&gt;
+
+&lt;p&gt;Operatorは、CRDで定義されたリソース(など)の作成、更新、削除を監視(watch)して、リソースの内容に応じた何らかの処理をするReconciliationループを回すPod。
+普通、リソースはOperatorの管理対象のアプリケーションの状態を表す。
+で、Operatorはリソースの内容とアプリケーションの状態が同じになるように、Reconciliationループ内で&lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/controllers/deployment/&#34;&gt;Deployment&lt;/a&gt;を作ったりアプリケーションのAPIを叩いたりする。&lt;/p&gt;
+
+&lt;p&gt;ユーザとしては、アプリケーションの構成や設定をKubernetesのAPIで宣言的に統一的に管理できるようになって幸せになれる。&lt;/p&gt;
+
+&lt;h1 id=&#34;operator作成ツール&#34;&gt;Operator作成ツール&lt;/h1&gt;
+
+&lt;p&gt;Operatorを作るツールとして以下がある。&lt;/p&gt;
+
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;ツール&lt;/th&gt;
+&lt;th&gt;&lt;a href=&#34;https://github.com/operator-framework/operator-sdk&#34;&gt;Operator SDK&lt;/a&gt;&lt;/th&gt;
+&lt;th&gt;&lt;a href=&#34;https://book.kubebuilder.io/&#34;&gt;Kubebuilder&lt;/a&gt;&lt;/th&gt;
+&lt;th&gt;&lt;a href=&#34;https://metacontroller.app/&#34;&gt;Metacontroller&lt;/a&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;開発元&lt;/td&gt;
+&lt;td&gt;Kubernetesコミュニティ製&lt;/td&gt;
+&lt;td&gt;CoreOS社製&lt;/td&gt;
+&lt;td&gt;GKEチーム製&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;GitHubスター数&lt;/td&gt;
+&lt;td&gt;1459&lt;/td&gt;
+&lt;td&gt;1009&lt;/td&gt;
+&lt;td&gt;506&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;開発言語&lt;/td&gt;
+&lt;td&gt;Go、Ansible、Helm&lt;/td&gt;
+&lt;td&gt;Go&lt;/td&gt;
+&lt;td&gt;任意&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;特徴&lt;/td&gt;
+&lt;td&gt;プロジェクトテンプレート生成、ビルド、デプロイをするCLIツール。&lt;a href=&#34;https://www.ansible.com/&#34;&gt;Ansible&lt;/a&gt;でもOperatorを書けるのが面白い。&lt;a href=&#34;https://github.com/operator-framework&#34;&gt;Operator Framework&lt;/a&gt;として&lt;a href=&#34;https://github.com/operator-framework/operator-lifecycle-manager&#34;&gt;Lifecycle Manager&lt;/a&gt;などが提供されていたり、&lt;a href=&#34;https://www.operatorhub.io/&#34;&gt;OperatorHub.io&lt;/a&gt;というコミュニティサイトがあったり、エコシステムが充実している。&lt;/td&gt;
+&lt;td&gt;プロジェクトテンプレート生成、ビルド、デプロイをするCLIツール。3つの中で一番シンプル。Goでしか開発できない。&lt;/td&gt;
+&lt;td&gt;他の2つと毛色が違って、Metacontroller自体が汎用的にOperatorを管理するKubernetesアプリ。Operatorの定義をJSONを投げて登録すると、Reconciliationループを回してその中でWebフックを実行してくるので、それを受けて任意の処理をするサーバを任意の言語で書ける。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;この中では、Operator SDKが数歩リードしている感じ。
+(CoreOS社を買収した)Red Hatが後ろ盾ているし、OperatorHub.ioはGCPとAWSとAzureが協力している。&lt;/p&gt;
+
+&lt;p&gt;けど、この記事のネタを書き始めたときにはまだOperatorHub.ioが発表されていなくて、単純にKubebuilderがシンプルでいいと思って採用してしまった。
+まあOperator SDKもKubebuilderも下回りのライブラリは同じものを使っているので、だいたい同じだろうし、Operator Frameworkへの移行も難しくなかろう。&lt;/p&gt;
+
+&lt;h1 id=&#34;zundoko-operator&#34;&gt;Zundoko Operator&lt;/h1&gt;
+
+&lt;p&gt;Kubebuilderで今回作ったのは&lt;a href=&#34;https://github.com/kaitoy/zundoko-operator&#34;&gt;Zundoko Operator&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;CRDで定義したリソースは以下。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/kaitoy/zundoko-operator/blob/master/config/crds/zundokokiyoshi_v1beta1_hikawa.yaml&#34;&gt;Hikawa&lt;/a&gt;: 作るとズンドコきよしを開始する。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/kaitoy/zundoko-operator/blob/master/config/crds/zundokokiyoshi_v1beta1_zundoko.yaml&#34;&gt;Zundoko&lt;/a&gt;: 「ズン」と「ドコ」を表す。Hikawaに管理される。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/kaitoy/zundoko-operator/blob/master/config/crds/zundokokiyoshi_v1beta1_kiyoshi.yaml&#34;&gt;Kiyoshi&lt;/a&gt;: 「キ・ヨ・シ！」を表す。Hikawaに管理される。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Zundoko Operatorは、HikawaとZundokoをwatchする。
+Hikawaが作成されると、一定間隔で、ランダムに「ズン」か「ドコ」をセットしたZundokoを作成する。
+「ズン」を4つ作ったあとに「ドコ」を作ったら、Kiyoshiを作成して、Zundokoの作成を止める。&lt;/p&gt;
+
+&lt;h1 id=&#34;kubebuilderの使い方&#34;&gt;Kubebuilderの使い方&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://book.kubebuilder.io/quick_start.html&#34;&gt;Quick Start&lt;/a&gt;を参考に。&lt;/p&gt;
+
+&lt;p&gt;Kuberbuilderを使うには&lt;a href=&#34;https://golang.org/&#34;&gt;Go&lt;/a&gt;、&lt;a href=&#34;https://github.com/golang/dep&#34;&gt;dep&lt;/a&gt;と&lt;a href=&#34;https://github.com/kubernetes-sigs/kustomize&#34;&gt;kustomize&lt;/a&gt;とDockerが必要で、Linuxしかサポートしていない。
+自分のPCがWindows 10なので、WSL (Ubuntu 18.04)で環境を作ったんだけど、結局Dockerビルドとかテストとかが上手く動かなかったので、VMとかのLinuxで動かしたほうがよさそう。&lt;/p&gt;
+
+&lt;h2 id=&#34;kubebuilderセットアップ&#34;&gt;Kubebuilderセットアップ&lt;/h2&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Goインストール&lt;/p&gt;
+
+&lt;p&gt;Goは&lt;a href=&#34;https://golang.org/dl/&#34;&gt;公式サイト&lt;/a&gt;からLinux用アーカイブをダウンロードして展開して、そのbinディレクトリにPATH通すだけでインストールできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ go version
+go version go1.11.4 linux/amd64
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;あと、作業ディレクトリを作って&lt;code&gt;GOPATH&lt;/code&gt;を設定しておく。
+&lt;code&gt;~/go/&lt;/code&gt;を作業ディレクトリとする。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ export GOPATH=$HOME/go
+$ echo &#39;export GOPATH=$HOME/go&#39; &amp;gt;&amp;gt; ~/.profile
+$ mkdir $GOPATH/bin
+$ mkdir $GOPATH/src
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;で、&lt;code&gt;$GOPATH/bin&lt;/code&gt;にもPATH通しておく。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;depインストール&lt;/p&gt;
+
+&lt;p&gt;Go公式の依存ライブラリ管理ツール。
+コマンド一発でインストールできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;kustomizeインストール&lt;/p&gt;
+
+&lt;p&gt;バイナリをPATHの通ったところにダウンロードするだけ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ curl -L https://github.com/kubernetes-sigs/kustomize/releases/download/v2.0.3/kustomize_2.0.3_linux_amd64 -o /usr/local/bin/kustomize
+$ chmod +x /usr/local/bin/kustomize
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;kubebuilderインストール&lt;/p&gt;
+
+&lt;p&gt;GitHubのReleasesからアーカイブをダウンロードして展開してPATH通すだけ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ version=1.0.6
+$ arch=amd64
+$ curl -LO https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${version}/kubebuilder_${version}_linux_${arch}.tar.gz
+$ tar -zxvf kubebuilder_${version}_linux_${arch}.tar.gz
+$ sudo mv kubebuilder_${version}_linux_${arch} /usr/local/kubebuilder
+$ export PATH=$PATH:/usr/local/kubebuilder/bin
+$ echo &#39;export PATH=$PATH:/usr/local/kubebuilder/bin&#39; &amp;gt;&amp;gt; ~/.profile
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Dockerインストール&lt;/p&gt;
+
+&lt;p&gt;は適当に…&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&#34;kubebuilderプロジェクト生成&#34;&gt;Kubebuilderプロジェクト生成&lt;/h2&gt;
+
+&lt;p&gt;Zundoko Operatorのプロジェクトを生成する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ mkdir -p $GOPATH/src/github.com/kaitoy/zundoko-operator
+$ cd $GOPATH/src/github.com/kaitoy/zundoko-operator
+$ kubebuilder init --owner kaitoy
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;dep ensure&lt;/code&gt;を実行するかを聞かれるのでyesで回答すると、依存ライブラリがダウンロードされ、プロジェクトのビルドが走る。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;デフォルトではCRDなどの名前空間が&lt;code&gt;k8s.io&lt;/code&gt;になっているので、&lt;code&gt;kaitoy.github.com&lt;/code&gt;に変えるべく、&lt;code&gt;zundoko-operator/PROJECT&lt;/code&gt;を編集する。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;zundoko-operator/PROJECT&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; version: &amp;quot;1&amp;quot;
+-domain: k8s.io
++domain: kaitoy.github.com
+ repo: github.com/kaitoy/zundoko-operator
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;crdとcontroller生成&#34;&gt;CRDとController生成&lt;/h2&gt;
+
+&lt;p&gt;HikawaとZundokoとKiyoshiのCRDを生成する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Hikawa
+$ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Zundoko
+$ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Kiyoshi
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;それぞれ、リソースを作成するか (Create Resource under pkg/apis [y/n]?) と、Controllerを作成するか (Create Controller under pkg/controller [y/n]?) を聞かれる。
+リソースはそれぞれ作成して、ControllerはHikawaにだけ作成した。&lt;/p&gt;
+
+&lt;p&gt;生成されたのは以下のファイル。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;API定義とそのテスト: &lt;code&gt;zundoko-operator/pkg/apis/zundokokiyoshi/v1beta1/*.go&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;CRD: &lt;code&gt;zundoko-operator/config/crds/config/crds/*.yaml&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Hikawa Controllerとそのテスト: &lt;code&gt;zundoko-operator/pkg/controller/hikawa/*.go&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;リソースのマニフェストのサンプル: &lt;code&gt;zundoko-operator/config/crds/config/samples/*.yaml&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;これらの内、CRDと &lt;code&gt;zundoko-operator/pkg/apis/zundokokiyoshi/v1beta1/zz_generated.deepcopy.go&lt;/code&gt; はAPI定義をもとに生成されるので、API定義を書いた後生成しなおすことになる。&lt;/p&gt;
+
+&lt;h2 id=&#34;api定義記述&#34;&gt;API定義記述&lt;/h2&gt;
+
+&lt;p&gt;リソースがどのような属性をもつかをGoで定義する。
+テンプレートは生成されているので、ちょっと書き足すだけでできる。&lt;/p&gt;
+
+&lt;p&gt;以下はHikawaのAPI定義。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;zundoko-operator/pkg/apis/zundokokiyoshi/v1beta1/hikawa_types.go&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-golang&#34;&gt;package v1beta1
+
+import (
+	&amp;quot;time&amp;quot;
+
+	metav1 &amp;quot;k8s.io/apimachinery/pkg/apis/meta/v1&amp;quot;
+)
+
+// HikawaSpec defines the desired state of Hikawa
+type HikawaSpec struct {
+	IntervalMillis time.Duration `json:&amp;quot;intervalMillis&amp;quot;`
+	NumZundokos    int           `json:&amp;quot;numZundokos,omitempty&amp;quot;`
+	SayKiyoshi     bool          `json:&amp;quot;sayKiyoshi,omitempty&amp;quot;`
+}
+
+// HikawaStatus defines the observed state of Hikawa
+type HikawaStatus struct {
+	NumZundokosSaid int  `json:&amp;quot;numZundokosSaid&amp;quot;`
+	Kiyoshied       bool `json:&amp;quot;kiyoshied&amp;quot;`
+}
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Hikawa is the Schema for the hikawas API
+// +k8s:openapi-gen=true
+type Hikawa struct {
+	metav1.TypeMeta   `json:&amp;quot;,inline&amp;quot;`
+	metav1.ObjectMeta `json:&amp;quot;metadata,omitempty&amp;quot;`
+
+	Spec   HikawaSpec   `json:&amp;quot;spec,omitempty&amp;quot;`
+	Status HikawaStatus `json:&amp;quot;status,omitempty&amp;quot;`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// HikawaList contains a list of Hikawa
+type HikawaList struct {
+	metav1.TypeMeta `json:&amp;quot;,inline&amp;quot;`
+	metav1.ListMeta `json:&amp;quot;metadata,omitempty&amp;quot;`
+	Items           []Hikawa `json:&amp;quot;items&amp;quot;`
+}
+
+func init() {
+	SchemeBuilder.Register(&amp;amp;Hikawa{}, &amp;amp;HikawaList{})
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;自分で書いたのは&lt;code&gt;HikawaSpec&lt;/code&gt;と&lt;code&gt;HikawaStatus&lt;/code&gt;の中だけ。&lt;/p&gt;
+
+&lt;p&gt;Specの方には期待する状態、Statusの方には現在の実際の状態を表すフィールドを定義するのがパターン。
+例えば、&lt;code&gt;HikawaSpec.NumZundokos&lt;/code&gt;が期待するZundokoの数で、&lt;code&gt;HikawaStatus.NumZundokosSaid&lt;/code&gt;が実際に作成されたZundokono数。&lt;/p&gt;
+
+&lt;p&gt;Hikawa ControllerはReconciliationループの中で、SpecとStateが同じになるように処理をすることになる。&lt;/p&gt;
+
+&lt;p&gt;ZundokoとKiyoshiのAPI定義は、Specに「Zun」、「Doko」、または「Kiyoshi!」を入れるためのSayフィールドだけを書いた。&lt;/p&gt;
+
+&lt;h2 id=&#34;hikawa-controller記述&#34;&gt;Hikawa Controller記述&lt;/h2&gt;
+
+&lt;p&gt;Hikawa Controllerもテンプレートが生成されているので、それを参考に書ける。&lt;/p&gt;
+
+&lt;p&gt;まずはどのリソースをwatchするかを書く。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;zundoko-operator/pkg/controller/hikawa/hikawa_controller.go&lt;/code&gt;前半抜粋:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;func add(mgr manager.Manager, r reconcile.Reconciler) error {
+	// Create a new controller
+	c, err := controller.New(&amp;quot;hikawa-controller&amp;quot;, mgr, controller.Options{Reconciler: r})
+	if err != nil {
+		return err
+	}
+
+	// Watch for changes to Hikawa
+	err = c.Watch(&amp;amp;source.Kind{Type: &amp;amp;zundokokiyoshiv1beta1.Hikawa{}}, &amp;amp;handler.EnqueueRequestForObject{})
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&amp;amp;source.Kind{Type: &amp;amp;zundokokiyoshiv1beta1.Zundoko{}}, &amp;amp;handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &amp;amp;zundokokiyoshiv1beta1.Hikawa{},
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Hikawaは普通にwatchして、Zundokoはownしているリソースとしてwatchしている。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Reconciliationループは以下のように書いた。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;zundoko-operator/pkg/controller/hikawa/hikawa_controller.go&lt;/code&gt;後半抜粋:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=hikawas,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=hikawas/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=zundokos,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=zundokos/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=kiyoshis,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=kiyoshis/status,verbs=get;update;patch
+func (r *ReconcileHikawa) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	instanceName := request.NamespacedName.String()
+	log.Info(&amp;quot;Reconciling a Hikawa: &amp;quot; + instanceName)
+
+	// Fetch the Hikawa instance
+	instance := &amp;amp;zundokokiyoshiv1beta1.Hikawa{}
+	err := r.Get(context.TODO(), request.NamespacedName, instance)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// Object not found, return.  Created objects are automatically garbage collected.
+			// For additional cleanup logic use finalizers.
+			return reconcile.Result{}, nil
+		}
+		// Error reading the object - requeue the request.
+		return reconcile.Result{}, err
+	}
+
+	if instance.Status.Kiyoshied {
+		log.Info(instanceName + &amp;quot; has kiyoshied.&amp;quot;)
+		return reconcile.Result{}, nil
+	}
+
+	zundokoList := &amp;amp;zundokokiyoshiv1beta1.ZundokoList{}
+	if err := r.List(context.TODO(), &amp;amp;client.ListOptions{Namespace: instance.Namespace}, zundokoList); err != nil {
+		log.Error(err, &amp;quot;Failed to list zundokos for: &amp;quot;, instanceName)
+		return reconcile.Result{}, err
+	}
+
+	var dependents []zundokokiyoshiv1beta1.Zundoko
+	for _, zundoko := range zundokoList.Items {
+		for _, owner := range zundoko.GetOwnerReferences() {
+			if owner.Name == instance.Name {
+				dependents = append(dependents, zundoko)
+			}
+		}
+	}
+	numZundokosSaid := len(dependents)
+
+	if instance.Spec.NumZundokos &amp;gt; numZundokosSaid {
+		log.Info(instanceName + &amp;quot; wants &amp;quot; + strconv.Itoa(instance.Spec.NumZundokos-numZundokosSaid) + &amp;quot; more zundoko(s).&amp;quot;)
+		time.Sleep(instance.Spec.IntervalMillis * time.Millisecond)
+		word := getZundoko()
+		if err := createZundoko(instance, r, fmt.Sprintf(&amp;quot;-zundoko-%03d&amp;quot;, numZundokosSaid+1), word); err != nil {
+			return reconcile.Result{}, err
+		}
+	} else if instance.Status.NumZundokosSaid != numZundokosSaid {
+		log.Info(instanceName + &amp;quot; has said &amp;quot; + strconv.Itoa(numZundokosSaid) + &amp;quot; zundoko(s). Updating the status.&amp;quot;)
+		instance.Status.NumZundokosSaid = numZundokosSaid
+		if err := r.Update(context.Background(), instance); err != nil {
+			log.Error(err, &amp;quot;Failed to update &amp;quot;+instanceName)
+			return reconcile.Result{}, err
+		}
+	} else if instance.Spec.SayKiyoshi {
+		log.Info(instanceName + &amp;quot; is going to say &amp;quot; + wordKiyoshi)
+		time.Sleep(instance.Spec.IntervalMillis * time.Millisecond)
+		if err := createKiyoshi(instance, r); err != nil {
+			return reconcile.Result{}, err
+		}
+
+		instance.Status.Kiyoshied = true
+		if err := r.Update(context.Background(), instance); err != nil {
+			log.Error(err, &amp;quot;Failed to update &amp;quot;+instanceName)
+			return reconcile.Result{}, err
+		}
+	} else if isReadyToKiyoshi(dependents) {
+		log.Info(instanceName + &amp;quot; is ready to say &amp;quot; + wordKiyoshi)
+		instance.Spec.SayKiyoshi = true
+		if err := r.Update(context.Background(), instance); err != nil {
+			log.Error(err, &amp;quot;Failed to update &amp;quot;+instanceName)
+			return reconcile.Result{}, err
+		}
+	} else {
+		log.Info(instanceName + &amp;quot; keeps going on ZUNDOKO.&amp;quot;)
+		instance.Spec.NumZundokos++
+		if err := r.Update(context.Background(), instance); err != nil {
+			log.Error(err, &amp;quot;Failed to update &amp;quot;+instanceName)
+			return reconcile.Result{}, err
+		}
+	}
+
+	return reconcile.Result{}, nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;冒頭のコメントの内容は、このControllerにどのリソースのどの操作を許可するかを列挙しているもので、これをもとにControllerのRole定義 (&lt;code&gt;zundoko-operator/config/rbac/rbac_role.yaml&lt;/code&gt;) が生成される。
+Hikawa ControllerはHikawaとZundokoとKiyoshiを作ったり取得したりする必要があるので、それっぽく書いた。&lt;/p&gt;
+
+&lt;p&gt;watchしているリソースの作成・更新・削除のたびに&lt;code&gt;Reconcile()&lt;/code&gt;が呼ばれるので、そのなかでは対象となるHikawaを取得して期待されている状態を調べたり、Zundokoのリストを取得して現状を確認したり、リソースを更新したりして、&lt;code&gt;reconcile.Result{}&lt;/code&gt;をreturnする。
+&lt;code&gt;reconcile.Result{}&lt;/code&gt;が何なのかドキュメントにも記載が無くてよくわからないが、いつも空でreturnしておくのが無難っぽい。&lt;/p&gt;
+
+&lt;p&gt;errorオブジェクトをreturnすると、若干のインターバルののち再度&lt;code&gt;Reconcile()&lt;/code&gt;が呼ばれる。&lt;/p&gt;
+
+&lt;p&gt;リソースの削除時になにか処理をしたいときは、&lt;a href=&#34;https://book.kubebuilder.io/beyond_basics/using_finalizers.html&#34;&gt;Finalizer&lt;/a&gt;という仕組みが使える。
+今回は使ってない。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Zundokoを作成する&lt;code&gt;createZundoko()&lt;/code&gt;は以下。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;func createZundoko(instance *zundokokiyoshiv1beta1.Hikawa, r *ReconcileHikawa, nameSuffix, word string) error {
+	zundoko := &amp;amp;zundokokiyoshiv1beta1.Zundoko{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      instance.Name + nameSuffix,
+			Namespace: instance.Namespace,
+		},
+		Spec: zundokokiyoshiv1beta1.ZundokoSpec{
+			Say: word,
+		},
+	}
+	if err := controllerutil.SetControllerReference(instance, zundoko, r.scheme); err != nil {
+		log.Error(err, &amp;quot;An error occurred in SetControllerReference&amp;quot;, &amp;quot;instance&amp;quot;, instance.Name, &amp;quot;namespace&amp;quot;, zundoko.Namespace, &amp;quot;name&amp;quot;, zundoko.Name)
+		return err
+	}
+
+	log.Info(&amp;quot;Creating Zundoko&amp;quot;, &amp;quot;namespace&amp;quot;, zundoko.Namespace, &amp;quot;name&amp;quot;, zundoko.Name)
+	if err := r.Create(context.TODO(), zundoko); err != nil {
+		log.Error(err, &amp;quot;Failed to create Zundoko&amp;quot;, &amp;quot;namespace&amp;quot;, zundoko.Namespace, &amp;quot;name&amp;quot;, zundoko.Name)
+		return err
+	}
+
+	return nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;controllerutil.SetControllerReference()&lt;/code&gt;で、作成するZundokoにHikawaをownerとして紐づけている。
+これにより、Zundokoの作成・更新時にReconciliationループの中で正しいHikawaが取得できるとともに、Hikawaを削除したときに関連するZundokoが&lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/&#34;&gt;Garbage Collection&lt;/a&gt;される。&lt;/p&gt;
+
+&lt;h2 id=&#34;crdなどの再生成&#34;&gt;CRDなどの再生成&lt;/h2&gt;
+
+&lt;p&gt;API定義などの記述を反映させるため、CRDとかrbac_role.yamlとかzz_generated.deepcopy.goを再生成する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ make generate
+$ make manifest
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;zundoko-operatorのdockerイメージのビルド&#34;&gt;Zundoko OperatorのDockerイメージのビルド&lt;/h2&gt;
+
+&lt;p&gt;Zundoko OperatorはPodとして動かすので、そのDockerイメージをビルドしておく必要がある。
+DockerfileもKubebuilderが生成してくれているので、それをそのまま使えばいい。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ docker build -t kaitoy/zundoko-operator:latest .
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;zundoko-operatorをデプロイするkubernetesマニフェスト生成&#34;&gt;Zundoko OperatorをデプロイするKubernetesマニフェスト生成&lt;/h2&gt;
+
+&lt;p&gt;Zundoko OperatorをデプロイするKubernetesマニフェストはkustomizeで生成する。
+生成する前に、kustomizeのパッチファイルである&lt;code&gt;zundoko-operator/config/default/manager_image_patch.yaml&lt;/code&gt;を編集して、&lt;code&gt;spec.template.spec.containers[].image&lt;/code&gt;にさっきビルドしたDockerイメージの名前を書いておく。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;zundoko-operator/config/default/manager_image_patch.yaml&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; apiVersion: apps/v1
+ kind: StatefulSet
+ metadata:
+   name: controller-manager
+   namespace: system
+ spec:
+   template:
+     spec:
+       containers:
+       # Change the value of image field below to your controller image URL
+-     - image: IMAGE_URL
++     - image: kaitoy/zundoko-operator:latest
+         name: manager
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;で、以下のコマンドで生成できる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ kustomize build config/default &amp;gt; zundoko-operator.yaml
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;zundoko-operatorデプロイ&#34;&gt;Zundoko Operatorデプロイ&lt;/h2&gt;
+
+&lt;p&gt;Zundoko Operatorをデプロイするには、生成したCRDと、kustomizeの出力を&lt;code&gt;kubectl apply&lt;/code&gt;してやればいい。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ kubectl apply -f zundoko-operator/config/crds/zundokokiyoshi_v1beta1_hikawa.yaml
+$ kubectl apply -f zundoko-operator/config/crds/zundokokiyoshi_v1beta1_kiyoshi.yaml
+$ kubectl apply -f zundoko-operator/config/crds/zundokokiyoshi_v1beta1_zundoko.yaml
+$ kubectl apply -f zundoko-operator/zundoko-operator.yaml
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;hikawa作成&#34;&gt;Hikawa作成&lt;/h2&gt;
+
+&lt;p&gt;Hikawaを登録するとズンドコしはじめる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ cat &amp;lt;&amp;lt;EOF | kubectl create -f -
+apiVersion: zundokokiyoshi.kaitoy.github.com/v1beta1
+kind: Hikawa
+metadata:
+  labels:
+    controller-tools.k8s.io: &amp;quot;1.0&amp;quot;
+  name: hikawa-sample
+spec:
+  intervalMillis: 500
+EOF
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;embed video-player&#34; style=&#34;text-align: center&#34;&gt;
+  &lt;iframe class=&#34;youtube-player&#34; type=&#34;text/html&#34; width=&#34;320&#34; height=&#34;193&#34; src=&#34;https://www.youtube.com/embed/oemOqYspbaE&#34; allowfullscreen frameborder=&#34;0&#34;&gt;
+  &lt;/iframe&gt;
+&lt;/div&gt;
+&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -15847,268 +16399,6 @@ Ubuntu側からは消えてないように見えるが、アクセスしよう�
 
 &lt;p&gt;また、上のスライドには表現していないが、コマンド実行前にワーキングディレクトリやインデックスに未コミットな変更が入っている場合、Gitはそれをコマンド実行後のワーキングディレクトリに適用しようとしてくれる。
 これは例えばあるブランチで作った変更を別のブランチにコミットしたいようなときは便利だが、&lt;code&gt;checkout&lt;/code&gt;したコミットに別途変更が入っているとその適用は失敗し、コマンドがエラーになるので、普通はコマンド実行前に&lt;code&gt;git stash&lt;/code&gt;しておくのが無難。&lt;/p&gt;
-</description>
-        </item>
-      
-    
-      
-        <item>
-          <title>Gitの良さが分からない？ ちょっとそこに座れ</title>
-          <link>https://www.kaitoy.xyz/2016/10/06/git-vs-subversion/</link>
-          <pubDate>Thu, 06 Oct 2016 00:18:05 -0600</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2016/10/06/git-vs-subversion/</guid>
-          <description>
-
-&lt;p&gt;&lt;a href=&#34;http://crapp.hatenablog.com/entry/2016/10/01/111528&#34;&gt;Gitの良さがいまだに分からない&lt;/a&gt;という人がいるようなので、Git派の一人としてSubversion(以下SVN)と比較してのGitの良さ(メリット)について語りたい。
-(GitとSVNの違いについては他の人の記事に詳しいのであまり書いていない一方、勢い余ってGitのデメリットも書いた。)&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;p&gt;本題に入る前に、冒頭にリンクを貼った記事についてひとつだけつっこんでおく。
-つっこみどころは他にも沢山あるけど。&lt;/p&gt;
-
-&lt;blockquote&gt;
-&lt;p&gt;※話の前提としてgitとSVNを採用している現場に下記のような割と違いがあるとする。&lt;/p&gt;
-
-&lt;p&gt;git
-イシューごとにブランチを切り、ローカルでコミットして、リモートブランチにpushして、GitHub・GitLab・Bitbucket経由でマージリクエスト。コードレビューの後にマージ。&lt;/p&gt;
-
-&lt;p&gt;SVN
-リモートのtrunkに個々人が直接コミット。コードレビューはあまりない。ブランチを切ることもない。&lt;/p&gt;
-
-&lt;p&gt;このような違いが出る背景には次のものがある。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;gitを採用する現場は、猫も杓子もgit-flowというプラクティスに従う傾向がある
-gitを採用する現場は、コードの品質もある程度管理する傾向がある
-SVNは集中型でありブランチ機能などが非常に使いにくい
-SVNを採用する現場はコードの品質よりも「リリースに含めるならさっさとコミット」と考える傾向がある
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;この前提には無理がある。&lt;/p&gt;
-
-&lt;p&gt;Gitのところに書いてあるのが、Gitというツールの枠を大きくはみだした&lt;a href=&#34;https://gist.github.com/Gab-km/3705015&#34;&gt;GitHub Flow&lt;/a&gt;というブランチ戦略+開発プロセスに当たるものであり、
-それでGitを批判するのはお門違いであろうという点については、Gitの流行がGitHubの人気によるところが大きく、GitHubを使えることがGitの大きなメリットであるので、目をつむることにする。(マージリクエストを使う羽目になるデメリットなんて言いがかりでしかないとだけ言っておく。)&lt;/p&gt;
-
-&lt;p&gt;看過できないのは、SVNを使った開発がコードレビューもブランチもないという点。&lt;/p&gt;
-
-&lt;p&gt;どこの世界の話をしているんだろうか。
-Gitが世に出る前は世間にコードレビューもブランチもあまりなかったかのような前提だが、もちろんそんなことは全くない。
-60万個以上のOSSプロジェクト情報を統括する&lt;a href=&#34;https://ja.wikipedia.org/wiki/Ohloh&#34;&gt;Open HUB&lt;/a&gt;によれば、OSSプロジェクトの&lt;a href=&#34;https://www.openhub.net/repositories/compare&#34;&gt;46%がSVNを使っている&lt;/a&gt;。この中にはGitの誕生以降にSVNを使い始めたプロジェクトも多くある。270000余りのプロジェクトの大部分がブランチすら使っていないとでも?&lt;/p&gt;
-
-&lt;p&gt;GitHub Flowと対比するために無理やりこじつけたんだろうけど、その無理のせいで議論のスタート地点からめちゃくちゃだ。&lt;/p&gt;
-
-&lt;p&gt;まともな開発にはコードレビューもブランチも必要だ。
-品質管理もリリース管理もしないなら要らないのかもしれないが、そんないい加減な開発現場を前提にSVNかGitかなんて議論しても意味がない。
-高品質なソフトウェアを効率よく開発するために則りたい素晴らしい開発フローがあるとして、そのフローをSVNやGitやその他のツールないしひょっとしたらアナクロな日付フォルダの内どれがもっとも上手く実現してくれるか、というのがあるべき議論だ。
-この「素晴らしい開発フロー」には一般的に品質管理と並行開発が含まれていて、それらにはコードレビューとブランチの利用が含まれている。
-Git(+GitHub)がこんなにも急速にSVNに取って代わって流行ったのは、分散リポジトリの仕組みとブランチの軽量な実装によって効率的な並行開発が実現でき、またプルリクエストなどの機能によりコードレビューを含む快適なソーシャルコーディングが実現できるからだ。
-逆に言えば、Gitが流行ったことが、人々が効率的な並行開発やコードレビューを開発フローに取り入れたかった証拠と言えるかもしれない。&lt;/p&gt;
-
-&lt;h1 id=&#34;gitのメリット&#34;&gt;Gitのメリット&lt;/h1&gt;
-
-&lt;p&gt;前置きが長くなったが、少なくともブランチとコードレビューを活用した高品質で高効率なソフトウェア開発をしたいという前提で、SVNに対するGitのメリットを挙げてみたい。&lt;/p&gt;
-
-&lt;h4 id=&#34;1-リポジトリ構造がシンプル&#34;&gt;1. リポジトリ構造がシンプル&lt;/h4&gt;
-
-&lt;p&gt;Gitリポジトリはすごくシンプルに作られているそうな。
-確かに、&lt;a href=&#34;https://www.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;その構造&lt;/a&gt;を見ると、&lt;code&gt;add&lt;/code&gt;、&lt;code&gt;commit&lt;/code&gt;、&lt;code&gt;log&lt;/code&gt;、&lt;code&gt;reset&lt;/code&gt;くらいは自前ですぐに実装できそうだ。&lt;/p&gt;
-
-&lt;p&gt;このシンプルな構造のおかげで、Gitリポジトリは壊れにくい。ここで壊れにくいとは、リポジトリ内部で不整合が起こりにくいということで、コマンドミスでコミット履歴が一部消えたりとかいうトラブルは壊れるに入らない。&lt;/p&gt;
-
-&lt;p&gt;実のところSVNリポジトリの構造を知らないので経験的なことしか言えないが、SVNリポジトリ(というより作業ディレクトリの管理情報?)はちょくちょく変な状態になり、クリーンアップしたり、酷い時には.svn内のファイルを手動でいじったりしなければならなかった。&lt;/p&gt;
-
-&lt;p&gt;因みに、シンプルというのはリポジトリサイズがすごく小さいということにはならず、同等の履歴を含むGitリポジトリとSVNリポジトリはだいたい同サイズなんだそうな。&lt;/p&gt;
-
-&lt;h4 id=&#34;2-ブランチが軽い&#34;&gt;2. ブランチが軽い&lt;/h4&gt;
-
-&lt;p&gt;Gitのブランチは単一のコミットを指す参照で、リポジトリ内ではSHA-1ハッシュ値が書かれただけのたった一つのファイルに過ぎない。
-その為ブランチは一瞬で作成できるし、ディスクも圧迫しないので、じゃんじゃん作ってじゃんじゃん消せる。
-さらに、ローカルリポジトリに過去の全ファイルの全バージョンが入っているという分散リポジトリの特長のおかげで、ブランチの切り替えも軽快にできる。
-ローカルから必要なファイルを作業ディレクトリに展開するだけなので。&lt;/p&gt;
-
-&lt;p&gt;一方SVNはそもそもブランチをサポートする直接的な機能がないため、ブランチはリビジョンのコピーという形で実装されている。
-コピーと言ってもハードリンクみたいなものでディスク上に物理的なコピーが作られるわけではなく、軽量という点ではGitと大差ないが、集中リポジトリなせいでブランチの切り替えには差が出る。
-&lt;code&gt;svn switch&lt;/code&gt;にしろ&lt;code&gt;svn checkout&lt;/code&gt;にしろネットワークの向こうのサーバとの通信が必要なので、それなりの時間がかかるし、通信が途切れると切り替えられなくなる。&lt;/p&gt;
-
-&lt;p&gt;冒頭に貼った記事にはGitはブランチを切り替える際に&lt;code&gt;stash&lt;/code&gt;とかしないといけなくて面倒とあったが、そんなのSVNだって同じだし、&lt;code&gt;stash&lt;/code&gt;すればいいだけだし、&lt;code&gt;stash&lt;/code&gt;という機能があるだけSVNよりまし。Gitならコミットはあとから書き変えられるので、&lt;code&gt;stash&lt;/code&gt;の代わりに一時的にコミットしちゃってもいい。&lt;/p&gt;
-
-&lt;p&gt;それも嫌なら&lt;a href=&#34;http://qiita.com/shibukk/items/80430b54ecda7f36ca44&#34;&gt;&lt;code&gt;worktree&lt;/code&gt;&lt;/a&gt;使えばよろしい。&lt;/p&gt;
-
-&lt;h4 id=&#34;3-バージョン間の差分取得が速い&#34;&gt;3. バージョン間の差分取得が速い&lt;/h4&gt;
-
-&lt;p&gt;Gitは全てのファイルについて全てのバージョンのコンテンツをまるまるリポジトリに持っている。
-一方SVNのリポジトリにはバージョン間の変更が記録されている。
-このため、あるファイルについて任意のバージョン間の差分を取るのに、Gitはシンプルにそれぞれのバージョンのファイルを取り出して比較するだけでよいが、SVNは隣り合ったバージョンでなければバージョン間の変更を足し合わせて差分を計算しなければいけない。&lt;/p&gt;
-
-&lt;p&gt;さらに、Gitは比較するファイルをローカルリポジトリから取り出すだけでよいが、SVNはサーバへのアクセスが必要なので、差分取得はGitの方が大分速い。&lt;/p&gt;
-
-&lt;h4 id=&#34;4-ログ取得が速い&#34;&gt;4. ログ取得が速い&lt;/h4&gt;
-
-&lt;p&gt;Gitのコミットは常にプロジェクトの全ファイルに対するものだ。
-これは変更したファイルの一部だけを対象とするコミット操作ができないという意味ではない。
-Gitがひとつのコミット操作をコミットオブジェクトと呼ばれる単一のファイルに記録し、そのファイルが常にプロジェクトの全ファイルの特定のバージョンを参照しているという意味だ。(正確に言うとこのファイル自身に全ての参照が記録されているわけではないが。)&lt;/p&gt;
-
-&lt;p&gt;このためGitのコミット履歴は実にシンプルで、ログ一覧を取得するには単にコミットをたどりながらコミットオブジェクトに書かれたログを集めればいい。&lt;/p&gt;
-
-&lt;p&gt;一方SVNはファイル毎にバージョンを管理するので、もう少しややこしい。&lt;/p&gt;
-
-&lt;p&gt;さらに、Gitはコミットオブジェクトをローカルリポジトリから持ってこれるがSVNは(以下略)。&lt;/p&gt;
-
-&lt;h4 id=&#34;5-オフラインでだいたいなんでもできる&#34;&gt;5. オフラインでだいたいなんでもできる&lt;/h4&gt;
-
-&lt;p&gt;と、ここまで書いて、Gitのいいところはオフライン作業が捗るところではないかと思い立った。&lt;/p&gt;
-
-&lt;p&gt;実際Gitは、&lt;code&gt;clone&lt;/code&gt;、&lt;code&gt;fetch&lt;/code&gt;、&lt;code&gt;pull&lt;/code&gt;、&lt;code&gt;push&lt;/code&gt;といったあからさまな操作以外はオフラインでできる。
-多くの操作にネットワーク通信コストを払わなくていい上、リモートリポジトリサーバが落ちたりネットワークが落ちたり山に籠ったりしていても作業が続けられる。&lt;/p&gt;
-
-&lt;p&gt;ノマドに最適。&lt;/p&gt;
-
-&lt;p&gt;一方SVNがネットワーク通信なしでできることは、…ベースバージョンとのdiffくらい?&lt;/p&gt;
-
-&lt;h4 id=&#34;6-コミット履歴を汚さずにコードレビューできる&#34;&gt;6. コミット履歴を汚さずにコードレビューできる&lt;/h4&gt;
-
-&lt;p&gt;私の職場はSVNを使っていて、コードを書いたら一旦コミットして、リビジョンを偉い人に通知してレビューしてもらっている。
-偉い人は遠い異国にいたりするが、こちらがコミットしてしまえばSVNの機能で変更内容の取得も確認もできるという寸法だ。
-リポジトリ外で変更内容をやりとりする方法とは違って、レビュー後のコミットミスや漏れが起こる余地がないのがいいが、レビューで受けた指摘は別のコミットを加えて反映したり、酷い時はリバースコミットで変更を取り消す必要がある。
-こういうコミット履歴は大抵単なるノイズで、そうでなくてもリポジトリにある必要はない情報だ。&lt;/p&gt;
-
-&lt;p&gt;一方GitならP2Pで偉い人にコミットを送れるし、レビュー後にコミットの作り直しもできるので、コミット履歴をきれいに保てる。
-履歴がきれいだと変更のトレーサビリティが高まる。
-変更のトレーサビリティが高いと、保守性が高くなり、低メンテナンスコストで高品質なプロダクトの開発につながる。&lt;/p&gt;
-
-&lt;h4 id=&#34;7-ソーシャルコーディングできる&#34;&gt;7. ソーシャルコーディングできる&lt;/h4&gt;
-
-&lt;p&gt;SaaSなら&lt;a href=&#34;https://github.com/&#34;&gt;GitHub&lt;/a&gt;や&lt;a href=&#34;https://bitbucket.org/product&#34;&gt;Bitbucket&lt;/a&gt;、オンプレミスなら&lt;a href=&#34;https://enterprise.github.com/home&#34;&gt;GitHub Enterprise&lt;/a&gt;や&lt;a href=&#34;https://about.gitlab.com/&#34;&gt;GitLab&lt;/a&gt;を利用して、ソーシャルコーディングを実現できるのはやはりGitの大きな強みだ。&lt;/p&gt;
-
-&lt;p&gt;ソーシャルコーディングはアジャイルの先にあるDevOpsに必須とも言える要素で、今後これを実現できないIT企業やユーザ企業は開発力で他企業に差を付けられ、苦しい競争を強いられるであろう。&lt;/p&gt;
-
-&lt;p&gt;バージョン管理ツール単体だけでなく、その上に乗っかるものまで見た場合、GitはSVNに大きく差を付けている感がある。&lt;/p&gt;
-
-&lt;h1 id=&#34;git対svnの迷信&#34;&gt;Git対SVNの迷信&lt;/h1&gt;
-
-&lt;p&gt;調べているうちに、Git対SVNで広く信じられている迷信があることを知ったので、ついでに書き残しておく。&lt;/p&gt;
-
-&lt;h4 id=&#34;1-svnのマージはクソ&#34;&gt;1. SVNのマージはクソ&lt;/h4&gt;
-
-&lt;p&gt;例えば&lt;a href=&#34;http://catcher-in-the-tech.net/806/&#34;&gt;「SVNからGitに移行して分かった、今すぐSVNを捨てるべき3つの理由」&lt;/a&gt;という記事の3つめの理由にSVNのマージ機能がクソと書いてあるが、これは最近では迷信とされている。&lt;/p&gt;
-
-&lt;p&gt;SVNは確かにかつてブランチとマージに対するサポートが貧弱で、ブランチがどこを起点に作られたか、どのコミットをマージしたかといった情報を記憶しなかったため、ユーザがコマンドに教えてあげたり、コミットログを工夫して記録してやらなければならなかった。
-しかし、&lt;a href=&#34;https://subversion.apache.org/docs/release-notes/1.5.html#merge-tracking&#34;&gt;バージョン1.5&lt;/a&gt;からこの状況が改善され始め、&lt;a href=&#34;https://subversion.apache.org/docs/release-notes/1.8.html#auto-reintegrate&#34;&gt;バージョン1.8&lt;/a&gt;で成熟したオートマージ機能により、SVNのマージも十分強力なものになった。&lt;/p&gt;
-
-&lt;p&gt;Gitは&lt;a href=&#34;https://git-scm.com/docs/merge-strategies&#34;&gt;オクトパスマージとかマージ戦略オプションとか&lt;/a&gt;あってさらに強力そうではあるけど、そんな高機能を必要とする場面があまりなさそう。&lt;/p&gt;
-
-&lt;h4 id=&#34;2-svnフォルダが各フォルダにあってうっとうしくてほんとクソ&#34;&gt;2. .svnフォルダが各フォルダにあってうっとうしくてほんとクソ&lt;/h4&gt;
-
-&lt;p&gt;これも今では迷信。&lt;a href=&#34;https://subversion.apache.org/docs/release-notes/1.7.html#wc-ng&#34;&gt;バージョン1.7&lt;/a&gt;から&lt;code&gt;.svn&lt;/code&gt;はルートフォルダだけに作られるようになった。&lt;/p&gt;
-
-&lt;h1 id=&#34;gitのデメリット&#34;&gt;Gitのデメリット&lt;/h1&gt;
-
-&lt;p&gt;GitはSVNより全ての点で優れているというわけでもない。
-以下、SVNに対するGitのデメリットを挙げてみたい。&lt;/p&gt;
-
-&lt;h4 id=&#34;1-cloneに時間がかかる&#34;&gt;1. cloneに時間がかかる&lt;/h4&gt;
-
-&lt;p&gt;Gitでの開発は基本的にリポジトリ全体を&lt;code&gt;clone&lt;/code&gt;することから始まる。
-上記の「オフラインでだいたいなんでもできる」というのは、最初に全部ローカルに持ってきてしまうことで活きてくる利点だ。&lt;/p&gt;
-
-&lt;p&gt;けどリポジトリが大きいとやっぱり&lt;code&gt;clone&lt;/code&gt;は時間がかかる操作になる。
-例えば、&lt;a href=&#34;https://github.com/torvalds/linux&#34;&gt;Linuxカーネル&lt;/a&gt;をGitHubから&lt;code&gt;clone&lt;/code&gt;してみたら 45 分程かかった。
-そんなに気軽にできる操作ではない。&lt;/p&gt;
-
-&lt;p&gt;このデメリットに対処する方法は&lt;a href=&#34;http://japan.blogs.atlassian.com/2014/05/handle-big-repositories-git/&#34;&gt;いくつかある&lt;/a&gt;が、それをするとオフライン作業の幅を狭めることになる。&lt;/p&gt;
-
-&lt;p&gt;SVNには&lt;code&gt;clone&lt;/code&gt;の概念がないのでこの悩みはない。&lt;/p&gt;
-
-&lt;h4 id=&#34;2-部分cloneのサポートが貧弱&#34;&gt;2. 部分cloneのサポートが貧弱&lt;/h4&gt;
-
-&lt;p&gt;上でも書いたが、GitはSVNのように履歴をディレクトリやファイル毎に管理しているわけではなく、コミットはプロジェクトの全ファイルを参照(i.e. 依存)しているので、特定のディレクトリ以下だけのcloneといった部分cloneの完全な実装は技術的に困難だ。&lt;/p&gt;
-
-&lt;p&gt;Gitはリリース当初、部分cloneのサポートを全く提供せず、バージョン1.7になってそれっぽい&lt;a href=&#34;http://stackoverflow.com/questions/600079/how-do-i-clone-a-subdirectory-only-of-a-git-repository&#34;&gt;sparse checkout&lt;/a&gt;が実装されたが、あまり使い勝手が良くない。
-Gitの開発陣は当初から部分cloneの実装に乗り気ではないし、上記の技術的な壁もあるので、今後この状況が大きく改善されることは恐らくないであろう。&lt;/p&gt;
-
-&lt;p&gt;妥協になるだろうが、ソースをモジュール毎に分割して別々のリポジトリに突っ込み、必要に応じて&lt;code&gt;submodule&lt;/code&gt;か&lt;code&gt;subtree&lt;/code&gt;でつなげるのが実用的な解ではないだろうか。
-それにしたって面倒だが。&lt;/p&gt;
-
-&lt;p&gt;SVNではリポジトリの一部を&lt;code&gt;checkout&lt;/code&gt;する操作は第一級市民であり、何の制限もなく快適にできる。
-この点においてはSVNパイセンの圧勝だ。&lt;/p&gt;
-
-&lt;h4 id=&#34;3-コマンドが分かり辛い&#34;&gt;3. コマンドが分かり辛い&lt;/h4&gt;
-
-&lt;p&gt;Gitはもともと低レベルなバージョン管理ツールとして開発されたためか、&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E3%83%AA%E3%83%BC%E3%83%8A%E3%82%B9%E3%83%BB%E3%83%88%E3%83%BC%E3%83%90%E3%83%AB%E3%82%BA&#34;&gt;神&lt;/a&gt;の思考パターンが凡人のそれとはかけ離れているためか、Gitのコマンド体系は分かり辛く使いにくいというのは世界共通の認識のようだ。
-このためGitの導入に当たってはどうしても高い学習コストを払わなければいけない。&lt;/p&gt;
-
-&lt;p&gt;これは、分散バージョン管理システムというアーキテクチャが複雑だから、という理由からくるものではない。
-同じ分散バージョン管理システムでも、&lt;a href=&#34;https://www.mercurial-scm.org/&#34;&gt;Mercurial&lt;/a&gt;は&lt;a href=&#34;https://blogs.atlassian.com/2012/02/mercurial-vs-git-why-mercurial/&#34;&gt;一貫したきれいな使いやすいコマンド体系をもっている&lt;/a&gt;らしい。&lt;/p&gt;
-
-&lt;p&gt;好みの問題もあるだろうが、この点についてもSVNに分があるというのが一般的な認識だ。&lt;/p&gt;
-
-&lt;p&gt;まあGitのGUIツールも&lt;a href=&#34;https://git-scm.com/docs/git-gui&#34;&gt;バンドルされてるやつ&lt;/a&gt;とか&lt;a href=&#34;https://tortoisegit.org/&#34;&gt;TortoiseGit&lt;/a&gt;とか&lt;a href=&#34;https://ja.atlassian.com/software/sourcetree&#34;&gt;SourceTree&lt;/a&gt;とか&lt;a href=&#34;https://www.gitkraken.com/&#34;&gt;イカ&lt;/a&gt;とか色々あるので、それで大分カバーできるだろうが。&lt;/p&gt;
-
-&lt;h4 id=&#34;4-バイナリファイルの扱いが下手&#34;&gt;4. バイナリファイルの扱いが下手&lt;/h4&gt;
-
-&lt;p&gt;Gitは基本的にテキストファイルを扱うよう作られていて、バイナリファイルの扱いは下手だ。
-これはSVNも同じだけど、SVNの方がましらしい。&lt;/p&gt;
-
-&lt;p&gt;例えば、バイナリファイルの同等の履歴を管理するのに、GitはSVNより少しだけ多くリポジトリ容量を食う。&lt;/p&gt;
-
-&lt;p&gt;また、Gitはファイルのコンテンツに注目して管理するツールであるが、バイナリファイルは人間から見ると少しの変更(e.g. 画像の明度の変更)でもコンテンツが大きく変わるため、Gitが変更前のファイルと変更後のファイルを別のファイルとして扱ってしまうことがある。(最近のバージョンでは修正されているかも。)&lt;/p&gt;
-
-&lt;p&gt;SVNはファイルそのものに注目しているので、その内容がどんなに劇的に変わっても見失うことはない。&lt;/p&gt;
-
-&lt;p&gt;Gitでバイナリファイル、特にサイズが大きかったり頻繁に修正されるものを扱う必要があるときは、&lt;a href=&#34;https://git-annex.branchable.com/&#34;&gt;git-annex&lt;/a&gt;や&lt;a href=&#34;https://git-lfs.github.com/&#34;&gt;Git Large File Storage (LFS)&lt;/a&gt;の利用を検討すべし。&lt;/p&gt;
-
-&lt;h4 id=&#34;5-アクセスコントロール機能がない&#34;&gt;5. アクセスコントロール機能がない&lt;/h4&gt;
-
-&lt;p&gt;Git自身にはアクセスコントロール機能が全く実装されていない(多分)。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;clone&lt;/code&gt;するときなんかは、HTTPやSSHやTLSの力を借りてリポジトリ単位でのユーザ認証ができたり、&lt;code&gt;push&lt;/code&gt;するときにはファイルシステムのアクセスコントロールの力を借りて特定のファイルの変更を防いだりはできるが、もっと細かい制御をしたい場合は&lt;a href=&#34;https://github.com/sitaramc/gitolite&#34;&gt;Gitolite&lt;/a&gt;の力を借りる必要がある。&lt;/p&gt;
-
-&lt;p&gt;借りてばっかだ。&lt;/p&gt;
-
-&lt;p&gt;一方SVNは自前で&lt;a href=&#34;http://svnbook.red-bean.com/en/1.8/svn.serverconfig.pathbasedauthz.html&#34;&gt;Path-Based Authorization&lt;/a&gt;という機能を持っていて、ユーザ認証とディレクトリまたはファイル単位での読み書き制限ができる。&lt;/p&gt;
-
-&lt;h4 id=&#34;6-ファイル単位の履歴を保持しない&#34;&gt;6. ファイル単位の履歴を保持しない&lt;/h4&gt;
-
-&lt;p&gt;上にも書いたが、GitはSVNのようにファイル単位でバージョン管理をしているわけではないし、また、ファイルそのものではなくそのコンテンツに注目してバージョン管理する。この特徴のせいで、Gitはたまにファイルの行方を見失うことがある。&lt;/p&gt;
-
-&lt;p&gt;上記バイナリファイルの問題もそうだし、テキストファイルでもリネームとコンテンツ変更を同時にやると&lt;code&gt;git log --follow&lt;/code&gt;で&lt;a href=&#34;https://svnvsgit.com/#losing-history-after-rename-in-Git&#34;&gt;ファイルの履歴が追えなくなる&lt;/a&gt;。&lt;/p&gt;
-
-&lt;p&gt;SVNはリネームにちゃんと&lt;code&gt;svn mv&lt;/code&gt;を使っている限りファイルを見失うことはない。&lt;/p&gt;
-
-&lt;p&gt;ただこれは実際、Gitのデメリットと言うよりは、GitとSVNの思想の違いと言った方がいいかもしれない。
-&lt;code&gt;git log --follow&lt;/code&gt;は単に&lt;a href=&#34;http://stackoverflow.com/questions/5743739/how-to-really-show-logs-of-renamed-files-with-git&#34;&gt;SVNに慣れ親しんだGit初心者のための機能&lt;/a&gt;で、真のGit使いは特定のファイルの履歴を追うということを必要としない。&lt;/p&gt;
-
-&lt;p&gt;ファイルの履歴を見たい煩悩に駆られたら、心を静め、&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E3%83%AA%E3%83%BC%E3%83%8A%E3%82%B9%E3%83%BB%E3%83%88%E3%83%BC%E3%83%90%E3%83%AB%E3%82%BA&#34;&gt;神&lt;/a&gt;に祈りを捧げ、Gitのソースコードを写経し、Gitコマンドを108回たたいて悟りを開くべし。&lt;/p&gt;
-
-&lt;h1 id=&#34;まとめ&#34;&gt;まとめ&lt;/h1&gt;
-
-&lt;p&gt;Git派としてGit押しの記事を書こうと思っていたが、意外とデメリットもたくさん見えてきてしまった。
-結局、GitとSVNどちらが単純に優れているということはないので、プロジェクトの構成やワークフローなどの要件を鑑みて使い分ければよしということか。&lt;/p&gt;
-
-&lt;h1 id=&#34;参考資料&#34;&gt;参考資料&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&#34;https://www.oreilly.co.jp/books/9784873114408/&#34;&gt;蝙蝠本&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://git.wiki.kernel.org/index.php/GitSvnComparsion&#34;&gt;GitSvnComparison&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://svnvsgit.com/&#34;&gt;Subversion vs. Git: Myths and Facts&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
 </description>
         </item>
       

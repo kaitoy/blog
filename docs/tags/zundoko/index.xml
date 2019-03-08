@@ -5,9 +5,561 @@
     <link>https://www.kaitoy.xyz/tags/zundoko/</link>
     <language>en-us</language>
     <author>Kaito Yamada</author>
-    <rights>(C) 2018</rights>
-    <updated>2016-03-19 11:47:03 -0600 -0600</updated>
+    <rights>(C) 2019</rights>
+    <updated>2019-03-08 17:29:16 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</title>
+          <link>https://www.kaitoy.xyz/2019/03/08/k8s-zundoko-operator/</link>
+          <pubDate>Fri, 08 Mar 2019 17:29:16 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2019/03/08/k8s-zundoko-operator/</guid>
+          <description>
+
+&lt;p&gt;&lt;blockquote class=&#34;twitter-tweet&#34; data-lang=&#34;ja&#34;&gt;&lt;p lang=&#34;ja&#34; dir=&#34;ltr&#34;&gt;Javaの講義、試験が「自作関数を作り記述しなさい」って問題だったから&lt;br&gt;「ズン」「ドコ」のいずれかをランダムで出力し続けて「ズン」「ズン」「ズン」「ズン」「ドコ」の配列が出たら「キ・ヨ・シ！」って出力した後終了って関数作ったら満点で単位貰ってた&lt;/p&gt;&amp;mdash; てくも (@kumiromilk) &lt;a href=&#34;https://twitter.com/kumiromilk/status/707437861881180160&#34;&gt;2016年3月9日&lt;/a&gt;&lt;/blockquote&gt;
+&lt;script async src=&#34;//platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;久しぶりにズンドコしたくなったので、&lt;a href=&#34;https://book.kubebuilder.io/&#34;&gt;Kubebuilder&lt;/a&gt;を使って、&lt;a href=&#34;https://kubernetes.io/&#34;&gt;Kubernetes&lt;/a&gt;の&lt;a href=&#34;https://coreos.com/operators/&#34;&gt;Operator&lt;/a&gt;として動く&lt;a href=&#34;https://github.com/kaitoy/zundoko-operator&#34;&gt;Zundoko Operator&lt;/a&gt;を作ってみた。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h1 id=&#34;kubernetes-operatorとは&#34;&gt;Kubernetes Operatorとは&lt;/h1&gt;
+
+&lt;p&gt;KubernetesのOperatorというのは&lt;a href=&#34;https://coreos.com/&#34;&gt;CoreOS社&lt;/a&gt;(現Red Hat)によって提唱された概念(実装パターン)で、KubernetesのAPIで登録される&lt;a href=&#34;https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/#understanding-kubernetes-objects&#34;&gt;Kubernetesオブジェクト&lt;/a&gt;の内容に従って何らかの処理をするController (e.g. &lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/controllers/deployment/&#34;&gt;Deployment Controller&lt;/a&gt;)の一種。&lt;/p&gt;
+
+&lt;p&gt;Controllerが汎用的なのに対して、特定のアプリケーションに特化しているのが特徴。
+アプリケーションごとの細かな設定をKubernetesオブジェクトで表現するために、KubernetesのAPIを拡張する。&lt;/p&gt;
+
+&lt;p&gt;APIを拡張するには&lt;a href=&#34;https://kubernetes.io/docs/tasks/access-kubernetes-api/configure-aggregation-layer/&#34;&gt;API Aggregation&lt;/a&gt;を使う方法と&lt;a href=&#34;https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/&#34;&gt;Custom Resource Definition (CRD)&lt;/a&gt;を使う方法がある。
+API Aggregationは、Kubernetesオブジェクトを&lt;a href=&#34;https://github.com/etcd-io/etcd&#34;&gt;etcd&lt;/a&gt;以外で管理したり、&lt;a href=&#34;https://ja.wikipedia.org/wiki/WebSocket&#34;&gt;WebSocket&lt;/a&gt;を使ったり、Kubernetesクラスタ外のAPIサーバを使う場合など、特殊な場合にも対応できる高度なやりかたで、大抵のユースケースではCRDで事足りる。
+Operatorも普通はCRDを使う。(というかCRDを使うのがOperatorという人もいる。)&lt;/p&gt;
+
+&lt;h1 id=&#34;crdとは&#34;&gt;CRDとは&lt;/h1&gt;
+
+&lt;p&gt;KubernetesのAPIを簡単に拡張できる仕組みで、Kubernetesオブジェクト(リソース)を定義するKubernetesオブジェクト。&lt;/p&gt;
+
+&lt;p&gt;YAMLで、定義したいリソースの名前や型やバリデーションなんかを書いて&lt;code&gt;kubectl apply&lt;/code&gt;すれば、そのリソースをKubernetesのREST APIとかkubectlで作成したり取得したりできるようになる。&lt;/p&gt;
+
+&lt;h1 id=&#34;operatorの仕組み&#34;&gt;Operatorの仕組み&lt;/h1&gt;
+
+&lt;p&gt;Operatorは、CRDで定義されたリソース(など)の作成、更新、削除を監視(watch)して、リソースの内容に応じた何らかの処理をするReconciliationループを回すPod。
+普通、リソースはOperatorの管理対象のアプリケーションの状態を表す。
+で、Operatorはリソースの内容とアプリケーションの状態が同じになるように、Reconciliationループ内で&lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/controllers/deployment/&#34;&gt;Deployment&lt;/a&gt;を作ったりアプリケーションのAPIを叩いたりする。&lt;/p&gt;
+
+&lt;p&gt;ユーザとしては、アプリケーションの構成や設定をKubernetesのAPIで宣言的に統一的に管理できるようになって幸せになれる。&lt;/p&gt;
+
+&lt;h1 id=&#34;operator作成ツール&#34;&gt;Operator作成ツール&lt;/h1&gt;
+
+&lt;p&gt;Operatorを作るツールとして以下がある。&lt;/p&gt;
+
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;ツール&lt;/th&gt;
+&lt;th&gt;&lt;a href=&#34;https://github.com/operator-framework/operator-sdk&#34;&gt;Operator SDK&lt;/a&gt;&lt;/th&gt;
+&lt;th&gt;&lt;a href=&#34;https://book.kubebuilder.io/&#34;&gt;Kubebuilder&lt;/a&gt;&lt;/th&gt;
+&lt;th&gt;&lt;a href=&#34;https://metacontroller.app/&#34;&gt;Metacontroller&lt;/a&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;開発元&lt;/td&gt;
+&lt;td&gt;Kubernetesコミュニティ製&lt;/td&gt;
+&lt;td&gt;CoreOS社製&lt;/td&gt;
+&lt;td&gt;GKEチーム製&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;GitHubスター数&lt;/td&gt;
+&lt;td&gt;1459&lt;/td&gt;
+&lt;td&gt;1009&lt;/td&gt;
+&lt;td&gt;506&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;開発言語&lt;/td&gt;
+&lt;td&gt;Go、Ansible、Helm&lt;/td&gt;
+&lt;td&gt;Go&lt;/td&gt;
+&lt;td&gt;任意&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;特徴&lt;/td&gt;
+&lt;td&gt;プロジェクトテンプレート生成、ビルド、デプロイをするCLIツール。&lt;a href=&#34;https://www.ansible.com/&#34;&gt;Ansible&lt;/a&gt;でもOperatorを書けるのが面白い。&lt;a href=&#34;https://github.com/operator-framework&#34;&gt;Operator Framework&lt;/a&gt;として&lt;a href=&#34;https://github.com/operator-framework/operator-lifecycle-manager&#34;&gt;Lifecycle Manager&lt;/a&gt;などが提供されていたり、&lt;a href=&#34;https://www.operatorhub.io/&#34;&gt;OperatorHub.io&lt;/a&gt;というコミュニティサイトがあったり、エコシステムが充実している。&lt;/td&gt;
+&lt;td&gt;プロジェクトテンプレート生成、ビルド、デプロイをするCLIツール。3つの中で一番シンプル。Goでしか開発できない。&lt;/td&gt;
+&lt;td&gt;他の2つと毛色が違って、Metacontroller自体が汎用的にOperatorを管理するKubernetesアプリ。Operatorの定義をJSONを投げて登録すると、Reconciliationループを回してその中でWebフックを実行してくるので、それを受けて任意の処理をするサーバを任意の言語で書ける。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;この中では、Operator SDKが数歩リードしている感じ。
+(CoreOS社を買収した)Red Hatが後ろ盾ているし、OperatorHub.ioはGCPとAWSとAzureが協力している。&lt;/p&gt;
+
+&lt;p&gt;けど、この記事のネタを書き始めたときにはまだOperatorHub.ioが発表されていなくて、単純にKubebuilderがシンプルでいいと思って採用してしまった。
+まあOperator SDKもKubebuilderも下回りのライブラリは同じものを使っているので、だいたい同じだろうし、Operator Frameworkへの移行も難しくなかろう。&lt;/p&gt;
+
+&lt;h1 id=&#34;zundoko-operator&#34;&gt;Zundoko Operator&lt;/h1&gt;
+
+&lt;p&gt;Kubebuilderで今回作ったのは&lt;a href=&#34;https://github.com/kaitoy/zundoko-operator&#34;&gt;Zundoko Operator&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;CRDで定義したリソースは以下。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/kaitoy/zundoko-operator/blob/master/config/crds/zundokokiyoshi_v1beta1_hikawa.yaml&#34;&gt;Hikawa&lt;/a&gt;: 作るとズンドコきよしを開始する。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/kaitoy/zundoko-operator/blob/master/config/crds/zundokokiyoshi_v1beta1_zundoko.yaml&#34;&gt;Zundoko&lt;/a&gt;: 「ズン」と「ドコ」を表す。Hikawaに管理される。&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/kaitoy/zundoko-operator/blob/master/config/crds/zundokokiyoshi_v1beta1_kiyoshi.yaml&#34;&gt;Kiyoshi&lt;/a&gt;: 「キ・ヨ・シ！」を表す。Hikawaに管理される。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Zundoko Operatorは、HikawaとZundokoをwatchする。
+Hikawaが作成されると、一定間隔で、ランダムに「ズン」か「ドコ」をセットしたZundokoを作成する。
+「ズン」を4つ作ったあとに「ドコ」を作ったら、Kiyoshiを作成して、Zundokoの作成を止める。&lt;/p&gt;
+
+&lt;h1 id=&#34;kubebuilderの使い方&#34;&gt;Kubebuilderの使い方&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://book.kubebuilder.io/quick_start.html&#34;&gt;Quick Start&lt;/a&gt;を参考に。&lt;/p&gt;
+
+&lt;p&gt;Kuberbuilderを使うには&lt;a href=&#34;https://golang.org/&#34;&gt;Go&lt;/a&gt;、&lt;a href=&#34;https://github.com/golang/dep&#34;&gt;dep&lt;/a&gt;と&lt;a href=&#34;https://github.com/kubernetes-sigs/kustomize&#34;&gt;kustomize&lt;/a&gt;とDockerが必要で、Linuxしかサポートしていない。
+自分のPCがWindows 10なので、WSL (Ubuntu 18.04)で環境を作ったんだけど、結局Dockerビルドとかテストとかが上手く動かなかったので、VMとかのLinuxで動かしたほうがよさそう。&lt;/p&gt;
+
+&lt;h2 id=&#34;kubebuilderセットアップ&#34;&gt;Kubebuilderセットアップ&lt;/h2&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Goインストール&lt;/p&gt;
+
+&lt;p&gt;Goは&lt;a href=&#34;https://golang.org/dl/&#34;&gt;公式サイト&lt;/a&gt;からLinux用アーカイブをダウンロードして展開して、そのbinディレクトリにPATH通すだけでインストールできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ go version
+go version go1.11.4 linux/amd64
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;あと、作業ディレクトリを作って&lt;code&gt;GOPATH&lt;/code&gt;を設定しておく。
+&lt;code&gt;~/go/&lt;/code&gt;を作業ディレクトリとする。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ export GOPATH=$HOME/go
+$ echo &#39;export GOPATH=$HOME/go&#39; &amp;gt;&amp;gt; ~/.profile
+$ mkdir $GOPATH/bin
+$ mkdir $GOPATH/src
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;で、&lt;code&gt;$GOPATH/bin&lt;/code&gt;にもPATH通しておく。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;depインストール&lt;/p&gt;
+
+&lt;p&gt;Go公式の依存ライブラリ管理ツール。
+コマンド一発でインストールできる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;kustomizeインストール&lt;/p&gt;
+
+&lt;p&gt;バイナリをPATHの通ったところにダウンロードするだけ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ curl -L https://github.com/kubernetes-sigs/kustomize/releases/download/v2.0.3/kustomize_2.0.3_linux_amd64 -o /usr/local/bin/kustomize
+$ chmod +x /usr/local/bin/kustomize
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;kubebuilderインストール&lt;/p&gt;
+
+&lt;p&gt;GitHubのReleasesからアーカイブをダウンロードして展開してPATH通すだけ。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ version=1.0.6
+$ arch=amd64
+$ curl -LO https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${version}/kubebuilder_${version}_linux_${arch}.tar.gz
+$ tar -zxvf kubebuilder_${version}_linux_${arch}.tar.gz
+$ sudo mv kubebuilder_${version}_linux_${arch} /usr/local/kubebuilder
+$ export PATH=$PATH:/usr/local/kubebuilder/bin
+$ echo &#39;export PATH=$PATH:/usr/local/kubebuilder/bin&#39; &amp;gt;&amp;gt; ~/.profile
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Dockerインストール&lt;/p&gt;
+
+&lt;p&gt;は適当に…&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&#34;kubebuilderプロジェクト生成&#34;&gt;Kubebuilderプロジェクト生成&lt;/h2&gt;
+
+&lt;p&gt;Zundoko Operatorのプロジェクトを生成する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ mkdir -p $GOPATH/src/github.com/kaitoy/zundoko-operator
+$ cd $GOPATH/src/github.com/kaitoy/zundoko-operator
+$ kubebuilder init --owner kaitoy
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;dep ensure&lt;/code&gt;を実行するかを聞かれるのでyesで回答すると、依存ライブラリがダウンロードされ、プロジェクトのビルドが走る。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;デフォルトではCRDなどの名前空間が&lt;code&gt;k8s.io&lt;/code&gt;になっているので、&lt;code&gt;kaitoy.github.com&lt;/code&gt;に変えるべく、&lt;code&gt;zundoko-operator/PROJECT&lt;/code&gt;を編集する。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;zundoko-operator/PROJECT&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; version: &amp;quot;1&amp;quot;
+-domain: k8s.io
++domain: kaitoy.github.com
+ repo: github.com/kaitoy/zundoko-operator
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;crdとcontroller生成&#34;&gt;CRDとController生成&lt;/h2&gt;
+
+&lt;p&gt;HikawaとZundokoとKiyoshiのCRDを生成する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Hikawa
+$ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Zundoko
+$ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Kiyoshi
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;それぞれ、リソースを作成するか (Create Resource under pkg/apis [y/n]?) と、Controllerを作成するか (Create Controller under pkg/controller [y/n]?) を聞かれる。
+リソースはそれぞれ作成して、ControllerはHikawaにだけ作成した。&lt;/p&gt;
+
+&lt;p&gt;生成されたのは以下のファイル。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;API定義とそのテスト: &lt;code&gt;zundoko-operator/pkg/apis/zundokokiyoshi/v1beta1/*.go&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;CRD: &lt;code&gt;zundoko-operator/config/crds/config/crds/*.yaml&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Hikawa Controllerとそのテスト: &lt;code&gt;zundoko-operator/pkg/controller/hikawa/*.go&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;リソースのマニフェストのサンプル: &lt;code&gt;zundoko-operator/config/crds/config/samples/*.yaml&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;これらの内、CRDと &lt;code&gt;zundoko-operator/pkg/apis/zundokokiyoshi/v1beta1/zz_generated.deepcopy.go&lt;/code&gt; はAPI定義をもとに生成されるので、API定義を書いた後生成しなおすことになる。&lt;/p&gt;
+
+&lt;h2 id=&#34;api定義記述&#34;&gt;API定義記述&lt;/h2&gt;
+
+&lt;p&gt;リソースがどのような属性をもつかをGoで定義する。
+テンプレートは生成されているので、ちょっと書き足すだけでできる。&lt;/p&gt;
+
+&lt;p&gt;以下はHikawaのAPI定義。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;zundoko-operator/pkg/apis/zundokokiyoshi/v1beta1/hikawa_types.go&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-golang&#34;&gt;package v1beta1
+
+import (
+	&amp;quot;time&amp;quot;
+
+	metav1 &amp;quot;k8s.io/apimachinery/pkg/apis/meta/v1&amp;quot;
+)
+
+// HikawaSpec defines the desired state of Hikawa
+type HikawaSpec struct {
+	IntervalMillis time.Duration `json:&amp;quot;intervalMillis&amp;quot;`
+	NumZundokos    int           `json:&amp;quot;numZundokos,omitempty&amp;quot;`
+	SayKiyoshi     bool          `json:&amp;quot;sayKiyoshi,omitempty&amp;quot;`
+}
+
+// HikawaStatus defines the observed state of Hikawa
+type HikawaStatus struct {
+	NumZundokosSaid int  `json:&amp;quot;numZundokosSaid&amp;quot;`
+	Kiyoshied       bool `json:&amp;quot;kiyoshied&amp;quot;`
+}
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Hikawa is the Schema for the hikawas API
+// +k8s:openapi-gen=true
+type Hikawa struct {
+	metav1.TypeMeta   `json:&amp;quot;,inline&amp;quot;`
+	metav1.ObjectMeta `json:&amp;quot;metadata,omitempty&amp;quot;`
+
+	Spec   HikawaSpec   `json:&amp;quot;spec,omitempty&amp;quot;`
+	Status HikawaStatus `json:&amp;quot;status,omitempty&amp;quot;`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// HikawaList contains a list of Hikawa
+type HikawaList struct {
+	metav1.TypeMeta `json:&amp;quot;,inline&amp;quot;`
+	metav1.ListMeta `json:&amp;quot;metadata,omitempty&amp;quot;`
+	Items           []Hikawa `json:&amp;quot;items&amp;quot;`
+}
+
+func init() {
+	SchemeBuilder.Register(&amp;amp;Hikawa{}, &amp;amp;HikawaList{})
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;自分で書いたのは&lt;code&gt;HikawaSpec&lt;/code&gt;と&lt;code&gt;HikawaStatus&lt;/code&gt;の中だけ。&lt;/p&gt;
+
+&lt;p&gt;Specの方には期待する状態、Statusの方には現在の実際の状態を表すフィールドを定義するのがパターン。
+例えば、&lt;code&gt;HikawaSpec.NumZundokos&lt;/code&gt;が期待するZundokoの数で、&lt;code&gt;HikawaStatus.NumZundokosSaid&lt;/code&gt;が実際に作成されたZundokono数。&lt;/p&gt;
+
+&lt;p&gt;Hikawa ControllerはReconciliationループの中で、SpecとStateが同じになるように処理をすることになる。&lt;/p&gt;
+
+&lt;p&gt;ZundokoとKiyoshiのAPI定義は、Specに「Zun」、「Doko」、または「Kiyoshi!」を入れるためのSayフィールドだけを書いた。&lt;/p&gt;
+
+&lt;h2 id=&#34;hikawa-controller記述&#34;&gt;Hikawa Controller記述&lt;/h2&gt;
+
+&lt;p&gt;Hikawa Controllerもテンプレートが生成されているので、それを参考に書ける。&lt;/p&gt;
+
+&lt;p&gt;まずはどのリソースをwatchするかを書く。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;zundoko-operator/pkg/controller/hikawa/hikawa_controller.go&lt;/code&gt;前半抜粋:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;func add(mgr manager.Manager, r reconcile.Reconciler) error {
+	// Create a new controller
+	c, err := controller.New(&amp;quot;hikawa-controller&amp;quot;, mgr, controller.Options{Reconciler: r})
+	if err != nil {
+		return err
+	}
+
+	// Watch for changes to Hikawa
+	err = c.Watch(&amp;amp;source.Kind{Type: &amp;amp;zundokokiyoshiv1beta1.Hikawa{}}, &amp;amp;handler.EnqueueRequestForObject{})
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&amp;amp;source.Kind{Type: &amp;amp;zundokokiyoshiv1beta1.Zundoko{}}, &amp;amp;handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &amp;amp;zundokokiyoshiv1beta1.Hikawa{},
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Hikawaは普通にwatchして、Zundokoはownしているリソースとしてwatchしている。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Reconciliationループは以下のように書いた。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;zundoko-operator/pkg/controller/hikawa/hikawa_controller.go&lt;/code&gt;後半抜粋:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=hikawas,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=hikawas/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=zundokos,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=zundokos/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=kiyoshis,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=kiyoshis/status,verbs=get;update;patch
+func (r *ReconcileHikawa) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	instanceName := request.NamespacedName.String()
+	log.Info(&amp;quot;Reconciling a Hikawa: &amp;quot; + instanceName)
+
+	// Fetch the Hikawa instance
+	instance := &amp;amp;zundokokiyoshiv1beta1.Hikawa{}
+	err := r.Get(context.TODO(), request.NamespacedName, instance)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// Object not found, return.  Created objects are automatically garbage collected.
+			// For additional cleanup logic use finalizers.
+			return reconcile.Result{}, nil
+		}
+		// Error reading the object - requeue the request.
+		return reconcile.Result{}, err
+	}
+
+	if instance.Status.Kiyoshied {
+		log.Info(instanceName + &amp;quot; has kiyoshied.&amp;quot;)
+		return reconcile.Result{}, nil
+	}
+
+	zundokoList := &amp;amp;zundokokiyoshiv1beta1.ZundokoList{}
+	if err := r.List(context.TODO(), &amp;amp;client.ListOptions{Namespace: instance.Namespace}, zundokoList); err != nil {
+		log.Error(err, &amp;quot;Failed to list zundokos for: &amp;quot;, instanceName)
+		return reconcile.Result{}, err
+	}
+
+	var dependents []zundokokiyoshiv1beta1.Zundoko
+	for _, zundoko := range zundokoList.Items {
+		for _, owner := range zundoko.GetOwnerReferences() {
+			if owner.Name == instance.Name {
+				dependents = append(dependents, zundoko)
+			}
+		}
+	}
+	numZundokosSaid := len(dependents)
+
+	if instance.Spec.NumZundokos &amp;gt; numZundokosSaid {
+		log.Info(instanceName + &amp;quot; wants &amp;quot; + strconv.Itoa(instance.Spec.NumZundokos-numZundokosSaid) + &amp;quot; more zundoko(s).&amp;quot;)
+		time.Sleep(instance.Spec.IntervalMillis * time.Millisecond)
+		word := getZundoko()
+		if err := createZundoko(instance, r, fmt.Sprintf(&amp;quot;-zundoko-%03d&amp;quot;, numZundokosSaid+1), word); err != nil {
+			return reconcile.Result{}, err
+		}
+	} else if instance.Status.NumZundokosSaid != numZundokosSaid {
+		log.Info(instanceName + &amp;quot; has said &amp;quot; + strconv.Itoa(numZundokosSaid) + &amp;quot; zundoko(s). Updating the status.&amp;quot;)
+		instance.Status.NumZundokosSaid = numZundokosSaid
+		if err := r.Update(context.Background(), instance); err != nil {
+			log.Error(err, &amp;quot;Failed to update &amp;quot;+instanceName)
+			return reconcile.Result{}, err
+		}
+	} else if instance.Spec.SayKiyoshi {
+		log.Info(instanceName + &amp;quot; is going to say &amp;quot; + wordKiyoshi)
+		time.Sleep(instance.Spec.IntervalMillis * time.Millisecond)
+		if err := createKiyoshi(instance, r); err != nil {
+			return reconcile.Result{}, err
+		}
+
+		instance.Status.Kiyoshied = true
+		if err := r.Update(context.Background(), instance); err != nil {
+			log.Error(err, &amp;quot;Failed to update &amp;quot;+instanceName)
+			return reconcile.Result{}, err
+		}
+	} else if isReadyToKiyoshi(dependents) {
+		log.Info(instanceName + &amp;quot; is ready to say &amp;quot; + wordKiyoshi)
+		instance.Spec.SayKiyoshi = true
+		if err := r.Update(context.Background(), instance); err != nil {
+			log.Error(err, &amp;quot;Failed to update &amp;quot;+instanceName)
+			return reconcile.Result{}, err
+		}
+	} else {
+		log.Info(instanceName + &amp;quot; keeps going on ZUNDOKO.&amp;quot;)
+		instance.Spec.NumZundokos++
+		if err := r.Update(context.Background(), instance); err != nil {
+			log.Error(err, &amp;quot;Failed to update &amp;quot;+instanceName)
+			return reconcile.Result{}, err
+		}
+	}
+
+	return reconcile.Result{}, nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;冒頭のコメントの内容は、このControllerにどのリソースのどの操作を許可するかを列挙しているもので、これをもとにControllerのRole定義 (&lt;code&gt;zundoko-operator/config/rbac/rbac_role.yaml&lt;/code&gt;) が生成される。
+Hikawa ControllerはHikawaとZundokoとKiyoshiを作ったり取得したりする必要があるので、それっぽく書いた。&lt;/p&gt;
+
+&lt;p&gt;watchしているリソースの作成・更新・削除のたびに&lt;code&gt;Reconcile()&lt;/code&gt;が呼ばれるので、そのなかでは対象となるHikawaを取得して期待されている状態を調べたり、Zundokoのリストを取得して現状を確認したり、リソースを更新したりして、&lt;code&gt;reconcile.Result{}&lt;/code&gt;をreturnする。
+&lt;code&gt;reconcile.Result{}&lt;/code&gt;が何なのかドキュメントにも記載が無くてよくわからないが、いつも空でreturnしておくのが無難っぽい。&lt;/p&gt;
+
+&lt;p&gt;errorオブジェクトをreturnすると、若干のインターバルののち再度&lt;code&gt;Reconcile()&lt;/code&gt;が呼ばれる。&lt;/p&gt;
+
+&lt;p&gt;リソースの削除時になにか処理をしたいときは、&lt;a href=&#34;https://book.kubebuilder.io/beyond_basics/using_finalizers.html&#34;&gt;Finalizer&lt;/a&gt;という仕組みが使える。
+今回は使ってない。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Zundokoを作成する&lt;code&gt;createZundoko()&lt;/code&gt;は以下。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;func createZundoko(instance *zundokokiyoshiv1beta1.Hikawa, r *ReconcileHikawa, nameSuffix, word string) error {
+	zundoko := &amp;amp;zundokokiyoshiv1beta1.Zundoko{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      instance.Name + nameSuffix,
+			Namespace: instance.Namespace,
+		},
+		Spec: zundokokiyoshiv1beta1.ZundokoSpec{
+			Say: word,
+		},
+	}
+	if err := controllerutil.SetControllerReference(instance, zundoko, r.scheme); err != nil {
+		log.Error(err, &amp;quot;An error occurred in SetControllerReference&amp;quot;, &amp;quot;instance&amp;quot;, instance.Name, &amp;quot;namespace&amp;quot;, zundoko.Namespace, &amp;quot;name&amp;quot;, zundoko.Name)
+		return err
+	}
+
+	log.Info(&amp;quot;Creating Zundoko&amp;quot;, &amp;quot;namespace&amp;quot;, zundoko.Namespace, &amp;quot;name&amp;quot;, zundoko.Name)
+	if err := r.Create(context.TODO(), zundoko); err != nil {
+		log.Error(err, &amp;quot;Failed to create Zundoko&amp;quot;, &amp;quot;namespace&amp;quot;, zundoko.Namespace, &amp;quot;name&amp;quot;, zundoko.Name)
+		return err
+	}
+
+	return nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;controllerutil.SetControllerReference()&lt;/code&gt;で、作成するZundokoにHikawaをownerとして紐づけている。
+これにより、Zundokoの作成・更新時にReconciliationループの中で正しいHikawaが取得できるとともに、Hikawaを削除したときに関連するZundokoが&lt;a href=&#34;https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/&#34;&gt;Garbage Collection&lt;/a&gt;される。&lt;/p&gt;
+
+&lt;h2 id=&#34;crdなどの再生成&#34;&gt;CRDなどの再生成&lt;/h2&gt;
+
+&lt;p&gt;API定義などの記述を反映させるため、CRDとかrbac_role.yamlとかzz_generated.deepcopy.goを再生成する。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ make generate
+$ make manifest
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;zundoko-operatorのdockerイメージのビルド&#34;&gt;Zundoko OperatorのDockerイメージのビルド&lt;/h2&gt;
+
+&lt;p&gt;Zundoko OperatorはPodとして動かすので、そのDockerイメージをビルドしておく必要がある。
+DockerfileもKubebuilderが生成してくれているので、それをそのまま使えばいい。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ docker build -t kaitoy/zundoko-operator:latest .
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;zundoko-operatorをデプロイするkubernetesマニフェスト生成&#34;&gt;Zundoko OperatorをデプロイするKubernetesマニフェスト生成&lt;/h2&gt;
+
+&lt;p&gt;Zundoko OperatorをデプロイするKubernetesマニフェストはkustomizeで生成する。
+生成する前に、kustomizeのパッチファイルである&lt;code&gt;zundoko-operator/config/default/manager_image_patch.yaml&lt;/code&gt;を編集して、&lt;code&gt;spec.template.spec.containers[].image&lt;/code&gt;にさっきビルドしたDockerイメージの名前を書いておく。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;zundoko-operator/config/default/manager_image_patch.yaml&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-diff&#34;&gt; apiVersion: apps/v1
+ kind: StatefulSet
+ metadata:
+   name: controller-manager
+   namespace: system
+ spec:
+   template:
+     spec:
+       containers:
+       # Change the value of image field below to your controller image URL
+-     - image: IMAGE_URL
++     - image: kaitoy/zundoko-operator:latest
+         name: manager
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;で、以下のコマンドで生成できる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ kustomize build config/default &amp;gt; zundoko-operator.yaml
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;zundoko-operatorデプロイ&#34;&gt;Zundoko Operatorデプロイ&lt;/h2&gt;
+
+&lt;p&gt;Zundoko Operatorをデプロイするには、生成したCRDと、kustomizeの出力を&lt;code&gt;kubectl apply&lt;/code&gt;してやればいい。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ kubectl apply -f zundoko-operator/config/crds/zundokokiyoshi_v1beta1_hikawa.yaml
+$ kubectl apply -f zundoko-operator/config/crds/zundokokiyoshi_v1beta1_kiyoshi.yaml
+$ kubectl apply -f zundoko-operator/config/crds/zundokokiyoshi_v1beta1_zundoko.yaml
+$ kubectl apply -f zundoko-operator/zundoko-operator.yaml
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;hikawa作成&#34;&gt;Hikawa作成&lt;/h2&gt;
+
+&lt;p&gt;Hikawaを登録するとズンドコしはじめる。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ cat &amp;lt;&amp;lt;EOF | kubectl create -f -
+apiVersion: zundokokiyoshi.kaitoy.github.com/v1beta1
+kind: Hikawa
+metadata:
+  labels:
+    controller-tools.k8s.io: &amp;quot;1.0&amp;quot;
+  name: hikawa-sample
+spec:
+  intervalMillis: 500
+EOF
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;embed video-player&#34; style=&#34;text-align: center&#34;&gt;
+  &lt;iframe class=&#34;youtube-player&#34; type=&#34;text/html&#34; width=&#34;320&#34; height=&#34;193&#34; src=&#34;https://www.youtube.com/embed/oemOqYspbaE&#34; allowfullscreen frameborder=&#34;0&#34;&gt;
+  &lt;/iframe&gt;
+&lt;/div&gt;
+&lt;/p&gt;
+</description>
+        </item>
+      
     
       
         <item>

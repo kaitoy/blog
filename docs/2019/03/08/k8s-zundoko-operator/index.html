@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた | To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2019/03/08/k8s-zundoko-operator/">
+    <link rel="canonical" href="https://www.kaitoy.xyz/2019/03/08/k8s-zundoko-operator/">
+    <meta property="og:description" content="Javaの講義、試験が「自作関数を作り記述しなさい」って問題だったから 「ズン」「ドコ」のいずれかをランダムで出力し続けて「ズン」「ズン」「ズン」「ズン」「ドコ」の配列が出たら「キ・ヨ・シ！」って出力した後終了って関数作ったら満点で単位貰ってた &mdash; てくも (@kumiromilk) 2016年3月9日 久しぶりにズンドコしたくなったので、Kubebuilderを使って、KubernetesのOperatorとして動くZundoko Operatorを作ってみた。 (adsbygoogle = window.adsbygoogle || []).push({}); Kubernetes Operatorとは KubernetesのOperatorというのはCoreOS社(現Red Hat)によって提唱された概念(実装パターン)で、KubernetesのAPIで登録されるKubernetesオブジェクトの内容に従って何らかの処理をするController (e.g. Deployment Controller)の一種。 Controllerが汎用的なのに対して、特定のアプリケーションに特化しているのが特徴。 アプリケーションごとの細かな設定をKubernetesオブジェクトで表現するために、KubernetesのAPIを拡張する。 APIを拡張するにはAPI Aggregationを使う方法とCustom Resource Definition (CRD)を使う方法がある。 API Aggregationは、Kubernetesオブジェクトをetcd以外で管理したり、WebSocketを使ったり、Kubernetesクラスタ外のAPIサーバを使う場合など、特殊な場合にも対応できる高度なやりかたで、大抵のユースケースではCRDで事足りる。 Operatorも普通はCRDを使う。(というかCRDを使うのがOperatorという人もいる。) CRDとは KubernetesのAPIを簡単に拡張できる仕組みで、Kubernetesオブジェクト(リソース)を定義するKubernetesオブジェクト。 YAMLで、定義したいリソースの名前や型やバリデーションなんかを書いてkubectl applyすれば、そのリソースをKubernetesのREST APIとかkubectlで作成したり取得したりできるようになる。 Operatorの仕組み Operatorは、CRDで定義されたリソース(など)の作成、更新、削除を監視(watch)して、リソースの内容に応じた何らかの処理をするReconciliationループを回すPod。 普通、リソースはOperatorの管理対象のアプリケーションの状態を表す。 で、Operatorはリソースの内容とアプリケーションの状態が同じになるように、Reconciliationループ内でDeploymentを作ったりアプリケーションのAPIを叩いたりする。 ユーザとしては、アプリケーションの構成や設定をKubernetesのAPIで宣言的に統一的に管理できるようになって幸せになれる。 Operator作成ツール Operatorを作るツールとして以下がある。 ツール Operator SDK Kubebuilder Metacontroller 開発元 Kubernetesコミュニティ製 CoreOS社製 GKEチーム製 GitHubスター数 1459 1009 506 開発言語 Go、Ansible、Helm Go 任意 特徴 プロジェクトテンプレート生成、ビルド、デプロイをするCLIツール。AnsibleでもOperatorを書けるのが面白い。Operator FrameworkとしてLifecycle Managerなどが提供されていたり、OperatorHub.ioというコミュニティサイトがあったり、エコシステムが充実している。 プロジェクトテンプレート生成、ビルド、デプロイをするCLIツール。3つの中で一番シンプル。Goでしか開発できない。 他の2つと毛色が違って、Metacontroller自体が汎用的にOperatorを管理するKubernetesアプリ。Operatorの定義をJSONを投げて登録すると、Reconciliationループを回してその中でWebフックを実行してくるので、それを受けて任意の処理をするサーバを任意の言語で書ける。 この中では、Operator SDKが数歩リードしている感じ。 (CoreOS社を買収した)Red Hatが後ろ盾ているし、OperatorHub.ioはGCPとAWSとAzureが協力している。 けど、この記事のネタを書き始めたときにはまだOperatorHub.ioが発表されていなくて、単純にKubebuilderがシンプルでいいと思って採用してしまった。 まあOperator SDKもKubebuilderも下回りのライブラリは同じものを使っているので、だいたい同じだろうし、Operator Frameworkへの移行も難しくなかろう。 Zundoko Operator Kubebuilderで今回作ったのはZundoko Operator。 CRDで定義したリソースは以下。 Hikawa: 作るとズンドコきよしを開始する。 Zundoko: 「ズン」と「ドコ」を表す。Hikawaに管理される。 Kiyoshi: 「キ・ヨ・シ！」を表す。Hikawaに管理される。 Zundoko Operatorは、HikawaとZundokoをwatchする。 Hikawaが作成されると、一定間隔で、ランダムに「ズン」か「ドコ」をセットしたZundokoを作成する。 「ズン」を4つ作ったあとに「ドコ」を作ったら、Kiyoshiを作成して、Zundokoの作成を止める。 Kubebuilderの使い方 Quick Startを参考に。 Kuberbuilderを使うにはGo、depとkustomizeとDockerが必要で、Linuxしかサポートしていない。 自分のPCがWindows 10なので、WSL (Ubuntu 18.04)で環境を作ったんだけど、結局Dockerビルドとかテストとかが上手く動かなかったので、VMとかのLinuxで動かしたほうがよさそう。 Kubebuilderセットアップ Goインストール Goは公式サイトからLinux用アーカイブをダウンロードして展開して、そのbinディレクトリにPATH通すだけでインストールできる。 $ go version go version go1.11.4 linux/amd64 あと、作業ディレクトリを作ってGOPATHを設定しておく。 ~/go/を作業ディレクトリとする。 $ export GOPATH=$HOME/go $ echo &#39;export GOPATH=$HOME/go&#39; &gt;&gt; ~/.profile $ mkdir $GOPATH/bin $ mkdir $GOPATH/src で、$GOPATH/binにもPATH通しておく。 depインストール Go公式の依存ライブラリ管理ツール。 コマンド一発でインストールできる。 $ curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh kustomizeインストール バイナリをPATHの通ったところにダウンロードするだけ。 $ curl -L https://github.com/kubernetes-sigs/kustomize/releases/download/v2.0.3/kustomize_2.0.3_linux_amd64 -o /usr/local/bin/kustomize $ chmod &#43;x /usr/local/bin/kustomize kubebuilderインストール GitHubのReleasesからアーカイブをダウンロードして展開してPATH通すだけ。 $ version=1.0.6 $ arch=amd64 $ curl -LO https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${version}/kubebuilder_${version}_linux_${arch}.tar.gz $ tar -zxvf kubebuilder_${version}_linux_${arch}.tar.gz $ sudo mv kubebuilder_${version}_linux_${arch} /usr/local/kubebuilder $ export PATH=$PATH:/usr/local/kubebuilder/bin $ echo &#39;export PATH=$PATH:/usr/local/kubebuilder/bin&#39; &gt;&gt; ~/.profile Dockerインストール は適当に… Kubebuilderプロジェクト生成 Zundoko Operatorのプロジェクトを生成する。 $ mkdir -p $GOPATH/src/github.com/kaitoy/zundoko-operator $ cd $GOPATH/src/github.com/kaitoy/zundoko-operator $ kubebuilder init --owner kaitoy dep ensureを実行するかを聞かれるのでyesで回答すると、依存ライブラリがダウンロードされ、プロジェクトのビルドが走る。 デフォルトではCRDなどの名前空間がk8s.ioになっているので、kaitoy.github.comに変えるべく、zundoko-operator/PROJECTを編集する。 zundoko-operator/PROJECT: version: &quot;1&quot; -domain: k8s.io &#43;domain: kaitoy.github.com repo: github.com/kaitoy/zundoko-operator CRDとController生成 HikawaとZundokoとKiyoshiのCRDを生成する。 $ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Hikawa $ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Zundoko $ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Kiyoshi それぞれ、リソースを作成するか (Create Resource under pkg/apis [y/n]?) と、Controllerを作成するか (Create Controller under pkg/controller [y/n]?) を聞かれる。 リソースはそれぞれ作成して、ControllerはHikawaにだけ作成した。 生成されたのは以下のファイル。 API定義とそのテスト: zundoko-operator/pkg/apis/zundokokiyoshi/v1beta1/*.go CRD: zundoko-operator/config/crds/config/crds/*.yaml Hikawa Controllerとそのテスト: zundoko-operator/pkg/controller/hikawa/*.go リソースのマニフェストのサンプル: zundoko-operator/config/crds/config/samples/*.yaml これらの内、CRDと zundoko-operator/pkg/apis/zundokokiyoshi/v1beta1/zz_generated.deepcopy.go はAPI定義をもとに生成されるので、API定義を書いた後生成しなおすことになる。 API定義記述 リソースがどのような属性をもつかをGoで定義する。 テンプレートは生成されているので、ちょっと書き足すだけでできる。 以下はHikawaのAPI定義。 zundoko-operator/pkg/apis/zundokokiyoshi/v1beta1/hikawa_types.go: package v1beta1 import ( &quot;time&quot; metav1 &quot;k8s.io/apimachinery/pkg/apis/meta/v1&quot; ) // HikawaSpec defines the desired state of Hikawa type HikawaSpec struct { IntervalMillis time.Duration `json:&quot;intervalMillis&quot;` NumZundokos int `json:&quot;numZundokos,omitempty&quot;` SayKiyoshi bool `json:&quot;sayKiyoshi,omitempty&quot;` } // HikawaStatus defines the observed state of Hikawa type HikawaStatus struct { NumZundokosSaid int `json:&quot;numZundokosSaid&quot;` Kiyoshied bool `json:&quot;kiyoshied&quot;` } // &#43;genclient // &#43;k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object // Hikawa is the Schema for the hikawas API // &#43;k8s:openapi-gen=true type Hikawa struct { metav1.TypeMeta `json:&quot;,inline&quot;` metav1.ObjectMeta `json:&quot;metadata,omitempty&quot;` Spec HikawaSpec `json:&quot;spec,omitempty&quot;` Status HikawaStatus `json:&quot;status,omitempty&quot;` } // &#43;k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object // HikawaList contains a list of Hikawa type HikawaList struct { metav1.TypeMeta `json:&quot;,inline&quot;` metav1.ListMeta `json:&quot;metadata,omitempty&quot;` Items []Hikawa `json:&quot;items&quot;` } func init() { SchemeBuilder.Register(&amp;Hikawa{}, &amp;HikawaList{}) } 自分で書いたのはHikawaSpecとHikawaStatusの中だけ。 Specの方には期待する状態、Statusの方には現在の実際の状態を表すフィールドを定義するのがパターン。 例えば、HikawaSpec.NumZundokosが期待するZundokoの数で、HikawaStatus.NumZundokosSaidが実際に作成されたZundokono数。 Hikawa ControllerはReconciliationループの中で、SpecとStateが同じになるように処理をすることになる。 ZundokoとKiyoshiのAPI定義は、Specに「Zun」、「Doko」、または「Kiyoshi!」を入れるためのSayフィールドだけを書いた。 Hikawa Controller記述 Hikawa Controllerもテンプレートが生成されているので、それを参考に書ける。 まずはどのリソースをwatchするかを書く。 zundoko-operator/pkg/controller/hikawa/hikawa_controller.go前半抜粋: func add(mgr manager.Manager, r reconcile.Reconciler) error { // Create a new controller c, err := controller.New(&quot;hikawa-controller&quot;, mgr, controller.Options{Reconciler: r}) if err != nil { return err } // Watch for changes to Hikawa err = c.Watch(&amp;source.Kind{Type: &amp;zundokokiyoshiv1beta1.Hikawa{}}, &amp;handler.EnqueueRequestForObject{}) if err != nil { return err } err = c.Watch(&amp;source.Kind{Type: &amp;zundokokiyoshiv1beta1.Zundoko{}}, &amp;handler.EnqueueRequestForOwner{ IsController: true, OwnerType: &amp;zundokokiyoshiv1beta1.Hikawa{}, }) if err != nil { return err } return nil } Hikawaは普通にwatchして、Zundokoはownしているリソースとしてwatchしている。 Reconciliationループは以下のように書いた。 zundoko-operator/pkg/controller/hikawa/hikawa_controller.go後半抜粋: // &#43;kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=hikawas,verbs=get;list;watch;create;update;patch;delete // &#43;kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=hikawas/status,verbs=get;update;patch // &#43;kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=zundokos,verbs=get;list;watch;create;update;patch;delete // &#43;kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=zundokos/status,verbs=get;update;patch // &#43;kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=kiyoshis,verbs=get;list;watch;create;update;patch;delete // &#43;kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=kiyoshis/status,verbs=get;update;patch func (r *ReconcileHikawa) Reconcile(request reconcile.Request) (reconcile.Result, error) { instanceName := request.NamespacedName.String() log.Info(&quot;Reconciling a Hikawa: &quot; &#43; instanceName) // Fetch the Hikawa instance instance := &amp;zundokokiyoshiv1beta1.Hikawa{} err := r.Get(context.TODO(), request.NamespacedName, instance) if err != nil { if errors.IsNotFound(err) { // Object not found, return.">
+    
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+    
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-6244473643910448",
+        enable_page_level_ads: true
+      });
+    </script>
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Fri, Mar 8, 2019</span>
+      <h2 class="title">ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p><blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">Javaの講義、試験が「自作関数を作り記述しなさい」って問題だったから<br>「ズン」「ドコ」のいずれかをランダムで出力し続けて「ズン」「ズン」「ズン」「ズン」「ドコ」の配列が出たら「キ・ヨ・シ！」って出力した後終了って関数作ったら満点で単位貰ってた</p>&mdash; てくも (@kumiromilk) <a href="https://twitter.com/kumiromilk/status/707437861881180160">2016年3月9日</a></blockquote>
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script></p>
+
+<p>久しぶりにズンドコしたくなったので、<a href="https://book.kubebuilder.io/">Kubebuilder</a>を使って、<a href="https://kubernetes.io/">Kubernetes</a>の<a href="https://coreos.com/operators/">Operator</a>として動く<a href="https://github.com/kaitoy/zundoko-operator">Zundoko Operator</a>を作ってみた。</p>
+
+<p>
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</p>
+
+<h1 id="kubernetes-operatorとは">Kubernetes Operatorとは</h1>
+
+<p>KubernetesのOperatorというのは<a href="https://coreos.com/">CoreOS社</a>(現Red Hat)によって提唱された概念(実装パターン)で、KubernetesのAPIで登録される<a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/#understanding-kubernetes-objects">Kubernetesオブジェクト</a>の内容に従って何らかの処理をするController (e.g. <a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/">Deployment Controller</a>)の一種。</p>
+
+<p>Controllerが汎用的なのに対して、特定のアプリケーションに特化しているのが特徴。
+アプリケーションごとの細かな設定をKubernetesオブジェクトで表現するために、KubernetesのAPIを拡張する。</p>
+
+<p>APIを拡張するには<a href="https://kubernetes.io/docs/tasks/access-kubernetes-api/configure-aggregation-layer/">API Aggregation</a>を使う方法と<a href="https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/">Custom Resource Definition (CRD)</a>を使う方法がある。
+API Aggregationは、Kubernetesオブジェクトを<a href="https://github.com/etcd-io/etcd">etcd</a>以外で管理したり、<a href="https://ja.wikipedia.org/wiki/WebSocket">WebSocket</a>を使ったり、Kubernetesクラスタ外のAPIサーバを使う場合など、特殊な場合にも対応できる高度なやりかたで、大抵のユースケースではCRDで事足りる。
+Operatorも普通はCRDを使う。(というかCRDを使うのがOperatorという人もいる。)</p>
+
+<h1 id="crdとは">CRDとは</h1>
+
+<p>KubernetesのAPIを簡単に拡張できる仕組みで、Kubernetesオブジェクト(リソース)を定義するKubernetesオブジェクト。</p>
+
+<p>YAMLで、定義したいリソースの名前や型やバリデーションなんかを書いて<code>kubectl apply</code>すれば、そのリソースをKubernetesのREST APIとかkubectlで作成したり取得したりできるようになる。</p>
+
+<h1 id="operatorの仕組み">Operatorの仕組み</h1>
+
+<p>Operatorは、CRDで定義されたリソース(など)の作成、更新、削除を監視(watch)して、リソースの内容に応じた何らかの処理をするReconciliationループを回すPod。
+普通、リソースはOperatorの管理対象のアプリケーションの状態を表す。
+で、Operatorはリソースの内容とアプリケーションの状態が同じになるように、Reconciliationループ内で<a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/">Deployment</a>を作ったりアプリケーションのAPIを叩いたりする。</p>
+
+<p>ユーザとしては、アプリケーションの構成や設定をKubernetesのAPIで宣言的に統一的に管理できるようになって幸せになれる。</p>
+
+<h1 id="operator作成ツール">Operator作成ツール</h1>
+
+<p>Operatorを作るツールとして以下がある。</p>
+
+<table>
+<thead>
+<tr>
+<th>ツール</th>
+<th><a href="https://github.com/operator-framework/operator-sdk">Operator SDK</a></th>
+<th><a href="https://book.kubebuilder.io/">Kubebuilder</a></th>
+<th><a href="https://metacontroller.app/">Metacontroller</a></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>開発元</td>
+<td>Kubernetesコミュニティ製</td>
+<td>CoreOS社製</td>
+<td>GKEチーム製</td>
+</tr>
+
+<tr>
+<td>GitHubスター数</td>
+<td>1459</td>
+<td>1009</td>
+<td>506</td>
+</tr>
+
+<tr>
+<td>開発言語</td>
+<td>Go、Ansible、Helm</td>
+<td>Go</td>
+<td>任意</td>
+</tr>
+
+<tr>
+<td>特徴</td>
+<td>プロジェクトテンプレート生成、ビルド、デプロイをするCLIツール。<a href="https://www.ansible.com/">Ansible</a>でもOperatorを書けるのが面白い。<a href="https://github.com/operator-framework">Operator Framework</a>として<a href="https://github.com/operator-framework/operator-lifecycle-manager">Lifecycle Manager</a>などが提供されていたり、<a href="https://www.operatorhub.io/">OperatorHub.io</a>というコミュニティサイトがあったり、エコシステムが充実している。</td>
+<td>プロジェクトテンプレート生成、ビルド、デプロイをするCLIツール。3つの中で一番シンプル。Goでしか開発できない。</td>
+<td>他の2つと毛色が違って、Metacontroller自体が汎用的にOperatorを管理するKubernetesアプリ。Operatorの定義をJSONを投げて登録すると、Reconciliationループを回してその中でWebフックを実行してくるので、それを受けて任意の処理をするサーバを任意の言語で書ける。</td>
+</tr>
+</tbody>
+</table>
+
+<p><br></p>
+
+<p>この中では、Operator SDKが数歩リードしている感じ。
+(CoreOS社を買収した)Red Hatが後ろ盾ているし、OperatorHub.ioはGCPとAWSとAzureが協力している。</p>
+
+<p>けど、この記事のネタを書き始めたときにはまだOperatorHub.ioが発表されていなくて、単純にKubebuilderがシンプルでいいと思って採用してしまった。
+まあOperator SDKもKubebuilderも下回りのライブラリは同じものを使っているので、だいたい同じだろうし、Operator Frameworkへの移行も難しくなかろう。</p>
+
+<h1 id="zundoko-operator">Zundoko Operator</h1>
+
+<p>Kubebuilderで今回作ったのは<a href="https://github.com/kaitoy/zundoko-operator">Zundoko Operator</a>。</p>
+
+<p>CRDで定義したリソースは以下。</p>
+
+<ul>
+<li><a href="https://github.com/kaitoy/zundoko-operator/blob/master/config/crds/zundokokiyoshi_v1beta1_hikawa.yaml">Hikawa</a>: 作るとズンドコきよしを開始する。</li>
+<li><a href="https://github.com/kaitoy/zundoko-operator/blob/master/config/crds/zundokokiyoshi_v1beta1_zundoko.yaml">Zundoko</a>: 「ズン」と「ドコ」を表す。Hikawaに管理される。</li>
+<li><a href="https://github.com/kaitoy/zundoko-operator/blob/master/config/crds/zundokokiyoshi_v1beta1_kiyoshi.yaml">Kiyoshi</a>: 「キ・ヨ・シ！」を表す。Hikawaに管理される。</li>
+</ul>
+
+<p>Zundoko Operatorは、HikawaとZundokoをwatchする。
+Hikawaが作成されると、一定間隔で、ランダムに「ズン」か「ドコ」をセットしたZundokoを作成する。
+「ズン」を4つ作ったあとに「ドコ」を作ったら、Kiyoshiを作成して、Zundokoの作成を止める。</p>
+
+<h1 id="kubebuilderの使い方">Kubebuilderの使い方</h1>
+
+<p><a href="https://book.kubebuilder.io/quick_start.html">Quick Start</a>を参考に。</p>
+
+<p>Kuberbuilderを使うには<a href="https://golang.org/">Go</a>、<a href="https://github.com/golang/dep">dep</a>と<a href="https://github.com/kubernetes-sigs/kustomize">kustomize</a>とDockerが必要で、Linuxしかサポートしていない。
+自分のPCがWindows 10なので、WSL (Ubuntu 18.04)で環境を作ったんだけど、結局Dockerビルドとかテストとかが上手く動かなかったので、VMとかのLinuxで動かしたほうがよさそう。</p>
+
+<h2 id="kubebuilderセットアップ">Kubebuilderセットアップ</h2>
+
+<ol>
+<li><p>Goインストール</p>
+
+<p>Goは<a href="https://golang.org/dl/">公式サイト</a>からLinux用アーカイブをダウンロードして展開して、そのbinディレクトリにPATH通すだけでインストールできる。</p>
+
+<pre><code class="language-sh">$ go version
+go version go1.11.4 linux/amd64
+</code></pre>
+
+<p>あと、作業ディレクトリを作って<code>GOPATH</code>を設定しておく。
+<code>~/go/</code>を作業ディレクトリとする。</p>
+
+<pre><code class="language-sh">$ export GOPATH=$HOME/go
+$ echo 'export GOPATH=$HOME/go' &gt;&gt; ~/.profile
+$ mkdir $GOPATH/bin
+$ mkdir $GOPATH/src
+</code></pre>
+
+<p>で、<code>$GOPATH/bin</code>にもPATH通しておく。</p></li>
+
+<li><p>depインストール</p>
+
+<p>Go公式の依存ライブラリ管理ツール。
+コマンド一発でインストールできる。</p>
+
+<pre><code class="language-sh">$ curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+</code></pre></li>
+
+<li><p>kustomizeインストール</p>
+
+<p>バイナリをPATHの通ったところにダウンロードするだけ。</p>
+
+<pre><code class="language-sh">$ curl -L https://github.com/kubernetes-sigs/kustomize/releases/download/v2.0.3/kustomize_2.0.3_linux_amd64 -o /usr/local/bin/kustomize
+$ chmod +x /usr/local/bin/kustomize
+</code></pre></li>
+
+<li><p>kubebuilderインストール</p>
+
+<p>GitHubのReleasesからアーカイブをダウンロードして展開してPATH通すだけ。</p>
+
+<pre><code>$ version=1.0.6
+$ arch=amd64
+$ curl -LO https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${version}/kubebuilder_${version}_linux_${arch}.tar.gz
+$ tar -zxvf kubebuilder_${version}_linux_${arch}.tar.gz
+$ sudo mv kubebuilder_${version}_linux_${arch} /usr/local/kubebuilder
+$ export PATH=$PATH:/usr/local/kubebuilder/bin
+$ echo 'export PATH=$PATH:/usr/local/kubebuilder/bin' &gt;&gt; ~/.profile
+</code></pre></li>
+
+<li><p>Dockerインストール</p>
+
+<p>は適当に…</p></li>
+</ol>
+
+<h2 id="kubebuilderプロジェクト生成">Kubebuilderプロジェクト生成</h2>
+
+<p>Zundoko Operatorのプロジェクトを生成する。</p>
+
+<pre><code class="language-sh">$ mkdir -p $GOPATH/src/github.com/kaitoy/zundoko-operator
+$ cd $GOPATH/src/github.com/kaitoy/zundoko-operator
+$ kubebuilder init --owner kaitoy
+</code></pre>
+
+<p><code>dep ensure</code>を実行するかを聞かれるのでyesで回答すると、依存ライブラリがダウンロードされ、プロジェクトのビルドが走る。</p>
+
+<p><br></p>
+
+<p>デフォルトではCRDなどの名前空間が<code>k8s.io</code>になっているので、<code>kaitoy.github.com</code>に変えるべく、<code>zundoko-operator/PROJECT</code>を編集する。</p>
+
+<p><code>zundoko-operator/PROJECT</code>:</p>
+
+<pre><code class="language-diff"> version: &quot;1&quot;
+-domain: k8s.io
++domain: kaitoy.github.com
+ repo: github.com/kaitoy/zundoko-operator
+</code></pre>
+
+<h2 id="crdとcontroller生成">CRDとController生成</h2>
+
+<p>HikawaとZundokoとKiyoshiのCRDを生成する。</p>
+
+<pre><code class="language-sh">$ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Hikawa
+$ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Zundoko
+$ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Kiyoshi
+</code></pre>
+
+<p>それぞれ、リソースを作成するか (Create Resource under pkg/apis [y/n]?) と、Controllerを作成するか (Create Controller under pkg/controller [y/n]?) を聞かれる。
+リソースはそれぞれ作成して、ControllerはHikawaにだけ作成した。</p>
+
+<p>生成されたのは以下のファイル。</p>
+
+<ul>
+<li>API定義とそのテスト: <code>zundoko-operator/pkg/apis/zundokokiyoshi/v1beta1/*.go</code></li>
+<li>CRD: <code>zundoko-operator/config/crds/config/crds/*.yaml</code></li>
+<li>Hikawa Controllerとそのテスト: <code>zundoko-operator/pkg/controller/hikawa/*.go</code></li>
+<li>リソースのマニフェストのサンプル: <code>zundoko-operator/config/crds/config/samples/*.yaml</code></li>
+</ul>
+
+<p>これらの内、CRDと <code>zundoko-operator/pkg/apis/zundokokiyoshi/v1beta1/zz_generated.deepcopy.go</code> はAPI定義をもとに生成されるので、API定義を書いた後生成しなおすことになる。</p>
+
+<h2 id="api定義記述">API定義記述</h2>
+
+<p>リソースがどのような属性をもつかをGoで定義する。
+テンプレートは生成されているので、ちょっと書き足すだけでできる。</p>
+
+<p>以下はHikawaのAPI定義。</p>
+
+<p><code>zundoko-operator/pkg/apis/zundokokiyoshi/v1beta1/hikawa_types.go</code>:</p>
+
+<pre><code class="language-golang">package v1beta1
+
+import (
+	&quot;time&quot;
+
+	metav1 &quot;k8s.io/apimachinery/pkg/apis/meta/v1&quot;
+)
+
+// HikawaSpec defines the desired state of Hikawa
+type HikawaSpec struct {
+	IntervalMillis time.Duration `json:&quot;intervalMillis&quot;`
+	NumZundokos    int           `json:&quot;numZundokos,omitempty&quot;`
+	SayKiyoshi     bool          `json:&quot;sayKiyoshi,omitempty&quot;`
+}
+
+// HikawaStatus defines the observed state of Hikawa
+type HikawaStatus struct {
+	NumZundokosSaid int  `json:&quot;numZundokosSaid&quot;`
+	Kiyoshied       bool `json:&quot;kiyoshied&quot;`
+}
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Hikawa is the Schema for the hikawas API
+// +k8s:openapi-gen=true
+type Hikawa struct {
+	metav1.TypeMeta   `json:&quot;,inline&quot;`
+	metav1.ObjectMeta `json:&quot;metadata,omitempty&quot;`
+
+	Spec   HikawaSpec   `json:&quot;spec,omitempty&quot;`
+	Status HikawaStatus `json:&quot;status,omitempty&quot;`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// HikawaList contains a list of Hikawa
+type HikawaList struct {
+	metav1.TypeMeta `json:&quot;,inline&quot;`
+	metav1.ListMeta `json:&quot;metadata,omitempty&quot;`
+	Items           []Hikawa `json:&quot;items&quot;`
+}
+
+func init() {
+	SchemeBuilder.Register(&amp;Hikawa{}, &amp;HikawaList{})
+}
+</code></pre>
+
+<p>自分で書いたのは<code>HikawaSpec</code>と<code>HikawaStatus</code>の中だけ。</p>
+
+<p>Specの方には期待する状態、Statusの方には現在の実際の状態を表すフィールドを定義するのがパターン。
+例えば、<code>HikawaSpec.NumZundokos</code>が期待するZundokoの数で、<code>HikawaStatus.NumZundokosSaid</code>が実際に作成されたZundokono数。</p>
+
+<p>Hikawa ControllerはReconciliationループの中で、SpecとStateが同じになるように処理をすることになる。</p>
+
+<p>ZundokoとKiyoshiのAPI定義は、Specに「Zun」、「Doko」、または「Kiyoshi!」を入れるためのSayフィールドだけを書いた。</p>
+
+<h2 id="hikawa-controller記述">Hikawa Controller記述</h2>
+
+<p>Hikawa Controllerもテンプレートが生成されているので、それを参考に書ける。</p>
+
+<p>まずはどのリソースをwatchするかを書く。</p>
+
+<p><code>zundoko-operator/pkg/controller/hikawa/hikawa_controller.go</code>前半抜粋:</p>
+
+<pre><code class="language-go">func add(mgr manager.Manager, r reconcile.Reconciler) error {
+	// Create a new controller
+	c, err := controller.New(&quot;hikawa-controller&quot;, mgr, controller.Options{Reconciler: r})
+	if err != nil {
+		return err
+	}
+
+	// Watch for changes to Hikawa
+	err = c.Watch(&amp;source.Kind{Type: &amp;zundokokiyoshiv1beta1.Hikawa{}}, &amp;handler.EnqueueRequestForObject{})
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&amp;source.Kind{Type: &amp;zundokokiyoshiv1beta1.Zundoko{}}, &amp;handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &amp;zundokokiyoshiv1beta1.Hikawa{},
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+</code></pre>
+
+<p>Hikawaは普通にwatchして、Zundokoはownしているリソースとしてwatchしている。</p>
+
+<p><br></p>
+
+<p>Reconciliationループは以下のように書いた。</p>
+
+<p><code>zundoko-operator/pkg/controller/hikawa/hikawa_controller.go</code>後半抜粋:</p>
+
+<pre><code class="language-go">// +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=hikawas,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=hikawas/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=zundokos,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=zundokos/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=kiyoshis,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=kiyoshis/status,verbs=get;update;patch
+func (r *ReconcileHikawa) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	instanceName := request.NamespacedName.String()
+	log.Info(&quot;Reconciling a Hikawa: &quot; + instanceName)
+
+	// Fetch the Hikawa instance
+	instance := &amp;zundokokiyoshiv1beta1.Hikawa{}
+	err := r.Get(context.TODO(), request.NamespacedName, instance)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// Object not found, return.  Created objects are automatically garbage collected.
+			// For additional cleanup logic use finalizers.
+			return reconcile.Result{}, nil
+		}
+		// Error reading the object - requeue the request.
+		return reconcile.Result{}, err
+	}
+
+	if instance.Status.Kiyoshied {
+		log.Info(instanceName + &quot; has kiyoshied.&quot;)
+		return reconcile.Result{}, nil
+	}
+
+	zundokoList := &amp;zundokokiyoshiv1beta1.ZundokoList{}
+	if err := r.List(context.TODO(), &amp;client.ListOptions{Namespace: instance.Namespace}, zundokoList); err != nil {
+		log.Error(err, &quot;Failed to list zundokos for: &quot;, instanceName)
+		return reconcile.Result{}, err
+	}
+
+	var dependents []zundokokiyoshiv1beta1.Zundoko
+	for _, zundoko := range zundokoList.Items {
+		for _, owner := range zundoko.GetOwnerReferences() {
+			if owner.Name == instance.Name {
+				dependents = append(dependents, zundoko)
+			}
+		}
+	}
+	numZundokosSaid := len(dependents)
+
+	if instance.Spec.NumZundokos &gt; numZundokosSaid {
+		log.Info(instanceName + &quot; wants &quot; + strconv.Itoa(instance.Spec.NumZundokos-numZundokosSaid) + &quot; more zundoko(s).&quot;)
+		time.Sleep(instance.Spec.IntervalMillis * time.Millisecond)
+		word := getZundoko()
+		if err := createZundoko(instance, r, fmt.Sprintf(&quot;-zundoko-%03d&quot;, numZundokosSaid+1), word); err != nil {
+			return reconcile.Result{}, err
+		}
+	} else if instance.Status.NumZundokosSaid != numZundokosSaid {
+		log.Info(instanceName + &quot; has said &quot; + strconv.Itoa(numZundokosSaid) + &quot; zundoko(s). Updating the status.&quot;)
+		instance.Status.NumZundokosSaid = numZundokosSaid
+		if err := r.Update(context.Background(), instance); err != nil {
+			log.Error(err, &quot;Failed to update &quot;+instanceName)
+			return reconcile.Result{}, err
+		}
+	} else if instance.Spec.SayKiyoshi {
+		log.Info(instanceName + &quot; is going to say &quot; + wordKiyoshi)
+		time.Sleep(instance.Spec.IntervalMillis * time.Millisecond)
+		if err := createKiyoshi(instance, r); err != nil {
+			return reconcile.Result{}, err
+		}
+
+		instance.Status.Kiyoshied = true
+		if err := r.Update(context.Background(), instance); err != nil {
+			log.Error(err, &quot;Failed to update &quot;+instanceName)
+			return reconcile.Result{}, err
+		}
+	} else if isReadyToKiyoshi(dependents) {
+		log.Info(instanceName + &quot; is ready to say &quot; + wordKiyoshi)
+		instance.Spec.SayKiyoshi = true
+		if err := r.Update(context.Background(), instance); err != nil {
+			log.Error(err, &quot;Failed to update &quot;+instanceName)
+			return reconcile.Result{}, err
+		}
+	} else {
+		log.Info(instanceName + &quot; keeps going on ZUNDOKO.&quot;)
+		instance.Spec.NumZundokos++
+		if err := r.Update(context.Background(), instance); err != nil {
+			log.Error(err, &quot;Failed to update &quot;+instanceName)
+			return reconcile.Result{}, err
+		}
+	}
+
+	return reconcile.Result{}, nil
+}
+</code></pre>
+
+<p>冒頭のコメントの内容は、このControllerにどのリソースのどの操作を許可するかを列挙しているもので、これをもとにControllerのRole定義 (<code>zundoko-operator/config/rbac/rbac_role.yaml</code>) が生成される。
+Hikawa ControllerはHikawaとZundokoとKiyoshiを作ったり取得したりする必要があるので、それっぽく書いた。</p>
+
+<p>watchしているリソースの作成・更新・削除のたびに<code>Reconcile()</code>が呼ばれるので、そのなかでは対象となるHikawaを取得して期待されている状態を調べたり、Zundokoのリストを取得して現状を確認したり、リソースを更新したりして、<code>reconcile.Result{}</code>をreturnする。
+<code>reconcile.Result{}</code>が何なのかドキュメントにも記載が無くてよくわからないが、いつも空でreturnしておくのが無難っぽい。</p>
+
+<p>errorオブジェクトをreturnすると、若干のインターバルののち再度<code>Reconcile()</code>が呼ばれる。</p>
+
+<p>リソースの削除時になにか処理をしたいときは、<a href="https://book.kubebuilder.io/beyond_basics/using_finalizers.html">Finalizer</a>という仕組みが使える。
+今回は使ってない。</p>
+
+<p><br></p>
+
+<p>Zundokoを作成する<code>createZundoko()</code>は以下。</p>
+
+<pre><code class="language-go">func createZundoko(instance *zundokokiyoshiv1beta1.Hikawa, r *ReconcileHikawa, nameSuffix, word string) error {
+	zundoko := &amp;zundokokiyoshiv1beta1.Zundoko{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      instance.Name + nameSuffix,
+			Namespace: instance.Namespace,
+		},
+		Spec: zundokokiyoshiv1beta1.ZundokoSpec{
+			Say: word,
+		},
+	}
+	if err := controllerutil.SetControllerReference(instance, zundoko, r.scheme); err != nil {
+		log.Error(err, &quot;An error occurred in SetControllerReference&quot;, &quot;instance&quot;, instance.Name, &quot;namespace&quot;, zundoko.Namespace, &quot;name&quot;, zundoko.Name)
+		return err
+	}
+
+	log.Info(&quot;Creating Zundoko&quot;, &quot;namespace&quot;, zundoko.Namespace, &quot;name&quot;, zundoko.Name)
+	if err := r.Create(context.TODO(), zundoko); err != nil {
+		log.Error(err, &quot;Failed to create Zundoko&quot;, &quot;namespace&quot;, zundoko.Namespace, &quot;name&quot;, zundoko.Name)
+		return err
+	}
+
+	return nil
+}
+</code></pre>
+
+<p><code>controllerutil.SetControllerReference()</code>で、作成するZundokoにHikawaをownerとして紐づけている。
+これにより、Zundokoの作成・更新時にReconciliationループの中で正しいHikawaが取得できるとともに、Hikawaを削除したときに関連するZundokoが<a href="https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/">Garbage Collection</a>される。</p>
+
+<h2 id="crdなどの再生成">CRDなどの再生成</h2>
+
+<p>API定義などの記述を反映させるため、CRDとかrbac_role.yamlとかzz_generated.deepcopy.goを再生成する。</p>
+
+<pre><code class="language-sh">$ make generate
+$ make manifest
+</code></pre>
+
+<h2 id="zundoko-operatorのdockerイメージのビルド">Zundoko OperatorのDockerイメージのビルド</h2>
+
+<p>Zundoko OperatorはPodとして動かすので、そのDockerイメージをビルドしておく必要がある。
+DockerfileもKubebuilderが生成してくれているので、それをそのまま使えばいい。</p>
+
+<pre><code class="language-sh">$ docker build -t kaitoy/zundoko-operator:latest .
+</code></pre>
+
+<h2 id="zundoko-operatorをデプロイするkubernetesマニフェスト生成">Zundoko OperatorをデプロイするKubernetesマニフェスト生成</h2>
+
+<p>Zundoko OperatorをデプロイするKubernetesマニフェストはkustomizeで生成する。
+生成する前に、kustomizeのパッチファイルである<code>zundoko-operator/config/default/manager_image_patch.yaml</code>を編集して、<code>spec.template.spec.containers[].image</code>にさっきビルドしたDockerイメージの名前を書いておく。</p>
+
+<p><code>zundoko-operator/config/default/manager_image_patch.yaml</code>:</p>
+
+<pre><code class="language-diff"> apiVersion: apps/v1
+ kind: StatefulSet
+ metadata:
+   name: controller-manager
+   namespace: system
+ spec:
+   template:
+     spec:
+       containers:
+       # Change the value of image field below to your controller image URL
+-     - image: IMAGE_URL
++     - image: kaitoy/zundoko-operator:latest
+         name: manager
+</code></pre>
+
+<p>で、以下のコマンドで生成できる。</p>
+
+<pre><code class="language-sh">$ kustomize build config/default &gt; zundoko-operator.yaml
+</code></pre>
+
+<h2 id="zundoko-operatorデプロイ">Zundoko Operatorデプロイ</h2>
+
+<p>Zundoko Operatorをデプロイするには、生成したCRDと、kustomizeの出力を<code>kubectl apply</code>してやればいい。</p>
+
+<pre><code class="language-sh">$ kubectl apply -f zundoko-operator/config/crds/zundokokiyoshi_v1beta1_hikawa.yaml
+$ kubectl apply -f zundoko-operator/config/crds/zundokokiyoshi_v1beta1_kiyoshi.yaml
+$ kubectl apply -f zundoko-operator/config/crds/zundokokiyoshi_v1beta1_zundoko.yaml
+$ kubectl apply -f zundoko-operator/zundoko-operator.yaml
+</code></pre>
+
+<h2 id="hikawa作成">Hikawa作成</h2>
+
+<p>Hikawaを登録するとズンドコしはじめる。</p>
+
+<pre><code class="language-sh">$ cat &lt;&lt;EOF | kubectl create -f -
+apiVersion: zundokokiyoshi.kaitoy.github.com/v1beta1
+kind: Hikawa
+metadata:
+  labels:
+    controller-tools.k8s.io: &quot;1.0&quot;
+  name: hikawa-sample
+spec:
+  intervalMillis: 500
+EOF
+</code></pre>
+
+<p><br></p>
+
+<p><div class="embed video-player" style="text-align: center">
+  <iframe class="youtube-player" type="text/html" width="320" height="193" src="https://www.youtube.com/embed/oemOqYspbaE" allowfullscreen frameborder="0">
+  </iframe>
+</div>
+</p>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        
+        
+
+        
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-6244473643910448"
+             data-ad-slot="1845600530"
+             data-ad-format="auto"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </aside>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2019%2f03%2f08%2fk8s-zundoko-operator%2f&t=%e3%82%ba%e3%83%b3%e3%83%89%e3%82%b3%e3%82%ad%e3%83%a8%e3%82%b7%20with%20Kubernetes%20Operator%20-%20Kubebuilder%e3%81%a7Kubernetes%20Operator%e3%82%92%e4%bd%9c%e3%81%a3%e3%81%a6%e3%81%bf%e3%81%9f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2019%2f03%2f08%2fk8s-zundoko-operator%2f&text=%e3%82%ba%e3%83%b3%e3%83%89%e3%82%b3%e3%82%ad%e3%83%a8%e3%82%b7%20with%20Kubernetes%20Operator%20-%20Kubebuilder%e3%81%a7Kubernetes%20Operator%e3%82%92%e4%bd%9c%e3%81%a3%e3%81%a6%e3%81%bf%e3%81%9f&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2019%2f03%2f08%2fk8s-zundoko-operator%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2019%2f03%2f08%2fk8s-zundoko-operator%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2019%2f03%2f08%2fk8s-zundoko-operator%2f&title=%e3%82%ba%e3%83%b3%e3%83%89%e3%82%b3%e3%82%ad%e3%83%a8%e3%82%b7%20with%20Kubernetes%20Operator%20-%20Kubebuilder%e3%81%a7Kubernetes%20Operator%e3%82%92%e4%bd%9c%e3%81%a3%e3%81%a6%e3%81%bf%e3%81%9f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://www.kaitoy.xyz/tags/kubernetes"><i class="fa fa-tags"></i> kubernetes </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/kubebuilder"><i class="fa fa-tags"></i> kubebuilder </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/zundoko"><i class="fa fa-tags"></i> zundoko </a>
+                
+                <a href="https://www.kaitoy.xyz/tags/golang"><i class="fa fa-tags"></i> golang </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/06/17/packer-k8s/">Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/">Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2018/04/01/hello-skaffold/">Skaffoldを触ってみた</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">Kubernetes 1.8のアクセス制御について。あとDashboard。</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></li>
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <li><a href="https://www.kaitoy.xyz/2016/03/19/zundoko-kiyoshi-with-pcap4j/"> ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた</a></li>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://www.kaitoy.xyz/2018/11/26/creating-react-redux-app-from-scratch-11/">
+                  React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その11: FlowからTypeScriptへ移行
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ansible">ansible</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/babel">babel</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cnn">cnn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/coursera">coursera</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/css-modules">css-modules</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/deep-learning">deep-learning</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/enzyme">enzyme</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/eslint">eslint</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/esxi">esxi</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/flow">flow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/frontend">frontend</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/golang">golang</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/headless-browser">headless-browser</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jest">jest</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/keras">keras</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubeadm">kubeadm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubebuilder">kubebuilder</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/license">license</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/machine-learning">machine-learning</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/material-ui">material-ui</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/msys2">msys2</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/neural-network">neural-network</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nlp">nlp</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/packer">packer</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/postcss">postcss</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/prettier">prettier</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react-router">react-router</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/redux">redux</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/redux-saga">redux-saga</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/rnn">rnn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/selenium">selenium</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/servicenow">servicenow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/skaffold">skaffold</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/styled-components">styled-components</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/stylelint">stylelint</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/tensorflow">tensorflow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/test-framework">test-framework</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/typescript">typescript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/webdriverio">webdriverio</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/webpack">webpack</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-6244473643910448"
+    data-ad-slot="1845600530"
+    data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2019  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/highlight.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dos.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/yaml.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dockerfile.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/go.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+
