@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+
+    
+    
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="アジャイル開発の真髄 ― DRY | To Be Decided">
+    <meta property="og:url" content="https://www.kaitoy.xyz/2019/04/11/essence-of-agile-dry/">
+    <link rel="canonical" href="https://www.kaitoy.xyz/2019/04/11/essence-of-agile-dry/">
+    <meta property="og:description" content="今携わっているプロジェクトではScrumで開発していて、私自身2年ほどスクラムマスタを経験した。 うちの会社はかなり保守的で、ごく最近までウォータフォールで開発するのがあたりまえだったので、そこから文化を変え、マインドシフトし、アジャイルなプロセスに順応していくにはそれなりに苦労があった。 今でも、アジャイルに慣れていないエンジニアがアジャイルなチームに入ってくると、やはりいろいろな違いに戸惑っているように見えるし、こちらとしても期待するアウトプットがなかなか出てこなくて困ることが多い。 私はスクラムマスタというロールを任されてはいるが、どちらかと言えばテックリードやアーキテクト的な役割に期待されている気がしていて、そっちに力が入ってしまうのが実情。 そんな状況なので、コードレビューには結構時間を割いているんだけど、アジャイルなエンジニアとそうでないエンジニアが書くコードにはなんだかとても重大な差異があるような気がずっとしていた。 で、最近それを説明できるまでに考えがまとまってきたので、ここに書き残しておく。 (adsbygoogle = window.adsbygoogle || []).push({}); ウォータフォールの問題 ウォータフォール開発は以下のような特徴がある。 綿密な計画を事前に立てて、計画通りに開発を進めることを重視する。 機能設計 ⇒ 詳細設計 ⇒ コーディング ⇒ テストといった感じに、全体の計画を工程でフェーズ分けして、手戻りなく、一方向に進むことを重視する。 各フェーズでは全開発項目を並行して進め、ソフトウェア全体の整合性を取ることを重視する。 各フェーズで、包括的で完成されたアウトプットを作ることを重視する。アウトプットは各フェーズで詳細にレビューする。 綿密な設計ドキュメントを整備し、適時アップデートしていくことを重視する。理想的には、コーディングは設計ドキュメントをプログラミング言語に射影するだけの単純作業になる。 これはこれで、バグの少ないソフトウェアを、大人数で、非属人的に、低リスクで開発するのに向いた開発手法ではある。 しかし、設計ドキュメントの整備にかなりの時間がかかり、開発工程全体が長くなりがちなのと、動くソフトウェアが出来てくるのが開発終盤になってしまうのが欠点。 ソフトウェアがビジネスにおいて果たす役割がかなり大きくなった昨今では、ウォータフォール開発はビジネスのスピードや変化についていけない時代遅れの手法という評価になった。 代わりに台頭したのがアジャイル開発だ。 現代では欧米のソフトウェアプロジェクトの9割以上がアジャイルなプロセスを採用しているというのをHPEのカンファレンスで聞いた覚えがある。 いまだにウォータフォールを採用するのは、例えばNASAのロケット制御ソフトウェアみたいな、バグがあると数十億ドルと世界トップレベルの人材が吹っ飛ぶようなソフトウェアの開発プロジェクトだ。 (因みにNASAのコーディング規約は、再起関数禁止、静的に回数が決まらないループ禁止など、常軌を逸した厳しさ。) アジャイル開発のDRY ウォータフォールとアジャイルの違いは大量にあるが、パッと見て分かりやすい違いは設計ドキュメントの有無であろう。 アジャイルな開発では設計ドキュメントを排除するのが基本。 ウォータフォールなプロセス: ウォータフォール開発では、こんな感じにいろんなドキュメントを作ることになる。 加えて、ソースコードには大量のコメントを書くのが良しとされていた。(うちの会社だけ?) また、テストフェーズでは、何をどう操作して何をどう確認するという詳細なチェックリストを作り、経験の有無にかかわらずだれでも機械的に同じテストができるようになっているのが理想とされていた。(うちの会社だけ?) 沢山設計ドキュメントを書いても、結局顧客が手にするのはソフトウェアだけ。(ユーザマニュアルは別として。) 顧客が目にする唯一の「真実 (Truth)」は、インストールされて手元で動いているソフトウェアだ。 この「真実」の挙動や構造を説明するもの、つまり「真実の情報源 (Source of Truth)」はどこにあるか。 機能設計書や詳細設計書は言うまでもなく「真実の情報源」。 ソースコードのコメントも、どのような処理をしているのかを説明するものが多いだろうから、「真実の情報源」と言える。 ソースコード自体も、「真実」の挙動を決定づけるものなので「真実の情報源」だ。 テスト設計書やチェックリストも、「何をしたとき、どうなる」ということを記述しているので、「真実の情報源」になる。 このようにウォータフォール開発では、唯一の「真実」を様々な形で何度も表現することになるので、開発工数が膨らむことになる。 アジャイル開発では、これをプロセスにおけるDRY (Don’t Repeat Yourself)と断罪する。 つまり、「真実の情報源」が複数になることを悪として、「真実の単一情報源 (Single Source of Truth)」にしなさいと言う。 これには、ソフトウェアの挙動を変更したいときに修正すべき「情報源」を少なくして、修正工数を下げつつ、「情報源」間のずれによるバグを防ぐ狙いがある。 アジャイル開発プロセスにおける真実の単一情報源 アジャイル開発プロセスにおける「真実の単一情報源」とは何か。 それは、ウォータフォール開発における「真実の情報源」から何を削減するかという話になるわけだけど、結論は明らかだ。 絶対に捨てられないものが一つだけあるので、それ以外を排除することになる。 残すのは当然ソースコード(自動テストのコードも含む)。 ソースコードが無ければソフトウェアは動き得ないので。 アジャイルなプロセス: ソースコードが「真実の単一情報源」なので、それ以外の「真実の情報源」はDRY違反。 これがアジャイル開発で設計ドキュメントやテストドキュメントの作成を避ける理由だ。 ただし、注意すべきなのは、設計そのものを否定しているわけでも、設計の情報をチームで共有をすることを不要としているわけではないこと。 アジャイル開発は、それらを重要視しつつも、それらのためにドキュメントを作るという作業を排除した。 ドキュメントが無ければ、設計しても人に伝えられず、すぐに立ち消えてしまうように思われるが、アジャイル開発ではそれを別の媒体に記録する。 この媒体が何かというのも明らかで、ソースコードしか作らないんだからソースコードそのものということになる。 要するに、ソースコードを動く仕様書兼設計書にするということ。 日本人にとっては英語が母国語ではないので実感がわき辛い気がするが、ソースコードは割と自然言語を駆使して書いている。 プログラミング言語の機能やライブラリやフレームワークが強力になって、プログラミングパラダイムやコーディング手法の進化もあって、ソースコードは設計を伝達する媒体として十分な表現力を持つようになった。 アジャイル開発の現場でよく、ソースが仕様書みたいなことを言うのを聞くが、それは伊達ではなく、言葉通りの意味ということだ。 「アジャイル開発という名目を掲げて仕様書作成をさぼっているから、ソースコードを見て仕様を読み解け」などという開発者の怠慢・傲慢ではなく、「仕様書のように美しく読みやすく体系立ったソースコードを書きます」という決意表明なのである。 (因みに現実的には、ソースコード以外の「真実の情報源」を完全に排除できるわけではない。ユーザマニュアルが最たるものだし、設計ドキュメントに関しても、大域的な設計は別途簡単にでもまとめておいたほうがいい場合が多い。結局は理想のDRYと現実との間でバランスをとることが大事。) ソースコードを動く仕様書兼設計書にするには ソースコードを動く仕様書兼設計書にするために実践すべきことはたくさんある。 フォーマッタをかける 体裁が整っていないコードは読み辛い。 フォーマッタは、アジャイル開発の普及につれて、IDEが提供する補助的な機能の一つから独立したツールへ、さらにプログラミング言語の一部へと昇格を遂げた。 変数名、関数名を説明的にする 変数名や関数名などの識別子は、仕様書における用語であったり、章節のタイトルであったり、文の主語・目的語にあたるものなので、明確で、正確で、曖昧さが無く、一貫性があるべき。 例えば、tmpとかlistとかの何が入るかわからない変数名はよくないし、HTTPでデータを取得する関数にはgetXxxよりもfetchXxxの方がいい。 また、なでしこで書かない限りは英語で名付けることになるので、英語をしっかりリスペクトした名前にすること。 よく、複数の要素を保持する変数(i.e.">
+    
+    <meta property="og:image" content="https://www.kaitoy.xyz/images/agile.jpg">
+    
+    
+    <meta property="og:site_name" content="To Be Decided">
+
+    <title>
+      
+      アジャイル開発の真髄 ― DRY | To Be Decided
+      
+    </title>
+
+    
+    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/styles/zenburn.min.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
+    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
+
+    
+    
+
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-6244473643910448",
+        enable_page_level_ads: true
+      });
+    </script>
+
+    
+  </head>
+  <body>
+
+    <header id="site-header">
+      <div class="container">
+        <h1 class="text-center">
+          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
+        </h1>
+      </div>
+    </header>
+
+    <main id="site-body">
+      <div class="container">
+
+<div class="row">
+  <div class="col-md-9">
+    <article id="post">
+      <span class="date">Thu, Apr 11, 2019</span>
+      <h2 class="title">アジャイル開発の真髄 ― DRY</h2>
+
+      <div class="eyecatch text-center">
+        
+        <img src="https://www.kaitoy.xyz/images/agile.jpg" alt="アジャイル開発の真髄 ― DRY">
+        
+      </div>
+
+      <div class="content">
+        
+
+<p>今携わっているプロジェクトでは<a href="https://www.scrumguides.org/">Scrum</a>で開発していて、私自身2年ほどスクラムマスタを経験した。
+うちの会社はかなり保守的で、ごく最近まで<a href="https://en.wikipedia.org/wiki/Waterfall_model">ウォータフォール</a>で開発するのがあたりまえだったので、そこから文化を変え、マインドシフトし、アジャイルなプロセスに順応していくにはそれなりに苦労があった。
+今でも、アジャイルに慣れていないエンジニアがアジャイルなチームに入ってくると、やはりいろいろな違いに戸惑っているように見えるし、こちらとしても期待するアウトプットがなかなか出てこなくて困ることが多い。</p>
+
+<p>私はスクラムマスタというロールを任されてはいるが、どちらかと言えばテックリードやアーキテクト的な役割に期待されている気がしていて、そっちに力が入ってしまうのが実情。
+そんな状況なので、コードレビューには結構時間を割いているんだけど、アジャイルなエンジニアとそうでないエンジニアが書くコードにはなんだかとても重大な差異があるような気がずっとしていた。
+で、最近それを説明できるまでに考えがまとまってきたので、ここに書き残しておく。</p>
+
+<p>
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</p>
+
+<h1 id="ウォータフォールの問題">ウォータフォールの問題</h1>
+
+<p>ウォータフォール開発は以下のような特徴がある。</p>
+
+<ul>
+<li>綿密な計画を事前に立てて、計画通りに開発を進めることを重視する。</li>
+<li>機能設計 ⇒ 詳細設計 ⇒ コーディング ⇒ テストといった感じに、全体の計画を工程でフェーズ分けして、手戻りなく、一方向に進むことを重視する。</li>
+<li>各フェーズでは全開発項目を並行して進め、ソフトウェア全体の整合性を取ることを重視する。</li>
+<li>各フェーズで、包括的で完成されたアウトプットを作ることを重視する。アウトプットは各フェーズで詳細にレビューする。</li>
+<li>綿密な設計ドキュメントを整備し、適時アップデートしていくことを重視する。理想的には、コーディングは設計ドキュメントをプログラミング言語に射影するだけの単純作業になる。</li>
+</ul>
+
+<p>これはこれで、バグの少ないソフトウェアを、大人数で、非属人的に、低リスクで開発するのに向いた開発手法ではある。
+しかし、設計ドキュメントの整備にかなりの時間がかかり、開発工程全体が長くなりがちなのと、動くソフトウェアが出来てくるのが開発終盤になってしまうのが欠点。
+ソフトウェアがビジネスにおいて果たす役割がかなり大きくなった昨今では、ウォータフォール開発はビジネスのスピードや変化についていけない時代遅れの手法という評価になった。
+代わりに台頭したのが<a href="https://agilemanifesto.org/iso/ja/manifesto.html">アジャイル開発</a>だ。</p>
+
+<p>現代では欧米のソフトウェアプロジェクトの9割以上がアジャイルなプロセスを採用しているというのをHPEのカンファレンスで聞いた覚えがある。
+いまだにウォータフォールを採用するのは、例えばNASAのロケット制御ソフトウェアみたいな、バグがあると数十億ドルと世界トップレベルの人材が吹っ飛ぶようなソフトウェアの開発プロジェクトだ。
+(因みに<a href="https://qiita.com/tomboyboy/items/1b5625d429ea4aa1ac32">NASAのコーディング規約</a>は、再起関数禁止、静的に回数が決まらないループ禁止など、常軌を逸した厳しさ。)</p>
+
+<h1 id="アジャイル開発のdry">アジャイル開発のDRY</h1>
+
+<p>ウォータフォールとアジャイルの違いは大量にあるが、パッと見て分かりやすい違いは設計ドキュメントの有無であろう。
+アジャイルな開発では設計ドキュメントを排除するのが基本。</p>
+
+<p><br></p>
+
+<p><strong>ウォータフォールなプロセス:</strong>
+<img src="/images/essence-of-agile-dry/waterfall.png" alt="waterfall.png" />
+</p>
+
+<p><br></p>
+
+<p>ウォータフォール開発では、こんな感じにいろんなドキュメントを作ることになる。
+加えて、ソースコードには大量のコメントを書くのが良しとされていた。(うちの会社だけ?)
+また、テストフェーズでは、何をどう操作して何をどう確認するという詳細なチェックリストを作り、経験の有無にかかわらずだれでも機械的に同じテストができるようになっているのが理想とされていた。(うちの会社だけ?)</p>
+
+<p>沢山設計ドキュメントを書いても、結局顧客が手にするのはソフトウェアだけ。(ユーザマニュアルは別として。)
+顧客が目にする唯一の「真実 (Truth)」は、インストールされて手元で動いているソフトウェアだ。</p>
+
+<p>この「真実」の挙動や構造を説明するもの、つまり「真実の情報源 (Source of Truth)」はどこにあるか。
+機能設計書や詳細設計書は言うまでもなく「真実の情報源」。
+ソースコードのコメントも、どのような処理をしているのかを説明するものが多いだろうから、「真実の情報源」と言える。
+ソースコード自体も、「真実」の挙動を決定づけるものなので「真実の情報源」だ。
+テスト設計書やチェックリストも、「何をしたとき、どうなる」ということを記述しているので、「真実の情報源」になる。
+このようにウォータフォール開発では、唯一の「真実」を様々な形で何度も表現することになるので、開発工数が膨らむことになる。</p>
+
+<p>アジャイル開発では、これをプロセスにおける<a href="https://ja.wikipedia.org/wiki/Don%27t_repeat_yourself">DRY (Don’t Repeat Yourself)</a>と断罪する。
+つまり、「真実の情報源」が複数になることを悪として、「真実の単一情報源 (Single Source of Truth)」にしなさいと言う。
+これには、ソフトウェアの挙動を変更したいときに修正すべき「情報源」を少なくして、修正工数を下げつつ、「情報源」間のずれによるバグを防ぐ狙いがある。</p>
+
+<h1 id="アジャイル開発プロセスにおける真実の単一情報源">アジャイル開発プロセスにおける真実の単一情報源</h1>
+
+<p>アジャイル開発プロセスにおける「真実の単一情報源」とは何か。
+それは、ウォータフォール開発における「真実の情報源」から何を削減するかという話になるわけだけど、結論は明らかだ。
+絶対に捨てられないものが一つだけあるので、それ以外を排除することになる。
+残すのは当然ソースコード(自動テストのコードも含む)。
+ソースコードが無ければソフトウェアは動き得ないので。</p>
+
+<p><br></p>
+
+<p><strong>アジャイルなプロセス:</strong>
+<img src="/images/essence-of-agile-dry/agile.png" alt="agile.png" />
+</p>
+
+<p><br></p>
+
+<p>ソースコードが「真実の単一情報源」なので、それ以外の「真実の情報源」はDRY違反。
+これがアジャイル開発で設計ドキュメントやテストドキュメントの作成を避ける理由だ。
+ただし、注意すべきなのは、設計そのものを否定しているわけでも、設計の情報をチームで共有をすることを不要としているわけではないこと。
+アジャイル開発は、それらを重要視しつつも、それらのためにドキュメントを作るという作業を排除した。
+ドキュメントが無ければ、設計しても人に伝えられず、すぐに立ち消えてしまうように思われるが、アジャイル開発ではそれを別の媒体に記録する。
+この媒体が何かというのも明らかで、ソースコードしか作らないんだからソースコードそのものということになる。</p>
+
+<p>要するに、ソースコードを動く仕様書兼設計書にするということ。
+日本人にとっては英語が母国語ではないので実感がわき辛い気がするが、ソースコードは割と自然言語を駆使して書いている。
+プログラミング言語の機能やライブラリやフレームワークが強力になって、プログラミングパラダイムやコーディング手法の進化もあって、ソースコードは設計を伝達する媒体として十分な表現力を持つようになった。</p>
+
+<p>アジャイル開発の現場でよく、ソースが仕様書みたいなことを言うのを聞くが、それは伊達ではなく、言葉通りの意味ということだ。
+「アジャイル開発という名目を掲げて仕様書作成をさぼっているから、ソースコードを見て仕様を読み解け」などという開発者の怠慢・傲慢ではなく、「仕様書のように美しく読みやすく体系立ったソースコードを書きます」という決意表明なのである。</p>
+
+<p>(因みに現実的には、ソースコード以外の「真実の情報源」を完全に排除できるわけではない。ユーザマニュアルが最たるものだし、設計ドキュメントに関しても、大域的な設計は別途簡単にでもまとめておいたほうがいい場合が多い。結局は理想のDRYと現実との間でバランスをとることが大事。)</p>
+
+<h1 id="ソースコードを動く仕様書兼設計書にするには">ソースコードを動く仕様書兼設計書にするには</h1>
+
+<p>ソースコードを動く仕様書兼設計書にするために実践すべきことはたくさんある。</p>
+
+<ul>
+<li><p>フォーマッタをかける</p>
+
+<p>体裁が整っていないコードは読み辛い。
+フォーマッタは、アジャイル開発の普及につれて、IDEが提供する補助的な機能の一つから独立したツールへ、さらに<a href="https://golang.org/cmd/gofmt/">プログラミング言語の一部</a>へと昇格を遂げた。</p></li>
+
+<li><p>変数名、関数名を説明的にする</p>
+
+<p>変数名や関数名などの識別子は、仕様書における用語であったり、章節のタイトルであったり、文の主語・目的語にあたるものなので、明確で、正確で、曖昧さが無く、一貫性があるべき。
+例えば、<code>tmp</code>とか<code>list</code>とかの何が入るかわからない変数名はよくないし、HTTPでデータを取得する関数には<code>getXxx</code>よりも<code>fetchXxx</code>の方がいい。
+また、<a href="https://nadesi.com/top/">なでしこ</a>で書かない限りは英語で名付けることになるので、英語をしっかりリスペクトした名前にすること。
+よく、複数の要素を保持する変数(i.e. コレクション)に単数形の名前をつけちゃうことがあるんだけど、これはダメということ。</p></li>
+
+<li><p>型を付ける</p>
+
+<p>型をうまく付けてやることで、値(の集合)が表すものを説明できるだけでなく、継承などによって値間の関係を表現したり、インスタンスメソッドなどによって値と処理の関係も表現することができる。
+例えば、<code>{ &quot;status&quot;: &quot;xxx&quot;, &quot;body&quot;: &quot;yyy&quot;}</code>みたいにプレーンなオブジェクトに値を詰めるよりも、<code>HTTPResponse</code>みたいなクラスのインスタンスでデータを扱うほうがはるかに意図を伝えられる。</p></li>
+
+<li><p>コード生成ツールを活用する</p>
+
+<p>コード生成ツールは大抵、なんらかの<a href="https://ja.wikipedia.org/wiki/%E3%83%89%E3%83%A1%E3%82%A4%E3%83%B3%E5%9B%BA%E6%9C%89%E8%A8%80%E8%AA%9E">DSL</a>をもとにソースコードを生成するようになっている。
+このDSLは、特定のドメインに対するソフトウェアの挙動を効率よくわかりやすく記述できるように設計されているので、ソースコードを直接書くよりも設計の意図を伝えやすい。
+また、実装上のDRYを進める一助にもなる。
+例えば<a href="https://github.com/swagger-api/swagger-codegen">swagger-codegen</a>を使えば、YAMLで記述したREST API仕様から、サーバコード(の一部)とクライアントコードに加えて、APIリファレンスまでも生成できる。
+プロセスのDRY違反無しに設計ドキュメントを得られるようなものなので、非常に強力だ。</p></li>
+
+<li><p>ライブラリやフレームワークを活用する</p>
+
+<p>ライブラリを使うことで、処理の詳細が隠蔽されて、より抽象的にコードを書けるようになる。
+これはドキュメントにより豊かな語彙を使えるようなもの。
+また、フレームワークを使うことでボイラープレートが削減され、記述が統一され、体系的にコードを書けるようになる。
+これは優れたドキュメントテンプレートやガイドラインを得たようなものだ。</p></li>
+
+<li><p>効果的なコメントを書く</p>
+
+<p>個別の処理内容を説明する、「～をする」という形のコメントはDRYに反するので排除する。
+効果的なコメントは以下のようなもの</p>
+
+<ul>
+<li>「～のためにする」とか「～なのでする」といった、「何」ではなく「なぜ」を説くもの。</li>
+<li>「～であることを想定」といった事前条件、事後条件。</li>
+<li>「～してはいけない」とか、「～に注意」といった、見落としやすい落とし穴の注意喚起。</li>
+<li>「将来的に～すべき」とか、「～は未実装」といった、既知の欠陥を示すもの。</li>
+<li>大きな処理を要約するコメント。大抵はモジュールやクラスやメソッドに付ける、JavaDocやJSDocやdocstringの形式であるべきであろう。</li>
+</ul></li>
+
+<li><p><a href="https://postd.cc/solid-principles-every-developer-should-know/">SOLID</a>や<a href="https://ja.wikipedia.org/wiki/KISS%E3%81%AE%E5%8E%9F%E5%89%87">KISS</a>といった設計原則に従う</p>
+
+<p>SOLIDやKISSのような設計原則はウォータフォール時代から大事にされていたもので、ソースコードに設計の意図を反映させるためのものではないが、従っていれば意図の伝わりやすいコードになりやすい。
+例えば単一責任の原則に従うことで、設計ドキュメントの章節を適切な粒度に分割するような効果が得られる。</p></li>
+
+<li><p><a href="https://ja.wikipedia.org/wiki/%E3%83%86%E3%82%B9%E3%83%88%E9%A7%86%E5%8B%95%E9%96%8B%E7%99%BA">TDD</a>、<a href="https://ja.wikipedia.org/wiki/%E3%83%93%E3%83%98%E3%82%A4%E3%83%93%E3%82%A2%E9%A7%86%E5%8B%95%E9%96%8B%E7%99%BA">BDD</a>を実践する</p>
+
+<p>自動テストのコードは、ソフトウェアの挙動を説明する重要な情報源になる。
+ソースコードだけでは伝えにくい事前条件・事後条件・境界条件なんかは特に、テストコードで伝えるのが効果的。
+<a href="https://jestjs.io/ja/">Jest</a>というJavaScriptのテストフレームワークでは、テストコードを書くファイル名の拡張子を<code>.spec.js</code>にするが、これはテストコードが仕様(i.e. specification)を表現すべきものということを示している。</p></li>
+
+<li><p><a href="https://ja.wikipedia.org/wiki/%E3%83%89%E3%83%A1%E3%82%A4%E3%83%B3%E9%A7%86%E5%8B%95%E8%A8%AD%E8%A8%88">ドメイン駆動設計 (DDD)</a>を実践する</p>
+
+<p>ドメイン駆動設計の手法を使えば、ソフトウェアが扱う問題領域の構成要素や事象やそれらの間の相互作用を、ソースコードに紐づく形でモデリングすることができる。
+設計と実装が連動するので、ソースコードがより直接的に深く設計を伝えられるようになる。</p></li>
+</ul>
+
+<p><br></p>
+
+<p>これらのプラクティスはウォータフォール開発のころから実践されてきたものも多いが、設計の意図をソースコードに込める目的を意識しているかによって実践レベルに差が出てくる。
+この差がアジャイルなエンジニアとそうでないエンジニアとの差異の一つであろう。</p>
+
+<p>ソースは、上手く構造化されていて、変更に強く、効率よい処理方式で書かれているというだけでは、アジャイル時代には不十分。
+ソースは仕様書なので、設計の背景や意図を明確に伝えるものでなければいけない。
+アジャイルなチームに入ってくる人たちには、まずはこの点をしっかり認識してほしい。</p>
+
+<h1 id="参考文献">参考文献</h1>
+
+<p>アジャイル時代のコーダーになるには以下のような本が役に立つ。
+古典ばっかりだけど。</p>
+
+<ul>
+<li><a href="https://www.amazon.co.jp/%E3%83%AA%E3%83%BC%E3%83%80%E3%83%96%E3%83%AB%E3%82%B3%E3%83%BC%E3%83%89-%E2%80%95%E3%82%88%E3%82%8A%E8%89%AF%E3%81%84%E3%82%B3%E3%83%BC%E3%83%89%E3%82%92%E6%9B%B8%E3%81%8F%E3%81%9F%E3%82%81%E3%81%AE%E3%82%B7%E3%83%B3%E3%83%97%E3%83%AB%E3%81%A7%E5%AE%9F%E8%B7%B5%E7%9A%84%E3%81%AA%E3%83%86%E3%82%AF%E3%83%8B%E3%83%83%E3%82%AF-Theory-practice-Boswell/dp/4873115655/ref=pd_sbs_14_1/357-8535931-1964347?_encoding=UTF8&amp;pd_rd_i=4873115655&amp;pd_rd_r=5277cdbc-5a4f-11e9-a642-ad09d6c31385&amp;pd_rd_w=bYd3U&amp;pd_rd_wg=2bnyy&amp;pf_rd_p=ad2ea29d-ea11-483c-9db2-6b5875bb9b73&amp;pf_rd_r=J1R8RMWJHSVMCRSEWRCE&amp;psc=1&amp;refRID=J1R8RMWJHSVMCRSEWRCE">リーダブルコード</a></li>
+<li><a href="https://www.amazon.co.jp/%E6%96%B0%E8%A3%85%E7%89%88-%E9%81%94%E4%BA%BA%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%9E%E3%83%BC-%E8%81%B7%E4%BA%BA%E3%81%8B%E3%82%89%E5%90%8D%E5%8C%A0%E3%81%B8%E3%81%AE%E9%81%93-Andrew-Hunt/dp/427421933X/ref=pd_sbs_14_2/357-8535931-1964347?_encoding=UTF8&amp;pd_rd_i=427421933X&amp;pd_rd_r=5277cdbc-5a4f-11e9-a642-ad09d6c31385&amp;pd_rd_w=bYd3U&amp;pd_rd_wg=2bnyy&amp;pf_rd_p=ad2ea29d-ea11-483c-9db2-6b5875bb9b73&amp;pf_rd_r=J1R8RMWJHSVMCRSEWRCE&amp;psc=1&amp;refRID=J1R8RMWJHSVMCRSEWRCE">達人プログラマー</a></li>
+<li><a href="https://www.amazon.co.jp/dp/427405019X/ref=asc_df_427405019X2617728/?tag=jpgo-22&amp;creative=9303&amp;creativeASIN=427405019X&amp;linkCode=df0&amp;hvadid=295686767484&amp;hvpos=1o1&amp;hvnetw=g&amp;hvrand=9130244240729679799&amp;hvpone=&amp;hvptwo=&amp;hvqmt=&amp;hvdev=c&amp;hvdvcmdl=&amp;hvlocint=&amp;hvlocphy=1009343&amp;hvtargid=pla-523949311580&amp;th=1&amp;psc=1">リファクタリング</a></li>
+<li><a href="https://www.amazon.co.jp/%E3%82%A8%E3%83%AA%E3%83%83%E3%82%AF%E3%83%BB%E3%82%A8%E3%83%B4%E3%82%A1%E3%83%B3%E3%82%B9%E3%81%AE%E3%83%89%E3%83%A1%E3%82%A4%E3%83%B3%E9%A7%86%E5%8B%95%E8%A8%AD%E8%A8%88-Architects%E2%80%99Archive-%E3%82%BD%E3%83%95%E3%83%88%E3%82%A6%E3%82%A7%E3%82%A2%E9%96%8B%E7%99%BA%E3%81%AE%E5%AE%9F%E8%B7%B5-%E3%82%A8%E3%83%AA%E3%83%83%E3%82%AF%E3%83%BB%E3%82%A8%E3%83%B4%E3%82%A1%E3%83%B3%E3%82%B9/dp/4798121967/ref=sr_1_fkmrnull_2?adgrpid=56053864951&amp;hvadid=259171363567&amp;hvdev=c&amp;hvlocphy=1009343&amp;hvnetw=g&amp;hvpos=1t1&amp;hvqmt=b&amp;hvrand=17611871694639848519&amp;hvtargid=kwd-311742515945&amp;jp-ad-ap=0&amp;keywords=%E5%AE%9F%E8%B7%B5%E3%83%89%E3%83%A1%E3%82%A4%E3%83%B3%E9%A7%86%E5%8B%95%E8%A8%AD%E8%A8%88&amp;qid=1554937204&amp;s=gateway&amp;sr=8-2-fkmrnull">エリック・エヴァンスのドメイン駆動設計</a></li>
+</ul>
+
+      </div>
+
+      <div class="text-center custom-partial">
+        
+      </div>
+
+      <aside>
+        
+        
+
+        
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-6244473643910448"
+             data-ad-slot="1845600530"
+             data-ad-format="auto"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </aside>
+
+      <aside>
+        <div class="row">
+          <div class="col-sm-5">
+            <section id="share">
+              <h3>Share</h3>
+              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2019%2f04%2f11%2fessence-of-agile-dry%2f&t=%e3%82%a2%e3%82%b8%e3%83%a3%e3%82%a4%e3%83%ab%e9%96%8b%e7%99%ba%e3%81%ae%e7%9c%9f%e9%ab%84%20%e2%80%95%20DRY" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
+              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2019%2f04%2f11%2fessence-of-agile-dry%2f&text=%e3%82%a2%e3%82%b8%e3%83%a3%e3%82%a4%e3%83%ab%e9%96%8b%e7%99%ba%e3%81%ae%e7%9c%9f%e9%ab%84%20%e2%80%95%20DRY&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
+              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2019%2f04%2f11%2fessence-of-agile-dry%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
+              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2019%2f04%2f11%2fessence-of-agile-dry%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
+              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2019%2f04%2f11%2fessence-of-agile-dry%2f&title=%e3%82%a2%e3%82%b8%e3%83%a3%e3%82%a4%e3%83%ab%e9%96%8b%e7%99%ba%e3%81%ae%e7%9c%9f%e9%ab%84%20%e2%80%95%20DRY" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
+            </section>
+          </div>
+
+          <div class="col-sm-7">
+            
+            
+
+            
+            <section id="related">
+              <h3>Related Post</h3>
+              <div id="tags">
+                
+                <a href="https://www.kaitoy.xyz/tags/agile"><i class="fa fa-tags"></i> agile </a>
+                
+              </div>
+
+              <ul id="related-posts">
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+              </ul>
+            </section>
+            
+          </div>
+        </div>
+      </aside>
+
+      
+      <footer>
+        <section id="pagination">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="prev">
+                
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="next text-right">
+                
+                <a href="https://www.kaitoy.xyz/2019/03/08/k8s-zundoko-operator/">
+                  ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+
+        
+        <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'kaitoy-tobedecided';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+        
+      </footer>
+
+    </article>
+  </div>
+
+  <div class="col-md-3">
+    <aside id="site-sidebar">
+      <div class="row">
+        <div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+  <section class="sidebar-bordered">
+    
+    <div id="profile">
+      <div class="text-center">
+        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
+      </div>
+      <div class="data">
+        <h4 id="profile-username" class="post-title"></h4>
+        
+        <span id="profile-birth">DOB: Dec 14, 1983</span>
+        
+        <div id="social-links">
+          
+          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
+          
+          
+          
+          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
+          
+        </div>
+        <div id="profile-description"></div>
+        <ul id="profile-urls" class="post-tags"></ul>
+      </div>
+    </div>
+    
+  </section>
+</div>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <section>
+    <h3>Tags</h3>
+    
+    <div id="tag-cloud" class="text-center">
+      
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/agile">agile</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ansible">ansible</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/babel">babel</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/cnn">cnn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/coursera">coursera</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/css-modules">css-modules</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/deep-learning">deep-learning</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/enzyme">enzyme</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/eslint">eslint</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/esxi">esxi</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/flow">flow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/frontend">frontend</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/git">git</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/github">github</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/golang">golang</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/headless-browser">headless-browser</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jest">jest</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/keras">keras</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubeadm">kubeadm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubebuilder">kubebuilder</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/license">license</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/machine-learning">machine-learning</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/management">management</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/material-ui">material-ui</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/msys2">msys2</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/neural-network">neural-network</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/nlp">nlp</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/packer">packer</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/postcss">postcss</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/prettier">prettier</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react">react</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/react-router">react-router</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/redux">redux</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/redux-saga">redux-saga</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/rnn">rnn</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/selenium">selenium</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/servicenow">servicenow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/skaffold">skaffold</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/styled-components">styled-components</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/stylelint">stylelint</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/tensorflow">tensorflow</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/test-framework">test-framework</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/typescript">typescript</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/webdriverio">webdriverio</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/webpack">webpack</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
+      
+      
+      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
+      
+    </div>
+    
+  </section>
+</div>
+
+
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-6244473643910448"
+    data-ad-slot="1845600530"
+    data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<div class="col-md-12 col-sm-6 col-xs-12">
+  <div class="text-center custom-partial">
+    
+  </div>
+</div>
+
+      </div>
+    </aside>
+  </div>
+</div>
+
+        <div class="text-center custom-partial">
+          
+        </div>
+      </div>
+    </main>
+
+    <footer id="site-footer" class="text-center font-logo">
+      <p>&copy;  2015 -  2019  Kaito Yamada </p>
+      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
+      <p>
+        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
+        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
+      </p>
+    </footer>
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
+    
+    <script>
+      $(document).ready(function(){
+        $('.bxslider').bxSlider({
+          speed: 1,
+          preloadImages: 'all'
+        });
+      });
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/highlight.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dos.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/yaml.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dockerfile.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/go.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-65248565-1', 'auto');
+    ga('send', 'pageview');
+
+    </script>
+
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-photo").attr("src", entry.photos[0].value);
+          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
+          $("#profile-description").html(entry.aboutMe);
+          entry.urls.forEach(function(el){
+            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
+          });
+          $("#profile").show();
+        });
+    });
+    </script>
+  </body>
+</html>
+

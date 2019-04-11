@@ -6,8 +6,215 @@
     <language>en-us</language>
     <author>Kaito Yamada</author>
     <rights>(C) 2019</rights>
-    <updated>2019-03-08 17:29:16 &#43;0900 JST</updated>
+    <updated>2019-04-11 23:34:53 &#43;0900 JST</updated>
 
+    
+      
+        <item>
+          <title>アジャイル開発の真髄 ― DRY</title>
+          <link>https://www.kaitoy.xyz/2019/04/11/essence-of-agile-dry/</link>
+          <pubDate>Thu, 11 Apr 2019 23:34:53 JST</pubDate>
+          <author>Kaito Yamada</author>
+          <guid>https://www.kaitoy.xyz/2019/04/11/essence-of-agile-dry/</guid>
+          <description>
+
+&lt;p&gt;今携わっているプロジェクトでは&lt;a href=&#34;https://www.scrumguides.org/&#34;&gt;Scrum&lt;/a&gt;で開発していて、私自身2年ほどスクラムマスタを経験した。
+うちの会社はかなり保守的で、ごく最近まで&lt;a href=&#34;https://en.wikipedia.org/wiki/Waterfall_model&#34;&gt;ウォータフォール&lt;/a&gt;で開発するのがあたりまえだったので、そこから文化を変え、マインドシフトし、アジャイルなプロセスに順応していくにはそれなりに苦労があった。
+今でも、アジャイルに慣れていないエンジニアがアジャイルなチームに入ってくると、やはりいろいろな違いに戸惑っているように見えるし、こちらとしても期待するアウトプットがなかなか出てこなくて困ることが多い。&lt;/p&gt;
+
+&lt;p&gt;私はスクラムマスタというロールを任されてはいるが、どちらかと言えばテックリードやアーキテクト的な役割に期待されている気がしていて、そっちに力が入ってしまうのが実情。
+そんな状況なので、コードレビューには結構時間を割いているんだけど、アジャイルなエンジニアとそうでないエンジニアが書くコードにはなんだかとても重大な差異があるような気がずっとしていた。
+で、最近それを説明できるまでに考えがまとまってきたので、ここに書き残しておく。&lt;/p&gt;
+
+&lt;p&gt;
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+&lt;/p&gt;
+
+&lt;h1 id=&#34;ウォータフォールの問題&#34;&gt;ウォータフォールの問題&lt;/h1&gt;
+
+&lt;p&gt;ウォータフォール開発は以下のような特徴がある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;綿密な計画を事前に立てて、計画通りに開発を進めることを重視する。&lt;/li&gt;
+&lt;li&gt;機能設計 ⇒ 詳細設計 ⇒ コーディング ⇒ テストといった感じに、全体の計画を工程でフェーズ分けして、手戻りなく、一方向に進むことを重視する。&lt;/li&gt;
+&lt;li&gt;各フェーズでは全開発項目を並行して進め、ソフトウェア全体の整合性を取ることを重視する。&lt;/li&gt;
+&lt;li&gt;各フェーズで、包括的で完成されたアウトプットを作ることを重視する。アウトプットは各フェーズで詳細にレビューする。&lt;/li&gt;
+&lt;li&gt;綿密な設計ドキュメントを整備し、適時アップデートしていくことを重視する。理想的には、コーディングは設計ドキュメントをプログラミング言語に射影するだけの単純作業になる。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;これはこれで、バグの少ないソフトウェアを、大人数で、非属人的に、低リスクで開発するのに向いた開発手法ではある。
+しかし、設計ドキュメントの整備にかなりの時間がかかり、開発工程全体が長くなりがちなのと、動くソフトウェアが出来てくるのが開発終盤になってしまうのが欠点。
+ソフトウェアがビジネスにおいて果たす役割がかなり大きくなった昨今では、ウォータフォール開発はビジネスのスピードや変化についていけない時代遅れの手法という評価になった。
+代わりに台頭したのが&lt;a href=&#34;https://agilemanifesto.org/iso/ja/manifesto.html&#34;&gt;アジャイル開発&lt;/a&gt;だ。&lt;/p&gt;
+
+&lt;p&gt;現代では欧米のソフトウェアプロジェクトの9割以上がアジャイルなプロセスを採用しているというのをHPEのカンファレンスで聞いた覚えがある。
+いまだにウォータフォールを採用するのは、例えばNASAのロケット制御ソフトウェアみたいな、バグがあると数十億ドルと世界トップレベルの人材が吹っ飛ぶようなソフトウェアの開発プロジェクトだ。
+(因みに&lt;a href=&#34;https://qiita.com/tomboyboy/items/1b5625d429ea4aa1ac32&#34;&gt;NASAのコーディング規約&lt;/a&gt;は、再起関数禁止、静的に回数が決まらないループ禁止など、常軌を逸した厳しさ。)&lt;/p&gt;
+
+&lt;h1 id=&#34;アジャイル開発のdry&#34;&gt;アジャイル開発のDRY&lt;/h1&gt;
+
+&lt;p&gt;ウォータフォールとアジャイルの違いは大量にあるが、パッと見て分かりやすい違いは設計ドキュメントの有無であろう。
+アジャイルな開発では設計ドキュメントを排除するのが基本。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;ウォータフォールなプロセス:&lt;/strong&gt;
+&lt;img src=&#34;https://www.kaitoy.xyz/images/essence-of-agile-dry/waterfall.png&#34; alt=&#34;waterfall.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ウォータフォール開発では、こんな感じにいろんなドキュメントを作ることになる。
+加えて、ソースコードには大量のコメントを書くのが良しとされていた。(うちの会社だけ?)
+また、テストフェーズでは、何をどう操作して何をどう確認するという詳細なチェックリストを作り、経験の有無にかかわらずだれでも機械的に同じテストができるようになっているのが理想とされていた。(うちの会社だけ?)&lt;/p&gt;
+
+&lt;p&gt;沢山設計ドキュメントを書いても、結局顧客が手にするのはソフトウェアだけ。(ユーザマニュアルは別として。)
+顧客が目にする唯一の「真実 (Truth)」は、インストールされて手元で動いているソフトウェアだ。&lt;/p&gt;
+
+&lt;p&gt;この「真実」の挙動や構造を説明するもの、つまり「真実の情報源 (Source of Truth)」はどこにあるか。
+機能設計書や詳細設計書は言うまでもなく「真実の情報源」。
+ソースコードのコメントも、どのような処理をしているのかを説明するものが多いだろうから、「真実の情報源」と言える。
+ソースコード自体も、「真実」の挙動を決定づけるものなので「真実の情報源」だ。
+テスト設計書やチェックリストも、「何をしたとき、どうなる」ということを記述しているので、「真実の情報源」になる。
+このようにウォータフォール開発では、唯一の「真実」を様々な形で何度も表現することになるので、開発工数が膨らむことになる。&lt;/p&gt;
+
+&lt;p&gt;アジャイル開発では、これをプロセスにおける&lt;a href=&#34;https://ja.wikipedia.org/wiki/Don%27t_repeat_yourself&#34;&gt;DRY (Don’t Repeat Yourself)&lt;/a&gt;と断罪する。
+つまり、「真実の情報源」が複数になることを悪として、「真実の単一情報源 (Single Source of Truth)」にしなさいと言う。
+これには、ソフトウェアの挙動を変更したいときに修正すべき「情報源」を少なくして、修正工数を下げつつ、「情報源」間のずれによるバグを防ぐ狙いがある。&lt;/p&gt;
+
+&lt;h1 id=&#34;アジャイル開発プロセスにおける真実の単一情報源&#34;&gt;アジャイル開発プロセスにおける真実の単一情報源&lt;/h1&gt;
+
+&lt;p&gt;アジャイル開発プロセスにおける「真実の単一情報源」とは何か。
+それは、ウォータフォール開発における「真実の情報源」から何を削減するかという話になるわけだけど、結論は明らかだ。
+絶対に捨てられないものが一つだけあるので、それ以外を排除することになる。
+残すのは当然ソースコード(自動テストのコードも含む)。
+ソースコードが無ければソフトウェアは動き得ないので。&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;アジャイルなプロセス:&lt;/strong&gt;
+&lt;img src=&#34;https://www.kaitoy.xyz/images/essence-of-agile-dry/agile.png&#34; alt=&#34;agile.png&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;ソースコードが「真実の単一情報源」なので、それ以外の「真実の情報源」はDRY違反。
+これがアジャイル開発で設計ドキュメントやテストドキュメントの作成を避ける理由だ。
+ただし、注意すべきなのは、設計そのものを否定しているわけでも、設計の情報をチームで共有をすることを不要としているわけではないこと。
+アジャイル開発は、それらを重要視しつつも、それらのためにドキュメントを作るという作業を排除した。
+ドキュメントが無ければ、設計しても人に伝えられず、すぐに立ち消えてしまうように思われるが、アジャイル開発ではそれを別の媒体に記録する。
+この媒体が何かというのも明らかで、ソースコードしか作らないんだからソースコードそのものということになる。&lt;/p&gt;
+
+&lt;p&gt;要するに、ソースコードを動く仕様書兼設計書にするということ。
+日本人にとっては英語が母国語ではないので実感がわき辛い気がするが、ソースコードは割と自然言語を駆使して書いている。
+プログラミング言語の機能やライブラリやフレームワークが強力になって、プログラミングパラダイムやコーディング手法の進化もあって、ソースコードは設計を伝達する媒体として十分な表現力を持つようになった。&lt;/p&gt;
+
+&lt;p&gt;アジャイル開発の現場でよく、ソースが仕様書みたいなことを言うのを聞くが、それは伊達ではなく、言葉通りの意味ということだ。
+「アジャイル開発という名目を掲げて仕様書作成をさぼっているから、ソースコードを見て仕様を読み解け」などという開発者の怠慢・傲慢ではなく、「仕様書のように美しく読みやすく体系立ったソースコードを書きます」という決意表明なのである。&lt;/p&gt;
+
+&lt;p&gt;(因みに現実的には、ソースコード以外の「真実の情報源」を完全に排除できるわけではない。ユーザマニュアルが最たるものだし、設計ドキュメントに関しても、大域的な設計は別途簡単にでもまとめておいたほうがいい場合が多い。結局は理想のDRYと現実との間でバランスをとることが大事。)&lt;/p&gt;
+
+&lt;h1 id=&#34;ソースコードを動く仕様書兼設計書にするには&#34;&gt;ソースコードを動く仕様書兼設計書にするには&lt;/h1&gt;
+
+&lt;p&gt;ソースコードを動く仕様書兼設計書にするために実践すべきことはたくさんある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;フォーマッタをかける&lt;/p&gt;
+
+&lt;p&gt;体裁が整っていないコードは読み辛い。
+フォーマッタは、アジャイル開発の普及につれて、IDEが提供する補助的な機能の一つから独立したツールへ、さらに&lt;a href=&#34;https://golang.org/cmd/gofmt/&#34;&gt;プログラミング言語の一部&lt;/a&gt;へと昇格を遂げた。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;変数名、関数名を説明的にする&lt;/p&gt;
+
+&lt;p&gt;変数名や関数名などの識別子は、仕様書における用語であったり、章節のタイトルであったり、文の主語・目的語にあたるものなので、明確で、正確で、曖昧さが無く、一貫性があるべき。
+例えば、&lt;code&gt;tmp&lt;/code&gt;とか&lt;code&gt;list&lt;/code&gt;とかの何が入るかわからない変数名はよくないし、HTTPでデータを取得する関数には&lt;code&gt;getXxx&lt;/code&gt;よりも&lt;code&gt;fetchXxx&lt;/code&gt;の方がいい。
+また、&lt;a href=&#34;https://nadesi.com/top/&#34;&gt;なでしこ&lt;/a&gt;で書かない限りは英語で名付けることになるので、英語をしっかりリスペクトした名前にすること。
+よく、複数の要素を保持する変数(i.e. コレクション)に単数形の名前をつけちゃうことがあるんだけど、これはダメということ。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;型を付ける&lt;/p&gt;
+
+&lt;p&gt;型をうまく付けてやることで、値(の集合)が表すものを説明できるだけでなく、継承などによって値間の関係を表現したり、インスタンスメソッドなどによって値と処理の関係も表現することができる。
+例えば、&lt;code&gt;{ &amp;quot;status&amp;quot;: &amp;quot;xxx&amp;quot;, &amp;quot;body&amp;quot;: &amp;quot;yyy&amp;quot;}&lt;/code&gt;みたいにプレーンなオブジェクトに値を詰めるよりも、&lt;code&gt;HTTPResponse&lt;/code&gt;みたいなクラスのインスタンスでデータを扱うほうがはるかに意図を伝えられる。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;コード生成ツールを活用する&lt;/p&gt;
+
+&lt;p&gt;コード生成ツールは大抵、なんらかの&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E3%83%89%E3%83%A1%E3%82%A4%E3%83%B3%E5%9B%BA%E6%9C%89%E8%A8%80%E8%AA%9E&#34;&gt;DSL&lt;/a&gt;をもとにソースコードを生成するようになっている。
+このDSLは、特定のドメインに対するソフトウェアの挙動を効率よくわかりやすく記述できるように設計されているので、ソースコードを直接書くよりも設計の意図を伝えやすい。
+また、実装上のDRYを進める一助にもなる。
+例えば&lt;a href=&#34;https://github.com/swagger-api/swagger-codegen&#34;&gt;swagger-codegen&lt;/a&gt;を使えば、YAMLで記述したREST API仕様から、サーバコード(の一部)とクライアントコードに加えて、APIリファレンスまでも生成できる。
+プロセスのDRY違反無しに設計ドキュメントを得られるようなものなので、非常に強力だ。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;ライブラリやフレームワークを活用する&lt;/p&gt;
+
+&lt;p&gt;ライブラリを使うことで、処理の詳細が隠蔽されて、より抽象的にコードを書けるようになる。
+これはドキュメントにより豊かな語彙を使えるようなもの。
+また、フレームワークを使うことでボイラープレートが削減され、記述が統一され、体系的にコードを書けるようになる。
+これは優れたドキュメントテンプレートやガイドラインを得たようなものだ。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;効果的なコメントを書く&lt;/p&gt;
+
+&lt;p&gt;個別の処理内容を説明する、「～をする」という形のコメントはDRYに反するので排除する。
+効果的なコメントは以下のようなもの&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;「～のためにする」とか「～なのでする」といった、「何」ではなく「なぜ」を説くもの。&lt;/li&gt;
+&lt;li&gt;「～であることを想定」といった事前条件、事後条件。&lt;/li&gt;
+&lt;li&gt;「～してはいけない」とか、「～に注意」といった、見落としやすい落とし穴の注意喚起。&lt;/li&gt;
+&lt;li&gt;「将来的に～すべき」とか、「～は未実装」といった、既知の欠陥を示すもの。&lt;/li&gt;
+&lt;li&gt;大きな処理を要約するコメント。大抵はモジュールやクラスやメソッドに付ける、JavaDocやJSDocやdocstringの形式であるべきであろう。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://postd.cc/solid-principles-every-developer-should-know/&#34;&gt;SOLID&lt;/a&gt;や&lt;a href=&#34;https://ja.wikipedia.org/wiki/KISS%E3%81%AE%E5%8E%9F%E5%89%87&#34;&gt;KISS&lt;/a&gt;といった設計原則に従う&lt;/p&gt;
+
+&lt;p&gt;SOLIDやKISSのような設計原則はウォータフォール時代から大事にされていたもので、ソースコードに設計の意図を反映させるためのものではないが、従っていれば意図の伝わりやすいコードになりやすい。
+例えば単一責任の原則に従うことで、設計ドキュメントの章節を適切な粒度に分割するような効果が得られる。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E3%83%86%E3%82%B9%E3%83%88%E9%A7%86%E5%8B%95%E9%96%8B%E7%99%BA&#34;&gt;TDD&lt;/a&gt;、&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E3%83%93%E3%83%98%E3%82%A4%E3%83%93%E3%82%A2%E9%A7%86%E5%8B%95%E9%96%8B%E7%99%BA&#34;&gt;BDD&lt;/a&gt;を実践する&lt;/p&gt;
+
+&lt;p&gt;自動テストのコードは、ソフトウェアの挙動を説明する重要な情報源になる。
+ソースコードだけでは伝えにくい事前条件・事後条件・境界条件なんかは特に、テストコードで伝えるのが効果的。
+&lt;a href=&#34;https://jestjs.io/ja/&#34;&gt;Jest&lt;/a&gt;というJavaScriptのテストフレームワークでは、テストコードを書くファイル名の拡張子を&lt;code&gt;.spec.js&lt;/code&gt;にするが、これはテストコードが仕様(i.e. specification)を表現すべきものということを示している。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E3%83%89%E3%83%A1%E3%82%A4%E3%83%B3%E9%A7%86%E5%8B%95%E8%A8%AD%E8%A8%88&#34;&gt;ドメイン駆動設計 (DDD)&lt;/a&gt;を実践する&lt;/p&gt;
+
+&lt;p&gt;ドメイン駆動設計の手法を使えば、ソフトウェアが扱う問題領域の構成要素や事象やそれらの間の相互作用を、ソースコードに紐づく形でモデリングすることができる。
+設計と実装が連動するので、ソースコードがより直接的に深く設計を伝えられるようになる。&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;これらのプラクティスはウォータフォール開発のころから実践されてきたものも多いが、設計の意図をソースコードに込める目的を意識しているかによって実践レベルに差が出てくる。
+この差がアジャイルなエンジニアとそうでないエンジニアとの差異の一つであろう。&lt;/p&gt;
+
+&lt;p&gt;ソースは、上手く構造化されていて、変更に強く、効率よい処理方式で書かれているというだけでは、アジャイル時代には不十分。
+ソースは仕様書なので、設計の背景や意図を明確に伝えるものでなければいけない。
+アジャイルなチームに入ってくる人たちには、まずはこの点をしっかり認識してほしい。&lt;/p&gt;
+
+&lt;h1 id=&#34;参考文献&#34;&gt;参考文献&lt;/h1&gt;
+
+&lt;p&gt;アジャイル時代のコーダーになるには以下のような本が役に立つ。
+古典ばっかりだけど。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.amazon.co.jp/%E3%83%AA%E3%83%BC%E3%83%80%E3%83%96%E3%83%AB%E3%82%B3%E3%83%BC%E3%83%89-%E2%80%95%E3%82%88%E3%82%8A%E8%89%AF%E3%81%84%E3%82%B3%E3%83%BC%E3%83%89%E3%82%92%E6%9B%B8%E3%81%8F%E3%81%9F%E3%82%81%E3%81%AE%E3%82%B7%E3%83%B3%E3%83%97%E3%83%AB%E3%81%A7%E5%AE%9F%E8%B7%B5%E7%9A%84%E3%81%AA%E3%83%86%E3%82%AF%E3%83%8B%E3%83%83%E3%82%AF-Theory-practice-Boswell/dp/4873115655/ref=pd_sbs_14_1/357-8535931-1964347?_encoding=UTF8&amp;amp;pd_rd_i=4873115655&amp;amp;pd_rd_r=5277cdbc-5a4f-11e9-a642-ad09d6c31385&amp;amp;pd_rd_w=bYd3U&amp;amp;pd_rd_wg=2bnyy&amp;amp;pf_rd_p=ad2ea29d-ea11-483c-9db2-6b5875bb9b73&amp;amp;pf_rd_r=J1R8RMWJHSVMCRSEWRCE&amp;amp;psc=1&amp;amp;refRID=J1R8RMWJHSVMCRSEWRCE&#34;&gt;リーダブルコード&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.amazon.co.jp/%E6%96%B0%E8%A3%85%E7%89%88-%E9%81%94%E4%BA%BA%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%9E%E3%83%BC-%E8%81%B7%E4%BA%BA%E3%81%8B%E3%82%89%E5%90%8D%E5%8C%A0%E3%81%B8%E3%81%AE%E9%81%93-Andrew-Hunt/dp/427421933X/ref=pd_sbs_14_2/357-8535931-1964347?_encoding=UTF8&amp;amp;pd_rd_i=427421933X&amp;amp;pd_rd_r=5277cdbc-5a4f-11e9-a642-ad09d6c31385&amp;amp;pd_rd_w=bYd3U&amp;amp;pd_rd_wg=2bnyy&amp;amp;pf_rd_p=ad2ea29d-ea11-483c-9db2-6b5875bb9b73&amp;amp;pf_rd_r=J1R8RMWJHSVMCRSEWRCE&amp;amp;psc=1&amp;amp;refRID=J1R8RMWJHSVMCRSEWRCE&#34;&gt;達人プログラマー&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.amazon.co.jp/dp/427405019X/ref=asc_df_427405019X2617728/?tag=jpgo-22&amp;amp;creative=9303&amp;amp;creativeASIN=427405019X&amp;amp;linkCode=df0&amp;amp;hvadid=295686767484&amp;amp;hvpos=1o1&amp;amp;hvnetw=g&amp;amp;hvrand=9130244240729679799&amp;amp;hvpone=&amp;amp;hvptwo=&amp;amp;hvqmt=&amp;amp;hvdev=c&amp;amp;hvdvcmdl=&amp;amp;hvlocint=&amp;amp;hvlocphy=1009343&amp;amp;hvtargid=pla-523949311580&amp;amp;th=1&amp;amp;psc=1&#34;&gt;リファクタリング&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.amazon.co.jp/%E3%82%A8%E3%83%AA%E3%83%83%E3%82%AF%E3%83%BB%E3%82%A8%E3%83%B4%E3%82%A1%E3%83%B3%E3%82%B9%E3%81%AE%E3%83%89%E3%83%A1%E3%82%A4%E3%83%B3%E9%A7%86%E5%8B%95%E8%A8%AD%E8%A8%88-Architects%E2%80%99Archive-%E3%82%BD%E3%83%95%E3%83%88%E3%82%A6%E3%82%A7%E3%82%A2%E9%96%8B%E7%99%BA%E3%81%AE%E5%AE%9F%E8%B7%B5-%E3%82%A8%E3%83%AA%E3%83%83%E3%82%AF%E3%83%BB%E3%82%A8%E3%83%B4%E3%82%A1%E3%83%B3%E3%82%B9/dp/4798121967/ref=sr_1_fkmrnull_2?adgrpid=56053864951&amp;amp;hvadid=259171363567&amp;amp;hvdev=c&amp;amp;hvlocphy=1009343&amp;amp;hvnetw=g&amp;amp;hvpos=1t1&amp;amp;hvqmt=b&amp;amp;hvrand=17611871694639848519&amp;amp;hvtargid=kwd-311742515945&amp;amp;jp-ad-ap=0&amp;amp;keywords=%E5%AE%9F%E8%B7%B5%E3%83%89%E3%83%A1%E3%82%A4%E3%83%B3%E9%A7%86%E5%8B%95%E8%A8%AD%E8%A8%88&amp;amp;qid=1554937204&amp;amp;s=gateway&amp;amp;sr=8-2-fkmrnull&#34;&gt;エリック・エヴァンスのドメイン駆動設計&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+      
     
       
         <item>
@@ -16276,129 +16483,6 @@ Ubuntu側からは消えてないように見えるが、アクセスしよう�
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
 &lt;p&gt;件の問題もベータがとれたら直るかもしれないが、&lt;code&gt;%localappdata%\lxss\&lt;/code&gt;は保護された隠しフォルダなのでやはり触らないのが無難か。&lt;/p&gt;
-</description>
-        </item>
-      
-    
-      
-        <item>
-          <title>git checkoutを図解する</title>
-          <link>https://www.kaitoy.xyz/2016/10/08/git-checkout/</link>
-          <pubDate>Sat, 08 Oct 2016 16:39:46 -0600</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2016/10/08/git-checkout/</guid>
-          <description>
-
-&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;の &lt;code&gt;git checkout&lt;/code&gt; というコマンドについて説明する。&lt;/p&gt;
-
-&lt;p&gt;このコマンドは普通ブランチを切り替えるものと説明されるが、主たる機能は &lt;strong&gt;オブジェクト格納領域から指定されたファイルを取り出し、ワーキングディレクトリに配置する&lt;/strong&gt; ものである。
-つまりこれがGitにおけるチェックアウトで、チェックアウト=ブランチの切り替えではない。&lt;/p&gt;
-
-&lt;p&gt;コマンドに与える引数によっては &lt;code&gt;HEAD&lt;/code&gt; の付け替え、つまりはブランチの切り替えもする、というだけ。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;git checkout&lt;/code&gt; の動作を &lt;code&gt;HEAD&lt;/code&gt; の付け替えの有無によって分けて考えると分かりやすく覚えやすいので、以下そのように説明する。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h1 id=&#34;headを付け替えないgit-checkout&#34;&gt;HEADを付け替えないgit checkout&lt;/h1&gt;
-
-&lt;p&gt;&lt;code&gt;HEAD&lt;/code&gt; を付け替えない &lt;code&gt;git checkout&lt;/code&gt; は、引数にワーキングディレクトリ内の &lt;strong&gt;ファイルまたはディレクトリへのパスを与えた場合&lt;/strong&gt; のもの。
-ディレクトリを指定した場合はそれ以下の全ファイルが操作対象となる。
-パスは絶対パスかカレントディレクトリからの相対パスで、複数指定できる。&lt;/p&gt;
-
-&lt;p&gt;つまりは以下の様なコマンド形式になる。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;git checkout &amp;lt;パス(複数可)&amp;gt;&lt;/code&gt;&lt;/p&gt;
-
-&lt;p&gt;これを実行すると、指定したファイルについて、&lt;strong&gt;インデックスが指しているブロブ&lt;/strong&gt; をオブジェクト格納領域から取り出し、ワーキングディレクトリのファイルを置き変える。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド4.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド5.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド6.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド7.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;上のスライドではインデックスが指しているブロブを取り出したが、任意のブロブを取り出すこともできる。
-この場合、以下の様なコマンド形式を使う。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;git checkout &amp;lt;コミット&amp;gt; &amp;lt;パス(複数可)&amp;gt;&lt;/code&gt;&lt;/p&gt;
-
-&lt;p&gt;このコマンド形式だと、&lt;strong&gt;指定したコミットが指すツリー以下のブロブ&lt;/strong&gt; が取り出される。
-&lt;code&gt;&amp;lt;コミット&amp;gt;&lt;/code&gt;の部分には、コミットオブジェクトのSHA1ハッシュ値、参照(i.e. ブランチかタグ)、シンボリック参照(e.g. &lt;code&gt;HEAD&lt;/code&gt;)を指定できる。(実際にはこれらが全てではないが、実用的にはこの3種。)&lt;/p&gt;
-
-&lt;p&gt;この形式だと、ワーキングディレクトリだけでなく、取り出すブロブを指すよう &lt;strong&gt;インデックスも更新される&lt;/strong&gt; ことに注意。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths_commit/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths_commit/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths_commit/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;headを付け替えるgit-checkout&#34;&gt;HEADを付け替えるgit checkout&lt;/h1&gt;
-
-&lt;p&gt;&lt;code&gt;HEAD&lt;/code&gt; を付け替える &lt;code&gt;git checkout&lt;/code&gt; は、引数に &lt;strong&gt;パスを与えない場合&lt;/strong&gt; のもの。
-代わりにコミットを与える。&lt;/p&gt;
-
-&lt;p&gt;つまりは以下の様なコマンド形式になる。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;git checkout &amp;lt;コミット&amp;gt;&lt;/code&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;&amp;lt;コミット&amp;gt;&lt;/code&gt;の部分には、コミットオブジェクトのSHA1ハッシュ値、参照(i.e. ブランチかタグ)、シンボリック参照(e.g. &lt;code&gt;HEAD&lt;/code&gt;)を指定できる。(実際にはこれらが全てではないが、実用的にはこの3種。)&lt;/p&gt;
-
-&lt;p&gt;これを実行すると、&lt;strong&gt;指定したコミットが指すツリー以下の全てのブロブ&lt;/strong&gt; を指すようインデックスを更新し、それらのブロブをオブジェクト格納領域から取り出してワーキングディレクトリに配置する。&lt;/p&gt;
-
-&lt;p&gt;この上更に&lt;code&gt;HEAD&lt;/code&gt;を付け替えるわけだが、付け替え先は&lt;code&gt;&amp;lt;コミット&amp;gt;&lt;/code&gt;の種類によって以下の三通りある。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;&amp;lt;コミット&amp;gt;&lt;/code&gt;がブランチ: &lt;code&gt;HEAD&lt;/code&gt;はそのブランチを指すよう更新される。&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;&amp;lt;コミット&amp;gt;&lt;/code&gt;がSHA1ハッシュ値: &lt;code&gt;HEAD&lt;/code&gt;はコミットを指すよう更新される。&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;&amp;lt;コミット&amp;gt;&lt;/code&gt;がタグかシンボリック参照: &lt;code&gt;HEAD&lt;/code&gt;はタグかシンボリック参照が指すコミットを指すよう更新される。&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド4.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド5.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド6.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド7.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド8.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド9.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;上のスライド中のコミットをチェックアウトした例を見ると分かるが、コマンド実行前後でワーキングディレクトリからファイルが削除されることもある。
-これは多分、実際にはインデックスの更新処理の前に、&lt;code&gt;HEAD&lt;/code&gt;が指すコミットに含まれるファイルをワーキングディレクトリから削除する処理があるからだと考えられる。&lt;/p&gt;
-
-&lt;p&gt;また、上のスライドには表現していないが、コマンド実行前にワーキングディレクトリやインデックスに未コミットな変更が入っている場合、Gitはそれをコマンド実行後のワーキングディレクトリに適用しようとしてくれる。
-これは例えばあるブランチで作った変更を別のブランチにコミットしたいようなときは便利だが、&lt;code&gt;checkout&lt;/code&gt;したコミットに別途変更が入っているとその適用は失敗し、コマンドがエラーになるので、普通はコマンド実行前に&lt;code&gt;git stash&lt;/code&gt;しておくのが無難。&lt;/p&gt;
 </description>
         </item>
       
