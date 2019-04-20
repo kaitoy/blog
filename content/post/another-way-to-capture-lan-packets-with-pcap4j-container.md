@@ -2,7 +2,7 @@
 categories = [ "Programming", "Container" ]
 date = "2015-07-27T23:41:49-06:00"
 draft = false
-eyecatch = "pcap4jlogo.png"
+cover = "pcap4jlogo.png"
 slug = "another-way-to-capture-lan-packets-with-pcap4j-container"
 tags = [ "docker", "pcap4j" ]
 title = "Another way to capture LAN packets with pcap4j container"
@@ -17,7 +17,7 @@ I'm writing about it here.
 
 {{< google-adsense >}}
 
-### --net option for docker run
+# --net option for docker run
 
 When we start a docker container we use `docker run` command. It accepts some options.
 `--net` is one of them, which is to set a network mode for a container.
@@ -29,14 +29,14 @@ which means Pcap4J on a container with the `host` mode can see network interface
 
 This sounds easy. And more, according to the Docker Docs, the `host` mode gives significantly better networking performance than the `bridge` mode. But instead, `host` is insecure. (See [Docker Docs - Mode: host](https://docs.docker.com/reference/run/#mode-host) for the details.)
 
-### What I did
+# What I did
 
 In the same environment with [2 days ago](https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/#what-i-did:a3622224f79a64f15ba6f2b66e1010d9), I did the followings:
 
 1. Start a Pcap4J container with the network mode set to host
 
-      ```sh
-      [root@localhost ~]# docker run --name pcap4j-hostnet --net=host kaitoy/pcap4j:latest
+      ```shell
+      # docker run --name pcap4j-hostnet --net=host kaitoy/pcap4j:latest
       ```
 
       That's it.

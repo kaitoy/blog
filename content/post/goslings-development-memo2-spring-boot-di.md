@@ -2,7 +2,7 @@
 categories = [ "Programing" ]
 date = "2017-01-10T00:21:27-07:00"
 draft = false
-eyecatch = "goslings-spring.png"
+cover = "goslings-spring.png"
 slug = "goslings-development-memo2-spring-boot-di"
 tags = [ "goslings", "spring", "spring-boot" ]
 title = "Goslings開発メモ - その2: Spring Boot続編 (DI)"

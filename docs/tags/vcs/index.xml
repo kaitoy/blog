@@ -1,1287 +1,189 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>To Be Decided </title>
+    <title>vcs on To Be Decided</title>
     <link>https://www.kaitoy.xyz/tags/vcs/</link>
+    <description>Recent content in vcs on To Be Decided</description>
+    <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <author>Kaito Yamada</author>
-    <rights>(C) 2019</rights>
-    <updated>2017-06-10 00:00:17 &#43;0900 JST</updated>
-
+    <copyright>© 2015 Kaito Yamada</copyright>
+    <lastBuildDate>Sat, 10 Jun 2017 00:00:17 +0900</lastBuildDate>
     
-      
-        <item>
-          <title>git rebaseを図解する</title>
-          <link>https://www.kaitoy.xyz/2017/06/10/git-rebase/</link>
-          <pubDate>Sat, 10 Jun 2017 00:00:17 JST</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2017/06/10/git-rebase/</guid>
-          <description>
-
-&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;の &lt;code&gt;git rebase&lt;/code&gt; というコマンドについて説明する。&lt;/p&gt;
-
-&lt;p&gt;このコマンドは、コミット履歴を改変できるGit特有のコマンドで、&lt;a href=&#34;http://qiita.com/kaitoy/items/ed22474837b943eb6d97&#34;&gt;分かり辛いGitコマンド&lt;/a&gt;の中でも最も分かり辛い部類のものだ。
-Gitの最後の関門と言えよう。
-けど、それだけに使いこなせばとても便利なものでもある。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h1 id=&#34;git-rebaseがもつたった一つの機能&#34;&gt;git rebaseがもつたった一つの機能&lt;/h1&gt;
-
-&lt;p&gt;&lt;code&gt;git rebase&lt;/code&gt;にはいろんなオプションがあって、ちょっと調べただけだと、コミットを移動する機能とコミットを修正する機能の二つがあるように見えるかもしれないが、実際は単一の機能しかないシンプルなコマンドだ。&lt;/p&gt;
-
-&lt;p&gt;その機能とは、指定した範囲のコミットが含む変更を、別に指定したコミットのコードベースに適用するというもの。&lt;/p&gt;
-
-&lt;p&gt;コマンドの基本形は次のようなものだ。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;$ git rebase --onto master dev bugfix
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;このコマンドは、&lt;code&gt;bugfix&lt;/code&gt;から辿れるコミット群から、&lt;code&gt;dev&lt;/code&gt;から辿れるコミット群を除いたコミット群が含む変更を、&lt;code&gt;master&lt;/code&gt;のコードベースに適用する。&lt;/p&gt;
-
-&lt;p&gt;と書いても分からないので図解する。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase/スライド4.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase/スライド5.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase/スライド6.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;このスライドを見ると、&lt;code&gt;git rebase&lt;/code&gt;に指定した3つのブランチのそれぞれの使われ方が分かるはず。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;git rebase --onto master dev bugfix&lt;/code&gt;が実行する処理をもっと正確に言うと、&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;&lt;code&gt;bugfix&lt;/code&gt;を&lt;code&gt;checkout&lt;/code&gt;して(i.e. &lt;code&gt;HEAD&lt;/code&gt;を&lt;code&gt;bugfix&lt;/code&gt;にして)、&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;dev..HEAD&lt;/code&gt;のコミット群が含む変更を、それぞれ仮領域にパッチとして保存して、&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;git reset --hard master&lt;/code&gt;して、&lt;/li&gt;
-&lt;li&gt;仮領域に保存した変更を、&lt;code&gt;HEAD&lt;/code&gt;が指すコミットのコードベースにひとつひとつ順番に適用する。&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;上記コマンドで&lt;code&gt;bugfix&lt;/code&gt;のところを省略すると、ステップ1の&lt;code&gt;checkout&lt;/code&gt;が省略される。
-言い換えると、上記コマンドは次の二つのコマンドに分解できる。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;$ git checkout bugfix
-$ git rebase --onto master dev
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;さらに、&lt;code&gt;--onto master&lt;/code&gt;を省略すると、ステップ3の&lt;code&gt;reset&lt;/code&gt;先が変わり、&lt;code&gt;dev&lt;/code&gt;になる。
-このときのコマンドの形は、&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;$ git rebase dev
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;という見慣れたものになるが、これが最初に挙げた基本形の省略形だと認識しておくと応用が利く。&lt;/p&gt;
-
-&lt;p&gt;以下に&lt;code&gt;git rebase dev&lt;/code&gt;の動きを細かめに図解する。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド4.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド5.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド6.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_short/スライド7.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;インタラクティブモード&#34;&gt;インタラクティブモード&lt;/h2&gt;
-
-&lt;p&gt;前節のスライドに書いたパッチの適用をカスタマイズできるのがインタラクティブモードで、これは&lt;code&gt;-i&lt;/code&gt;オプションで有効にできる。
-インタラクティブモードを使うと、パッチをスキップしたり、順番を変えたり、まとめたり、分割したり、編集したりでき、またパッチとパッチの間に任意のコマンドを実行でき、例えばパッチごとにユニットテストを実行できたりする。&lt;/p&gt;
-
-&lt;p&gt;インタラクティブモードの使い方についてはググればたくさん出てくるのでここには書かない。
-&lt;a href=&#34;http://tkengo.github.io/blog/2013/05/16/git-rebase-reference/&#34;&gt;この記事&lt;/a&gt;辺りがわかりやすい。&lt;/p&gt;
-
-&lt;p&gt;インタラクティブモードのユースケースとしてよく紹介されるのが、&lt;code&gt;git rebase -i HEAD^^&lt;/code&gt;で直近の二つのコミットを変更するといったものだが、これを図解すると以下のようになる。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド4.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド5.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド6.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド7.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド8.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-rebase/git_rebase_interactive/スライド9.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;このスライドを見ると、&lt;code&gt;git rebase dev&lt;/code&gt;と&lt;code&gt;git rebase -i HEAD^^&lt;/code&gt;は、パッチの適用がインタラクティブかどうか以外は同じ処理をしていることがわかる。
-見た目の違いに惑わされないようにしたい。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;git rebase&lt;/code&gt;はブランチを複数指定したりして分かり辛いコマンドであることは確かだけど、上記の基本形を押さえておけばすんなり理解できるはず。&lt;/p&gt;
-</description>
-        </item>
-      
+	<atom:link href="https://www.kaitoy.xyz/tags/vcs/index.xml" rel="self" type="application/rss+xml" />
     
-      
-        <item>
-          <title>git checkoutを図解する</title>
-          <link>https://www.kaitoy.xyz/2016/10/08/git-checkout/</link>
-          <pubDate>Sat, 08 Oct 2016 16:39:46 -0600</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2016/10/08/git-checkout/</guid>
-          <description>
-
-&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;の &lt;code&gt;git checkout&lt;/code&gt; というコマンドについて説明する。&lt;/p&gt;
-
-&lt;p&gt;このコマンドは普通ブランチを切り替えるものと説明されるが、主たる機能は &lt;strong&gt;オブジェクト格納領域から指定されたファイルを取り出し、ワーキングディレクトリに配置する&lt;/strong&gt; ものである。
-つまりこれがGitにおけるチェックアウトで、チェックアウト=ブランチの切り替えではない。&lt;/p&gt;
-
-&lt;p&gt;コマンドに与える引数によっては &lt;code&gt;HEAD&lt;/code&gt; の付け替え、つまりはブランチの切り替えもする、というだけ。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;git checkout&lt;/code&gt; の動作を &lt;code&gt;HEAD&lt;/code&gt; の付け替えの有無によって分けて考えると分かりやすく覚えやすいので、以下そのように説明する。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h1 id=&#34;headを付け替えないgit-checkout&#34;&gt;HEADを付け替えないgit checkout&lt;/h1&gt;
-
-&lt;p&gt;&lt;code&gt;HEAD&lt;/code&gt; を付け替えない &lt;code&gt;git checkout&lt;/code&gt; は、引数にワーキングディレクトリ内の &lt;strong&gt;ファイルまたはディレクトリへのパスを与えた場合&lt;/strong&gt; のもの。
-ディレクトリを指定した場合はそれ以下の全ファイルが操作対象となる。
-パスは絶対パスかカレントディレクトリからの相対パスで、複数指定できる。&lt;/p&gt;
-
-&lt;p&gt;つまりは以下の様なコマンド形式になる。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;git checkout &amp;lt;パス(複数可)&amp;gt;&lt;/code&gt;&lt;/p&gt;
-
-&lt;p&gt;これを実行すると、指定したファイルについて、&lt;strong&gt;インデックスが指しているブロブ&lt;/strong&gt; をオブジェクト格納領域から取り出し、ワーキングディレクトリのファイルを置き変える。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド4.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド5.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド6.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths/スライド7.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;上のスライドではインデックスが指しているブロブを取り出したが、任意のブロブを取り出すこともできる。
-この場合、以下の様なコマンド形式を使う。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;git checkout &amp;lt;コミット&amp;gt; &amp;lt;パス(複数可)&amp;gt;&lt;/code&gt;&lt;/p&gt;
-
-&lt;p&gt;このコマンド形式だと、&lt;strong&gt;指定したコミットが指すツリー以下のブロブ&lt;/strong&gt; が取り出される。
-&lt;code&gt;&amp;lt;コミット&amp;gt;&lt;/code&gt;の部分には、コミットオブジェクトのSHA1ハッシュ値、参照(i.e. ブランチかタグ)、シンボリック参照(e.g. &lt;code&gt;HEAD&lt;/code&gt;)を指定できる。(実際にはこれらが全てではないが、実用的にはこの3種。)&lt;/p&gt;
-
-&lt;p&gt;この形式だと、ワーキングディレクトリだけでなく、取り出すブロブを指すよう &lt;strong&gt;インデックスも更新される&lt;/strong&gt; ことに注意。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths_commit/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths_commit/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_paths_commit/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;headを付け替えるgit-checkout&#34;&gt;HEADを付け替えるgit checkout&lt;/h1&gt;
-
-&lt;p&gt;&lt;code&gt;HEAD&lt;/code&gt; を付け替える &lt;code&gt;git checkout&lt;/code&gt; は、引数に &lt;strong&gt;パスを与えない場合&lt;/strong&gt; のもの。
-代わりにコミットを与える。&lt;/p&gt;
-
-&lt;p&gt;つまりは以下の様なコマンド形式になる。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;git checkout &amp;lt;コミット&amp;gt;&lt;/code&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;&amp;lt;コミット&amp;gt;&lt;/code&gt;の部分には、コミットオブジェクトのSHA1ハッシュ値、参照(i.e. ブランチかタグ)、シンボリック参照(e.g. &lt;code&gt;HEAD&lt;/code&gt;)を指定できる。(実際にはこれらが全てではないが、実用的にはこの3種。)&lt;/p&gt;
-
-&lt;p&gt;これを実行すると、&lt;strong&gt;指定したコミットが指すツリー以下の全てのブロブ&lt;/strong&gt; を指すようインデックスを更新し、それらのブロブをオブジェクト格納領域から取り出してワーキングディレクトリに配置する。&lt;/p&gt;
-
-&lt;p&gt;この上更に&lt;code&gt;HEAD&lt;/code&gt;を付け替えるわけだが、付け替え先は&lt;code&gt;&amp;lt;コミット&amp;gt;&lt;/code&gt;の種類によって以下の三通りある。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;&amp;lt;コミット&amp;gt;&lt;/code&gt;がブランチ: &lt;code&gt;HEAD&lt;/code&gt;はそのブランチを指すよう更新される。&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;&amp;lt;コミット&amp;gt;&lt;/code&gt;がSHA1ハッシュ値: &lt;code&gt;HEAD&lt;/code&gt;はコミットを指すよう更新される。&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;&amp;lt;コミット&amp;gt;&lt;/code&gt;がタグかシンボリック参照: &lt;code&gt;HEAD&lt;/code&gt;はタグかシンボリック参照が指すコミットを指すよう更新される。&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド4.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド5.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド6.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド7.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド8.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-checkout/git_checkout_branch/スライド9.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;上のスライド中のコミットをチェックアウトした例を見ると分かるが、コマンド実行前後でワーキングディレクトリからファイルが削除されることもある。
-これは多分、実際にはインデックスの更新処理の前に、&lt;code&gt;HEAD&lt;/code&gt;が指すコミットに含まれるファイルをワーキングディレクトリから削除する処理があるからだと考えられる。&lt;/p&gt;
-
-&lt;p&gt;また、上のスライドには表現していないが、コマンド実行前にワーキングディレクトリやインデックスに未コミットな変更が入っている場合、Gitはそれをコマンド実行後のワーキングディレクトリに適用しようとしてくれる。
-これは例えばあるブランチで作った変更を別のブランチにコミットしたいようなときは便利だが、&lt;code&gt;checkout&lt;/code&gt;したコミットに別途変更が入っているとその適用は失敗し、コマンドがエラーになるので、普通はコマンド実行前に&lt;code&gt;git stash&lt;/code&gt;しておくのが無難。&lt;/p&gt;
-</description>
-        </item>
-      
     
+    <item>
+      <title>git rebaseを図解する</title>
+      <link>https://www.kaitoy.xyz/2017/06/10/git-rebase/</link>
+      <pubDate>Sat, 10 Jun 2017 00:00:17 +0900</pubDate>
       
-        <item>
-          <title>Gitの良さが分からない？ ちょっとそこに座れ</title>
-          <link>https://www.kaitoy.xyz/2016/10/06/git-vs-subversion/</link>
-          <pubDate>Thu, 06 Oct 2016 00:18:05 -0600</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2016/10/06/git-vs-subversion/</guid>
-          <description>
-
-&lt;p&gt;&lt;a href=&#34;http://crapp.hatenablog.com/entry/2016/10/01/111528&#34;&gt;Gitの良さがいまだに分からない&lt;/a&gt;という人がいるようなので、Git派の一人としてSubversion(以下SVN)と比較してのGitの良さ(メリット)について語りたい。
-(GitとSVNの違いについては他の人の記事に詳しいのであまり書いていない一方、勢い余ってGitのデメリットも書いた。)&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;p&gt;本題に入る前に、冒頭にリンクを貼った記事についてひとつだけつっこんでおく。
-つっこみどころは他にも沢山あるけど。&lt;/p&gt;
-
-&lt;blockquote&gt;
-&lt;p&gt;※話の前提としてgitとSVNを採用している現場に下記のような割と違いがあるとする。&lt;/p&gt;
-
-&lt;p&gt;git
-イシューごとにブランチを切り、ローカルでコミットして、リモートブランチにpushして、GitHub・GitLab・Bitbucket経由でマージリクエスト。コードレビューの後にマージ。&lt;/p&gt;
-
-&lt;p&gt;SVN
-リモートのtrunkに個々人が直接コミット。コードレビューはあまりない。ブランチを切ることもない。&lt;/p&gt;
-
-&lt;p&gt;このような違いが出る背景には次のものがある。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;gitを採用する現場は、猫も杓子もgit-flowというプラクティスに従う傾向がある
-gitを採用する現場は、コードの品質もある程度管理する傾向がある
-SVNは集中型でありブランチ機能などが非常に使いにくい
-SVNを採用する現場はコードの品質よりも「リリースに含めるならさっさとコミット」と考える傾向がある
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;この前提には無理がある。&lt;/p&gt;
-
-&lt;p&gt;Gitのところに書いてあるのが、Gitというツールの枠を大きくはみだした&lt;a href=&#34;https://gist.github.com/Gab-km/3705015&#34;&gt;GitHub Flow&lt;/a&gt;というブランチ戦略+開発プロセスに当たるものであり、
-それでGitを批判するのはお門違いであろうという点については、Gitの流行がGitHubの人気によるところが大きく、GitHubを使えることがGitの大きなメリットであるので、目をつむることにする。(マージリクエストを使う羽目になるデメリットなんて言いがかりでしかないとだけ言っておく。)&lt;/p&gt;
-
-&lt;p&gt;看過できないのは、SVNを使った開発がコードレビューもブランチもないという点。&lt;/p&gt;
-
-&lt;p&gt;どこの世界の話をしているんだろうか。
-Gitが世に出る前は世間にコードレビューもブランチもあまりなかったかのような前提だが、もちろんそんなことは全くない。
-60万個以上のOSSプロジェクト情報を統括する&lt;a href=&#34;https://ja.wikipedia.org/wiki/Ohloh&#34;&gt;Open HUB&lt;/a&gt;によれば、OSSプロジェクトの&lt;a href=&#34;https://www.openhub.net/repositories/compare&#34;&gt;46%がSVNを使っている&lt;/a&gt;。この中にはGitの誕生以降にSVNを使い始めたプロジェクトも多くある。270000余りのプロジェクトの大部分がブランチすら使っていないとでも?&lt;/p&gt;
-
-&lt;p&gt;GitHub Flowと対比するために無理やりこじつけたんだろうけど、その無理のせいで議論のスタート地点からめちゃくちゃだ。&lt;/p&gt;
-
-&lt;p&gt;まともな開発にはコードレビューもブランチも必要だ。
-品質管理もリリース管理もしないなら要らないのかもしれないが、そんないい加減な開発現場を前提にSVNかGitかなんて議論しても意味がない。
-高品質なソフトウェアを効率よく開発するために則りたい素晴らしい開発フローがあるとして、そのフローをSVNやGitやその他のツールないしひょっとしたらアナクロな日付フォルダの内どれがもっとも上手く実現してくれるか、というのがあるべき議論だ。
-この「素晴らしい開発フロー」には一般的に品質管理と並行開発が含まれていて、それらにはコードレビューとブランチの利用が含まれている。
-Git(+GitHub)がこんなにも急速にSVNに取って代わって流行ったのは、分散リポジトリの仕組みとブランチの軽量な実装によって効率的な並行開発が実現でき、またプルリクエストなどの機能によりコードレビューを含む快適なソーシャルコーディングが実現できるからだ。
-逆に言えば、Gitが流行ったことが、人々が効率的な並行開発やコードレビューを開発フローに取り入れたかった証拠と言えるかもしれない。&lt;/p&gt;
-
-&lt;h1 id=&#34;gitのメリット&#34;&gt;Gitのメリット&lt;/h1&gt;
-
-&lt;p&gt;前置きが長くなったが、少なくともブランチとコードレビューを活用した高品質で高効率なソフトウェア開発をしたいという前提で、SVNに対するGitのメリットを挙げてみたい。&lt;/p&gt;
-
-&lt;h4 id=&#34;1-リポジトリ構造がシンプル&#34;&gt;1. リポジトリ構造がシンプル&lt;/h4&gt;
-
-&lt;p&gt;Gitリポジトリはすごくシンプルに作られているそうな。
-確かに、&lt;a href=&#34;https://www.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;その構造&lt;/a&gt;を見ると、&lt;code&gt;add&lt;/code&gt;、&lt;code&gt;commit&lt;/code&gt;、&lt;code&gt;log&lt;/code&gt;、&lt;code&gt;reset&lt;/code&gt;くらいは自前ですぐに実装できそうだ。&lt;/p&gt;
-
-&lt;p&gt;このシンプルな構造のおかげで、Gitリポジトリは壊れにくい。ここで壊れにくいとは、リポジトリ内部で不整合が起こりにくいということで、コマンドミスでコミット履歴が一部消えたりとかいうトラブルは壊れるに入らない。&lt;/p&gt;
-
-&lt;p&gt;実のところSVNリポジトリの構造を知らないので経験的なことしか言えないが、SVNリポジトリ(というより作業ディレクトリの管理情報?)はちょくちょく変な状態になり、クリーンアップしたり、酷い時には.svn内のファイルを手動でいじったりしなければならなかった。&lt;/p&gt;
-
-&lt;p&gt;因みに、シンプルというのはリポジトリサイズがすごく小さいということにはならず、同等の履歴を含むGitリポジトリとSVNリポジトリはだいたい同サイズなんだそうな。&lt;/p&gt;
-
-&lt;h4 id=&#34;2-ブランチが軽い&#34;&gt;2. ブランチが軽い&lt;/h4&gt;
-
-&lt;p&gt;Gitのブランチは単一のコミットを指す参照で、リポジトリ内ではSHA-1ハッシュ値が書かれただけのたった一つのファイルに過ぎない。
-その為ブランチは一瞬で作成できるし、ディスクも圧迫しないので、じゃんじゃん作ってじゃんじゃん消せる。
-さらに、ローカルリポジトリに過去の全ファイルの全バージョンが入っているという分散リポジトリの特長のおかげで、ブランチの切り替えも軽快にできる。
-ローカルから必要なファイルを作業ディレクトリに展開するだけなので。&lt;/p&gt;
-
-&lt;p&gt;一方SVNはそもそもブランチをサポートする直接的な機能がないため、ブランチはリビジョンのコピーという形で実装されている。
-コピーと言ってもハードリンクみたいなものでディスク上に物理的なコピーが作られるわけではなく、軽量という点ではGitと大差ないが、集中リポジトリなせいでブランチの切り替えには差が出る。
-&lt;code&gt;svn switch&lt;/code&gt;にしろ&lt;code&gt;svn checkout&lt;/code&gt;にしろネットワークの向こうのサーバとの通信が必要なので、それなりの時間がかかるし、通信が途切れると切り替えられなくなる。&lt;/p&gt;
-
-&lt;p&gt;冒頭に貼った記事にはGitはブランチを切り替える際に&lt;code&gt;stash&lt;/code&gt;とかしないといけなくて面倒とあったが、そんなのSVNだって同じだし、&lt;code&gt;stash&lt;/code&gt;すればいいだけだし、&lt;code&gt;stash&lt;/code&gt;という機能があるだけSVNよりまし。Gitならコミットはあとから書き変えられるので、&lt;code&gt;stash&lt;/code&gt;の代わりに一時的にコミットしちゃってもいい。&lt;/p&gt;
-
-&lt;p&gt;それも嫌なら&lt;a href=&#34;http://qiita.com/shibukk/items/80430b54ecda7f36ca44&#34;&gt;&lt;code&gt;worktree&lt;/code&gt;&lt;/a&gt;使えばよろしい。&lt;/p&gt;
-
-&lt;h4 id=&#34;3-バージョン間の差分取得が速い&#34;&gt;3. バージョン間の差分取得が速い&lt;/h4&gt;
-
-&lt;p&gt;Gitは全てのファイルについて全てのバージョンのコンテンツをまるまるリポジトリに持っている。
-一方SVNのリポジトリにはバージョン間の変更が記録されている。
-このため、あるファイルについて任意のバージョン間の差分を取るのに、Gitはシンプルにそれぞれのバージョンのファイルを取り出して比較するだけでよいが、SVNは隣り合ったバージョンでなければバージョン間の変更を足し合わせて差分を計算しなければいけない。&lt;/p&gt;
-
-&lt;p&gt;さらに、Gitは比較するファイルをローカルリポジトリから取り出すだけでよいが、SVNはサーバへのアクセスが必要なので、差分取得はGitの方が大分速い。&lt;/p&gt;
-
-&lt;h4 id=&#34;4-ログ取得が速い&#34;&gt;4. ログ取得が速い&lt;/h4&gt;
-
-&lt;p&gt;Gitのコミットは常にプロジェクトの全ファイルに対するものだ。
-これは変更したファイルの一部だけを対象とするコミット操作ができないという意味ではない。
-Gitがひとつのコミット操作をコミットオブジェクトと呼ばれる単一のファイルに記録し、そのファイルが常にプロジェクトの全ファイルの特定のバージョンを参照しているという意味だ。(正確に言うとこのファイル自身に全ての参照が記録されているわけではないが。)&lt;/p&gt;
-
-&lt;p&gt;このためGitのコミット履歴は実にシンプルで、ログ一覧を取得するには単にコミットをたどりながらコミットオブジェクトに書かれたログを集めればいい。&lt;/p&gt;
-
-&lt;p&gt;一方SVNはファイル毎にバージョンを管理するので、もう少しややこしい。&lt;/p&gt;
-
-&lt;p&gt;さらに、Gitはコミットオブジェクトをローカルリポジトリから持ってこれるがSVNは(以下略)。&lt;/p&gt;
-
-&lt;h4 id=&#34;5-オフラインでだいたいなんでもできる&#34;&gt;5. オフラインでだいたいなんでもできる&lt;/h4&gt;
-
-&lt;p&gt;と、ここまで書いて、Gitのいいところはオフライン作業が捗るところではないかと思い立った。&lt;/p&gt;
-
-&lt;p&gt;実際Gitは、&lt;code&gt;clone&lt;/code&gt;、&lt;code&gt;fetch&lt;/code&gt;、&lt;code&gt;pull&lt;/code&gt;、&lt;code&gt;push&lt;/code&gt;といったあからさまな操作以外はオフラインでできる。
-多くの操作にネットワーク通信コストを払わなくていい上、リモートリポジトリサーバが落ちたりネットワークが落ちたり山に籠ったりしていても作業が続けられる。&lt;/p&gt;
-
-&lt;p&gt;ノマドに最適。&lt;/p&gt;
-
-&lt;p&gt;一方SVNがネットワーク通信なしでできることは、…ベースバージョンとのdiffくらい?&lt;/p&gt;
-
-&lt;h4 id=&#34;6-コミット履歴を汚さずにコードレビューできる&#34;&gt;6. コミット履歴を汚さずにコードレビューできる&lt;/h4&gt;
-
-&lt;p&gt;私の職場はSVNを使っていて、コードを書いたら一旦コミットして、リビジョンを偉い人に通知してレビューしてもらっている。
-偉い人は遠い異国にいたりするが、こちらがコミットしてしまえばSVNの機能で変更内容の取得も確認もできるという寸法だ。
-リポジトリ外で変更内容をやりとりする方法とは違って、レビュー後のコミットミスや漏れが起こる余地がないのがいいが、レビューで受けた指摘は別のコミットを加えて反映したり、酷い時はリバースコミットで変更を取り消す必要がある。
-こういうコミット履歴は大抵単なるノイズで、そうでなくてもリポジトリにある必要はない情報だ。&lt;/p&gt;
-
-&lt;p&gt;一方GitならP2Pで偉い人にコミットを送れるし、レビュー後にコミットの作り直しもできるので、コミット履歴をきれいに保てる。
-履歴がきれいだと変更のトレーサビリティが高まる。
-変更のトレーサビリティが高いと、保守性が高くなり、低メンテナンスコストで高品質なプロダクトの開発につながる。&lt;/p&gt;
-
-&lt;h4 id=&#34;7-ソーシャルコーディングできる&#34;&gt;7. ソーシャルコーディングできる&lt;/h4&gt;
-
-&lt;p&gt;SaaSなら&lt;a href=&#34;https://github.com/&#34;&gt;GitHub&lt;/a&gt;や&lt;a href=&#34;https://bitbucket.org/product&#34;&gt;Bitbucket&lt;/a&gt;、オンプレミスなら&lt;a href=&#34;https://enterprise.github.com/home&#34;&gt;GitHub Enterprise&lt;/a&gt;や&lt;a href=&#34;https://about.gitlab.com/&#34;&gt;GitLab&lt;/a&gt;を利用して、ソーシャルコーディングを実現できるのはやはりGitの大きな強みだ。&lt;/p&gt;
-
-&lt;p&gt;ソーシャルコーディングはアジャイルの先にあるDevOpsに必須とも言える要素で、今後これを実現できないIT企業やユーザ企業は開発力で他企業に差を付けられ、苦しい競争を強いられるであろう。&lt;/p&gt;
-
-&lt;p&gt;バージョン管理ツール単体だけでなく、その上に乗っかるものまで見た場合、GitはSVNに大きく差を付けている感がある。&lt;/p&gt;
-
-&lt;h1 id=&#34;git対svnの迷信&#34;&gt;Git対SVNの迷信&lt;/h1&gt;
-
-&lt;p&gt;調べているうちに、Git対SVNで広く信じられている迷信があることを知ったので、ついでに書き残しておく。&lt;/p&gt;
-
-&lt;h4 id=&#34;1-svnのマージはクソ&#34;&gt;1. SVNのマージはクソ&lt;/h4&gt;
-
-&lt;p&gt;例えば&lt;a href=&#34;http://catcher-in-the-tech.net/806/&#34;&gt;「SVNからGitに移行して分かった、今すぐSVNを捨てるべき3つの理由」&lt;/a&gt;という記事の3つめの理由にSVNのマージ機能がクソと書いてあるが、これは最近では迷信とされている。&lt;/p&gt;
-
-&lt;p&gt;SVNは確かにかつてブランチとマージに対するサポートが貧弱で、ブランチがどこを起点に作られたか、どのコミットをマージしたかといった情報を記憶しなかったため、ユーザがコマンドに教えてあげたり、コミットログを工夫して記録してやらなければならなかった。
-しかし、&lt;a href=&#34;https://subversion.apache.org/docs/release-notes/1.5.html#merge-tracking&#34;&gt;バージョン1.5&lt;/a&gt;からこの状況が改善され始め、&lt;a href=&#34;https://subversion.apache.org/docs/release-notes/1.8.html#auto-reintegrate&#34;&gt;バージョン1.8&lt;/a&gt;で成熟したオートマージ機能により、SVNのマージも十分強力なものになった。&lt;/p&gt;
-
-&lt;p&gt;Gitは&lt;a href=&#34;https://git-scm.com/docs/merge-strategies&#34;&gt;オクトパスマージとかマージ戦略オプションとか&lt;/a&gt;あってさらに強力そうではあるけど、そんな高機能を必要とする場面があまりなさそう。&lt;/p&gt;
-
-&lt;h4 id=&#34;2-svnフォルダが各フォルダにあってうっとうしくてほんとクソ&#34;&gt;2. .svnフォルダが各フォルダにあってうっとうしくてほんとクソ&lt;/h4&gt;
-
-&lt;p&gt;これも今では迷信。&lt;a href=&#34;https://subversion.apache.org/docs/release-notes/1.7.html#wc-ng&#34;&gt;バージョン1.7&lt;/a&gt;から&lt;code&gt;.svn&lt;/code&gt;はルートフォルダだけに作られるようになった。&lt;/p&gt;
-
-&lt;h1 id=&#34;gitのデメリット&#34;&gt;Gitのデメリット&lt;/h1&gt;
-
-&lt;p&gt;GitはSVNより全ての点で優れているというわけでもない。
-以下、SVNに対するGitのデメリットを挙げてみたい。&lt;/p&gt;
-
-&lt;h4 id=&#34;1-cloneに時間がかかる&#34;&gt;1. cloneに時間がかかる&lt;/h4&gt;
-
-&lt;p&gt;Gitでの開発は基本的にリポジトリ全体を&lt;code&gt;clone&lt;/code&gt;することから始まる。
-上記の「オフラインでだいたいなんでもできる」というのは、最初に全部ローカルに持ってきてしまうことで活きてくる利点だ。&lt;/p&gt;
-
-&lt;p&gt;けどリポジトリが大きいとやっぱり&lt;code&gt;clone&lt;/code&gt;は時間がかかる操作になる。
-例えば、&lt;a href=&#34;https://github.com/torvalds/linux&#34;&gt;Linuxカーネル&lt;/a&gt;をGitHubから&lt;code&gt;clone&lt;/code&gt;してみたら 45 分程かかった。
-そんなに気軽にできる操作ではない。&lt;/p&gt;
-
-&lt;p&gt;このデメリットに対処する方法は&lt;a href=&#34;http://japan.blogs.atlassian.com/2014/05/handle-big-repositories-git/&#34;&gt;いくつかある&lt;/a&gt;が、それをするとオフライン作業の幅を狭めることになる。&lt;/p&gt;
-
-&lt;p&gt;SVNには&lt;code&gt;clone&lt;/code&gt;の概念がないのでこの悩みはない。&lt;/p&gt;
-
-&lt;h4 id=&#34;2-部分cloneのサポートが貧弱&#34;&gt;2. 部分cloneのサポートが貧弱&lt;/h4&gt;
-
-&lt;p&gt;上でも書いたが、GitはSVNのように履歴をディレクトリやファイル毎に管理しているわけではなく、コミットはプロジェクトの全ファイルを参照(i.e. 依存)しているので、特定のディレクトリ以下だけのcloneといった部分cloneの完全な実装は技術的に困難だ。&lt;/p&gt;
-
-&lt;p&gt;Gitはリリース当初、部分cloneのサポートを全く提供せず、バージョン1.7になってそれっぽい&lt;a href=&#34;http://stackoverflow.com/questions/600079/how-do-i-clone-a-subdirectory-only-of-a-git-repository&#34;&gt;sparse checkout&lt;/a&gt;が実装されたが、あまり使い勝手が良くない。
-Gitの開発陣は当初から部分cloneの実装に乗り気ではないし、上記の技術的な壁もあるので、今後この状況が大きく改善されることは恐らくないであろう。&lt;/p&gt;
-
-&lt;p&gt;妥協になるだろうが、ソースをモジュール毎に分割して別々のリポジトリに突っ込み、必要に応じて&lt;code&gt;submodule&lt;/code&gt;か&lt;code&gt;subtree&lt;/code&gt;でつなげるのが実用的な解ではないだろうか。
-それにしたって面倒だが。&lt;/p&gt;
-
-&lt;p&gt;SVNではリポジトリの一部を&lt;code&gt;checkout&lt;/code&gt;する操作は第一級市民であり、何の制限もなく快適にできる。
-この点においてはSVNパイセンの圧勝だ。&lt;/p&gt;
-
-&lt;h4 id=&#34;3-コマンドが分かり辛い&#34;&gt;3. コマンドが分かり辛い&lt;/h4&gt;
-
-&lt;p&gt;Gitはもともと低レベルなバージョン管理ツールとして開発されたためか、&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E3%83%AA%E3%83%BC%E3%83%8A%E3%82%B9%E3%83%BB%E3%83%88%E3%83%BC%E3%83%90%E3%83%AB%E3%82%BA&#34;&gt;神&lt;/a&gt;の思考パターンが凡人のそれとはかけ離れているためか、Gitのコマンド体系は分かり辛く使いにくいというのは世界共通の認識のようだ。
-このためGitの導入に当たってはどうしても高い学習コストを払わなければいけない。&lt;/p&gt;
-
-&lt;p&gt;これは、分散バージョン管理システムというアーキテクチャが複雑だから、という理由からくるものではない。
-同じ分散バージョン管理システムでも、&lt;a href=&#34;https://www.mercurial-scm.org/&#34;&gt;Mercurial&lt;/a&gt;は&lt;a href=&#34;https://blogs.atlassian.com/2012/02/mercurial-vs-git-why-mercurial/&#34;&gt;一貫したきれいな使いやすいコマンド体系をもっている&lt;/a&gt;らしい。&lt;/p&gt;
-
-&lt;p&gt;好みの問題もあるだろうが、この点についてもSVNに分があるというのが一般的な認識だ。&lt;/p&gt;
-
-&lt;p&gt;まあGitのGUIツールも&lt;a href=&#34;https://git-scm.com/docs/git-gui&#34;&gt;バンドルされてるやつ&lt;/a&gt;とか&lt;a href=&#34;https://tortoisegit.org/&#34;&gt;TortoiseGit&lt;/a&gt;とか&lt;a href=&#34;https://ja.atlassian.com/software/sourcetree&#34;&gt;SourceTree&lt;/a&gt;とか&lt;a href=&#34;https://www.gitkraken.com/&#34;&gt;イカ&lt;/a&gt;とか色々あるので、それで大分カバーできるだろうが。&lt;/p&gt;
-
-&lt;h4 id=&#34;4-バイナリファイルの扱いが下手&#34;&gt;4. バイナリファイルの扱いが下手&lt;/h4&gt;
-
-&lt;p&gt;Gitは基本的にテキストファイルを扱うよう作られていて、バイナリファイルの扱いは下手だ。
-これはSVNも同じだけど、SVNの方がましらしい。&lt;/p&gt;
-
-&lt;p&gt;例えば、バイナリファイルの同等の履歴を管理するのに、GitはSVNより少しだけ多くリポジトリ容量を食う。&lt;/p&gt;
-
-&lt;p&gt;また、Gitはファイルのコンテンツに注目して管理するツールであるが、バイナリファイルは人間から見ると少しの変更(e.g. 画像の明度の変更)でもコンテンツが大きく変わるため、Gitが変更前のファイルと変更後のファイルを別のファイルとして扱ってしまうことがある。(最近のバージョンでは修正されているかも。)&lt;/p&gt;
-
-&lt;p&gt;SVNはファイルそのものに注目しているので、その内容がどんなに劇的に変わっても見失うことはない。&lt;/p&gt;
-
-&lt;p&gt;Gitでバイナリファイル、特にサイズが大きかったり頻繁に修正されるものを扱う必要があるときは、&lt;a href=&#34;https://git-annex.branchable.com/&#34;&gt;git-annex&lt;/a&gt;や&lt;a href=&#34;https://git-lfs.github.com/&#34;&gt;Git Large File Storage (LFS)&lt;/a&gt;の利用を検討すべし。&lt;/p&gt;
-
-&lt;h4 id=&#34;5-アクセスコントロール機能がない&#34;&gt;5. アクセスコントロール機能がない&lt;/h4&gt;
-
-&lt;p&gt;Git自身にはアクセスコントロール機能が全く実装されていない(多分)。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;clone&lt;/code&gt;するときなんかは、HTTPやSSHやTLSの力を借りてリポジトリ単位でのユーザ認証ができたり、&lt;code&gt;push&lt;/code&gt;するときにはファイルシステムのアクセスコントロールの力を借りて特定のファイルの変更を防いだりはできるが、もっと細かい制御をしたい場合は&lt;a href=&#34;https://github.com/sitaramc/gitolite&#34;&gt;Gitolite&lt;/a&gt;の力を借りる必要がある。&lt;/p&gt;
-
-&lt;p&gt;借りてばっかだ。&lt;/p&gt;
-
-&lt;p&gt;一方SVNは自前で&lt;a href=&#34;http://svnbook.red-bean.com/en/1.8/svn.serverconfig.pathbasedauthz.html&#34;&gt;Path-Based Authorization&lt;/a&gt;という機能を持っていて、ユーザ認証とディレクトリまたはファイル単位での読み書き制限ができる。&lt;/p&gt;
-
-&lt;h4 id=&#34;6-ファイル単位の履歴を保持しない&#34;&gt;6. ファイル単位の履歴を保持しない&lt;/h4&gt;
-
-&lt;p&gt;上にも書いたが、GitはSVNのようにファイル単位でバージョン管理をしているわけではないし、また、ファイルそのものではなくそのコンテンツに注目してバージョン管理する。この特徴のせいで、Gitはたまにファイルの行方を見失うことがある。&lt;/p&gt;
-
-&lt;p&gt;上記バイナリファイルの問題もそうだし、テキストファイルでもリネームとコンテンツ変更を同時にやると&lt;code&gt;git log --follow&lt;/code&gt;で&lt;a href=&#34;https://svnvsgit.com/#losing-history-after-rename-in-Git&#34;&gt;ファイルの履歴が追えなくなる&lt;/a&gt;。&lt;/p&gt;
-
-&lt;p&gt;SVNはリネームにちゃんと&lt;code&gt;svn mv&lt;/code&gt;を使っている限りファイルを見失うことはない。&lt;/p&gt;
-
-&lt;p&gt;ただこれは実際、Gitのデメリットと言うよりは、GitとSVNの思想の違いと言った方がいいかもしれない。
-&lt;code&gt;git log --follow&lt;/code&gt;は単に&lt;a href=&#34;http://stackoverflow.com/questions/5743739/how-to-really-show-logs-of-renamed-files-with-git&#34;&gt;SVNに慣れ親しんだGit初心者のための機能&lt;/a&gt;で、真のGit使いは特定のファイルの履歴を追うということを必要としない。&lt;/p&gt;
-
-&lt;p&gt;ファイルの履歴を見たい煩悩に駆られたら、心を静め、&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E3%83%AA%E3%83%BC%E3%83%8A%E3%82%B9%E3%83%BB%E3%83%88%E3%83%BC%E3%83%90%E3%83%AB%E3%82%BA&#34;&gt;神&lt;/a&gt;に祈りを捧げ、Gitのソースコードを写経し、Gitコマンドを108回たたいて悟りを開くべし。&lt;/p&gt;
-
-&lt;h1 id=&#34;まとめ&#34;&gt;まとめ&lt;/h1&gt;
-
-&lt;p&gt;Git派としてGit押しの記事を書こうと思っていたが、意外とデメリットもたくさん見えてきてしまった。
-結局、GitとSVNどちらが単純に優れているということはないので、プロジェクトの構成やワークフローなどの要件を鑑みて使い分ければよしということか。&lt;/p&gt;
-
-&lt;h1 id=&#34;参考資料&#34;&gt;参考資料&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&#34;https://www.oreilly.co.jp/books/9784873114408/&#34;&gt;蝙蝠本&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://git.wiki.kernel.org/index.php/GitSvnComparsion&#34;&gt;GitSvnComparison&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://svnvsgit.com/&#34;&gt;Subversion vs. Git: Myths and Facts&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-</description>
-        </item>
-      
+      <guid>https://www.kaitoy.xyz/2017/06/10/git-rebase/</guid>
+      <description>この記事を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、Gitの git rebase というコマンドについて説明する。
+このコマンドは、コミット履歴を改変できるGit特有のコマンドで、分かり辛いGitコマンドの中でも最も分かり辛い部類のものだ。 Gitの最後の関門と言えよう。 けど、それだけに使いこなせばとても便利なものでもある。
+
+   (adsbygoogle = window.adsbygoogle || []).push({});  git rebaseがもつたった一つの機能 git rebaseにはいろんなオプションがあって、ちょっと調べただけだと、コミットを移動する機能とコミットを修正する機能の二つがあるように見えるかもしれないが、実際は単一の機能しかないシンプルなコマンドだ。
+その機能とは、指定した範囲のコミットが含む変更を、別に指定したコミットのコードベースに適用するというもの。
+コマンドの基本形は次のようなものだ。
+$ git rebase --onto master dev bugfix  このコマンドは、bugfixから辿れるコミット群から、devから辿れるコミット群を除いたコミット群が含む変更を、masterのコードベースに適用する。
+と書いても分からないので図解する。
+
+       
+このスライドを見ると、git rebaseに指定した3つのブランチのそれぞれの使われ方が分かるはず。
+git rebase --onto master dev bugfixが実行する処理をもっと正確に言うと、
+ bugfixをcheckoutして(i.e. HEADをbugfixにして)、 dev..HEADのコミット群が含む変更を、それぞれ仮領域にパッチとして保存して、 git reset --hard masterして、 仮領域に保存した変更を、HEADが指すコミットのコードベースにひとつひとつ順番に適用する。  
+上記コマンドでbugfixのところを省略すると、ステップ1のcheckoutが省略される。 言い換えると、上記コマンドは次の二つのコマンドに分解できる。
+$ git checkout bugfix $ git rebase --onto master dev  さらに、--onto masterを省略すると、ステップ3のreset先が変わり、devになる。 このときのコマンドの形は、</description>
+    </item>
     
+    <item>
+      <title>git checkoutを図解する</title>
+      <link>https://www.kaitoy.xyz/2016/10/08/git-checkout/</link>
+      <pubDate>Sat, 08 Oct 2016 16:39:46 -0600</pubDate>
       
-        <item>
-          <title>git resetとrevertを図解する</title>
-          <link>https://www.kaitoy.xyz/2016/01/01/git-revert-reset/</link>
-          <pubDate>Fri, 01 Jan 2016 18:38:02 -0700</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2016/01/01/git-revert-reset/</guid>
-          <description>
+      <guid>https://www.kaitoy.xyz/2016/10/08/git-checkout/</guid>
+      <description>この記事を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、Gitの git checkout というコマンドについて説明する。
+このコマンドは普通ブランチを切り替えるものと説明されるが、主たる機能は オブジェクト格納領域から指定されたファイルを取り出し、ワーキングディレクトリに配置する ものである。 つまりこれがGitにおけるチェックアウトで、チェックアウト=ブランチの切り替えではない。
+コマンドに与える引数によっては HEAD の付け替え、つまりはブランチの切り替えもする、というだけ。
+git checkout の動作を HEAD の付け替えの有無によって分けて考えると分かりやすく覚えやすいので、以下そのように説明する。
 
-&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;の &lt;code&gt;git revert&lt;/code&gt; と &lt;code&gt;git reset&lt;/code&gt;というコマンドについて説明する。
-この二つはしばしばコミットを取り消すコマンドとして同じ文脈で説明されることが多いのでこのエントリでも一緒に説明するが、実際は全く異なるコマンドだし、そもそもどちらもコミットを取り消すコマンドではない。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h2 id=&#34;git-revert&#34;&gt;git revert&lt;/h2&gt;
-
-&lt;p&gt;&lt;code&gt;git revert&lt;/code&gt;は、指定したコミットが持ち込んだ変更を打ち消すコミットを追加する。
-リバースパッチを適用すると言ってもよい。
-コミットを追加しかしないので、このコマンドによって既存のコミットが消えたり変わったりすることはない。&lt;/p&gt;
-
-&lt;p&gt;図にすると以下の感じ。単純。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-revert-reset/git_revert/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-revert-reset/git_revert/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;git-reset&#34;&gt;git reset&lt;/h2&gt;
-
-&lt;p&gt;&lt;code&gt;git reset&lt;/code&gt;には二つの機能がある。
-インデックスを再設定する(i.e. resetする)機能と、&lt;code&gt;HEAD&lt;/code&gt;を付け替える(i.e. resetする)機能だ。&lt;/p&gt;
-
-&lt;h4 id=&#34;インデックスの再設定&#34;&gt;インデックスの再設定&lt;/h4&gt;
-
-&lt;p&gt;インデックスの再設定をするコマンドは&lt;code&gt;git reset &amp;lt;ワーキングディレクトリ内のファイルのパス(複数可)&amp;gt;&lt;/code&gt;。
-これを実行すると、指定したファイルについて、&lt;code&gt;HEAD&lt;/code&gt;が指すコミットが指すツリー内のブロブを指すようインデックスを更新する。&lt;/p&gt;
-
-&lt;p&gt;何を言っているのかわからないので図にする。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-revert-reset/git_reset_path/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-revert-reset/git_reset_path/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-revert-reset/git_reset_path/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;(この図では便宜的に&lt;code&gt;HEAD&lt;/code&gt;、つまり参照をオブジェクト格納領域内に書いているが、実際には別の場所にあることに注意。)&lt;/p&gt;
-
-&lt;p&gt;図を見ると、&lt;code&gt;git add Readme.md&lt;/code&gt;と&lt;code&gt;git reset Readme.md&lt;/code&gt;がだいたい逆のことをしていることがわかる。
-要するに、&lt;code&gt;git add &amp;lt;パス&amp;gt;&lt;/code&gt;は指定したファイルをステージし、&lt;code&gt;git reset &amp;lt;パス&amp;gt;&lt;/code&gt;は指定したファイルをアンステージする。&lt;/p&gt;
-
-&lt;h4 id=&#34;headの付け替え&#34;&gt;HEADの付け替え&lt;/h4&gt;
-
-&lt;p&gt;&lt;code&gt;HEAD&lt;/code&gt;の付け替えをするコマンドは&lt;code&gt;git reset &amp;lt;コミット&amp;gt;&lt;/code&gt;。
-これを実行すると、&lt;code&gt;HEAD&lt;/code&gt;が指しているコミットを指すよう&lt;code&gt;ORIG_HEAD&lt;/code&gt;を作成または更新し、指定したコミットを指すよう&lt;code&gt;HEAD&lt;/code&gt;を更新する。
-オプションによってはさらにインデックスやワーキングディレクトリを指定したコミットが指すツリーと同期するよう更新する。&lt;/p&gt;
-
-&lt;p&gt;このオプションには&lt;code&gt;--soft&lt;/code&gt;、&lt;code&gt;--mixed&lt;/code&gt; (デフォルト)、&lt;code&gt;--hard&lt;/code&gt;の三種類があり、それぞれのオプションを付けた時の更新対象を次の表に示す。&lt;/p&gt;
-
-&lt;table&gt;
-&lt;thead&gt;
-&lt;tr&gt;
-&lt;th&gt;オプション&lt;/th&gt;
-&lt;th&gt;HEAD&lt;/th&gt;
-&lt;th&gt;インデックス&lt;/th&gt;
-&lt;th&gt;ワーキングディレクトリ&lt;/th&gt;
-&lt;/tr&gt;
-&lt;/thead&gt;
-
-&lt;tbody&gt;
-&lt;tr&gt;
-&lt;td&gt;--soft&lt;/td&gt;
-&lt;td&gt;○&lt;/td&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;/tr&gt;
-
-&lt;tr&gt;
-&lt;td&gt;--mixed&lt;/td&gt;
-&lt;td&gt;○&lt;/td&gt;
-&lt;td&gt;○&lt;/td&gt;
-&lt;td&gt;&lt;/td&gt;
-&lt;/tr&gt;
-
-&lt;tr&gt;
-&lt;td&gt;--hard&lt;/td&gt;
-&lt;td&gt;○&lt;/td&gt;
-&lt;td&gt;○&lt;/td&gt;
-&lt;td&gt;○&lt;/td&gt;
-&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;この三者の違いについては面倒だしだいたい分かるはずなので図にしないが、&lt;code&gt;git reset &amp;lt;コミット&amp;gt;&lt;/code&gt;したときの&lt;code&gt;HEAD&lt;/code&gt;動きについて次に図示する。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-revert-reset/git_reset_commit/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-revert-reset/git_reset_commit/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-revert-reset/git_reset_commit/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;スライド中で&lt;code&gt;git reset HEAD^&lt;/code&gt;した時点で、コミットDは実質的に削除されたに近い状態になる。
-&lt;code&gt;ORIG_HEAD&lt;/code&gt;という一時的なシンボリック参照で指されているだけで、どの参照からもたどり着けなくなるからだ。
-コミットDはいずれ&lt;code&gt;git gc&lt;/code&gt;によって実際に削除されるはずだし、&lt;code&gt;git push&lt;/code&gt;してもコミットD、それが指すツリー、そのツリーの下にしかないブロブはリモートリポジトリに送られない。&lt;/p&gt;
-
-&lt;p&gt;よって、&lt;code&gt;git reset &amp;lt;コミット&amp;gt;&lt;/code&gt;は普通コミットを削除したいときに使われる。
-使われはするが、このコマンド自体がコミットを削除するわけではなくて、あくまで&lt;code&gt;HEAD&lt;/code&gt;を付け替えるコマンドであることを覚えていた方がいざというときに助かる。&lt;/p&gt;
-
-&lt;p&gt;因みに上のスライドでやった操作は、&lt;code&gt;git commit --amend&lt;/code&gt;がやることとほぼ同じ。&lt;/p&gt;
-</description>
-        </item>
-      
+   (adsbygoogle = window.adsbygoogle || []).push({});  HEADを付け替えないgit checkout HEAD を付け替えない git checkout は、引数にワーキングディレクトリ内の ファイルまたはディレクトリへのパスを与えた場合 のもの。 ディレクトリを指定した場合はそれ以下の全ファイルが操作対象となる。 パスは絶対パスかカレントディレクトリからの相対パスで、複数指定できる。
+つまりは以下の様なコマンド形式になる。
+git checkout &amp;lt;パス(複数可)&amp;gt;
+これを実行すると、指定したファイルについて、インデックスが指しているブロブ をオブジェクト格納領域から取り出し、ワーキングディレクトリのファイルを置き変える。
+        
+上のスライドではインデックスが指しているブロブを取り出したが、任意のブロブを取り出すこともできる。 この場合、以下の様なコマンド形式を使う。
+git checkout &amp;lt;コミット&amp;gt; &amp;lt;パス(複数可)&amp;gt;
+このコマンド形式だと、指定したコミットが指すツリー以下のブロブ が取り出される。 &amp;lt;コミット&amp;gt;の部分には、コミットオブジェクトのSHA1ハッシュ値、参照(i.e. ブランチかタグ)、シンボリック参照(e.g. HEAD)を指定できる。(実際にはこれらが全てではないが、実用的にはこの3種。)
+この形式だと、ワーキングディレクトリだけでなく、取り出すブロブを指すよう インデックスも更新される ことに注意。</description>
+    </item>
     
+    <item>
+      <title>Gitの良さが分からない？ ちょっとそこに座れ</title>
+      <link>https://www.kaitoy.xyz/2016/10/06/git-vs-subversion/</link>
+      <pubDate>Thu, 06 Oct 2016 00:18:05 -0600</pubDate>
       
-        <item>
-          <title>Gitの分散バージョン管理の仕組み</title>
-          <link>https://www.kaitoy.xyz/2015/12/31/git-dvc/</link>
-          <pubDate>Thu, 31 Dec 2015 01:02:59 -0700</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2015/12/31/git-dvc/</guid>
-          <description>
-
-&lt;p&gt;このエントリでは、&lt;a href=&#34;https://www.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;の分散バージョン管理の仕組みについて説明する。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h2 id=&#34;gitの分散バージョン管理&#34;&gt;Gitの分散バージョン管理&lt;/h2&gt;
-
-&lt;p&gt;分散バージョン管理とは、分散したリポジトリでのバージョン管理ということ。
-ここでリポジトリが分散しているとは、同じプロジェクトの履歴を管理する完全で独立したリポジトリが複数あるということ。
-これにより一つのプロジェクトの開発を地理的に分散して並行して進めることができる。&lt;/p&gt;
-
-&lt;p&gt;Gitは分散バージョン管理のために、リポジトリのクローン(≒コピー)を作る機能と、リポジトリ間でコミットグラフを同期する機能を提供している。&lt;/p&gt;
-
-&lt;p&gt;リポジトリのクローンを作ると言うと、オリジナルとクローンの間に格差があるような気がするが、
-実際にはGitは全てのリポジトリが対等であるという思想のもとで実装されている。
-このため、リポジトリをクローンする時には(デフォルトで)クローン元の完全なコミットグラフがクローンにコピーされるし、任意のリポジトリ間のデータのやり取りをpeer-to-peerでできる。
-クローンからクローンを作ることももちろん可能。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;git push&lt;/code&gt;でデータを送る先をアップストリームと呼ぶことはあるし、次節でローカルリポジトリとリモートリポジトリという関係が出てくるが、これはあくまでその時点でそういう設定になっているというだけ。
-アップストリームはいつでもいくつでも&lt;code&gt;git remote&lt;/code&gt;コマンドで追加したり削除したりできる。&lt;/p&gt;
-
-&lt;p&gt;このような実装により、Gitの分散バージョン管理ではリポジトリ間で柔軟なデータのやり取りができる。
-例えば以下の様な複雑なリポジトリネットワークを組むこともできる。&lt;/p&gt;
-
-&lt;p&gt;&lt;img alt=&#34;good-object-2.png&#34; src=&#34;https://www.kaitoy.xyz/images/git-dvc/repo_net.png&#34; style=&#34;width: 100%; max-width: 400px; margin: 0px auto; display: block;&#34;&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;ローカルリポジトリとリモートリポジトリ&#34;&gt;ローカルリポジトリとリモートリポジトリ&lt;/h2&gt;
-
-&lt;p&gt;一人の開発者から見て、手元にあるリポジトリを &lt;strong&gt;ローカルリポジトリ&lt;/strong&gt; と呼ぶのに対して、&lt;code&gt;git push&lt;/code&gt;や&lt;code&gt;git pull&lt;/code&gt;や&lt;code&gt;git fetch&lt;/code&gt;でデータをやり取りする相手のリポジトリを &lt;strong&gt;リモートリポジトリ&lt;/strong&gt; と呼ぶ。
-リモートリポジトリとのやり取りは、&lt;strong&gt;リモート追跡ブランチ&lt;/strong&gt; と &lt;strong&gt;リモート&lt;/strong&gt; というものを使って実装されている。&lt;/p&gt;
-
-&lt;h4 id=&#34;リモート追跡ブランチ&#34;&gt;リモート追跡ブランチ&lt;/h4&gt;
-
-&lt;p&gt;リモート追跡ブランチは、ローカルリポジトリの&lt;code&gt;.git/refs/remotes/&lt;/code&gt;に格納される参照で、リモートリポジトリ内のローカルブランチのコミットグラフを取得してローカルリポジトリ内に保持するために使われる。
-&lt;code&gt;git branch -r&lt;/code&gt;でその一覧が見れる。&lt;/p&gt;
-
-&lt;p&gt;「追跡」ブランチというだけあって、リモートリポジトリ内でコミットグラフが成長した場合、この変更に追随することができる。
-このためのコマンドが&lt;code&gt;git fetch&lt;/code&gt;。
-因みに&lt;code&gt;git pull&lt;/code&gt;は、&lt;code&gt;git fetch&lt;/code&gt;でリモート追跡ブランチを更新した後、&lt;code&gt;git merge&lt;/code&gt;(オプションによっては&lt;code&gt;git rebase&lt;/code&gt;)でそのリモート追跡ブランチをローカルブランチにマージするのと同じ。&lt;/p&gt;
-
-&lt;h4 id=&#34;リモート&#34;&gt;リモート&lt;/h4&gt;
-
-&lt;p&gt;リモートとは、リモートリポジトリのこと、またはリモートリポジトリに接続するための定義のこと。
-この定義は、ローカルリポジトリの&lt;code&gt;.git/config&lt;/code&gt;に&lt;code&gt;remote&lt;/code&gt;セクションとして書かれている。
-以下がその例。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;[remote &amp;quot;origin&amp;quot;]
-        fetch = +refs/heads/*:refs/remotes/origin/*
-        url = git@github.com:kaitoy/blog.git
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;セクション名のところに&lt;code&gt;&amp;quot;origin&amp;quot;&lt;/code&gt;とあるがこれは、この定義で接続するリモートリポジトリをGitコマンドなどで&lt;code&gt;origin&lt;/code&gt;と指定できるということ。
-ここで定義されているのは&lt;code&gt;url&lt;/code&gt;と&lt;code&gt;fetch&lt;/code&gt;で、それぞれ以下を意味する。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;url&lt;/p&gt;
-
-&lt;p&gt;リモートリポジトリのURL。
-つまり、リモートリポジトリがどのサーバのどのディレクトリにあって、それとのデータのやり取りをどのプロトコルでやるかという定義。
-このURLには以下の書式が使える。&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;ファイルパス&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;/path/to/repo.git&lt;/code&gt;とか&lt;code&gt;C:\\Users\\Kaito\\Desktop\\pcap4j&lt;/code&gt;といった、普通のファイルパスの書式。
-&lt;a href=&#34;https://ja.wikipedia.org/wiki/Network_File_System&#34;&gt;NFS&lt;/a&gt;などでリモートリポジトリが共有されている場合などに使われる。&lt;/p&gt;
-
-&lt;p&gt;シンボリックリンクがサポートされているOS上では、クローンはリモートリポジトリをハードリンクで参照する。
-このシンボリック参照でのファイル共有がトラブルの元なため、この書式は非推奨。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;ファイルURL&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;file:///path/to/repo.git&lt;/code&gt;とか&lt;code&gt;file://C:/Users/Kaito/Desktop/pcap4j&lt;/code&gt;といった、ローカルホスト上のパスを示すファイルURLの書式。
-用途はファイルパスと同様だが、ハードリンクを作る代わりにコピーするのでより安全。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;HTTP(S)&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;https://github.com/kaitoy/pcap4j.git&lt;/code&gt;といったHTTPSやHTTPのURL。
-リポジトリへのアクセス制御にHTTPの認証機能やHTTPSのクライアント証明書などが使えるほか、HTTPSなら通信の暗号化もできる。&lt;/p&gt;
-
-&lt;p&gt;使用するポートがファイアウォールにブロックされていることが少ないのも使いやすい。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;Gitプロトコル&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;git://example.com/path/to/repo.git&lt;/code&gt;といった書式で、&lt;a href=&#34;https://git-scm.com/book/ja/v1/Git-%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC-Git-%E3%83%87%E3%83%BC%E3%83%A2%E3%83%B3&#34;&gt;Gitデーモン&lt;/a&gt;によるGitネイティブプロトコルを使うURL。
-HTTPよりも高速な通信ができるが、認証機能も暗号化機能もない。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;SSH + Gitプロトコル&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;ssh://git@github.com/kaitoy/pcap4j.git&lt;/code&gt;のような&lt;a href=&#34;https://ja.wikipedia.org/wiki/Secure_Shell&#34;&gt;SSH&lt;/a&gt;のURLで、これを使うとSSHトンネルを通してGitプロトコルで通信できる。
-Gitプロトコル単体を使うのに比べ、SSHの認証機能と暗号化機能を利用できるが、やや遅くなるはず。&lt;/p&gt;
-
-&lt;p&gt;このプロトコルには、&lt;code&gt;git@github.com:kaitoy/pcap4j.git&lt;/code&gt;のような&lt;a href=&#34;https://ja.wikipedia.org/wiki/Secure_copy&#34;&gt;SCP&lt;/a&gt;書式も使える。&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;Git自体はGitデーモンを含めリポジトリへのアクセス制御の機能を一切持たないので、認証などが必要な場合はHTTPなどその機能を持つプロトコルのURLを使う必要がある。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;fetch&lt;/p&gt;
-
-&lt;p&gt;リモートリポジトリ内のローカルブランチとローカルリポジトリ内の追跡ブランチとがどう対応するかを定義する。
-この定義は&lt;code&gt;refspec&lt;/code&gt;と呼ばれる。&lt;/p&gt;
-
-&lt;p&gt;上の例の&lt;code&gt;fetch = +refs/heads/*:refs/remotes/origin/*&lt;/code&gt;だと、リモートリポジトリの&lt;code&gt;.git/refs/heads/&lt;/code&gt;にある全てのブランチをそれぞれ、ローカルリポジトリの&lt;code&gt;.git/refs/remotes/origin/&lt;/code&gt;にある同名のブランチで追跡する、という意味。&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;クローン時の挙動&#34;&gt;クローン時の挙動&lt;/h2&gt;
-
-&lt;p&gt;クローン時のデフォルトの挙動は以下の様なもの。&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;&lt;p&gt;オブジェクト格納領域内のオブジェクトが全てクローンにコピーされる。
-(多分。参照からたどれないオブジェクトもコピーされることを確認した。)
-つまり、元のリポジトリ(i.e. リモートリポジトリ)と同じコミットグラフ(とタグオブジェクト)がクローンのリポジトリに入る。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;リモートリポジトリ内の全てのローカルブランチに対応する同名のリモート追跡ブランチがクローンのリポジトリ内に作成される。
-これに対応するリモートも作成され、これの&lt;code&gt;fetch&lt;/code&gt;に(前節の例と同様に)&lt;code&gt;+refs/heads/*:refs/remotes/origin/*&lt;/code&gt;が設定される。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;リモートリポジトリのカレントブランチがローカルリポジトリにコピーされ、チェックアウトされる。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;リモートリポジトリの全てのタグがクローンにコピーされる。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;ローカルリポジトリで&lt;code&gt;git fetch&lt;/code&gt;が実行され、全てのリモート追跡ブランチが更新される。&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;インデックスはリポジトリ毎に固有の一時的なデータなので、クローンにはコピーされない。&lt;/p&gt;
-
-&lt;p&gt;リモート追跡ブランチもクローンにコピーされない。&lt;/p&gt;
-
-&lt;p&gt;シンボリック参照もクローンにコピーされない。
-クローンにはカレントブランチを指す&lt;code&gt;HEAD&lt;/code&gt;だけが作成される。&lt;/p&gt;
-
-&lt;h2 id=&#34;リモートリポジトリとのやり取りの図解&#34;&gt;リモートリポジトリとのやり取りの図解&lt;/h2&gt;
-
-&lt;p&gt;リモートリポジトリをクローンして、変更をプルしたりプッシュしたりする様子を以下に図示する。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_merge/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_merge/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_merge/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_merge/スライド4.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_merge/スライド5.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_merge/スライド6.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;これはこれで完全に正しい手順だが、最終的にできるコミットグラフが無駄に分岐していて美しくない。
-普通は以下の様に、リベースを挟んで一直線の履歴に保つ方が一般にいいと思う。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_ff/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_ff/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_ff/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-dvc/git_dvc_ff/スライド4.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;このフェッチ + リベースを一度にやってくれるのが、&lt;code&gt;git pull --rebase&lt;/code&gt;。&lt;/p&gt;
-
-&lt;h2 id=&#34;gitで分散バージョン管理する際の注意点&#34;&gt;Gitで分散バージョン管理する際の注意点&lt;/h2&gt;
-
-&lt;p&gt;Gitで分散バージョン管理する際の注意点を二つ挙げる。&lt;/p&gt;
-
-&lt;h4 id=&#34;他のリポジトリにもあるコミットを変更してはいけない&#34;&gt;他のリポジトリにもあるコミットを変更してはいけない&lt;/h4&gt;
-
-&lt;p&gt;Gitには、&lt;code&gt;git commit --amend&lt;/code&gt;、&lt;a href=&#34;https://www.kaitoy.xyz/2015/12/28/git-merge/#%E3%83%AA%E3%83%99%E3%83%BC%E3%82%B9&#34;&gt;&lt;code&gt;git rebase&lt;/code&gt;&lt;/a&gt;といったコミットを変更するコマンドや、&lt;a href=&#34;https://www.kaitoy.xyz/2016/01/01/git-revert-reset/#git-reset&#34;&gt;&lt;code&gt;git reset&lt;/code&gt;&lt;/a&gt;というコミットの削除につながるコマンドがある。
-こういうコマンドで他のリポジトリにもあるコミットを変更してはいけない。&lt;/p&gt;
-
-&lt;p&gt;他のリポジトリにもあるコミットとは、クローン時にコピーしてきたコミット、プルしたコミット、プッシュしたコミットなどのこと。&lt;/p&gt;
-
-&lt;p&gt;もしやると、プッシュもプルも簡単にはできなくなり非常に面倒なことになる。&lt;/p&gt;
-
-&lt;h4 id=&#34;開発リポジトリには-基本的に-プッシュしてはいけない&#34;&gt;開発リポジトリには(基本的に)プッシュしてはいけない&lt;/h4&gt;
-
-&lt;p&gt;リポジトリには、&lt;strong&gt;ベアリポジトリ&lt;/strong&gt; と、&lt;strong&gt;開発リポジトリ&lt;/strong&gt; がある。
-開発リポジトリは普段使っている普通のリポジトリ。
-ベアリポジトリは、簡単に言うとワーキングディレクトリやカレントブランチやリモートを持たないリポジトリで、開発リポジトリのリモートリポジトリとして使われ、&lt;code&gt;git init&lt;/code&gt;や&lt;code&gt;git clone&lt;/code&gt;に&lt;code&gt;--bare&lt;/code&gt;オプションを付けて実行すると作れる。&lt;/p&gt;
-
-&lt;p&gt;ベアリポジトリにはプッシュしていい。
-むしろプッシュしないベアリポジトリに意味はない。&lt;/p&gt;
-
-&lt;p&gt;一方、開発リポジトリには(基本的に)プッシュしてはいけない。
-これは、プッシュがリモートリポジトリのオブジェクトと参照だけ更新してワーキングディレクトリやインデックスは更新せず、開発者がプッシュされたことに気付けないため(※1)。
-気付かないまま開発を進めてコミットを作ると、プッシュによって&lt;code&gt;HEAD&lt;/code&gt;が変わっていたりするため、コミットグラフが変な状態になってしまう。&lt;/p&gt;
-
-&lt;p&gt;お互い示し合わせたうえでプッシュをしたりプッシュするブランチを工夫したりすれば問題が起きないようにできるはできる。&lt;/p&gt;
-
-&lt;p&gt;(※1: と&lt;a href=&#34;https://www.oreilly.co.jp/books/9784873114408/&#34;&gt;O&amp;rsquo;Reillyの蝙蝠本&lt;/a&gt;には書いてあったが、これは&lt;a href=&#34;https://github.com/git/git/blob/master/Documentation/RelNotes/1.7.0.txt&#34;&gt;Git 1.6.xまでの話らしい&lt;/a&gt;。
-今はチェックアウトされたブランチにはデフォルトでプッシュできないので、この節に書いた問題は基本的に起きない。
-2.6.3で試したら以下のエラーになった。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;remote: error: refusing to update checked out branch: refs/heads/master
-remote: error: By default, updating the current branch in a non-bare repository
-remote: error: is denied, because it will make the index and work tree inconsistent
-remote: error: with what you pushed, and will require &#39;git reset --hard&#39; to match
-remote: error: the work tree to HEAD.
-remote: error:
-remote: error: You can set &#39;receive.denyCurrentBranch&#39; configuration variable t
-remote: error: &#39;ignore&#39; or &#39;warn&#39; in the remote repository to allow pushing int
-remote: error: its current branch; however, this is not recommended unless you
-remote: error: arranged to update its work tree to match what you pushed in som
-remote: error: other way.
-remote: error:
-remote: error: To squelch this message and still keep the default behaviour, se
-remote: error: &#39;receive.denyCurrentBranch&#39; configuration variable to &#39;refuse&#39;.
-To file://C:/Users/Kaito/Desktop/master
- ! [remote rejected] master -&amp;gt; master (branch is currently checked out)
-error: failed to push some refs to &#39;file://C:/Users/Kaito/Desktop/master&#39;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;)&lt;/p&gt;
-</description>
-        </item>
-      
+      <guid>https://www.kaitoy.xyz/2016/10/06/git-vs-subversion/</guid>
+      <description>Gitの良さがいまだに分からないという人がいるようなので、Git派の一人としてSubversion(以下SVN)と比較してのGitの良さ(メリット)について語りたい。 (GitとSVNの違いについては他の人の記事に詳しいのであまり書いていない一方、勢い余ってGitのデメリットも書いた。)
+
+   (adsbygoogle = window.adsbygoogle || []).push({});  本題に入る前に、冒頭にリンクを貼った記事についてひとつだけつっこんでおく。 つっこみどころは他にも沢山あるけど。
+ ※話の前提としてgitとSVNを採用している現場に下記のような割と違いがあるとする。
+git イシューごとにブランチを切り、ローカルでコミットして、リモートブランチにpushして、GitHub・GitLab・Bitbucket経由でマージリクエスト。コードレビューの後にマージ。
+SVN リモートのtrunkに個々人が直接コミット。コードレビューはあまりない。ブランチを切ることもない。
+このような違いが出る背景には次のものがある。
+gitを採用する現場は、猫も杓子もgit-flowというプラクティスに従う傾向がある gitを採用する現場は、コードの品質もある程度管理する傾向がある SVNは集中型でありブランチ機能などが非常に使いにくい SVNを採用する現場はコードの品質よりも「リリースに含めるならさっさとコミット」と考える傾向がある   この前提には無理がある。
+Gitのところに書いてあるのが、Gitというツールの枠を大きくはみだしたGitHub Flowというブランチ戦略+開発プロセスに当たるものであり、 それでGitを批判するのはお門違いであろうという点については、Gitの流行がGitHubの人気によるところが大きく、GitHubを使えることがGitの大きなメリットであるので、目をつむることにする。(マージリクエストを使う羽目になるデメリットなんて言いがかりでしかないとだけ言っておく。)
+看過できないのは、SVNを使った開発がコードレビューもブランチもないという点。
+どこの世界の話をしているんだろうか。 Gitが世に出る前は世間にコードレビューもブランチもあまりなかったかのような前提だが、もちろんそんなことは全くない。 60万個以上のOSSプロジェクト情報を統括するOpen HUBによれば、OSSプロジェクトの46%がSVNを使っている。この中にはGitの誕生以降にSVNを使い始めたプロジェクトも多くある。270000余りのプロジェクトの大部分がブランチすら使っていないとでも?
+GitHub Flowと対比するために無理やりこじつけたんだろうけど、その無理のせいで議論のスタート地点からめちゃくちゃだ。
+まともな開発にはコードレビューもブランチも必要だ。 品質管理もリリース管理もしないなら要らないのかもしれないが、そんないい加減な開発現場を前提にSVNかGitかなんて議論しても意味がない。 高品質なソフトウェアを効率よく開発するために則りたい素晴らしい開発フローがあるとして、そのフローをSVNやGitやその他のツールないしひょっとしたらアナクロな日付フォルダの内どれがもっとも上手く実現してくれるか、というのがあるべき議論だ。 この「素晴らしい開発フロー」には一般的に品質管理と並行開発が含まれていて、それらにはコードレビューとブランチの利用が含まれている。 Git(+GitHub)がこんなにも急速にSVNに取って代わって流行ったのは、分散リポジトリの仕組みとブランチの軽量な実装によって効率的な並行開発が実現でき、またプルリクエストなどの機能によりコードレビューを含む快適なソーシャルコーディングが実現できるからだ。 逆に言えば、Gitが流行ったことが、人々が効率的な並行開発やコードレビューを開発フローに取り入れたかった証拠と言えるかもしれない。
+Gitのメリット 前置きが長くなったが、少なくともブランチとコードレビューを活用した高品質で高効率なソフトウェア開発をしたいという前提で、SVNに対するGitのメリットを挙げてみたい。
+1. リポジトリ構造がシンプル Gitリポジトリはすごくシンプルに作られているそうな。 確かに、その構造を見ると、add、commit、log、resetくらいは自前ですぐに実装できそうだ。
+このシンプルな構造のおかげで、Gitリポジトリは壊れにくい。ここで壊れにくいとは、リポジトリ内部で不整合が起こりにくいということで、コマンドミスでコミット履歴が一部消えたりとかいうトラブルは壊れるに入らない。
+実のところSVNリポジトリの構造を知らないので経験的なことしか言えないが、SVNリポジトリ(というより作業ディレクトリの管理情報?)はちょくちょく変な状態になり、クリーンアップしたり、酷い時には.svn内のファイルを手動でいじったりしなければならなかった。
+因みに、シンプルというのはリポジトリサイズがすごく小さいということにはならず、同等の履歴を含むGitリポジトリとSVNリポジトリはだいたい同サイズなんだそうな。
+2. ブランチが軽い Gitのブランチは単一のコミットを指す参照で、リポジトリ内ではSHA-1ハッシュ値が書かれただけのたった一つのファイルに過ぎない。 その為ブランチは一瞬で作成できるし、ディスクも圧迫しないので、じゃんじゃん作ってじゃんじゃん消せる。 さらに、ローカルリポジトリに過去の全ファイルの全バージョンが入っているという分散リポジトリの特長のおかげで、ブランチの切り替えも軽快にできる。 ローカルから必要なファイルを作業ディレクトリに展開するだけなので。
+一方SVNはそもそもブランチをサポートする直接的な機能がないため、ブランチはリビジョンのコピーという形で実装されている。 コピーと言ってもハードリンクみたいなものでディスク上に物理的なコピーが作られるわけではなく、軽量という点ではGitと大差ないが、集中リポジトリなせいでブランチの切り替えには差が出る。 svn switchにしろsvn checkoutにしろネットワークの向こうのサーバとの通信が必要なので、それなりの時間がかかるし、通信が途切れると切り替えられなくなる。
+冒頭に貼った記事にはGitはブランチを切り替える際にstashとかしないといけなくて面倒とあったが、そんなのSVNだって同じだし、stashすればいいだけだし、stashという機能があるだけSVNよりまし。Gitならコミットはあとから書き変えられるので、stashの代わりに一時的にコミットしちゃってもいい。
+それも嫌ならworktree使えばよろしい。
+3. バージョン間の差分取得が速い Gitは全てのファイルについて全てのバージョンのコンテンツをまるまるリポジトリに持っている。 一方SVNのリポジトリにはバージョン間の変更が記録されている。 このため、あるファイルについて任意のバージョン間の差分を取るのに、Gitはシンプルにそれぞれのバージョンのファイルを取り出して比較するだけでよいが、SVNは隣り合ったバージョンでなければバージョン間の変更を足し合わせて差分を計算しなければいけない。</description>
+    </item>
     
+    <item>
+      <title>git resetとrevertを図解する</title>
+      <link>https://www.kaitoy.xyz/2016/01/01/git-revert-reset/</link>
+      <pubDate>Fri, 01 Jan 2016 18:38:02 -0700</pubDate>
       
-        <item>
-          <title>Gitのマージを図解する</title>
-          <link>https://www.kaitoy.xyz/2015/12/28/git-merge/</link>
-          <pubDate>Mon, 28 Dec 2015 01:05:29 -0700</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2015/12/28/git-merge/</guid>
-          <description>
+      <guid>https://www.kaitoy.xyz/2016/01/01/git-revert-reset/</guid>
+      <description>この記事を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、Gitの git revert と git resetというコマンドについて説明する。 この二つはしばしばコミットを取り消すコマンドとして同じ文脈で説明されることが多いのでこのエントリでも一緒に説明するが、実際は全く異なるコマンドだし、そもそもどちらもコミットを取り消すコマンドではない。
 
-&lt;p&gt;このエントリでは、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;が提供するマージのための機能の内、主なもの4つ、&lt;strong&gt;真のマージ&lt;/strong&gt;、&lt;strong&gt;リベース&lt;/strong&gt;、&lt;strong&gt;ファストフォワードマージ&lt;/strong&gt;、&lt;strong&gt;チェリーピック&lt;/strong&gt; について図解する。
-ここでマージとは、とあるブランチのコミットが入れた修正を別のブランチに取り込むこととする。&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;この記事&lt;/a&gt;を事前に読んでGitのオブジェクトモデルを理解しておくと分かりやすいかもしれない。&lt;/p&gt;
-
-&lt;p&gt;ここで説明するマージは全てローカルリポジトリ内のブランチを操作対象とする。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h2 id=&#34;真のマージ&#34;&gt;真のマージ&lt;/h2&gt;
-
-&lt;p&gt;真のマージは、複数のブランチでそれぞれ開発が進んでいて、つまりそれぞれのコミットグラフが伸びている場合に、それらの修正を統合するときに実行する。
-マージするブランチはいくつでも指定できる。&lt;/p&gt;
-
-&lt;p&gt;基本的なコマンドは&lt;code&gt;git merge &amp;lt;ブランチ(複数可)&amp;gt;&lt;/code&gt;。&lt;/p&gt;
-
-&lt;p&gt;操作に成功すると、マージ後のプロジェクトの状態を表すコミット(マージコミット)が作られ、カレントブランチの先頭に追加される。
-マージコミットは、マージした全てのブランチが指していたコミットを親として持つ。&lt;/p&gt;
-
-&lt;p&gt;このマージはマージコミットを追加するだけであり、既存のコミットを一切変更しないことを認識しておくべし。&lt;/p&gt;
-
-&lt;p&gt;以下、真のマージの実行例を図示する。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_merge/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_merge/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_merge/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_merge/スライド4.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;リベース&#34;&gt;リベース&lt;/h2&gt;
-
-&lt;p&gt;リベースは、あるブランチで作った一連のコミットの起点(ベース)を移動したいときに実行する。
-この操作は一般的にはマージとは呼ばれないが、冒頭に書いたマージの定義からするとマージと見なせないこともないのでここに挙げる。&lt;/p&gt;
-
-&lt;p&gt;基本的なコマンドは&lt;code&gt;git rebase &amp;lt;ブランチ&amp;gt;&lt;/code&gt;。
-このコマンドは、カレントブランチの起点を指定したブランチが指すコミットに移動する。&lt;/p&gt;
-
-&lt;p&gt;この操作に成功すると、カレントブランチで作ったコミットは(実質)消え、それと同等の修正をもたらす別のコミットが移動先のコミットを起点として作成される。(※1)&lt;/p&gt;
-
-&lt;p&gt;リベースは既存のコミットを消し、コミットグラフを変更してしまうということを認識しておくべし。&lt;/p&gt;
-
-&lt;p&gt;以下、リベースの簡単な実行例を図示する。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_rebase/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_rebase/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;上のスライドのように単純なコミットグラフならいいが、リベースするブランチが分岐していたりするとややこしいことが起き得る。
-そういうケースには&lt;a href=&#34;https://www.oreilly.co.jp/books/9784873114408/&#34;&gt;O&amp;rsquo;Reillyの蝙蝠本&lt;/a&gt;などでよく勉強してから臨むべし。&lt;/p&gt;
-
-&lt;p&gt;(※1: より正確には&lt;code&gt;git rebase &amp;lt;ブランチ&amp;gt;&lt;/code&gt;は、&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;カレントブランチで作った各コミットが入れた変更をパッチにして、&lt;/li&gt;
-&lt;li&gt;それを古い順に一つずつ、指定したブランチが指すコミットに適用しながら新しいコミットを作り、&lt;/li&gt;
-&lt;li&gt;カレントブランチが指しているコミットを&lt;code&gt;ORIG_HEAD&lt;/code&gt;で指し、&lt;/li&gt;
-&lt;li&gt;カレントブランチを最新のコミットを指すよう更新する。&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;2で、指定したブランチが既にチェリーピック(後述)などでカレントブランチのとあるコミットの変更を取り込んでいた場合、そのコミットのパッチの適用はスキップされ、そのパッチによるコミットも作られない。&lt;/p&gt;
-
-&lt;p&gt;また、上でカレントブランチのコミットは実質消えると書いたが、当面はオブジェクトが本当に消えるわけではないし、&lt;code&gt;ORIG_HEAD&lt;/code&gt;とかが指しているのでもどることもできる。)&lt;/p&gt;
-
-&lt;h2 id=&#34;ファストフォワードマージ&#34;&gt;ファストフォワードマージ&lt;/h2&gt;
-
-&lt;p&gt;ファストフォワードマージは、マージ先のコミットが全てマージ元に含まれているときに使えるマージ。
-この操作は既存のコミットグラフをいじらないしマージコミットも作らない特殊なマージ。
-(実のところマージじゃないと言ってもいい。)
-このマージを実行した後は、コミットグラフは一直線になり、ブランチを作らずにコミットを作った場合と同様になる。&lt;/p&gt;
-
-&lt;p&gt;このマージは、&lt;code&gt;git merge &amp;lt;ブランチ&amp;gt;&lt;/code&gt;を実行したときに可能であれば実行される。
-(でなければ真のマージが実行される。オプションで選択することもできる。)&lt;/p&gt;
-
-&lt;p&gt;以下にファストフォワードマージの例を図示する。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_ff/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_ff/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;ファストフォワードマージはよくリベースとともに実行される。
-リベースのスライドの最後のページの図は、ここのスライドの最初のページの図と同じになっている。&lt;/p&gt;
-
-&lt;p&gt;リベース + ファストフォワードは、トピックブランチで入れた修正を、そのブランチを作ったという履歴を残さずに別のブランチに取り入れたいときなどに使う手法。
-マージコミットを作る手法よりもコミットグラフをシンプルに保てる。&lt;/p&gt;
-
-&lt;h2 id=&#34;チェリーピック&#34;&gt;チェリーピック&lt;/h2&gt;
-
-&lt;p&gt;チェリーピックは、あるブランチの任意のコミットによる修正を別のブランチに取り込みたいときに実行する。
-他の3つのマージに比べて分かりやすい操作であり、また操作対象にするブランチやコミットの自由度が高いので使いやすい。
-その反面、コミットログなどに明記しないとどこのコミットをマージしたのかが分からなくなる。&lt;/p&gt;
-
-&lt;p&gt;基本的なコマンドは&lt;code&gt;git cherry-pick &amp;lt;コミット&amp;gt;&lt;/code&gt;。&lt;/p&gt;
-
-&lt;p&gt;操作に成功すると、指定したコミットと同等の修正をもたらす新しいコミットが作成され、&lt;code&gt;HEAD&lt;/code&gt;に追加される。&lt;/p&gt;
-
-&lt;p&gt;この操作はコミットを追加するだけであり、既存のコミットは変更しない。&lt;/p&gt;
-
-&lt;p&gt;以下にチェリーピックの例を図示する。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_cherry-pick/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-merge/git_cherry-pick/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-</description>
-        </item>
-      
+   (adsbygoogle = window.adsbygoogle || []).push({});  git revert git revertは、指定したコミットが持ち込んだ変更を打ち消すコミットを追加する。 リバースパッチを適用すると言ってもよい。 コミットを追加しかしないので、このコマンドによって既存のコミットが消えたり変わったりすることはない。
+図にすると以下の感じ。単純。
+   git reset git resetには二つの機能がある。 インデックスを再設定する(i.e. resetする)機能と、HEADを付け替える(i.e. resetする)機能だ。
+インデックスの再設定 インデックスの再設定をするコマンドはgit reset &amp;lt;ワーキングディレクトリ内のファイルのパス(複数可)&amp;gt;。 これを実行すると、指定したファイルについて、HEADが指すコミットが指すツリー内のブロブを指すようインデックスを更新する。
+何を言っているのかわからないので図にする。
+    (この図では便宜的にHEAD、つまり参照をオブジェクト格納領域内に書いているが、実際には別の場所にあることに注意。)
+図を見ると、git add Readme.mdとgit reset Readme.mdがだいたい逆のことをしていることがわかる。 要するに、git add &amp;lt;パス&amp;gt;は指定したファイルをステージし、git reset &amp;lt;パス&amp;gt;は指定したファイルをアンステージする。
+HEADの付け替え HEADの付け替えをするコマンドはgit reset &amp;lt;コミット&amp;gt;。 これを実行すると、HEADが指しているコミットを指すようORIG_HEADを作成または更新し、指定したコミットを指すようHEADを更新する。 オプションによってはさらにインデックスやワーキングディレクトリを指定したコミットが指すツリーと同期するよう更新する。
+このオプションには--soft、--mixed (デフォルト)、--hardの三種類があり、それぞれのオプションを付けた時の更新対象を次の表に示す。
+   オプション HEAD インデックス ワーキングディレクトリ     --soft ○     --mixed ○ ○    --hard ○ ○ ○</description>
+    </item>
     
+    <item>
+      <title>Gitの分散バージョン管理の仕組み</title>
+      <link>https://www.kaitoy.xyz/2015/12/31/git-dvc/</link>
+      <pubDate>Thu, 31 Dec 2015 01:02:59 -0700</pubDate>
       
-        <item>
-          <title>Gitのリポジトリの中身をなるべく正確に理解する</title>
-          <link>https://www.kaitoy.xyz/2015/12/27/git-repository/</link>
-          <pubDate>Sun, 27 Dec 2015 11:34:18 -0700</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2015/12/27/git-repository/</guid>
-          <description>
-
-&lt;p&gt;このエントリでは、&lt;a href=&#34;https://git-scm.com/&#34;&gt;&lt;strong&gt;Git&lt;/strong&gt;&lt;/a&gt;の基本的な使い方は理解している前提で、そのリポジトリの構造をなるべく正確に説明する。
-ここに書いてあることは概ね、筆者が&lt;a href=&#34;https://www.oreilly.co.jp/books/9784873114408/&#34;&gt;O&amp;rsquo;Reillyの蝙蝠本&lt;/a&gt;を読んで得た知識に基づく。&lt;/p&gt;
-
-&lt;p&gt;リポジトリの構造というとコアで上級者向けの知識のように聞こえるが、これをまず理解しておくことで強力で複雑なGitの機能を習得するのが非常に楽になる。
-具体的には、Gitにおけるブランチの概念などの理解が深まったり、&lt;a href=&#34;https://www.kaitoy.xyz/2016/01/01/git-revert-reset/#git-reset&#34;&gt;&lt;code&gt;git reset&lt;/code&gt;&lt;/a&gt;などのGit特有で分かり辛いコマンドを自信をもって使えるようになったり、なにより、Gitを使う上での最大のハードルである &lt;strong&gt;インデックス&lt;/strong&gt; や &lt;strong&gt;HEAD&lt;/strong&gt; の概念を完璧に理解できるというメリットがある。&lt;/p&gt;
-
-&lt;p&gt;チュートリアルを終えたくらいの初心者にこそ読んでほしいエントリである。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h1 id=&#34;gitリポジトリの中身&#34;&gt;Gitリポジトリの中身&lt;/h1&gt;
-
-&lt;p&gt;Gitのリポジトリは、プロジェクトをクローンしたときとかにできる&lt;code&gt;.git&lt;/code&gt;ディレクトリ内に詰まっている。
-このディレクトリには、&lt;strong&gt;オブジェクト格納領域&lt;/strong&gt; と &lt;strong&gt;インデックス&lt;/strong&gt; というデータ構造が入っている。
-また、&lt;strong&gt;参照 (ref)&lt;/strong&gt; や &lt;strong&gt;シンボリック参照 (symref)&lt;/strong&gt; というものも入っている。&lt;/p&gt;
-
-&lt;p&gt;以下、それぞれについて説明する。&lt;/p&gt;
-
-&lt;h3 id=&#34;オブジェクト格納領域&#34;&gt;オブジェクト格納領域&lt;/h3&gt;
-
-&lt;p&gt;オブジェクト格納領域は、ファイルシステム上では&lt;code&gt;.git/objects/&lt;/code&gt;以下にあたる。&lt;/p&gt;
-
-&lt;p&gt;ここには、バージョン管理されているファイルの情報やそのコミット履歴などが保存されていて、具体的には以下の4種類のオブジェクトが置かれている。&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;ブロブ&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;一つのファイルを表すオブジェクト。
-バージョン管理対象のファイルの内容(だけ)を保持する。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;ツリー&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;一つのディレクトリを表すオブジェクト。ブロブや別のツリーを指すポインタを持ち、またそれらが表すファイル/ディレクトリの名前や属性を保持する。
-つまり、これとブロブを組み合わせると、ファイルシステム上のディレクトリツリーを表すことができる。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;コミット&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;一つのコミットを表すオブジェクト。コミット日時やログメッセージなどの情報と、一つ前のコミット(親コミット)を指すポインタと、一つのツリーを指すポインタを持つ。
-このツリーはプロジェクトのルートディレクトリを表す。
-つまり、一つのコミットは、プロジェクトのある時点でのディレクトリツリー全体を表してもいる。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;タグ&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;一つの注釈付きタグ(&lt;code&gt;git tag -a&lt;/code&gt;で作るタグ)を表すオブジェクト。
-タグ名やタグにつけたコメントなどの情報と、一つのオブジェクト(普通はコミット)へのポインタを持つ。
-因みに軽量タグ(&lt;code&gt;git tag&lt;/code&gt;で作るタグ)はオブジェクトにならない。&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;ファイルシステム上で、一つのオブジェクトは一つのファイルに書き込まれ、&lt;a href=&#34;https://ja.wikipedia.org/wiki/Zlib&#34;&gt;zlib&lt;/a&gt;で圧縮され、&lt;code&gt;.git/objects/&lt;/code&gt;以下に配置される。
-そのファイルへのパスには、オブジェクトのコンテンツから計算されたSHA1ハッシュの値(i.e. オブジェクトの名前)が使われる。
-例えば&lt;code&gt;.git/objects/16/cacde1ddabe1698b0e41e091e4697313e2b7e5&lt;/code&gt;というファイルがあったら、これは &lt;strong&gt;16cacde1ddabe1698b0e41e091e4697313e2b7e5&lt;/strong&gt; という名のオブジェクトの実体。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;git cat-file -p &amp;lt;SHA1ハッシュ&amp;gt;&lt;/code&gt;でオブジェクトのコンテンツを見れるので、いくつか見てみると面白い。
-たとえばコミットオブジェクトは以下の様になっている。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ git cat-file -p d444447526f91a97f2edeefc65d4f58e8e006d78
-tree 5d43dfbb8dd89018b9a383d6b9f663166e3cf9f9
-parent adcf8b197c6c156860dc8aa66ccb9a0c0a3bebb6
-author kaitoy &amp;lt;kaitoy@pcap4j.org&amp;gt; 1480004891 -0700
-committer kaitoy &amp;lt;kaitoy@pcap4j.org&amp;gt; 1480004891 -0700
-
-[#76] Rmove unneeded makePacketForInvokingPacketField call from IcmpV4InvokingPacketPacket.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h3 id=&#34;インデックス&#34;&gt;インデックス&lt;/h3&gt;
-
-&lt;p&gt;インデックスは、&lt;code&gt;git add&lt;/code&gt;の説明とかに出てくる「インデックス」とか「ステージング」とか呼ばれる機能を実現するためのデータ構造で、ファイルシステム上では&lt;code&gt;.git/index&lt;/code&gt;というバイナリファイルにあたる。&lt;/p&gt;
-
-&lt;p&gt;インデックスは、プロジェクトのある時点でのディレクトリツリー全体を表すデータをもつ。
-具体的には、プロジェクトの各ファイルについて、対応するブロブへのポインタと、プロジェクトルートディレクトリからの相対パスが記録されている。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;git ls-files --stage&lt;/code&gt;で&lt;code&gt;.git/index&lt;/code&gt;の内容を見れる。&lt;/p&gt;
-
-&lt;p&gt;例として、&lt;code&gt;https://github.com/kaitoy/japanese-word-selection&lt;/code&gt;をクローンして上記コマンドを実行すると以下の様に表示される。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ git ls-files --stage
-100644 ade14b9196fcad03cd0177c25ec1c31000ecf86a 0       .gitignore
-100644 bbbbcd3415597bac39b0314f5c708d90684161fc 0       CHANGES.md
-100644 f6b0b485fec1ee0bc53a452bc82cb6b7de2a1d91 0       LICENSE
-100644 10e50f7b628d83f1b66f34f2d9d34029e7fc8670 0       README.md
-100644 4dc8027d17765180fac5c3292a0195bb09b10ceb 0       assets/japanese-word-selection.gif
-100644 dd92c48bae50307b55fb623c1b2beccab963096e 0       lib/japanese-word-selection.coffee
-100644 8152af5ad39515fcd5021e3c8afee32910c0cf79 0       package.json
-100644 9c0d180898d841bb319f51f1b1c7e07320426eeb 0       spec/japanese-word-selection-spec.coffee
-100644 3d32fc0f42cc9babccd5525165e8227dce00a206 0       spec/japanese-word-selection-whitespace-spec.coffee
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;一行がひとつのファイルの情報で、左からファイルモード(パーミッション)、ブロブのSHA1ハッシュ、ステージ、ファイルパスが表示されている。
-ステージは0～3の値になり得る。&lt;/p&gt;
-
-&lt;p&gt;ステージは普段は0だけだけど、マージコンフリクトが起きた場合は、ベースバージョン、一方のブランチのバージョン、他方のブランチのバージョンの3つをそれぞれステージ1、2、3としてインデックスに保持する。
-これは、マージコンフリクトの解消(i.e. 3-wayマージ)を&lt;a href=&#34;https://git-scm.com/docs/git-merge#_how_to_resolve_conflicts&#34;&gt;サポートする機能&lt;/a&gt;のためだ。&lt;/p&gt;
-
-&lt;h3 id=&#34;オブジェクト格納領域とインデックスの図解&#34;&gt;オブジェクト格納領域とインデックスの図解&lt;/h3&gt;
-
-&lt;p&gt;ワーキングディレクトリに変更を入れ、&lt;code&gt;git add&lt;/code&gt;、&lt;code&gt;git commit&lt;/code&gt;をする中で、オブジェクト格納領域とインデックスがどう変化するかを図にした。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-repository/git_repo/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-repository/git_repo/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-repository/git_repo/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-repository/git_repo/スライド4.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-repository/git_repo/スライド5.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-repository/git_repo/スライド6.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-repository/git_repo/スライド7.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;(タグオブジェクトについては次の節で。)&lt;/p&gt;
-
-&lt;p&gt;スライドの1ページ目や最後のページのようにワーキングディレクトリとインデックスとオブジェクト格納領域が同期していて、&lt;code&gt;git status&lt;/code&gt;を実行すると&lt;code&gt;nothing to commit, working directory clean&lt;/code&gt;と表示される状態をワーキングディレクトリがクリーンであると言い、そうでない状態をワーキングディレクトリがダーティであると言う。&lt;/p&gt;
-
-&lt;p&gt;このスライドにより、Gitがファイルの履歴をどう記録しているかがよく分かるはず。
-特に、ブロブが常にファイルのある時点の内容全体を保持していて、Gitが(&lt;a href=&#34;https://subversion.apache.org/&#34;&gt;Subversion&lt;/a&gt;のように)差分を保存しているわけではないことは覚えておくべし。&lt;/p&gt;
-
-&lt;p&gt;スライドの最後のページのオブジェクト格納領域の図で、ツリーとブロブとそれらを指す矢印を省略すると、Gitのブランチ等の説明でよく見かける丸が矢印で連なった図(コミットグラフ)になる。以降の説明でそのような図を使うが、丸がコミットを意味していて、各コミットがルートツリーを指していることはよく認識しておくべし。&lt;/p&gt;
-
-&lt;h3 id=&#34;参照-ref&#34;&gt;参照 (ref)&lt;/h3&gt;
-
-&lt;p&gt;参照は、一つのオブジェクトを指し示すポインタのようなもので、普通はコミットオブジェクトを指す。
-参照には、&lt;strong&gt;ローカルブランチ&lt;/strong&gt;、&lt;strong&gt;リモート追跡ブランチ&lt;/strong&gt;、&lt;strong&gt;タグ&lt;/strong&gt; の三種類がある。&lt;/p&gt;
-
-&lt;p&gt;ファイルシステム上では&lt;code&gt;.git/refs/&lt;/code&gt;以下にある、指し示すオブジェクトのSHA1ハッシュ値が書かれただけのテキストファイルにあたる。
-&lt;code&gt;.git/refs/heads/&lt;/code&gt;以下にローカルブランチ、&lt;code&gt;.git/refs/remotes/&lt;/code&gt;以下にリモート追跡ブランチ、&lt;code&gt;.git/refs/tags/&lt;/code&gt;以下にタグが置かれる。&lt;/p&gt;
-
-&lt;p&gt;参照は、Gitコマンドなどにおいてコミットを指定する方法としてSHA1ハッシュ値の代わりに使える。
-この時、参照の名前は上記ファイルシステム上のパスから&lt;code&gt;.git/&lt;/code&gt;を省いたものになる。
-例えば&lt;code&gt;refs/heads/master&lt;/code&gt;。さらに、ディレクトリは省略できるので、同じ参照は&lt;code&gt;heads/master&lt;/code&gt;や単に&lt;code&gt;master&lt;/code&gt;とも書ける。&lt;/p&gt;
-
-&lt;p&gt;ここで、ブランチやタグが単なる参照であるところに注目。
-Subversionのようにリポジトリのコピーを作るのとはかなり異なる。
-Gitのブランチを作るというのは単に参照を追加するだけだし、ブランチをチェックアウトするというのはブランチが指すコミットが指すツリーが表すディレクトリツリーをファイルシステムに展開するということ。
-この実装によってGitのブランチが軽量で速いものになっている。&lt;/p&gt;
-
-&lt;p&gt;ローカルブランチの挙動を以下に図示する。図中で、各コミットには便宜上ラベルとしてアルファベットを付けている。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-repository/git_branch/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-repository/git_branch/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-repository/git_branch/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-repository/git_branch/スライド4.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-repository/git_branch/スライド5.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;このスライドの最後のページでmasterブランチが本流でbugfixブランチが支流かのように書いているが、実際は実装上それらに差はなく全く対等である。&lt;/p&gt;
-
-&lt;p&gt;また、ブランチは単なる一方的な参照であり、コミットオブジェクトからはそれに全く関与しないことに注意。
-ブランチを削除してもそれによってコミットが消えることはない(※1)し、また例えば、スライドの最後のページでbugfixブランチを削除したらXがどのブランチで作られたコミットなのかを知るすべはなくなる。&lt;/p&gt;
-
-&lt;p&gt;(※1: ブランチを削除することにより到達不能になるコミットは、結果的に&lt;a href=&#34;https://git-scm.com/book/ja/v2/Git%E3%81%AE%E5%86%85%E5%81%B4-%E3%83%A1%E3%82%A4%E3%83%B3%E3%83%86%E3%83%8A%E3%83%B3%E3%82%B9%E3%81%A8%E3%83%87%E3%83%BC%E3%82%BF%E3%83%AA%E3%82%AB%E3%83%90%E3%83%AA&#34;&gt;&lt;code&gt;git gc&lt;/code&gt;&lt;/a&gt;により削除されはする。)&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;次に、タグの挙動を以下に図示する。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-repository/git_tag/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-repository/git_tag/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-repository/git_tag/スライド3.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-repository/git_tag/スライド4.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-repository/git_tag/スライド5.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;図中で、タグオブジェクトはオブジェクトなのでオブジェクト格納領域に入り、それを指す参照のタグは&lt;code&gt;.git/refs/&lt;/code&gt;に入る。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;リモート追跡ブランチについては&lt;a href=&#34;https://www.kaitoy.xyz/2015/12/31/git-dvc/&#34;&gt;別のエントリ&lt;/a&gt;で書く。&lt;/p&gt;
-
-&lt;h3 id=&#34;シンボリック参照-symref&#34;&gt;シンボリック参照 (symref)&lt;/h3&gt;
-
-&lt;p&gt;シンボリック参照は参照やオブジェクトを指し示すポインタのようなもので、以下の四つがある。&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;HEAD&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;カレントブランチ、つまりチェックアウトしているブランチ(i.e. 参照)を指す。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;ORIG_HEAD&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;git merge&lt;/code&gt;や&lt;a href=&#34;https://www.kaitoy.xyz/2016/01/01/git-revert-reset/#git-reset&#34;&gt;&lt;code&gt;git reset&lt;/code&gt;&lt;/a&gt;でHEADが更新されたとき、更新前のHEADが指していたブランチが指していたコミットを指す。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;FETCH_HEAD&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;最後にフェッチされたブランチの最新コミットを指す。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;MERGE_HEAD&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;マージ操作中に作られ、HEADにマージされようとしているコミットを指す。&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;それぞれが、Gitコマンドなどにおいてコミットを指定する方法としてSHA1ハッシュ値の代わりに使える。&lt;/p&gt;
-
-&lt;p&gt;ファイルシステム上では&lt;code&gt;.git/{HEAD,ORIG_HEAD,FETCH_HEAD,MERGE_HEAD}&lt;/code&gt;にあたり、全て単純なテキストファイルである。&lt;/p&gt;
-
-&lt;p&gt;特によく使う&lt;code&gt;HEAD&lt;/code&gt;を図示すると以下のようになる。&lt;/p&gt;
-
-&lt;ul class=&#34;bxslider&#34;&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-repository/git_head/スライド1.PNG&#34; /&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/git-repository/git_head/スライド2.PNG&#34; /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;上図に見られるように、&lt;code&gt;HEAD&lt;/code&gt;は通常ブランチを指す。
-実際に&lt;code&gt;.git/HEAD&lt;/code&gt;ファイルの中身を見ると以下の様になっていて、確かにブランチを指していることが見て取れる。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;ref: refs/heads/master
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;gitコマンドの実行内容によっては&lt;code&gt;HEAD&lt;/code&gt;が直接コミットを指すようになることもあり、この場合は特に「detached HEAD」、つまり(ブランチから)切り離されたHEADと呼ばれる。&lt;/p&gt;
-
-&lt;p&gt;スライドの1ページ目の状態では、だいたいのgitコマンドから見てコミットEと&lt;code&gt;master&lt;/code&gt;と&lt;code&gt;HEAD&lt;/code&gt;は等価であると考えていい。
-つまり例えば、&lt;code&gt;git reset &amp;lt;コミットEのSHA1ハッシュ値&amp;gt;&lt;/code&gt;、&lt;code&gt;git reset master&lt;/code&gt;、&lt;code&gt;git reset HEAD&lt;/code&gt;は同じ結果になる。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;以上がGitリポジトリの中身のほぼ全容。あとは設定ファイルとかフックスクリプトとかがあるだけ。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;実際のGitリポジトリのオブジェクト、参照、シンボリック参照を、この記事のスライドと同じ見た目でビジュアライズするツール、&lt;a href=&#34;https://www.kaitoy.xyz/tags/goslings/&#34;&gt;&lt;strong&gt;Goslings&lt;/strong&gt;&lt;/a&gt;を作った。
-このツールを使って実際のリポジトリの中身を見ながらこの記事を内容を確認すると、より理解が深まるかもしれない。&lt;/p&gt;
-</description>
-        </item>
-      
+      <guid>https://www.kaitoy.xyz/2015/12/31/git-dvc/</guid>
+      <description>このエントリでは、この記事を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、Gitの分散バージョン管理の仕組みについて説明する。
+
+   (adsbygoogle = window.adsbygoogle || []).push({});  Gitの分散バージョン管理 分散バージョン管理とは、分散したリポジトリでのバージョン管理ということ。 ここでリポジトリが分散しているとは、同じプロジェクトの履歴を管理する完全で独立したリポジトリが複数あるということ。 これにより一つのプロジェクトの開発を地理的に分散して並行して進めることができる。
+Gitは分散バージョン管理のために、リポジトリのクローン(≒コピー)を作る機能と、リポジトリ間でコミットグラフを同期する機能を提供している。
+リポジトリのクローンを作ると言うと、オリジナルとクローンの間に格差があるような気がするが、 実際にはGitは全てのリポジトリが対等であるという思想のもとで実装されている。 このため、リポジトリをクローンする時には(デフォルトで)クローン元の完全なコミットグラフがクローンにコピーされるし、任意のリポジトリ間のデータのやり取りをpeer-to-peerでできる。 クローンからクローンを作ることももちろん可能。
+git pushでデータを送る先をアップストリームと呼ぶことはあるし、次節でローカルリポジトリとリモートリポジトリという関係が出てくるが、これはあくまでその時点でそういう設定になっているというだけ。 アップストリームはいつでもいくつでもgit remoteコマンドで追加したり削除したりできる。
+このような実装により、Gitの分散バージョン管理ではリポジトリ間で柔軟なデータのやり取りができる。 例えば以下の様な複雑なリポジトリネットワークを組むこともできる。
+ローカルリポジトリとリモートリポジトリ 一人の開発者から見て、手元にあるリポジトリを ローカルリポジトリ と呼ぶのに対して、git pushやgit pullやgit fetchでデータをやり取りする相手のリポジトリを リモートリポジトリ と呼ぶ。 リモートリポジトリとのやり取りは、リモート追跡ブランチ と リモート というものを使って実装されている。
+リモート追跡ブランチ リモート追跡ブランチは、ローカルリポジトリの.git/refs/remotes/に格納される参照で、リモートリポジトリ内のローカルブランチのコミットグラフを取得してローカルリポジトリ内に保持するために使われる。 git branch -rでその一覧が見れる。
+「追跡」ブランチというだけあって、リモートリポジトリ内でコミットグラフが成長した場合、この変更に追随することができる。 このためのコマンドがgit fetch。 因みにgit pullは、git fetchでリモート追跡ブランチを更新した後、git merge(オプションによってはgit rebase)でそのリモート追跡ブランチをローカルブランチにマージするのと同じ。
+リモート リモートとは、リモートリポジトリのこと、またはリモートリポジトリに接続するための定義のこと。 この定義は、ローカルリポジトリの.git/configにremoteセクションとして書かれている。 以下がその例。
+[remote &amp;quot;origin&amp;quot;] fetch = +refs/heads/*:refs/remotes/origin/* url = git@github.com:kaitoy/blog.git  セクション名のところに&amp;quot;origin&amp;quot;とあるがこれは、この定義で接続するリモートリポジトリをGitコマンドなどでoriginと指定できるということ。 ここで定義されているのはurlとfetchで、それぞれ以下を意味する。
+ url</description>
+    </item>
     
+    <item>
+      <title>Gitのマージを図解する</title>
+      <link>https://www.kaitoy.xyz/2015/12/28/git-merge/</link>
+      <pubDate>Mon, 28 Dec 2015 01:05:29 -0700</pubDate>
+      
+      <guid>https://www.kaitoy.xyz/2015/12/28/git-merge/</guid>
+      <description>このエントリでは、Gitが提供するマージのための機能の内、主なもの4つ、真のマージ、リベース、ファストフォワードマージ、チェリーピック について図解する。 ここでマージとは、とあるブランチのコミットが入れた修正を別のブランチに取り込むこととする。
+この記事を事前に読んでGitのオブジェクトモデルを理解しておくと分かりやすいかもしれない。
+ここで説明するマージは全てローカルリポジトリ内のブランチを操作対象とする。
 
+   (adsbygoogle = window.adsbygoogle || []).push({});  真のマージ 真のマージは、複数のブランチでそれぞれ開発が進んでいて、つまりそれぞれのコミットグラフが伸びている場合に、それらの修正を統合するときに実行する。 マージするブランチはいくつでも指定できる。
+基本的なコマンドはgit merge &amp;lt;ブランチ(複数可)&amp;gt;。
+操作に成功すると、マージ後のプロジェクトの状態を表すコミット(マージコミット)が作られ、カレントブランチの先頭に追加される。 マージコミットは、マージした全てのブランチが指していたコミットを親として持つ。
+このマージはマージコミットを追加するだけであり、既存のコミットを一切変更しないことを認識しておくべし。
+以下、真のマージの実行例を図示する。
+     リベース リベースは、あるブランチで作った一連のコミットの起点(ベース)を移動したいときに実行する。 この操作は一般的にはマージとは呼ばれないが、冒頭に書いたマージの定義からするとマージと見なせないこともないのでここに挙げる。
+基本的なコマンドはgit rebase &amp;lt;ブランチ&amp;gt;。 このコマンドは、カレントブランチの起点を指定したブランチが指すコミットに移動する。
+この操作に成功すると、カレントブランチで作ったコミットは(実質)消え、それと同等の修正をもたらす別のコミットが移動先のコミットを起点として作成される。(※1)
+リベースは既存のコミットを消し、コミットグラフを変更してしまうということを認識しておくべし。
+以下、リベースの簡単な実行例を図示する。
+   
+上のスライドのように単純なコミットグラフならいいが、リベースするブランチが分岐していたりするとややこしいことが起き得る。 そういうケースにはO&amp;rsquo;Reillyの蝙蝠本などでよく勉強してから臨むべし。
+(※1: より正確にはgit rebase &amp;lt;ブランチ&amp;gt;は、
+ カレントブランチで作った各コミットが入れた変更をパッチにして、 それを古い順に一つずつ、指定したブランチが指すコミットに適用しながら新しいコミットを作り、 カレントブランチが指しているコミットをORIG_HEADで指し、 カレントブランチを最新のコミットを指すよう更新する。  2で、指定したブランチが既にチェリーピック(後述)などでカレントブランチのとあるコミットの変更を取り込んでいた場合、そのコミットのパッチの適用はスキップされ、そのパッチによるコミットも作られない。
+また、上でカレントブランチのコミットは実質消えると書いたが、当面はオブジェクトが本当に消えるわけではないし、ORIG_HEADとかが指しているのでもどることもできる。)
+ファストフォワードマージ ファストフォワードマージは、マージ先のコミットが全てマージ元に含まれているときに使えるマージ。 この操作は既存のコミットグラフをいじらないしマージコミットも作らない特殊なマージ。 (実のところマージじゃないと言ってもいい。) このマージを実行した後は、コミットグラフは一直線になり、ブランチを作らずにコミットを作った場合と同様になる。
+このマージは、git merge &amp;lt;ブランチ&amp;gt;を実行したときに可能であれば実行される。 (でなければ真のマージが実行される。オプションで選択することもできる。)
+以下にファストフォワードマージの例を図示する。</description>
+    </item>
+    
+    <item>
+      <title>Gitのリポジトリの中身をなるべく正確に理解する</title>
+      <link>https://www.kaitoy.xyz/2015/12/27/git-repository/</link>
+      <pubDate>Sun, 27 Dec 2015 11:34:18 -0700</pubDate>
+      
+      <guid>https://www.kaitoy.xyz/2015/12/27/git-repository/</guid>
+      <description>このエントリでは、Gitの基本的な使い方は理解している前提で、そのリポジトリの構造をなるべく正確に説明する。 ここに書いてあることは概ね、筆者がO&amp;rsquo;Reillyの蝙蝠本を読んで得た知識に基づく。
+リポジトリの構造というとコアで上級者向けの知識のように聞こえるが、これをまず理解しておくことで強力で複雑なGitの機能を習得するのが非常に楽になる。 具体的には、Gitにおけるブランチの概念などの理解が深まったり、git resetなどのGit特有で分かり辛いコマンドを自信をもって使えるようになったり、なにより、Gitを使う上での最大のハードルである インデックス や HEAD の概念を完璧に理解できるというメリットがある。
+チュートリアルを終えたくらいの初心者にこそ読んでほしいエントリである。
+
+   (adsbygoogle = window.adsbygoogle || []).push({});  Gitリポジトリの中身 Gitのリポジトリは、プロジェクトをクローンしたときとかにできる.gitディレクトリ内に詰まっている。 このディレクトリには、オブジェクト格納領域 と インデックス というデータ構造が入っている。 また、参照 (ref) や シンボリック参照 (symref) というものも入っている。
+以下、それぞれについて説明する。
+オブジェクト格納領域 オブジェクト格納領域は、ファイルシステム上では.git/objects/以下にあたる。
+ここには、バージョン管理されているファイルの情報やそのコミット履歴などが保存されていて、具体的には以下の4種類のオブジェクトが置かれている。
+ ブロブ
+一つのファイルを表すオブジェクト。 バージョン管理対象のファイルの内容(だけ)を保持する。
+ ツリー
+一つのディレクトリを表すオブジェクト。ブロブや別のツリーを指すポインタを持ち、またそれらが表すファイル/ディレクトリの名前や属性を保持する。 つまり、これとブロブを組み合わせると、ファイルシステム上のディレクトリツリーを表すことができる。
+ コミット
+一つのコミットを表すオブジェクト。コミット日時やログメッセージなどの情報と、一つ前のコミット(親コミット)を指すポインタと、一つのツリーを指すポインタを持つ。 このツリーはプロジェクトのルートディレクトリを表す。 つまり、一つのコミットは、プロジェクトのある時点でのディレクトリツリー全体を表してもいる。
+ タグ
+一つの注釈付きタグ(git tag -aで作るタグ)を表すオブジェクト。 タグ名やタグにつけたコメントなどの情報と、一つのオブジェクト(普通はコミット)へのポインタを持つ。 因みに軽量タグ(git tagで作るタグ)はオブジェクトにならない。
+  ファイルシステム上で、一つのオブジェクトは一つのファイルに書き込まれ、zlibで圧縮され、.git/objects/以下に配置される。 そのファイルへのパスには、オブジェクトのコンテンツから計算されたSHA1ハッシュの値(i.e. オブジェクトの名前)が使われる。 例えば.git/objects/16/cacde1ddabe1698b0e41e091e4697313e2b7e5というファイルがあったら、これは 16cacde1ddabe1698b0e41e091e4697313e2b7e5 という名のオブジェクトの実体。
+git cat-file -p &amp;lt;SHA1ハッシュ&amp;gt;でオブジェクトのコンテンツを見れるので、いくつか見てみると面白い。 たとえばコミットオブジェクトは以下の様になっている。</description>
+    </item>
+    
   </channel>
 </rss>

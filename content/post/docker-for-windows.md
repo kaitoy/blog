@@ -2,11 +2,11 @@
 categories = [ "Container" ]
 date = "2016-07-31T14:34:16-06:00"
 draft = false
-eyecatch = "docker.png"
+cover = "docker.png"
 slug = "docker-for-windows"
 tags = [ "docker", " windows" ]
 title = "Docker for Windowsがコレジャナかった"
-
+highlightLanguages = ["dos"]
 +++
 
 7/28にDocker for Winodws(とDocker for Mac)の正式版リリースの[アナウンス](https://blog.docker.com/2016/07/docker-for-mac-and-windows-production-ready/)があったので試してみたけど、期待していたものと違ったしなんだか上手く動かなかった話。
@@ -15,7 +15,7 @@ title = "Docker for Windowsがコレジャナかった"
 
 {{< google-adsense >}}
 
-## Docker for Windowsとは
+# Docker for Windowsとは
 [Docker for Windows](https://docs.docker.com/docker-for-windows/)は[Docker Toolbox](https://www.docker.com/products/docker-toolbox)の後継製品。(多分。)
 
 Docker ToolboxはWindowsやMacでDockerを使うための製品で、以下のコンポーネントからなる。
@@ -53,11 +53,11 @@ Docker for Windowsは単にDocker ToolboxのVirtualBoxがHyper-Vになっただ�
 
 ともあれ、やった作業を以下に記す。
 
-## Docker for Windows on VMware Player
+# Docker for Windows on VMware Player
 現時点ではDocker for WindowsはホストとしてWindows 10 x64 Pro/Enterprise/Education (Version 1511 Build 10586 以降)しかサポートしていない。
 自前のPCが5年前に買った[dynabook](https://dynabook.com/)でWindows 10をサポートしていないので、VMware PlayerのVM上のWindows 10にDocker for Windowsをインストールしてみる。
 
-#### VMware PlayerのVMでHyper-Vを使うための設定
+## VMware PlayerのVMでHyper-Vを使うための設定
 VMware PlayerのVMでは通常Hyper-Vは使えないので、[How to Install Hyper-V on vmware Workstation 10 ?](http://social.technet.microsoft.com/wiki/contents/articles/22283.how-to-install-hyper-v-on-vmware-workstation-10.aspx)を参考にしてVMの設定をいじる。
 この記事はVMware Workstationについてのものだが、VMware Playerでも全く同じ方法でいける。
 
@@ -67,7 +67,7 @@ VMのバージョンは11.0。2CPUでメモリは2GB。ネットワークイン�
 
 このVMの.vmxファイルをテキストエディタで開いて以下を追記。意味は不明。
 
-```
+```ini
 hypervisor.cpuid.v0 = "FALSE"
 mce.enable = "TRUE"
 vhu.enable = "TRUE"
@@ -83,7 +83,7 @@ vhu.enable = "TRUE"
 
 Hyper-VはDocker for Windowsのインストーラが有効化してくれるのでここでは何もしなくていい。
 
-#### Docker for Windowsインストール
+## Docker for Windowsインストール
 VMを起動して、[Getting Started with Docker for Windows](https://docs.docker.com/docker-for-windows/)に従ってDocker for Windowsをインストールする。
 
 まず、[上記サイト内のリンク](https://download.docker.com/win/stable/InstallDocker.msi)からインストーラをダウンロード。stableの方。

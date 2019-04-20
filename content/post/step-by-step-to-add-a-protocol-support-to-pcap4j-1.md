@@ -2,7 +2,7 @@
 categories = [ "Programming" ]
 date = "2015-08-09T21:53:29-06:00"
 draft = false
-eyecatch = "pcap4jlogo.png"
+cover = "pcap4jlogo.png"
 slug = "step-by-step-to-add-a-protocol-support-to-pcap4j-1"
 tags = [ "pcap4j" ]
 title = "Step by Step to Add a Protocol Support to Pcap4J (Part 1)"
@@ -15,60 +15,62 @@ I will show how to add a protocol support to [Pcap4J](https://github.com/kaitoy/
 
 {{< google-adsense >}}
 
-### Named Number Class
+# Named Number Class
 First of all, we need to know the packet format. It's explained in [RFC 2131](http://www.ietf.org/rfc/rfc2131.txt) as below:
 
-> ```
-> 0                   1                   2                   3
-> 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-> |     op (1)    |   htype (1)   |   hlen (1)    |   hops (1)    |
-> +---------------+---------------+---------------+---------------+
-> |                            xid (4)                            |
-> +-------------------------------+-------------------------------+
-> |           secs (2)            |           flags (2)           |
-> +-------------------------------+-------------------------------+
-> |                          ciaddr  (4)                          |
-> +---------------------------------------------------------------+
-> |                          yiaddr  (4)                          |
-> +---------------------------------------------------------------+
-> |                          siaddr  (4)                          |
-> +---------------------------------------------------------------+
-> |                          giaddr  (4)                          |
-> +---------------------------------------------------------------+
-> |                                                               |
-> |                          chaddr  (16)                         |
-> |                                                               |
-> |                                                               |
-> +---------------------------------------------------------------+
-> |                                                               |
-> |                          sname   (64)                         |
-> +---------------------------------------------------------------+
-> |                                                               |
-> |                          file    (128)                        |
-> +---------------------------------------------------------------+
-> |                                                               |
-> |                          options (variable)                   |
-> +---------------------------------------------------------------+
-> ```
->
->  FIELD  |OCTETS |               DESCRIPTION
-> --------|-------|------------------------------------------------------
-> op      |   1   |  Message op code / message type.<br>1 = BOOTREQUEST, 2 = BOOTREPLY
-> htype   |   1   |  Hardware address type, see ARP section in "Assigned<br>Numbers" RFC; e.g., '1' = 10mb ethernet.
-> hlen    |   1   |  Hardware address length (e.g.  '6' for 10mb ethernet).
-> hops    |   1   |  Client sets to zero, optionally used by relay agents when booting via a relay agent.
-> xid     |   4   |  Transaction ID, a random number chosen by the client, used by the client and server to associate messages and responses between a client and a server.
-> secs    |   2   |  Filled in by client, seconds elapsed since client began address acquisition or renewal process.
-> flags   |   2   |  Flags (see figure 2).
-> ciaddr  |   4   |  Client IP address; only filled in if client is in BOUND, RENEW or REBINDING state and can respond to ARP requests.
-> yiaddr  |   4   |  'your' (client) IP address.
-> siaddr  |   4   |  IP address of next server to use in bootstrap; returned in DHCPOFFER, DHCPACK by server.
-> giaddr  |   4   |  Relay agent IP address, used in booting via a relay agent.
-> chaddr  |  16   |  Client hardware address.
-> sname   |  64   |  Optional server host name, null terminated string.
-> file    | 128   |  Boot file name, null terminated string; "generic" name or null in DHCPDISCOVER, fully qualified directory-path name in DHCPOFFER.
-> options | var   |  Optional parameters field.  See the options documents for a list of defined options.
+```
+0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|     op (1)    |   htype (1)   |   hlen (1)    |   hops (1)    |
++---------------+---------------+---------------+---------------+
+|                            xid (4)                            |
++-------------------------------+-------------------------------+
+|           secs (2)            |           flags (2)           |
++-------------------------------+-------------------------------+
+|                          ciaddr  (4)                          |
++---------------------------------------------------------------+
+|                          yiaddr  (4)                          |
++---------------------------------------------------------------+
+|                          siaddr  (4)                          |
++---------------------------------------------------------------+
+|                          giaddr  (4)                          |
++---------------------------------------------------------------+
+|                                                               |
+|                          chaddr  (16)                         |
+|                                                               |
+|                                                               |
++---------------------------------------------------------------+
+|                                                               |
+|                          sname   (64)                         |
++---------------------------------------------------------------+
+|                                                               |
+|                          file    (128)                        |
++---------------------------------------------------------------+
+|                                                               |
+|                          options (variable)                   |
++---------------------------------------------------------------+
+```
+
+ FIELD  |OCTETS |               DESCRIPTION
+--------|-------|------------------------------------------------------
+op      |   1   |  Message op code / message type.<br>1 = BOOTREQUEST, 2 = BOOTREPLY
+htype   |   1   |  Hardware address type, see ARP section in "Assigned<br>Numbers" RFC; e.g., '1' = 10mb hernet.
+hlen    |   1   |  Hardware address length (e.g.  '6' for 10mb ethernet).
+hops    |   1   |  Client sets to zero, optionally used by relay agents when booting via a relay agent.
+xid     |   4   |  Transaction ID, a random number chosen by the client, used by the client and server to sociate messages and responses between a client and a server.
+secs    |   2   |  Filled in by client, seconds elapsed since client began address acquisition or renewal ocess.
+flags   |   2   |  Flags (see figure 2).
+ciaddr  |   4   |  Client IP address; only filled in if client is in BOUND, RENEW or REBINDING state and can spond to ARP requests.
+yiaddr  |   4   |  'your' (client) IP address.
+siaddr  |   4   |  IP address of next server to use in bootstrap; returned in DHCPOFFER, DHCPACK by server.
+giaddr  |   4   |  Relay agent IP address, used in booting via a relay agent.
+chaddr  |  16   |  Client hardware address.
+sname   |  64   |  Optional server host name, null terminated string.
+file    | 128   |  Boot file name, null terminated string; "generic" name or null in DHCPDISCOVER, fully alified directory-path name in DHCPOFFER.
+options | var   |  Optional parameters field.  See the options documents for a list of defined options.
+
+<br>
 
 It looks DHCP has only one packet format, and the packet doesn't have a payload.
 So, we will need to write only one packet class, one header class, and one builder class for DHCP. Easy!

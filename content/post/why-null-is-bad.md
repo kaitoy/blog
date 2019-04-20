@@ -2,7 +2,7 @@
 categories = [ "Software Engineering" ]
 date = "2015-07-26T19:07:20-06:00"
 draft = false
-eyecatch = "teamedio_logo.svg"
+cover = "teamedio_logo.svg"
 slug = "why-null-is-bad"
 tags = [ "yegor256", "oop" ]
 title = "なぜNullはダメか"
@@ -71,7 +71,7 @@ public Employee getByName(String name) {
 * John Sonmezの[Say "No" to "Null"](http://elegantcode.com/2010/05/01/say-no-to-null/)
 * StackOverflowの[Is returning null bad design?](http://stackoverflow.com/questions/1274792/is-returning-null-bad-design)
 
-### アドホック(場当たりな)エラー処理
+# アドホック(場当たりな)エラー処理
 インプットとしてオブジェクトを受け取った場合は常に、それが`NULL`でないか、また有効なオブジェクト参照かどうかを確認しないといけない。
 その確認を忘れると、`NullPointerException` (NPE)が実行時に処理を止めてしまう恐れがある。
 このため、ロジックが複数の確認処理やif/then/else分岐に汚染されてしまう。
@@ -97,7 +97,7 @@ dept.getByName("Jeffrey").transferTo(dept2);
 
 `NULL`参照は手続き型言語から受け継がれたものだと認識し、Nullオブジェクトか例外を変わりに使うべきだ。
 
-### あいまいな意図
+# あいまいな意図
 上記メソッドの目的を明確に伝えるためには、`getByName()`は`getByNameOrNullIfNotFound()`という名前でなければいけない。
 これと同様の名前を、オブジェクトか`NULL`を返す全ての関数が持たなければいけない。
 さもなくば、だれかがあいまいなコードを読むはめになる。だから、コードの意図を明確にするために、関数に長い名前をつけるべきだ。
@@ -140,7 +140,7 @@ return found.next();
 
 因みに、C++の標準ライブラリの[map::find()](http://www.cppll.jp/cppreference/cppmap_details.html)はまさにこのように設計されている。
 
-### コンピュータ思考 vs. オブジェクト思考
+# コンピュータ思考 vs. オブジェクト思考
 Javaのオブジェクトはデータ構造を指すポインタで、`NULL`は何も指さないポインタ(Intel x86プロセッサでは0x00000000)であることを知っている人にとっては、`if (employee == null)`という文は理解できる。
 
 しかし、もし君がオブジェクトになって考えたとすると、この文はかなり意味のないものになる。オブジェクト視点で上記コードは以下のように見える。
@@ -162,7 +162,7 @@ Javaのオブジェクトはデータ構造を指すポインタで、`NULL`は�
 あるいは、ソフトウェア部の人が、Jeffreyではないがだいたいの質問に答えられる人に取り次いでくれるかもしれないし、
 Jeffreyにしかわからない用事だから無理、と拒否してくるかもしれない(Nullオブジェクト)。
 
-### 遅いエラー
+# 遅いエラー
 [フェイルファスト](http://martinfowler.com/ieeeSoftware/failFast.pdf)な`getByName()`に対して、Nullオブジェクトを使った方はゆっくり死のうとしている。途中で他のものを殺しながら。
 問題が発生したので例外処理をすぐに始めるべきだと周りに知らせる代わりに、クライアントからエラーを隠している。
 
@@ -198,7 +198,7 @@ public Employee getByName(String name) {
 }
 ```
 
-### 可変で不完全なオブジェクト
+# 可変で不完全なオブジェクト
 一般的に、オブジェクトは[不変的](http://www.yegor256.com/2014/06/09/objects-should-be-immutable.html)に設計することが望ましい。
 これはつまり、オブジェクトはインスタンス化の際に必要な情報を全て受け取り、その後そのライフサイクル全体に渡ってその状態を変えないということだ。
 

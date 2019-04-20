@@ -2,7 +2,7 @@
 categories = [ "Web" ]
 date = "2016-07-06T09:15:43-06:00"
 draft = true
-eyecatch = ""
+cover = ""
 slug = "rich-snippets"
 tags = [ "blog" ]
 title = "リッチスニペット"

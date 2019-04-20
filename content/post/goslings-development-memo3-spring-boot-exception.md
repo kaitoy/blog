@@ -2,7 +2,7 @@
 categories = [ "Programing" ]
 date = "2017-01-13T14:01:01-07:00"
 draft = false
-eyecatch = "goslings-spring.png"
+cover = "goslings-spring.png"
 slug = "goslings-development-memo3-spring-boot-exception"
 tags = [ "goslings", "spring", "spring-boot" ]
 title = "Goslings開発メモ - その3: Spring Boot続続編 (例外処理)"
@@ -40,7 +40,7 @@ Spring MVCアプリにおける例外処理には以下の3つの段階がある
 
 以下それぞれについて書く。
 
-#### 1. 投げる例外をカスタマイズする
+## 1. 投げる例外をカスタマイズする
 リクエストハンドラから投げる例外に[`@ResponseStatus`](http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/ResponseStatus.html)をつけることで、クライアントに返すHTTPステータスコード(とリーズンフレーズ)をカスタマイズできる。
 
 例えば以下のような例外を投げると、HTTPステータスコード`500 (Internal Server Error)`の代わりに`400 (Bad Request)`がクライアントに返る。
@@ -52,7 +52,7 @@ public final class BadRequestException extends RuntimeException {
 }
 ```
 
-#### 2. 例外クラス毎の例外ハンドラをコントローラに実装する
+## 2. 例外クラス毎の例外ハンドラをコントローラに実装する
 コントローラのメソッドに[`@ExceptionHandler`](http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/ExceptionHandler.html)をつけてやると、そのメソッドは例外ハンドラになり、そのコントローラのリクエストハンドラから特定の例外が投げられたときの処理を書くことができる。
 さらに例外ハンドラに`@ResponseStatus`をつければ、HTTPステータスコードをカスタマイズできる。
 例外ハンドラの戻り値はリクエストハンドラのと同様に処理されるので、遷移するページ等も自由にカスタマイズできる。
@@ -83,7 +83,7 @@ public final class RestApiV1Controller {
 
 冒頭に貼った記事には例外ハンドラは`Model`を受け取れないとあるが、これは古い情報で、今は受け取れるっぽい。
 
-#### 3. コントローラ間で共用する例外ハンドラクラスを作る
+## 3. コントローラ間で共用する例外ハンドラクラスを作る
 コントローラから例外処理を完全に分離したい場合や、複数のコントローラで例外ハンドラを共有したい場合は、コントローラアドバイスクラスを書けばいい。
 
 コントローラアドバイスクラスは[`@ControllerAdvice`](http://docs.spring.io/spring-framework/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/ControllerAdvice.html)を付けて定義したクラスで、このクラスに例外ハンドラを書いておくと複数のコントローラで有効になる。

@@ -2,7 +2,7 @@
 categories = [ "Programing" ]
 date = "2017-01-24T09:01:49-07:00"
 draft = false
-eyecatch = "goslings-spring.png"
+cover = "goslings-spring.png"
 slug = "goslings-development-memo5-spring-boot-static-resources"
 tags = [ "goslings", "spring", "spring-boot" ]
 title = "Goslings開発メモ - その5: Spring Boot最終編 (静的リソース処理)"
@@ -91,13 +91,13 @@ public String hoge() {
 Spring Bootは`index.html`と`favicon.ico`という名のファイルを特別扱いする。
 前者がウェルカムページで後者がファビコン。
 
-#### ウェルカムページ
+## ウェルカムページ
 [Spring Bootのリファレンスガイド](https://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/htmlsingle/#boot-features-spring-mvc-static-content)にもちらっとかいてあるけど、リソースロケーションに`index.html`というファイルを置いておくと、それがウェルカムページとして設定され、URLのパスにルート(e.g. `http://localhost:8080/`)を指定したときにクライアントに返るようになる。
 
 ソースを見ると、上記`WebMvcAutoConfiguration`の[ここ](https://github.com/spring-projects/spring-boot/blob/v1.4.3.RELEASE/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/web/WebMvcAutoConfiguration.java#L297)でそのための設定している。
 `/META-INF/resources/index.html`、`/resources/index.html`、`/static/index.html`、`/public/index.html`の順に探すようで、複数個所に`index.html`を置いた場合は最初に見つかったものがウェルカムページになる。(そんなことする意味はないが。)
 
-#### ファビコン
+## ファビコン
 ファビコンについてはSpring Bootの現時点でリリース済みバージョンのリファレンスガイドにはほとんど情報がないが、`1.5.0.BUILD-SNAPSHOT`のリファレンスガイドには以下の様に書いてある。
 
 > 27.1.6 Custom Favicon

@@ -2,7 +2,7 @@
 categories = [ "Software Engineering" ]
 date = "2017-02-23T00:25:03-07:00"
 draft = false
-eyecatch = "hibernate_logo.png"
+cover = "hibernate_logo.png"
 slug = "how-hibernate-ruined-my-career"
 tags = [ "hibernate", "orm" ]
 title = "Hibernateはどのようにして私のキャリアを破滅寸前にしたか"

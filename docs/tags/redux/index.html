@@ -1,547 +1,293 @@
 <!DOCTYPE html>
 <html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
-
-    
-    
-    <meta property="og:title" content="To Be Decided">
-    <meta property="og:url" content="https://www.kaitoy.xyz">
-    <link rel="canonical" href="https://www.kaitoy.xyz">
-    
-    <meta property="og:site_name" content="To Be Decided">
-
-    <title>
-      
-      redux | To Be Decided
-      
-    </title>
-
-    
-    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
-
-    
-    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
-
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
-    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
-    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
-    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
-    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/styles/zenburn.min.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
-
-    
-    
-
-    
-    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-    <script>
-      (adsbygoogle = window.adsbygoogle || []).push({
-        google_ad_client: "ca-pub-6244473643910448",
-        enable_page_level_ads: true
-      });
-    </script>
-
-    
-  </head>
-  <body>
-
-    <header id="site-header">
-      <div class="container">
-        <h1 class="text-center">
-          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
-        </h1>
-      </div>
-    </header>
-
-    <main id="site-body">
-      <div class="container">
-
-
-<div class="row">
-  <div class="col-md-9">
-    <div id="posts">
-      <div class="row">
-        
-        
-        
-        <div class="col-sm-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2018/11/02/creating-react-redux-app-from-scratch-09/" class="post post-topix">
-              <header class="eyecatch text-center">
-                <img src="/images/react-router-seeklogo.com.svg" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Fri, Nov 2, 2018</span>
-              </div>
-              <h2 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その9: React Router</h2>
-              <div class="summary">
-                ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はRedux Sagaをセットアップした。 (2018/11/21更新) (adsbygoogle = window.adsbygoogle || []).push({}); フロントエンドのルーティング Webアプリケーションにおけるルーティングとは、クライアントがリクエストしたURLに対して、返すべきリソースを選択する処理。 昔はバックエンド(i.e. サーバサイド)でやってたけど、バックエンドでリソースを返すということは、ページ遷移が発生するということなので、ネイティブアプリケーションに比べてUXが落ちてしまう。 一方、ページ遷移を発生させないようにAjaxでサーバとやりとりしつつ、ちまちまDOMをいじるのは大変。 DOMをごっそり書き換えて、ページ遷移なしに画面を切り替えることはできるけど、ナイーブにやると以下のような問題がある。 URLと画面の紐づけがなく、URLを指定して直接開けない ブラウザの進む、戻るが使えない 宣言的に書けない こういった問題に対応するため、フロントエンドでのルーティング技術が生まれた。 フロントエンドのルーティングでは、URLが変わってもリクエストはサーバに飛ばない。 代わりに、フロントエンドフレームワークがそのURLを見て、適切な画面を選んでレンダリングする。 ハッシュベースのルーティング URLが変わってもリクエストがサーバに飛ばないとは何事か。 それを実現するやりかたは2通りある。 古くはハッシュ(#、フラグメント識別子)をつかったやり方。 例えば、http://example.com/でUIをサーブしているとすると、http://example.com/#fooとか、http://example.com/#barで別々のページの状態を表現する。 ハッシュ以降が変わってもブラウザがサーバにリクエストを投げることはないので、クライアント側でハンドリングできる。 (因みに、ハッシュを含んだURLをブラウザのアドレスバーに入れても、ハッシュを除いたURLでリクエストが送られる。この挙動の根拠となる規格はRFCなどを調べても見つからなかったけど…) ハッシュの書き換えは、JavaScriptで以下のようにしてできる。 location.hash = newHash; こういう処理を、例えばWeb UIのボタンをクリックしたときなんかに実行してURLを変えて、その上で画面を更新してやればいい。 そのあと、ブラウザの戻るボタンなんかを押されると書き換える前のURLにもどるわけだけど、これを検知するためにsetInterval()とかで定期的にlocation.hashを監視してたりした。 History APIによるルーティング ハッシュベースのルーティングは見るからにしょぼい。 URLのハッシュ以降しか使えないのもしょぼいし、内部の処理も泥臭い。 これが、HTML 5でHistory APIがでて変わった。 History APIはJavaScriptのAPIで、ブラウザの履歴を操作できる。 const state = { hoge: &quot;hogeee&quot; }; history.pushState(state, &quot;&quot;, &quot;/foo/bar&quot;); こんな感じのを実行すると、URLが/foo/barに変わる。(が、もちろんサーバにはリクエストは飛ばない。) で、ブラウザの戻るボタンを押すと、popstateイベントが発生するので、それにイベントハンドラを登録しておけば、もとのURLに戻った時にも適時画面を書き換えられる。 popstateイベントからは、pushState()に渡したstateオブジェクトを取得できる。 ところで、ブラウザのアドレスバーに/foo/barを直打ちするとどうなるかというと、普通にWebサーバを設定しておくと、/foo/bar/index.htmlを返そうとして、無いので404エラーになっちゃう。 ので、サーバ設定では、どのURLも同じリソース(e.g. /index.html)をしといて、そこからJavaScriptを呼んで、URLを読み取って、画面を描いてやればいい。 HTML 5が普及するにつれ、このようなHistory APIを使ったフロントエンドルーティングをするフレームワークやライブラリが色々出てきた。んだろうと思う。 React Router Reactのエコシステムとしては、React Routerがフロントエンドルーティングを実現してくれる。 React Routerは、宣言的にフロントエンドルーティングを実現できるReactコンポーネントのライブラリ。
-              </div>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        <div class="col-sm-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/" class="post post-topix">
-              <header class="eyecatch text-center">
-                <img src="/images/redux-saga.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Sun, Oct 7, 2018</span>
-              </div>
-              <h2 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その8: Redux-Saga</h2>
-              <div class="summary">
-                ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はReact Reduxをセットアップした。 (2018/11/21更新) (adsbygoogle = window.adsbygoogle || []).push({}); ReduxのMiddleware Redux単体では同期的なデータフローしか実装できない。 つまり、Actionを発生させたら、即座にディスパッチされ、stateが更新される。 一方、非同期なフローとは、REST APIを呼んでその結果でstateを更新するような処理。 REST API呼び出しが非同期なわけだが、これをReduxのピュアなフローのどこで実行するのかというと、Middlewareで実行する。 MiddlewareはStoreのdispatch()をラップして、Actionをトラップして副作用を含む任意の処理をするための機能。 Middlewareの仕組みについてはこの記事が分かりやすい。 Middlewareには例えば、発生したActionの内容と、それによるstateの変化をログに出力するredux-loggerがある。 デバッグに有用そうなので入れておく。 yarn add redux-logger v3.0.6が入った。 Middlewareは、ReduxのapplyMiddleware()というAPIを使って、createStore()実行時に適用できる。 src/configureStore.js: -import { createStore } from 'redux'; +import { createStore, applyMiddleware } from 'redux'; +import { logger } from 'redux-logger'; import rootReducer from './reducers/rootReducer'; export default function configureStore(initialState = {}) { + const middlewares = []; + if (process.env.NODE_ENV === `development`) { + middlewares.push(logger);
-              </div>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        <div class="col-sm-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/" class="post post-topix">
-              <header class="eyecatch text-center">
-                <img src="/images/redux.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Mon, Oct 1, 2018</span>
-              </div>
-              <h2 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その7: React Redux</h2>
-              <div class="summary">
-                ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はReduxをセットアップした。 (2018/11/21更新) (adsbygoogle = window.adsbygoogle || []).push({}); React Redux 前回はReduxをセットアップして、ActionをStoreにディスパッチしてstateを更新できるようになった。 今回はこれをReactにつなぐ。 使うのはReact Redux。 yarn add react-redux v5.1.1が入った。 Presentational Components と Container Components React Reduxの使い方を理解するには、Presentational Components と Container Components という概念を知らないといけない。 これはReactコンポーネントを役割別に分ける考え方で、それぞれ以下のような特徴をもつ。 Presentational Components Container Components 主な役割 DOMをレンダリングする データを取得したりstateを更新したりする(Reduxとつなぐ) Reduxとの関連 無し 有り データの読み込み propsから読む Reduxのstateオブジェクトから読む データの更新 propsで渡されたコールバックを呼ぶ ReduxのActionをディスパッチする 作り方 自前で書く React Reduxで生成する 要するに、普通にReactで作ったUIコンポーネントを、React Reduxで生成するContainer ComponentでラップしてやることでReduxのStoreとつなぐことができる。 connect() Container Componentの生成にはReact Reduxのconnect()というAPIを使う。 React Reduxを使う場合、Reduxのstateの更新に応じてReactコンポーネントに新しいpropsを渡して再レンダリングすることになるが、この新しいpropsを作ってコンポーネントに渡す処理を定義するのがconnect()。 connect()の第一引数には、ReduxのstateのプロパティとReactコンポーネントのpropsのプロパティとのマッピングをする関数であるmapStateToProps()を渡す。 mapStateToProps()はstateの更新に応じて呼び出され、引数にstate(と現在のprops)が渡される。 mapStateToProps()が返すオブジェクトはReactコンポーネントに渡されるpropsにマージされる。 connect()の第二引数には、Storeのdispatch()を呼び出す処理とReactコンポーネントのpropsのプロパティとのマッピングをする関数であるmapDispatchToProps()を渡す。 mapDispatchToProps()の引数にはdispatch()が渡される。 mapDispatchToProps()が返すオブジェクトはReactコンポーネントに渡されるpropsにマージされる。 (mapDispatchToProps()は第二引数にpropsを受け取ることもできて、この場合、propsの更新に反応して呼び出されるコールバックになる。) connect()を実行すると関数が返ってくる。 この関数にReactコンポーネント(Presentational
-              </div>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        <div class="col-sm-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2018/09/26/creating-react-redux-app-from-scratch-06/" class="post post-topix">
-              <header class="eyecatch text-center">
-                <img src="/images/redux.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Wed, Sep 26, 2018</span>
-              </div>
-              <h2 class="title">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その6: Redux</h2>
-              <div class="summary">
-                ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。) 前回はMaterial-UIをセットアップした。 (2018/11/21更新) (adsbygoogle = window.adsbygoogle || []).push({}); Reactの状態管理 Reactによるプログラミングをするとき、小さいUIコンポーネントをたくさん作って、それらを組み合わせてVirtual DOMツリーを作っておいて、そこにpropsをほうりこんでレンダリングする、という感じになる。 また、レンダリングした後はコンポーネントのstateをいじって状態を変化させる。 このpropsやstateの扱いをReactの状態管理という。 propsやstateを適当にアドホックに設定してると、結局jQuery使ってるのとそんなに変わらなくなって辛くなるので、Reactの開発元であるFacebookはFluxというアーキテクチャを提案している。 Fluxでは、単一の(またはドメイン毎くらいの単位の)オブジェクトでアプリケーション全体の状態(state)を表し、これをStoreに保持する。 ReactはStoreが保持するstateを受け取り、それをもとにViewをレンダリングする。 Viewに対するユーザの操作(など)はActionというオブジェクトで表現され、Dispatcherに渡され、Dispatcherに登録されたcallbackを通してstateを変化させる。 データが常に一方向に流れて見通しがよく、各コンポーネントの独立性が高いのが特徴。 各コンポーネントは、受け取ったデータをピュアに処理すればよく、リアクティブにファンクショナルに実装できる。 Redux Fluxの実装、というか発展形がRedux。 ReduxではFluxのDispatcher辺りがReducerに置き換わっている。 ReducerはActionと現在のstateから次のstateを計算する純粋関数。 また、ReduxからはViewが切り離されていて、Actionによってstateを更新する状態管理ライブラリの役割に徹している。 ReactコンポーネントのイベントハンドラからActionオブジェクトを生成したり、更新したstateをReactに渡したりするつなぎ目は、別途React Reduxというライブラリが担当する。 ReduxとReact Reduxについては、Qiitaの「たぶんこれが一番分かりやすいと思います React + Redux のフロー図解」という記事が分かりやすい。 今回はReduxを導入する。 yarn add redux Redux v4.0.1が入った。 以降、現時点で唯一のUIコンポーネントであるHOGEボタンの状態管理を実装してみる。 Action まずActionを実装する。 Actionオブジェクトはどんな形式でもいいけど、普通はFlux Standard Action(FSA)にする。 FSAは以下のプロパティを持つプレーンオブジェクト。 type: Action種別を示す文字列定数。必須。 payload: Actionの情報を示す任意の型の値。任意。 error: Actionがエラーを表すものかを示す boolean プロパティ。エラーなら true にして、payload にエラーオブジェクトをセットする。任意。 meta: その他の情報を入れる任意の型の値。任意。 Actionのコードは、Actionのtypeに入れる値を定義するactionTypes.jsと、Action Creator(i.e. Actionオブジェクトを生成する関数)を定義するactions.jsからなり、ともにsrc/actions/に置く。 HOGEボタンをクリックしたときのAction、HOGE_BUTTON_CLICKEDを定義してみる。 src/actions/actionTypes.js: export const HOGE_BUTTON_CLICKED = 'HOGE_BUTTON_CLICKED'; src/actions/actions.js: import { HOGE_BUTTON_CLICKED, } from './actionTypes'; export function hogeButtonClicked() { return { type: HOGE_BUTTON_CLICKED, }; } こんな感じ。 Reducer 次はReducer。 Reducerは、上記Action Creatorが生成するActionオブジェクトに対応して起動し、Store(後述)から現在のstateオブジェクトを受け取って、Actionオブジェクトのpayloadの値(など)に応じて新しいstateオブジェクトを作る。 Reducerを書く前に、stateオブジェクトの構造を設計しておくことが推奨されている。 UIコンポーネント毎にプロパティを分けて、コンポーネント構造と同様の階層構造にしておけばだいたいよさそう。 HOGEボタンに一つ、クリックしたかどうかの状態(clicked)を持たせるとすると、stateオブジェクトは以下のようになる。 { hoge: { clicked: false, }, } Reducerはピュアじゃないといけないので、内部で副作用を起こしてはいけない。 副作用とは、具体的には以下のようなもの。 引数で与えられたオブジェクトを変更する。 REST APIへのリクエストを送る。 (ログの出力も厳密には副作用なんだろうけど、それは許されてる気がする。) また、ピュアであるためには参照透過性を持たないといけなくて、つまり同じ引数に対しては同じ戻り値を返さないといけないので、内部でDate.now()とかMath.random()とかを呼ぶのもダメ。 Reducerのコードはsrc/reducers/に置く。 HOGE_BUTTON_CLICKEDが発生したら、hogeのclickedをtrueにするReducer(hoge())は以下の感じに書ける。 src/reducers/reducers.js: import { HOGE_BUTTON_CLICKED } from '../actions/actionTypes'; const initialState = { hoge: { clicked: false, }, }; export const hoge = (state = initialState, action) =&gt; { switch (action.type) { case HOGE_BUTTON_CLICKED: const newHoge = { hoge: { clicked: true, }, }; return Object.assign({}, state, newHoge); default: return state; } } hoge()のポイントはたくさんある。 stateとactionを引数に取る。前者が現在の状態を表すstateオブジェクトで、後者がActionオブジェクト。 戻り値は新しい状態を表すstateオブジェクト。 actionオブジェクトはどのActionを表すものかは分からないので、action.typeを見てHOGE_BUTTON_CLICKEDだけを処理するようにする。 知らないActionだったら(i.e.
-              </div>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-      </div>
-    </div>
-  </div>
-  <div class="col-md-3">
-    <aside id="site-sidebar">
-      <div class="row">
-        <div class="col-md-12 col-sm-6 col-xs-12">
-  <div class="text-center custom-partial">
-    
-  </div>
-  <section class="sidebar-bordered">
-    
-    <div id="profile">
-      <div class="text-center">
-        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
-      </div>
-      <div class="data">
-        <h4 id="profile-username" class="post-title"></h4>
-        
-        <span id="profile-birth">DOB: Dec 14, 1983</span>
-        
-        <div id="social-links">
-          
-          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
-          
-          
-          
-          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
-          
-        </div>
-        <div id="profile-description"></div>
-        <ul id="profile-urls" class="post-tags"></ul>
-      </div>
-    </div>
-    
-  </section>
-</div>
-
-<div class="col-md-12 col-sm-6 col-xs-12">
-  <section>
-    <h3>Tags</h3>
-    
-    <div id="tag-cloud" class="text-center">
-      
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/agile">agile</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/ansible">ansible</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/babel">babel</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/cnn">cnn</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/coursera">coursera</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/css-modules">css-modules</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/deep-learning">deep-learning</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/enzyme">enzyme</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/eslint">eslint</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/esxi">esxi</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/flow">flow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/frontend">frontend</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/git">git</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/github">github</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/golang">golang</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/headless-browser">headless-browser</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jest">jest</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/keras">keras</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kubeadm">kubeadm</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kubebuilder">kubebuilder</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/license">license</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/machine-learning">machine-learning</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/management">management</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/material-ui">material-ui</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/msys2">msys2</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/neural-network">neural-network</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/nlp">nlp</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/packer">packer</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/postcss">postcss</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/prettier">prettier</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/react">react</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/react-router">react-router</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/redux">redux</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/redux-saga">redux-saga</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/rnn">rnn</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/selenium">selenium</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/servicenow">servicenow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/skaffold">skaffold</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/styled-components">styled-components</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/stylelint">stylelint</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/tensorflow">tensorflow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/test-framework">test-framework</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/typescript">typescript</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/webdriverio">webdriverio</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/webpack">webpack</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
-      
-    </div>
-    
-  </section>
-</div>
-
-
-
-
+    <head>
+         
 
 <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<ins class="adsbygoogle"
-    style="display:block"
-    data-ad-client="ca-pub-6244473643910448"
-    data-ad-slot="1845600530"
-    data-ad-format="auto"></ins>
 <script>
-(adsbygoogle = window.adsbygoogle || []).push({});
+  (adsbygoogle = window.adsbygoogle || []).push({
+    google_ad_client: "ca-pub-6244473643910448",
+    enable_page_level_ads: true
+  });
 </script>
 
-<div class="col-md-12 col-sm-6 col-xs-12">
-  <div class="text-center custom-partial">
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/tags/redux/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/tags/redux/">
+
+
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="[To Be Decided ~]$ find /tags/redux/">
+  <title>[To Be Decided ~]$ find /tags/redux/</title>
+  <meta property="og:description" content="Kaitoy&#39;s Personal Tech Blog">
+  <meta name="description" content="Kaitoy&#39;s Personal Tech Blog">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/title.png">
+
+
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <style>
+
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&amp;subset=japanese">
+
+
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai.min.css"> 
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
     
-  </div>
-</div>
 
-      </div>
-    </aside>
-  </div>
-</div>
-
-        <div class="text-center custom-partial">
-          
-        </div>
-      </div>
-    </main>
-
-    <footer id="site-footer" class="text-center font-logo">
-      <p>&copy;  2015 -  2019  Kaito Yamada </p>
-      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
-      <p>
-        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
-        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
-      </p>
-    </footer>
-
-    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
-    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
-    
-    <script>
-      $(document).ready(function(){
-        $('.bxslider').bxSlider({
-          speed: 1,
-          preloadImages: 'all'
-        });
-      });
-    </script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/highlight.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dos.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/yaml.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dockerfile.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/go.min.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
 
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
+        <link rel="alternate" type="application/rss+xml" href="https://www.kaitoy.xyz/tags/redux/index.xml" title="To Be Decided" />
+        
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
     
-    <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-    ga('create', 'UA-65248565-1', 'auto');
-    ga('send', 'pageview');
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v3.2"></script>
 
-    </script>
+        <nav class="navbar navbar-default navbar-fixed-top">
 
-    <script>
-    $(function() {
-      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
-      $.getJSON(url)
-        .done(function(data) {
-          var entry = data.entry[0];
-          $("#profile-photo").attr("src", entry.photos[0].value);
-          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
-          $("#profile-description").html(entry.aboutMe);
-          entry.urls.forEach(function(el){
-            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
-          });
-          $("#profile").show();
-        });
-    });
-    </script>
-  </body>
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">redux</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    
+
+    <h2>redux</h2>
+
+     <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/11/02/creating-react-redux-app-from-scratch-09/">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その9: React Router</a></h4>
+    <h5>Fri, Nov 2, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/react"><kbd class="item-tag">react</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/frontend"><kbd class="item-tag">frontend</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/redux"><kbd class="item-tag">redux</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/react-router"><kbd class="item-tag">react-router</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/10/07/creating-react-redux-app-from-scratch-08/">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その8: Redux-Saga</a></h4>
+    <h5>Sun, Oct 7, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/react"><kbd class="item-tag">react</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/frontend"><kbd class="item-tag">frontend</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/redux"><kbd class="item-tag">redux</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/redux-saga"><kbd class="item-tag">redux-saga</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/10/01/creating-react-redux-app-from-scratch-07/">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その7: React Redux</a></h4>
+    <h5>Mon, Oct 1, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/react"><kbd class="item-tag">react</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/frontend"><kbd class="item-tag">frontend</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/redux"><kbd class="item-tag">redux</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/09/26/creating-react-redux-app-from-scratch-06/">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その6: Redux</a></h4>
+    <h5>Wed, Sep 26, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/react"><kbd class="item-tag">react</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/frontend"><kbd class="item-tag">frontend</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/redux"><kbd class="item-tag">redux</kbd></a>
+    
+
+</div>
+ 
+
+    
+
+</main>
+
+
+
+
+        <footer>
+
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script>window.twttr = (function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0],
+            t = window.twttr || {};
+          if (d.getElementById(id)) return t;
+          js = d.createElement(s);
+          js.id = id;
+          js.src = "https://platform.twitter.com/widgets.js";
+          fjs.parentNode.insertBefore(js, fjs);
+
+          t._e = [];
+          t.ready = function(f) {
+            t._e.push(f);
+          };
+
+          return t;
+        }(document, "script", "twitter-wjs"));</script>
+
+    </body>
+
 </html>
 

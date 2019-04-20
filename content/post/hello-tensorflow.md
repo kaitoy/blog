@@ -2,7 +2,7 @@
 categories = ["x", "y"]
 date = "2018-03-27T07:50:46+09:00"
 draft = true
-eyecatch = ""
+cover = ""
 slug = ""
 tags = ["x", "y"]
 title = "hello tensorflow"

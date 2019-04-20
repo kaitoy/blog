@@ -2,10 +2,11 @@
 categories = [ "Programming" ]
 date = "2016-11-19T11:41:07-07:00"
 draft = false
-eyecatch = "pcap4jlogo.png"
+cover = "pcap4jlogo.png"
 slug = "pcap4j-doesnt-work-on-bow-yet"
 tags = [ "bow", "windows", "pcap4j" ]
 title = "Currently Pcap4J Doesn't Work on Bash on Windows"
+highlightLanguages = ["dos"]
 +++
 
 # TL;DR

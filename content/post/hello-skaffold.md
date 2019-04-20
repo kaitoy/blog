@@ -2,18 +2,18 @@
 categories = ["Programing"]
 date = "2018-04-01T09:59:43+09:00"
 draft = false
-eyecatch = "kubernetes.png"
+cover = "kubernetes.png"
 slug = "hello-skaffold"
 tags = ["docker", "kubernetes", "skaffold", "minikube"]
 title = "Skaffoldを触ってみた"
-
+highlightLanguages = ["dos", "yaml"]
 +++
 
 [Skaffold](https://github.com/GoogleCloudPlatform/skaffold#run-a-deployment-pipeline-once)を試してみた話。
 
 {{< google-adsense >}}
 
-## Skaffoldとは
+# Skaffoldとは
 
 Googleが開発している、Kubernetesアプリケーションを快適に開発するためのツール。
 アプリケーションのソースを監視し、変更が入ると、自動的にコンテナイメージをビルドしてKubernetesクラスタにデプロイしてくれる。
@@ -26,7 +26,7 @@ Goで書かれていて、Linux、OS X、Windows用のバイナリが提供さ�
 
 また、Gitのコミットを自動デプロイしてくれるものに、[Gitkube](https://gitkube.sh/)、[Jenkins X (エックス)](http://jenkins-x.io/)がある。
 
-## Windows版を試す
+# Windows版を試す
 
 自PCがWindowsなのでWindows版を試す。
 会社で使ってるのもWindowsだし。
@@ -98,7 +98,7 @@ MinGW(Git Bash)でやっても同じ結果。
 
 対応を待つしかない。
 
-## Linux版を試す
+# Linux版を試す
 
 Linux版も試してみる。
 minikubeのVMがLinux(Boot2Docker)なので、そこで動かす。
@@ -122,7 +122,7 @@ ERRO[0001] run: getting skaffold config: getting k8s client: Error creating kube
 
 ちょっと調べたら、kubectlのコンテクストが設定されていないのがだめっぽい。
 
-```sh
+```shell
 # kubectl config current-context
 error: current-context is not set
 ```

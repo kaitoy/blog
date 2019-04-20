@@ -1,673 +1,426 @@
 <!DOCTYPE html>
 <html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
-
-    
-    
-    <meta property="og:title" content="To Be Decided">
-    <meta property="og:url" content="https://www.kaitoy.xyz">
-    <link rel="canonical" href="https://www.kaitoy.xyz">
-    
-    <meta property="og:site_name" content="To Be Decided">
-
-    <title>
-      
-      kubernetes | To Be Decided
-      
-    </title>
-
-    
-    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
-
-    
-    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
-
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
-    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
-    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
-    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
-    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/styles/zenburn.min.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
-
-    
-    
-
-    
-    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-    <script>
-      (adsbygoogle = window.adsbygoogle || []).push({
-        google_ad_client: "ca-pub-6244473643910448",
-        enable_page_level_ads: true
-      });
-    </script>
-
-    
-  </head>
-  <body>
-
-    <header id="site-header">
-      <div class="container">
-        <h1 class="text-center">
-          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
-        </h1>
-      </div>
-    </header>
-
-    <main id="site-body">
-      <div class="container">
-
-
-<div class="row">
-  <div class="col-md-9">
-    <div id="posts">
-      <div class="row">
-        
-        
-        
-        <div class="col-sm-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2019/03/08/k8s-zundoko-operator/" class="post post-topix">
-              <header class="eyecatch text-center">
-                <img src="/images/kubernetes.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Fri, Mar 8, 2019</span>
-              </div>
-              <h2 class="title">ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</h2>
-              <div class="summary">
-                Javaの講義、試験が「自作関数を作り記述しなさい」って問題だったから 「ズン」「ドコ」のいずれかをランダムで出力し続けて「ズン」「ズン」「ズン」「ズン」「ドコ」の配列が出たら「キ・ヨ・シ！」って出力した後終了って関数作ったら満点で単位貰ってた &mdash; てくも (@kumiromilk) 2016年3月9日 久しぶりにズンドコしたくなったので、Kubebuilderを使って、KubernetesのOperatorとして動くZundoko Operatorを作ってみた。 (adsbygoogle = window.adsbygoogle || []).push({}); Kubernetes Operatorとは KubernetesのOperatorというのはCoreOS社(現Red Hat)によって提唱された概念(実装パターン)で、KubernetesのAPIで登録されるKubernetesオブジェクトの内容に従って何らかの処理をするController (e.g. Deployment Controller)の一種。 Controllerが汎用的なのに対して、特定のアプリケーションに特化しているのが特徴。 アプリケーションごとの細かな設定をKubernetesオブジェクトで表現するために、KubernetesのAPIを拡張する。 APIを拡張するにはAPI Aggregationを使う方法とCustom Resource Definition (CRD)を使う方法がある。 API Aggregationは、Kubernetesオブジェクトをetcd以外で管理したり、WebSocketを使ったり、Kubernetesクラスタ外のAPIサーバを使う場合など、特殊な場合にも対応できる高度なやりかたで、大抵のユースケースではCRDで事足りる。 Operatorも普通はCRDを使う。(というかCRDを使うのがOperatorという人もいる。) CRDとは KubernetesのAPIを簡単に拡張できる仕組みで、Kubernetesオブジェクト(リソース)を定義するKubernetesオブジェクト。 YAMLで、定義したいリソースの名前や型やバリデーションなんかを書いてkubectl applyすれば、そのリソースをKubernetesのREST APIとかkubectlで作成したり取得したりできるようになる。 Operatorの仕組み Operatorは、CRDで定義されたリソース(など)の作成、更新、削除を監視(watch)して、リソースの内容に応じた何らかの処理をするReconciliationループを回すPod。 普通、リソースはOperatorの管理対象のアプリケーションの状態を表す。 で、Operatorはリソースの内容とアプリケーションの状態が同じになるように、Reconciliationループ内でDeploymentを作ったりアプリケーションのAPIを叩いたりする。 ユーザとしては、アプリケーションの構成や設定をKubernetesのAPIで宣言的に統一的に管理できるようになって幸せになれる。 Operator作成ツール Operatorを作るツールとして以下がある。 ツール Operator SDK Kubebuilder Metacontroller 開発元 Kubernetesコミュニティ製 CoreOS社製 GKEチーム製 GitHubスター数 1459 1009 506 開発言語 Go、Ansible、Helm Go 任意 特徴 プロジェクトテンプレート生成、ビルド、デプロイをするCLIツール。AnsibleでもOperatorを書けるのが面白い。Operator FrameworkとしてLifecycle Managerなどが提供されていたり、OperatorHub.ioというコミュニティサイトがあったり、エコシステムが充実している。 プロジェクトテンプレート生成、ビルド、デプロイをするCLIツール。3つの中で一番シンプル。Goでしか開発できない。 他の2つと毛色が違って、Metacontroller自体が汎用的にOperatorを管理するKubernetesアプリ。Operatorの定義をJSONを投げて登録すると、Reconciliationループを回してその中でWebフックを実行してくるので、それを受けて任意の処理をするサーバを任意の言語で書ける。 この中では、Operator SDKが数歩リードしている感じ。 (CoreOS社を買収した)Red Hatが後ろ盾ているし、OperatorHub.ioはGCPとAWSとAzureが協力している。 けど、この記事のネタを書き始めたときにはまだOperatorHub.ioが発表されていなくて、単純にKubebuilderがシンプルでいいと思って採用してしまった。 まあOperator SDKもKubebuilderも下回りのライブラリは同じものを使っているので、だいたい同じだろうし、Operator Frameworkへの移行も難しくなかろう。 Zundoko Operator Kubebuilderで今回作ったのはZundoko Operator。 CRDで定義したリソースは以下。 Hikawa: 作るとズンドコきよしを開始する。 Zundoko: 「ズン」と「ドコ」を表す。Hikawaに管理される。 Kiyoshi: 「キ・ヨ・シ！」を表す。Hikawaに管理される。 Zundoko Operatorは、HikawaとZundokoをwatchする。 Hikawaが作成されると、一定間隔で、ランダムに「ズン」か「ドコ」をセットしたZundokoを作成する。 「ズン」を4つ作ったあとに「ドコ」を作ったら、Kiyoshiを作成して、Zundokoの作成を止める。 Kubebuilderの使い方 Quick Startを参考に。 Kuberbuilderを使うにはGo、depとkustomizeとDockerが必要で、Linuxしかサポートしていない。 自分のPCがWindows 10なので、WSL (Ubuntu 18.04)で環境を作ったんだけど、結局Dockerビルドとかテストとかが上手く動かなかったので、VMとかのLinuxで動かしたほうがよさそう。 Kubebuilderセットアップ Goインストール Goは公式サイトからLinux用アーカイブをダウンロードして展開して、そのbinディレクトリにPATH通すだけでインストールできる。 $ go version go version go1.11.4 linux/amd64 あと、作業ディレクトリを作ってGOPATHを設定しておく。 ~/go/を作業ディレクトリとする。 $ export GOPATH=$HOME/go $ echo 'export GOPATH=$HOME/go' &gt;&gt; ~/.profile $ mkdir $GOPATH/bin $ mkdir $GOPATH/src で、$GOPATH/binにもPATH通しておく。 depインストール Go公式の依存ライブラリ管理ツール。 コマンド一発でインストールできる。 $ curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh kustomizeインストール バイナリをPATHの通ったところにダウンロードするだけ。 $ curl -L https://github.com/kubernetes-sigs/kustomize/releases/download/v2.0.3/kustomize_2.0.3_linux_amd64 -o /usr/local/bin/kustomize $ chmod +x /usr/local/bin/kustomize kubebuilderインストール GitHubのReleasesからアーカイブをダウンロードして展開してPATH通すだけ。 $ version=1.0.6 $ arch=amd64 $ curl -LO https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${version}/kubebuilder_${version}_linux_${arch}.tar.gz $ tar -zxvf kubebuilder_${version}_linux_${arch}.tar.gz $ sudo mv kubebuilder_${version}_linux_${arch} /usr/local/kubebuilder $ export PATH=$PATH:/usr/local/kubebuilder/bin $ echo 'export PATH=$PATH:/usr/local/kubebuilder/bin' &gt;&gt; ~/.profile Dockerインストール は適当に… Kubebuilderプロジェクト生成 Zundoko Operatorのプロジェクトを生成する。 $ mkdir -p $GOPATH/src/github.com/kaitoy/zundoko-operator $ cd $GOPATH/src/github.com/kaitoy/zundoko-operator $ kubebuilder init --owner kaitoy dep ensureを実行するかを聞かれるのでyesで回答すると、依存ライブラリがダウンロードされ、プロジェクトのビルドが走る。 デフォルトではCRDなどの名前空間がk8s.ioになっているので、kaitoy.github.comに変えるべく、zundoko-operator/PROJECTを編集する。 zundoko-operator/PROJECT: version: &quot;1&quot; -domain: k8s.io +domain: kaitoy.github.com repo: github.com/kaitoy/zundoko-operator CRDとController生成 HikawaとZundokoとKiyoshiのCRDを生成する。 $ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Hikawa $ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Zundoko $ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Kiyoshi それぞれ、リソースを作成するか (Create Resource under pkg/apis [y/n]?) と、Controllerを作成するか (Create Controller under pkg/controller [y/n]?) を聞かれる。 リソースはそれぞれ作成して、ControllerはHikawaにだけ作成した。 生成されたのは以下のファイル。 API定義とそのテスト: zundoko-operator/pkg/apis/zundokokiyoshi/v1beta1/*.go CRD: zundoko-operator/config/crds/config/crds/*.yaml Hikawa Controllerとそのテスト: zundoko-operator/pkg/controller/hikawa/*.go リソースのマニフェストのサンプル: zundoko-operator/config/crds/config/samples/*.yaml これらの内、CRDと zundoko-operator/pkg/apis/zundokokiyoshi/v1beta1/zz_generated.deepcopy.go はAPI定義をもとに生成されるので、API定義を書いた後生成しなおすことになる。 API定義記述 リソースがどのような属性をもつかをGoで定義する。 テンプレートは生成されているので、ちょっと書き足すだけでできる。 以下はHikawaのAPI定義。 zundoko-operator/pkg/apis/zundokokiyoshi/v1beta1/hikawa_types.go: package v1beta1 import ( &quot;time&quot; metav1 &quot;k8s.io/apimachinery/pkg/apis/meta/v1&quot; ) // HikawaSpec defines the desired state of Hikawa type HikawaSpec struct { IntervalMillis time.Duration `json:&quot;intervalMillis&quot;` NumZundokos int `json:&quot;numZundokos,omitempty&quot;` SayKiyoshi bool `json:&quot;sayKiyoshi,omitempty&quot;` } // HikawaStatus defines the observed state of Hikawa type HikawaStatus struct { NumZundokosSaid int `json:&quot;numZundokosSaid&quot;` Kiyoshied bool `json:&quot;kiyoshied&quot;` } // +genclient // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object // Hikawa is the Schema for the hikawas API // +k8s:openapi-gen=true type Hikawa struct { metav1.TypeMeta `json:&quot;,inline&quot;` metav1.ObjectMeta `json:&quot;metadata,omitempty&quot;` Spec HikawaSpec `json:&quot;spec,omitempty&quot;` Status HikawaStatus `json:&quot;status,omitempty&quot;` } // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object // HikawaList contains a list of Hikawa type HikawaList struct { metav1.TypeMeta `json:&quot;,inline&quot;` metav1.ListMeta `json:&quot;metadata,omitempty&quot;` Items []Hikawa `json:&quot;items&quot;` } func init() { SchemeBuilder.Register(&amp;Hikawa{}, &amp;HikawaList{}) } 自分で書いたのはHikawaSpecとHikawaStatusの中だけ。 Specの方には期待する状態、Statusの方には現在の実際の状態を表すフィールドを定義するのがパターン。 例えば、HikawaSpec.NumZundokosが期待するZundokoの数で、HikawaStatus.NumZundokosSaidが実際に作成されたZundokono数。 Hikawa ControllerはReconciliationループの中で、SpecとStateが同じになるように処理をすることになる。 ZundokoとKiyoshiのAPI定義は、Specに「Zun」、「Doko」、または「Kiyoshi!」を入れるためのSayフィールドだけを書いた。 Hikawa Controller記述 Hikawa Controllerもテンプレートが生成されているので、それを参考に書ける。 まずはどのリソースをwatchするかを書く。 zundoko-operator/pkg/controller/hikawa/hikawa_controller.go前半抜粋: func add(mgr manager.Manager, r reconcile.Reconciler) error { // Create a new controller c, err := controller.New(&quot;hikawa-controller&quot;, mgr, controller.Options{Reconciler: r}) if err != nil { return err } // Watch for changes to Hikawa err = c.Watch(&amp;source.Kind{Type: &amp;zundokokiyoshiv1beta1.Hikawa{}}, &amp;handler.EnqueueRequestForObject{}) if err != nil { return err } err = c.Watch(&amp;source.Kind{Type: &amp;zundokokiyoshiv1beta1.Zundoko{}}, &amp;handler.EnqueueRequestForOwner{ IsController: true, OwnerType: &amp;zundokokiyoshiv1beta1.Hikawa{}, }) if err != nil { return err } return nil } Hikawaは普通にwatchして、Zundokoはownしているリソースとしてwatchしている。 Reconciliationループは以下のように書いた。 zundoko-operator/pkg/controller/hikawa/hikawa_controller.go後半抜粋: // +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=hikawas,verbs=get;list;watch;create;update;patch;delete // +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=hikawas/status,verbs=get;update;patch // +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=zundokos,verbs=get;list;watch;create;update;patch;delete // +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=zundokos/status,verbs=get;update;patch // +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=kiyoshis,verbs=get;list;watch;create;update;patch;delete // +kubebuilder:rbac:groups=zundokokiyoshi.kaitoy.github.com,resources=kiyoshis/status,verbs=get;update;patch func (r *ReconcileHikawa) Reconcile(request reconcile.Request) (reconcile.Result, error) { instanceName := request.NamespacedName.String() log.Info(&quot;Reconciling a Hikawa: &quot; + instanceName) // Fetch the Hikawa instance instance := &amp;zundokokiyoshiv1beta1.Hikawa{} err := r.Get(context.TODO(), request.NamespacedName, instance) if err != nil { if errors.IsNotFound(err) { // Object not found, return.
-              </div>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        <div class="col-sm-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2018/06/17/packer-k8s/" class="post post-topix">
-              <header class="eyecatch text-center">
-                <img src="/images/kubernetes-ansible-packer.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Sun, Jun 17, 2018</span>
-              </div>
-              <h2 class="title">Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</h2>
-              <div class="summary">
-                「Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した」の続きで、さらにPackerを組み合わせて、VM作成まで自動化した話。 AnsibleをWindows(MSYS2)で動かした話でもある。 書いたPackerテンプレートはGitHubに置いた。 (adsbygoogle = window.adsbygoogle || []).push({}); Packerとは Packerは、様々な種類のVMを構築できるツール。 VagrantとかTerraformとかを開発しているHashiCorpが開発している。 テンプレートと呼ばれるビルド定義をJSONファイルに書いて、ビルド、プロビジョニング、ポストプロセスを実行して、アーティファクトと呼ばれるビルドの成果物を生成する。 ビルドのステップでは、VMを作成して、ハードウェア構成を設定したり、OSをインストールしたりする。 以下のような環境でVMを作れる。 VirtualBox Hyper-V VMware Workstation VMware vSphere Hypervisor Docker AWS EC2 プロビジョニングのステップでは、ビルドで作ったVMのOS上で指定された操作を実行し、ソフトウェアのインストールなどのセットアップ処理をする。 プロビジョニングには以下のようなツールを使える。 Shell PowerShell Ansible Chef Puppet プロビジョニングが終わるとアーティファクト(VMイメージファイルや、AWS EC2のAMI IDとか)が出力される。 ポストプロセスのステップでは、アーティファクトを入力として何らかの処理をして、最終的なアーティファクトを生成する。 ポストプロセスでは以下のような処理を実行できる。 アーカイブ VagrantBox生成 AWS EC2へのインポート Docker push PackerはGoで書かれていてビルド済みのバイナリが配布されているので、ダウンロードページから落として PATHの通ったところに置くだけでインストールできる。 今回はPacker 1.2.4のWindows版をインストールした。 Packerのテンプレート概要 Packerのテンプレートにはビルド、プロビジョニング、ポストプロセスの定義を複数かけて、複数環境のVM生成を1ファイルで定義できる。 テンプレートには以下のプロパティを書く。 builders: ビルドの定義のリスト。 description: テンプレートの説明。 min_packer_version: Packer の最低バージョン指定。 post-processors: ポストプロセスの定義のリスト。 provisioners: プロビジョニングの定義のリスト。 variables: テンプレート内で使う変数の定義。 _comment: コメントなどを書くためのプロパティ。実際はアンダースコアで始まればなんでもいい。JSON オブジェクトのルートレベルのみで使える。 これらのうち、必須なのはbuildersだけ。 一つのビルド定義には一つのcommunicatorを紐づける。 communicatorはビルド時にVMにつなぐための設定。 基本はSSHだけど、WinRMとかもある。 やりたいこと Windows 10上でPackerとAnsibleを動かして、VirtualBoxのVMをOracle Linux 7.4で作って、Kubernetes 1.10をインストールしたい。 Windowsでやりたいのは、単にベアメタルのLinuxの環境が無いからってのもあるし、いずれHyper-VのVMも作りたいからってのもある。 PackerはGo製で普通にWindowsで動くからいいけど、問題はAnsibleがPython製のくせにWindowsのPythonでは動かないこと。 AnsibleはWSLでは動くけど、VirtualBoxとかHyper-VはWindows上で動くから、PackerはWindows上で動かさないといけないはずで、そうなるとPackerから呼ばれるAnsibleもWindows上で動かさないといけない気がする。 のでWSLではだめな気がするし、そもそも実はWindows 7でも同じことやりたいのでWSLは無し。 要はWindows上でLinuxのPythonを使ってAnsibleを動かしたい。 ならばCygwinかMSYS2+MinGW-w64かGit Bashか。 ここにAnsibleはCygwinでもGit Bashでも動かすの難しいと書いてあって、逆にMSYS2でAnsible動かした記事はあったので、安直にMSYS2でやることにした。 MSYS2インストール MSYS2は、公式サイトからx86_64のインストーラ(msys2-x86_64-20180531.exe)をダウンロードして実行して普通にインストールしただけ。 Ansibleインストール MSYS2でのパッケージ管理にはpacmanを使う。 何はともあれPythonを入れる。3系でいい。 MSYS2 MSYSのショートカット(MSYS2 MinGW 64-bitじゃだめ)からターミナルを開いて、 $ pacman -S python で、Python 3.6.2が入った。 次に、Ansible(の依存)のビルドに必要なパッケージを入れる。 $ pacman -S gcc $ pacman -S make $ pacman -S libffi-devel $ pacman -S openssl-devel さらに、AnsibleからのSSH接続で(鍵ではなくて)パスワードを使う場合に必要なパッケージも入れる。 $ pacman -S sshpass sshpassの依存としてopensshも入った。 Ansibleはpipでインストールするんだけど、pacmanで入れたPython 3にはpipが付いてなかったので、別途入れる。 $ curl https://bootstrap.pypa.io/get-pip.py -LO $ python get-pip.py (ちょっと古いけどpipはpacman python3-pipでも入る。) で、ようやくAnsibleインストール。 $ export CFLAGS=-I/usr/lib/libffi-3.2.1/include $ pip install ansible 依存するPyNaClのビルドに20分くらいかかるのでゆっくり待つと、インストール完了するはず。 今回はAnsible 2.5.4がインストールされた。 AnsibleでJinja2のipaddrフィルターを使うために、もう一つPyPiパッケージ入れる。 $ pip install netaddr Packerテンプレート作成 ビルドは、OSインストールメディアのISOファイルを使うVirtualBoxのビルダであるvirtualbox-isoを指定して書いた。 OSのインストールは、Boot Commandをテンプレートに書くことで、インストーラのGUIを操作してやることもできるけど、RHEL系ならKickstartを使うのが楽。 Kickstartの定義ファイルは、普通に手動でOSをインストールした後、/root/anaconda-ks.cfgを採取して、必要に応じて編集して作る。 今回作ったのはこれで、このスレを参考に、Minimalインストールから、Wifiのファームウェアとか要らないのを抜いてる。 プロビジョニングは、「Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した」ときのPlaybookを実行するやつを公式マニュアル見ながら適当に書いて、ポストプロセスも適当に書いて、できたのがこれ。 ansible_env_varsでANSIBLE_SSH_ARGSに-o ControlMaster=noを入れているのは、この問題に対応するため。 ビルド実行 MSYS2 MSYSのショートカットからターミナルを開いて、Packerを実行してみたら以下のエラー。 $ packer build -var-file=variables.json k8s_single_node_cluster-vb.json bash: packer: コマンドが見つかりません WindowsのPathが通ったところにPackerバイナリを置いておいてもMSYS2からは見えない。 のでpackerバイナリのフルパス(今回はC:\Users\kaitoy\Desktop\bin\にインストールしてたのでそのパス)を指定してやる。 $ /c/Users/kaitoy/Desktop/bin/packer.exe build -var-file=variables.json k8s_single_node_cluster-vb.json k8s-single-node-cluster output will be in this color.
-              </div>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        <div class="col-sm-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/" class="post post-topix">
-              <header class="eyecatch text-center">
-                <img src="/images/kubernetes-ansible.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Sun, Jun 3, 2018</span>
-              </div>
-              <h2 class="title">Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</h2>
-              <div class="summary">
-                「Kubernetes 1.10をスクラッチから全手動で構築」、「Kubernetes 1.10のクラスタにWeave Netをデプロイする」、「Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える」のまとめとして、Kubernetes 1.10のクラスタを構築するAnsible Playbookを書いた。 書いたものはGitHubに置いた。 (adsbygoogle = window.adsbygoogle || []).push({}); Ansibleとは Ansibleは、Ansible社が開発したOSSのIT自動化ツール。 Ansible社は2015年10月にRedHatが買収したので、現在はRedHatが開発している。 似たようなツールにPuppetやChefがあるが、最近はAnsibleが最も支持されている気がする。 構成管理ツールと紹介されることが多い気がするが、2014年末位からはIT自動化ツールを自称していて、構成管理は実現するユースケースの一つという位置づけになっているので、そろそろ認識を改めてあげたい。 ユースケースは以下のようなもの。 プロビジョニング (ベアメタル、VM、クラウドインスタンス) 構成管理 アプリケーションデプロイメント CI/CD セキュリティ・コンプライアンス管理 オーケストレーション 以下のような特徴を持つ。 Python(とPowerShell)で作られてる。 昔はPython 2じゃないと動かなかったけど、2.2からPython 3でも動くようになった。 YAMLで書いた定義(Playbook)に従って処理を実行する。 シンプルで簡便であることを売りにしている。 多数のモジュールがビルトインされていて、様々な操作を簡潔な定義で宣言的に実行できる。 エージェントレスで、SSH(等)で対象のサーバにつないで処理を実行する。 処理を冪等にできるような仕組みが備わっていて、特にビルトインモジュールを活用すると簡単に冪等性を持たせられる。 Pythonで書かれているのでどこでも動くかと思いきや、fcntlとかgrpやらUnix特有のモジュールを使っているため、WindowsのPythonでは動かない。 MSYS2とかWSLでは動く模様。 (Git Bashでは動かない…) 今回使ったのは最新版の2.5.3。 Ansibleインストール AnsibleはYUMとかpipとかでインストールできる。 今回はOracle Linux 7.4で動かすため、以下のようにインストールした。 AnsibleのYUMリポジトリ追加 以下の内容を/etc/yum.repos.d/の適当な.repoファイルに書く。 [ansible] name=Ansible baseurl=http://releases.ansible.com/ansible/rpm/release/epel-7-x86_64/ gpgcheck=0 enabled=1 依存するPythonパッケージのYUMリポジトリを有効化 /etc/yum.repos.d/public-yum-ol7.repoを編集して、ol7_openstack30セクションのenabledを1にする。 インストール # yum install -y ansible Playbookの書き方 Playbookの書き方は他にたくさん情報があるし、どうせすぐに陳腐化するのでここには書かない。 以下を参照して書いた。 公式のBest Practices 公式マニュアルのモジュール編 公式マニュアルの変数編 公式マニュアルのループ編 Jinja2のマニュアル edXのAnsibleコーディング規約 一つ他にあまりなかった情報を書く: タスクをループするとき、with_itemsプロパティを書くのはもう古くて、バージョン2.5以降ではloopプロパティを使う。 書いたPlaybookで構築できるのは以下のようなKubernetesクラスタ。 Kubernetes: バージョン1.10.1 単一ノード 全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e.
-              </div>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        <div class="col-sm-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/" class="post post-topix">
-              <header class="eyecatch text-center">
-                <img src="/images/kubernetes.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Sat, May 5, 2018</span>
-              </div>
-              <h2 class="title">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</h2>
-              <div class="summary">
-                「Kubernetes 1.10をスクラッチから全手動で構築」、「Kubernetes 1.10のクラスタにWeave Netをデプロイする」の続き。 kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPodSecurityPolicyを使うように変更した話。 ついでにkube-proxyとkube-schedulerもConfigファイルを使うようにした。 (adsbygoogle = window.adsbygoogle || []).push({}); Kubelet Configファイル journalctl -u kubeletすると、以下の警告が出ている。 Apr 28 15:31:39 k8s-master kubelet[1370]: Flag --address has been deprecated, This parameter should be set via the config file specified by the Kubelet's - -config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information. Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --pod-manifest-path has been deprecated, This parameter should be set via the config file specified by the K ubelet's --config flag.
-              </div>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        <div class="col-md-3 col-sm-4 col-xs-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/" class="post">
-              <header class="eyecatch text-center">
-                <img src="/images/weave-k8s.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Fri, May 4, 2018</span>
-              </div>
-              <h3 class="title">Kubernetes 1.10のクラスタにWeave Netをデプロイする</h3>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        <div class="col-md-3 col-sm-4 col-xs-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/" class="post">
-              <header class="eyecatch text-center">
-                <img src="/images/kubernetes.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Tue, Apr 17, 2018</span>
-              </div>
-              <h3 class="title">Kubernetes 1.10をスクラッチから全手動で構築</h3>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        <div class="col-md-3 col-sm-4 col-xs-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2018/04/01/hello-skaffold/" class="post">
-              <header class="eyecatch text-center">
-                <img src="/images/kubernetes.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Sun, Apr 1, 2018</span>
-              </div>
-              <h3 class="title">Skaffoldを触ってみた</h3>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        <div class="col-md-3 col-sm-4 col-xs-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/" class="post">
-              <header class="eyecatch text-center">
-                <img src="/images/kubernetes.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Tue, Oct 31, 2017</span>
-              </div>
-              <h3 class="title">Kubernetes 1.8のアクセス制御について。あとDashboard。</h3>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        <div class="col-md-3 col-sm-4 col-xs-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/" class="post">
-              <header class="eyecatch text-center">
-                <img src="/images/kubernetes.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Sat, Oct 21, 2017</span>
-              </div>
-              <h3 class="title">Kubernetes1.8のクラスタを構築する。kubeadmで。</h3>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        <div class="col-md-3 col-sm-4 col-xs-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/" class="post">
-              <header class="eyecatch text-center">
-                <img src="/images/kubernetes_goslings.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Wed, Oct 11, 2017</span>
-              </div>
-              <h3 class="title">Kubernetesのチュートリアルをやる</h3>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        <div class="col-md-3 col-sm-4 col-xs-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/" class="post">
-              <header class="eyecatch text-center">
-                <img src="/images/kubernetes_goslings.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Tue, Oct 10, 2017</span>
-              </div>
-              <h3 class="title">Kubernetes 1.8が出たので、Minikubeを触ってみる</h3>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-      </div>
-    </div>
-  </div>
-  <div class="col-md-3">
-    <aside id="site-sidebar">
-      <div class="row">
-        <div class="col-md-12 col-sm-6 col-xs-12">
-  <div class="text-center custom-partial">
-    
-  </div>
-  <section class="sidebar-bordered">
-    
-    <div id="profile">
-      <div class="text-center">
-        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
-      </div>
-      <div class="data">
-        <h4 id="profile-username" class="post-title"></h4>
-        
-        <span id="profile-birth">DOB: Dec 14, 1983</span>
-        
-        <div id="social-links">
-          
-          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
-          
-          
-          
-          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
-          
-        </div>
-        <div id="profile-description"></div>
-        <ul id="profile-urls" class="post-tags"></ul>
-      </div>
-    </div>
-    
-  </section>
-</div>
-
-<div class="col-md-12 col-sm-6 col-xs-12">
-  <section>
-    <h3>Tags</h3>
-    
-    <div id="tag-cloud" class="text-center">
-      
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/agile">agile</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/ansible">ansible</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/babel">babel</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/cnn">cnn</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/coursera">coursera</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/css-modules">css-modules</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/deep-learning">deep-learning</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/enzyme">enzyme</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/eslint">eslint</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/esxi">esxi</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/flow">flow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/frontend">frontend</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/git">git</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/github">github</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/golang">golang</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/headless-browser">headless-browser</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jest">jest</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/keras">keras</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kubeadm">kubeadm</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kubebuilder">kubebuilder</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/license">license</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/machine-learning">machine-learning</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/management">management</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/material-ui">material-ui</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/msys2">msys2</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/neural-network">neural-network</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/nlp">nlp</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/packer">packer</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/postcss">postcss</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/prettier">prettier</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/react">react</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/react-router">react-router</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/redux">redux</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/redux-saga">redux-saga</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/rnn">rnn</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/selenium">selenium</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/servicenow">servicenow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/skaffold">skaffold</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/styled-components">styled-components</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/stylelint">stylelint</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/tensorflow">tensorflow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/test-framework">test-framework</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/typescript">typescript</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/webdriverio">webdriverio</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/webpack">webpack</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
-      
-    </div>
-    
-  </section>
-</div>
-
-
-
-
+    <head>
+         
 
 <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<ins class="adsbygoogle"
-    style="display:block"
-    data-ad-client="ca-pub-6244473643910448"
-    data-ad-slot="1845600530"
-    data-ad-format="auto"></ins>
 <script>
-(adsbygoogle = window.adsbygoogle || []).push({});
+  (adsbygoogle = window.adsbygoogle || []).push({
+    google_ad_client: "ca-pub-6244473643910448",
+    enable_page_level_ads: true
+  });
 </script>
 
-<div class="col-md-12 col-sm-6 col-xs-12">
-  <div class="text-center custom-partial">
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/tags/kubernetes/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/tags/kubernetes/">
+
+
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="[To Be Decided ~]$ find /tags/kubernetes/">
+  <title>[To Be Decided ~]$ find /tags/kubernetes/</title>
+  <meta property="og:description" content="Kaitoy&#39;s Personal Tech Blog">
+  <meta name="description" content="Kaitoy&#39;s Personal Tech Blog">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/title.png">
+
+
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <style>
+
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&amp;subset=japanese">
+
+
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai.min.css"> 
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
     
-  </div>
-</div>
 
-      </div>
-    </aside>
-  </div>
-</div>
-
-        <div class="text-center custom-partial">
-          
-        </div>
-      </div>
-    </main>
-
-    <footer id="site-footer" class="text-center font-logo">
-      <p>&copy;  2015 -  2019  Kaito Yamada </p>
-      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
-      <p>
-        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
-        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
-      </p>
-    </footer>
-
-    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
-    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
-    
-    <script>
-      $(document).ready(function(){
-        $('.bxslider').bxSlider({
-          speed: 1,
-          preloadImages: 'all'
-        });
-      });
-    </script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/highlight.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dos.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/yaml.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dockerfile.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/go.min.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
 
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
+        <link rel="alternate" type="application/rss+xml" href="https://www.kaitoy.xyz/tags/kubernetes/index.xml" title="To Be Decided" />
+        
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
     
-    <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-    ga('create', 'UA-65248565-1', 'auto');
-    ga('send', 'pageview');
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v3.2"></script>
 
-    </script>
+        <nav class="navbar navbar-default navbar-fixed-top">
 
-    <script>
-    $(function() {
-      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
-      $.getJSON(url)
-        .done(function(data) {
-          var entry = data.entry[0];
-          $("#profile-photo").attr("src", entry.photos[0].value);
-          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
-          $("#profile-description").html(entry.aboutMe);
-          entry.urls.forEach(function(el){
-            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
-          });
-          $("#profile").show();
-        });
-    });
-    </script>
-  </body>
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">kubernetes</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    
+
+    <h2>kubernetes</h2>
+
+     <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/03/08/k8s-zundoko-operator/">ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</a></h4>
+    <h5>Fri, Mar 8, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubebuilder"><kbd class="item-tag">kubebuilder</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/golang"><kbd class="item-tag">golang</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/17/packer-k8s/">Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</a></h4>
+    <h5>Sun, Jun 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/packer"><kbd class="item-tag">packer</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/msys2"><kbd class="item-tag">msys2</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/03/build-k8s-cluster-by-ansible/">Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</a></h4>
+    <h5>Sun, Jun 3, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a></h4>
+    <h5>Sat, May 5, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a></h4>
+    <h5>Fri, May 4, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a></h4>
+    <h5>Tue, Apr 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/01/hello-skaffold/">Skaffoldを触ってみた</a></h4>
+    <h5>Sun, Apr 1, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/skaffold"><kbd class="item-tag">skaffold</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">Kubernetes 1.8のアクセス制御について。あとDashboard。</a></h4>
+    <h5>Tue, Oct 31, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a></h4>
+    <h5>Sat, Oct 21, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubeadm"><kbd class="item-tag">kubeadm</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></h4>
+    <h5>Wed, Oct 11, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+ 
+
+    
+
+</main>
+
+
+
+<div class="pages">
+
+     
+    <a class="icon pages-icon" href="/tags/kubernetes/page/2/" rel="next">
+        <i class="fa fa-angle-right"></i>
+    </a>
+    <a class="icon pages-icon" href="/tags/kubernetes/page/2/" rel="prev">
+        <i class="fa fa-angle-double-right"></i>
+    </a>
+    
+
+</div>
+
+
+
+
+        <footer>
+
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script>window.twttr = (function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0],
+            t = window.twttr || {};
+          if (d.getElementById(id)) return t;
+          js = d.createElement(s);
+          js.id = id;
+          js.src = "https://platform.twitter.com/widgets.js";
+          fjs.parentNode.insertBefore(js, fjs);
+
+          t._e = [];
+          t.ready = function(f) {
+            t._e.push(f);
+          };
+
+          return t;
+        }(document, "script", "twitter-wjs"));</script>
+
+    </body>
+
 </html>
 

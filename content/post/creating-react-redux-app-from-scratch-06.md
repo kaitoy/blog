@@ -2,7 +2,7 @@
 categories = ["Programming"]
 date = "2018-09-26T23:03:04+09:00"
 draft = false
-eyecatch = "redux.png"
+cover = "redux.png"
 slug = "creating-react-redux-app-from-scratch-06"
 tags = ["react", "frontend", "redux"]
 title = "React + Reduxアプリケーションプロジェクトのテンプレートを作る ― その6: Redux"
@@ -51,7 +51,7 @@ ReduxとReact Reduxについては、Qiitaの「[たぶんこれが一番分か�
 
 今回はReduxを導入する。
 
-```cmd
+```shell
 yarn add redux
 ```
 

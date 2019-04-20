@@ -2,10 +2,11 @@
 categories = [ "Version Control System" ]
 date = "2016-10-08T16:39:46-06:00"
 draft = false
-eyecatch = "git.png"
+cover = "git.png"
 slug = "git-checkout"
 tags = [ "git", "vcs" ]
 title = "git checkoutを図解する"
+slide = true
 +++
 
 [この記事](https://www.kaitoy.xyz/2015/12/27/git-repository/)を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、[__Git__](https://git-scm.com/)の `git checkout` というコマンドについて説明する。

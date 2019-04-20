@@ -2,7 +2,7 @@
 categories = [ "Text Editor" ]
 date = "2015-12-02T11:23:02-07:00"
 draft = false
-eyecatch = "atom_editor_logo.svg.png"
+cover = "atom_editor_logo.svg.png"
 slug = "unpublish-atom-package"
 tags = [ "atom" ]
 title = "Atomパッケージをアンパブリッシュする"
@@ -21,14 +21,14 @@ title = "Atomパッケージをアンパブリッシュする"
 
 {{< google-adsense >}}
 
-## アンパブリッシュのやり方
+# アンパブリッシュのやり方
 リリースしたパッケージのプロジェクトのルートフォルダ(package.jsonがあるところ)に`cd`して、`apm unpublish`を実行するだけ。
 
 または、任意のフォルダで`apm unpublish <パッケージ名>`を実行する。
 
 特定のバージョンだけアンパブリッシュしたい場合は、`apm unpublish <パッケージ名>@<バージョン>`。例えば`apm unpublish disturb-me@0.1.0`。
 
-## 注意すべき点 1: Git Bashでアンパブリッシュするとエラー
+# 注意すべき点 1: Git Bashでアンパブリッシュするとエラー
 [Git for Windows](https://git-for-windows.github.io/)のGit Bash上で、Windows版Atomに付属するapmで`apm unpublish`を実行すると以下のエラーが出る。
 
 ```
@@ -51,7 +51,7 @@ Error: EINVAL, invalid argument
 
 コマンドプロンプトでやるべし。
 
-## 注意すべき点 2: アンパブリッシュはパブリッシュの真逆じゃない
+# 注意すべき点 2: アンパブリッシュはパブリッシュの真逆じゃない
 [以前の記事](https://www.kaitoy.xyz/2015/08/21/japanese-word-selection/#10-%E3%83%91%E3%83%96%E3%83%AA%E3%83%83%E3%82%B7%E3%83%A5)で
 `apm publish`は以下の処理をすると書いた。
 
@@ -65,22 +65,22 @@ Error: EINVAL, invalid argument
 
 3, 4 のタグ作成も取り消したいのであれば、
 
-```sh
-git tag -d v0.1.0
-git push origin :v0.1.0
+```shell
+$ git tag -d v0.1.0
+$ git push origin :v0.1.0
 ```
 
 のようにして、ローカルリポジトリとリモートリポジトリ両方のタグを削除する。
 
 また、2 のpackage.jsonのversion変更を取り消したいのであれば、`git log`で`Prepare 0.1.0 release`みたいなログのコミットをさがしてそのハッシュをメモり、
 
-```sh
-git revert <ハッシュ>
+```shell
+$ git revert <ハッシュ>
 ```
 
 を実行して`git push`。(上記<ハッシュ>の部分は、`apm publish`後何もcommitしてないなら`HEAD`でもよし。)
 
-## 注意すべき点 3: パッケージのキャッシュ
+# 注意すべき点 3: パッケージのキャッシュ
 とあるパッケージ、仮に`hoge`を開発していたとき、以下のような操作をした後に変な現象が起こった。
 
 1. バージョン`0.1.0`をパブリッシュ。

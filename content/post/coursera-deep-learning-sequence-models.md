@@ -2,7 +2,7 @@
 categories = ["Programing"]
 date = "2018-02-27T00:49:05+09:00"
 draft = false
-eyecatch = "deeplearning.ai.png"
+cover = "deeplearning.ai.png"
 slug = "coursera-deep-learning-sequence-models"
 tags = ["coursera", "machine learning", "deep learning", "neural network", "rnn", "nlp"]
 title = "CourseraのDeep Learning SpecializationのSequence Modelsコースを修了した"

@@ -1,489 +1,70 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>To Be Decided </title>
+    <title>ansible on To Be Decided</title>
     <link>https://www.kaitoy.xyz/tags/ansible/</link>
+    <description>Recent content in ansible on To Be Decided</description>
+    <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <author>Kaito Yamada</author>
-    <rights>(C) 2019</rights>
-    <updated>2018-06-17 23:22:33 &#43;0900 JST</updated>
-
+    <copyright>© 2015 Kaito Yamada</copyright>
+    <lastBuildDate>Sun, 17 Jun 2018 23:22:33 +0900</lastBuildDate>
     
-      
-        <item>
-          <title>Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</title>
-          <link>https://www.kaitoy.xyz/2018/06/17/packer-k8s/</link>
-          <pubDate>Sun, 17 Jun 2018 23:22:33 JST</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2018/06/17/packer-k8s/</guid>
-          <description>
-
-&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/&#34;&gt;Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した&lt;/a&gt;」の続きで、さらに&lt;a href=&#34;https://www.packer.io/&#34;&gt;Packer&lt;/a&gt;を組み合わせて、VM作成まで自動化した話。&lt;/p&gt;
-
-&lt;p&gt;AnsibleをWindows(&lt;a href=&#34;https://www.msys2.org/&#34;&gt;MSYS2&lt;/a&gt;)で動かした話でもある。&lt;/p&gt;
-
-&lt;p&gt;書いたPackerテンプレートは&lt;a href=&#34;https://github.com/kaitoy/packer-k8s&#34;&gt;GitHub&lt;/a&gt;に置いた。&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h2 id=&#34;packerとは&#34;&gt;Packerとは&lt;/h2&gt;
-
-&lt;p&gt;Packerは、様々な種類のVMを構築できるツール。
-VagrantとかTerraformとかを開発している&lt;a href=&#34;https://www.hashicorp.com/&#34;&gt;HashiCorp&lt;/a&gt;が開発している。&lt;/p&gt;
-
-&lt;p&gt;テンプレートと呼ばれるビルド定義をJSONファイルに書いて、ビルド、プロビジョニング、ポストプロセスを実行して、アーティファクトと呼ばれるビルドの成果物を生成する。&lt;/p&gt;
-
-&lt;p&gt;ビルドのステップでは、VMを作成して、ハードウェア構成を設定したり、OSをインストールしたりする。&lt;/p&gt;
-
-&lt;p&gt;以下のような環境でVMを作れる。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;VirtualBox&lt;/li&gt;
-&lt;li&gt;Hyper-V&lt;/li&gt;
-&lt;li&gt;VMware Workstation&lt;/li&gt;
-&lt;li&gt;VMware vSphere Hypervisor&lt;/li&gt;
-&lt;li&gt;Docker&lt;/li&gt;
-&lt;li&gt;AWS EC2&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;プロビジョニングのステップでは、ビルドで作ったVMのOS上で指定された操作を実行し、ソフトウェアのインストールなどのセットアップ処理をする。&lt;/p&gt;
-
-&lt;p&gt;プロビジョニングには以下のようなツールを使える。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Shell&lt;/li&gt;
-&lt;li&gt;PowerShell&lt;/li&gt;
-&lt;li&gt;Ansible&lt;/li&gt;
-&lt;li&gt;Chef&lt;/li&gt;
-&lt;li&gt;Puppet&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;プロビジョニングが終わるとアーティファクト(VMイメージファイルや、AWS EC2のAMI IDとか)が出力される。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;ポストプロセスのステップでは、アーティファクトを入力として何らかの処理をして、最終的なアーティファクトを生成する。&lt;/p&gt;
-
-&lt;p&gt;ポストプロセスでは以下のような処理を実行できる。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;アーカイブ&lt;/li&gt;
-&lt;li&gt;VagrantBox生成&lt;/li&gt;
-&lt;li&gt;AWS EC2へのインポート&lt;/li&gt;
-&lt;li&gt;Docker push&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;PackerはGoで書かれていてビルド済みのバイナリが配布されているので、&lt;a href=&#34;https://www.packer.io/downloads.html&#34;&gt;ダウンロードページ&lt;/a&gt;から落として PATHの通ったところに置くだけでインストールできる。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;今回はPacker 1.2.4のWindows版をインストールした。&lt;/p&gt;
-
-&lt;h2 id=&#34;packerの-テンプレート-https-www-packer-io-docs-templates-index-html-概要&#34;&gt;Packerの&lt;a href=&#34;https://www.packer.io/docs/templates/index.html&#34;&gt;テンプレート&lt;/a&gt;概要&lt;/h2&gt;
-
-&lt;p&gt;Packerのテンプレートにはビルド、プロビジョニング、ポストプロセスの定義を複数かけて、複数環境のVM生成を1ファイルで定義できる。&lt;/p&gt;
-
-&lt;p&gt;テンプレートには以下のプロパティを書く。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&#34;https://www.packer.io/docs/templates/builders.html&#34;&gt;builders&lt;/a&gt;: ビルドの定義のリスト。&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;description&lt;/code&gt;: テンプレートの説明。&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;min_packer_version&lt;/code&gt;: Packer の最低バージョン指定。&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://www.packer.io/docs/templates/post-processors.html&#34;&gt;post-processors&lt;/a&gt;: ポストプロセスの定義のリスト。&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://www.packer.io/docs/templates/provisioners.html&#34;&gt;provisioners&lt;/a&gt;: プロビジョニングの定義のリスト。&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://www.packer.io/docs/templates/user-variables.html&#34;&gt;variables&lt;/a&gt;: テンプレート内で使う変数の定義。&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;_comment&lt;/code&gt;: コメントなどを書くためのプロパティ。実際はアンダースコアで始まればなんでもいい。JSON オブジェクトのルートレベルのみで使える。&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;これらのうち、必須なのはbuildersだけ。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;一つのビルド定義には一つの&lt;a href=&#34;https://www.packer.io/docs/templates/communicator.html&#34;&gt;communicator&lt;/a&gt;を紐づける。
-communicatorはビルド時にVMにつなぐための設定。
-基本は&lt;a href=&#34;https://www.packer.io/docs/templates/communicator.html#ssh-communicator&#34;&gt;SSH&lt;/a&gt;だけど、WinRMとかもある。&lt;/p&gt;
-
-&lt;h2 id=&#34;やりたいこと&#34;&gt;やりたいこと&lt;/h2&gt;
-
-&lt;p&gt;Windows 10上でPackerとAnsibleを動かして、VirtualBoxのVMをOracle Linux 7.4で作って、Kubernetes 1.10をインストールしたい。
-Windowsでやりたいのは、単にベアメタルのLinuxの環境が無いからってのもあるし、いずれHyper-VのVMも作りたいからってのもある。&lt;/p&gt;
-
-&lt;p&gt;PackerはGo製で普通にWindowsで動くからいいけど、問題はAnsibleがPython製のくせにWindowsのPythonでは動かないこと。
-AnsibleはWSLでは動くけど、VirtualBoxとかHyper-VはWindows上で動くから、PackerはWindows上で動かさないといけないはずで、そうなるとPackerから呼ばれるAnsibleもWindows上で動かさないといけない気がする。
-のでWSLではだめな気がするし、そもそも実はWindows 7でも同じことやりたいのでWSLは無し。&lt;/p&gt;
-
-&lt;p&gt;要はWindows上でLinuxのPythonを使ってAnsibleを動かしたい。
-ならばCygwinかMSYS2+MinGW-w64かGit Bashか。&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://superuser.com/questions/1255634/install-ansible-in-windows-using-git-bash&#34;&gt;ここ&lt;/a&gt;にAnsibleはCygwinでもGit Bashでも動かすの難しいと書いてあって、逆に&lt;a href=&#34;http://itsp0.blogspot.com/2017/03/ansible-msys2-ansible.html&#34;&gt;MSYS2でAnsible動かした記事&lt;/a&gt;はあったので、安直にMSYS2でやることにした。&lt;/p&gt;
-
-&lt;h2 id=&#34;msys2インストール&#34;&gt;MSYS2インストール&lt;/h2&gt;
-
-&lt;p&gt;MSYS2は、&lt;a href=&#34;http://www.msys2.org/&#34;&gt;公式サイト&lt;/a&gt;からx86_64のインストーラ(msys2-x86_64-20180531.exe)をダウンロードして実行して普通にインストールしただけ。&lt;/p&gt;
-
-&lt;h2 id=&#34;ansibleインストール&#34;&gt;Ansibleインストール&lt;/h2&gt;
-
-&lt;p&gt;MSYS2でのパッケージ管理にはpacmanを使う。&lt;/p&gt;
-
-&lt;p&gt;何はともあれPythonを入れる。3系でいい。
-&lt;code&gt;MSYS2 MSYS&lt;/code&gt;のショートカット(&lt;code&gt;MSYS2 MinGW 64-bit&lt;/code&gt;じゃだめ)からターミナルを開いて、&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ pacman -S python
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;で、Python 3.6.2が入った。&lt;/p&gt;
-
-&lt;p&gt;次に、Ansible(の依存)のビルドに必要なパッケージを入れる。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ pacman -S gcc
-$ pacman -S make
-$ pacman -S libffi-devel
-$ pacman -S openssl-devel
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;さらに、AnsibleからのSSH接続で(鍵ではなくて)パスワードを使う場合に必要なパッケージも入れる。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ pacman -S sshpass
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;sshpassの依存としてopensshも入った。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;Ansibleはpipでインストールするんだけど、pacmanで入れたPython 3にはpipが付いてなかったので、&lt;a href=&#34;https://pip.pypa.io/en/stable/installing/&#34;&gt;別途入れる&lt;/a&gt;。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ curl https://bootstrap.pypa.io/get-pip.py -LO
-$ python get-pip.py
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;(ちょっと古いけどpipは&lt;code&gt;pacman python3-pip&lt;/code&gt;でも入る。)&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;で、ようやくAnsibleインストール。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ export CFLAGS=-I/usr/lib/libffi-3.2.1/include
-$ pip install ansible
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;依存するPyNaClのビルドに20分くらいかかるのでゆっくり待つと、インストール完了するはず。&lt;/p&gt;
-
-&lt;p&gt;今回はAnsible 2.5.4がインストールされた。&lt;/p&gt;
-
-&lt;p&gt;AnsibleでJinja2のipaddrフィルターを使うために、もう一つPyPiパッケージ入れる。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ pip install netaddr
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&#34;packerテンプレート作成&#34;&gt;Packerテンプレート作成&lt;/h2&gt;
-
-&lt;p&gt;ビルドは、OSインストールメディアのISOファイルを使うVirtualBoxのビルダである&lt;a href=&#34;https://www.packer.io/docs/builders/virtualbox-iso.html&#34;&gt;virtualbox-iso&lt;/a&gt;を指定して書いた。&lt;/p&gt;
-
-&lt;p&gt;OSのインストールは、&lt;a href=&#34;https://www.packer.io/docs/builders/virtualbox-iso.html#boot-command&#34;&gt;Boot Command&lt;/a&gt;をテンプレートに書くことで、インストーラのGUIを操作してやることもできるけど、RHEL系なら&lt;a href=&#34;https://access.redhat.com/documentation/ja-jp/red_hat_enterprise_linux/7/html/installation_guide/chap-kickstart-installations&#34;&gt;Kickstart&lt;/a&gt;を使うのが楽。&lt;/p&gt;
-
-&lt;p&gt;Kickstartの定義ファイルは、普通に手動でOSをインストールした後、&lt;code&gt;/root/anaconda-ks.cfg&lt;/code&gt;を採取して、必要に応じて編集して作る。
-今回作ったのは&lt;a href=&#34;https://github.com/kaitoy/packer-k8s/blob/fc530d94a04c15c97986e73d2c190e659ee0ddc0/http/ks.cfg&#34;&gt;これ&lt;/a&gt;で、&lt;a href=&#34;https://www.centos.org/forums/viewtopic.php?t=47262&#34;&gt;このスレ&lt;/a&gt;を参考に、Minimalインストールから、Wifiのファームウェアとか要らないのを抜いてる。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;プロビジョニングは、「&lt;a href=&#34;https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/&#34;&gt;Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した&lt;/a&gt;」ときのPlaybookを実行するやつを&lt;a href=&#34;https://www.packer.io/docs/provisioners/ansible.html&#34;&gt;公式マニュアル&lt;/a&gt;見ながら適当に書いて、ポストプロセスも適当に書いて、できたのが&lt;a href=&#34;https://github.com/kaitoy/packer-k8s/blob/fc530d94a04c15c97986e73d2c190e659ee0ddc0/k8s_single_node_cluster-vb.json&#34;&gt;これ&lt;/a&gt;。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;ansible_env_vars&lt;/code&gt;で&lt;code&gt;ANSIBLE_SSH_ARGS&lt;/code&gt;に&lt;code&gt;-o ControlMaster=no&lt;/code&gt;を入れているのは、&lt;a href=&#34;https://github.com/geerlingguy/JJG-Ansible-Windows/issues/6&#34;&gt;この問題&lt;/a&gt;に対応するため。&lt;/p&gt;
-
-&lt;h2 id=&#34;ビルド実行&#34;&gt;ビルド実行&lt;/h2&gt;
-
-&lt;p&gt;&lt;code&gt;MSYS2 MSYS&lt;/code&gt;のショートカットからターミナルを開いて、Packerを実行してみたら以下のエラー。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ packer build -var-file=variables.json k8s_single_node_cluster-vb.json
-bash: packer: コマンドが見つかりません
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;WindowsのPathが通ったところにPackerバイナリを置いておいてもMSYS2からは見えない。
-のでpackerバイナリのフルパス(今回は&lt;code&gt;C:\Users\kaitoy\Desktop\bin\&lt;/code&gt;にインストールしてたのでそのパス)を指定してやる。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;$ /c/Users/kaitoy/Desktop/bin/packer.exe build -var-file=variables.json k8s_single_node_cluster-vb.json
-k8s-single-node-cluster output will be in this color.
-
-1 error(s) occurred:
-
-* Error running &amp;quot;ansible-playbook --version&amp;quot;: exec: &amp;quot;ansible-playbook&amp;quot;: executable file not found in %PATH%
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;と、今度は、ansible-playbookが無いと言われる。
-ansible-playbookはansibleパッケージに入っていて/usr/bin/にインストールされているんだけど、Windows界で動いているPackerからはLinuxのPATHが見えないので、見つけられない。&lt;/p&gt;
-
-&lt;p&gt;さらに、AnsibleのPlaybookのパスなど、Packerが妙な気を利かせてWindowsのフルパスにしてansible-playbookに渡してくれちゃうので、それをLinuxなパスに変換してやる必要がある。&lt;/p&gt;
-
-&lt;p&gt;ということで、以下のようなラッパスクリプトを書いて、カレントディレクトリに置くことにした。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bat&#34;&gt;@echo off
-setlocal enabledelayedexpansion
-
-for %%f in (%*) do (
-  if !key_file! == 1 (
-    rem The value of ansible_ssh_private_key_file is the path to
-    rem a key file in Windows TMP directory from MSYS2 point of view.
-    set arg=/%tmp:\=/%
-    set arg=!arg::=!
-    set args=!args!=!arg!/%%~nxf
-    set key_file=0
-  ) else if %%~xf == .yml (
-    rem Convert the passed Playbook path to relative one.
-    set arg=%%f
-    set arg=!arg:%CD%=!
-    set arg=!arg:\=/!
-    set args=!args! !arg:~1!
-  ) else (
-    rem Add other args as they are
-    set args=!args! %%f
-  )
-  if %%f == ansible_ssh_private_key_file (
-    rem The next arg will be the value of ansible_ssh_private_key_file
-    set key_file=1
-  )
-)
-
-echo args: %args%
-C:\msys64\usr\bin\python C:\msys64\usr\bin\ansible-playbook -v %args%
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;以上でちゃんと実行できるようになった。&lt;/p&gt;
-
-&lt;p&gt;まとめると、&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;Windows 10に、&lt;/li&gt;
-&lt;li&gt;VirtualBox 5.1.28をインストールして、&lt;/li&gt;
-&lt;li&gt;Packer 1.2.4のWindows版をインストールして、&lt;/li&gt;
-&lt;li&gt;MSYS2をインストールして、&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;MSYS2 MSYS&lt;/code&gt;のターミナルでPython 3.6.2とAnsible 2.5.4とか(とGit)をインストールして、&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;以下を実行すればいい。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ git clone --recursive https://github.com/kaitoy/packer-k8s.git
-$ cd packer-k8s
-$ /c/Users/kaitoy/Desktop/bin/packer.exe build -var-file=variables.json k8s_single_node_cluster-vb.json
-&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;&lt;code&gt;packer.exe build&lt;/code&gt;に&lt;code&gt;-debug&lt;/code&gt;を渡すと、内部の処理ステップごとに停止するようになり、デバッグしやすい。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;一回実行したらゴミができて、次回実行時にエラーになるので、以下でクリーンアップする必要がある。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ rm -rf /tmp/ansible
-$ rm -f ~/.ssh/known_hosts
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;因みに、上記known_hostsを消し忘れると以下のようなエラーになる。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt; k8s-single-node-cluster: fatal: [k8s_master]: UNREACHABLE! =&amp;gt; {&amp;quot;changed&amp;quot;: false, &amp;quot;msg&amp;quot;: &amp;quot;Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\n@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\r\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\nIT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\r\nSomeone could be eavesdropping on you right now (man-in-the-middle attack)!\r\nIt is also possible that a host key has just been changed.\r\nThe fingerprint for the ECDSA key sent by the remote host is\nSHA256:JNs/ZY38VpIuBE3QEzLHyLFGYe+Qg+bEWi8BOzgSNc0.\r\nPlease contact your system administrator.\r\nAdd correct host key in /home/kaitoy/.ssh/known_hosts to get rid of this message.\r\nOffending ECDSA key in /home/kaitoy/.ssh/known_hosts:1\r\nPassword authentication is disabled to avoid man-in-the-middle attacks.\r\nKeyboard-interactive authentication is disabled to avoid man-in-the-middle attacks.\r\nroot@127.0.0.1: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).\r\n&amp;quot;, &amp;quot;unreachable&amp;quot;: true}
-&lt;/code&gt;&lt;/pre&gt;
-</description>
-        </item>
-      
+	<atom:link href="https://www.kaitoy.xyz/tags/ansible/index.xml" rel="self" type="application/rss+xml" />
     
-      
-        <item>
-          <title>Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</title>
-          <link>https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/</link>
-          <pubDate>Sun, 03 Jun 2018 17:14:07 JST</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/</guid>
-          <description>
-
-&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/&#34;&gt;Kubernetes 1.10をスクラッチから全手動で構築&lt;/a&gt;」、「&lt;a href=&#34;https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/&#34;&gt;Kubernetes 1.10のクラスタにWeave Netをデプロイする&lt;/a&gt;」、「&lt;a href=&#34;https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/&#34;&gt;Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える&lt;/a&gt;」のまとめとして、Kubernetes 1.10のクラスタを構築するAnsible Playbookを書いた。&lt;/p&gt;
-
-&lt;p&gt;書いたものは&lt;a href=&#34;https://github.com/kaitoy/ansible-k8s&#34;&gt;GitHub&lt;/a&gt;に置いた。&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h2 id=&#34;ansibleとは&#34;&gt;Ansibleとは&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.ansible.com/&#34;&gt;Ansible&lt;/a&gt;は、Ansible社が開発したOSSのIT自動化ツール。
-Ansible社は2015年10月にRedHatが買収したので、現在はRedHatが開発している。
-似たようなツールに&lt;a href=&#34;https://puppet.com/&#34;&gt;Puppet&lt;/a&gt;や&lt;a href=&#34;https://www.chef.io/&#34;&gt;Chef&lt;/a&gt;があるが、最近はAnsibleが最も支持されている気がする。&lt;/p&gt;
-
-&lt;p&gt;構成管理ツールと紹介されることが多い気がするが、2014年末位からはIT自動化ツールを自称していて、構成管理は実現するユースケースの一つという位置づけになっているので、そろそろ認識を改めてあげたい。&lt;/p&gt;
-
-&lt;p&gt;ユースケースは以下のようなもの。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&#34;https://www.ansible.com/use-cases/provisioning&#34;&gt;プロビジョニング&lt;/a&gt; (ベアメタル、VM、クラウドインスタンス)&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://www.ansible.com/use-cases/configuration-management&#34;&gt;構成管理&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://www.ansible.com/use-cases/application-deployment&#34;&gt;アプリケーションデプロイメント&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://www.ansible.com/use-cases/continuous-delivery&#34;&gt;CI/CD&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://www.ansible.com/use-cases/security-and-compliance&#34;&gt;セキュリティ・コンプライアンス管理&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://www.ansible.com/use-cases/orchestration&#34;&gt;オーケストレーション&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;以下のような特徴を持つ。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Python(とPowerShell)で作られてる。
-
-&lt;ul&gt;
-&lt;li&gt;昔はPython 2じゃないと動かなかったけど、2.2から&lt;a href=&#34;https://docs.ansible.com/ansible/2.3/python_3_support.html&#34;&gt;Python 3でも動くようになった&lt;/a&gt;。&lt;/li&gt;
-&lt;/ul&gt;&lt;/li&gt;
-&lt;li&gt;YAMLで書いた定義(Playbook)に従って処理を実行する。&lt;/li&gt;
-&lt;li&gt;シンプルで簡便であることを売りにしている。
-
-&lt;ul&gt;
-&lt;li&gt;多数のモジュールがビルトインされていて、様々な操作を簡潔な定義で宣言的に実行できる。&lt;/li&gt;
-&lt;/ul&gt;&lt;/li&gt;
-&lt;li&gt;エージェントレスで、SSH(等)で対象のサーバにつないで処理を実行する。&lt;/li&gt;
-&lt;li&gt;処理を冪等にできるような仕組みが備わっていて、特にビルトインモジュールを活用すると簡単に冪等性を持たせられる。&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;Pythonで書かれているのでどこでも動くかと思いきや、&lt;a href=&#34;https://docs.python.jp/3/library/fcntl.html&#34;&gt;fcntl&lt;/a&gt;とか&lt;a href=&#34;https://docs.python.jp/3/library/grp.html&#34;&gt;grp&lt;/a&gt;やらUnix特有のモジュールを使っているため、WindowsのPythonでは動かない。&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://kzlog.picoaccel.com/post-935/&#34;&gt;MSYS2&lt;/a&gt;とか&lt;a href=&#34;https://qiita.com/comefigo/items/f2b42c22e903f43e136e&#34;&gt;WSL&lt;/a&gt;では動く模様。
-(&lt;a href=&#34;https://superuser.com/questions/1255634/install-ansible-in-windows-using-git-bash&#34;&gt;Git Bashでは動かない…&lt;/a&gt;)&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;今回使ったのは最新版の2.5.3。&lt;/p&gt;
-
-&lt;h2 id=&#34;ansibleインストール&#34;&gt;Ansibleインストール&lt;/h2&gt;
-
-&lt;p&gt;AnsibleはYUMとかpipとかでインストールできる。&lt;/p&gt;
-
-&lt;p&gt;今回はOracle Linux 7.4で動かすため、以下のようにインストールした。&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;&lt;p&gt;AnsibleのYUMリポジトリ追加&lt;/p&gt;
-
-&lt;p&gt;以下の内容を&lt;code&gt;/etc/yum.repos.d/&lt;/code&gt;の適当な&lt;code&gt;.repo&lt;/code&gt;ファイルに書く。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-txt&#34;&gt;[ansible]
-name=Ansible
-baseurl=http://releases.ansible.com/ansible/rpm/release/epel-7-x86_64/
-gpgcheck=0
-enabled=1
-&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;依存するPythonパッケージのYUMリポジトリを有効化&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;/etc/yum.repos.d/public-yum-ol7.repo&lt;/code&gt;を編集して、&lt;code&gt;ol7_openstack30&lt;/code&gt;セクションの&lt;code&gt;enabled&lt;/code&gt;を1にする。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;インストール&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;# yum install -y ansible
-&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h2 id=&#34;playbookの書き方&#34;&gt;Playbookの書き方&lt;/h2&gt;
-
-&lt;p&gt;Playbookの書き方は他にたくさん情報があるし、どうせすぐに陳腐化するのでここには書かない。&lt;/p&gt;
-
-&lt;p&gt;以下を参照して書いた。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&#34;http://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html#how-to-differentiate-staging-vs-production&#34;&gt;公式のBest Practices&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;http://docs.ansible.com/ansible/latest/modules/modules_by_category.html&#34;&gt;公式マニュアルのモジュール編&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;http://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html&#34;&gt;公式マニュアルの変数編&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;http://docs.ansible.com/ansible/latest/user_guide/playbooks_loops.html&#34;&gt;公式マニュアルのループ編&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;http://jinja.pocoo.org/docs/2.10/&#34;&gt;Jinja2のマニュアル&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://openedx.atlassian.net/wiki/spaces/OpenOPS/pages/26837527/Ansible+Code+Conventions&#34;&gt;edXのAnsibleコーディング規約&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;一つ他にあまりなかった情報を書く:&lt;/p&gt;
-
-&lt;p&gt;タスクをループするとき、&lt;code&gt;with_items&lt;/code&gt;プロパティを書くのはもう古くて、バージョン2.5以降では&lt;code&gt;loop&lt;/code&gt;プロパティを使う。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;書いたPlaybookで構築できるのは以下のようなKubernetesクラスタ。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Kubernetes: バージョン1.10.1
-
-&lt;ul&gt;
-&lt;li&gt;単一ノード&lt;/li&gt;
-&lt;li&gt;全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e. 非コンテナ)
-
-&lt;ul&gt;
-&lt;li&gt;kubeletとkube-proxy以外は非rootユーザ&lt;/li&gt;
-&lt;/ul&gt;&lt;/li&gt;
-&lt;li&gt;コンポーネント間通信とkubectlの通信をTLSで暗号化&lt;/li&gt;
-&lt;li&gt;コンポーネント間通信とkubectlの通信の認証は&lt;a href=&#34;https://kubernetes.io/docs/admin/authentication/#x509-client-certs&#34;&gt;x509クライアント証明書&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;TLS Bootstrapping
-
-&lt;ul&gt;
-&lt;li&gt;Bootstrap token使用&lt;/li&gt;
-&lt;li&gt;CSR自動承認&lt;/li&gt;
-&lt;/ul&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/tasks/tls/certificate-rotation/&#34;&gt;Certificate Rotation&lt;/a&gt;有効&lt;/li&gt;
-&lt;li&gt;etcd 3.1.12&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://www.weave.works/oss/net/&#34;&gt;Weave Net&lt;/a&gt; 2.3.0&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/coredns/coredns&#34;&gt;CoreDNS&lt;/a&gt; 1.1.3&lt;/li&gt;
-&lt;li&gt;SERVICE_CLUSTER_IP_RANGE (Serviceに割り当てるIPの範囲) は10.0.0.0/16&lt;/li&gt;
-&lt;li&gt;CLUSTER_CIDR (Podに割り当てるIPの範囲) は10.32.0.0/16&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies&#34;&gt;Proxyモード&lt;/a&gt;はiptables。&lt;/li&gt;
-&lt;li&gt;PodSecurityPolicy有効。&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/&#34;&gt;KubeletConfiguration&lt;/a&gt;、&lt;a href=&#34;https://github.com/kubernetes/kubernetes/blob/master/pkg/proxy/apis/kubeproxyconfig/v1alpha1/types.go&#34;&gt;KubeProxyConfiguration&lt;/a&gt;、&lt;a href=&#34;https://github.com/kubernetes/kubernetes/blob/master/pkg/apis/componentconfig/v1alpha1/types.go&#34;&gt;KubeSchedulerConfiguration&lt;/a&gt;を使用。&lt;/li&gt;
-&lt;/ul&gt;&lt;/li&gt;
-&lt;li&gt;開発ツール付き
-
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/c-bata/kube-prompt&#34;&gt;kube-prompt&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/moncho/dry&#34;&gt;dry&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;etc.&lt;/li&gt;
-&lt;/ul&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Ansibleの変数をいじればある程度違う構成もできる。
-複数ノードや、マスターコンポーネントの冗長化や、etcdが別サーバの構成もできそうな感じにはRoleを分けて書いたけど、試してはいない。&lt;/p&gt;
-
-&lt;h2 id=&#34;kubespray&#34;&gt;kubespray&lt;/h2&gt;
-
-&lt;p&gt;一通り作った後で、&lt;a href=&#34;https://github.com/kubernetes-incubator/kubespray&#34;&gt;kubespray&lt;/a&gt;というものを知った。
-これ使うと、Ansibleでマルチノードのk8sクラスタ作れて、ネットワークプロバイダ切り替えたり、&lt;a href=&#34;https://istio.io/&#34;&gt;istio&lt;/a&gt;とか&lt;a href=&#34;https://helm.sh/&#34;&gt;Helm&lt;/a&gt;とかDocker Registryとか簡単にデプロイできたり、AWSやAzureにクラスタ作れたり、すごい。&lt;/p&gt;
-
-&lt;p&gt;あ、いや、けどこれOracle Linuxサポートしてないし…&lt;/p&gt;
-</description>
-        </item>
-      
     
+    <item>
+      <title>Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</title>
+      <link>https://www.kaitoy.xyz/2018/06/17/packer-k8s/</link>
+      <pubDate>Sun, 17 Jun 2018 23:22:33 +0900</pubDate>
+      
+      <guid>https://www.kaitoy.xyz/2018/06/17/packer-k8s/</guid>
+      <description>「Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した」の続きで、さらにPackerを組み合わせて、VM作成まで自動化した話。
+AnsibleをWindows(MSYS2)で動かした話でもある。
+書いたPackerテンプレートはGitHubに置いた。
+   (adsbygoogle = window.adsbygoogle || []).push({});  Packerとは Packerは、様々な種類のVMを構築できるツール。 VagrantとかTerraformとかを開発しているHashiCorpが開発している。
+テンプレートと呼ばれるビルド定義をJSONファイルに書いて、ビルド、プロビジョニング、ポストプロセスを実行して、アーティファクトと呼ばれるビルドの成果物を生成する。
+ビルドのステップでは、VMを作成して、ハードウェア構成を設定したり、OSをインストールしたりする。
+以下のような環境でVMを作れる。
+ VirtualBox Hyper-V VMware Workstation VMware vSphere Hypervisor Docker AWS EC2  
+プロビジョニングのステップでは、ビルドで作ったVMのOS上で指定された操作を実行し、ソフトウェアのインストールなどのセットアップ処理をする。
+プロビジョニングには以下のようなツールを使える。
+ Shell PowerShell Ansible Chef Puppet  プロビジョニングが終わるとアーティファクト(VMイメージファイルや、AWS EC2のAMI IDとか)が出力される。
 
+ポストプロセスのステップでは、アーティファクトを入力として何らかの処理をして、最終的なアーティファクトを生成する。
+ポストプロセスでは以下のような処理を実行できる。
+ アーカイブ VagrantBox生成 AWS EC2へのインポート Docker push  
+PackerはGoで書かれていてビルド済みのバイナリが配布されているので、ダウンロードページから落として PATHの通ったところに置くだけでインストールできる。
+
+今回はPacker 1.2.4のWindows版をインストールした。
+Packerのテンプレート概要 Packerのテンプレートにはビルド、プロビジョニング、ポストプロセスの定義を複数かけて、複数環境のVM生成を1ファイルで定義できる。
+テンプレートには以下のプロパティを書く。
+ builders: ビルドの定義のリスト。 description: テンプレートの説明。 min_packer_version: Packer の最低バージョン指定。 post-processors: ポストプロセスの定義のリスト。 provisioners: プロビジョニングの定義のリスト。 variables: テンプレート内で使う変数の定義。 _comment: コメントなどを書くためのプロパティ。実際はアンダースコアで始まればなんでもいい。JSON オブジェクトのルートレベルのみで使える。  これらのうち、必須なのはbuildersだけ。</description>
+    </item>
+    
+    <item>
+      <title>Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</title>
+      <link>https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/</link>
+      <pubDate>Sun, 03 Jun 2018 17:14:07 +0900</pubDate>
+      
+      <guid>https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/</guid>
+      <description>「Kubernetes 1.10をスクラッチから全手動で構築」、「Kubernetes 1.10のクラスタにWeave Netをデプロイする」、「Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える」のまとめとして、Kubernetes 1.10のクラスタを構築するAnsible Playbookを書いた。
+書いたものはGitHubに置いた。
+   (adsbygoogle = window.adsbygoogle || []).push({});  Ansibleとは Ansibleは、Ansible社が開発したOSSのIT自動化ツール。 Ansible社は2015年10月にRedHatが買収したので、現在はRedHatが開発している。 似たようなツールにPuppetやChefがあるが、最近はAnsibleが最も支持されている気がする。
+構成管理ツールと紹介されることが多い気がするが、2014年末位からはIT自動化ツールを自称していて、構成管理は実現するユースケースの一つという位置づけになっているので、そろそろ認識を改めてあげたい。
+ユースケースは以下のようなもの。
+ プロビジョニング (ベアメタル、VM、クラウドインスタンス) 構成管理 アプリケーションデプロイメント CI/CD セキュリティ・コンプライアンス管理 オーケストレーション  
+以下のような特徴を持つ。
+ Python(とPowerShell)で作られてる。  昔はPython 2じゃないと動かなかったけど、2.2からPython 3でも動くようになった。  YAMLで書いた定義(Playbook)に従って処理を実行する。 シンプルで簡便であることを売りにしている。  多数のモジュールがビルトインされていて、様々な操作を簡潔な定義で宣言的に実行できる。  エージェントレスで、SSH(等)で対象のサーバにつないで処理を実行する。 処理を冪等にできるような仕組みが備わっていて、特にビルトインモジュールを活用すると簡単に冪等性を持たせられる。  
+Pythonで書かれているのでどこでも動くかと思いきや、fcntlとかgrpやらUnix特有のモジュールを使っているため、WindowsのPythonでは動かない。
+MSYS2とかWSLでは動く模様。 (Git Bashでは動かない…)
+
+今回使ったのは最新版の2.5.3。
+Ansibleインストール AnsibleはYUMとかpipとかでインストールできる。
+今回はOracle Linux 7.4で動かすため、以下のようにインストールした。
+ AnsibleのYUMリポジトリ追加
+以下の内容を/etc/yum.repos.d/の適当な.repoファイルに書く。
+[ansible] name=Ansible baseurl=http://releases.ansible.com/ansible/rpm/release/epel-7-x86_64/ gpgcheck=0 enabled=1  依存するPythonパッケージのYUMリポジトリを有効化</description>
+    </item>
+    
   </channel>
 </rss>

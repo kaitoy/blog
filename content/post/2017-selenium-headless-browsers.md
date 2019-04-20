@@ -2,7 +2,7 @@
 categories = [ "Programing" ]
 date = "2017-07-12T22:36:22+09:00"
 draft = false
-eyecatch = "servicenow-selenium.png"
+cover = "servicenow-selenium.png"
 slug = "2017-selenium-headless-browsers"
 tags = [ "servicenow", "selenium", "headless-browser" ]
 title = "2017年夏、Selenium、ヘッドレスブラウザ"
@@ -96,7 +96,7 @@ Selenium ServerとかChromeDriverのようにWebDriverプロトコルのサー�
 これだと、テストを定期的に自動実行したり、CIしたりするのが難しい。
 また、GUIは動作が遅く、テストに時間がかかる。
 
-### ヘッドレスブラウザ
+## ヘッドレスブラウザ
 こうした問題を解決するため、ヘッドレスブラウザというものが開発された。
 ヘッドレスブラウザには以下のようなものがある。
 
@@ -152,7 +152,7 @@ jsdomはDOMツリーとそれに対する操作をエミュレートするツー
 ヘッドレスブラウザにも色々あるが結局、テスト用に作られたブラウザであって、実際に多くのエンドユーザに使われて揉まれているGUI有りブラウザに比べて、品質が悪かったり動きが違ったりする(らしい)。
 JavaScriptのバージョンのキャッチアップが遅かったりも。
 
-### Xvfb
+## Xvfb
 ヘッドレスブラウザの問題は、実際のブラウザではないということに尽きる。
 実際のブラウザをヘッドレスで使えたら万事が上手くいくわけだが、実はこれがLinuxでなら出来る。
 [Xvfb](https://www.x.org/releases/X11R7.7/doc/man/man1/Xvfb.1.xhtml)というツールを使って。
@@ -163,7 +163,7 @@ Xvfbはフレームバッファをエミュレートし、ディスプレイが�
 
 Xvfbについては[この記事](http://blog.amedama.jp/entry/2016/01/03/115602)が分かりやすい。
 
-### Chrome 59
+## Chrome 59
 Xvfbを使えば大分幸せになりそうだが、ブラウザ以外のツールを起動しなければいけなかったり、Windowsで使えなかったり、まだちょっと不満が残る。
 
 そんななか、2017年6月、Chrome 59がリリースされ、ヘッドレスモードを搭載した。

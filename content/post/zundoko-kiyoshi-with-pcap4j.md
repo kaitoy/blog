@@ -2,10 +2,11 @@
 categories = [ "Programming" ]
 date = "2016-03-19T11:47:03-06:00"
 draft = false
-eyecatch = "pcap4jlogo.png"
+cover = "pcap4jlogo.png"
 slug = "zundoko-kiyoshi-with-pcap4j"
 tags = [ "pcap4j", "zundoko" ]
 title = " ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた"
+highlightLanguages = ["dos"]
 +++
 
 先週くらいから巷でズンドコズンドコ騒いでいると思ってはいたが、昨日ようやくその元ネタを見た。
@@ -23,8 +24,8 @@ title = " ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装し
 
 {{< google-adsense >}}
 
-ZUNDOKOプロトコル
----------------
+# ZUNDOKOプロトコル
+
 クライアントはサーバに「ズン」か「ドコ」を送る。
 
 サーバは「ズン」を4回受信した後に「ドコ」を受信するとクライアントに「キ・ヨ・シ！」を返す。
@@ -84,8 +85,8 @@ EtherTypeは[IANA](http://www.iana.org/assignments/ieee-802-numbers/ieee-802-num
 |                               |
 ```
 
-実装
-----
+# 実装
+
 [Pcap4J](https://github.com/kaitoy/pcap4j)を使ってクライアントとサーバを実装した。
 書いたのは以下の3つのクラス。(といくつかのインナークラス。)
 
@@ -93,8 +94,8 @@ EtherTypeは[IANA](http://www.iana.org/assignments/ieee-802-numbers/ieee-802-num
 * [com.github.kaitoy.zundoko.protocol.ZundokoServer](https://github.com/kaitoy/zundoko-protocol/tree/master/src/main/java/com/github/kaitoy/zundoko/protocol/ZundokoServer.java): Zundokoサーバ
 * [com.github.kaitoy.zundoko.protocol.ZundokoClient](https://github.com/kaitoy/zundoko-protocol/tree/master/src/main/java/com/github/kaitoy/zundoko/protocol/ZundokoClient.java): Zundokoクライアント
 
-ビルド
-------
+# ビルド
+
 今だに[Maven](https://maven.apache.org/)。
 
 以下を実行するとビルドできる。
@@ -105,8 +106,8 @@ cd zundoko-protocol
 mvn install
 ```
 
-サーバ/クライアントの使い方
------------------------
+# サーバ/クライアントの使い方
+
 下位レイヤがEthernetなのでネットワークセグメントを超えたZundokoパケットのやり取りはできない。
 よってまずは同一ネットワーク内にサーバマシンとクライアントマシンを用意する。
 VMware Playerのホストとゲストで可。
@@ -144,7 +145,7 @@ run-client.bat <Macアドレス>
 また、サーバからZundokoパケット受信したらそのzundokoフィールドの値を表示する。
 
 
-実行例
------
+# 実行例
+
 
 {{< youtube ad3u4Y86e_I >}}

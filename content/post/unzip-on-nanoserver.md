@@ -2,10 +2,11 @@
 categories = [ "Container" ]
 date = "2016-09-12T16:46:54-06:00"
 draft = false
-eyecatch = "nanoserver.png"
+cover = "nanoserver.png"
 slug = "unzip-on-nanoserver"
 tags = ["windows", "nanoserver", "docker"]
 title = "Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え"
+highlightLanguages = ["dos", "powershell"]
 +++
 
 Nano Serverでunzipしたかっただけだったのに、妙に苦労した話。
@@ -14,17 +15,17 @@ Nano Serverでunzipしたかっただけだったのに、妙に苦労した話�
 
 {{< google-adsense >}}
 
-## Nano Serverとは
+# Nano Serverとは
 [Nano Server](https://technet.microsoft.com/en-us/windows-server-docs/compute/nano-server/getting-started-with-nano-server)は、Windows Server 2016で追加されるWindows Serverの新たなインストール形式で、[Server Core](https://en.wikipedia.org/wiki/Server_Core)よりさらに機能を絞り、リモートで管理するクラウドホストやWebサーバ向けにに特化したもの。
 
 Server Coreが数GBくらいなのに対し、Nano Serverは数百MBととても軽量で、それゆえ起動が速くセキュア。
 
-## unzipとは
+# unzipとは
 unzipとは、[zip](https://ja.wikipedia.org/wiki/ZIP_(%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%83%95%E3%82%A9%E3%83%BC%E3%83%9E%E3%83%83%E3%83%88)ファイルを解凍する、ただそれだけのこと。
 
 ただそれだけのことで、基本的な機能だと思うのだが、Windowsはこれを[コマンドラインで実行する方法](https://technet.microsoft.com/en-us/library/dn841359.aspx)をつい最近まで正式に提供していなかった。
 
-## Nano Serverでunzip
+# Nano Serverでunzip
 Windows 10の[Hyper-V Containers](https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containers%E3%81%A8%E3%81%AF)の上で[Pcap4J](https://github.com/kaitoy/pcap4j)のビルドとテストをするDockerイメージをビルドしたくて、そのための依存ライブラリなどをインストールする処理をDockerfileに書いていて、`ADD`でzipをダウンロードしたところまではいいんだけど、このzipどうやって解凍してやろうかとなった。
 (Dockerホストに置いたものをコンテナに`ADD`するのはなんか格好悪いから無しで。Dockerfile裸一貫で実現したい。)
 
@@ -34,7 +35,7 @@ Windows 10のHyper-V Containersは、[現時点でNano Serverしかサポート�
 
 以下、いろいろ試したことを書く。
 
-#### 正攻法: Expand-Archive
+## 正攻法: Expand-Archive
 PowerShellの v5 で実装されたExpand-Archiveというコマンドレットでzipを解凍できる。
 Nano ServerのPowerShellのバージョンを確認したら 5.1 だったのでこれでいけるかと思った。
 
@@ -66,7 +67,7 @@ char:5
 
 Expand-ArchiveはSystem.IO.Compression.FileSystem.dllの中のZipFileクラスに依存しているんだけど、.NET CoreにはSystem.IO.Compression.FileSystem.dllが含まれていないっぽい。
 
-#### ShellオブジェクトのCopyHere
+## ShellオブジェクトのCopyHere
 PowerShellでのunzip方法を調べたらStack Overflowに[いくつか載っていた](http://stackoverflow.com/questions/27768303/how-to-unzip-a-file-in-powershell)。
 Expand-Archiveと、System.IO.Compression.ZipFileを直接使う方法と、Shellオブジェクト(COMオブジェクト)のCopyHereメソッドを使う方法。
 
@@ -86,14 +87,14 @@ foreach ($item in $zip.items()) {
 
 したら以下のエラー。
 
-```powershell
+```
 new-object : Retrieving the COM class factory for component with CLSID {00000000-0000-0000-0000-000000000000} failed
 due to the following error: 80040154 Class not registered (Exception from HRESULT: 0x80040154 (REGDB_E_CLASSNOTREG)).
 ```
 
 この方法で利用しようとしているのは[Windows shell](https://en.wikipedia.org/wiki/Windows_shell)、つまり[Windows Explorer](https://ja.wikipedia.org/wiki/Windows_Explorer)の機能らしく、そうであればまあGUIがないNano Serverで動かないのも当然か。
 
-#### サードパーティツールに頼る
+## サードパーティツールに頼る
 Stack Overflowの[別の質問](http://stackoverflow.com/questions/1021557/how-to-unzip-a-file-using-the-command-line)にサードパーティツールに頼る方法がいくつか紹介されていた。
 
 ここで挙げられていたもののうち、[7-Zip](http://www.7-zip.org/download.html)、[Freebyte Zip](http://www.freebyte.com/fbzip/)、[Info-ZIP](http://infozip.sourceforge.net/)は、配布形式がダメ。
@@ -105,7 +106,7 @@ Freebyte ZipやInfo-ZIPの自己解凍ファイルもコンテナ内では動い
 一方、[pkunzip](http://membrane.com/synapse/library/pkunzip.html)はコマンドが裸で配布されているので行けるかと思ったが、実行したら「The system cannot execute the specified program.」なるエラー。
 よく見たらこれ16bitアプリケーション。Nano Serverは32bitアプリすら実行できないというのに。
 
-#### jarに託された最後の希望
+## jarに託された最後の希望
 上に貼ったStack Overflowの質問には[jarコマンド](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jar.html)を使う方法も挙げられていたが、JDKなんてどうせインストールできないとあきらめていた。
 
 が、ふと思い立って[Docker Hub](https://hub.docker.com/)を検索してみたら、[OpenJDK入りのNano Server](https://hub.docker.com/r/michaeltlombardi/nanoserveropenjdk/)をアップしてくれている人がいた。

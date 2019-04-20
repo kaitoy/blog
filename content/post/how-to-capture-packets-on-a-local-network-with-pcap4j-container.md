@@ -2,7 +2,7 @@
 categories = [ "Programming", "Container" ]
 date = "2015-07-25T19:05:06-06:00"
 draft = false
-eyecatch = "pcap4jlogo.png"
+cover = "pcap4jlogo.png"
 slug = "how-to-capture-packets-on-a-local-network-with-pcap4j-container"
 tags = [ "docker", "pcap4j" ]
 title = "How to capture packets on a local network with Pcap4J container"
@@ -14,7 +14,7 @@ I'll show how to capture packets on a local network with Pcap4J container.
 
 {{< google-adsense >}}
 
-### Docker network
+# Docker network
 By default, Docker containers are not connected to a local network.
 They are connected only to a virtual network Docker creates as like below:
 
@@ -22,7 +22,7 @@ They are connected only to a virtual network Docker creates as like below:
 
 Refer to [the Docker doc](https://docs.docker.com/articles/networking/) for more details.
 
-### What's a challenge
+# What's a challenge
 In order to let a Pcap4J container capture packets in a local (real) network,
 we need to directly connect the container to the local network,
 because docker0 forwards only packets the destinations of which are in the virtual network.
@@ -32,12 +32,12 @@ I referred to one of them, [Four ways to connect a docker container to a local n
 
 What I actually did is as follows.
 
-### What I did
+# What I did
 * Environment
     * OS: CentOS 7.0 (on VMware Player 7.1.0 on Windows 7)
 
-        ```sh
-        [root@localhost ~]# uname -a
+        ```shell
+        # uname -a
         Linux localhost.localdomain 3.10.0-229.el7.x86_64 #1 SMP Fri Mar 6 11:36:42 UTC 2015 x86_64 x86_64 x86_64 GNU/Linux
         ```
 
@@ -46,8 +46,8 @@ What I actually did is as follows.
     * Docker version: 1.6.2
     * Network interfaces:
 
-        ```sh
-          [root@localhost ~]# ip addr show
+        ```shell
+          # ip addr show
           1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN
               link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
               inet 127.0.0.1/8 scope host lo
@@ -90,20 +90,20 @@ What I actually did is as follows.
 
     2. Pull the latest Pcap4J image
 
-        ```sh
-        [root@localhost ~]# docker pull kaitoy/pcap4j
+        ```shell
+        # docker pull kaitoy/pcap4j
         ```
 
     3. Start a Pcap4J container with wait mode
 
-        ```sh
-        [root@localhost ~]# docker run --name pcap4j-br kaitoy/pcap4j:latest eth1 true
+        ```shell
+        # docker run --name pcap4j-br kaitoy/pcap4j:latest eth1 true
         ```
 
         This container (`pcap4j-br`) waits for a ping to `eth0` on the container before staring capturing packets with `eth1` on the container.
         After the container starts, you will see messages like below:
 
-        ```sh
+        ```
         17:49:21.196 [main] INFO  org.pcap4j.core.Pcaps - 3 NIF(s) found.
         eth0 (null)
         IP address: /172.17.0.3
@@ -117,13 +117,13 @@ What I actually did is as follows.
 
         Open another terminal and do the following:
 
-        ```sh
-        [root@localhost ~]# ip link add eth1 link eth0 type macvlan mode bridge
-        [root@localhost ~]# ip link set netns $(docker-pid pcap4j-br) eth1
-        [root@localhost ~]# nsenter -t $(docker-pid pcap4j-br) -n ip link set eth1 up
-        [root@localhost ~]# nsenter -t $(docker-pid pcap4j-br) -n ip route del default
-        [root@localhost ~]# nsenter -t $(docker-pid pcap4j-br) -n ip addr add 192.168.1.200/24 dev eth1
-        [root@localhost ~]# nsenter -t $(docker-pid pcap4j-br) -n ip route add default via 192.168.1.1 dev eth1
+        ```shell
+        # ip link add eth1 link eth0 type macvlan mode bridge
+        # ip link set netns $(docker-pid pcap4j-br) eth1
+        # nsenter -t $(docker-pid pcap4j-br) -n ip link set eth1 up
+        # nsenter -t $(docker-pid pcap4j-br) -n ip route del default
+        # nsenter -t $(docker-pid pcap4j-br) -n ip addr add 192.168.1.200/24 dev eth1
+        # nsenter -t $(docker-pid pcap4j-br) -n ip route add default via 192.168.1.1 dev eth1
         ```
 
         The above commands
@@ -137,10 +137,10 @@ What I actually did is as follows.
         Too much hassle? I agree. Let's use an awesome tool, [pipework](https://github.com/jpetazzo/pipework).
         This tool accomplishes the above 6 steps in easier way as shown below:
 
-        ```sh
-        [root@localhost ~]# git clone https://github.com/jpetazzo/pipework.git
-        [root@localhost ~]# cd pipework
-        [root@localhost pipework]# ./pipework eth0 pcap4j-br 192.168.1.200/24@192.168.1.1
+        ```shell
+        # git clone https://github.com/jpetazzo/pipework.git
+        # cd pipework
+        # ./pipework eth0 pcap4j-br 192.168.1.200/24@192.168.1.1
         ```
 
         pipework uses `ip netns exec` command instead of `nsenter` to manipulate a container.
@@ -148,8 +148,8 @@ What I actually did is as follows.
 
         In addition, in my case, because I was doing it on a VMware VM, I needed to enable the promiscuous mode of `eth0` (on the docker host machine) as follows:
 
-        ```sh
-        [root@localhost ~]# ip link set dev eth0 promisc on
+        ```shell
+        # ip link set dev eth0 promisc on
         ```
 
     5. Try to poke the container
@@ -164,6 +164,6 @@ What I actually did is as follows.
 
         Ping to `eth0` of `pcap4j-br` form the docker host to start packet capturing.
 
-        ```sh
-        [root@localhost ~]# ping -c 1 172.17.0.3
+        ```shell
+        # ping -c 1 172.17.0.3
         ```

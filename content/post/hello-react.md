@@ -2,7 +2,7 @@
 categories = [ "Web" ]
 date = "2015-12-21T00:07:28-07:00"
 draft = false
-eyecatch = "react.png"
+cover = "react.png"
 slug = "hello-react"
 tags = [ "react", "atom", "javascript" ]
 title = "ReactをAtomパッケージ開発に使ってみた"
@@ -21,7 +21,7 @@ Grommetはいずれ仕事で触ることになりそうなので、まずはReac
 
 {{< google-adsense >}}
 
-## Reactとは
+# Reactとは
 ReactはFacebookが開発しているWeb UIのフレームワークで、[MVC](https://ja.wikipedia.org/wiki/Model_View_Controller)のVだけを実装したもの。
 2013年に最初のバージョンが公開され、世界中で流行ってきているらしい。
 
@@ -39,7 +39,7 @@ FluxはMVCアーキテクチャに置き換わるもので、従来の複雑な�
 Fluxは単なるアーキテクチャで、その全体の実装を支援するフレームワークは現時点では無い。
 (多分。[Relay](https://facebook.github.io/relay/)が一部支援してくれるっぽい。)
 
-## Reactを触った感想
+# Reactを触った感想
 Reactは本当にちょっとしか触っていないので、あまりよく分かっていないんだろうけど、なんだか使いにくかった。
 
 Reactは仮想DOMを作るところしか助けてくれないので、他のことは全部自分でやらないといけない。
@@ -49,7 +49,7 @@ FacebookはReact用のウィジェットすら提供していない。
 そのうえ、他のフレームワークやライブラリと組み合わせて使おうとすると仮想DOMが壁になってくる。普通のフレームワークはリアルDOMを扱うからだ。
 例えば、JavaScriptを書いているとすぐ[jQuery](https://jquery.com/)を使いたくなるが、これでリアルDOMを直接いじってしまってはReactを使う意味がない気がする。
 
-## AtomパッケージでReactを使う
+# AtomパッケージでReactを使う
 Reactは[npm](https://www.npmjs.com/)でも提供されていて、Atomパッケージの開発に簡単に使える。
 パッケージの`package.json`の`dependencies`に[react](https://www.npmjs.com/package/react)と[react-dom](https://www.npmjs.com/package/react-dom)を入れておけば、パッケージコード中で以下の様に仮想DOMを作れるようになる。
 
@@ -66,7 +66,7 @@ class MyComponent extends React.Component {
 ReactDOM.render(<MyComponent />, node);
 ```
 
-## BabelによるJSXの手動コンパイル
+# BabelによるJSXの手動コンパイル
 JSXのコンパイルには[Babel](https://babeljs.io/)を使うのがいい。
 手動コンパイルにはBabelのコマンドラインツールが必要で、これはnpmで提供されている。
 npmコマンドはAtomに同梱されているので別途インストールは不要。
@@ -77,8 +77,8 @@ npmコマンドはAtomに同梱されているので別途インストールは�
 
     任意の場所で、
 
-    ```sh
-    npm install -g babel-cli
+    ```shell
+    # npm install -g babel-cli
     ```
 
     を実行すると、Babelのコマンドラインツールがグローバルにインストールされ、任意の場所で`babel`コマンドが使えるようになる。
@@ -98,23 +98,23 @@ npmコマンドはAtomに同梱されているので別途インストールは�
     `.babelrc`に書いた`presets`の値は、コンパイルにReactプラグインを使うという意味。
     なので、以下のコマンドでReactプラグインを(ローカルに)インストールする必要がある。
 
-    ```sh
-    cd <.babelrcを置いたフォルダ>
-    npm install babel-preset-react
+    ```shell
+    # cd <.babelrcを置いたフォルダ>
+    # npm install babel-preset-react
     ```
 
 4. コンパイル
 
     `babel`コマンドでコンパイルを実行する。例えば以下を実行すると、
 
-    ```sh
-    cd <.babelrcを置いたフォルダ>
-    babel src -d lib
+    ```shell
+    # cd <.babelrcを置いたフォルダ>
+    # babel src -d lib
     ```
 
     `src/*.jsx`がコンパイルされて、`lib/*.js`に出力される。
 
-## language-babelパッケージによるJSXの自動コンパイル
+# language-babelパッケージによるJSXの自動コンパイル
 上記Babelによるコンパイルは、Atomなら[language-babelパッケージ](https://atom.io/packages/language-babel)で自動化できる。
 
 以下、Atomパッケージの開発でlanguage-babelを利用する手順を書く。
@@ -166,11 +166,11 @@ npmコマンドはAtomに同梱されているので別途インストールは�
 
     これで、`<パッケージプロジェクトのルート>/src/*.jsx`が、Atomで編集して保存したときにコンパイルされ、`<パッケージプロジェクトのルート>/lib/*.js`に出力されるようになった。
 
-## BabelでJSXをコンパイルする場合の制限
+# BabelでJSXをコンパイルする場合の制限
 手動にしろ自動にしろ、JSXのコンパイルにBabelを使う場合、BabelがCoffeeScriptに対応していないので、CoffeeScript + JSXでは書けない。
 JavaScript + JSXで書かないといけない。
 
-## Minified exception
+# Minified exception
 React周りでバグを作りこんでエラーが発生した場合、コンソールに以下のようなエラーメッセージが出ることがある。
 
 ```

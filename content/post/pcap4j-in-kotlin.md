@@ -2,11 +2,11 @@
 categories = [ "Programming" ]
 date = "2016-04-16T11:09:53-06:00"
 draft = false
-eyecatch = "pcap4j-kotlin.png"
+cover = "pcap4j-kotlin.png"
 slug = "pcap4j-in-kotlin"
 tags = [ "pcap4j", "kotlin", "jvm language" ]
 title = "Pcap4J in Kotlin"
-
+highlightLanguages = ["dos"]
 +++
 
 [Groovy](https://www.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/)に続いて、[__Kotlin__](https://kotlinlang.org/)で[__Pcap4J__](https://github.com/kaitoy/pcap4j)を使ってパケットキャプチャしてみた。
@@ -18,7 +18,7 @@ KotlinからでもPcap4Jちゃんと動くよということを実証するの�
 
 {{< google-adsense >}}
 
-## Kotlinとは
+# Kotlinとは
 KotlinはJVM言語、つまりJavaのバイトコードにコンパイルされてJavaの実行環境で動くプログラミング言語のひとつ。
 [IntelliJ IDEA](https://www.jetbrains.com/idea/)で有名な[JetBrains社](https://www.jetbrains.com/)によって[OSS](https://github.com/JetBrains/kotlin)として開発されている。
 
@@ -36,7 +36,7 @@ Javaのバイトコードだけでなく、JavaScriptを生成するバックエ
 GitHubにホストされているKotlinプロジェクトは、2016/4/15現在、全体の __0.1%__ (3493/3215549) しかない。
 v1のリリースは結構注目を集めたので、この割合は今後増えていくと期待される。
 
-## Kotlinのインストール
+# Kotlinのインストール
 [チュートリアル](https://kotlinlang.org/docs/tutorials/)に従えば、IDEやテキストエディタ+コマンドラインの環境を整えてHello Worldを書いて実行するところまで簡単にできる。
 筆者はEclipse(Mars)とコマンドラインの環境をWindows 7上で作った。
 Kotlinのバージョンは1.0.1-2。
@@ -46,7 +46,7 @@ Kotlinのバージョンは1.0.1-2。
 
 因みにKotlinの書き方は、[Kotlin Koans](https://kotlinlang.org/docs/tutorials/koans.html)という例題集を[オンラインのIDE](http://try.kotlinlang.org/koans)で解きながらを学ぶことができる。
 
-## パケットキャプチャ with Pcap4J in Java
+# パケットキャプチャ with Pcap4J in Java
 Pcap4Jでパケットキャプチャするコードを普通にJavaで書くと以下の様になる。
 ([Groovy](https://www.kaitoy.xyz/2016/04/10/pcap4j-in-groovy/)の時のと一緒。)
 
@@ -54,7 +54,7 @@ Pcap4Jでパケットキャプチャするコードを普通にJavaで書くと�
 
 これを実行すると、パケットキャプチャするネットワークインターフェースを選択し、5つのパケットをキャプチャしてタイムスタンプと共にコンソールに表示する。
 
-## パケットキャプチャ with Pcap4J in Kotlin
+# パケットキャプチャ with Pcap4J in Kotlin
 上記処理をKotlinで書くと以下の様になる。
 
 {{< gist 074769880c7bf4c0628c1c25a724c1a7 >}}
@@ -94,7 +94,7 @@ java -cp pcap4j-core.jar;pcap4j-packetfactory-static.jar;jna.jar;slf4j-api.jar;P
 
 コンパイル/実行方法は[他にもある](https://kotlinlang.org/docs/tutorials/command-line.html#creating-and-running-a-first-application)。
 
-## スクリプトなKotlin
+# スクリプトなKotlin
 Kotlinプログラムはスクリプトとしても書けて、コンパイル無しで実行することができる。
 この場合、`main`関数は消してその中身をトップレベルに書き、ファイルの拡張子を`.kts`にする。
 

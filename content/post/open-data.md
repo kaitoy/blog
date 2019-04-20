@@ -2,7 +2,7 @@
 categories = ["Programing"]
 date = "2018-03-04T16:22:46+09:00"
 draft = false
-eyecatch = "ml.png"
+cover = "ml.png"
 slug = "open-data"
 tags = ["machine learning", "deep learning"]
 title = "オープンデータメモ"

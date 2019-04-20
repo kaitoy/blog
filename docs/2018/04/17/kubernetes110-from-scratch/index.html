@@ -1,88 +1,224 @@
 <!DOCTYPE html>
 <html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <head>
+         
 
-    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+    google_ad_client: "ca-pub-6244473643910448",
+    enable_page_level_ads: true
+  });
+</script>
 
-    
-    
-    <meta property="og:type" content="article">
-    <meta property="og:title" content="Kubernetes 1.10をスクラッチから全手動で構築 | To Be Decided">
-    <meta property="og:url" content="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">
-    <link rel="canonical" href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">
-    <meta property="og:description" content="Oracle Linux 7.4.0のVMでKubernetes 1.10.0のクラスタをスクラッチから全手動で作った。 参考にしたのは主に以下。 https://nixaid.com/deploying-kubernetes-cluster-from-scratch/ https://github.com/kubernetes/kubeadm/blob/master/docs/design/design_v1.10.md https://kubernetes.io/docs/getting-started-guides/scratch/ https://kubernetes.io/docs/reference/setup-tools/kubeadm/implementation-details/ https://ulam.io/blog/kubernetes-scratch/ https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master (2019/1/17追記: クラスタ全手動構築手順はKubernetes 1.13になってもほとんど変わっていない。ユニットファイルに指定するオプションが多少減ったりしたくらい。 また、ホストがRHELでもほとんど変わらない。インストールするDockerがDocker-CE(もしくはRedhatのやつ)に変わるくらいで、あとはkubeletの--cgroup-driverをsystemdにしないといけなかったかも。) (adsbygoogle = window.adsbygoogle || []).push({}); 構成 マシン: Windows 10 Homeのラップトップの上のVMware PlayerのVM CPU: 2コア メモリ: 4GB NIF: NATのを一つ OS: Oracle Linux 7.4.0 Minimalインストール IPアドレス: 192.168.171.200、静的割り当て ホスト名: k8s-master (hostsで解決) Docker: Oracle Container Runtime for Docker (docker-engine) 17.06.2 Kubernetes: バージョン1.10.0 単一ノード 全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e. 非コンテナ) kubeletとkube-proxy以外は非rootユーザ kubeletは現時点でrootで動かす必要がある kube-proxyはiptableいじったりする都合上rootで動かす必要があるっぽい。 コンポーネント間通信とkubectlの通信をTLSで暗号化 TLS 1.2 セキュアなCipher Suites コンポーネント間通信とkubectlの通信の認証はx509クライアント証明書 TLS Bootstrapping Bootstrap token使用 CSR自動承認 Certificate Rotation有効 etcd 3.1.12 flannel 0.10.0 CoreDNS 1.1.1 SERVICE_CLUSTER_IP_RANGE (Serviceに割り当てるIPの範囲) は10.0.0.0/16 kube-apiserverのIPはこの範囲の最初のIP(i.e.">
-    
-    <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
-    
-    
-    <meta property="og:site_name" content="To Be Decided">
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">
 
-    <title>
-      
-      Kubernetes 1.10をスクラッチから全手動で構築 | To Be Decided
-      
-    </title>
 
-    
-    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
 
-    
-    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="[To Be Decided ~]$ cat /post/&quot;Kubernetes 1.10をスクラッチから全手動で構築&quot;">
+  <title>[To Be Decided ~]$ cat /post/&quot;Kubernetes 1.10をスクラッチから全手動で構築&quot;</title>
+  <meta property="og:description" content="Oracle Linux 7.4.0のVMでKubernetes 1.10.0のクラスタをスクラッチから全手動で作った。 参考にしたのは主に以下。
+ https://nixaid.com/deploying-kubernetes-cluster-from-scratch/ https://github.com/kubernetes/kubeadm/blob/master/docs/design/design_v1.10.md https://kubernetes.io/docs/getting-started-guides/scratch/ https://kubernetes.io/docs/reference/setup-tools/kubeadm/implementation-details/ https://ulam.io/blog/kubernetes-scratch/ https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/creating-a-linux-master  (2019/1/17追記: クラスタ全手動構築手順はKubernetes 1.13になってもほとんど変わっていない。ユニットファイルに指定するオプションが多少減ったりしたくらい。 また、ホストがRHELでもほとんど変わらない。インストールするDockerがDocker-CE(もしくはRedhatのやつ)に変わるくらいで、あとはkubeletの--cgroup-driverをsystemdにしないといけなかったかも。)    (adsbygoogle = window.adsbygoogle || []).push({});  構成  マシン: Windows 10 Homeのラップトップの上のVMware PlayerのVM  CPU: 2コア メモリ: 4GB NIF: NATのを一つ  OS: Oracle Linux 7.4.0  Minimalインストール IPアドレス: 192.168.171.200、静的割り当て ホスト名: k8s-master (hostsで解決)  Docker: Oracle Container Runtime for Docker (docker-engine) 17.06.2 Kubernetes: バージョン1.10.0  単一ノード 全コンポーネント(kubelet、kube-proxy、kube-apiserver、kube-controller-manager、kube-scheduler、etcd)をsystemdで起動 (i.e. 非コンテナ)  kubeletとkube-proxy以外は非rootユーザ kubeletは現時点でrootで動かす必要がある kube-proxyはiptableいじったりする都合上rootで動かす必要があるっぽい。  コンポーネント間通信とkubectlの通信をTLSで暗号化  TLS 1.">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
 
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
-    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
-    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
-    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
-    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/styles/zenburn.min.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
 
-    
-    
 
-    
-    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-    <script>
-      (adsbygoogle = window.adsbygoogle || []).push({
-        google_ad_client: "ca-pub-6244473643910448",
-        enable_page_level_ads: true
-      });
-    </script>
-
-    
-  </head>
-  <body>
-
-    <header id="site-header">
-      <div class="container">
-        <h1 class="text-center">
-          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
-        </h1>
-      </div>
-    </header>
-
-    <main id="site-body">
-      <div class="container">
-
-<div class="row">
-  <div class="col-md-9">
-    <article id="post">
-      <span class="date">Tue, Apr 17, 2018</span>
-      <h2 class="title">Kubernetes 1.10をスクラッチから全手動で構築</h2>
-
-      <div class="eyecatch text-center">
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         
-        <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="Kubernetes 1.10をスクラッチから全手動で構築">
-        
-      </div>
+        <style>
 
-      <div class="content">
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&amp;subset=japanese">
+
+
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai.min.css"> 
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+    
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
         
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
+    
+
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v3.2"></script>
+
+        <nav class="navbar navbar-default navbar-fixed-top">
+
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">Kubernetes 1.10をスクラッチから全手動で構築</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    <div class="single-post">
+        <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a></h4>
+    <h5>Tue, Apr 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+
+
+        <div class="cover">
+            <a href="/2018/04/17/kubernetes110-from-scratch/">
+                <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="Kubernetes 1.10をスクラッチから全手動で構築">
+            </a>
+        </div>
+
+        
+        <h4 class="page-header">Table of Contents</h4>
+        <aside>
+            <nav id="TableOfContents">
+<ul>
+<li><a href="#構成">構成</a></li>
+<li><a href="#クラスタ構築手順">クラスタ構築手順</a>
+<ul>
+<li><a href="#1-bridge-netfilterとip-forwardingを設定">1. Bridge netfilterとIP forwardingを設定</a></li>
+<li><a href="#2-x509証明書生成">2. x509証明書生成</a></li>
+<li><a href="#3-kubernetesバイナリインストール">3. Kubernetesバイナリインストール</a></li>
+<li><a href="#4-kubeconfigファイル生成">4. kubeconfigファイル生成</a></li>
+<li><a href="#5-etcdデプロイ">5. etcdデプロイ</a></li>
+<li><a href="#6-マスタコンポーネントデプロイ">6. マスタコンポーネントデプロイ。</a></li>
+<li><a href="#7-tls-bootstrapping-https-kubernetes-io-docs-admin-kubelet-tls-bootstrapping-の設定">7. <a href="https://kubernetes.io/docs/admin/kubelet-tls-bootstrapping/">TLS Bootstrapping</a>の設定</a></li>
+<li><a href="#8-docker-cni-kubeletインストール">8. Docker、CNI、kubeletインストール</a></li>
+<li><a href="#9-kube-proxy-オーバレイネットワーク-dnsのデプロイ">9. kube-proxy、オーバレイネットワーク、DNSのデプロイ</a></li>
+<li><a href="#10-kubernetesアプリデプロイ">10. Kubernetesアプリデプロイ</a></li>
+</ul></li>
+</ul>
+</nav>
+        </aside>
+        <hr>
+        
+
+        <br> <div class="text-justify">
 
 <p>Oracle Linux 7.4.0のVMでKubernetes 1.10.0のクラスタをスクラッチから全手動で作った。
 参考にしたのは主に以下。</p>
@@ -113,7 +249,7 @@
 </script>
 </p>
 
-<h2 id="構成">構成</h2>
+<h1 id="構成">構成</h1>
 
 <ul>
 <li>マシン: Windows 10 Homeのラップトップの上のVMware PlayerのVM
@@ -184,7 +320,8 @@
 <p>kubeletの動作条件にあるので、swapをoffにする。
 Oracle Linuxにログインして、<code>/etc/fstab</code>のswapの行を削除して、以下のコマンドを実行。</p>
 
-<pre><code class="language-sh"># swapoff -a
+<pre><code class="language-shell"># swapoff -a
+# cd /tmp
 </code></pre>
 
 <p><br></p>
@@ -193,14 +330,14 @@ Oracle Linuxにログインして、<code>/etc/fstab</code>のswapの行を削�
 
 <p><code>/etc/selinux/config</code>を編集して、<code>SELINUX</code>を<code>permissive</code>にして、以下のコマンドを実行。</p>
 
-<pre><code class="language-sh"># setenforce 0
+<pre><code class="language-shell"># setenforce 0
 </code></pre>
 
 <p><br></p>
 
 <p>ファイアウォールもちゃんと設定すればいいんだけど面倒なのでとりあえず無効にする。</p>
 
-<pre><code class="language-sh"># systemctl stop firewalld
+<pre><code class="language-shell"># systemctl stop firewalld
 # systemctl disable firewalld
 </code></pre>
 
@@ -208,23 +345,22 @@ Oracle Linuxにログインして、<code>/etc/fstab</code>のswapの行を削�
 
 <p>これで準備完了。</p>
 
-<h2 id="クラスタ構築手順">クラスタ構築手順</h2>
+<h1 id="クラスタ構築手順">クラスタ構築手順</h1>
 
 <p>おおむね、k8sコンポーネント間の通信の暗号化に使う鍵と証明書の生成、各コンポーネント用kubeconfigの生成、etcdのデプロイ、k8sコンポーネントのデプロイ、fannelデプロイ、CoreDNSデプロイ、という流れ。
 ついでに最後に<a href="https://github.com/weaveworks/scope">Weave Scope</a>をデプロイしてみる。</p>
 
-<ol>
-<li><p>Bridge netfilterとIP forwardingを設定</p>
+<h2 id="1-bridge-netfilterとip-forwardingを設定">1. Bridge netfilterとIP forwardingを設定</h2>
 
 <p>まず、Bridge netfilterモジュールをロードする。</p>
 
-<pre><code class="language-sh"># modprobe br_netfilter
+<pre><code class="language-shell"># modprobe br_netfilter
 # echo &quot;br_netfilter&quot; &gt; /etc/modules-load.d/br_netfilter.conf
 </code></pre>
 
 <p>Bridge netfilterとIP forwardingを有効化する。</p>
 
-<pre><code class="language-sh"># cat &gt; /etc/sysctl.d/kubernetes.conf &lt;&lt; EOF
+<pre><code class="language-shell"># cat &gt; /etc/sysctl.d/kubernetes.conf &lt;&lt; EOF
 net.bridge.bridge-nf-call-iptables = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 net.ipv4.ip_forward = 1
@@ -236,16 +372,16 @@ EOF
 
 <p>設定確認。</p>
 
-<pre><code class="language-sh"># lsmod |grep br_netfilter
+<pre><code class="language-shell"># lsmod |grep br_netfilter
 # sysctl -a | grep -E &quot;net.bridge.bridge-nf-call-|net.ipv4.ip_forward&quot;
-</code></pre></li>
+</code></pre>
 
-<li><p>x509証明書生成</p>
+<h2 id="2-x509証明書生成">2. x509証明書生成</h2>
 
 <ol>
 <li><p>opensslの設定作成</p>
 
-<pre><code class="language-sh"># mkdir -p /etc/kubernetes/pki
+<pre><code class="language-shell"># mkdir -p /etc/kubernetes/pki
 # HOSTNAME=k8s-master
 # K8S_SERVICE_IP=10.0.0.1
 # MASTER_IP=192.168.171.200
@@ -289,7 +425,7 @@ EOF
 <p>以降で生成する証明書に署名するための証明書。
 後述のTLS Bootstrappingでの証明書生成にも使う。</p>
 
-<pre><code class="language-sh"># groupadd -r kubernetes
+<pre><code class="language-shell"># groupadd -r kubernetes
 # adduser -r -g kubernetes -M -s /sbin/nologin kubernetes
 # CA_DAYS=5475
 # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/ca.key
@@ -302,7 +438,7 @@ EOF
 
 <p>kube-apiserverのサーバ証明書。</p>
 
-<pre><code class="language-sh"># APISERVER_DAYS=5475
+<pre><code class="language-shell"># APISERVER_DAYS=5475
 # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/kube-apiserver.key
 # chown kubernetes:kubernetes /etc/kubernetes/pki/kube-apiserver.key
 # chmod 0600 /etc/kubernetes/pki/kube-apiserver.key
@@ -313,7 +449,7 @@ EOF
 
 <p>kube-apiserverが<a href="https://kubernetes.io/docs/concepts/architecture/master-node-communication/#apiserver-kubelet">kubeletのAPIにアクセス</a>するときのクライアント証明書。</p>
 
-<pre><code class="language-sh"># APISERVER_KUBELET_CLIENT_DAYS=5475
+<pre><code class="language-shell"># APISERVER_KUBELET_CLIENT_DAYS=5475
 # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/apiserver-kubelet-client.key
 # chown kubernetes:kubernetes /etc/kubernetes/pki/apiserver-kubelet-client.key
 # chmod 0600 /etc/kubernetes/pki/apiserver-kubelet-client.key
@@ -324,7 +460,7 @@ EOF
 
 <p>kubectlがkube-apiserverのAPIにアクセスするときのクライアント証明書。</p>
 
-<pre><code class="language-sh"># groupadd -r kube-admin
+<pre><code class="language-shell"># groupadd -r kube-admin
 # adduser -r -g kube-admin -M -s /sbin/nologin kube-admin
 # ADMIN_DAYS=5475
 # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/admin.key
@@ -338,7 +474,7 @@ EOF
 <p>kube-controller-managerがkube-apiserverに接続するときのクライアント証明書。
 この証明書に対応する秘密鍵と公開鍵はそれぞれ、kube-controller-managerがService Accountトークンに署名するとき、kube-apiserverがトークンの署名を確認するときにも使う。</p>
 
-<pre><code class="language-sh"># CONTROLLER_MANAGER_DAYS=5475
+<pre><code class="language-shell"># CONTROLLER_MANAGER_DAYS=5475
 # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/kube-controller-manager.key
 # openssl ec -in /etc/kubernetes/pki/kube-controller-manager.key -outform PEM -pubout -out /etc/kubernetes/pki/kube-controller-manager.pub
 # chown kubernetes:kubernetes /etc/kubernetes/pki/kube-controller-manager.key
@@ -350,7 +486,7 @@ EOF
 
 <p>kube-schedulerがkube-apiserverにリクエストするときに使うクライアント証明書。</p>
 
-<pre><code class="language-sh"># SCHEDULER_DAYS=5475
+<pre><code class="language-shell"># SCHEDULER_DAYS=5475
 # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/kube-scheduler.key
 # chown kubernetes:kubernetes /etc/kubernetes/pki/kube-scheduler.key
 # chmod 0600 /etc/kubernetes/pki/kube-scheduler.key
@@ -361,7 +497,7 @@ EOF
 
 <p>kube-proxyがkube-apiserverにリクエストするときに使うクライアント証明書。</p>
 
-<pre><code class="language-sh"># PROXY_DAYS=5475
+<pre><code class="language-shell"># PROXY_DAYS=5475
 # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/kube-proxy.key
 # chown kubernetes:kubernetes /etc/kubernetes/pki/kube-proxy.key
 # chmod 0600 /etc/kubernetes/pki/kube-proxy.key
@@ -378,7 +514,7 @@ API Aggregationは現時点では<a href="https://kubernetes.io/docs/concepts/ap
 <p>API AggregationしないならこのCA証明書と次のクライアント証明書はいらないはず。
 今回はしないけど、とりあえず作って設定したおく。</p>
 
-<pre><code class="language-sh"># FRONT_PROXY_CA_DAYS=5475
+<pre><code class="language-shell"># FRONT_PROXY_CA_DAYS=5475
 # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/front-proxy-ca.key
 # chown kubernetes:kubernetes /etc/kubernetes/pki/front-proxy-ca.key
 # chmod 0600 /etc/kubernetes/pki/front-proxy-ca.key
@@ -390,7 +526,7 @@ API Aggregationは現時点では<a href="https://kubernetes.io/docs/concepts/ap
 <p>Extension API ServerのAPIへのリクエストは、いったんkube-apiserverが受け取ってExtension API Serverに転送される。(多分。)
 この転送の暗号化と認証にTLSが使われていて、ここではそのクライアント証明書を生成する。</p>
 
-<pre><code class="language-sh"># FRONT_PROXY_CLIENT_DAYS=5475
+<pre><code class="language-shell"># FRONT_PROXY_CLIENT_DAYS=5475
 # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/front-proxy-client.key
 # chown kubernetes:kubernetes /etc/kubernetes/pki/front-proxy-client.key
 # chmod 0600 /etc/kubernetes/pki/front-proxy-client.key
@@ -401,7 +537,7 @@ API Aggregationは現時点では<a href="https://kubernetes.io/docs/concepts/ap
 
 <p>以降で生成するetcdの証明書に署名するための証明書。</p>
 
-<pre><code class="language-sh"># groupadd -r etcd
+<pre><code class="language-shell"># groupadd -r etcd
 # adduser -r -g etcd -M -s /sbin/nologin etcd
 # ETCD_CA_DAYS=5475
 # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/etcd-ca.key
@@ -414,7 +550,7 @@ API Aggregationは現時点では<a href="https://kubernetes.io/docs/concepts/ap
 
 <p>etcdのサーバ証明書。</p>
 
-<pre><code class="language-sh"># ETCD_DAYS=5475
+<pre><code class="language-shell"># ETCD_DAYS=5475
 # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/etcd.key
 # chown etcd:etcd /etc/kubernetes/pki/etcd.key
 # chmod 0600 /etc/kubernetes/pki/etcd.key
@@ -426,7 +562,7 @@ API Aggregationは現時点では<a href="https://kubernetes.io/docs/concepts/ap
 <p>etcdのクライアント証明書。
 kube-apiserverだけがetcdと話すので、kube-apiserverだけが使う。</p>
 
-<pre><code class="language-sh"># ETCD_CLIENT_DAYS=5475
+<pre><code class="language-shell"># ETCD_CLIENT_DAYS=5475
 # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/etcd-client.key
 # chown kubernetes:kubernetes /etc/kubernetes/pki/etcd-client.key
 # chmod 0600 /etc/kubernetes/pki/etcd-client.key
@@ -438,7 +574,7 @@ kube-apiserverだけがetcdと話すので、kube-apiserverだけが使う。</p
 <p>etcdサーバが冗長構成のとき、サーバ間の通信の暗号化に使う証明書。
 マスタが一つなら要らないはずだけど、今回とりあえず作って設定しておく。</p>
 
-<pre><code class="language-sh"># ETCD_PEER_DAYS=5475
+<pre><code class="language-shell"># ETCD_PEER_DAYS=5475
 # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/etcd-peer.key
 # chown etcd:etcd /etc/kubernetes/pki/etcd-peer.key
 # chmod 0600 /etc/kubernetes/pki/etcd-peer.key
@@ -449,15 +585,15 @@ kube-apiserverだけがetcdと話すので、kube-apiserverだけが使う。</p
 
 <p>以上で生成した証明書の内容を確認する。</p>
 
-<pre><code class="language-sh"># for i in /etc/kubernetes/pki/*crt; do
+<pre><code class="language-shell"># for i in /etc/kubernetes/pki/*crt; do
   echo $i:;
   openssl x509 -subject -issuer -noout -in $i;
   echo;
 done
 </code></pre></li>
-</ol></li>
+</ol>
 
-<li><p>Kubernetesバイナリインストール</p>
+<h2 id="3-kubernetesバイナリインストール">3. Kubernetesバイナリインストール</h2>
 
 <p><a href="https://kubernetes.io/docs/getting-started-guides/scratch/#selecting-images">公式ドキュメント</a>によると、Docker、kubelet、kube-proxyはコンテナ外で動かして、etcd、kube-apiserver、kube-controller-manager、kube-schedulerはコンテナで動かすのが推奨されている。
 けど、とりあえずは簡単に全部コンテナ外でやる。</p>
@@ -504,7 +640,7 @@ done
 
 <p>hyperkubeとkubeadmのバイナリを<code>/usr/bin/</code>において、以下のコマンドを実行。</p>
 
-<pre><code class="language-sh"># ln -s /usr/bin/hyperkube /usr/bin/kube-apiserver
+<pre><code class="language-shell"># ln -s /usr/bin/hyperkube /usr/bin/kube-apiserver
 # ln -s /usr/bin/hyperkube /usr/bin/kube-controller-manager
 # ln -s /usr/bin/hyperkube /usr/bin/kube-scheduler
 # ln -s /usr/bin/hyperkube /usr/bin/kube-proxy
@@ -512,16 +648,16 @@ done
 # ln -s /usr/bin/hyperkube /usr/bin/kubectl
 # chmod +x /usr/bin/kube*
 # mkdir -p /var/lib/{kubelet,kube-proxy}
-</code></pre></li>
+</code></pre>
 
-<li><p>kubeconfigファイル生成</p>
+<h2 id="4-kubeconfigファイル生成">4. kubeconfigファイル生成</h2>
 
 <p>kubectlとマスタコンポーネントがkube-apiserverと話すときに使うkubeconfigファイルを生成する。</p>
 
 <ol>
 <li><p>kube-controller-managerのkubeconfig</p>
 
-<pre><code class="language-sh"># MASTER_IP=192.168.171.200
+<pre><code class="language-shell"># MASTER_IP=192.168.171.200
 # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
 # CLUSTER_NAME=&quot;k8s&quot;
 # KCONFIG=/etc/kubernetes/kube-controller-manager.kubeconfig
@@ -536,12 +672,12 @@ done
 
 <p>設定確認。</p>
 
-<pre><code class="language-sh"># kubectl config view --kubeconfig=${KCONFIG}
+<pre><code class="language-shell"># kubectl config view --kubeconfig=${KCONFIG}
 </code></pre></li>
 
 <li><p>kube-schedulerのkubeconfig</p>
 
-<pre><code class="language-sh"># MASTER_IP=192.168.171.200
+<pre><code class="language-shell"># MASTER_IP=192.168.171.200
 # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
 # CLUSTER_NAME=&quot;k8s&quot;
 # KCONFIG=/etc/kubernetes/kube-scheduler.kubeconfig
@@ -556,14 +692,14 @@ done
 
 <p>設定確認。</p>
 
-<pre><code class="language-sh"># kubectl config view --kubeconfig=${KCONFIG}
+<pre><code class="language-shell"># kubectl config view --kubeconfig=${KCONFIG}
 </code></pre></li>
 
 <li><p>adminのkubeconfig</p>
 
 <p>kubectl用。</p>
 
-<pre><code class="language-sh"># MASTER_IP=192.168.171.200
+<pre><code class="language-shell"># MASTER_IP=192.168.171.200
 # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
 # CLUSTER_NAME=&quot;k8s&quot;
 # KCONFIG=/etc/kubernetes/admin.kubeconfig
@@ -579,16 +715,16 @@ done
 
 <p>設定確認。</p>
 
-<pre><code class="language-sh"># kubectl config view --kubeconfig=${KCONFIG}
+<pre><code class="language-shell"># kubectl config view --kubeconfig=${KCONFIG}
 </code></pre></li>
-</ol></li>
+</ol>
 
-<li><p>etcdデプロイ</p>
+<h2 id="5-etcdデプロイ">5. etcdデプロイ</h2>
 
 <p><a href="https://github.com/coreos/etcd/releases/download/v3.1.12/etcd-v3.1.12-linux-amd64.tar.gz">https://github.com/coreos/etcd/releases/download/v3.1.12/etcd-v3.1.12-linux-amd64.tar.gz</a>
 からアーカイブをダウンロードして、中のetcdとetcdctlを<code>/usr/bin/</code>にいれて、以下のコマンドを実行。</p>
 
-<pre><code class="language-sh"># chown root:root /usr/bin/etcd*
+<pre><code class="language-shell"># chown root:root /usr/bin/etcd*
 # chmod 0755 /usr/bin/etcd*
 # mkdir -p /var/lib/etcd
 # chown etcd:etcd /var/lib/etcd
@@ -598,7 +734,7 @@ done
 
 <p>(参考: <a href="https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/">Kubernetesドキュメント</a>、<a href="https://github.com/coreos/etcd/blob/master/Documentation/op-guide/security.md">etcdドキュメント</a>)</p>
 
-<pre><code class="language-sh"># MASTER_IP=192.168.171.200
+<pre><code class="language-shell"># MASTER_IP=192.168.171.200
 # ETCD_MEMBER_NAME=etcd1
 # CLUSTER_NAME=&quot;k8s&quot;
 # ETCD_TOKEN=$(openssl rand -hex 5)
@@ -608,7 +744,6 @@ done
 Description=etcd
 Documentation=https://coreos.com/etcd/docs/latest/
 After=network.target
-
 
 [Service]
 Type=notify
@@ -636,7 +771,6 @@ ExecStart=/usr/bin/etcd \\
 Restart=always
 RestartSec=10s
 
-
 [Install]
 WantedBy=multi-user.target
 EOF
@@ -647,13 +781,13 @@ EOF
 
 <p>確認。</p>
 
-<pre><code class="language-sh"># systemctl status etcd -l
+<pre><code class="language-shell"># systemctl status etcd -l
 # MASTER_IP=192.168.171.200
 # etcdctl --endpoints https://${MASTER_IP}:2379 --ca-file=/etc/kubernetes/pki/etcd-ca.crt --cert-file=/etc/kubernetes/pki/etcd-client.crt --key-file=/etc/kubernetes/pki/etcd-client.key cluster-health
 # etcdctl --endpoints https://${MASTER_IP}:2379 --ca-file=/etc/kubernetes/pki/etcd-ca.crt --cert-file=/etc/kubernetes/pki/etcd-client.crt --key-file=/etc/kubernetes/pki/etcd-client.key member list
-</code></pre></li>
+</code></pre>
 
-<li><p>マスタコンポーネントデプロイ。</p>
+<h2 id="6-マスタコンポーネントデプロイ">6. マスタコンポーネントデプロイ。</h2>
 
 <ol>
 <li><p>kube-apiserver</p>
@@ -664,7 +798,7 @@ EOF
 <li>d</li>
 </ul>
 
-<pre><code class="language-sh"># mkdir -p /var/log/kubernetes
+<pre><code class="language-shell"># mkdir -p /var/log/kubernetes
 # chown kubernetes:kubernetes /var/log/kubernetes
 # chmod 0700 /var/log/kubernetes
 # MASTER_IP=192.168.171.200
@@ -703,14 +837,12 @@ rules:
     - group: &quot;&quot;
       resources: [&quot;pods/log&quot;, &quot;pods/status&quot;]
 
-
   # Don't log requests to a configmap called &quot;controller-leader&quot;
   - level: None
     resources:
     - group: &quot;&quot;
       resources: [&quot;configmaps&quot;]
       resourceNames: [&quot;controller-leader&quot;]
-
 
   # Don't log watch requests by the &quot;system:kube-proxy&quot; on endpoints or services
   - level: None
@@ -720,14 +852,12 @@ rules:
     - group: &quot;&quot; # core API group
       resources: [&quot;endpoints&quot;, &quot;services&quot;]
 
-
   # Don't log authenticated requests to certain non-resource URL paths.
   - level: None
     userGroups: [&quot;system:authenticated&quot;]
     nonResourceURLs:
     - &quot;/api*&quot; # Wildcard matching.
     - &quot;/version&quot;
-
 
   # Log the request body of configmap changes in kube-system.
   - level: Request
@@ -738,20 +868,17 @@ rules:
     # The empty string &quot;&quot; can be used to select non-namespaced resources.
     namespaces: [&quot;kube-system&quot;]
 
-
   # Log configmap and secret changes in all other namespaces at the Metadata level.
   - level: Metadata
     resources:
     - group: &quot;&quot; # core API group
       resources: [&quot;secrets&quot;, &quot;configmaps&quot;]
 
-
   # Log all other resources in core and extensions at the Request level.
   - level: Request
     resources:
     - group: &quot;&quot; # core API group
     - group: &quot;extensions&quot; # Version of group should NOT be included.
-
 
   # A catch-all rule to log all other requests at the Metadata level.
   - level: Metadata
@@ -765,7 +892,6 @@ EOF
 Description=Kubernetes API Server
 Documentation=https://github.com/kubernetes/kubernetes
 After=network.target
-
 
 [Service]
 User=kubernetes
@@ -813,7 +939,6 @@ ExecStart=/usr/bin/kube-apiserver \\
 Restart=always
 RestartSec=10s
 
-
 [Install]
 WantedBy=multi-user.target
 EOF
@@ -857,7 +982,7 @@ RSA鍵交換はNG、RC4と3DESもNG、AESの鍵長は128ビット以上、SHA1�
 
 <p>確認。</p>
 
-<pre><code class="language-sh"># systemctl status kube-apiserver -l
+<pre><code class="language-shell"># systemctl status kube-apiserver -l
 # journalctl -u kube-apiserver
 </code></pre></li>
 
@@ -865,7 +990,7 @@ RSA鍵交換はNG、RC4と3DESもNG、AESの鍵長は128ビット以上、SHA1�
 
 <p>systemdのユニットファイルを書いてサービス化。</p>
 
-<pre><code class="language-sh"># CLUSTER_CIDR=&quot;10.244.0.0/16&quot;
+<pre><code class="language-shell"># CLUSTER_CIDR=&quot;10.244.0.0/16&quot;
 # SERVICE_CLUSTER_IP_RANGE=&quot;10.0.0.0/16&quot;
 # CLUSTER_NAME=&quot;k8s&quot;
 # cat &gt; /etc/systemd/system/kube-controller-manager.service &lt;&lt; EOF
@@ -873,7 +998,6 @@ RSA鍵交換はNG、RC4と3DESもNG、AESの鍵長は128ビット以上、SHA1�
 Description=Kubernetes Controller Manager
 Documentation=https://github.com/kubernetes/kubernetes
 After=network.target
-
 
 [Service]
 User=kubernetes
@@ -897,7 +1021,6 @@ ExecStart=/usr/bin/kube-controller-manager \\
   --experimental-cluster-signing-duration=8760h0m0s
 Restart=always
 RestartSec=10s
-
 
 [Install]
 WantedBy=multi-user.target
@@ -929,19 +1052,18 @@ EOF
 
 <p>確認。</p>
 
-<pre><code class="language-sh"># systemctl status kube-controller-manager -l
+<pre><code class="language-shell"># systemctl status kube-controller-manager -l
 </code></pre></li>
 
 <li><p>kube-scheduler</p>
 
 <p>systemdのユニットファイルを書いてサービス化。</p>
 
-<pre><code class="language-sh"># cat &gt; /etc/systemd/system/kube-scheduler.service &lt;&lt; EOF
+<pre><code class="language-shell"># cat &gt; /etc/systemd/system/kube-scheduler.service &lt;&lt; EOF
 [Unit]
 Description=Kubernetes Scheduler
 Documentation=https://github.com/kubernetes/kubernetes
 After=network.target
-
 
 [Service]
 User=kubernetes
@@ -954,7 +1076,6 @@ ExecStart=/usr/bin/kube-scheduler \\
 Restart=always
 RestartSec=10s
 
-
 [Install]
 WantedBy=multi-user.target
 EOF
@@ -965,17 +1086,17 @@ EOF
 
 <p>確認。</p>
 
-<pre><code class="language-sh"># systemctl status kube-scheduler -l
+<pre><code class="language-shell"># systemctl status kube-scheduler -l
 </code></pre></li>
 
 <li><p>マスタコンポーネント状態確認</p>
 
-<pre><code class="language-sh"># kubectl version
+<pre><code class="language-shell"># kubectl version
 # kubectl get componentstatuses
 </code></pre></li>
-</ol></li>
+</ol>
 
-<li><p><a href="https://kubernetes.io/docs/admin/kubelet-tls-bootstrapping/">TLS Bootstrapping</a>の設定</p>
+<h2 id="7-tls-bootstrapping-https-kubernetes-io-docs-admin-kubelet-tls-bootstrapping-の設定">7. <a href="https://kubernetes.io/docs/admin/kubelet-tls-bootstrapping/">TLS Bootstrapping</a>の設定</h2>
 
 <p>TLS Bootstrappingは、Kubernetesクラスタのコンポーネント間の通信がTLSで暗号化されている環境で、ノードが新たにクラスタに参加するとき、自動的にセキュアに<a href="https://ja.wikipedia.org/wiki/%E8%A8%BC%E6%98%8E%E6%9B%B8%E7%BD%B2%E5%90%8D%E8%A6%81%E6%B1%82">CSR</a>を処理する仕組み。</p>
 
@@ -991,7 +1112,7 @@ EOF
 
 <p>以下のように生成できる。</p>
 
-<pre><code class="language-sh"># TOKEN_PUB=$(openssl rand -hex 3)
+<pre><code class="language-shell"># TOKEN_PUB=$(openssl rand -hex 3)
 # TOKEN_SECRET=$(openssl rand -hex 8)
 # BOOTSTRAP_TOKEN=&quot;${TOKEN_PUB}.${TOKEN_SECRET}&quot;
 # kubectl -n kube-system create secret generic bootstrap-token-${TOKEN_PUB} --type 'bootstrap.kubernetes.io/token' --from-literal description=&quot;cluster bootstrap token&quot; --from-literal token-id=${TOKEN_PUB} --from-literal token-secret=${TOKEN_SECRET} --from-literal usage-bootstrap-authentication=true --from-literal usage-bootstrap-signing=true --from-literal auth-extra-groups=system:bootstrappers:worker,system:bootstrappers:ingress
@@ -999,7 +1120,7 @@ EOF
 
 <p>けど、<a href="https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-token/#cmd-token-generate">kubeadm</a>でも生成出来てこっちのほうが楽なので、それで。</p>
 
-<pre><code class="language-sh"># BOOTSTRAP_TOKEN=$(kubeadm token create --kubeconfig /etc/kubernetes/admin.kubeconfig)
+<pre><code class="language-shell"># BOOTSTRAP_TOKEN=$(kubeadm token create --kubeconfig /etc/kubernetes/admin.kubeconfig)
 </code></pre>
 
 <p>BOOTSTRAP_TOKENの値はあとで使う。</p>
@@ -1008,7 +1129,7 @@ EOF
 
 <p>確認。</p>
 
-<pre><code class="language-sh"># TOKEN_PUB=$(echo $BOOTSTRAP_TOKEN | sed -e s/\\..*//)
+<pre><code class="language-shell"># TOKEN_PUB=$(echo $BOOTSTRAP_TOKEN | sed -e s/\\..*//)
 # kubectl -n kube-system get secret/bootstrap-token-${TOKEN_PUB} -o yaml
 </code></pre></li>
 
@@ -1017,7 +1138,7 @@ EOF
 <p>Bootstrap時は<code>kubelet-bootstrap</code>というユーザでkube-apiserverに接続する。
 <code>kubelet-bootstrap</code>は<code>system:node-bootstrapper</code>ロールを持って<code>system:bootstrappers</code>に属しているユーザとして認証される必要がある。</p>
 
-<pre><code class="language-sh"># mkdir -p /etc/kubernetes/manifests
+<pre><code class="language-shell"># mkdir -p /etc/kubernetes/manifests
 # MASTER_IP=192.168.171.200
 # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
 # CLUSTER_NAME=&quot;k8s&quot;
@@ -1032,34 +1153,34 @@ EOF
 
 <p>確認。</p>
 
-<pre><code class="language-sh"># kubectl config view --kubeconfig=${KCONFIG}
+<pre><code class="language-shell"># kubectl config view --kubeconfig=${KCONFIG}
 </code></pre></li>
 
 <li><p>CA証明書とbootstrap kubeconfigをConfigMap(cluster-info)で公開</p>
 
 <p>kubeletはこのConfigMapを見てクラスタに参加する。</p>
 
-<pre><code class="language-sh"># kubectl -n kube-public create configmap cluster-info --from-file /etc/kubernetes/pki/ca.crt --from-file /etc/kubernetes/bootstrap.kubeconfig
+<pre><code class="language-shell"># kubectl -n kube-public create configmap cluster-info --from-file /etc/kubernetes/pki/ca.crt --from-file /etc/kubernetes/bootstrap.kubeconfig
 </code></pre>
 
 <p>anonymousユーザにcluster-infoへのアクセスを許可する。</p>
 
-<pre><code class="language-sh"># kubectl -n kube-public create role system:bootstrap-signer-clusterinfo --verb get --resource configmaps
+<pre><code class="language-shell"># kubectl -n kube-public create role system:bootstrap-signer-clusterinfo --verb get --resource configmaps
 # kubectl -n kube-public create rolebinding kubeadm:bootstrap-signer-clusterinfo --role system:bootstrap-signer-clusterinfo --user system:anonymous
 </code></pre>
 
 <p>system:bootstrappersグループにsystem:node-bootstrapperロールを紐づける。</p>
 
-<pre><code class="language-sh"># kubectl create clusterrolebinding kubeadm:kubelet-bootstrap --clusterrole system:node-bootstrapper --group system:bootstrappers
+<pre><code class="language-shell"># kubectl create clusterrolebinding kubeadm:kubelet-bootstrap --clusterrole system:node-bootstrapper --group system:bootstrappers
 </code></pre></li>
 
 <li><p>bootstrap.kubeconfigにトークンを追記</p>
 
-<pre><code class="language-sh"># kubectl config set-credentials kubelet-bootstrap --token=${BOOTSTRAP_TOKEN} --kubeconfig=/etc/kubernetes/bootstrap.kubeconfig
+<pre><code class="language-shell"># kubectl config set-credentials kubelet-bootstrap --token=${BOOTSTRAP_TOKEN} --kubeconfig=/etc/kubernetes/bootstrap.kubeconfig
 </code></pre></li>
-</ol></li>
+</ol>
 
-<li><p>Docker、CNI、kubeletインストール</p>
+<h2 id="8-docker-cni-kubeletインストール">8. Docker、CNI、kubeletインストール</h2>
 
 <ol>
 <li><p>Docker</p>
@@ -1068,7 +1189,7 @@ EOF
 に従ってDocker CEをインストール。
 ストレージドライバにはoverlay2をつかうので、device-mapper-persistent-dataとlvm2は入れない。</p>
 
-<pre><code class="language-sh"># yum install -y yum-utils
+<pre><code class="language-shell"># yum install -y yum-utils
 # yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 # yum install -y docker-ce
 </code></pre>
@@ -1079,7 +1200,7 @@ EOF
 
 <p><code>/etc/yum.repos.d/public-yum-ol7.repo</code>の<code>ol7_addons</code>の<code>enabled</code>を1にして、以下のコマンドでdocker-engineをインストール。</p>
 
-<pre><code class="language-sh"># yum install -y docker-engine
+<pre><code class="language-shell"># yum install -y docker-engine
 </code></pre>
 
 <p>docker-engine 17.06.2が入った。</p>
@@ -1096,21 +1217,21 @@ EOF
 
 <p>で、起動。</p>
 
-<pre><code class="language-sh"># systemctl daemon-reload
+<pre><code class="language-shell"># systemctl daemon-reload
 # systemctl enable docker
 # systemctl start docker
 </code></pre>
 
 <p>確認。</p>
 
-<pre><code class="language-sh"># cat /proc/$(pidof dockerd)/environ
+<pre><code class="language-shell"># cat /proc/$(pidof dockerd)/environ
 # systemctl status docker -l
 # docker version
 </code></pre></li>
 
 <li><p>CNI</p>
 
-<pre><code class="language-sh"># mkdir -p /etc/cni/net.d /opt/cni/bin/
+<pre><code class="language-shell"># mkdir -p /etc/cni/net.d /opt/cni/bin/
 # cd /tmp
 # curl -OL https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz
 # curl -OL https://github.com/containernetworking/plugins/releases/download/v0.7.1/cni-plugins-amd64-v0.7.1.tgz
@@ -1129,12 +1250,12 @@ EOF
 
 <p>前提コマンド(conntrack)インストール。</p>
 
-<pre><code class="language-sh"># yum -y install conntrack-tools
+<pre><code class="language-shell"># yum -y install conntrack-tools
 </code></pre>
 
 <p>systemdのユニットファイルを書いてサービス化。</p>
 
-<pre><code class="language-sh"># DNS_SERVER_IP=10.0.0.10
+<pre><code class="language-shell"># DNS_SERVER_IP=10.0.0.10
 # PAUSE_IMAGE=k8s.gcr.io/pause-amd64:3.1
 # DNS_DOMAIN=&quot;cluster.local&quot;
 # cat &gt; /etc/systemd/system/kubelet.service &lt;&lt; EOF
@@ -1143,7 +1264,6 @@ Description=Kubernetes Kubelet
 Documentation=https://github.com/kubernetes/kubernetes
 After=docker.service
 Requires=docker.service
-
 
 [Service]
 CPUAccounting=true
@@ -1174,7 +1294,6 @@ ExecStart=/usr/bin/kubelet \\
   --anonymous-auth=false
 Restart=always
 RestartSec=10s
-
 
 [Install]
 WantedBy=multi-user.target
@@ -1212,7 +1331,7 @@ EOF
 
 <p>起動確認。</p>
 
-<pre><code class="language-sh"># systemctl status kubelet -l
+<pre><code class="language-shell"># systemctl status kubelet -l
 </code></pre></li>
 
 <li><p>Node CSR手動承認</p>
@@ -1221,7 +1340,7 @@ EOF
 
 <p>CSRは以下のコマンドで見れる。</p>
 
-<pre><code class="language-sh"># kubectl get csr
+<pre><code class="language-shell"># kubectl get csr
 NAME                                                   AGE       REQUESTOR                 CONDITION
 csr-cf9hm                                              24m       system:node:k8s-master  Pending
 node-csr-Vcw_4HioW1CI96eDH29RMKPrOchEN133053wm6DCXUk   24m       system:bootstrap:itacbw   Pending
@@ -1230,7 +1349,7 @@ node-csr-Vcw_4HioW1CI96eDH29RMKPrOchEN133053wm6DCXUk   24m       system:bootstra
 <p><code>node-csr-…</code>がクライアント証明書のためのCSRで、<code>csr-…</code>がサーバ証明書の。
 これらを承認する。</p>
 
-<pre><code class="language-sh"># kubectl certificate approve node-csr-Vcw_4HioW1CI96eDH29RMKPrOchEN133053wm6DCXUk
+<pre><code class="language-shell"># kubectl certificate approve node-csr-Vcw_4HioW1CI96eDH29RMKPrOchEN133053wm6DCXUk
 # kubectl certificate approve csr-cf9hm
 </code></pre>
 
@@ -1239,7 +1358,7 @@ node-csr-Vcw_4HioW1CI96eDH29RMKPrOchEN133053wm6DCXUk   24m       system:bootstra
 <p>これでクラスタにノードが追加されたはず。
 確認。</p>
 
-<pre><code class="language-sh"># kubectl get node
+<pre><code class="language-shell"># kubectl get node
 NAME         STATUS    ROLES     AGE       VERSION
 k8s-master   Ready     &lt;none&gt;    36s       v1.10.0
 </code></pre></li>
@@ -1254,7 +1373,7 @@ k8s-master   Ready     &lt;none&gt;    36s       v1.10.0
 <li>s</li>
 </ul>
 
-<pre><code class="language-sh"># cat &lt;&lt;EOF | kubectl create -f -
+<pre><code class="language-shell"># cat &lt;&lt;EOF | kubectl create -f -
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -1272,7 +1391,7 @@ EOF
 
 <p>また、kubeletのクライアント証明書を自動更新(i.e. RotateKubeletClientCertificate)するときのCSRを承認するClusterRoleとして<code>system:certificates.k8s.io:certificatesigningrequests:selfnodeclient</code>が自動生成されていて、これをノード毎のユーザにバインドしてやると、自動承認が有効になる。</p>
 
-<pre><code class="language-sh"># HOSTNAME=k8s-master
+<pre><code class="language-shell"># HOSTNAME=k8s-master
 # cat &lt;&lt;EOF | kubectl create -f -
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -1291,7 +1410,7 @@ EOF
 
 <p>kubeletのサーバ証明書を自動更新(i.e. RotateKubeletServerCertificate)するときのCSRを承認するClusterRoleは現時点で自動生成されないので、自分で作ってノード毎のユーザにバインドして、自動承認を有効にする。</p>
 
-<pre><code class="language-sh"># cat &lt;&lt;EOF | kubectl create -f -
+<pre><code class="language-shell"># cat &lt;&lt;EOF | kubectl create -f -
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -1317,16 +1436,16 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 EOF
 </code></pre></li>
-</ol></li>
+</ol>
 
-<li><p>kube-proxy、オーバレイネットワーク、DNSのデプロイ</p>
+<h2 id="9-kube-proxy-オーバレイネットワーク-dnsのデプロイ">9. kube-proxy、オーバレイネットワーク、DNSのデプロイ</h2>
 
 <ol>
 <li><p>kube-proxy</p>
 
 <p>kube-proxyのkubeconfigを作成。</p>
 
-<pre><code class="language-sh"># MASTER_IP=192.168.171.200
+<pre><code class="language-shell"># MASTER_IP=192.168.171.200
 # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
 # CLUSTER_NAME=&quot;k8s&quot;
 # KCONFIG=&quot;/etc/kubernetes/kube-proxy.kubeconfig&quot;
@@ -1341,18 +1460,17 @@ EOF
 
 <p>確認。</p>
 
-<pre><code class="language-sh"># kubectl config view --kubeconfig=${KCONFIG}
+<pre><code class="language-shell"># kubectl config view --kubeconfig=${KCONFIG}
 </code></pre>
 
 <p>systemdのユニットファイルを書いてサービス化。</p>
 
-<pre><code class="language-sh"># CLUSTER_CIDR=&quot;10.244.0.0/16&quot;
+<pre><code class="language-shell"># CLUSTER_CIDR=&quot;10.244.0.0/16&quot;
 # cat &gt; /etc/systemd/system/kube-proxy.service &lt;&lt; EOF
 [Unit]
 Description=Kubernetes Kube Proxy
 Documentation=https://github.com/kubernetes/kubernetes
 After=network.target
-
 
 [Service]
 User=root
@@ -1366,7 +1484,6 @@ ExecStart=/usr/bin/kube-proxy \\
 Restart=always
 RestartSec=10s
 
-
 [Install]
 WantedBy=multi-user.target
 EOF
@@ -1377,7 +1494,7 @@ EOF
 
 <p>確認。</p>
 
-<pre><code class="language-sh"># systemctl status kube-proxy -l
+<pre><code class="language-shell"># systemctl status kube-proxy -l
 </code></pre></li>
 
 <li><p>ネットワークプロバイダ (flannel)</p>
@@ -1390,7 +1507,7 @@ EOF
 
 <p>デプロイ自体は以下のコマンドを実行するだけ。</p>
 
-<pre><code class="language-sh"># kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+<pre><code class="language-shell"># kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 </code></pre>
 
 <p>このKubernetesマニフェストでは、quay.ioから<code>quay.io/coreos/flannel:v0.10.0-amd64</code>というコンテナイメージがpullされる。</p>
@@ -1399,7 +1516,7 @@ EOF
 
 <p>起動確認。</p>
 
-<pre><code class="language-sh"># kubectl -n kube-system get po
+<pre><code class="language-shell"># kubectl -n kube-system get po
 NAME                    READY     STATUS    RESTARTS   AGE
 kube-flannel-ds-gkcqd   1/1       Running   0          1m
 </code></pre>
@@ -1419,7 +1536,7 @@ kube-flannel-ds-gkcqd   1/1       Running   0          1m
 <li><a href="https://github.com/coredns/deployment/tree/master/kubernetes">https://github.com/coredns/deployment/tree/master/kubernetes</a></li>
 </ul>
 
-<pre><code class="language-sh"># cd /tmp
+<pre><code class="language-shell"># cd /tmp
 # curl -LO https://raw.githubusercontent.com/coredns/deployment/master/kubernetes/coredns.yaml.sed
 # curl -LO https://raw.githubusercontent.com/coredns/deployment/master/kubernetes/deploy.sh
 # chmod +x deploy.sh
@@ -1434,24 +1551,23 @@ kube-flannel-ds-gkcqd   1/1       Running   0          1m
 
 <p>起動確認。</p>
 
-<pre><code class="language-sh"># kubectl -n kube-system get pods -o wide | grep coredns
+<pre><code class="language-shell"># kubectl -n kube-system get pods -o wide | grep coredns
 coredns-8459d9f654-b585f   1/1       Running   0          48s       10.244.0.3        k8s-master
 coredns-8459d9f654-x7drc   1/1       Running   0          48s       10.244.0.2        k8s-master
 </code></pre>
 
 <p>起動確認時にCoreDNSのIPアドレスを確認して、動作確認。</p>
 
-<pre><code class="language-sh"># dig @10.244.0.3 kubernetes.default.svc.cluster.local +noall +answer
-
+<pre><code class="language-shell"># dig @10.244.0.3 kubernetes.default.svc.cluster.local +noall +answer
 
 ; &lt;&lt;&gt;&gt; DiG 9.9.4-RedHat-9.9.4-61.el7 &lt;&lt;&gt;&gt; @10.244.0.3 kubernetes.default.svc.cluster.local +noall +answer
 ; (1 server found)
 ;; global options: +cmd
 kubernetes.default.svc.cluster.local. 5 IN A    10.0.0.1
 </code></pre></li>
-</ol></li>
+</ol>
 
-<li><p>Kubernetesアプリデプロイ</p>
+<h2 id="10-kubernetesアプリデプロイ">10. Kubernetesアプリデプロイ</h2>
 
 <p>前節まででKubernetesクラスタの構築は完了。
 試しにKubernetesアプリをひとつデプロイしてみる。</p>
@@ -1461,7 +1577,7 @@ kubernetes.default.svc.cluster.local. 5 IN A    10.0.0.1
 
 <p><a href="https://www.weave.works/docs/scope/latest/installing/#k8s">ドキュメント</a>を参考に。</p>
 
-<pre><code class="language-sh"># cd /tmp
+<pre><code class="language-shell"># cd /tmp
 # curl -sSL -o scope.yaml https://cloud.weave.works/k8s/scope.yaml?k8s-service-type=NodePort
 # kubectl apply -f scope.yaml
 </code></pre>
@@ -1469,925 +1585,513 @@ kubernetes.default.svc.cluster.local. 5 IN A    10.0.0.1
 <p>このKubernetesマニフェストではDocker Hubから<code>weaveworks/scope:1.8.0</code>というイメージがpullされる。</p>
 
 <p><code>kubectl -n weave get svc/weave-scope-app</code>でポート調べて、<code>http://k8s-master:&lt;ポート&gt;/</code>をブラウザ開くとWeave ScopeのGUIが見れる。</p></li>
-</ol></li>
 </ol>
+</div>
 
-      </div>
-
-      <div class="text-center custom-partial">
-        
-      </div>
-
-      <aside>
-        
-        
-
-        
-        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-client="ca-pub-6244473643910448"
-             data-ad-slot="1845600530"
-             data-ad-format="auto"></ins>
-        <script>
-        (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
-      </aside>
-
-      <aside>
-        <div class="row">
-          <div class="col-sm-5">
-            <section id="share">
-              <h3>Share</h3>
-              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f04%2f17%2fkubernetes110-from-scratch%2f&t=Kubernetes%201.10%e3%82%92%e3%82%b9%e3%82%af%e3%83%a9%e3%83%83%e3%83%81%e3%81%8b%e3%82%89%e5%85%a8%e6%89%8b%e5%8b%95%e3%81%a7%e6%a7%8b%e7%af%89" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
-              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f04%2f17%2fkubernetes110-from-scratch%2f&text=Kubernetes%201.10%e3%82%92%e3%82%b9%e3%82%af%e3%83%a9%e3%83%83%e3%83%81%e3%81%8b%e3%82%89%e5%85%a8%e6%89%8b%e5%8b%95%e3%81%a7%e6%a7%8b%e7%af%89&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
-              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f04%2f17%2fkubernetes110-from-scratch%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
-              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f04%2f17%2fkubernetes110-from-scratch%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
-              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f04%2f17%2fkubernetes110-from-scratch%2f&title=Kubernetes%201.10%e3%82%92%e3%82%b9%e3%82%af%e3%83%a9%e3%83%83%e3%83%81%e3%81%8b%e3%82%89%e5%85%a8%e6%89%8b%e5%8b%95%e3%81%a7%e6%a7%8b%e7%af%89" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
-            </section>
+        <section class="share-buttons">
+          <div class="share-button">
+            <div class="fb-share-button" data-href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/" data-layout="box_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f04%2f17%2fkubernetes110-from-scratch%2f&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Share</a></div>
           </div>
-
-          <div class="col-sm-7">
-            
-            
-
-            
-            <section id="related">
-              <h3>Related Post</h3>
-              <div id="tags">
-                
-                <a href="https://www.kaitoy.xyz/tags/kubernetes"><i class="fa fa-tags"></i> kubernetes </a>
-                
-                <a href="https://www.kaitoy.xyz/tags/docker"><i class="fa fa-tags"></i> docker </a>
-                
-              </div>
-
-              <ul id="related-posts">
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2019/03/08/k8s-zundoko-operator/">ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2018/06/17/packer-k8s/">Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</a></li>
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/">Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</a></li>
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a></li>
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2018/04/01/hello-skaffold/">Skaffoldを触ってみた</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">Kubernetes 1.8のアクセス制御について。あとDashboard。</a></li>
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a></li>
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></li>
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2017/08/14/webdriverio-chrome/">WebdriverIOとChromeのヘッドレスモードで自動ブラウザテストするDockerイメージ: webdriverio-chrome</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ</a></li>
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2016/07/31/docker-for-windows/">Docker for Windowsがコレジャナかった</a></li>
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/">Windows Server 2016 TP5でWindows Containersにリトライ</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">Pcap4J Meets Windows Containers</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></li>
-                
-                
-                
-                
-                
-                
-              </ul>
-            </section>
-            
+          <div class="share-button">
+            <a class="twitter-share-button"
+              href="https://twitter.com/intent/tweet?text=Kubernetes%201.10%e3%82%92%e3%82%b9%e3%82%af%e3%83%a9%e3%83%83%e3%83%81%e3%81%8b%e3%82%89%e5%85%a8%e6%89%8b%e5%8b%95%e3%81%a7%e6%a7%8b%e7%af%89&amp;url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f04%2f17%2fkubernetes110-from-scratch%2f"
+              data-size="large">
+            Tweet</a>
           </div>
-        </div>
-      </aside>
-
-      
-      <footer>
-        <section id="pagination">
-          <div class="row">
-            <div class="col-sm-6">
-              <div class="prev">
-                
-                <a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">
-                  <i class="fa fa-chevron-left"></i>
-                  Kubernetes 1.10のクラスタにWeave Netをデプロイする
-                </a>
-                
-              </div>
-            </div>
-            <div class="col-sm-6">
-              <div class="next text-right">
-                
-                <a href="https://www.kaitoy.xyz/2018/04/01/hello-skaffold/">
-                  Skaffoldを触ってみた
-                  <i class="fa fa-chevron-right"></i>
-                </a>
-                
-              </div>
-            </div>
+          <div class="share-button">
+            <a href="http://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="vertical-normal" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+          </div>
+          <div class="share-button">
+            <a data-pocket-label="pocket" data-pocket-count="vertical" class="pocket-btn" data-lang="en"></a>
+            <script type="text/javascript">!function(d,i){if(!d.getElementById(i)){var j=d.createElement("script");j.id=i;j.src="https://widgets.getpocket.com/v1/j/btn.js?v=1";var w=d.getElementById(i);d.body.appendChild(j);}}(document,"pocket-btn-js");</script>
           </div>
         </section>
+    </div>
 
-        
-        <div id="disqus_thread"></div>
-<script type="text/javascript">
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-6244473643910448"
+         data-ad-slot="1845600530"
+         data-ad-format="auto"></ins>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
 
-(function() {
-    
-    
-    if (window.location.hostname == "localhost")
-        return;
-
-    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-    var disqus_shortname = 'kaitoy-tobedecided';
-    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-})();
-</script>
-<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
-
-        
-      </footer>
-
-    </article>
-  </div>
-
-  <div class="col-md-3">
-    <aside id="site-sidebar">
+    <section class="tbd-pagination">
       <div class="row">
-        <div class="col-md-12 col-sm-6 col-xs-12">
-  <div class="text-center custom-partial">
-    
-  </div>
-  <section class="sidebar-bordered">
-    
-    <div id="profile">
-      <div class="text-center">
-        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
-      </div>
-      <div class="data">
-        <h4 id="profile-username" class="post-title"></h4>
-        
-        <span id="profile-birth">DOB: Dec 14, 1983</span>
-        
-        <div id="social-links">
-          
-          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
-          
-          
-          
-          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
-          
+        <div class="col-sm-6">
+          <div class="prev">
+            
+            <a href="https://www.kaitoy.xyz/2018/04/01/hello-skaffold/">
+              <i class="fa fa-angle-left"></i>
+              Skaffoldを触ってみた
+            </a>
+            
+          </div>
         </div>
-        <div id="profile-description"></div>
-        <ul id="profile-urls" class="post-tags"></ul>
+        <div class="col-sm-6">
+          <div class="next text-right">
+            
+            <a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">
+              Kubernetes 1.10のクラスタにWeave Netをデプロイする
+              <i class="fa fa-angle-right"></i>
+            </a>
+            
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
+
     
-  </section>
+    
+
+    
+
+        <h4 class="page-header">Related</h4>
+
+        <div class="related-links">
+           <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/03/08/k8s-zundoko-operator/">ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</a></h4>
+    <h5>Fri, Mar 8, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubebuilder"><kbd class="item-tag">kubebuilder</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/golang"><kbd class="item-tag">golang</kbd></a>
+    
+
 </div>
+  <div class="item">
 
-<div class="col-md-12 col-sm-6 col-xs-12">
-  <section>
-    <h3>Tags</h3>
     
-    <div id="tag-cloud" class="text-center">
-      
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/agile">agile</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/ansible">ansible</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/babel">babel</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/cnn">cnn</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/coursera">coursera</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/css-modules">css-modules</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/deep-learning">deep-learning</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/enzyme">enzyme</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/eslint">eslint</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/esxi">esxi</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/flow">flow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/frontend">frontend</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/git">git</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/github">github</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/golang">golang</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/headless-browser">headless-browser</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jest">jest</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/keras">keras</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kubeadm">kubeadm</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kubebuilder">kubebuilder</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/license">license</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/machine-learning">machine-learning</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/management">management</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/material-ui">material-ui</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/msys2">msys2</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/neural-network">neural-network</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/nlp">nlp</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/packer">packer</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/postcss">postcss</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/prettier">prettier</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/react">react</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/react-router">react-router</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/redux">redux</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/redux-saga">redux-saga</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/rnn">rnn</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/selenium">selenium</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/servicenow">servicenow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/skaffold">skaffold</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/styled-components">styled-components</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/stylelint">stylelint</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/tensorflow">tensorflow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/test-framework">test-framework</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/typescript">typescript</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/webdriverio">webdriverio</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/webpack">webpack</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
-      
-    </div>
     
-  </section>
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/17/packer-k8s/">Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</a></h4>
+    <h5>Sun, Jun 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/packer"><kbd class="item-tag">packer</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/msys2"><kbd class="item-tag">msys2</kbd></a>
+    
+
 </div>
+  <div class="item">
 
+    
+    
+    
 
+    
+    
 
+    <h4 class="post-title"><a href="/2018/06/03/build-k8s-cluster-by-ansible/">Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</a></h4>
+    <h5>Sun, Jun 3, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
 
+</div>
+  <div class="item">
 
-<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<ins class="adsbygoogle"
-    style="display:block"
-    data-ad-client="ca-pub-6244473643910448"
-    data-ad-slot="1845600530"
-    data-ad-format="auto"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a></h4>
+    <h5>Sat, May 5, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a></h4>
+    <h5>Fri, May 4, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/01/hello-skaffold/">Skaffoldを触ってみた</a></h4>
+    <h5>Sun, Apr 1, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/skaffold"><kbd class="item-tag">skaffold</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">Kubernetes 1.8のアクセス制御について。あとDashboard。</a></h4>
+    <h5>Tue, Oct 31, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a></h4>
+    <h5>Sat, Oct 21, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubeadm"><kbd class="item-tag">kubeadm</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></h4>
+    <h5>Wed, Oct 11, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a></h4>
+    <h5>Tue, Oct 10, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/08/14/webdriverio-chrome/">WebdriverIOとChromeのヘッドレスモードで自動ブラウザテストするDockerイメージ: webdriverio-chrome</a></h4>
+    <h5>Mon, Aug 14, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/servicenow"><kbd class="item-tag">servicenow</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/selenium"><kbd class="item-tag">selenium</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/webdriverio"><kbd class="item-tag">webdriverio</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ</a></h4>
+    <h5>Thu, Sep 15, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag">windows</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/nanoserver"><kbd class="item-tag">nanoserver</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/09/12/unzip-on-nanoserver/">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</a></h4>
+    <h5>Mon, Sep 12, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag">windows</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/nanoserver"><kbd class="item-tag">nanoserver</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/07/31/docker-for-windows/">Docker for Windowsがコレジャナかった</a></h4>
+    <h5>Sun, Jul 31, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag"> windows</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/07/11/windows_containers_on_tp5/">Windows Server 2016 TP5でWindows Containersにリトライ</a></h4>
+    <h5>Mon, Jul 11, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag">windows</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/01/22/pcap4j-meets-windows-containers/">Pcap4J Meets Windows Containers</a></h4>
+    <h5>Fri, Jan 22, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag">windows</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></h4>
+    <h5>Mon, Jul 27, 2015</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></h4>
+    <h5>Sat, Jul 25, 2015</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></h4>
+    <h5>Sun, Jul 19, 2015</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/runc"><kbd class="item-tag">runc</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+ 
+        </div>
+    
+
+    
+
+        <h4 class="page-header">Comments</h4>
+
+        <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "kaitoy-tobedecided" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
 </script>
-
-<div class="col-md-12 col-sm-6 col-xs-12">
-  <div class="text-center custom-partial">
-    
-  </div>
-</div>
-
-      </div>
-    </aside>
-  </div>
-</div>
-
-        <div class="text-center custom-partial">
-          
-        </div>
-      </div>
-    </main>
-
-    <footer id="site-footer" class="text-center font-logo">
-      <p>&copy;  2015 -  2019  Kaito Yamada </p>
-      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
-      <p>
-        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
-        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
-      </p>
-    </footer>
-
-    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
-    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
-    
-    <script>
-      $(document).ready(function(){
-        $('.bxslider').bxSlider({
-          speed: 1,
-          preloadImages: 'all'
-        });
-      });
-    </script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/highlight.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dos.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/yaml.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dockerfile.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/go.min.js"></script>
-    <script>hljs.initHighlightingOnLoad();</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
 
     
-    <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-    ga('create', 'UA-65248565-1', 'auto');
-    ga('send', 'pageview');
+</main>
 
-    </script>
+        <footer>
 
-    <script>
-    $(function() {
-      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
-      $.getJSON(url)
-        .done(function(data) {
-          var entry = data.entry[0];
-          $("#profile-photo").attr("src", entry.photos[0].value);
-          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
-          $("#profile-description").html(entry.aboutMe);
-          entry.urls.forEach(function(el){
-            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
-          });
-          $("#profile").show();
-        });
-    });
-    </script>
-  </body>
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script>window.twttr = (function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0],
+            t = window.twttr || {};
+          if (d.getElementById(id)) return t;
+          js = d.createElement(s);
+          js.id = id;
+          js.src = "https://platform.twitter.com/widgets.js";
+          fjs.parentNode.insertBefore(js, fjs);
+
+          t._e = [];
+          t.ready = function(f) {
+            t._e.push(f);
+          };
+
+          return t;
+        }(document, "script", "twitter-wjs"));</script>
+
+    </body>
+
 </html>
 

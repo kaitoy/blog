@@ -2,11 +2,11 @@
 categories = [ "Programming" ]
 date = "2016-04-10T00:05:27-06:00"
 draft = false
-eyecatch = "pcap4j-groovy.png"
+cover = "pcap4j-groovy.png"
 slug = "pcap4j-in-groovy"
 tags = [ "pcap4j", "groovy", "jvm language" ]
 title = "Pcap4J in Groovy"
-
+highlightLanguages = ["dos"]
 +++
 
 [__Groovy__](http://www.groovy-lang.org/index.html)で[__Pcap4J__](https://github.com/kaitoy/pcap4j)を使ってパケットキャプチャしてみた。
@@ -18,7 +18,7 @@ GroovyからでもPcap4Jちゃんと動くよということを実証するの�
 
 {{< google-adsense >}}
 
-## Groovyとは
+# Groovyとは
 GroovyはJVM言語、つまりJavaのバイトコードにコンパイルされてJavaの実行環境で動くプログラミング言語のひとつ。
 Javaのプログラマにとってとっつきやすい文法を保ちつつ、動的型付けを実現し、また[Ruby](https://www.ruby-lang.org/ja/)などのスクリプト言語の記法や機能を取り入れ、生産性を高めている。
 
@@ -30,14 +30,14 @@ GitHubにホストされているGroovyプロジェクトは、2016/4/9現在 __
 
 なぜ人気がないのかはよく分からないが、少なくとも、長くて打ちにくい名前とダサいロゴは不評のようだ。
 
-## Groovyのインストール
+# Groovyのインストール
 Windows 7にGroovy 2.4.6をインストールする。
 
 [本家サイトの手順](http://www.groovy-lang.org/install.html)に従い、Binary Releaseのアーカイブをダウンロードして、適当なところに展開して、展開したフォルダのパスを環境変数`GROOVY_HOME`にセットし、`%GROOVY_HOME%\bin`を`PATH`に追加するだけ。
 
 Java 6以降が前提なので、`JAVA_HOME`にJDK 1.7.0_17のパスをセットしておいた。JREでもいいはず。
 
-## パケットキャプチャ with Pcap4J in Java
+# パケットキャプチャ with Pcap4J in Java
 
 Pcap4Jでパケットキャプチャするコードを普通にJavaで書くと以下の様になる。
 
@@ -45,7 +45,7 @@ Pcap4Jでパケットキャプチャするコードを普通にJavaで書くと�
 
 これを実行すると、パケットキャプチャするネットワークインターフェースを選択し、5つのパケットをキャプチャしてタイムスタンプと共にコンソールに表示する。
 
-## パケットキャプチャ with Pcap4J in Groovy
+# パケットキャプチャ with Pcap4J in Groovy
 
 上記処理をGroovyで書くと以下の様になる。
 
@@ -65,7 +65,7 @@ groovy -cp "pcap4j-core.jar;jna.jar;slf4j-api.jar;pcap4j-packetfactory-static.ja
 
 これはスクリプト的な実行方法だが、`groovyc`コマンドで事前にコンパイルしてclassファイルを生成し、`java`コマンドで実行することもできる。
 
-### 困ったところ
+# 困ったところ
 
 1. 本家サイトのドキュメントが分かり辛い。
 

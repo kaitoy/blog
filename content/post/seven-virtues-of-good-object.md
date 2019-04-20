@@ -2,7 +2,7 @@
 categories = [ "Software Engineering" ]
 date = "2015-10-28T13:38:47-06:00"
 draft = false
-eyecatch = "teamedio_logo.svg"
+cover = "teamedio_logo.svg"
 slug = "seven-virtues-of-good-object"
 tags = [ "yegor256", "oop" ]
 title = "よいオブジェクトの七つの美徳"

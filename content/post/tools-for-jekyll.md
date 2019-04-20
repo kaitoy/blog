@@ -2,7 +2,7 @@
 categories = [ "Web" ]
 date = "2015-08-25T22:36:28-06:00"
 draft = false
-eyecatch = "octopress.png"
+cover = "octopress.png"
 slug = "tools-for-jekyll"
 tags = [ "blog", "github", "jekyll" ]
 title = "GitHub Pagesでブログ立ち上げ - Jekyllのためのツール"
@@ -18,7 +18,7 @@ Jekyllがだいたいセットアップできたところで、どんなサイ�
 
 {{< google-adsense >}}
 
-## Octopress
+# Octopress
 もっとも有名なのは[__Octopress__](http://octopress.org/)。
 ホームページの説明によると、「Octopress is a framework designed for Jekyll, the static blogging engine powering Github Pages」とのこと。
 フレームワークと呼ぶのはちょっと大げさな気がする。
@@ -37,7 +37,7 @@ Octopressが生成したJekyllソースをGitHub Pagesに上げたらビルド�
 
 つまりOctopressをGitHub Pages上のサイトに使うとしたら、結局ビルド成果物をアップしないといけなくなる。JekyllのソースだけをGitHubで管理するように出来たらいいと思っていたが当てが外れた。
 
-## Jekyll-Bootstrap
+# Jekyll-Bootstrap
 Octopressを使うモチベーションが下がり、他のを探したところ、[__Jekyll-Bootstrap__](http://jekyllbootstrap.com/)というのを見つけた。
 
 Jekyll-BootstrapはJekyllのソースそのもので、面倒な部分は既にできてるので、ユーザはテンプレートを使って記事の内容を書くだけでいいよ、というもの。テーマ機能と、記事作成作業を[__Rake__](http://docs.seattlerb.org/rake/)で簡易化するためのRakefile付き。
@@ -48,6 +48,6 @@ Jekyll-BootstrapはJekyllのソースそのもので、面倒な部分は既に�
 が、[プロジェクトページ](https://github.com/plusjade/jekyll-bootstrap)を見るにあまり活発に開発が進んでない模様。
 廃れ行きそうなツールを使うのもなぁ…
 
-## 結論
+# 結論
 Jekyll-Bootstrapを使うのは気が進まない。Octopressを使うとビルド成果物をアップしないといけない。
 どうせビルド成果物を上げるのなら、Jekyllにこだわる必要はないか、ということで、去年末くらいから盛り上がってきている[__Hugo__](https://gohugo.io/)にすることに。Hugoについてはまた[別のエントリ](https://www.kaitoy.xyz/2015/08/28/using-hugo/)で書く。

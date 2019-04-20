@@ -2,7 +2,7 @@
 categories = [ "Programming" ]
 date = "2015-10-12T01:00:13-06:00"
 draft = false
-eyecatch = "pcap4jlogo.png"
+cover = "pcap4jlogo.png"
 slug = "step-by-step-to-add-a-protocol-support-to-pcap4j-2"
 tags = [ "pcap4j" ]
 title = "Step by Step to Add a Protocol Support to Pcap4J (Part 2)"
@@ -16,7 +16,7 @@ We are adding DHCP support to [Pcap4J](https://github.com/kaitoy/pcap4j).
 
 {{< google-adsense >}}
 
-### Packet Piece Class
+# Packet Piece Class
 A packet piece class is a Java class which represents a field of a packet.
 We should create such classes instead of using a primitive types in some cases.
 
@@ -47,7 +47,7 @@ is better than
 boolean broadcast = (0x8000 & DhcpV4Packet.getHeader().getFlags()) != 0;
 ```
 
-### DhcpV4Flags class
+# DhcpV4Flags class
 Now, let's write a packet piece class __DhcpV4Flags__ for the flags field.
 For writing packet piece classes, there is no rule except that they must implement [Serializable interface](http://docs.oracle.com/javase/7/docs/api/java/io/Serializable.html).
 

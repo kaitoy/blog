@@ -2,7 +2,7 @@
 categories = [ "Text Editor" ]
 date = "2015-11-16T22:38:11-07:00"
 draft = false
-eyecatch = "atom_editor_logo.svg.png"
+cover = "atom_editor_logo.svg.png"
 slug = "thanks-bye-bye-japanese-wrap"
 tags = [ "atom" ]
 title = "ありがとうさようならjapanese-wrap"

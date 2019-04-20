@@ -1,0 +1,35 @@
+{{ partial "header" . }}
+
+<main>
+
+    {{ if eq .RelPermalink "/about/" }}
+
+    <section class="about-me">
+        <img src="https://www.gravatar.com/avatar/{{ .Site.Params.Gravatar }}?s=200" />
+        <h2>{{ .Site.Params.Author }}</h2>
+        <div id="profile-description" class="my-profile"></div>
+    </section>
+    <script>
+    $(function() {
+      var url = "https://ja.gravatar.com/{{ .Site.Params.Gravatar }}.json?callback=?";
+      $.getJSON(url)
+        .done(function(data) {
+          var entry = data.entry[0];
+          $("#profile-description").html(entry.aboutMe);
+        });
+    });
+    </script>
+
+    {{ else }}
+
+    <h2>{{ .Title }}</h2>
+
+    {{ range (.Paginator 10).Pages }} {{ partial "list-item" . }} {{ end }}
+
+    {{ end }}
+
+</main>
+
+{{ partial "paginator" . }}
+
+{{ partial "footer" . }}

@@ -1,88 +1,219 @@
 <!DOCTYPE html>
 <html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <head>
+         
 
-    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+    google_ad_client: "ca-pub-6244473643910448",
+    enable_page_level_ads: true
+  });
+</script>
 
-    
-    
-    <meta property="og:type" content="article">
-    <meta property="og:title" content="Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える | To Be Decided">
-    <meta property="og:url" content="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">
-    <link rel="canonical" href="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">
-    <meta property="og:description" content="「Kubernetes 1.10をスクラッチから全手動で構築」、「Kubernetes 1.10のクラスタにWeave Netをデプロイする」の続き。 kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPodSecurityPolicyを使うように変更した話。 ついでにkube-proxyとkube-schedulerもConfigファイルを使うようにした。 (adsbygoogle = window.adsbygoogle || []).push({}); Kubelet Configファイル journalctl -u kubeletすると、以下の警告が出ている。 Apr 28 15:31:39 k8s-master kubelet[1370]: Flag --address has been deprecated, This parameter should be set via the config file specified by the Kubelet&#39;s - -config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information. Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --pod-manifest-path has been deprecated, This parameter should be set via the config file specified by the K ubelet&#39;s --config flag.">
-    
-    <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
-    
-    
-    <meta property="og:site_name" content="To Be Decided">
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">
 
-    <title>
-      
-      Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える | To Be Decided
-      
-    </title>
 
-    
-    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
 
-    
-    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="[To Be Decided ~]$ cat /post/&quot;Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える&quot;">
+  <title>[To Be Decided ~]$ cat /post/&quot;Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える&quot;</title>
+  <meta property="og:description" content="「Kubernetes 1.10をスクラッチから全手動で構築」、「Kubernetes 1.10のクラスタにWeave Netをデプロイする」の続き。
+kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPodSecurityPolicyを使うように変更した話。
+ついでにkube-proxyとkube-schedulerもConfigファイルを使うようにした。
+   (adsbygoogle = window.adsbygoogle || []).push({});  Kubelet Configファイル journalctl -u kubeletすると、以下の警告が出ている。
+Apr 28 15:31:39 k8s-master kubelet[1370]: Flag --address has been deprecated, This parameter should be set via the config file specified by the Kubelet&#39;s - -config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information. Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --pod-manifest-path has been deprecated, This parameter should be set via the config file specified by the K ubelet&#39;s --config flag.">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
 
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
-    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
-    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
-    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
-    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/styles/zenburn.min.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
 
-    
-    
 
-    
-    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-    <script>
-      (adsbygoogle = window.adsbygoogle || []).push({
-        google_ad_client: "ca-pub-6244473643910448",
-        enable_page_level_ads: true
-      });
-    </script>
-
-    
-  </head>
-  <body>
-
-    <header id="site-header">
-      <div class="container">
-        <h1 class="text-center">
-          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
-        </h1>
-      </div>
-    </header>
-
-    <main id="site-body">
-      <div class="container">
-
-<div class="row">
-  <div class="col-md-9">
-    <article id="post">
-      <span class="date">Sat, May 5, 2018</span>
-      <h2 class="title">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</h2>
-
-      <div class="eyecatch text-center">
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         
-        <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える">
-        
-      </div>
+        <style>
 
-      <div class="content">
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&amp;subset=japanese">
+
+
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai.min.css"> 
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+    
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
         
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
+    
+
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v3.2"></script>
+
+        <nav class="navbar navbar-default navbar-fixed-top">
+
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    <div class="single-post">
+        <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a></h4>
+    <h5>Sat, May 5, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+
+
+        <div class="cover">
+            <a href="/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">
+                <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える">
+            </a>
+        </div>
+
+        
+        <h4 class="page-header">Table of Contents</h4>
+        <aside>
+            <nav id="TableOfContents">
+<ul>
+<li><a href="#kubelet-configファイル">Kubelet Configファイル</a>
+<ul>
+<li><a href="#podsecuritypolicy">PodSecurityPolicy</a></li>
+<li><a href="#kube-proxy-configファイル">Kube Proxy Configファイル</a></li>
+<li><a href="#kube-scheduler-confファイル">Kube Scheduler Confファイル</a></li>
+</ul></li>
+</ul>
+</nav>
+        </aside>
+        <hr>
+        
+
+        <br> <div class="text-justify">
 
 <p>「<a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a>」、「<a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a>」の続き。</p>
 
@@ -90,7 +221,7 @@
 
 <p>ついでにkube-proxyとkube-schedulerもConfigファイルを使うようにした。</p>
 
-<p>
+
 
 
 
@@ -103,7 +234,7 @@
 <script>
 (adsbygoogle = window.adsbygoogle || []).push({});
 </script>
-</p>
+
 
 <h1 id="kubelet-configファイル">Kubelet Configファイル</h1>
 
@@ -133,7 +264,7 @@ Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --allow-privileged has been depre
 
 <p>将来的に調整しそうなパラメータは、Kubelet Configファイルにデフォルト値とともにコメントとして書き出している。</p>
 
-<pre><code class="language-sh"># DNS_SERVER_IP=10.0.0.10
+<pre><code class="language-shell"># DNS_SERVER_IP=10.0.0.10
 # DNS_DOMAIN=&quot;cluster.local&quot;
 # cat &gt; /etc/kubernetes/kubelet.conf &lt;&lt; EOF
 kind: KubeletConfiguration
@@ -234,7 +365,7 @@ EOF
 <p>で、privilegedななんでもできるPodSecurityPolicyと、それを使うロールを作成する。
 因みにPodSecurityPolicyは名前空間に属さない。</p>
 
-<pre><code class="language-sh"># kubectl create -f- &lt;&lt;EOF
+<pre><code class="language-shell"># kubectl create -f- &lt;&lt;EOF
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
@@ -268,7 +399,7 @@ EOF
 <p>今のところ、privilegedなPodSecurityPolicyが必要なService AccountはWeave Netのkube-system:weave-netと、Weave Scopeのweave:weave-scopeとweave:default。
 こいつらに上記ロールをバインドする。</p>
 
-<pre><code class="language-sh"># kubectl -n kube-system create rolebinding weave-net:psp:privileged --role=psp:privileged --serviceaccount=kube-system:weave-net
+<pre><code class="language-shell"># kubectl -n kube-system create rolebinding weave-net:psp:privileged --role=psp:privileged --serviceaccount=kube-system:weave-net
 # kubectl -n weave create rolebinding weave-scope:psp:privileged --role=psp:privileged --serviceaccount=weave:weave-scope
 # kubectl -n weave create rolebinding weave-default:psp:privileged --role=psp:privileged --serviceaccount=weave:default
 </code></pre>
@@ -277,7 +408,7 @@ EOF
 
 <p>あと、CoreDNS用のPodSecurityPolicyとロールを作ってバインドする。</p>
 
-<pre><code class="language-sh"># kubectl apply -f- &lt;&lt;EOF
+<pre><code class="language-shell"># kubectl apply -f- &lt;&lt;EOF
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
@@ -320,7 +451,7 @@ EOF
 <p>kube-proxyも<a href="https://github.com/kubernetes/kubernetes/blob/master/pkg/proxy/apis/config/types.go">Kube Proxy Config</a>というのがある。
 <a href="https://github.com/kubernetes/kubernetes/issues/50041">ドキュメントには載ってない</a>けど、使わないと警告が出るので適当に書いてみた。</p>
 
-<pre><code class="language-sh"># CLUSTER_CIDR=&quot;10.32.0.0/16&quot;
+<pre><code class="language-shell"># CLUSTER_CIDR=&quot;10.32.0.0/16&quot;
 # cat &gt; /etc/kubernetes/kube-proxy.conf &lt;&lt; EOF
 kind: KubeProxyConfiguration
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
@@ -358,7 +489,7 @@ EOF
 <p>kube-schedulerも<a href="https://github.com/kubernetes/kubernetes/blob/master/pkg/apis/componentconfig/v1alpha1/types.go">Kube Scheduler Conf</a>というのがある。
 例によってドキュメントには載ってないけど、使わないと警告が出るので適当に書いてみた。</p>
 
-<pre><code class="language-sh"># cat &gt; /etc/kubernetes/kube-scheduler.conf &lt;&lt; EOF
+<pre><code class="language-shell"># cat &gt; /etc/kubernetes/kube-scheduler.conf &lt;&lt; EOF
 kind: KubeSchedulerConfiguration
 apiVersion: componentconfig/v1alpha1
 featureGates:
@@ -388,923 +519,512 @@ EOF
 # systemctl daemon-reload
 # systemctl restart kube-scheduler
 </code></pre>
+</div>
 
-      </div>
-
-      <div class="text-center custom-partial">
-        
-      </div>
-
-      <aside>
-        
-        
-
-        
-        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-client="ca-pub-6244473643910448"
-             data-ad-slot="1845600530"
-             data-ad-format="auto"></ins>
-        <script>
-        (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
-      </aside>
-
-      <aside>
-        <div class="row">
-          <div class="col-sm-5">
-            <section id="share">
-              <h3>Share</h3>
-              <a id="share-fb" href="http://www.facebook.com/sharer.php?src=bm&u=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f05%2f05%2fkubernetes-kubelet-config-and-pod-sec-policy%2f&t=Kubernetes%201.10%e3%81%aekubelet%e3%81%ae%e8%b5%b7%e5%8b%95%e3%82%aa%e3%83%97%e3%82%b7%e3%83%a7%e3%83%b3%e3%82%92Kubelet%20Config%e3%83%95%e3%82%a1%e3%82%a4%e3%83%ab%e3%81%a8PodSecurityPolicy%e3%81%a7%e7%bd%ae%e3%81%8d%e6%8f%9b%e3%81%88%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/facebook.png" alt="Facebook"/></a>
-              <a id="share-twitter" href="http://twitter.com/intent/tweet?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f05%2f05%2fkubernetes-kubelet-config-and-pod-sec-policy%2f&text=Kubernetes%201.10%e3%81%aekubelet%e3%81%ae%e8%b5%b7%e5%8b%95%e3%82%aa%e3%83%97%e3%82%b7%e3%83%a7%e3%83%b3%e3%82%92Kubelet%20Config%e3%83%95%e3%82%a1%e3%82%a4%e3%83%ab%e3%81%a8PodSecurityPolicy%e3%81%a7%e7%bd%ae%e3%81%8d%e6%8f%9b%e3%81%88%e3%82%8b&tw_p=tweetbutton" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/twitter.png" alt="Twitter"/></a>
-              <a id="share-googleplus" href="https://plus.google.com/share?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f05%2f05%2fkubernetes-kubelet-config-and-pod-sec-policy%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/googleplus.png" alt="Google+"/></a>
-              <a id="share-hatena" href="http://b.hatena.ne.jp/add?mode=confirm&url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f05%2f05%2fkubernetes-kubelet-config-and-pod-sec-policy%2f" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/hatena.png" alt="Hatena"/></a>
-              <a id="share-pocket" href="http://getpocket.com/edit?url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f05%2f05%2fkubernetes-kubelet-config-and-pod-sec-policy%2f&title=Kubernetes%201.10%e3%81%aekubelet%e3%81%ae%e8%b5%b7%e5%8b%95%e3%82%aa%e3%83%97%e3%82%b7%e3%83%a7%e3%83%b3%e3%82%92Kubelet%20Config%e3%83%95%e3%82%a1%e3%82%a4%e3%83%ab%e3%81%a8PodSecurityPolicy%e3%81%a7%e7%bd%ae%e3%81%8d%e6%8f%9b%e3%81%88%e3%82%8b" onclick="window.open(this.href, 'PCwindow', 'width=550, height=350, menubar=no, toolbar=no, scrollbars=yes'); return false;"><img src="https://www.kaitoy.xyz/images/sharebutton/pocket.png" alt="Pocket"/></a>
-            </section>
+        <section class="share-buttons">
+          <div class="share-button">
+            <div class="fb-share-button" data-href="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/" data-layout="box_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f05%2f05%2fkubernetes-kubelet-config-and-pod-sec-policy%2f&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Share</a></div>
           </div>
-
-          <div class="col-sm-7">
-            
-            
-
-            
-            <section id="related">
-              <h3>Related Post</h3>
-              <div id="tags">
-                
-                <a href="https://www.kaitoy.xyz/tags/kubernetes"><i class="fa fa-tags"></i> kubernetes </a>
-                
-                <a href="https://www.kaitoy.xyz/tags/docker"><i class="fa fa-tags"></i> docker </a>
-                
-              </div>
-
-              <ul id="related-posts">
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2019/03/08/k8s-zundoko-operator/">ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2018/06/17/packer-k8s/">Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</a></li>
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/">Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a></li>
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a></li>
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2018/04/01/hello-skaffold/">Skaffoldを触ってみた</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">Kubernetes 1.8のアクセス制御について。あとDashboard。</a></li>
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a></li>
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></li>
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2017/08/14/webdriverio-chrome/">WebdriverIOとChromeのヘッドレスモードで自動ブラウザテストするDockerイメージ: webdriverio-chrome</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ</a></li>
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2016/09/12/unzip-on-nanoserver/">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2016/07/31/docker-for-windows/">Docker for Windowsがコレジャナかった</a></li>
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2016/07/11/windows_containers_on_tp5/">Windows Server 2016 TP5でWindows Containersにリトライ</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">Pcap4J Meets Windows Containers</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></li>
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                <li><a href="https://www.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></li>
-                
-                
-                
-                
-                
-                
-              </ul>
-            </section>
-            
+          <div class="share-button">
+            <a class="twitter-share-button"
+              href="https://twitter.com/intent/tweet?text=Kubernetes%201.10%e3%81%aekubelet%e3%81%ae%e8%b5%b7%e5%8b%95%e3%82%aa%e3%83%97%e3%82%b7%e3%83%a7%e3%83%b3%e3%82%92Kubelet%20Config%e3%83%95%e3%82%a1%e3%82%a4%e3%83%ab%e3%81%a8PodSecurityPolicy%e3%81%a7%e7%bd%ae%e3%81%8d%e6%8f%9b%e3%81%88%e3%82%8b&amp;url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f05%2f05%2fkubernetes-kubelet-config-and-pod-sec-policy%2f"
+              data-size="large">
+            Tweet</a>
           </div>
-        </div>
-      </aside>
-
-      
-      <footer>
-        <section id="pagination">
-          <div class="row">
-            <div class="col-sm-6">
-              <div class="prev">
-                
-                <a href="https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/">
-                  <i class="fa fa-chevron-left"></i>
-                  Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した
-                </a>
-                
-              </div>
-            </div>
-            <div class="col-sm-6">
-              <div class="next text-right">
-                
-                <a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">
-                  Kubernetes 1.10のクラスタにWeave Netをデプロイする
-                  <i class="fa fa-chevron-right"></i>
-                </a>
-                
-              </div>
-            </div>
+          <div class="share-button">
+            <a href="http://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="vertical-normal" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+          </div>
+          <div class="share-button">
+            <a data-pocket-label="pocket" data-pocket-count="vertical" class="pocket-btn" data-lang="en"></a>
+            <script type="text/javascript">!function(d,i){if(!d.getElementById(i)){var j=d.createElement("script");j.id=i;j.src="https://widgets.getpocket.com/v1/j/btn.js?v=1";var w=d.getElementById(i);d.body.appendChild(j);}}(document,"pocket-btn-js");</script>
           </div>
         </section>
+    </div>
 
-        
-        <div id="disqus_thread"></div>
-<script type="text/javascript">
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-6244473643910448"
+         data-ad-slot="1845600530"
+         data-ad-format="auto"></ins>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
 
-(function() {
-    
-    
-    if (window.location.hostname == "localhost")
-        return;
-
-    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-    var disqus_shortname = 'kaitoy-tobedecided';
-    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-})();
-</script>
-<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
-
-        
-      </footer>
-
-    </article>
-  </div>
-
-  <div class="col-md-3">
-    <aside id="site-sidebar">
+    <section class="tbd-pagination">
       <div class="row">
-        <div class="col-md-12 col-sm-6 col-xs-12">
-  <div class="text-center custom-partial">
-    
-  </div>
-  <section class="sidebar-bordered">
-    
-    <div id="profile">
-      <div class="text-center">
-        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
-      </div>
-      <div class="data">
-        <h4 id="profile-username" class="post-title"></h4>
-        
-        <span id="profile-birth">DOB: Dec 14, 1983</span>
-        
-        <div id="social-links">
-          
-          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
-          
-          
-          
-          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
-          
+        <div class="col-sm-6">
+          <div class="prev">
+            
+            <a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">
+              <i class="fa fa-angle-left"></i>
+              Kubernetes 1.10のクラスタにWeave Netをデプロイする
+            </a>
+            
+          </div>
         </div>
-        <div id="profile-description"></div>
-        <ul id="profile-urls" class="post-tags"></ul>
+        <div class="col-sm-6">
+          <div class="next text-right">
+            
+            <a href="https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/">
+              Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した
+              <i class="fa fa-angle-right"></i>
+            </a>
+            
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
+
     
-  </section>
+    
+
+    
+
+        <h4 class="page-header">Related</h4>
+
+        <div class="related-links">
+           <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/03/08/k8s-zundoko-operator/">ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</a></h4>
+    <h5>Fri, Mar 8, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubebuilder"><kbd class="item-tag">kubebuilder</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/golang"><kbd class="item-tag">golang</kbd></a>
+    
+
 </div>
+  <div class="item">
 
-<div class="col-md-12 col-sm-6 col-xs-12">
-  <section>
-    <h3>Tags</h3>
     
-    <div id="tag-cloud" class="text-center">
-      
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/agile">agile</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/ansible">ansible</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/babel">babel</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/cnn">cnn</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/coursera">coursera</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/css-modules">css-modules</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/deep-learning">deep-learning</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/enzyme">enzyme</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/eslint">eslint</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/esxi">esxi</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/flow">flow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/frontend">frontend</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/git">git</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/github">github</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/golang">golang</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/headless-browser">headless-browser</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jest">jest</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/keras">keras</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kubeadm">kubeadm</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kubebuilder">kubebuilder</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/license">license</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/machine-learning">machine-learning</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/management">management</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/material-ui">material-ui</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/msys2">msys2</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/neural-network">neural-network</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/nlp">nlp</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/packer">packer</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/postcss">postcss</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/prettier">prettier</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/react">react</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/react-router">react-router</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/redux">redux</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/redux-saga">redux-saga</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/rnn">rnn</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/selenium">selenium</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/servicenow">servicenow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/skaffold">skaffold</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/styled-components">styled-components</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/stylelint">stylelint</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/tensorflow">tensorflow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/test-framework">test-framework</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/typescript">typescript</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/webdriverio">webdriverio</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/webpack">webpack</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
-      
-    </div>
     
-  </section>
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/17/packer-k8s/">Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</a></h4>
+    <h5>Sun, Jun 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/packer"><kbd class="item-tag">packer</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/msys2"><kbd class="item-tag">msys2</kbd></a>
+    
+
 </div>
+  <div class="item">
 
+    
+    
+    
 
+    
+    
 
+    <h4 class="post-title"><a href="/2018/06/03/build-k8s-cluster-by-ansible/">Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</a></h4>
+    <h5>Sun, Jun 3, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
 
+</div>
+  <div class="item">
 
-<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<ins class="adsbygoogle"
-    style="display:block"
-    data-ad-client="ca-pub-6244473643910448"
-    data-ad-slot="1845600530"
-    data-ad-format="auto"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a></h4>
+    <h5>Fri, May 4, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a></h4>
+    <h5>Tue, Apr 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/01/hello-skaffold/">Skaffoldを触ってみた</a></h4>
+    <h5>Sun, Apr 1, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/skaffold"><kbd class="item-tag">skaffold</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">Kubernetes 1.8のアクセス制御について。あとDashboard。</a></h4>
+    <h5>Tue, Oct 31, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a></h4>
+    <h5>Sat, Oct 21, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubeadm"><kbd class="item-tag">kubeadm</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></h4>
+    <h5>Wed, Oct 11, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a></h4>
+    <h5>Tue, Oct 10, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/08/14/webdriverio-chrome/">WebdriverIOとChromeのヘッドレスモードで自動ブラウザテストするDockerイメージ: webdriverio-chrome</a></h4>
+    <h5>Mon, Aug 14, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/servicenow"><kbd class="item-tag">servicenow</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/selenium"><kbd class="item-tag">selenium</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/webdriverio"><kbd class="item-tag">webdriverio</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ</a></h4>
+    <h5>Thu, Sep 15, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag">windows</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/nanoserver"><kbd class="item-tag">nanoserver</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/09/12/unzip-on-nanoserver/">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</a></h4>
+    <h5>Mon, Sep 12, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag">windows</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/nanoserver"><kbd class="item-tag">nanoserver</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/07/31/docker-for-windows/">Docker for Windowsがコレジャナかった</a></h4>
+    <h5>Sun, Jul 31, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag"> windows</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/07/11/windows_containers_on_tp5/">Windows Server 2016 TP5でWindows Containersにリトライ</a></h4>
+    <h5>Mon, Jul 11, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag">windows</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/01/22/pcap4j-meets-windows-containers/">Pcap4J Meets Windows Containers</a></h4>
+    <h5>Fri, Jan 22, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag">windows</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></h4>
+    <h5>Mon, Jul 27, 2015</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></h4>
+    <h5>Sat, Jul 25, 2015</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></h4>
+    <h5>Sun, Jul 19, 2015</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/runc"><kbd class="item-tag">runc</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+ 
+        </div>
+    
+
+    
+
+        <h4 class="page-header">Comments</h4>
+
+        <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "kaitoy-tobedecided" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
 </script>
-
-<div class="col-md-12 col-sm-6 col-xs-12">
-  <div class="text-center custom-partial">
-    
-  </div>
-</div>
-
-      </div>
-    </aside>
-  </div>
-</div>
-
-        <div class="text-center custom-partial">
-          
-        </div>
-      </div>
-    </main>
-
-    <footer id="site-footer" class="text-center font-logo">
-      <p>&copy;  2015 -  2019  Kaito Yamada </p>
-      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
-      <p>
-        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
-        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
-      </p>
-    </footer>
-
-    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
-    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
-    
-    <script>
-      $(document).ready(function(){
-        $('.bxslider').bxSlider({
-          speed: 1,
-          preloadImages: 'all'
-        });
-      });
-    </script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/highlight.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dos.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/yaml.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dockerfile.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/go.min.js"></script>
-    <script>hljs.initHighlightingOnLoad();</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
 
     
-    <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-    ga('create', 'UA-65248565-1', 'auto');
-    ga('send', 'pageview');
+</main>
 
-    </script>
+        <footer>
 
-    <script>
-    $(function() {
-      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
-      $.getJSON(url)
-        .done(function(data) {
-          var entry = data.entry[0];
-          $("#profile-photo").attr("src", entry.photos[0].value);
-          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
-          $("#profile-description").html(entry.aboutMe);
-          entry.urls.forEach(function(el){
-            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
-          });
-          $("#profile").show();
-        });
-    });
-    </script>
-  </body>
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script>window.twttr = (function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0],
+            t = window.twttr || {};
+          if (d.getElementById(id)) return t;
+          js = d.createElement(s);
+          js.id = id;
+          js.src = "https://platform.twitter.com/widgets.js";
+          fjs.parentNode.insertBefore(js, fjs);
+
+          t._e = [];
+          t.ready = function(f) {
+            t._e.push(f);
+          };
+
+          return t;
+        }(document, "script", "twitter-wjs"));</script>
+
+    </body>
+
 </html>
 

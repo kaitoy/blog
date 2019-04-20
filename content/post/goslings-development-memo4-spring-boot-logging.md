@@ -2,10 +2,11 @@
 categories = [ "Programing" ]
 date = "2017-01-17T00:15:25-07:00"
 draft = false
-eyecatch = "goslings-spring.png"
+cover = "goslings-spring.png"
 slug = "goslings-development-memo4-spring-boot-logging"
 tags = [ "goslings", "spring", "spring-boot" ]
 title = "Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)"
+highlightLanguages = ["dos"]
 +++
 
 「[Goslings開発メモ - その3: Spring Boot続続編 (例外処理)](https://www.kaitoy.xyz/2017/01/13/goslings-development-memo3-spring-boot-exception/)」の続き。
@@ -40,7 +41,7 @@ Spring Bootが備えているデフォルトのロギング設定は、`ERROR`�
 
 以下この設定の変更方法などを書く。
 
-#### ファイルへのログ出力
+## ファイルへのログ出力
 ログをファイルにも吐くようにするには、`logging.file`というプロパティでファイルパスを指定するか、`logging.path`というプロパティでディレクトリパスを指定すればいい。
 (後者の場合ログファイル名は`spring.log`になる。)
 
@@ -54,14 +55,14 @@ java -jar build/libs/goslings-0.0.1.jar --logging.file=build/hoge.log
 
 ログファイルはデフォルトで10MBでローテーションする。
 
-#### ログレベル
+## ログレベル
 ログレベルには重大度の低い方から`TRACE`、`DEBUG`、`INFO`、`WARN`、`ERROR`、`FATAL`の6段階があり、指定したログレベル以上のログが出力される。(`OFF`というログ出力を止めるものもある。)
 つまりSpring Bootのデフォルトのログレベルは`INFO`だということだ。(Logbackには`FATAL`がなく`ERROR`として出力される。)
 
 ログレベルは`logging.level.<ロガー名>`という形式のプロパティで指定できる。
 例えばコマンドラインから指定するなら以下の感じ。
 
-```
+```cmd
 java -jar build/libs/goslings-0.0.1.jar --logging.level.org.springframework.web=DEBUG
 ```
 
@@ -69,7 +70,7 @@ java -jar build/libs/goslings-0.0.1.jar --logging.level.org.springframework.web=
 
 全ロガーのログレベルは`logging.level.root`で指定できる。
 
-#### ロギング実装ライブラリの設定
+## ロギング実装ライブラリの設定
 ロギング実装ライブラリの設定ファイルをカスタマイズして、より詳細な設定をすることもできる。
 
 Logbackの場合、クラスパスのルートに置かれた`logback-spring.xml`か`logback.xml`がロードされる。
@@ -82,7 +83,7 @@ Logbackの場合、クラスパスのルートに置かれた`logback-spring.xml
 `logging.config`プロパティで設定ファイルのパスを指定することもできる。
 例えばコマンドラインから指定するなら以下の感じ。
 
-```
+```cmd
 java -jar build/libs/goslings-0.0.1.jar --logging.config=logback-spring.xml
 ```
 

@@ -2,7 +2,7 @@
 categories = [ "Programming" ]
 date = "2016-01-12T08:43:30-07:00"
 draft = false
-eyecatch = "pcap4jlogo.png"
+cover = "pcap4jlogo.png"
 slug = "pcap4j-with-four-native-libraries-on-windows10"
 tags = [ "pcap4j", "windows" ]
 title = "Pcap4J with Four Native Libraries on Windows 10"
@@ -21,7 +21,7 @@ This article explains each of the above libraries and tells the test results.
 
 {{< google-adsense >}}
 
-## Official WinPcap
+# Official WinPcap
 WinPcap is the most common native packet capture library developed based on [__libpcap__](http://www.tcpdump.org/).
 (WinPcap 4.1.3 is based on libpcap 1.0.0.)
 It's famous as a component of the de facto standard packet capture tool [__Wireshark__](https://www.wireshark.org/).
@@ -37,14 +37,14 @@ wpcap.dll and Packet.dll are installed in `C:\Windows\System32\` (64 bit binarie
 
 WinPcap worked without any problems in my tests.
 
-## WinPcap based on libpcap 1.7.4
+# WinPcap based on libpcap 1.7.4
 This is an unofficial version of WinPcap which was built on libpcap 1.7.4.
 This doesn't include NPF driver and doesn't update Packet.dll.
 These two components need to be installed from the official WinPcap 4.1.3.
 
 This worked well but [one moderate problem](https://github.com/kaitoy/pcap4j/issues/52).
 
-## Win10Pcap
+# Win10Pcap
 Win10Pcap is a WinPcap-based packet capture library developed by [Daiyuu Nobori](http://dnobori.cs.tsukuba.ac.jp/en/).
 This includes its own NPF driver and Packet.dll.
 The wpcap.dll Win10Pcap installs is exactly the same as one of the official WinPcap 4.1.3.
@@ -73,7 +73,7 @@ Although NDIS 6.x is backward-compatible with 5.x and WinPcap can run on Vista a
 
 Win10Pcap worked mostly fine in my tests, but it didn't detect MAC addresses and IPv6 addresses on devices.
 
-## Npcap
+# Npcap
 Npcap is another NDIS 6.x based version of WinPcap developed by [Yang Luo](http://www.veotax.com/) for [Nmap](https://nmap.org/).
 
 Npcap has a special functionality that allows to capture/send loopback packets.

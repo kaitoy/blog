@@ -2,10 +2,11 @@
 categories = [ "Web" ]
 date = "2016-07-01T14:17:41-06:00"
 draft = false
-eyecatch = "cloudflare.png"
+cover = "cloudflare.png"
 slug = "https-support-by-cloudflare"
 tags = [ "blog", "cdn"]
 title = "CloudflareでブログをHTTPS化"
+slide = true
 +++
 
 最近[GitHub Pages](https://pages.github.com/)がHTTPSに正式対応したというニュースを見たことをきっかけに、このブログを[Cloudflare](https://www.cloudflare.com/)で常時HTTPS化した話。
@@ -14,7 +15,7 @@ title = "CloudflareでブログをHTTPS化"
 
 {{< google-adsense >}}
 
-## このブログ
+# このブログ
 このブログは[GitHub Pagesでホストされている](https://www.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/)。
 GitHub Pages上のWebサイトはデフォルトでは`<GitHubユーザ名>.github.io`というドメインで公開されるが、ちょっとかっこつけたかったのでカスタムドメイン(`www.kaitoy.xyz`)にした。
 
@@ -25,14 +26,14 @@ GitHub Pagesは2014年3月から非公式にHTTPSをサポートしていて、2
 要するにこのブログにはHTTP接続しかできない状態だった。
 これをなんとかHTTPSに対応させたかった。
 
-## なぜHTTPS
+# なぜHTTPS
 HTTPS化(常時SSL化)が世界的な流行りな雰囲気を感じていたのと、なにより、[Googleに優遇してもらえるから](http://googlewebmastercentral-ja.blogspot.com/2015/12/indexing-https-pages-by-default.html)。
 Googleの検索結果の2,3ページ目までに出てこないなら、そのサイトはこの世に存在しないのとあまり変わらない。
 
 昔はHTTPSにするとSSLプロトコルのオーバーヘッドや暗号化/復号化処理によりHTTPに比べて遅くなると言われていたが、最近ではサーバ/クライアントマシンの性能が上がり、このデメリットは気にするほどのものではなくなった。
 逆に、常時SSL化すると[SPDY](https://ja.wikipedia.org/wiki/SPDY)や[HTTP/2](https://ja.wikipedia.org/wiki/HTTP/2)といった高速なプロトコルの恩恵を受けることができるようになり、HTTPより速くなることもあるらしい。
 
-## カスタムドメインなGitHub PagesサイトをHTTPS対応する方法
+# カスタムドメインなGitHub PagesサイトをHTTPS対応する方法
 上記の通りこのブログはカスタムドメインでGitHub Pagesのサポートがなく直接にはHTTPS対応できない。
 よって間接的に対応することになるので、[リバースプロキシ](https://ja.wikipedia.org/wiki/%E3%83%AA%E3%83%90%E3%83%BC%E3%82%B9%E3%83%97%E3%83%AD%E3%82%AD%E3%82%B7)を使うことになる。
 リバースプロキシサーバを自分で運用するのは大変なので、[CDN](https://ja.wikipedia.org/wiki/%E3%82%B3%E3%83%B3%E3%83%86%E3%83%B3%E3%83%84%E3%83%87%E3%83%AA%E3%83%90%E3%83%AA%E3%83%8D%E3%83%83%E3%83%88%E3%83%AF%E3%83%BC%E3%82%AF)サービスを利用する。
@@ -74,7 +75,7 @@ Cloudflareを利用すると、もともとだいたいこんな感じ↓だっ�
 
 上のスライド中のリバースプロキシは実際にはいくつもあり、[エニーキャスト](https://ja.wikipedia.org/wiki/%E3%82%A8%E3%83%8B%E3%83%BC%E3%82%AD%E3%83%A3%E3%82%B9%E3%83%88)によってブラウザから一番近いものが使われる。
 
-## Cloudflare事始め
+# Cloudflare事始め
 Cloudflareの始め方は[Qiitaの記事](http://qiita.com/superbrothers/items/95e5723e9bd320094537)を参考にした。
 
 1. Cloudflareのアカウント作成
@@ -119,7 +120,7 @@ Cloudflareの始め方は[Qiitaの記事](http://qiita.com/superbrothers/items/9
     Cloudflareからは二つのネームサーバが割り当てられたようだ。
     指示されたとおりに変更する。
 
-## Cloudflareの設定
+# Cloudflareの設定
 サインアップが終わるとCloudflareのダッシュボードが開く。
 
 <br>
@@ -160,6 +161,6 @@ Cloudflareの始め方は[Qiitaの記事](http://qiita.com/superbrothers/items/9
 
     ![page_rules.png](/images/https-support-by-cloudflare/page_rules.png "page_rules.png")
 
-## ブログサイトの修正
+# ブログサイトの修正
 `link`タグや`script`タグの`www.kaitoy.xyz`を指しているURLをHTTPSに修正。
 内部リンクも全部HTTPSにした。これで完了。

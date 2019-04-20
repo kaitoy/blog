@@ -2,10 +2,11 @@
 categories = [ "Programing" ]
 date = "2017-01-03T23:36:01-07:00"
 draft = false
-eyecatch = "goslings-spring.png"
+cover = "goslings-spring.png"
 slug = "goslings-development-memo1-spring-boot"
 tags = [ "goslings", "spring", "spring-boot" ]
 title = "Goslings開発メモ - その1: Spring Boot編"
+highlightLanguages = ["gradle"]
 +++
 
 「[Goslings開発メモ - その0: 紹介と概要と設計編](https://www.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/)」の続き。
@@ -34,7 +35,7 @@ Goslingsには最新バージョンの1.4.3.RELEASEを使った。
 
 Goslingsサーバは基本REST APIサーバなので、上記チュートリアルの内「[Building a RESTful Web Service](https://spring.io/guides/gs/rest-service/)」を見ながら以下を実施した。
 
-#### 1. プロジェクト作成
+## 1. プロジェクト作成
 チュートリアルにはGradleプロジェクトのディレクトリ構成を手動で作るところから書いてあるけど、そこは[IDEなどで楽できる](http://qiita.com/grachro/items/d1ebad3857a794895426)。
 私はEclipseを使っていて、いつのまにかGradleプラグインである[Eclipse Buildship: Eclipse Plug-ins for Gradle](https://projects.eclipse.org/projects/tools.buildship)と[Gradle IDE Pack](https://marketplace.eclipse.org/content/gradle-ide-pack)がインストールされていたので、これらを使った。
 
@@ -51,7 +52,7 @@ Goslingsサーバは基本REST APIサーバなので、上記チュートリア�
 
 ![project_structure.png](/images/goslings-development-memo1-spring-boot/project_structure.png)
 
-#### 2. Spring Boot Gradle plugin適用
+## 2. Spring Boot Gradle plugin適用
 [Spring Boot Gradle plugin](http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/build-tool-plugins-gradle-plugin.html)というものがあって、これをプロジェクトに適用すると以下の恩恵を受けられる。
 
 1. 依存ライブラリ管理機能
@@ -95,7 +96,7 @@ Goslingsサーバは基本REST APIサーバなので、上記チュートリア�
     }
     ```
 
-#### 3. 依存ライブラリ追加
+## 3. 依存ライブラリ追加
 Spring Bootは依存ライブラリの管理も簡易化してくれる。
 
 `spring-boot-starter-`で始まる[スターター](http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/htmlsingle/#using-boot-starter)と呼ばれるライブラリがいくつか提供されていて、作りたいアプリの種類や機能に応じたものをプロジェクトの依存ライブラリとして追加すると、推移的に諸々の必要なライブラリが追加されるようになっている。
@@ -119,7 +120,7 @@ dependencies {
 
 前節に書いた通り、Spring Boot Gradle pluginのおかげでバージョンの指定は不要。
 
-#### 4. ディベロッパツール追加
+## 4. ディベロッパツール追加
 Spring Bootの[ディベロッパツール](http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/reference/html/using-boot-devtools.html)を利用すると、以下の恩恵を受けられる。
 
 1. キャッシュの無効化
@@ -205,7 +206,7 @@ dependencies {
 }
 ```
 
-### 5. リソースクラス作成
+## 5. リソースクラス作成
 ここからやっとコーディング。
 まずはREST APIで取得するリソースを表現するクラスを作る。
 
@@ -228,7 +229,7 @@ public final class Commit {
 
 POJOとして書けばいいので、[Lombok](https://projectlombok.org/)の`@Data`か`@Value`を使うと楽だろうが、Goslingsには使わなかった。
 
-#### 6. コントローラ(REST APIコントローラ)作成
+## 6. コントローラ(REST APIコントローラ)作成
 クライアントからのHTTPリクエストを処理するクラスはコントローラクラスと呼ばれる。
 クライアントからのREST API呼び出しもHTTPリクエストなのでコントローラクラスで処理する。
 
@@ -275,7 +276,7 @@ public final class RestApiV1Controller {
 
 ここには書いてないけど、URLクエリパラメータは[`@RequestParam`](https://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/web/bind/annotation/RequestParam.html)を使って取得できるし、[`HttpServletRequest`](http://mergedoc.osdn.jp/tomcat-servletapi-5-ja/javax/servlet/http/HttpServletRequest.html)もメソッドの引数として宣言しておけばSpringが渡してくれる。
 
-#### 7. メインクラス作成
+## 7. メインクラス作成
 最後に、アプリを起動するメインクラスを作る。
 
 [`@SpringBootApplication`](http://docs.spring.io/spring-boot/docs/1.4.3.RELEASE/api/org/springframework/boot/autoconfigure/SpringBootApplication.html)を付けたクラスに`main`メソッドを以下の様に定義すればいいだけ。
@@ -306,7 +307,7 @@ public class Application {
 `@SpringBootApplication`、というか`@Configuration`をつけたクラスは`final`にしてはいけない。
 すると実行時にエラーになる。
 
-#### 8. ビルド、実行
+## 8. ビルド、実行
 以上でとりあえず動くものができた。
 
 `gradlew bootRun`を実行するとディベロッパツール付きでアプリが動くし、`gradlew build`を実行すれば`build/libs/goslings-0.0.1.jar`というアーティファクトが生成され、`java -jar build/libs/goslings-0.0.1.jar`でアプリを起動できる。

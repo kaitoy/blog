@@ -2,7 +2,7 @@
 categories = [ "Windows" ]
 date = "2016-11-19T01:05:26-07:00"
 draft = false
-eyecatch = "microsoft.png"
+cover = "microsoft.png"
 slug = "bow-do-not-change-linux-files-from-windows"
 tags = [ "bow", "windows" ]
 title = "Bash on WindowsでWindows側からUbuntu側のファイルをいじると壊れることがあるので注意"

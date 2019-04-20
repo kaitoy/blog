@@ -2,10 +2,11 @@
 categories = ["Programing"]
 date = "2018-06-17T23:22:33+09:00"
 draft = false
-eyecatch = "kubernetes-ansible-packer.png"
+cover = "kubernetes-ansible-packer.png"
 slug = "packer-k8s"
 tags = ["kubernetes", "docker", "ansible", "packer", "msys2"]
 title = "Packer + Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築"
+highlightLanguages = ["dos"]
 +++
 
 「[Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した](https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/)」の続きで、さらに[Packer](https://www.packer.io/)を組み合わせて、VM作成まで自動化した話。
@@ -16,7 +17,7 @@ AnsibleをWindows([MSYS2](https://www.msys2.org/))で動かした話でもある
 
 {{< google-adsense >}}
 
-## Packerとは
+# Packerとは
 
 Packerは、様々な種類のVMを構築できるツール。
 VagrantとかTerraformとかを開発している[HashiCorp](https://www.hashicorp.com/)が開発している。
@@ -67,7 +68,7 @@ PackerはGoで書かれていてビルド済みのバイナリが配布されて
 
 今回はPacker 1.2.4のWindows版をインストールした。
 
-## Packerの[テンプレート](https://www.packer.io/docs/templates/index.html)概要
+# Packerの[テンプレート](https://www.packer.io/docs/templates/index.html)概要
 
 Packerのテンプレートにはビルド、プロビジョニング、ポストプロセスの定義を複数かけて、複数環境のVM生成を1ファイルで定義できる。
 
@@ -89,7 +90,7 @@ Packerのテンプレートにはビルド、プロビジョニング、ポス�
 communicatorはビルド時にVMにつなぐための設定。
 基本は[SSH](https://www.packer.io/docs/templates/communicator.html#ssh-communicator)だけど、WinRMとかもある。
 
-## やりたいこと
+# やりたいこと
 
 Windows 10上でPackerとAnsibleを動かして、VirtualBoxのVMをOracle Linux 7.4で作って、Kubernetes 1.10をインストールしたい。
 Windowsでやりたいのは、単にベアメタルのLinuxの環境が無いからってのもあるし、いずれHyper-VのVMも作りたいからってのもある。
@@ -103,18 +104,18 @@ AnsibleはWSLでは動くけど、VirtualBoxとかHyper-VはWindows上で動く�
 
 [ここ](https://superuser.com/questions/1255634/install-ansible-in-windows-using-git-bash)にAnsibleはCygwinでもGit Bashでも動かすの難しいと書いてあって、逆に[MSYS2でAnsible動かした記事](http://itsp0.blogspot.com/2017/03/ansible-msys2-ansible.html)はあったので、安直にMSYS2でやることにした。
 
-## MSYS2インストール
+# MSYS2インストール
 
 MSYS2は、[公式サイト](http://www.msys2.org/)からx86_64のインストーラ(msys2-x86_64-20180531.exe)をダウンロードして実行して普通にインストールしただけ。
 
-## Ansibleインストール
+# Ansibleインストール
 
 MSYS2でのパッケージ管理にはpacmanを使う。
 
 何はともあれPythonを入れる。3系でいい。
 `MSYS2 MSYS`のショートカット(`MSYS2 MinGW 64-bit`じゃだめ)からターミナルを開いて、
 
-```sh
+```shell
 $ pacman -S python
 ```
 
@@ -122,7 +123,7 @@ $ pacman -S python
 
 次に、Ansible(の依存)のビルドに必要なパッケージを入れる。
 
-```sh
+```shell
 $ pacman -S gcc
 $ pacman -S make
 $ pacman -S libffi-devel
@@ -131,7 +132,7 @@ $ pacman -S openssl-devel
 
 さらに、AnsibleからのSSH接続で(鍵ではなくて)パスワードを使う場合に必要なパッケージも入れる。
 
-```sh
+```shell
 $ pacman -S sshpass
 ```
 
@@ -141,7 +142,7 @@ sshpassの依存としてopensshも入った。
 
 Ansibleはpipでインストールするんだけど、pacmanで入れたPython 3にはpipが付いてなかったので、[別途入れる](https://pip.pypa.io/en/stable/installing/)。
 
-```sh
+```shell
 $ curl https://bootstrap.pypa.io/get-pip.py -LO
 $ python get-pip.py
 ```
@@ -152,7 +153,7 @@ $ python get-pip.py
 
 で、ようやくAnsibleインストール。
 
-```sh
+```shell
 $ export CFLAGS=-I/usr/lib/libffi-3.2.1/include
 $ pip install ansible
 ```
@@ -163,11 +164,11 @@ $ pip install ansible
 
 AnsibleでJinja2のipaddrフィルターを使うために、もう一つPyPiパッケージ入れる。
 
-```sh
+```shell
 $ pip install netaddr
 ```
 
-## Packerテンプレート作成
+# Packerテンプレート作成
 
 ビルドは、OSインストールメディアのISOファイルを使うVirtualBoxのビルダである[virtualbox-iso](https://www.packer.io/docs/builders/virtualbox-iso.html)を指定して書いた。
 
@@ -182,11 +183,11 @@ Kickstartの定義ファイルは、普通に手動でOSをインストールし
 
 `ansible_env_vars`で`ANSIBLE_SSH_ARGS`に`-o ControlMaster=no`を入れているのは、[この問題](https://github.com/geerlingguy/JJG-Ansible-Windows/issues/6)に対応するため。
 
-## ビルド実行
+# ビルド実行
 
 `MSYS2 MSYS`のショートカットからターミナルを開いて、Packerを実行してみたら以下のエラー。
 
-```sh
+```shell
 $ packer build -var-file=variables.json k8s_single_node_cluster-vb.json
 bash: packer: コマンドが見つかりません
 ```
@@ -210,7 +211,7 @@ ansible-playbookはansibleパッケージに入っていて/usr/bin/にインス
 
 ということで、以下のようなラッパスクリプトを書いて、カレントディレクトリに置くことにした。
 
-```bat
+```dos
 @echo off
 setlocal enabledelayedexpansion
 
@@ -255,7 +256,7 @@ C:\msys64\usr\bin\python C:\msys64\usr\bin\ansible-playbook -v %args%
 4. `MSYS2 MSYS`のターミナルでPython 3.6.2とAnsible 2.5.4とか(とGit)をインストールして、
 5. 以下を実行すればいい。
 
-    ```sh
+    ```shell
     $ git clone --recursive https://github.com/kaitoy/packer-k8s.git
     $ cd packer-k8s
     $ /c/Users/kaitoy/Desktop/bin/packer.exe build -var-file=variables.json k8s_single_node_cluster-vb.json
@@ -267,7 +268,7 @@ C:\msys64\usr\bin\python C:\msys64\usr\bin\ansible-playbook -v %args%
 
 一回実行したらゴミができて、次回実行時にエラーになるので、以下でクリーンアップする必要がある。
 
-```sh
+```shell
 $ rm -rf /tmp/ansible
 $ rm -f ~/.ssh/known_hosts
 ```

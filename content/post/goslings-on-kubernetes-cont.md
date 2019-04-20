@@ -2,10 +2,11 @@
 categories = [ "Programing" ]
 date = "2017-10-11T23:48:40+09:00"
 draft = false
-eyecatch = "kubernetes_goslings.png"
+cover = "kubernetes_goslings.png"
 slug = "goslings-on-kubernetes-cont"
 tags = [ "goslings", "kubernetes", "minikube", "docker" ]
 title = "Kubernetesのチュートリアルをやる"
+highlightLanguages = ["dos", "yaml"]
 +++
 
 「[Kubernetes 1.8が出たので、Minikubeを触ってみる](https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/)」の続き。
@@ -13,7 +14,7 @@ Minikubeのセットアップまではできたので、[Kubernetes Basics](http
 
 {{< google-adsense >}}
 
-## Kubernetes Basics - 概要
+# Kubernetes Basics - 概要
 Kubernetes Basicsは、公式のチュートリアルで、Kubernetesクラスタのオーケストレーションの基本を学ぶことができるもの。
 以下の6つのモジュールからなる。
 
@@ -31,12 +32,12 @@ Kubernetes Basicsは、公式のチュートリアルで、Kubernetesクラス�
 
 <br>
 
-## Kubernetes Basics - モジュール 1: Kubernetesクラスタを作る
+# Kubernetes Basics - モジュール 1: Kubernetesクラスタを作る
 Minikubeを起動してkubectlでクラスタの状態をみるだけのモジュール。
 
 これは[前回の記事](https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/)でカバーしている。
 
-## Kubernetes Basics - モジュール 2: アプリをデプロイする
+# Kubernetes Basics - モジュール 2: アプリをデプロイする
 アプリ(i.e. コンテナ)をデプロイするにはDeploymentオブジェクトを作る。
 MasterはDeploymentのspecに従って各ノードにアプリのインスタンスをスケジューリングする。
 Deploymentは、アプリが落ちたら再起動してくれる、つまりself-healingも実現する。
@@ -116,7 +117,7 @@ goslings-1210510689-6w5tf   1/1       Running   0          24m
 
 ![goslings-proxy](/images/goslings-on-kubernetes-cont/goslings-proxy.png)
 
-## Kubernetes Basics - モジュール 3: アプリを調査する
+# Kubernetes Basics - モジュール 3: アプリを調査する
 以下のコマンドで、アプリの状態を調査するモジュール。
 
 * kubectl get: リソースをリスト表示する。
@@ -249,7 +250,7 @@ Dockerfile  _config.yml  build.log     goslings-server  gradle.properties  gradl
 C:\Users\kaitoy>
 ```
 
-## Kubernetes Basics - モジュール 4: アプリを公開する
+# Kubernetes Basics - モジュール 4: アプリを公開する
 Serviceオブジェクト扱うモジュール。
 
 例えば、以下のような状況にあるとする。
@@ -361,7 +362,7 @@ C:\Users\kaitoy>kubectl label pod goslings-1210510689-6w5tf ver=1.2.3
 pod "goslings-1210510689-6w5tf" labeled
 ```
 
-## Kubernetes Basics - モジュール 5: アプリをスケールする
+# Kubernetes Basics - モジュール 5: アプリをスケールする
 アプリのスケールアウト・スケールインを学ぶモジュール。
 
 Deploymentの定義でPodのレプリカ数を変えると、その数に合わせてKubernetesがPodを起動したり止めたりしてくれてスケールできる仕組み。
@@ -425,7 +426,7 @@ goslings-442066424-kmn3p   1/1       Running   0          17m
 
 ![objects](/images/goslings-on-kubernetes-cont/objects.png)
 
-## Kubernetes Basics - モジュール 6: アプリをアップデートする
+# Kubernetes Basics - モジュール 6: アプリをアップデートする
 デプロイしたアプリのアップデート(i.e. コンテナイメージの変更)を学ぶモジュール。
 
 Deploymentの定義をいじってコンテナイメージを変えてやると、その中のPodを新しいイメージで順次(デフォルトだと一つ一つ)起動しなおしてくれる。
@@ -472,7 +473,7 @@ goslings-442066424-m3873   1/1       Running   0          5s
 
 無事に戻った。
 
-## 番外編1 - 3つのオブジェクト管理手法
+# 番外編1 - 3つのオブジェクト管理手法
 Kubernetesオブジェクトを管理する手法は[大きく3つある](https://kubernetes.io/docs/tutorials/object-management-kubectl/object-management/)。
 
  管理手法           |いじる対象                 | 難易度
@@ -497,7 +498,7 @@ Kubernetes Basicsでやってた手法は一番上の命令的コマンド。
 
 命令的オブジェクト設定は以下のような形でやる。
 
-```sh
+```shell
 $ kubectl create -f nginx.yaml
 $ kubectl delete -f nginx.yaml -f redis.yaml
 $ kubectl replace -f nginx.yaml
@@ -514,11 +515,11 @@ $ kubectl replace -f nginx.yaml
 
 宣言的オブジェクト設定は以下のような形でやる。
 
-```sh
+```shell
 $ kubectl apply -R -f configs/
 ```
 
-## 番外編2 - 命令的オブジェクト設定
+# 番外編2 - 命令的オブジェクト設定
 3つの手法の内、命令的オブジェクト設定でGoslingsをMinikubeにデプロイしてみる。
 
 まず、Kubernetes Basicsで作ったオブジェクトを消すため、MinikubeのVMを作り直す。

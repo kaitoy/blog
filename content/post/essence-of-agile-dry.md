@@ -2,7 +2,7 @@
 categories = ["Programming"]
 date = "2019-04-11T23:34:53+09:00"
 draft = false
-eyecatch = "agile.jpg"
+cover = "agile.jpg"
 slug = "essence-of-agile-dry"
 tags = ["agile"]
 title = "アジャイル開発の真髄 ― DRY"

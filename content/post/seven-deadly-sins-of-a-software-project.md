@@ -2,7 +2,7 @@
 categories = [ "Software Engineering" ]
 date = "2016-06-25T18:00:29-06:00"
 draft = false
-eyecatch = "teamedio_logo.svg"
+cover = "teamedio_logo.svg"
 slug = "seven-deadly-sins-of-a-software-project"
 tags = [ "yegor256" ]
 title = "ソフトウェアプロジェクトの7つの大罪"
@@ -24,7 +24,7 @@ title = "ソフトウェアプロジェクトの7つの大罪"
 私はソフトウェアを保守不能にする7つの基本的で致命的な罪があると考えている。
 それらについてここに書く。
 
-## アンチパターン
+# アンチパターン
 
 <img alt="ap.gif" src="/images/seven-deadly-sins-of-a-software-project/ap.gif" width="300" style="margin: 0px auto; display: block;">
 
@@ -64,7 +64,7 @@ title = "ソフトウェアプロジェクトの7つの大罪"
 常にソフトウェアの品質を疑い、「動く」ということだけで満足してはいけない。
 ちょうど癌のように、診断が早ければ早いほど生き残る可能性が大きい。
 
-## 追跡不能な変更
+# 追跡不能な変更
 
 <img alt="uc.gif" src="/images/seven-deadly-sins-of-a-software-project/uc.gif" width="300" style="margin: 0px auto; display: block;">
 
@@ -73,27 +73,27 @@ title = "ソフトウェアプロジェクトの7つの大罪"
 殆どのプロジェクトがこのようにできていない。
 以下に実践的な提案を示す。
 
-#### 常にチケットを使う
+## 常にチケットを使う
 プロジェクトやチームがどんなに小さくても、例え一人だけでも、修正しようとしている全ての問題に対してチケット(GitHub issues)を作れ。
 チケットに問題の簡単な説明とそれに対する考えを記述しろ。
 このチケットをその問題に関する全ての情報の一時的なストレージとして使え。
 将来、他の誰かがその「不可解なコミット」が何であるかを理解するために参照する可能性のある全ての情報をそこに書け。
 
-#### コミットからチケットを参照する
+## コミットからチケットを参照する
 言うまでもないが、全てのコミットにはメッセージが付いていないといけない。
 メッセージのないコミットはまったくひどい悪習だ。議論の余地はない。
 しかしメッセージだけでは不十分だ。
 全てのメッセージはチケット番号で始まらないといけない。
 GitHub(君ももちろん使っていると思うが)は自動でコミットとチケットをリンクし、変更の追跡可能性を高めてくれる。
 
-#### 何も消さない
+## 何も消さない
 Gitは「強制」push、つまりサーバに既にあるブランチ全体を上書きするpushを許している。
 これは開発履歴を破壊する方法の例のひとつだ。
 また、GitHubのチケットを「きれい」にするためにコメントを削除するのをよく見るが、これはまったくの間違いだ。
 何であれ決して消すな。
 履歴がどんなに汚く(または乱雑に)見えても、そのまま残しておくことだ。
 
-## アドホックリリース
+# アドホックリリース
 
 <img alt="ahr.gif" src="/images/seven-deadly-sins-of-a-software-project/ahr.gif" width="300" style="margin: 0px auto; display: block;">
 
@@ -119,7 +119,7 @@ DONE (took 98.7s)
 私は自動化に[rultor.com](http://www.yegor256.com/2014/09/11/deployment-script-vs-rultor.html)を使っているが、好きなのを使えばよい。
 重要なのは、手順全体が完全自動化されていてコマンドラインから実行できることだ。
 
-## 自発的静的解析
+# 自発的静的解析
 
 <img alt="vsa.gif" src="/images/seven-deadly-sins-of-a-software-project/vsa.gif" width="300" style="margin: 0px auto; display: block;">
 
@@ -136,7 +136,7 @@ DONE (took 98.7s)
 私が言いたいのは、静的解析は開発パイプラインの中の必須ステップでなければいけないということだ。
 もし静的解析ルールがひとつでも破られたら、ビルドを成功にしてはいけない。
 
-## 未知のテストカバレージ
+# 未知のテストカバレージ
 
 <img alt="utc.gif" src="/images/seven-deadly-sins-of-a-software-project/utc.gif" width="300" style="margin: 0px auto; display: block;">
 
@@ -155,7 +155,7 @@ DONE (took 98.7s)
 プロジェクトに入った新規開発者は、修正がどの程度カバレージに影響を与えるかを確認できなければいけない。
 理想的には、テストカバレージは静的解析でチェックされ、事前に決められた閾値(普通80%位)を下回ったらビルドが失敗するようになっているべきだ。
 
-## ノンストップ開発
+# ノンストップ開発
 
 <img alt="nd.gif" src="/images/seven-deadly-sins-of-a-software-project/nd.gif" width="300" style="margin: 0px auto; display: block;">
 
@@ -173,7 +173,7 @@ DONE (took 98.7s)
 また、それぞれのバージョンのバイナリは直接ダウンロードできるようにしておくことを忘れるな。
 プロジェクトが今バージョン3.4を開発していたとしても、即座にバージョン0.1.3をダウンロードしてテストできなければいけない。
 
-## ドキュメントに載っていないインターフェース
+# ドキュメントに載っていないインターフェース
 
 <img alt="ui.gif" src="/images/seven-deadly-sins-of-a-software-project/ui.gif" width="300" style="margin: 0px auto; display: block;">
 

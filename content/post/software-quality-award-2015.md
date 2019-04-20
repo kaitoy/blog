@@ -2,7 +2,7 @@
 categories = [ "Software Engineering" ]
 date = "2015-12-03T12:28:24-07:00"
 draft = false
-eyecatch = "pcap4jlogo.png"
+cover = "pcap4jlogo.png"
 slug = "software-quality-award-2015"
 tags = [ "yegor256", "pcap4j" ]
 title = "Pcap4JがSoftware Quality Award 2015で入賞"

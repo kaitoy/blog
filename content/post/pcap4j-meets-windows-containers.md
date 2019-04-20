@@ -2,10 +2,11 @@
 categories = [ "Programming", "Container" ]
 date = "2016-01-22T17:46:43-07:00"
 draft = false
-eyecatch = "pcap4j-docker.png"
+cover = "pcap4j-docker.png"
 slug = "pcap4j-meets-windows-containers"
 tags = [ "pcap4j", "docker", "windows" ]
 title = "Pcap4J Meets Windows Containers"
+highlightLanguages = ["dockerfile", "dos"]
 +++
 
 __[Windows Containers](https://msdn.microsoft.com/en-us/virtualization/windowscontainers/about/about_overview)__ で __[Pcap4J](https://github.com/kaitoy/pcap4j)__ のコンテナをビルドしてみた話。
@@ -14,7 +15,7 @@ __[Windows Containers](https://msdn.microsoft.com/en-us/virtualization/windowsco
 
 {{< google-adsense >}}
 
-## Windows Containersとは
+# Windows Containersとは
 Windows Containersは、Microsoftが[Docker, Inc](https://www.docker.com/company)と提携して開発している[コンテナ技術](http://www.sophia-it.com/content/%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E6%8A%80%E8%A1%93)で、Windows版[Docker](https://www.docker.com/)とも言われる機能。
 今年リリースされる __Windows Server 2016__ に実装される予定で、その3つめのテクニカルプレビューである __Windows Server 2016 Technical Preview 3__ (2015/8/19公開)から評価できるようになった。
 
@@ -36,7 +37,7 @@ Windows Containersには次の二種類がある。
 より詳しくは、[Microsoftによる解説](https://msdn.microsoft.com/en-us/virtualization/windowscontainers/about/about_overview)や[@ITのこの記事](http://www.atmarkit.co.jp/ait/articles/1512/11/news022.html)がわかりやすい。
 また、[Qiitaのこの記事](http://qiita.com/Arturias/items/3e82de8328067d0e03a3)がDockerとWindows Server Containersのアーキテクチャを詳細に説明していて面白い。
 
-## Windows Containersセットアップ
+# Windows Containersセットアップ
 まず、Windows 7 x64のノートPCにVMware Player 7.1.0を入れてWindows 10 x64用のVM(CPU2つとメモリ2.5GB)を作り、そこに2015/11/19に公開された __Windows Server 2016 Technical Preview 4__ をインストール。
 コマンドでいろいろ設定するの慣れていないのでGUI(Desktop Experience)付きで。
 (リモートデスクトップ使えばよかったのかもしれないけど。)
@@ -62,7 +63,7 @@ Windows Server Containersをセットアップする手順は以下。
 仮想Ethernetスイッチ接続の追加に失敗したというエラーが出たけどなんなんだろう。
 `ipconfig` の出力によると `vEthernet` というDockerの[virtual Ethernet bridge](https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/#docker-network)にあたるものはちゃんと作られているみたいなんだけど。
 
-## Windows Server Containers味見
+# Windows Server Containers味見
 コマンドプロンプトで `docker images` を実行すると、既に `windowsservercore` というコンテナイメージが入っていることがわかる。
 
 ```cmd
@@ -101,10 +102,10 @@ microsoft/sqlite     SQLite installed in a Windows Server Core ...   1          
 これらはちゃんと `docker pull` して使える。
 けど多分 `docker push` はできない。
 
-## Pcap4J on Windows Container
+# Pcap4J on Windows Container
 結論から言うと、以下の `Dockerfile` を書いて `docker build` してPcap4Jをコンテナ上でビルドするところまではできたが、それを実行してもNIFが全く検出できず、よってパケットキャプチャも実行できなかった。
 
-```
+```dockerfile
 #
 # Dockerfile for Pcap4J on Windows
 #
@@ -216,7 +217,7 @@ Windows Containersの[ドキュメント](https://msdn.microsoft.com/en-us/virtu
 
 試しに以下の処理を挟んでChocolateyのインストーラをHTTPで取ってくるようにしたらChocolateyのインストールまではできた。
 
-```cmd
+```dockerfile
 RUN powershell $(Get-Content install.ps1) -replace \"https\",\"http\" > install.mod.ps1
 ```
 

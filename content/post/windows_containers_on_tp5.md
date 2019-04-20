@@ -2,11 +2,11 @@
 categories = [ "Programming", "Container" ]
 date = "2016-07-11T00:30:33-06:00"
 draft = false
-eyecatch = "pcap4j-docker.png"
+cover = "pcap4j-docker.png"
 slug = "windows_containers_on_tp5"
 tags = [ "pcap4j", "docker", "windows" ]
 title = "Windows Server 2016 TP5でWindows Containersにリトライ"
-
+highlightLanguages = ["dockerfile", "dos", "powershell"]
 +++
 
 [Windows Server 2016のTechnical Preview 5(TP5)が公開されていた](https://www.microsoft.com/ja-jp/evalcenter/evaluate-windows-server-technical-preview)ので、
@@ -16,14 +16,14 @@ title = "Windows Server 2016 TP5でWindows Containersにリトライ"
 
 {{< google-adsense >}}
 
-## OSセットアップ
+# OSセットアップ
 [TP4のとき](https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containersセットアップ)と同じ環境。
 
 以降は[Windows Server Containersのクイックスタートガイド](https://msdn.microsoft.com/en-us/virtualization/windowscontainers/quick_start/quick_start_windows_server)に沿ってセットアップを進める。
 [TP4](https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#windows-containersセットアップ)からは大分変わっていて、単一のPowershellスクリプトを実行する形式から、Powershellのコマンドレットを逐次手動実行する形式になっている。
 面倒だけど何やってるかわかりやすくて好き。
 
-## コンテナ機能のインストール
+# コンテナ機能のインストール
 
 1. 管理者権限のパワーシェルウィンドウを開く
 
@@ -54,7 +54,7 @@ title = "Windows Server 2016 TP5でWindows Containersにリトライ"
     Restart-Computer -Force
     ```
 
-## Dockerインストール
+# Dockerインストール
 Dockerは、コンテナイメージの管理やコンテナの起動などもろもろの機能を提供するDockerデーモンと、その機能を利用するためのCLIを提供するDockerクライアントからなる。この節ではそれら両方をインストールする。
 
 1. Dockerインストールフォルダ作成
@@ -97,7 +97,7 @@ Dockerは、コンテナイメージの管理やコンテナの起動なども�
     パスの設定を反映するためにいったんパワーシェルウィンドウとコマンドプロンプトを閉じて、
     また管理者権限でパワーシェルウィンドウ開いて、以下のコマンドでDockerデーモンをサービスに登録する。
 
-    ```powershell
+    ```cmd
     dockerd --register-service
     ```
 
@@ -129,7 +129,7 @@ C:\Users\Administrator>docker -v
 Docker version 1.12.0-dev, build 8e92415
 ```
 
-## コンテナイメージのインストール
+# コンテナイメージのインストール
 次に、コンテナイメージをインストールする。
 
 1. コンテナイメージのパッケージプロバイダをインストール
@@ -169,7 +169,7 @@ REPOSITORY          TAG                 IMAGE ID            CREATED             
 windowsservercore   10.0.14300.1000     5bc36a335344        8 weeks ago         9.354 GB
 ```
 
-## Pcap4Jコンテナイメージのビルド
+# Pcap4Jコンテナイメージのビルド
 以下を`C:\Users\Administrator\Desktop\pcap4j\Dockerfile`に書いて、`cd C:\Users\Administrator\Desktop\pcap4j`して、`docker build -t pcap4j .`を実行。
 (Notepad使ったので、拡張子を表示する設定にして`Dockerfile`の`.txt`を消さないといけない罠があった。)
 
@@ -215,7 +215,7 @@ RUN echo @echo off > bin\capture.bat && \
 Dockerfileに書いた処理内容は[TP4のとき](https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container)とだいたい同じ。
 以下、Dockerfile書いているときに気付いたこと。
 
-#### TP4からのアップデート
+## TP4からのアップデート
 > WORKDIR や ENV や COPY でパスの区切りは \ 一つだと消えちゃうので \\ か / を使わないといけない。
 > <div style="font-size: 0.5em; text-align: right;"><cite>引用元: <a href="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/#pcap4j-on-windows-container">TP4のときのエントリ</a></cite></div>
 
@@ -265,10 +265,10 @@ TP4のときはなかったような。
 これは再現しなかった。以前のも勘違いだったのかもしれない。
 なんにせよデフォルトの.m2フォルダのパスが`C:\Users\ContainerAdministrator\.m2`になったので気にしなくてよくなった。
 
-#### ビルドエラー: hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce)
+## ビルドエラー: hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce)
 `choco install`の後で以下のエラーが出た。
 
-```cmd
+```
 re-exec error: exit status 1: output: time="2016-07-09T19:57:22-07:00" level=error msg="hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce) layerId=\\\\?\\C:\\ProgramData\\docker\\windowsfilter\\103de6bf1358c506510ad67990f09ec3e2f10f9e866e846df5a88c04f5edf7aa flavour=1 folder=C:\\Windows\\TEMP\\hcs719016711"
 hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce) layerId=\\?\C:\ProgramData\docker\windowsfilter\103de6bf1358c506510ad67990f09ec3e2f10f9e866e846df5a88c04f5edf7aa flavour=1 folder=C:\Windows\TEMP\hcs719016711
 ```
@@ -282,15 +282,15 @@ Invoke-WebRequest https://aka.ms/tp5/Update-Container-Host -OutFile update-conta
 Restart-Computer -Force
 ```
 
-#### git cloneできない
+## git cloneできない
 Pcap4Jのソースをダウンロードしたかったんだけど、なぜか`git clone`がHTTPSでもGITプロトコルでもエラーを返す。
 原因を調べるのが面倒で結局zipでダウンロードするようにした。
 
-#### 未実装の機能
+## 未実装の機能
 [Dockerfileのリファレンス](https://docs.docker.com/engine/reference/builder/)に載っていて、Windows向けのサンプルも書いてあるのに、[escapeディレクティブ](https://docs.docker.com/engine/reference/builder/#/escape)と[SHELLコマンド](https://docs.docker.com/engine/reference/builder/#/shell)
 が使えなかった。
 
-## コンテナ起動
+# コンテナ起動
 とりあえず上記DockerfileでPcap4Jコンテナイメージのビルドはできた。
 
 以下のコマンドでそのイメージからコンテナを起動。
@@ -337,21 +337,21 @@ java.io.IOException: No NIF to capture.
 
 ## コンテナ内でAdministratorでコマンド実行したい
 
-#### USERコマンド
+## USERコマンド
 Dockerfileのコマンドに[USER](https://docs.docker.com/engine/reference/builder/#/user)というのがあるので、`USER Administrator`をDockerfileの末尾に追加してみたら以下のエラー。
 
 ```cmd
 The daemon on this platform does not support the command 'user'
 ```
 
-#### --userオプション
+## --userオプション
 docker runコマンドに[--user](https://docs.docker.com/compose/reference/run/)というオプションがあるので以下のように試してみたところ、オプションは無視されて`ContainerAdministrator`でコンテナに入った。
 
 ```cmd
 docker run -it --user Administrator pcap4j cmd
 ```
 
-#### runas
+## runas
 ちょっと発想の転換をして、`ContainerAdministrator`でコンテナに入った後sudoみたいなことをすればいいかと思い、[runas](https://technet.microsoft.com/en-us/library/bb490994.aspx)コマンドを試したけどだめだった。
 よく分からないエラーがでるし、そもそも`Administrator`のパスワードがわからない。
 
@@ -369,7 +369,7 @@ Enter the password for User Manager\Administrator:
 RUNAS ERROR: Unable to acquire user password
 ```
 
-#### Enter-PSSession
+## Enter-PSSession
 フォーラムに行ったら[Enter-PSSession](https://social.msdn.microsoft.com/Forums/en-US/0b6bd405-a235-4608-a06b-a09b9ba08b2e/runas-administrator?forum=windowscontainers)を使う方法が書いてあった。
 
 [Enter-PSSession](https://technet.microsoft.com/en-us/library/hh849707.aspx)はリモートシステムに接続するコマンドレットで、`-ContainerName`オプションを使えばコンテナにも接続できる。

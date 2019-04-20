@@ -1,583 +1,335 @@
 <!DOCTYPE html>
 <html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
-
-    
-    
-    <meta property="og:title" content="To Be Decided">
-    <meta property="og:url" content="https://www.kaitoy.xyz">
-    <link rel="canonical" href="https://www.kaitoy.xyz">
-    
-    <meta property="og:site_name" content="To Be Decided">
-
-    <title>
-      
-      spring-boot | To Be Decided
-      
-    </title>
-
-    
-    <link rel="shortcut icon" href="https://www.kaitoy.xyz/assets/favicon.ico">
-
-    
-    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://www.kaitoy.xyz/index.xml">
-
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
-    <link href="//fonts.googleapis.com/css?family=Marcellus+SC" rel="stylesheet" type="text/css">
-    <link href="//fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
-    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
-    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/styles/zenburn.min.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/styles.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/custom.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/table.css" rel="stylesheet">
-    <link href="https://www.kaitoy.xyz/css/jquery.bxslider.css" rel="stylesheet" />
-
-    
-    
-
-    
-    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-    <script>
-      (adsbygoogle = window.adsbygoogle || []).push({
-        google_ad_client: "ca-pub-6244473643910448",
-        enable_page_level_ads: true
-      });
-    </script>
-
-    
-  </head>
-  <body>
-
-    <header id="site-header">
-      <div class="container">
-        <h1 class="text-center">
-          <a href="https://www.kaitoy.xyz" class="font-logo">To Be Decided</a>
-        </h1>
-      </div>
-    </header>
-
-    <main id="site-body">
-      <div class="container">
-
-
-<div class="row">
-  <div class="col-md-9">
-    <div id="posts">
-      <div class="row">
-        
-        
-        
-        <div class="col-sm-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2017/01/24/goslings-development-memo5-spring-boot-static-resources/" class="post post-topix">
-              <header class="eyecatch text-center">
-                <img src="/images/goslings-spring.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Tue, Jan 24, 2017</span>
-              </div>
-              <h2 class="title">Goslings開発メモ - その5: Spring Boot最終編 (静的リソース処理)</h2>
-              <div class="summary">
-                「Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)」の続き。 Spring Boot最終編で、静的リソース処理について。 (adsbygoogle = window.adsbygoogle || []).push({}); Spring Boot(Spring MVC)での静的リソース処理 この時点でのGoslingsは単なるREST APIサーバで、アクセスしてもJSONを返すだけだ。 アプリとしての体を成すためには、そのAPIを利用するクライアントコード、つまりHTMLドキュメントやCSSファイルやJavaScriptファイル(静的リソース)も返すようにしないといけない。 HTMLドキュメントを返す場合、普通はなんらかのテンプレートエンジンを使うものだが、Goslingsは本当に単純なGUIなので、サーバに置いたHTMLファイルをそのまま返したい。 「Getting Started Guides」にはServing Web Content with Spring MVCというのが乗っているが、これはThymeleafというテンプレートエンジンを使うものなのでちょっと違う。 Spring Bootリファレンスガイドによると、クラスパス(またはServletContextのルート)の/static/、/public/、/resources/、/META-INF/resources/のいずれかに静的リソースを置けば、特にコードを書かなくてもクライアントからアクセスできるらしい。 (逆に、一般的に静的リソースを置く場所である、プロジェクトのsrc/main/webapp/には置くべきでないとのこと。これは、jarにパッケージングするときにビルドツールに無視されることが多いため。) この仕組みについて、この記事を参考にちょろっとソースを見た感じでは、これらのパスはResourcePropertiesのCLASSPATH_RESOURCE_LOCATIONSに定義されていて、これをWebMvcAutoConfigurationがResourceHandlerRegistryでリソースロケーションとして登録することで静的リソース置き場たらしめている模様。 (このResourceHandlerRegistryはResourceHttpRequestHandlerを設定するファサード的なものっぽい。) で、@SpringBootApplication(その1参照)が付いているクラスがあって、spring-webmvc.jarがクラスパスにあると、@EnableWebMvcがSpring Bootによって付けられ、そこからごにょごにょして上記WebMvcAutoConfigurationが実行される。 spring-webmvc.jarはspring-boot-starter-web.jar(その1参照)が引っ張ってくる。 なお、Spring MVCの静的リソース処理の全体の流れについては 、ちょっと古いけど「handling static web resources」という記事が分かりやすい。 要は、URLに指定されたパスからサーバ上のリソースを探し当てるResourceResolverというものが優先度順に連なっているリゾルバチェイン(ResourceResolverChain)があって、まずこいつがリソースを取得する。 次に、そのリソースを加工するトランスフォーマチェイン(ResourceTransformerChain)というものに通し、その結果をクライアントに返す。 トランスフォーマチェインはResourceTransformerが連なったもの。 リゾルバチェインとトランスフォーマチェインは上記ResourceHttpRequestHandlerに設定される。 リゾルバには以下の様なものがある。 PathResourceResolver: ResourceHttpRequestHandlerに設定されたリソースロケーションからリソースを単純に検索するリゾルバ。 CachingResourceResolver: キャッシュからリソースを検索するリゾルバ。テンプレートエンジンの処理結果のキャッシュとかが返るのは多分ここから。 GzipResourceResolver: gzipで圧縮されたリソース、つまりURLで指定されたパスに.gzという拡張子を付けたリソースを検索するリゾルバ。 VersionResourceResolver: リソースバージョニングを実現するためのリゾルバ。 WebJarsResourceResolver: WebJarsのjarファイル内のリソースを検索するリゾルバ。 リゾルバの設定などについてはQiitaのこの記事ががよくまとまっている。 凝ったことをしたいときは参照しよう。 トランスフォーマには以下の様なものがある。 CssLinkResourceTransformer: CSSファイル内のリンクをクライアントがアクセスできるURLに変換する。 CachingResourceTransformer: 変換したリソースをキャッシュする。 AppCacheManifestTransformer: HTML5のAppCacheマニフェスト内のリソースを扱うトランスフォーマ。 デフォルトでResourceHttpRequestHandlerにはPathResourceResolverだけが設定されている。 以上をまとめると、クライアントからGetリクエストが来ると、WebMvcAutoConfigurationが設定したリソースロケーション(e.g. /static/)をPathResourceResolverが検索して、そこに置いてあるHTMLファイルとかをクライアントに返してくれる、ということであろう。 Javaのコードを全く書かなくていいので楽。 Javaのコードを書いて静的リソースファイルを明示することもできる。 Qiitaの記事によれば、@Controllerを付けたクラスのリクエストハンドラで以下の様にファイルへのパスを返せばいいらしい。 @RequestMapping(&quot;/hoge&quot;) public String hoge() { return &quot;/hoge.html&quot;; } 単純な静的リソースに対してこれをやるユースケースはあまりなさそう。 テンプレートエンジンを使っていてパラメータを渡したいときにはこういうリクエストハンドラを書くことになる。 Spring Bootのウェルカムページとファビコン Spring Bootはindex.htmlとfavicon.icoという名のファイルを特別扱いする。 前者がウェルカムページで後者がファビコン。 ウェルカムページ Spring Bootのリファレンスガイドにもちらっとかいてあるけど、リソースロケーションにindex.htmlというファイルを置いておくと、それがウェルカムページとして設定され、URLのパスにルート(e.g.
-              </div>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        <div class="col-sm-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2017/01/17/goslings-development-memo4-spring-boot-logging/" class="post post-topix">
-              <header class="eyecatch text-center">
-                <img src="/images/goslings-spring.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Tue, Jan 17, 2017</span>
-              </div>
-              <h2 class="title">Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)</h2>
-              <div class="summary">
-                「Goslings開発メモ - その3: Spring Boot続続編 (例外処理)」の続き。 Spring Boot続続続編で、ロギングについて。 (adsbygoogle = window.adsbygoogle || []).push({}); Spring Bootアプリにおけるロギング Spring Bootアプリにおけるロギングについては公式のマニュアルとHow-toガイドを読むべし。 この記事にはこれらの内容をまとめておく。 Spring Bootは内部でのロギングにApacheのCommons Loggingを使っている。 Commons Loggingはファサードライブラリだ。 つまり、Commons LoggingはロギングAPIだけをアプリケーションに提供し、実際のログ出力処理をするロギング実装ライブラリへの橋渡しとして機能する。 ロギング実装ライブラリには色々な選択肢があるが、Spring BootはJUL、 Log4j 2、Logback用のデフォルト設定を備えているので、これらのいずれかを使うのが楽であろう。 全てのスターターはspring-boot-starter-loggingというロギングスターターに依存していて、これがLogbackを使うので、普通はそのままLogbackを使うことになる。 spring-boot-starter-loggingは、JUL、Commons Logging、Log4j、SLF4Jによるログ出力をLogbackにルーティングするため、アプリ側や他の依存ライブラリがこれらを使っていてもLogbackに一本化できる。 spring-boot-starter-loggingの代わりにspring-boot-starter-log4j2に依存し、Log4j 2を使う方法もあるが、Goslingsには普通にspring-boot-starter-loggingを使った。 また、Goslings本体のログ出力には、プレースホルダを使いたかったのでSLF4Jを使った。 Spring Bootアプリにおけるロギング設定 Spring Bootが備えているデフォルトのロギング設定は、ERROR、WARN、INFOレベルのログをいい感じにフォーマットしてコンソールに吐くというものになっている。 以下この設定の変更方法などを書く。 ファイルへのログ出力 ログをファイルにも吐くようにするには、logging.fileというプロパティでファイルパスを指定するか、logging.pathというプロパティでディレクトリパスを指定すればいい。 (後者の場合ログファイル名はspring.logになる。) Spring Bootアプリでプロパティを指定する方法は色々あり(こことかここ参照)、大抵はapplication.propertiesで指定するんだろうけど、手軽にコマンドラインで以下の様に指定することもできる。 java -jar build/libs/goslings-0.0.1.jar --logging.file=build/hoge.log ログファイルはデフォルトで10MBでローテーションする。 ログレベル ログレベルには重大度の低い方からTRACE、DEBUG、INFO、WARN、ERROR、FATALの6段階があり、指定したログレベル以上のログが出力される。(OFFというログ出力を止めるものもある。) つまりSpring BootのデフォルトのログレベルはINFOだということだ。(LogbackにはFATALがなくERRORとして出力される。) ログレベルはlogging.level.&lt;ロガー名&gt;という形式のプロパティで指定できる。 例えばコマンドラインから指定するなら以下の感じ。 java -jar build/libs/goslings-0.0.1.jar --logging.level.org.springframework.web=DEBUG 全ロガーのログレベルはlogging.level.rootで指定できる。 ロギング実装ライブラリの設定 ロギング実装ライブラリの設定ファイルをカスタマイズして、より詳細な設定をすることもできる。 Logbackの場合、クラスパスのルートに置かれたlogback-spring.xmlかlogback.xmlがロードされる。 設定ファイルの二重初期化を防いだりSpring Boot拡張設定を利用可能にするために、前者のファイル名が推奨されている。 (Groovyが使える環境ならlogback-spring.groovyでもいい。) いつものようにjavaコマンドでアプリを起動する場合は-jarオプションを使うため、-cpオプションでクラスパスを指定しても無視されてしまうので、基本はlogback-spring.xmlはjarの中に入れることになる。 プロジェクトのリソースディレクトリのトップ(デフォルトではsrc/main/resources/)にlogback-spring.xmlを置いておけば、GradleのJavaプラグインのprocessResourcesタスクによってjar内の適切な場所に取り込まれる。 logging.configプロパティで設定ファイルのパスを指定することもできる。
-              </div>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        <div class="col-sm-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2017/01/13/goslings-development-memo3-spring-boot-exception/" class="post post-topix">
-              <header class="eyecatch text-center">
-                <img src="/images/goslings-spring.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Fri, Jan 13, 2017</span>
-              </div>
-              <h2 class="title">Goslings開発メモ - その3: Spring Boot続続編 (例外処理)</h2>
-              <div class="summary">
-                「Goslings開発メモ - その2: Spring Boot続編 (DI)」の続き。 Spring Boot続続編で、例外処理について。 (adsbygoogle = window.adsbygoogle || []).push({}); Spring MVCアプリにおける例外処理 Goslingsは前々回書いたようにspring-boot-starter-webというスターターを使っていて、つまりSpring MVCアプリだ。 Spring MVCアプリにおける例外処理についてはちょっと古いがこの記事に詳しい。 まず、Goslingsの構成で例外処理を何も書かなかった場合、コントローラのリクエストハンドラから例外が投げられると、ログにスタックトレースが出力され、クライアントにはHTTPステータスコード500 (Internal Server Error)とともに以下の様なデフォルトのエラーページが返る。 なんだかこれでも十分な気がするが、実際にはちゃんと明示的に例外処理をしたほうがいいだろう。 エラー時に返すHTTPステータスコードをカスタマイズしたり、遷移するページを変えたりしたくなるだろうから。 記事によれば、リクエストハンドラ内で例外をキャッチして処理するのはイケてなくて、関心事の分離のために別の場所に処理を書くのが良いらしい。 Spring MVCアプリにおける例外処理には以下の3つの段階がある。 投げる例外をカスタマイズする 例外クラス毎の例外ハンドラをコントローラに実装する コントローラ間で共用する例外ハンドラクラスを作る 以下それぞれについて書く。 1. 投げる例外をカスタマイズする リクエストハンドラから投げる例外に@ResponseStatusをつけることで、クライアントに返すHTTPステータスコード(とリーズンフレーズ)をカスタマイズできる。 例えば以下のような例外を投げると、HTTPステータスコード500 (Internal Server Error)の代わりに400 (Bad Request)がクライアントに返る。 @ResponseStatus(HttpStatus.BAD_REQUEST) public final class BadRequestException extends RuntimeException { // 省略 } 2. 例外クラス毎の例外ハンドラをコントローラに実装する コントローラのメソッドに@ExceptionHandlerをつけてやると、そのメソッドは例外ハンドラになり、そのコントローラのリクエストハンドラから特定の例外が投げられたときの処理を書くことができる。 さらに例外ハンドラに@ResponseStatusをつければ、HTTPステータスコードをカスタマイズできる。 例外ハンドラの戻り値はリクエストハンドラのと同様に処理されるので、遷移するページ等も自由にカスタマイズできる。 Goslingsでは、上記BadRequestExceptionからは@ResponseStatusを削除したうえで、RestApiV1Controllerに以下の様に例外ハンドラを書いた。 public final class RestApiV1Controller { // 例外ハンドラ @ResponseStatus(HttpStatus.BAD_REQUEST) @ExceptionHandler(BadRequestException.class) ErrorInfo handleBadRequestException(HttpServletRequest req, Exception ex) { return new ErrorInfo(req.getRequestURL().toString(), ex); } } (RestApiV1Controller.javaの完全なソースはこちら) こう書くと、RestApiV1Controllerの任意のリクエストハンドラからBadRequestExceptionが投げられると、handleBadRequestExceptionが呼び出され、HTTPステータスコード400 (Bad Request)とともにクライアントにHTTPレスポンスが返る。 RestApiV1ControllerはREST APIコントローラなので、このHTTPレスポンスのボディは、handleBadRequestExceptionの戻り値であるErrorInfoオブジェクトをJSONに変換したものになる。 例外ハンドラの仮引数は、上のコードに書いたもののほか、サーブレット関係のクラスなど(e.g.
-              </div>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        <div class="col-sm-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2017/01/10/goslings-development-memo2-spring-boot-di/" class="post post-topix">
-              <header class="eyecatch text-center">
-                <img src="/images/goslings-spring.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Tue, Jan 10, 2017</span>
-              </div>
-              <h2 class="title">Goslings開発メモ - その2: Spring Boot続編 (DI)</h2>
-              <div class="summary">
-                「Goslings開発メモ - その1: Spring Boot編」の続き。 Spring Boot続編で、DIについて。 (adsbygoogle = window.adsbygoogle || []).push({}); DIとは DIはDependency Injectionの略。依存性注入と訳される。 これは、Javaの文脈で具体的目に言うと、あるクラスが依存する具象クラスのインスタンス化と取得をフレームワークに任せることで、具象クラス間の直接的な依存を排除し、よってコンポーネント間を疎結合にする手法。 これにより、アプリの拡張性を高めたり、テストがしやすくなったりする。(参考記事) Spring FrameworkはもともとこのDI機能を提供するフレームワーク(i.e. DIコンテナ)として普及した。 GoslingsでDI Goslingsサーバの内部機能はざっくり、クライアントからのREST API呼び出しを処理するユーザインタフェース層と、Gitリポジトリにアクセスするデータベース層に分かれる。 Gitリポジトリにアクセスする部分は今回はJGitで実装するが、将来的に別のライブラリで実装しなおす可能性が微レ存なのと、Goslingsの開発自体がWebアプリ開発の練習でもあるので、ちゃんとしたアーキテクチャでと思い、DAOパターンを使ってやった。 つまり例えば、GitのコミットオブジェクトはJGitのAPIではRevCommitクラスで表されるが、ユーザインタフェース層からはリソースクラスであるCommitクラス(前回参照)を扱う以下の様なDAOインターフェースを呼ぶようにし、JGit依存の実装とは切り離す。 public interface ObjectDao { public Commit[] getCommits(String token) throws DaoException; } (ObjectDao.javaの完全なソースはこれ) ObjectDaoを実装するObjectDaoImplクラスでは、以下の様にJGitを使ってごりごりと実装を書く。 public final class ObjectDaoImpl implements ObjectDao { // フィールド定義は省略 @Override public Commit[] getCommits(String token) { try { return StreamSupport.stream(resolver.getGit(token).log().all().call().spliterator(), false) .map(this::convertToCommit) .toArray(Commit[]::new); } catch (NoHeadException e) { // エラー処理 } } private Commit convertToCommit(RevCommit commit) { // RevCommitをCommitに変換する処理 } } ユーザインターフェース層はRestApiV1Controllerクラス(前回参照)のgetCommitsメソッドで、以下の様にObjectDaoを使いたい。 public final class RestApiV1Controller { private ObjectDao objectDao; @RequestMapping(path=&quot;{token}/objects/commits&quot;) public Commit[] getCommits(@PathVariable String token) { return objectDao.getCommits(token); } // 以下他のメソッド } ここで問題になるのが、RestApiV1ControllerのobjectDaoフィールドへのインスタンスの代入だが、RestApiV1Controller内(e.g.
-              </div>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        <div class="col-md-3 col-sm-4 col-xs-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/" class="post">
-              <header class="eyecatch text-center">
-                <img src="/images/goslings-spring.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Tue, Jan 3, 2017</span>
-              </div>
-              <h3 class="title">Goslings開発メモ - その1: Spring Boot編</h3>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-        
-        
-        <div class="col-md-3 col-sm-4 col-xs-6">
-          <article>
-            <a href="https://www.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/" class="post">
-              <header class="eyecatch text-center">
-                <img src="/images/goslings-logo.png" alt="eyecatch">
-              </header>
-              <div class="date text-center">
-                <span>Sun, Dec 11, 2016</span>
-              </div>
-              <h3 class="title">Goslings開発メモ - その0: 紹介と概要と設計編</h3>
-            </a>
-          </article>
-        </div>
-        
-        
-        
-      </div>
-    </div>
-  </div>
-  <div class="col-md-3">
-    <aside id="site-sidebar">
-      <div class="row">
-        <div class="col-md-12 col-sm-6 col-xs-12">
-  <div class="text-center custom-partial">
-    
-  </div>
-  <section class="sidebar-bordered">
-    
-    <div id="profile">
-      <div class="text-center">
-        <img id="profile-photo" src="/images/nopicture.png" alt="profile">
-      </div>
-      <div class="data">
-        <h4 id="profile-username" class="post-title"></h4>
-        
-        <span id="profile-birth">DOB: Dec 14, 1983</span>
-        
-        <div id="social-links">
-          
-          <a href="https://www.facebook.com/yamada.kaito.90" target="_blank"><i class="fa fa-facebook-square"></i></a>
-          
-          
-          
-          <a href="https://github.com/Kaitoy" target="_blank"><i class="fa fa-github-square"></i></a>
-          
-        </div>
-        <div id="profile-description"></div>
-        <ul id="profile-urls" class="post-tags"></ul>
-      </div>
-    </div>
-    
-  </section>
-</div>
-
-<div class="col-md-12 col-sm-6 col-xs-12">
-  <section>
-    <h3>Tags</h3>
-    
-    <div id="tag-cloud" class="text-center">
-      
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/agile">agile</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/ansible">ansible</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/atom">atom</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/aws">aws</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/aws-ecs">aws-ecs</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/babel">babel</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/blog">blog</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/bow">bow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/cdn">cdn</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/ci">ci</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/cnn">cnn</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/coursera">coursera</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/css-modules">css-modules</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/deep-learning">deep-learning</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/disturb-me">disturb-me</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/docker">docker</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/elasticsearch">elasticsearch</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/enzyme">enzyme</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/eslint">eslint</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/esxi">esxi</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/filebeat">filebeat</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/firedrop">firedrop</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/flow">flow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/frontend">frontend</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/git">git</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/github">github</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/golang">golang</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/goslings">goslings</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/groovy">groovy</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/headless-browser">headless-browser</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/hibernate">hibernate</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/hugo">hugo</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/impress.js">impress.js</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/japanese-word-selection">japanese-word-selection</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/javascript">javascript</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jekyll">jekyll</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jest">jest</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jgit">jgit</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/jvm-language">jvm-language</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/keras">keras</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kotlin">kotlin</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kubeadm">kubeadm</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kubebuilder">kubebuilder</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/kubernetes">kubernetes</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/license">license</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/logstash">logstash</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/machine-learning">machine-learning</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/management">management</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/material-ui">material-ui</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/minikube">minikube</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/msys2">msys2</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/nanoserver">nanoserver</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/neural-network">neural-network</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/nlp">nlp</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/oop">oop</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/orm">orm</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/packer">packer</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/pcap4j">pcap4j</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/postcss">postcss</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/prettier">prettier</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/react">react</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/react-router">react-router</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/redux">redux</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/redux-saga">redux-saga</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/rnn">rnn</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/runc">runc</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/selenium">selenium</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/seo">seo</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/servicenow">servicenow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/skaffold">skaffold</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/spring">spring</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/spring-boot">spring-boot</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/styled-components">styled-components</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/stylelint">stylelint</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/subversion">subversion</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/tensorflow">tensorflow</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/test-framework">test-framework</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/typescript">typescript</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/vcs">vcs</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/webdriverio">webdriverio</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/webpack">webpack</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/windows">windows</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/yegor256">yegor256</a>
-      
-      
-      <a href="https://www.kaitoy.xyz/tags/zundoko">zundoko</a>
-      
-    </div>
-    
-  </section>
-</div>
-
-
-
-
+    <head>
+         
 
 <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<ins class="adsbygoogle"
-    style="display:block"
-    data-ad-client="ca-pub-6244473643910448"
-    data-ad-slot="1845600530"
-    data-ad-format="auto"></ins>
 <script>
-(adsbygoogle = window.adsbygoogle || []).push({});
+  (adsbygoogle = window.adsbygoogle || []).push({
+    google_ad_client: "ca-pub-6244473643910448",
+    enable_page_level_ads: true
+  });
 </script>
 
-<div class="col-md-12 col-sm-6 col-xs-12">
-  <div class="text-center custom-partial">
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/tags/spring-boot/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/tags/spring-boot/">
+
+
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="[To Be Decided ~]$ find /tags/spring-boot/">
+  <title>[To Be Decided ~]$ find /tags/spring-boot/</title>
+  <meta property="og:description" content="Kaitoy&#39;s Personal Tech Blog">
+  <meta name="description" content="Kaitoy&#39;s Personal Tech Blog">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/title.png">
+
+
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <style>
+
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&amp;subset=japanese">
+
+
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai.min.css"> 
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
     
-  </div>
-</div>
 
-      </div>
-    </aside>
-  </div>
-</div>
-
-        <div class="text-center custom-partial">
-          
-        </div>
-      </div>
-    </main>
-
-    <footer id="site-footer" class="text-center font-logo">
-      <p>&copy;  2015 -  2019  Kaito Yamada </p>
-      <p>Powered by <a href="http://gohugo.io" target="_blank">Hugo</a></p>
-      <p>
-        Theme: <a target="_blank" href="https://github.com/dim0627/hugo_theme_robust">Robust</a>
-        designed by <a target="_blank" href="http://yet.unresolved.xyz">Daisuke Tsuji</a>
-      </p>
-    </footer>
-
-    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
-    <script src="https://www.kaitoy.xyz/js/jquery.bxslider.min.js"></script>
-    
-    <script>
-      $(document).ready(function(){
-        $('.bxslider').bxSlider({
-          speed: 1,
-          preloadImages: 'all'
-        });
-      });
-    </script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/highlight.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dos.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/yaml.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/dockerfile.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/go.min.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
 
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
+        <link rel="alternate" type="application/rss+xml" href="https://www.kaitoy.xyz/tags/spring-boot/index.xml" title="To Be Decided" />
+        
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
     
-    <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-    ga('create', 'UA-65248565-1', 'auto');
-    ga('send', 'pageview');
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v3.2"></script>
 
-    </script>
+        <nav class="navbar navbar-default navbar-fixed-top">
 
-    <script>
-    $(function() {
-      var url = "https://ja.gravatar.com/5fbe47b2a4b3637dd26dfc9a49381895.json?callback=?";
-      $.getJSON(url)
-        .done(function(data) {
-          var entry = data.entry[0];
-          $("#profile-photo").attr("src", entry.photos[0].value);
-          $("#profile-username").html(entry.name.familyName + " " + entry.name.givenName);
-          $("#profile-description").html(entry.aboutMe);
-          entry.urls.forEach(function(el){
-            $("#profile-urls").append($("<li><a href='" + el.value + "'>" + el.title + "</a></li>"));
-          });
-          $("#profile").show();
-        });
-    });
-    </script>
-  </body>
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">spring-boot</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    
+
+    <h2>spring-boot</h2>
+
+     <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/01/24/goslings-development-memo5-spring-boot-static-resources/">Goslings開発メモ - その5: Spring Boot最終編 (静的リソース処理)</a></h4>
+    <h5>Tue, Jan 24, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring"><kbd class="item-tag">spring</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring-boot"><kbd class="item-tag">spring-boot</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/01/17/goslings-development-memo4-spring-boot-logging/">Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)</a></h4>
+    <h5>Tue, Jan 17, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring"><kbd class="item-tag">spring</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring-boot"><kbd class="item-tag">spring-boot</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/01/13/goslings-development-memo3-spring-boot-exception/">Goslings開発メモ - その3: Spring Boot続続編 (例外処理)</a></h4>
+    <h5>Fri, Jan 13, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring"><kbd class="item-tag">spring</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring-boot"><kbd class="item-tag">spring-boot</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/01/10/goslings-development-memo2-spring-boot-di/">Goslings開発メモ - その2: Spring Boot続編 (DI)</a></h4>
+    <h5>Tue, Jan 10, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring"><kbd class="item-tag">spring</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring-boot"><kbd class="item-tag">spring-boot</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/01/03/goslings-development-memo1-spring-boot/">Goslings開発メモ - その1: Spring Boot編</a></h4>
+    <h5>Tue, Jan 3, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring"><kbd class="item-tag">spring</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring-boot"><kbd class="item-tag">spring-boot</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/12/11/goslings-development-memo0-intro-design/">Goslings開発メモ - その0: 紹介と概要と設計編</a></h4>
+    <h5>Sun, Dec 11, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring"><kbd class="item-tag">spring</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring-boot"><kbd class="item-tag">spring-boot</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/jgit"><kbd class="item-tag">jgit</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">aws</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws-ecs"><kbd class="item-tag">aws-ecs</kbd></a>
+    
+
+</div>
+ 
+
+    
+
+</main>
+
+
+
+
+        <footer>
+
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script>window.twttr = (function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0],
+            t = window.twttr || {};
+          if (d.getElementById(id)) return t;
+          js = d.createElement(s);
+          js.id = id;
+          js.src = "https://platform.twitter.com/widgets.js";
+          fjs.parentNode.insertBefore(js, fjs);
+
+          t._e = [];
+          t.ready = function(f) {
+            t._e.push(f);
+          };
+
+          return t;
+        }(document, "script", "twitter-wjs"));</script>
+
+    </body>
+
 </html>
 

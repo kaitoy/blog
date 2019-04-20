@@ -2,7 +2,7 @@
 categories = [ "Programing" ]
 date = "2017-08-25T00:29:39+09:00"
 draft = false
-eyecatch = "react.png"
+cover = "react.png"
 slug = "if-youre-a-startup-you-should-not-use-react-reflecting-on-the-bsd-patents-license"
 tags = ["react", "license"]
 title = "スタートアップはReactを使うべきではない (BSD + patentsライセンスを考慮して) — もし、いつか大企業に買収されたいと望むなら"
@@ -77,7 +77,7 @@ Facebook、それが君らの考えるオープンソースなのか?
 <br>
 
 
-## Fridgebook Inc.
+# Fridgebook Inc.
 例として、君の会社「Fridgebook Inc.」はインテリジェントな冷蔵庫を販売しているとしよう。
 君の冷蔵庫にはスクリーンが付いていて、独自のアプリケーションを実行していて、そのUIにはReactが使われている。
 
@@ -114,7 +114,7 @@ __回避策?
 ここでは私は単にギブアンドテイクのバランスを分析しているだけだ。
 ```
 
-## Facebookの釈明
+# Facebookの釈明
 私が最後に見たとき、オープンソースの哲学は、よりよいソフトウェアを構築し、技術をより先に推し進めるために、有能な人々が砂粒に貢献するコミュニティを主要なテーマとしていた。
 
 それが、Apache Software FoundationやLinux Foundationなどの、__オープンソース界の主要な基準組織の精神だ__。
@@ -155,7 +155,7 @@ __残念ながら、これはうまくいかず、以下のような要因によ
 
 (2012) http://www.droid-life.com/2012/01/24/web-of-tech-patent-lawsuits-infographic/
 
-## Facebookによるオープンソース哲学の非倫理的な利用
+# Facebookによるオープンソース哲学の非倫理的な利用
 特許はアイデアや発明を保護する。
 ほとんどの場合特許主張裁判は、白黒が付くのではなく、勝ち負けになる。
 __侵害の評価は複雑でコストがかかる。__
@@ -183,7 +183,7 @@ FBが君の特許を侵害したという85％の確信を持っていたとし�
 
 <br>
 
-## なぜスタートアップはReactを避けるべきなのか
+# なぜスタートアップはReactを避けるべきなのか
 君がスタートアップを立ち上げているなら、君と君の投資家は、いつかは百万ドルの価値のある出口に到達することを望んでいるんだろう?
 
 君は、すべての買収元、特にApple、Microsoft、Google、Amazonなどの大企業に扉を開いておきたい。
@@ -199,7 +199,7 @@ __そうした企業は、Facebookに対抗して特許兵器を保有してい�
 
 よって、選択肢を残しておきたいのであれば…
 
-## 悪いことは言わない、Reactを使うのをやめろ
+# 悪いことは言わない、Reactを使うのをやめろ
 私は特に[Preact](https://github.com/developit/preact)が好きだが、FacebookにVirtual DOMやReact APIのソフトウェア特許を持っているかは定かではない。
 
 もし持っていたら、Preactはそれらの特許を侵害しているかもしれないので、[vue.js](https://vuejs.org/)や[cycle.js](https://cycle.js.org/)も見てみるといい。

@@ -2,7 +2,7 @@
 categories = [ "Text Editor", "Presentation" ]
 date = "2015-12-19T23:37:08-07:00"
 draft = false
-eyecatch = "atom_editor_logo.svg.png"
+cover = "atom_editor_logo.svg.png"
 slug = "atom-impress"
 tags = [ "atom", "impress.js" ]
 title = "impress.jsでのプレゼン資料作成をサポートするAtomパッケージ - impress"
@@ -16,7 +16,7 @@ title = "impress.jsでのプレゼン資料作成をサポートするAtomパッ
 
 {{< google-adsense >}}
 
-## impress.js
+# impress.js
 [__impress.js__](https://github.com/impress/impress.js)というJavaScriptライブラリがある。
 HTML5とCSS3とJavaScriptでプレゼン資料を作るためのライブラリで、これを使うと、[PowerPoint](https://products.office.com/ja-jp/powerpoint)や[Keynote](http://www.apple.com/jp/mac/keynote/)といった従来のツールによるものからは一線を画す斬新な資料を作ることができる。
 
@@ -45,7 +45,7 @@ impress.jsはスライド(impress.js用語ではステップ)間の遷移を制�
 
 ちょっとした図を書くにも、テキストエディタでちまちまHTMLとCSSを書いて、ブラウザで表示して確認して、思った通りになっていなければディベロッパツールでデバッグして、Web UIでも書いていたんだっけという気になってくる。
 
-## impressパッケージ
+# impressパッケージ
 そんな負担を少しでも軽くしたいと思って作ったのが[impressパッケージ](https://atom.io/packages/impress)。
 
 同じ目的のツール(i.e. オーサリングツール)は実は既に[いくつかあった](https://github.com/impress/impress.js/wiki/Examples-and-demos#authoring-tools)。
@@ -76,7 +76,7 @@ impress.jsはスライド(impress.js用語ではステップ)間の遷移を制�
 あとできればアニメーションを付ける機能とかも。
 Hovercraft!みたいにHTML書かなくてもいいよ、というのを目指すつもりはなくて、あくまでもコーダーのための、コーディングを補助するツールを目指す。
 
-## パッケージのサブモジュール
+# パッケージのサブモジュール
 impressパッケージは、新規資料プロジェクトの雛形生成機能などのため、impress.jsプロジェクト(の[フォーク](https://github.com/kaitoy/impress.js))をサブモジュールとしてとりこんでいる。
 
 最初はGitのサブモジュールコマンド(`git submodule`)を使って取り込んでいて、上手くいっているように見えたが、パブリッシュ後に次のような問題が発生した。
@@ -93,8 +93,8 @@ impressパッケージは、新規資料プロジェクトの雛形生成機能�
 これを使ってimpressパッケージを構成しなおしてみたら件の問題が解決した。
 因みにやりかたは、impressパッケージプロジェクトのルートに`impress.js`というフォルダを作った後、以下のコマンドを実行しただけ。
 
-```sh
-git subtree add --prefix impress.js git@github.com:kaitoy/impress.js.git master --squash
+```shell
+# git subtree add --prefix impress.js git@github.com:kaitoy/impress.js.git master --squash
 ```
 
 <br>

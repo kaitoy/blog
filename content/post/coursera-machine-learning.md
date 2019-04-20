@@ -2,7 +2,7 @@
 categories = ["Programing"]
 date = "2017-12-22T10:20:44+09:00"
 draft = false
-eyecatch = "cml.png"
+cover = "cml.png"
 slug = "coursera-machine-learning"
 tags = ["coursera", "machine learning"]
 title = "CourseraのMachine Learningコースを修了した"
@@ -12,13 +12,13 @@ title = "CourseraのMachine Learningコースを修了した"
 
 {{< google-adsense >}}
 
-## Courseraとは
+# Courseraとは
 Courseraは、2012年にスタンフォード大学のコンピュータ工学科の2人の教授によって設立されたサービスで、世界トップクラスの大学の講座をオンラインで受けることができるもの。
 東京大学とも提携している。
 
 講座の一部は無料で受けることができる。
 
-## CourseraのMachine Learningコースとは
+# CourseraのMachine Learningコースとは
 Machine Learningコースは、Courseraの設立者の一人であるAndrew Ngによる、機械学習の基礎から実践まで浅く広く(?)学べる世界的に有名な講座。
 Andrew先生は一時期Googleで働き、[Google Brain](https://en.wikipedia.org/wiki/Google_Brain)というDeep Learningのプロジェクトをリードしていたこともある機械学習のエキスパートで、さらにスタンフォードの教授だっただけあって教え方が非常にうまくてわかりやすい。
 

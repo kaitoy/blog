@@ -2,7 +2,7 @@
 categories = ["Programing"]
 date = "2018-06-30T16:56:34+09:00"
 draft = false
-eyecatch = "packer-esxi.png"
+cover = "packer-esxi.png"
 slug = "packer-esxi"
 tags = ["packer", "esxi"]
 title = "PackerでESXiにVMを自動構築"
@@ -14,7 +14,7 @@ title = "PackerでESXiにVMを自動構築"
 
 {{< google-adsense >}}
 
-## 前回との違い
+# 前回との違い
 
 VirtualBoxとESXiとで変えないといけない部分は、主にPackerのbuilderの定義。
 前回はvirtualbox-isoだったけど、今回は[vmware-iso](https://www.packer.io/docs/builders/vmware-iso.html)を使う。
@@ -27,7 +27,7 @@ VirtualBoxとESXiとで変えないといけない部分は、主にPackerのbui
 
 あとは、Nested Virtualizationでやった(下記)ので、すごく遅くて、色々タイムアウトを伸ばしたりしてやる必要があった。
 
-## ESXi環境
+# ESXi環境
 
 ESXi(というかVMware vSphere Hypervisor)は、現時点での最新の6.7を使用。
 自前のWindows 10 HomeのノートPC上で動くVMware Player 12で作ったVMにESXiをインストールして環境を作った。
@@ -79,7 +79,7 @@ Packerから操作するには、以下の設定をする必要がある。
         esxcli network firewall refresh
         ```
 
-## Packer実行
+# Packer実行
 
 設定ファイルが出来てESXi環境が用意できれば、Packer実行は前回と一緒。
 

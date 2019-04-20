@@ -2,7 +2,7 @@
 categories = [ "Web" ]
 date = "2017-03-05T23:28:03-07:00"
 draft = false
-eyecatch = "firedrop.png"
+cover = "firedrop.png"
 slug = "firedrop-private-beta"
 tags = [ "firedrop", "goslings" ]
 title = "Firedrop(プライベートベータ)が全く期待外れだった件"

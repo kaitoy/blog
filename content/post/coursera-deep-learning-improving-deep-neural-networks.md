@@ -2,7 +2,7 @@
 categories = ["Programing"]
 date = "2018-01-12T23:41:57+09:00"
 draft = false
-eyecatch = "deeplearning.ai.png"
+cover = "deeplearning.ai.png"
 slug = "coursera-deep-learning-improving-deep-neural-networks"
 tags = ["coursera", "machine learning", "deep learning", "neural network", "tensorflow"]
 title = "CourseraのDeep Learning SpecializationのImproving Deep Neural Networks: Hyperparameter tuning, Regularization and Optimizationコースを修了した"

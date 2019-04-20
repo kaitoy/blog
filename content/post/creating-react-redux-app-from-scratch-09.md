@@ -2,7 +2,7 @@
 categories = ["Programming"]
 date = "2018-11-02T13:45:56+09:00"
 draft = false
-eyecatch = "react-router-seeklogo.com.svg"
+cover = "react-router-seeklogo.com.svg"
 slug = "creating-react-redux-app-from-scratch-09"
 tags = ["react", "frontend", "redux", "react-router"]
 title = "React + Reduxアプリケーションプロジェクトのテンプレートを作る ― その9: React Router"
@@ -91,7 +91,7 @@ React Routerは、宣言的にフロントエンドルーティングを実現�
 Reduxとともに使う場合は、[Connected React Router](https://github.com/supasate/connected-react-router)を使う。
 Connected React Routerには[history](https://www.npmjs.com/package/history)が必要。
 
-```cmd
+```shell
 yarn add react-router-dom connected-react-router history
 ```
 

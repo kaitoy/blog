@@ -2,10 +2,11 @@
 categories = [ "Programing" ]
 date = "2017-10-10T00:10:59+09:00"
 draft = false
-eyecatch = "kubernetes_goslings.png"
+cover = "kubernetes_goslings.png"
 slug = "goslings-on-kubernetes"
 tags = [ "goslings", "kubernetes", "minikube", "docker" ]
 title = "Kubernetes 1.8が出たので、Minikubeを触ってみる"
+highlightLanguages = ["dos"]
 +++
 
 [Kubernetes](https://kubernetes.io/)1.8のリリースが話題になっていたので、ちょっと触って見たという話。
@@ -15,7 +16,7 @@ title = "Kubernetes 1.8が出たので、Minikubeを触ってみる"
 
 {{< google-adsense >}}
 
-## Kubernetesとは
+# Kubernetesとは
 KubernetesはOSSのコンテナオーケストレーションツール。
 英語だとクーバネティスみたいに発音する。
 Googleが自身のコンテナ技術である[Borg](https://research.google.com/pubs/pub43438.html)の運用で培ったノウハウを活かして開発したもの。
@@ -62,7 +63,7 @@ kubeletがコンテナを扱うためのコンテナランタイムは、普通�
 これをするのが[kube-proxy](https://kubernetes.io/docs/admin/kube-proxy/)。
 ロードバランシングもしてくれる。
 
-## Kubernetesオブジェクトとは
+# Kubernetesオブジェクトとは
 Kubernetesオブジェクトは、Kubernetesクラスタ上で機能する構成要素を表現するもの。
 オブジェクトは[specとstatus](https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/#object-spec-and-status)を持ち、オブジェクトに期待する状態やふるまい(spec)を定義しておくと、Kubernetesが実際の状態(status)をそれに合わせてくれる。
 宣言的。
@@ -147,7 +148,7 @@ Kubernetesオブジェクトは、Kubernetesクラスタ上で機能する構成
 
 今回Goslingsを動かすのに使ったのは、Pod、Deployment、ReplicaSet、Service (NodePort)。
 
-## Podネットワーク
+# Podネットワーク
 ちょっと細かい話だけど、Pod間の通信はどうなっているかという話についてちょっと調べたのでざっくり書いておく。
 
 普通の[Dockerネットワーク](https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/#docker-network)だと、コンテナはdocker0という仮想ブリッジ上のプライベートネットワークで動くため、同じホスト上のコンテナ間は通信できるけど、別のホスト上のコンテナ通信させたい場合は、ホストのIPアドレスのポートを割り当ててやらなければいけない。
@@ -162,7 +163,7 @@ Kubernetesオブジェクトは、Kubernetesクラスタ上で機能する構成
 * [Romana](https://github.com/romana/romana/tree/master/containerize#using-kubeadm)
 * [Weave Net](https://www.weave.works/docs/net/latest/kube-addon/)
 
-## Minikubeとは
+# Minikubeとは
 Kubernetesクラスタを構築する方法は[いくつかある](https://kubernetes.io/docs/setup/pick-right-solution/)が、中でももっとも簡単な方法がMinikube。
 
 Minikubeは、単一NodeのKubernetesクラスタを詰めたVMをダウンロードして起動して、ローカルのkubectlから使えるようにしてくれるツール。
@@ -170,7 +171,7 @@ Linux、Windows、OS Xで動き、開発やテスト用途のKubernetes環境と
 
 ちょっと[Vagrant](https://www.vagrantup.com/)っぽい感じ。Kubernetes専用の。
 
-## Minikubeインストール
+# Minikubeインストール
 [Kubernetesのドキュメント](https://kubernetes.io/docs/tasks/tools/install-minikube/)にしたがって、Minikubeをインストールする。
 環境はWindows 10 Home x64。
 
@@ -217,7 +218,7 @@ https://storage.googleapis.com/kubernetes-release/release/v1.7.5/bin/windows/amd
 以上でMinikubeの環境ができた。
 簡単。
 
-## Minikube起動
+# Minikube起動
 Minikubeは、`minikube start`で起動することができ、Minikubeが起動したらすぐにKubernetesをいじれるようになる。
 
 ```cmd

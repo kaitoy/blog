@@ -2,7 +2,7 @@
 categories = ["Programming"]
 date = "2018-10-01T07:54:53+09:00"
 draft = false
-eyecatch = "redux.png"
+cover = "redux.png"
 slug = "creating-react-redux-app-from-scratch-07"
 tags = ["react", "frontend", "redux"]
 title = "React + Reduxアプリケーションプロジェクトのテンプレートを作る ― その7: React Redux"
@@ -25,7 +25,7 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 
 使うのは[React Redux](https://redux.js.org/basics/usagewithreact)。
 
-```cmd
+```shell
 yarn add react-redux
 ```
 

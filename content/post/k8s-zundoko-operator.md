@@ -2,10 +2,11 @@
 categories = ["Programming"]
 date = "2019-03-08T17:29:16+09:00"
 draft = false
-eyecatch = "kubernetes.png"
+cover = "kubernetes.png"
 slug = "k8s-zundoko-operator"
 tags = ["kubernetes", "kubebuilder", "zundoko", "golang"]
 title = "ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた"
+highlightLanguages = ["go"]
 +++
 
 <blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">Javaの講義、試験が「自作関数を作り記述しなさい」って問題だったから<br>「ズン」「ドコ」のいずれかをランダムで出力し続けて「ズン」「ズン」「ズン」「ズン」「ドコ」の配列が出たら「キ・ヨ・シ！」って出力した後終了って関数作ったら満点で単位貰ってた</p>&mdash; てくも (@kumiromilk) <a href="https://twitter.com/kumiromilk/status/707437861881180160">2016年3月9日</a></blockquote>
@@ -87,7 +88,7 @@ Kuberbuilderを使うには[Go](https://golang.org/)、[dep](https://github.com/
 
     Goは[公式サイト](https://golang.org/dl/)からLinux用アーカイブをダウンロードして展開して、そのbinディレクトリにPATH通すだけでインストールできる。
 
-    ```sh
+    ```shell
     $ go version
     go version go1.11.4 linux/amd64
     ```
@@ -95,7 +96,7 @@ Kuberbuilderを使うには[Go](https://golang.org/)、[dep](https://github.com/
     あと、作業ディレクトリを作って`GOPATH`を設定しておく。
     `~/go/`を作業ディレクトリとする。
 
-    ```sh
+    ```shell
     $ export GOPATH=$HOME/go
     $ echo 'export GOPATH=$HOME/go' >> ~/.profile
     $ mkdir $GOPATH/bin
@@ -109,7 +110,7 @@ Kuberbuilderを使うには[Go](https://golang.org/)、[dep](https://github.com/
     Go公式の依存ライブラリ管理ツール。
     コマンド一発でインストールできる。
 
-    ```sh
+    ```shell
     $ curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
     ```
 
@@ -117,7 +118,7 @@ Kuberbuilderを使うには[Go](https://golang.org/)、[dep](https://github.com/
 
     バイナリをPATHの通ったところにダウンロードするだけ。
 
-    ```sh
+    ```shell
     $ curl -L https://github.com/kubernetes-sigs/kustomize/releases/download/v2.0.3/kustomize_2.0.3_linux_amd64 -o /usr/local/bin/kustomize
     $ chmod +x /usr/local/bin/kustomize
     ```
@@ -144,7 +145,7 @@ Kuberbuilderを使うには[Go](https://golang.org/)、[dep](https://github.com/
 
 Zundoko Operatorのプロジェクトを生成する。
 
-```sh
+```shell
 $ mkdir -p $GOPATH/src/github.com/kaitoy/zundoko-operator
 $ cd $GOPATH/src/github.com/kaitoy/zundoko-operator
 $ kubebuilder init --owner kaitoy
@@ -168,7 +169,7 @@ $ kubebuilder init --owner kaitoy
 
 HikawaとZundokoとKiyoshiのCRDを生成する。
 
-```sh
+```shell
 $ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Hikawa
 $ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Zundoko
 $ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Kiyoshi
@@ -431,7 +432,7 @@ func createZundoko(instance *zundokokiyoshiv1beta1.Hikawa, r *ReconcileHikawa, n
 
 API定義などの記述を反映させるため、CRDとかrbac_role.yamlとかzz_generated.deepcopy.goを再生成する。
 
-```sh
+```shell
 $ make generate
 $ make manifest
 ```
@@ -441,7 +442,7 @@ $ make manifest
 Zundoko OperatorはPodとして動かすので、そのDockerイメージをビルドしておく必要がある。
 DockerfileもKubebuilderが生成してくれているので、それをそのまま使えばいい。
 
-```sh
+```shell
 $ docker build -t kaitoy/zundoko-operator:latest .
 ```
 
@@ -469,7 +470,7 @@ Zundoko OperatorをデプロイするKubernetesマニフェストはkustomizeで
 
 で、以下のコマンドで生成できる。
 
-```sh
+```shell
 $ kustomize build config/default > zundoko-operator.yaml
 ```
 
@@ -477,7 +478,7 @@ $ kustomize build config/default > zundoko-operator.yaml
 
 Zundoko Operatorをデプロイするには、生成したCRDと、kustomizeの出力を`kubectl apply`してやればいい。
 
-```sh
+```shell
 $ kubectl apply -f zundoko-operator/config/crds/zundokokiyoshi_v1beta1_hikawa.yaml
 $ kubectl apply -f zundoko-operator/config/crds/zundokokiyoshi_v1beta1_kiyoshi.yaml
 $ kubectl apply -f zundoko-operator/config/crds/zundokokiyoshi_v1beta1_zundoko.yaml
@@ -488,7 +489,7 @@ $ kubectl apply -f zundoko-operator/zundoko-operator.yaml
 
 Hikawaを登録するとズンドコしはじめる。
 
-```sh
+```shell
 $ cat <<EOF | kubectl create -f -
 apiVersion: zundokokiyoshi.kaitoy.github.com/v1beta1
 kind: Hikawa

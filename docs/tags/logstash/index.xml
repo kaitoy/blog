@@ -1,290 +1,39 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>To Be Decided </title>
+    <title>logstash on To Be Decided</title>
     <link>https://www.kaitoy.xyz/tags/logstash/</link>
+    <description>Recent content in logstash on To Be Decided</description>
+    <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <author>Kaito Yamada</author>
-    <rights>(C) 2019</rights>
-    <updated>2017-04-04 09:24:12 &#43;0900 JST</updated>
-
+    <copyright>© 2015 Kaito Yamada</copyright>
+    <lastBuildDate>Tue, 04 Apr 2017 09:24:12 +0900</lastBuildDate>
     
-      
-        <item>
-          <title>Elasticsearch、Logstash、Filebeat、elasticsearch-headでログを見てみた</title>
-          <link>https://www.kaitoy.xyz/2017/04/04/elasticsearch-in-nnmi-log/</link>
-          <pubDate>Tue, 04 Apr 2017 09:24:12 JST</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2017/04/04/elasticsearch-in-nnmi-log/</guid>
-          <description>
-
-&lt;p&gt;&lt;a href=&#34;http://www8.hp.com/jp/ja/software-solutions/network-node-manager-i-network-management-software/&#34;&gt;NNMi&lt;/a&gt;ログを&lt;a href=&#34;https://www.elastic.co/jp/products/beats/filebeat&#34;&gt;Filebeat&lt;/a&gt;で集めて&lt;a href=&#34;https://www.elastic.co/jp/products/logstash&#34;&gt;Logstash&lt;/a&gt;で構造化して&lt;a href=&#34;https://www.elastic.co/jp/products/elasticsearch&#34;&gt;Elasticsearch&lt;/a&gt;に入れて&lt;a href=&#34;https://mobz.github.io/elasticsearch-head/&#34;&gt;elasticsearch-head&lt;/a&gt;で見てみたけど、ログ量が少なかったせいかあんまり恩恵が感じられなかった話。&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h1 id=&#34;elasticsearchとは&#34;&gt;Elasticsearchとは&lt;/h1&gt;
-
-&lt;p&gt;Elasticsearchは&lt;a href=&#34;https://www.elastic.co/&#34;&gt;Elastic社&lt;/a&gt;が開発している&lt;a href=&#34;https://www.elastic.co/products&#34;&gt;Elastic Stack&lt;/a&gt;(旧ELK Stack)というオープンソースなデータ収集分析ツール群のコア製品。
-内部で&lt;a href=&#34;https://lucene.apache.org/core/&#34;&gt;Lucene&lt;/a&gt;を使っていて、そのためJava製。
-「分散型RESTful検索/分析エンジン」と自称しているが、スキーマレスでNoSQLなドキュメント指向分散データベース管理システムとも見れる。&lt;/p&gt;
-
-&lt;p&gt;Elasticsearchインスタンスはノードと呼ばれ、単一または複数のノードによるシステムはクラスタと呼ばれる。
-同一ネットワークに複数のノードを立ち上げると自動で相互検出してクラスタを構成してくれ、そこにデータを入れると自動で冗長化して分散配置してくれるので、堅牢でレジリエントでスケーラブルなシステムが簡単に構築できる。&lt;/p&gt;
-
-&lt;p&gt;Elasticsearchが管理するデータの最小単位はドキュメントと呼ばれ、これはひとつのJSONオブジェクトで、RDBにおける行にあたる。
-つまり、JSONオブジェクトの各フィールドがRDBにおける列にあたる。
-同種のドキュメントの集まりはインデックスと呼ばれ、これはRDBにおけるテーブルにあたる。
-テーブルのスキーマにあたるものはマッピングと呼ばれ、ドキュメントのフィールドの型情報(e.g. string, integer)などを含み、Elasticsearchが自動で生成してくれる。(指定もできる、というかすべきらしい。)
-インデックス内ではさらにタイプという属性でドキュメントをカテゴライズできる、が、マニュアルからはタイプはあまり&lt;a href=&#34;https://www.elastic.co/guide/en/elasticsearch/reference/5.2/general-recommendations.html#_avoid_types&#34;&gt;使ってほしくない&lt;/a&gt;雰囲気が感じられる。&lt;/p&gt;
-
-&lt;p&gt;(2018/4/25追記: 6.0で、一つのインデックスに複数のタイプを作ることができなくなり、7.0では完全に&lt;a href=&#34;https://www.elastic.co/guide/en/elasticsearch/reference/6.x/removal-of-types.html&#34;&gt;タイプが廃止される&lt;/a&gt;ことになった。)&lt;/p&gt;
-
-&lt;p&gt;因みに、インデックスがRDBのデータベースでタイプがRDBのテーブルと説明されることもあるが、これは古いたとえで、&lt;a href=&#34;https://www.elastic.co/blog/index-vs-type&#34;&gt;公式が間違いだったとしている&lt;/a&gt;ので忘れてあげたい。&lt;/p&gt;
-
-&lt;p&gt;インデックスは分散処理のために分割でき、分割した各部分はシャードと呼ばれる。
-シャードを冗長化のためにコピーしたものはレプリカシャードと呼ばれ、レプリカシャードにより成るインデックスはレプリカと呼ばれる。
-デフォルトでは、ひとつのインデックスは5つのシャードに分割され、1つのレプリカが作成される。&lt;/p&gt;
-
-&lt;p&gt;インターフェースはREST APIだけ。
-REST APIに検索したいドキュメントを投げると、ドキュメントのフィールド毎に自動で形態素解析とかして&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E8%BB%A2%E7%BD%AE%E3%82%A4%E3%83%B3%E3%83%87%E3%83%83%E3%82%AF%E3%82%B9&#34;&gt;転置インデックス&lt;/a&gt;作って保管してくれる。
-検索もJSONで表現したクエリをREST APIに投げることで結果をJSONで受け取ることができる。
-検索は転置インデックスや分散処理のおかげで速く、また&lt;a href=&#34;http://qiita.com/r4-keisuke/items/d653d26b6fc8b7955c05#%E3%82%B9%E3%82%B3%E3%82%A2%E3%83%AA%E3%83%B3%E3%82%B0&#34;&gt;スコアリング&lt;/a&gt;によってより適切な結果が得られるようになっている。&lt;/p&gt;
-
-&lt;p&gt;今回使ったのはv5.2.1。&lt;/p&gt;
-
-&lt;h1 id=&#34;logstashとは&#34;&gt;Logstashとは&lt;/h1&gt;
-
-&lt;p&gt;LogstashはElastic Stackに含まれる製品で、データ収集エンジンであり、データの受け取り、解析/加工、出力の三つの機能を持つリアルタイムパイプラインを構成する。
-この三つの機能はそれぞれ&lt;a href=&#34;https://www.elastic.co/guide/en/logstash/5.2/input-plugins.html&#34;&gt;インプットプラグイン&lt;/a&gt;、&lt;a href=&#34;https://www.elastic.co/guide/en/logstash/5.2/filter-plugins.html&#34;&gt;フィルタプラグイン&lt;/a&gt;、&lt;a href=&#34;https://www.elastic.co/guide/en/logstash/5.2/output-plugins.html&#34;&gt;アウトプットプラグイン&lt;/a&gt;で提供されていて、プラグインの組み合わせにより様々なパイプラインを構成できる。&lt;/p&gt;
-
-&lt;p&gt;インプットプラグインは単位データ(一回分のログなど)を受け取り、タイムスタンプなどのメタデータを付けたりパースしたりしてイベントを生成し、パイプラインに流す。
-フィルタプラグインはインプットプラグインからイベントを受け取り、設定されたルールに従って情報を拡充したり変更したり構造化したり秘匿情報を消したりしてアウトプットプラグインに渡す。
-アウトプットプラグインは指定されたディスク上のパスやデータベースやアプリやサービスにイベントを書き込んだり送信したりする。&lt;/p&gt;
-
-&lt;p&gt;名前の通りもともとログ収集ツールだったが、今では様々なデータに対応していて、テキストログファイルの他にsyslog、HTTPリクエストやJDBCなんかの入力を受けることもできる。&lt;/p&gt;
-
-&lt;p&gt;Ruby(とJava)で書かれている。&lt;/p&gt;
-
-&lt;p&gt;今回使ったのはv5.2.2で、プラグインは以下を使った。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;インプット: &lt;a href=&#34;https://www.elastic.co/guide/en/logstash/5.2/plugins-inputs-beats.html&#34;&gt;beats&lt;/a&gt; 3.1.12: Beats(後述)からデータを受け取るプラグイン。&lt;a href=&#34;https://github.com/logstash-plugins/logstash-input-beats/blob/v3.1.12/PROTOCOL.md&#34;&gt;Lumberjack&lt;/a&gt;というElastic社が開発しているプロトコルを使い、TCPネットワーク上でデータを受信する。&lt;/li&gt;
-&lt;li&gt;フィルタ: &lt;a href=&#34;https://www.elastic.co/guide/en/logstash/5.2/plugins-filters-grok.html&#34;&gt;grok&lt;/a&gt; 3.3.1: 正規表現でパターンマッチして非構造化データを構造化するプラグイン。ログ解析の定番で、例えば、ログからタイムスタンプ、クラス名、ログメッセージを抽出したりする。&lt;a href=&#34;https://github.com/logstash-plugins/logstash-patterns-core/tree/master/patterns&#34;&gt;組み込みのパターン&lt;/a&gt;が120個くらいあり、&lt;a href=&#34;https://httpd.apache.org/&#34;&gt;Apache HTTP Server&lt;/a&gt;やsyslogのログであれば自分で正規表現を書く必要はない。&lt;/li&gt;
-&lt;li&gt;アウトプット: &lt;a href=&#34;https://www.elastic.co/guide/en/logstash/5.2/plugins-outputs-elasticsearch.html&#34;&gt;elasticsearch&lt;/a&gt; 6.2.6: Elasticsearchにイベントをポストするプラグイン。&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;beatsとは&#34;&gt;Beatsとは&lt;/h1&gt;
-
-&lt;p&gt;BeatsもElastic Stackに含まれる製品で、データを採取してLogstashやElasticsearchに送信する製品群の総称。
-&lt;a href=&#34;https://github.com/elastic/beats/tree/master/libbeat&#34;&gt;libbeat&lt;/a&gt;というGoのライブラリを使って作られていて、以下のようなものがある。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/elastic/beats/tree/master/filebeat&#34;&gt;Filebeat&lt;/a&gt;: ログファイルからログを取得する。&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/elastic/beats/tree/master/heartbeat&#34;&gt;Heartbeat&lt;/a&gt;: リモートサービスをpingして生死監視する。&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/elastic/beats/tree/master/metricbeat&#34;&gt;Metricbeat&lt;/a&gt;: OSとその上のサービスやアプリから稼動情報を取得する。&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/elastic/beats/tree/master/packetbeat&#34;&gt;Packetbeat&lt;/a&gt;: パケットキャプチャしてネットワークのトラフィックを監視する。&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/elastic/beats/tree/master/winlogbeat&#34;&gt;Winlogbeat&lt;/a&gt;: Windowsのイベントログを取得する。&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;今回使ったのはFilebeat 5.2.2。&lt;/p&gt;
-
-&lt;p&gt;Filebeatは指定したログファイルを監視し、変更を検知してリアルタイムにログを送信してくれる。
-FilebeatとLogstashが仲良くやってくれて、バッファがあふれるなどすることによるログの損失が起きないようにしてくれるらしい。
-Logstashが単位データを受け取るので、ログファイルからひとつひとつのログを切り出すのはFilebeatの責務。
-一行一ログなら何も考えなくていいけど、大抵複数行のログがあるのでなんとかする必要がある。&lt;/p&gt;
-
-&lt;h1 id=&#34;elasticsearch-headとは&#34;&gt;elasticsearch-headとは&lt;/h1&gt;
-
-&lt;p&gt;elasticsearch-headは3rdパーティ製(個人製?)のElasticsearchのWeb UI。
-ElasticsearchのUIはREST APIしかないのでこういうものを使わないと辛い。&lt;/p&gt;
-
-&lt;p&gt;ElasticsearchのGUIとしてはElastic Stackの&lt;a href=&#34;https://www.elastic.co/jp/products/kibana&#34;&gt;Kibana&lt;/a&gt;が有名だけど、これは大量のログから統計的な情報を見るのに便利そうなものであって、今回やりたかった障害原因調査のためにログを細かく追うのには向いてなさそうだったので使わなかった。&lt;/p&gt;
-
-&lt;h1 id=&#34;実験環境&#34;&gt;実験環境&lt;/h1&gt;
-
-&lt;p&gt;今回は単にログがどんな感じに見えるか試したかっただけなので、全部ローカルで動かして、ローカルに置いた静的なログファイルを読むだけ。
-環境はWindows 7のノートPC。&lt;/p&gt;
-
-&lt;p&gt;ログファイルは&lt;code&gt;C:\Users\Kaito\Desktop\logs\&lt;/code&gt;においた&lt;code&gt;nnm-trace.log&lt;/code&gt;と&lt;code&gt;nnm-trace.log.1&lt;/code&gt;。
-これらはNNMiのメインログで、&lt;a href=&#34;https://docs.oracle.com/javase/8/docs/api/java/util/logging/package-summary.html&#34;&gt;JUL&lt;/a&gt;で出力されたもの。
-NNMiは無料のコミュニティエディションのv10.00をVMのCentOSに適当に入れて採った。&lt;/p&gt;
-
-&lt;p&gt;ログはだいたい以下の様な一行のもの。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;2017-03-15 19:09:55.896 INFO  [com.hp.ov.nms.spi.common.deployment.deployers.ExtensionServicesDeployer] (Thread-2) Deploying arris-device
-2017-03-15 19:09:55.923 WARNING [com.hp.ov.nms.topo.spi.server.concurrent.NmsTimerTaskImpl] (NmsWorkManager Scheduler) Skipping task execution because previous execution has not completed: com.hp.ov.nnm.im.NnmIntegrationModule$EnablerTask@3abdac77
-2017-03-15 19:09:56.120 INFO  [com.hp.ov.nms.disco.spi.DiscoExtensionNotificationListener] (Thread-2) Disco deployed mapping rules: META-INF/disco/rules/cards/ArrisCard.xml
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;たまに複数行のものがある。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;2017-03-15 19:13:30.872 INFO  [com.hp.ov.nms.trapd.narrowfilter.NarrowTrapAnalysis] (pool-1-thread-18)
-***** Hosted Object Trap Rate Report *****
-Hosted object trap storm detection and suppression stage started: Wed Mar 15, 2017 19:09:00.746 PM.
-
-***** General Statistics *****
-Hosted Object trap rate threshold: 10 traps/sec.
-Average trap rate: 0 traps/sec.
-Total traps received: 0.
-Total traps received without configuration: 0.
-Total traps suppressed: 0.
-Number of trap configurations: 1.
-
-
-***** END Hosted object trap storm report END *****
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;ログレベルの部分(e.g. INFO、WARNING)はロケールによって日本語になったりする。&lt;/p&gt;
-
-&lt;p&gt;スレッド名の部分(e.g. pool-1-thread-18)は丸括弧で囲われているが、丸括弧を含むことがある。&lt;/p&gt;
-
-&lt;p&gt;クラス名の部分(e.g. com.hp.ov.nms.trapd.narrowfilter.NarrowTrapAnalysis)は、パッケージ名がついていないこともある。デフォルトパッケージってこともないだろうに。&lt;/p&gt;
-
-&lt;h1 id=&#34;elastic-stackのインストールと設定&#34;&gt;Elastic Stackのインストールと設定&lt;/h1&gt;
-
-&lt;p&gt;Elastic Stackの三つはどれも、サイトからアーカイブをダウンロードして展開すればインストール完了。&lt;/p&gt;
-
-&lt;p&gt;Filebeatの設定は、展開したディレクトリのトップにある&lt;code&gt;filebeat.yml&lt;/code&gt;に以下を書いた。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;filebeat.prospectors:
-
-- input_type: log
-  paths:
-    - C:\Users\Kaito\Desktop\logs\*
-
-  multiline.pattern: &#39;^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3} &#39;
-  multiline.negate: true
-  multiline.match: after
-
-output.logstash:
-  hosts: [&amp;quot;localhost:5043&amp;quot;]
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;code&gt;paths&lt;/code&gt;でログファイルを指定して、&lt;code&gt;hosts&lt;/code&gt;でログの送信先を指定している。
-また、複数行のログに対応するため、&lt;code&gt;multiline&lt;/code&gt;という設定を書いていて、タイムスタンプで始まらない行は前の行の続きになるようにしている。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;Logstashの設定は、展開したディレクトリのトップに&lt;code&gt;pipeline.conf&lt;/code&gt;というファイルを作ってそこに以下を書いた。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;input {
-    beats {
-        port =&amp;gt; &amp;quot;5043&amp;quot;
-    }
-}
-filter {
-    grok {
-        match =&amp;gt; { &amp;quot;message&amp;quot; =&amp;gt; &amp;quot;%{TIMESTAMP_ISO8601:timestamp} (?&amp;lt;log_level&amp;gt;[^ ]+) +\[(?:%{JAVACLASS:class}|(?&amp;lt;class&amp;gt;[A-Za-z0-9_]+))\] \((?&amp;lt;thread&amp;gt;.+(?=\) ))\) (?&amp;lt;log_message&amp;gt;.*)&amp;quot;}
-    }
-}
-output {
-    elasticsearch {
-        hosts =&amp;gt; [ &amp;quot;localhost:9200&amp;quot; ]
-    }
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;code&gt;input&lt;/code&gt;と&lt;code&gt;output&lt;/code&gt;の部分は単にbeatsプラグインとelasticsearchプラグイン使うようにして送受信先を指定しているだけ。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;filter&lt;/code&gt;の部分は、grokプラグインを使うようにしつつそのパターンマッチングを指定している。
-FilebeatがJSONオブジェクトの&lt;code&gt;message&lt;/code&gt;というフィールドに一回分のログを入れて送ってくるので、そこからタイムスタンプ、ログレベル、クラス、スレッド、ログメッセージを抽出し、それぞれ&lt;code&gt;timestamp&lt;/code&gt;、&lt;code&gt;log_level&lt;/code&gt;、&lt;code&gt;class&lt;/code&gt;、&lt;code&gt;thread&lt;/code&gt;、&lt;code&gt;log_message&lt;/code&gt;というフィールドに入れるように設定。
-&lt;code&gt;TIMESTAMP_ISO8601&lt;/code&gt;と&lt;code&gt;JAVACLASS&lt;/code&gt;が組み込みのパターンで、それぞれタイムスタンプとJavaのクラス名にマッチする。
-けど&lt;code&gt;JAVACLASS&lt;/code&gt;がパッケージ名の付いてないクラス名にマッチしないのでちょっと細工している。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;Elasticsearchの設定は、展開したディレクトリ内の&lt;code&gt;config/elasticsearch.yml&lt;/code&gt;に以下を書いた。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;http.cors.enabled: true
-http.cors.allow-origin: &amp;quot;*&amp;quot;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;これは、elasticsearch-headがWebアプリなので、そこからElasticsearchにアクセスできるように&lt;a href=&#34;https://en.wikipedia.org/wiki/Cross-origin_resource_sharing&#34;&gt;CORS&lt;/a&gt;を有効にする設定。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;これで設定は終わり。&lt;/p&gt;
-
-&lt;h1 id=&#34;各製品の起動&#34;&gt;各製品の起動&lt;/h1&gt;
-
-&lt;p&gt;Filebeatは普通はサービスとして起動するみたいだけど、今回はコマンドラインで起動する。&lt;/p&gt;
-
-&lt;p&gt;展開したディレクトリで以下のコマンドを実行。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;filebeat.exe -e -c filebeat.yml -d &amp;quot;publish&amp;quot;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;Logstashは展開したディレクトリで以下のコマンド。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;bin\logstash.bat -f pipeline.conf
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;Elasticsearchは展開したディレクトリで以下のコマンド。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-cmd&#34;&gt;bin\elasticsearch.bat
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;しばらく待つと起動完了し、&lt;code&gt;localhost:9200&lt;/code&gt;でHTTPリクエストを待ち始める。
-試しにブラウザで&lt;code&gt;http://localhost:9200/_cluster/health&lt;/code&gt;にアクセスすると、以下の様にElasticsearchクラスタのステータスがJSONで返ってきた。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;{&amp;quot;cluster_name&amp;quot;:&amp;quot;elasticsearch&amp;quot;,&amp;quot;status&amp;quot;:&amp;quot;yellow&amp;quot;,&amp;quot;timed_out&amp;quot;:false,&amp;quot;number_of_nodes&amp;quot;:1,&amp;quot;number_of_data_nodes&amp;quot;:1,&amp;quot;active_primary_shards&amp;quot;:5,&amp;quot;active_shards&amp;quot;:5,&amp;quot;relocating_shards&amp;quot;:0,&amp;quot;initializing_shards&amp;quot;:0,&amp;quot;unassigned_shards&amp;quot;:5,&amp;quot;delayed_unassigned_shards&amp;quot;:0,&amp;quot;number_of_pending_tasks&amp;quot;:0,&amp;quot;number_of_in_flight_fetch&amp;quot;:0,&amp;quot;task_max_waiting_in_queue_millis&amp;quot;:0,&amp;quot;active_shards_percent_as_number&amp;quot;:50.0}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;以上でElastic Stackが起動し、Elasticsearchにログが読み込まれた。&lt;/p&gt;
-
-&lt;h1 id=&#34;elasticsearch-headでログを見る&#34;&gt;elasticsearch-headでログを見る&lt;/h1&gt;
-
-&lt;p&gt;elasticsearch-headは&lt;code&gt;git clone https://github.com/mobz/elasticsearch-head.git&lt;/code&gt;してその中の&lt;code&gt;index.html&lt;/code&gt;をブラウザで開けば動く。組み込みのWebサーバを起動する手順もあるけど。&lt;/p&gt;
-
-&lt;p&gt;開くと&lt;code&gt;http://localhost:9200/&lt;/code&gt;(i.e. Elasticsearch)にアクセスしてGUIに情報を表示してくれる。
-Overviewタブには以下の様に、&lt;code&gt;logstash-2017.03.17&lt;/code&gt;というインデックスが作られていて、それに対して5つのシャードとレプリカシャードが作られている様が表示される。&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/elasticsearch-in-nnmi-log/overview.png&#34; alt=&#34;overview.png&#34; /&gt;
-&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;Browserタブではざっくりとログの一覧が見れる。&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/elasticsearch-in-nnmi-log/browser.png&#34; alt=&#34;browser.png&#34; /&gt;
-&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;Structured Queryタブでは条件を指定してログを表示できる。&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&#34;https://www.kaitoy.xyz/images/elasticsearch-in-nnmi-log/query.png&#34; alt=&#34;query.png&#34; /&gt;
-&lt;/p&gt;
-
-&lt;p&gt;ここでは2017/3/15 19:09:50から2017/3/15 19:10:00の間のINFOレベルのDiscoExtensionNotificationListenerクラスのログを10件表示した。&lt;/p&gt;
-
-&lt;p&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;p&gt;不要な列を非表示にできないし、ソートもできないし、ログメッセージ見難くくて全く使えない。
-もう少しいいGUIがあれば使えるのか、そもそもElasticsearchを使うのが間違っているのか。&lt;/p&gt;
-</description>
-        </item>
-      
+	<atom:link href="https://www.kaitoy.xyz/tags/logstash/index.xml" rel="self" type="application/rss+xml" />
     
-
+    
+    <item>
+      <title>Elasticsearch、Logstash、Filebeat、elasticsearch-headでログを見てみた</title>
+      <link>https://www.kaitoy.xyz/2017/04/04/elasticsearch-in-nnmi-log/</link>
+      <pubDate>Tue, 04 Apr 2017 09:24:12 +0900</pubDate>
+      
+      <guid>https://www.kaitoy.xyz/2017/04/04/elasticsearch-in-nnmi-log/</guid>
+      <description>NNMiログをFilebeatで集めてLogstashで構造化してElasticsearchに入れてelasticsearch-headで見てみたけど、ログ量が少なかったせいかあんまり恩恵が感じられなかった話。
+   (adsbygoogle = window.adsbygoogle || []).push({});  Elasticsearchとは ElasticsearchはElastic社が開発しているElastic Stack(旧ELK Stack)というオープンソースなデータ収集分析ツール群のコア製品。 内部でLuceneを使っていて、そのためJava製。 「分散型RESTful検索/分析エンジン」と自称しているが、スキーマレスでNoSQLなドキュメント指向分散データベース管理システムとも見れる。
+Elasticsearchインスタンスはノードと呼ばれ、単一または複数のノードによるシステムはクラスタと呼ばれる。 同一ネットワークに複数のノードを立ち上げると自動で相互検出してクラスタを構成してくれ、そこにデータを入れると自動で冗長化して分散配置してくれるので、堅牢でレジリエントでスケーラブルなシステムが簡単に構築できる。
+Elasticsearchが管理するデータの最小単位はドキュメントと呼ばれ、これはひとつのJSONオブジェクトで、RDBにおける行にあたる。 つまり、JSONオブジェクトの各フィールドがRDBにおける列にあたる。 同種のドキュメントの集まりはインデックスと呼ばれ、これはRDBにおけるテーブルにあたる。 テーブルのスキーマにあたるものはマッピングと呼ばれ、ドキュメントのフィールドの型情報(e.g. string, integer)などを含み、Elasticsearchが自動で生成してくれる。(指定もできる、というかすべきらしい。) インデックス内ではさらにタイプという属性でドキュメントをカテゴライズできる、が、マニュアルからはタイプはあまり使ってほしくない雰囲気が感じられる。
+(2018/4/25追記: 6.0で、一つのインデックスに複数のタイプを作ることができなくなり、7.0では完全にタイプが廃止されることになった。)
+因みに、インデックスがRDBのデータベースでタイプがRDBのテーブルと説明されることもあるが、これは古いたとえで、公式が間違いだったとしているので忘れてあげたい。
+インデックスは分散処理のために分割でき、分割した各部分はシャードと呼ばれる。 シャードを冗長化のためにコピーしたものはレプリカシャードと呼ばれ、レプリカシャードにより成るインデックスはレプリカと呼ばれる。 デフォルトでは、ひとつのインデックスは5つのシャードに分割され、1つのレプリカが作成される。
+インターフェースはREST APIだけ。 REST APIに検索したいドキュメントを投げると、ドキュメントのフィールド毎に自動で形態素解析とかして転置インデックス作って保管してくれる。 検索もJSONで表現したクエリをREST APIに投げることで結果をJSONで受け取ることができる。 検索は転置インデックスや分散処理のおかげで速く、またスコアリングによってより適切な結果が得られるようになっている。
+今回使ったのはv5.2.1。
+Logstashとは LogstashはElastic Stackに含まれる製品で、データ収集エンジンであり、データの受け取り、解析/加工、出力の三つの機能を持つリアルタイムパイプラインを構成する。 この三つの機能はそれぞれインプットプラグイン、フィルタプラグイン、アウトプットプラグインで提供されていて、プラグインの組み合わせにより様々なパイプラインを構成できる。
+インプットプラグインは単位データ(一回分のログなど)を受け取り、タイムスタンプなどのメタデータを付けたりパースしたりしてイベントを生成し、パイプラインに流す。 フィルタプラグインはインプットプラグインからイベントを受け取り、設定されたルールに従って情報を拡充したり変更したり構造化したり秘匿情報を消したりしてアウトプットプラグインに渡す。 アウトプットプラグインは指定されたディスク上のパスやデータベースやアプリやサービスにイベントを書き込んだり送信したりする。
+名前の通りもともとログ収集ツールだったが、今では様々なデータに対応していて、テキストログファイルの他にsyslog、HTTPリクエストやJDBCなんかの入力を受けることもできる。
+Ruby(とJava)で書かれている。
+今回使ったのはv5.2.2で、プラグインは以下を使った。
+ インプット: beats 3.1.12: Beats(後述)からデータを受け取るプラグイン。LumberjackというElastic社が開発しているプロトコルを使い、TCPネットワーク上でデータを受信する。 フィルタ: grok 3.3.1: 正規表現でパターンマッチして非構造化データを構造化するプラグイン。ログ解析の定番で、例えば、ログからタイムスタンプ、クラス名、ログメッセージを抽出したりする。組み込みのパターンが120個くらいあり、Apache HTTP Serverやsyslogのログであれば自分で正規表現を書く必要はない。 アウトプット: elasticsearch 6.2.6: Elasticsearchにイベントをポストするプラグイン。  Beatsとは BeatsもElastic Stackに含まれる製品で、データを採取してLogstashやElasticsearchに送信する製品群の総称。 libbeatというGoのライブラリを使って作られていて、以下のようなものがある。</description>
+    </item>
+    
   </channel>
 </rss>

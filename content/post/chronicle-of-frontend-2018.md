@@ -2,7 +2,7 @@
 categories = ["Programming"]
 date = "2018-08-16T23:44:39+09:00"
 draft = false
-eyecatch = "frontends.png"
+cover = "frontends.png"
 slug = "chronicle-of-frontend-2018"
 tags = ["react", "frontend"]
 title = "Webアプリケーションフロントエンド年代記 - 2018年夏編"
@@ -25,7 +25,7 @@ __1990年代前半__、まだWebアプリケーションという言葉が無か
 
 <br>
 
-```text
+```
 /var/www/html/
     |
     +-- index.html
@@ -323,7 +323,7 @@ ModelとViewとの間でのデータの同期の仕方には以下のように2�
 第1世代のフロントエンドフレームワークが出始めたころ、JavaScriptの言語周りの環境にも大きな変化があった。
 正直書くの辛くなってきたので、一気に片付ける。
 
-### CommonJS
+## CommonJS
 
 クライアントサイドでJavaScriptが盛り上がっているのを見て、もっとJavaScriptいろんなところで活用できるんじゃね?
 となって、ブラウザの外でも普通のプログラミング言語としてJavaScriptを使うためには、どんな機能を追加すべきか、みたいな議論をするプロジェクトが__2009年__に立ち上がった。
@@ -335,12 +335,12 @@ JavaScriptにはもともとそういうのが無くて、単にファイルを�
 
 因みに、JavaScriptのモジュールシステムには、CommonJSのやつ以外にも[AMD](https://en.wikipedia.org/wiki/Asynchronous_module_definition)というのがあったけど、そっちは盛り上がらなかった。
 
-### Node.js
+## Node.js
 
 CommonJSの流れを汲んで、サーバサイドのJavaScriptランタイムとして[Node.js](https://nodejs.org/en/)が__2009年__にリリースされた。
 これにより、ブラウザ外でJavaScriptを実行できるようになり、以降のJavaScript開発体験の劇的な改善につながった。
 
-### パッケージマネージャ
+## パッケージマネージャ
 
 __2010年__ には、Node.jsにパッケージマネージャとして[npm](https://www.npmjs.com/)が同梱されるようになった。
 これにより、モジュールを公開してシェアして再利用する文化が定着し、JavaScriptプログラムの開発効率や品質がかなり向上したはず。
@@ -351,7 +351,7 @@ npmはサーバサイドのパッケージ、Bowerはクライアントサイド
 __2016年10月__ には、Facebookが[Yarn](https://yarnpkg.com/lang/ja/)というnpmを代替するツールを[発表](https://code.fb.com/web/yarn-a-new-package-manager-for-javascript/)。
 パッケージバージョンのロック、[CDN (CloudFlare)](https://twitter.com/madbyk/status/988795520805203969?ref_src=twsrc%5Etfw%7Ctwcamp%5Etweetembed%7Ctwterm%5E988795520805203969&ref_url=https%3A%2F%2Fblog.risingstack.com%2Fyarn-vs-npm-node-js-package-managers%2F)・キャッシュ・並列処理によるパッケージダウンロードの高速化、パッケージ間のバージョンの不整合解消(フラットモード)、といった機能により、発表直後から急速にシェアを伸ばした。
 
-### モジュールバンドラ
+## モジュールバンドラ
 
 サーバサイドでモジュールシステムができたのはよかったけど、その仕様がブラウザでサポートされることは終ぞなかった。
 ので、モジュールバンドラというものが生まれた。
@@ -371,7 +371,7 @@ webpackは機能的には最高にクールだったが、設定が複雑で設�
 この問題を解消すべく、__2017年末__ に[Parcel](https://parceljs.org/)というモジュールバンドラがリリースされ、ゼロ設定で使えるということで人気を集めてきている。
 今の時点でプロダクションレディなレベルなのかは疑問。
 
-### AltJS
+## AltJS
 
 上に書いた通り、__2009年__ にECMAScript 5が発行されて、JavaScriptは若干改善されたわけだけど、はっきり言ってまだまだ貧弱な言語だった。
 そこに[CoffeeScript](https://coffeescript.org/)が登場。
@@ -414,7 +414,7 @@ AltJSには他に以下のようなものがあるが、ほぼTypeScriptしか�
     * AltJSというべきものかは微妙。JavaScriptに静的な型情報を付加するためのもの。
     * ReactなどのFacebookのプロジェクトや[Vue.js](https://jp.vuejs.org/index.html)で使われていてそれなりに存在感があるが、TypeScriptに押され気味。
 
-### AltCSS
+## AltCSS
 
 CSSにもalternativesがある。
 というかAltJSよりも歴史が古い。
@@ -433,7 +433,7 @@ CSSにもalternativesがある。
     * 正確にはAltCSSではなく、CSSを処理するツールをJavaScriptで開発できるフレームワーク。
     * [PostCSS Preset Env](https://preset-env.cssdb.org/)というプラグインとともに使うと、CSSのエッジな機能を使えるようになる。つまりどちらかといえば後述のトランスパイラに近い。
 
-### トランスパイラ
+## トランスパイラ
 
 CoffeeScriptの流行などを受けて、ECMAScriptに再び改善の圧力がかかったのか、__2011年後半__ ころから次期ECMAScriptの議論が活発化した。
 __2015年__ に満を持してECMAScript 6改めECMAScript 2015が発行された。
@@ -452,7 +452,7 @@ ECMAScript 6で書かれたコードをECMAScript 5なコードに変換して�
 
 __2018年現在__、Babel無しでフロントエンド開発をすることはほぼ無さそうな感じになってる。
 
-### タスクランナー
+## タスクランナー
 
 モジュールバンドラやら、AltJSやら、AltCSSやらで、フロントエンドにコンパイルとかビルドとかいう作業が必要になって来たため、この業界にも必然的にタスクランナーが登場してきた。
 

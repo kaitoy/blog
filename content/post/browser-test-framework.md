@@ -2,7 +2,7 @@
 categories = [ "Programing" ]
 date = "2017-08-04T15:29:37+09:00"
 draft = false
-eyecatch = "servicenow-webdriverio.png"
+cover = "servicenow-webdriverio.png"
 slug = "browser-test-framework"
 tags = [ "servicenow", "selenium", "test-framework", "webdriverio" ]
 title = "2017年夏、ブラウザテストフレームワーク"
@@ -17,7 +17,7 @@ title = "2017年夏、ブラウザテストフレームワーク"
 
 {{< google-adsense >}}
 
-## ブラウザ操作ツールとかブラウザテストフレームワークとか
+# ブラウザ操作ツールとかブラウザテストフレームワークとか
 
 Seleniumを直接使って、[JUnit](http://junit.org/junit4/)なんかのテストフレームワークでブラウザテストを書くこともできるけど、それは結構つらい。
 Seleniumは低レベルなブラウザ操作APIを提供するので、単純にテスト書き辛いし、動的サイトを扱うときには、かなり気を使ってwait処理を入れていかないとテストが安定しない。

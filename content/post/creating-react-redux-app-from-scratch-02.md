@@ -2,11 +2,10 @@
 categories = ["Programming"]
 date = "2018-08-22T08:21:28+09:00"
 draft = false
-eyecatch = "react.png"
+cover = "react.png"
 slug = "creating-react-redux-app-from-scratch-02"
 tags = ["react", "frontend"]
 title = "React + Reduxアプリケーションプロジェクトのテンプレートを作る ― その2: React"
-
 +++
 
 [React](https://reactjs.org/)と[Redux](https://redux.js.org/)を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
@@ -137,7 +136,7 @@ Welcome.propTypes = {
 
 上記のコードを実行するためのライブラリを一通りプロジェクトに追加する。
 
-```cmd
+```shell
 yarn add react react-dom prop-types
 ```
 

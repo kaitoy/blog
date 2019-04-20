@@ -1,126 +1,34 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>To Be Decided </title>
+    <title>esxi on To Be Decided</title>
     <link>https://www.kaitoy.xyz/tags/esxi/</link>
+    <description>Recent content in esxi on To Be Decided</description>
+    <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <author>Kaito Yamada</author>
-    <rights>(C) 2019</rights>
-    <updated>2018-06-30 16:56:34 &#43;0900 JST</updated>
-
+    <copyright>© 2015 Kaito Yamada</copyright>
+    <lastBuildDate>Sat, 30 Jun 2018 16:56:34 +0900</lastBuildDate>
     
-      
-        <item>
-          <title>PackerでESXiにVMを自動構築</title>
-          <link>https://www.kaitoy.xyz/2018/06/30/packer-esxi/</link>
-          <pubDate>Sat, 30 Jun 2018 16:56:34 JST</pubDate>
-          <author>Kaito Yamada</author>
-          <guid>https://www.kaitoy.xyz/2018/06/30/packer-esxi/</guid>
-          <description>
-
-&lt;p&gt;前回「&lt;a href=&#34;https://www.kaitoy.xyz/2018/06/17/packer-k8s/&#34;&gt;Packer + Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築&lt;/a&gt;」で、やったことをESXiでやっただけ。&lt;/p&gt;
-
-&lt;p&gt;書いたコードは&lt;a href=&#34;https://github.com/kaitoy/packer-k8s&#34;&gt;GitHub&lt;/a&gt;に置いてある。&lt;/p&gt;
-
-&lt;p&gt;
-
-
-
-&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
-&lt;ins class=&#34;adsbygoogle&#34;
-     style=&#34;display:block&#34;
-     data-ad-client=&#34;ca-pub-6244473643910448&#34;
-     data-ad-slot=&#34;1845600530&#34;
-     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
-&lt;script&gt;
-(adsbygoogle = window.adsbygoogle || []).push({});
-&lt;/script&gt;
-&lt;/p&gt;
-
-&lt;h2 id=&#34;前回との違い&#34;&gt;前回との違い&lt;/h2&gt;
-
-&lt;p&gt;VirtualBoxとESXiとで変えないといけない部分は、主にPackerのbuilderの定義。
-前回はvirtualbox-isoだったけど、今回は&lt;a href=&#34;https://www.packer.io/docs/builders/vmware-iso.html&#34;&gt;vmware-iso&lt;/a&gt;を使う。
-それに伴ってパラメータが結構違ってくる。&lt;/p&gt;
-
-&lt;p&gt;いっこトリッキーだったのが、&lt;code&gt;cdrom_adapter_type&lt;/code&gt;に&lt;code&gt;ide&lt;/code&gt;を明示的に指定しておかないと、CDロムドライブがSCSIになって、OSのインストールメディアのマウントか読み取り辺りでエラーになってしまったところ。
-環境によっては指定しないでいいかも。&lt;/p&gt;
-
-&lt;p&gt;また、&lt;code&gt;&amp;quot;vnc_disable_password&amp;quot;: &amp;quot;true&amp;quot;&lt;/code&gt;をbuilderに指定しておかないと、Packerが「Error handshaking with VNC: no suitable auth schemes found. server supported: []byte{0x1}」という&lt;a href=&#34;https://github.com/hashicorp/packer/issues/5939&#34;&gt;エラーを出す&lt;/a&gt;。&lt;/p&gt;
-
-&lt;p&gt;あとは、Nested Virtualizationでやった(下記)ので、すごく遅くて、色々タイムアウトを伸ばしたりしてやる必要があった。&lt;/p&gt;
-
-&lt;h2 id=&#34;esxi環境&#34;&gt;ESXi環境&lt;/h2&gt;
-
-&lt;p&gt;ESXi(というかVMware vSphere Hypervisor)は、現時点での最新の6.7を使用。
-自前のWindows 10 HomeのノートPC上で動くVMware Player 12で作ったVMにESXiをインストールして環境を作った。&lt;/p&gt;
-
-&lt;p&gt;(因みにVirtualBoxにもインストールしてみたESXi上ではVM作成できなかった。VirtualBoxは今の時点でNested Virtualization未サポートで、サポートする予定もない模様。)&lt;/p&gt;
-
-&lt;p&gt;Packerから操作するには、以下の設定をする必要がある。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;静的IPアドレスを設定。Packerからの接続先に指定するので。&lt;/li&gt;
-&lt;li&gt;SSH有効化。PackerがSSHで接続するので。
-
-&lt;ul&gt;
-&lt;li&gt;因みにSSHクライアントでESXiにつなぐときは、チャレンジ/レスポンス認証になる。&lt;/li&gt;
-&lt;/ul&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://www.packer.io/docs/builders/vmware-iso.html#building-on-a-remote-vsphere-hypervisor&#34;&gt;GuestIPHack の有効化&lt;/a&gt;
-
-&lt;ul&gt;
-&lt;li&gt;ESXiにSSHでログインして「&lt;code&gt;esxcli system settings advanced set -o /Net/GuestIPHack -i 1&lt;/code&gt;」&lt;/li&gt;
-&lt;/ul&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;ファイアウォール設定でVNCポート(TCP5900番台)を開ける。
-これをしないとPackerが「Starting HTTP server on port xxxx」でハングする。
-けどこれが一筋縄ではいかない。&lt;a href=&#34;https://kb.vmware.com/s/article/2008226?lang=ja&#34;&gt;この記事&lt;/a&gt;にあるように、&lt;code&gt;/etc/vmware/firewall/service.xml&lt;/code&gt;に設定を追加して「&lt;code&gt;esxcli network firewall refresh&lt;/code&gt;」してもいいんだけど、再起動するともとに戻ってしまう。&lt;/p&gt;
-
-&lt;p&gt;ので、&lt;a href=&#34;https://kb.vmware.com/s/article/2043564&#34;&gt;この記事&lt;/a&gt;などを参考に、&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;&lt;p&gt;VNCポートの設定ファイルをデータストアに作成。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;/vmfs/volumes/datastore1/svc/packer.xml&lt;/code&gt;:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-xml&#34;&gt;&amp;lt;ConfigRoot&amp;gt;
-  &amp;lt;service id=&amp;quot;1000&amp;quot;&amp;gt;
-    &amp;lt;id&amp;gt;packer-vnc&amp;lt;/id&amp;gt;
-    &amp;lt;rule id=&amp;quot;0000&amp;quot;&amp;gt;
-      &amp;lt;direction&amp;gt;inbound&amp;lt;/direction&amp;gt;
-      &amp;lt;protocol&amp;gt;tcp&amp;lt;/protocol&amp;gt;
-      &amp;lt;porttype&amp;gt;dst&amp;lt;/porttype&amp;gt;
-      &amp;lt;port&amp;gt;
-        &amp;lt;begin&amp;gt;5900&amp;lt;/begin&amp;gt;
-        &amp;lt;end&amp;gt;6000&amp;lt;/end&amp;gt;
-      &amp;lt;/port&amp;gt;
-    &amp;lt;/rule&amp;gt;
-    &amp;lt;enabled&amp;gt;true&amp;lt;/enabled&amp;gt;
-    &amp;lt;required&amp;gt;true&amp;lt;/required&amp;gt;
-  &amp;lt;/service&amp;gt;
-&amp;lt;/ConfigRoot&amp;gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;設定ファイルをESXi起動時に読み込むスクリプトを記述。&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;/etc/rc.local.d/local.sh&lt;/code&gt;に以下を追記:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;cp /vmfs/volumes/datastore1/svc/packer.xml /etc/vmware/firewall/
-esxcli network firewall refresh
-&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
-&lt;/ol&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;packer実行&#34;&gt;Packer実行&lt;/h2&gt;
-
-&lt;p&gt;設定ファイルが出来てESXi環境が用意できれば、Packer実行は前回と一緒。&lt;/p&gt;
-
-&lt;p&gt;ただ結局、環境が激遅なせいでところどころでタイムアウトしたり、OSインストール中にランダムにパニックになったり、PackerのBoot Commandの入力がランダムに失敗したりして、最後までビルド成功させる前に心折れた。
-まあAnsibleのプロビジョニングの途中までは動いたので、だいたいよしとする。&lt;/p&gt;
-</description>
-        </item>
-      
+	<atom:link href="https://www.kaitoy.xyz/tags/esxi/index.xml" rel="self" type="application/rss+xml" />
     
-
+    
+    <item>
+      <title>PackerでESXiにVMを自動構築</title>
+      <link>https://www.kaitoy.xyz/2018/06/30/packer-esxi/</link>
+      <pubDate>Sat, 30 Jun 2018 16:56:34 +0900</pubDate>
+      
+      <guid>https://www.kaitoy.xyz/2018/06/30/packer-esxi/</guid>
+      <description>前回「Packer + Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築」で、やったことをESXiでやっただけ。
+書いたコードはGitHubに置いてある。
+   (adsbygoogle = window.adsbygoogle || []).push({});  前回との違い VirtualBoxとESXiとで変えないといけない部分は、主にPackerのbuilderの定義。 前回はvirtualbox-isoだったけど、今回はvmware-isoを使う。 それに伴ってパラメータが結構違ってくる。
+いっこトリッキーだったのが、cdrom_adapter_typeにideを明示的に指定しておかないと、CDロムドライブがSCSIになって、OSのインストールメディアのマウントか読み取り辺りでエラーになってしまったところ。 環境によっては指定しないでいいかも。
+また、&amp;quot;vnc_disable_password&amp;quot;: &amp;quot;true&amp;quot;をbuilderに指定しておかないと、Packerが「Error handshaking with VNC: no suitable auth schemes found. server supported: []byte{0x1}」というエラーを出す。
+あとは、Nested Virtualizationでやった(下記)ので、すごく遅くて、色々タイムアウトを伸ばしたりしてやる必要があった。
+ESXi環境 ESXi(というかVMware vSphere Hypervisor)は、現時点での最新の6.7を使用。 自前のWindows 10 HomeのノートPC上で動くVMware Player 12で作ったVMにESXiをインストールして環境を作った。
+(因みにVirtualBoxにもインストールしてみたESXi上ではVM作成できなかった。VirtualBoxは今の時点でNested Virtualization未サポートで、サポートする予定もない模様。)
+Packerから操作するには、以下の設定をする必要がある。
+ 静的IPアドレスを設定。Packerからの接続先に指定するので。 SSH有効化。PackerがSSHで接続するので。  因みにSSHクライアントでESXiにつなぐときは、チャレンジ/レスポンス認証になる。  GuestIPHack の有効化  ESXiにSSHでログインして「esxcli system settings advanced set -o /Net/GuestIPHack -i 1」  ファイアウォール設定でVNCポート(TCP5900番台)を開ける。 これをしないとPackerが「Starting HTTP server on port xxxx」でハングする。 けどこれが一筋縄ではいかない。この記事にあるように、/etc/vmware/firewall/service.</description>
+    </item>
+    
   </channel>
 </rss>

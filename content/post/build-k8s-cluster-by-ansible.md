@@ -2,7 +2,7 @@
 categories = ["Programing"]
 date = "2018-06-03T17:14:07+09:00"
 draft = false
-eyecatch = "kubernetes-ansible.png"
+cover = "kubernetes-ansible.png"
 slug = "build-k8s-cluster-by-ansible"
 tags = ["kubernetes", "docker", "ansible"]
 title = "Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した"
@@ -14,7 +14,7 @@ title = "Kubernetes 1.10のクラスタを全手動で構築するのをAnsible�
 
 {{< google-adsense >}}
 
-## Ansibleとは
+# Ansibleとは
 
 [Ansible](https://www.ansible.com/)は、Ansible社が開発したOSSのIT自動化ツール。
 Ansible社は2015年10月にRedHatが買収したので、現在はRedHatが開発している。
@@ -54,7 +54,7 @@ Pythonで書かれているのでどこでも動くかと思いきや、[fcntl](
 
 今回使ったのは最新版の2.5.3。
 
-## Ansibleインストール
+# Ansibleインストール
 
 AnsibleはYUMとかpipとかでインストールできる。
 
@@ -64,7 +64,7 @@ AnsibleはYUMとかpipとかでインストールできる。
 
     以下の内容を`/etc/yum.repos.d/`の適当な`.repo`ファイルに書く。
 
-    ```txt
+    ```ini
     [ansible]
     name=Ansible
     baseurl=http://releases.ansible.com/ansible/rpm/release/epel-7-x86_64/
@@ -78,11 +78,11 @@ AnsibleはYUMとかpipとかでインストールできる。
 
 3. インストール
 
-    ```sh
+    ```shell
     # yum install -y ansible
     ```
 
-## Playbookの書き方
+# Playbookの書き方
 
 Playbookの書き方は他にたくさん情報があるし、どうせすぐに陳腐化するのでここには書かない。
 
@@ -131,7 +131,7 @@ Playbookの書き方は他にたくさん情報があるし、どうせすぐに
 Ansibleの変数をいじればある程度違う構成もできる。
 複数ノードや、マスターコンポーネントの冗長化や、etcdが別サーバの構成もできそうな感じにはRoleを分けて書いたけど、試してはいない。
 
-## kubespray
+# kubespray
 
 一通り作った後で、[kubespray](https://github.com/kubernetes-incubator/kubespray)というものを知った。
 これ使うと、Ansibleでマルチノードのk8sクラスタ作れて、ネットワークプロバイダ切り替えたり、[istio](https://istio.io/)とか[Helm](https://helm.sh/)とかDocker Registryとか簡単にデプロイできたり、AWSやAzureにクラスタ作れたり、すごい。

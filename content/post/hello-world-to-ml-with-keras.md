@@ -2,18 +2,18 @@
 categories = ["Programing"]
 date = "2018-03-25T22:43:27+09:00"
 draft = false
-eyecatch = "keras.png"
+cover = "keras.png"
 slug = "hello-world-to-ml-with-keras"
 tags = ["machine learning", "deep learning", "neural network", "tensorflow", "keras"]
 title = "機械学習のHello World: MNISTの分類モデルをKerasで作ってみた"
-
+highlightLanguages = ["dos"]
 +++
 
 機械学習のHello Worldとしてよくやられる[MNIST](http://yann.lecun.com/exdb/mnist/)の分類モデルを[Keras](https://keras.io/ja/) on [TensorFlow](https://www.tensorflow.org/)で作ってみた話。
 
 {{< google-adsense >}}
 
-## MNISTとは
+# MNISTとは
 手書き数字画像のラベル付きデータセット。
 6万個の訓練データと1万個のテストデータからなる。
 [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)で[配布されているっぽい](http://www.pymvpa.org/datadb/mnist.html)。
@@ -22,19 +22,19 @@ title = "機械学習のHello World: MNISTの分類モデルをKerasで作って
 
 画像とラベルがそれぞれ独特な形式でアーカイブされていて、画像一つ、ラベル一つ取り出すのも一苦労する。
 
-## Kerasとは
+# Kerasとは
 Pythonのニューラルネットワークライブラリ。
 バックエンドとしてTensorFlowかCNTKかTheanoを使う。
 今回はTensorFlowを使った。
 
-## やったこと
+# やったこと
 KerasのMNISTの[API](https://keras.io/ja/datasets/#mnist)とか[コードサンプル](https://github.com/keras-team/keras/blob/master/examples/mnist_cnn.py)とかがあけどこれらはスルー。
 
 MNISTのサイトにあるデータセットをダウンロードしてきて、サイトに書いてあるデータ形式の説明を見ながらサンプルを取り出すコードを書いた。
 で、KerasでVGGっぽいCNNを書いて、学習させてモデルをダンプして、ダンプしたモデルをロードしてテストデータで評価するコードを書いた。
 コードは[GitHub](https://github.com/kaitoy/ml-mnist)に。
 
-## ネットワークアーキテクチャ
+# ネットワークアーキテクチャ
 入力画像のサイズに合わせてVGGを小さくした感じのCNNを作った。
 
 VGGは2014年に発表されたアーキテクチャで、各層に同じフィルタを使い、フィルタ数を線形増加させるシンプルな構造でありながら、性能がよく、今でもよく使われるっぽい。
@@ -79,7 +79,7 @@ model: Model = Model(inputs=inputs, outputs=predictions)
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 ```
 
-## 訓練・評価
+# 訓練・評価
 上記モデルを6万個のサンプルでバッチサイズ512で一周(1エポック)学習させると、Intel Core i5-6300HQプロセッサー、メモリ16GBのノートPCで28秒前後かかる。
 
 とりあえず3エポック学習させてみる。
@@ -146,7 +146,7 @@ loss: 0.040611953073740006, acc: 0.9866999998092651
 テストデータでの正答率98.67%。
 ちょっと改善した。
 
-## モデル改善
+# モデル改善
 試しにバッチ正規化層を入れてみる。
 ReLUの前に入れるべきという情報があったけど、それだとちょっと修正が面倒なので、単にプーリング層の後に入れてみた。
 
@@ -211,7 +211,7 @@ loss: 0.034382903814315795, acc: 0.9893999994277954
 MNISTのサイトに載ってるので一番いいのが99.77%。
 どうしたらそんなによくなるのか。
 
-## エラー分析
+# エラー分析
 一番正答率が高かったモデルについて、エラー分析をしてみた。
 
 まず、エラーが多かった数字を調べる。

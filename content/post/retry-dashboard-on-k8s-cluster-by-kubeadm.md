@@ -2,25 +2,26 @@
 categories = ["Programing"]
 date = "2017-10-31T16:57:04+09:00"
 draft = false
-eyecatch = "kubernetes.png"
+cover = "kubernetes.png"
 slug = "retry-dashboard-on-k8s-cluster-by-kubeadm"
 tags = ["kubernetes", "docker"]
 title = "Kubernetes 1.8のアクセス制御について。あとDashboard。"
+highlightLanguages = ["dos", "yaml"]
 +++
 
 「[Kubernetes1.8のクラスタを構築する。kubeadmで。](https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/)」で、Dashboardがうまく動かない問題が発生したんだけど、それを解決した話。
 
 {{< google-adsense >}}
 
-## 問題の現象
+# 問題の現象
 [kubeadm](https://kubernetes.io/docs/admin/kubeadm/)でKubernetesクラスタを組んで、自前のアプリ([Goslings](https://www.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/))のデプロイまではうまくできたんだけど、[Dashboard](https://github.com/kubernetes/dashboard)をデプロイしたら動かず、Web UIに`kubectl proxy`経由でつないでもタイムアウトしてしまった。
 
-## 対策
+# 対策
 なんとなく、クラスタ内部での名前解決には[kube-dns](https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/dns)によるDNSサービスが使われているっぽいので、`/etc/hosts`に余計な事書いたのがいけなかったと思った。
 
 ので、`/etc/hosts`からk8s-masterとk8s-nodeのエントリを削除してから、`kubeadm init`からやり直してみた。
 
-## 結果
+# 結果
 したらちゃんと動いた。
 
 VMのホストで`kubectl proxy`して、
@@ -41,11 +42,11 @@ Dashboardはそこで認証されたユーザでクラスタのリソースに�
 
 Dashboardへのサインイン方法は[いくつかある](https://github.com/kubernetes/dashboard/wiki/Access-control)が、それらを理解するにはKubernetesのアクセス制御について学ぶことを推奨とあったのでちょっと[Kubernetesのドキュメント](https://kubernetes.io/docs/admin/accessing-the-api/)を読んだ。
 
-## Kubernetesのアクセス制御
+# Kubernetesのアクセス制御
 Kubernetesクラスタのエンドポイントはkube-apiserverであり、クラスタのリソースへのアクセス制御もkube-apiserverがやる。
 クライアントとkube-apiserverとのTLSセッションが確立した後、HTTP層のデータを見てアクセス制御をするんだけど、その処理は[Authentication](https://kubernetes.io/docs/admin/authentication/)(認証)、[Authorization](https://kubernetes.io/docs/admin/authorization/)(認可)、[Admission](https://kubernetes.io/docs/admin/admission-controllers/)(許可)の三段階からなる。
 
-### Authentication
+## Authentication
 第一段階がAuthentication。
 ここでは、kube-apiserverに仕込まれたAuthenticatorモジュールがユーザ認証をする。
 
@@ -69,7 +70,7 @@ Authenticatorモジュールには以下のようなものがある。
 
 このあたり、Qiitaの「[kubernetesがサポートする認証方法の全パターンを動かす](https://qiita.com/hiyosi/items/43465d4fc501c2044d01#x509-client-certs)」という記事をみると理解が深まる。
 
-### Authorization
+## Authorization
 Authenticationをパスすると、クライアントのユーザ(とグループ)が認証され、第二段階のAuthorizationモジュールの処理に移る。
 ここでは、リクエストの内容(操作対象、操作種別(メソッド)等)を見て、それがユーザに許されたものなら認可する。
 何を許すかは事前にクラスタにポリシーを定義しておく。
@@ -84,7 +85,7 @@ Authorizationモジュールには以下のようなものがある。
 * [RBAC Mode](https://kubernetes.io/docs/admin/authorization/rbac/): Role-Based Access Control。RoleオブジェクトやClusterRoleオブジェクトでロールを作成し、アクセスできるリソースや許可する操作を定義して、RoleBindingオブジェクトやClusterRoleBindingオブジェクトでユーザ名やグループと紐づける。
 * [Webhook Mode](https://kubernetes.io/docs/admin/authorization/webhook/): リクエストの内容を示すSubjectAccessReviewオブジェクトをシリアライズしたJSONデータをHTTPでPOSTして、そのレスポンスによって認可可否を決める。
 
-### Admission Control
+## Admission Control
 Authorizationをパスすると、第三段階のAdmission Controlモジュールの処理に移る。
 ここでは、オブジェクトの作成、削除、更新などのリクエストをインターセプトして、オブジェクトの永続化前にそのオブジェクトを確認して、永続化を許可するかを決める。
 リクエストされたオブジェクトやそれに関連するオブジェクトを永続化前にいじって、デフォルト値を設定したりもできる。
@@ -107,7 +108,7 @@ ServiceAccountモジュールは、Podの作成や更新時に動き、以下の
 4. トークンを含んだVolumeをPodに追加する。
 5. Pod内の各コンテナの`/var/run/secrets/kubernetes.io/serviceaccount`にそのVolumeをマウントさせる。
 
-## DashboardへBearer Tokenでサインイン
+# DashboardへBearer Tokenでサインイン
 Dashboardの話に戻る。
 とりあえず[Bearer Tokenでのサインイン](https://github.com/kubernetes/dashboard/wiki/Access-control#bearer-token)を試す。
 
@@ -193,7 +194,7 @@ Podも見れる。
 
 各画面でオレンジ色のワーニングも出ていて、`deployment-controller`ユーザで見れる範囲はあまり広くないことが分かる。
 
-## DashboardへAdmin権限でサインイン
+# DashboardへAdmin権限でサインイン
 DashboardのPodのService Accountである`kubernetes-dashboard`にAdmin権限を付けてやって、サインイン画面でSKIPを押すとなんでも見れるようになる。セキュリティリスクがあるので本番ではNG設定だけど。
 
 `cluster-admin`というClusterRoleがあって、これを`kubernetes-dashboard`にバインドするClusterRoleBindingを作ってやればいい。

@@ -2,7 +2,7 @@
 categories = [ "Programing" ]
 date = "2016-12-11T15:26:45-07:00"
 draft = false
-eyecatch = "goslings-logo.png"
+cover = "goslings-logo.png"
 slug = "goslings-development-memo0-intro-design"
 tags = [ "goslings", "spring", "spring-boot", "jgit", "aws", "aws-ecs" ]
 title = "Goslings開発メモ - その0: 紹介と概要と設計編"
@@ -83,7 +83,7 @@ URIを入力して`Browse`ボタンを[押下する](http://qiita.com/yaju/items
 # Goslingsの使い方
 Spring Bootを使ったおかげで、ビルド成果物は単一のjarで、これを以下の様に実行するだけでサーバが立ち上がる。Webアプリケーションコンテナいらず。
 
-```sh
+```shell
 $ java -jar goslings-server-0.0.1.jar --server.port=80
 ```
 
@@ -95,7 +95,7 @@ $ java -jar goslings-server-0.0.1.jar --server.port=80
 
 [Dockerコンテナイメージ](https://hub.docker.com/r/kaitoy/goslings/)もあって、以下のようなコマンドでダウンロードして起動できる。
 
-```sh
+```shell
 $ docker pull kaitoy/goslings
 $ docker run -p 80:80 -itd kaitoy/goslings 80 /goslings-repos https://github.com/kaitoy/
 ```

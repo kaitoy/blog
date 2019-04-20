@@ -4,7 +4,7 @@ draft = false
 title = "First Post"
 tags = [ "blog", "yegor256" ]
 categories = [ "Web" ]
-eyecatch = "teamedio_logo.svg"
+cover = "teamedio_logo.svg"
 +++
 
 初投稿。

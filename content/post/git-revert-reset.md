@@ -2,10 +2,11 @@
 categories = [ "Version Control System" ]
 date = "2016-01-01T18:38:02-07:00"
 draft = false
-eyecatch = "git.png"
+cover = "git.png"
 slug = "git-revert-reset"
 tags = [ "git", "vcs" ]
 title = "git resetとrevertを図解する"
+slide = true
 +++
 
 [この記事](https://www.kaitoy.xyz/2015/12/27/git-repository/)を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、[__Git__](https://git-scm.com/)の `git revert` と `git reset`というコマンドについて説明する。
@@ -15,7 +16,7 @@ title = "git resetとrevertを図解する"
 
 {{< google-adsense >}}
 
-## git revert
+# git revert
 `git revert`は、指定したコミットが持ち込んだ変更を打ち消すコミットを追加する。
 リバースパッチを適用すると言ってもよい。
 コミットを追加しかしないので、このコマンドによって既存のコミットが消えたり変わったりすることはない。
@@ -27,11 +28,11 @@ title = "git resetとrevertを図解する"
   <li><img src="/images/git-revert-reset/git_revert/スライド2.PNG" /></li>
 </ul>
 
-## git reset
+# git reset
 `git reset`には二つの機能がある。
 インデックスを再設定する(i.e. resetする)機能と、`HEAD`を付け替える(i.e. resetする)機能だ。
 
-#### インデックスの再設定
+## インデックスの再設定
 インデックスの再設定をするコマンドは`git reset <ワーキングディレクトリ内のファイルのパス(複数可)>`。
 これを実行すると、指定したファイルについて、`HEAD`が指すコミットが指すツリー内のブロブを指すようインデックスを更新する。
 
@@ -48,7 +49,7 @@ title = "git resetとrevertを図解する"
 図を見ると、`git add Readme.md`と`git reset Readme.md`がだいたい逆のことをしていることがわかる。
 要するに、`git add <パス>`は指定したファイルをステージし、`git reset <パス>`は指定したファイルをアンステージする。
 
-#### HEADの付け替え
+## HEADの付け替え
 `HEAD`の付け替えをするコマンドは`git reset <コミット>`。
 これを実行すると、`HEAD`が指しているコミットを指すよう`ORIG_HEAD`を作成または更新し、指定したコミットを指すよう`HEAD`を更新する。
 オプションによってはさらにインデックスやワーキングディレクトリを指定したコミットが指すツリーと同期するよう更新する。
@@ -57,9 +58,9 @@ title = "git resetとrevertを図解する"
 
 オプション  |HEAD|インデックス|ワーキングディレクトリ
 ----------|----|-----------|-----------------
-\--soft   | ○  |           |                 
-\--mixed  | ○  |     ○     |                 
-\--hard   | ○  |     ○     |        ○        
+\--soft   | ○  |           |
+\--mixed  | ○  |     ○     |
+\--hard   | ○  |     ○     |        ○
 
 <br>
 

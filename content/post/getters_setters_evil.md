@@ -2,7 +2,7 @@
 categories = [ "Software Engineering" ]
 date = "2015-07-22T00:21:15-06:00"
 draft = false
-eyecatch = "teamedio_logo.svg"
+cover = "teamedio_logo.svg"
 slug = "getters-setters-evil"
 tags = [ "yegor256", "oop" ]
 title = "Getter/Setterは悪だ。以上。"
@@ -34,7 +34,7 @@ getterやsetterはひどい慣習で、これらを使うやつらはゆるせ�
 Object Thinkingは、私が今まで読んだオブジェクト指向プログラミングについての本の中で最高のものだ。
 だからお願いだ。ひとまず落ち着いて。私に説明させてほしい。
 
-### 既存の論拠
+# 既存の論拠
 オブジェクト指向の世界で、アクセッサ(getterやsetterの別名)に反対する論拠はいくつかあるが、
 私にはそれら全てが十分に有力であるとは思えない。ひとつひとつ簡単に見ていこう。
 
@@ -65,7 +65,7 @@ Object Thinkingは、私が今まで読んだオブジェクト指向プログ�
 
 これらの全ての論拠は正当だが、重要なポイントが抜けている。
 
-### 根本的な誤解
+# 根本的な誤解
 ほとんどのプログラマはオブジェクトはメソッドを持ったデータ構造だと考えている。
 ここでBozhidar Bozhanovによる記事、[Getters and Setters Are Not Evil](https://dzone.com/articles/getters-and-setters-are-not)から引用する。
 
@@ -77,7 +77,7 @@ Object Thinkingは、私が今まで読んだオブジェクト指向プログ�
 もう一度言う。オブジェクトはデータとそれを操作する関数をセットにしたものではない。
 オブジェクトはデータエンティティではない。では何か?
 
-### ボールと犬
+# ボールと犬
 真のオブジェクト指向プログラミングでは、
 オブジェクトは[生きている生物](https://www.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/)だ。私や君と同じように。
 オブジェクトは生きている有機体で、それ自身の挙動や、特性や、ライフサイクルを持っている。
@@ -119,7 +119,7 @@ David Westが彼の本の30ページでそれについて以下のように言�
 君はロボトミーが必要か？
 因みに、WestのObject Thinkingを読んでいた時、私には明らかに必要だったので受けた。
 
-### オブジェクト思考
+# オブジェクト思考
 オブジェクト思考を開始すると、君は即座にメソッド名を変更し、多分以下のコードに辿り着く。
 
 ```java
