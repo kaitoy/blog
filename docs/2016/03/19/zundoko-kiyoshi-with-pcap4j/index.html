@@ -32,11 +32,11 @@ Javaの講義、試験が「自作関数を作り記述しなさい」って問�
    (adsbygoogle = window.adsbygoogle || []).push({});  ZUNDOKOプロトコル クライアントはサーバに「ズン」か「ドコ」を送る。
 サーバは「ズン」を4回受信した後に「ドコ」を受信するとクライアントに「キ・ヨ・シ！」を返す。
 クライアント/サーバ間でやり取りするメッセージ(Zundokoパケット)のフォーマットは下図。
- 0 15 31 &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; | zundoko (null-terminated string) | | | | | | | | | &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;  要はzundokoフィールドがあるだけ。 このzundokoフィールドは20 byte固定長で、NULL (0x00)で終わるUTF-8の文字列を保持する。
+0 15 31 &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; | zundoko (null-terminated string) | | | | | | | | | &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; 要はzundokoフィールドがあるだけ。 このzundokoフィールドは20 byte固定長で、NULL (0x00)で終わるUTF-8の文字列を保持する。
 このメッセージを運ぶ下位レイヤはEthernetで、EtherTypeは0x01FF。
 Ethernetにした理由は実装(下記)が楽だから。 EtherTypeはIANAでExperimentalとされている範囲から適当に選んだ。もちろんIANAに登録などはしていない。
 因みに、Ethernetヘッダを加えた、クライアント/サーバ間でやり取りする完全なパケットは以下の様になる。(プリアンブルとかは除く。)
- 0 15 &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; | Dst Hardware Address | &#43; &#43; | | &#43; &#43; | | &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; | Src Hardware Address | &#43; &#43; | | &#43; &#43; | | &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; | EtherType (0x01FF) | &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; | zundoko | | (null-terminated string) | | | | | | | | | | | | | | | | | &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; | padding | | |  実装 Pcap4Jを使ってクライアントとサーバを実装した。 書いたのは以下の3つのクラス。(といくつかのインナークラス。)">
+0 15 &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; | Dst Hardware Address | &#43; &#43; | | &#43; &#43; | | &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; | Src Hardware Address | &#43; &#43; | | &#43; &#43; | | &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; | EtherType (0x01FF) | &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; | zundoko | | (null-terminated string) | | | | | | | | | | | | | | | | | &#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43;-&#43; | padding | | | 実装 Pcap4Jを使ってクライアントとサーバを実装した。 書いたのは以下の3つのクラス。(といくつかのインナークラス。)">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/pcap4jlogo.png">
 
 
@@ -68,7 +68,7 @@ Ethernetにした理由は実装(下記)が楽だから。 EtherTypeはIANAでEx
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&amp;subset=japanese">
 
 
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai.min.css"> 
+
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -76,14 +76,6 @@ Ethernetにした理由は実装(下記)が楽だから。 EtherTypeはIANAでEx
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/dos.min.js"></script> 
-
-    <script>hljs.initHighlightingOnLoad();</script>
-
 
 
 
@@ -259,17 +251,14 @@ Ethernetにした理由は実装(下記)が楽だから。 EtherTypeはIANAでEx
 <p>サーバは「ズン」を4回受信した後に「ドコ」を受信するとクライアントに「キ・ヨ・シ！」を返す。</p>
 
 <p>クライアント/サーバ間でやり取りするメッセージ(Zundokoパケット)のフォーマットは下図。</p>
-
-<pre><code> 0                            15                              31
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain"> 0                            15                              31
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |             zundoko (null-terminated string)                  |
 |                                                               |
 |                                                               |
 |                                                               |
 |                                                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-</code></pre>
-
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</code></pre></div>
 <p>要はzundokoフィールドがあるだけ。
 このzundokoフィールドは20 byte固定長で、NULL (0x00)で終わるUTF-8の文字列を保持する。</p>
 
@@ -279,8 +268,7 @@ Ethernetにした理由は実装(下記)が楽だから。 EtherTypeはIANAでEx
 EtherTypeは<a href="http://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml#ieee-802-numbers-1">IANA</a>でExperimentalとされている範囲から適当に選んだ。もちろんIANAに登録などはしていない。</p>
 
 <p>因みに、Ethernetヘッダを加えた、クライアント/サーバ間でやり取りする完全なパケットは以下の様になる。(プリアンブルとかは除く。)</p>
-
-<pre><code> 0                            15
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain"> 0                            15
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |    Dst Hardware Address       |
 +                               +
@@ -308,9 +296,7 @@ EtherTypeは<a href="http://www.iana.org/assignments/ieee-802-numbers/ieee-802-n
 |                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |            padding            |
-|                               |
-</code></pre>
-
+|                               |</code></pre></div>
 <h1 id="実装">実装</h1>
 
 <p><a href="https://github.com/kaitoy/pcap4j">Pcap4J</a>を使ってクライアントとサーバを実装した。
@@ -327,12 +313,9 @@ EtherTypeは<a href="http://www.iana.org/assignments/ieee-802-numbers/ieee-802-n
 <p>今だに<a href="https://maven.apache.org/">Maven</a>。</p>
 
 <p>以下を実行するとビルドできる。</p>
-
-<pre><code class="language-cmd">git clone https://github.com/kaitoy/zundoko-protocol.git
-cd zundoko-protocol
-mvn install
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">git clone https://github.com/kaitoy/zundoko-protocol.git
+<span style="color:#6ab825;font-weight:bold">cd</span> zundoko-protocol
+mvn install</code></pre></div>
 <h1 id="サーバ-クライアントの使い方">サーバ/クライアントの使い方</h1>
 
 <p>下位レイヤがEthernetなのでネットワークセグメントを超えたZundokoパケットのやり取りはできない。
@@ -342,24 +325,15 @@ VMware Playerのホストとゲストで可。</p>
 <p>サーバマシンとクライアントマシンには<a href="http://www.winpcap.org/">WinPcap</a>か<a href="http://www.tcpdump.org/">libpcap</a>をインストールしておく。</p>
 
 <p>依存ライブラリをダウンロードするため、<code>zundoko-protocol\bin\</code>に<code>cd</code>して以下のコマンドを実行する。(要Maven。)</p>
-
-<pre><code class="language-cmd">configure.bat
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">configure.bat</code></pre></div>
 <p>サーバを起動するには、<code>zundoko-protocol\bin\</code>で以下のコマンドを実行する。</p>
-
-<pre><code class="language-cmd">run-server.bat
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">run-server.bat</code></pre></div>
 <p>起動するとZundokoパケットをやり取りするネットワークインターフェースを聞かれるので、
 クライアントとL2レベルでつながっているものを選ぶ。
 選んだインターフェースのMacアドレスはクライアントの起動に使うのでメモしておく。</p>
 
 <p>クライアントを起動するには、<code>zundoko-protocol\bin\</code>で以下のコマンドを実行する。</p>
-
-<pre><code class="language-cmd">run-client.bat &lt;Macアドレス&gt;
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">run-client.bat &lt;Macアドレス&gt;</code></pre></div>
 <p><code>&lt;Macアドレス&gt;</code>にはサーバ起動時にメモしたMacアドレスを入力する。
 起動するとZundokoパケットをやり取りするネットワークインターフェースを聞かれるので、
 サーバとL2レベルでつながっているものを選ぶ。</p>

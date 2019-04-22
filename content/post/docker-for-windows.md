@@ -6,7 +6,7 @@ cover = "docker.png"
 slug = "docker-for-windows"
 tags = [ "docker", " windows" ]
 title = "Docker for Windowsがコレジャナかった"
-highlightLanguages = ["dos"]
+
 +++
 
 7/28にDocker for Winodws(とDocker for Mac)の正式版リリースの[アナウンス](https://blog.docker.com/2016/07/docker-for-mac-and-windows-production-ready/)があったので試してみたけど、期待していたものと違ったしなんだか上手く動かなかった話。

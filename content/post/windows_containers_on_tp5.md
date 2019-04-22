@@ -6,7 +6,7 @@ cover = "pcap4j-docker.png"
 slug = "windows_containers_on_tp5"
 tags = [ "pcap4j", "docker", "windows" ]
 title = "Windows Server 2016 TP5でWindows Containersにリトライ"
-highlightLanguages = ["dockerfile", "dos", "powershell"]
+
 +++
 
 [Windows Server 2016のTechnical Preview 5(TP5)が公開されていた](https://www.microsoft.com/ja-jp/evalcenter/evaluate-windows-server-technical-preview)ので、
@@ -163,7 +163,7 @@ Docker version 1.12.0-dev, build 8e92415
 
 無事Windows Server Coreイメージがインストールされた。
 
-```powershell
+```cmd
 PS C:\Users\Administrator> docker images
 REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
 windowsservercore   10.0.14300.1000     5bc36a335344        8 weeks ago         9.354 GB
@@ -268,7 +268,7 @@ TP4のときはなかったような。
 ## ビルドエラー: hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce)
 `choco install`の後で以下のエラーが出た。
 
-```
+```plain
 re-exec error: exit status 1: output: time="2016-07-09T19:57:22-07:00" level=error msg="hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce) layerId=\\\\?\\C:\\ProgramData\\docker\\windowsfilter\\103de6bf1358c506510ad67990f09ec3e2f10f9e866e846df5a88c04f5edf7aa flavour=1 folder=C:\\Windows\\TEMP\\hcs719016711"
 hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce) layerId=\\?\C:\ProgramData\docker\windowsfilter\103de6bf1358c506510ad67990f09ec3e2f10f9e866e846df5a88c04f5edf7aa flavour=1 folder=C:\Windows\TEMP\hcs719016711
 ```

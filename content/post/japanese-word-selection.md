@@ -260,7 +260,7 @@ Atomは[MVVM](https://ja.wikipedia.org/wiki/Model_View_ViewModel)な感じの設
     私の場合、初回だったので、コマンド実行中にatom.ioのアカウントを作ってAPIトークンを取得する手順があった。
     以下がコマンドのメッセージ。
 
-    ```shell
+    ```tch
     # cd japanese-word-selection
     # apm publish minor
     Welcome to Atom!

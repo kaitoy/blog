@@ -91,7 +91,7 @@ React Routerは、宣言的にフロントエンドルーティングを実現�
 Reduxとともに使う場合は、[Connected React Router](https://github.com/supasate/connected-react-router)を使う。
 Connected React Routerには[history](https://www.npmjs.com/package/history)が必要。
 
-```shell
+```tch
 yarn add react-router-dom connected-react-router history
 ```
 
@@ -219,7 +219,7 @@ React Routerの[Redirect](https://reacttraining.com/react-router/core/api/Redire
 で、App.jsxはルーティングを定義するコンポーネントとして作り直す。
 
 `src/components/App.jsx`:
-```javascript
+```jsx
 import React from 'react';
 import { Route, Redirect } from 'react-router-dom';
 import Home from './Home';

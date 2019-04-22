@@ -6,7 +6,7 @@ cover = "goslings-spring.png"
 slug = "goslings-development-memo1-spring-boot"
 tags = [ "goslings", "spring", "spring-boot" ]
 title = "Goslings開発メモ - その1: Spring Boot編"
-highlightLanguages = ["gradle"]
+
 +++
 
 「[Goslings開発メモ - その0: 紹介と概要と設計編](https://www.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/)」の続き。

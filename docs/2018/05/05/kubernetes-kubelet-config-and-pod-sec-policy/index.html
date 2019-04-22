@@ -58,7 +58,7 @@ Apr 28 15:31:39 k8s-master kubelet[1370]: Flag --address has been deprecated, Th
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&amp;subset=japanese">
 
 
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai.min.css"> 
+
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -66,14 +66,6 @@ Apr 28 15:31:39 k8s-master kubelet[1370]: Flag --address has been deprecated, Th
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-
-    
-
-    <script>hljs.initHighlightingOnLoad();</script>
-
 
 
 
@@ -239,84 +231,80 @@ Apr 28 15:31:39 k8s-master kubelet[1370]: Flag --address has been deprecated, Th
 <h1 id="kubelet-configファイル">Kubelet Configファイル</h1>
 
 <p><code>journalctl -u kubelet</code>すると、以下の警告が出ている。</p>
-
-<pre><code>Apr 28 15:31:39 k8s-master kubelet[1370]: Flag --address has been deprecated, This parameter should be set via the config file specified by the Kubelet's -
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">Apr 28 15:31:39 k8s-master kubelet[1370]: Flag --address has been deprecated, This parameter should be set via the config file specified by the Kubelet&#39;s -
 -config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
 Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --pod-manifest-path has been deprecated, This parameter should be set via the config file specified by the K
-ubelet's --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+ubelet&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
 Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --cluster-dns has been deprecated, This parameter should be set via the config file specified by the Kubelet
-'s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
 Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --cluster-domain has been deprecated, This parameter should be set via the config file specified by the Kube
-let's --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+let&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
 Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --authorization-mode has been deprecated, This parameter should be set via the config file specified by the
-Kubelet's --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+Kubelet&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
 Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --client-ca-file has been deprecated, This parameter should be set via the config file specified by the Kube
-let's --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+let&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
 Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --cgroup-driver has been deprecated, This parameter should be set via the config file specified by the Kubel
-et's --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
-Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --tls-min-version has been deprecated, This parameter should be set via the config file specified by the Kubelet's --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
-Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --allow-privileged has been deprecated, will be removed in a future version
-</code></pre>
-
+et&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --tls-min-version has been deprecated, This parameter should be set via the config file specified by the Kubelet&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
+Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --allow-privileged has been deprecated, will be removed in a future version</code></pre></div>
 <p>kubeletのいくつかのオプションは、<a href="https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/">https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/</a> を参照してKubelet Configファイルのほうに書けとある。</p>
 
 <p>参照先のマニュアルには現時点でほぼ何も書いてないし、ググっても情報が無いので、<a href="https://github.com/kubernetes/kubernetes/blob/release-1.10/pkg/kubelet/apis/kubeletconfig/v1beta1/types.go">ソース</a>を見てそれっぽく書いてみた。</p>
 
 <p>将来的に調整しそうなパラメータは、Kubelet Configファイルにデフォルト値とともにコメントとして書き出している。</p>
-
-<pre><code class="language-shell"># DNS_SERVER_IP=10.0.0.10
-# DNS_DOMAIN=&quot;cluster.local&quot;
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># DNS_SERVER_IP=10.0.0.10
+# DNS_DOMAIN=&#34;cluster.local&#34;
 # cat &gt; /etc/kubernetes/kubelet.conf &lt;&lt; EOF
 kind: KubeletConfiguration
 apiVersion: kubelet.config.k8s.io/v1beta1
 featureGates:
   RotateKubeletServerCertificate: true
-address: &quot;0.0.0.0&quot;
-staticPodPath: &quot;/etc/kubernetes/manifests&quot;
-clusterDNS: [&quot;${DNS_SERVER_IP}&quot;]
-clusterDomain: &quot;${DNS_DOMAIN}&quot;
+address: &#34;0.0.0.0&#34;
+staticPodPath: &#34;/etc/kubernetes/manifests&#34;
+clusterDNS: [&#34;${DNS_SERVER_IP}&#34;]
+clusterDomain: &#34;${DNS_DOMAIN}&#34;
 authorization:
   mode: Webhook
   webhook:
-    cacheAuthorizedTTL: &quot;5m0s&quot;
-    cacheUnauthorizedTTL: &quot;30s&quot;
+    cacheAuthorizedTTL: &#34;5m0s&#34;
+    cacheUnauthorizedTTL: &#34;30s&#34;
 authentication:
   x509:
-    clientCAFile: &quot;/etc/kubernetes/pki/ca.crt&quot;
+    clientCAFile: &#34;/etc/kubernetes/pki/ca.crt&#34;
   webhook:
     enabled: false
-    cacheTTL: &quot;0s&quot;
+    cacheTTL: &#34;0s&#34;
   anonymous:
     enabled: false
-cgroupDriver: &quot;cgroupfs&quot;
-tlsMinVersion: &quot;VersionTLS12&quot;
+cgroupDriver: &#34;cgroupfs&#34;
+tlsMinVersion: &#34;VersionTLS12&#34;
 tlsCipherSuites:
-- &quot;TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256&quot;
-- &quot;TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384&quot;
-- &quot;TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256&quot;
-- &quot;TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384&quot;
+- &#34;TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256&#34;
+- &#34;TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384&#34;
+- &#34;TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256&#34;
+- &#34;TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384&#34;
 readOnlyPort: 0
 # port: 10250
-# containerLogMaxSize: &quot;10Mi&quot;
+# containerLogMaxSize: &#34;10Mi&#34;
 # containerLogMaxFiles: 5
 # evictionHard:
-#   imagefs.available: &quot;15%&quot;
-#   memory.available: &quot;100Mi&quot;
-#   nodefs.available: &quot;10%&quot;
-#   nodefs.inodesFree: &quot;5%&quot;
+#   imagefs.available: &#34;15%&#34;
+#   memory.available: &#34;100Mi&#34;
+#   nodefs.available: &#34;10%&#34;
+#   nodefs.inodesFree: &#34;5%&#34;
 # evictionMaxPodGracePeriod: 0
-# evictionPressureTransitionPeriod: &quot;5m0s&quot;
-# fileCheckFrequency: &quot;20s&quot;
+# evictionPressureTransitionPeriod: &#34;5m0s&#34;
+# fileCheckFrequency: &#34;20s&#34;
 # imageGCHighThresholdPercent: 85
 # imageGCLowThresholdPercent: 80
 # maxOpenFiles: 1000000
 # maxPods: 110
-# imageMinimumGCAge: &quot;2m0s&quot;
-# nodeStatusUpdateFrequency: &quot;10s&quot;
-# runtimeRequestTimeout: &quot;2m0s&quot;
-# streamingConnectionIdleTimeout: &quot;4h0m0s&quot;
-# syncFrequency: &quot;1m0s&quot;
-# volumeStatsAggPeriod: &quot;1m0s&quot;
+# imageMinimumGCAge: &#34;2m0s&#34;
+# nodeStatusUpdateFrequency: &#34;10s&#34;
+# runtimeRequestTimeout: &#34;2m0s&#34;
+# streamingConnectionIdleTimeout: &#34;4h0m0s&#34;
+# syncFrequency: &#34;1m0s&#34;
+# volumeStatsAggPeriod: &#34;1m0s&#34;
 EOF
 # PAUSE_IMAGE=k8s.gcr.io/pause-amd64:3.1
 # cat &gt; /etc/systemd/system/kubelet.service &lt;&lt; EOF
@@ -348,9 +336,7 @@ RestartSec=10s
 WantedBy=multi-user.target
 EOF
 # systemctl daemon-reload
-# systemctl restart kubelet
-</code></pre>
-
+# systemctl restart kubelet</code></pre></div>
 <p><br></p>
 
 <p><code>--allow-privileged</code>だけは、警告が出てるけどKubelet Configファイルで設定できない。</p>
@@ -364,8 +350,7 @@ EOF
 
 <p>で、privilegedななんでもできるPodSecurityPolicyと、それを使うロールを作成する。
 因みにPodSecurityPolicyは名前空間に属さない。</p>
-
-<pre><code class="language-shell"># kubectl create -f- &lt;&lt;EOF
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># kubectl create -f- &lt;&lt;EOF
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
@@ -379,36 +364,30 @@ spec:
   - min: 0
     max: 65535
   volumes:
-  - &quot;*&quot;
+  - &#34;*&#34;
   fsGroup:
-    rule: &quot;RunAsAny&quot;
+    rule: &#34;RunAsAny&#34;
   runAsUser:
-    rule: &quot;RunAsAny&quot;
+    rule: &#34;RunAsAny&#34;
   supplementalGroups:
-    rule: &quot;RunAsAny&quot;
+    rule: &#34;RunAsAny&#34;
   allowPrivilegeEscalation: true
   allowedCapabilities:
-  - &quot;*&quot;
+  - &#34;*&#34;
   seLinux:
-    rule: &quot;RunAsAny&quot;
+    rule: &#34;RunAsAny&#34;
 EOF
 # kubectl -n kube-system create role psp:privileged --verb=use --resource=podsecuritypolicy --resource-name=privileged
-# kubectl -n weave create role psp:privileged --verb=use --resource=podsecuritypolicy --resource-name=privileged
-</code></pre>
-
+# kubectl -n weave create role psp:privileged --verb=use --resource=podsecuritypolicy --resource-name=privileged</code></pre></div>
 <p>今のところ、privilegedなPodSecurityPolicyが必要なService AccountはWeave Netのkube-system:weave-netと、Weave Scopeのweave:weave-scopeとweave:default。
 こいつらに上記ロールをバインドする。</p>
-
-<pre><code class="language-shell"># kubectl -n kube-system create rolebinding weave-net:psp:privileged --role=psp:privileged --serviceaccount=kube-system:weave-net
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># kubectl -n kube-system create rolebinding weave-net:psp:privileged --role=psp:privileged --serviceaccount=kube-system:weave-net
 # kubectl -n weave create rolebinding weave-scope:psp:privileged --role=psp:privileged --serviceaccount=weave:weave-scope
-# kubectl -n weave create rolebinding weave-default:psp:privileged --role=psp:privileged --serviceaccount=weave:default
-</code></pre>
-
+# kubectl -n weave create rolebinding weave-default:psp:privileged --role=psp:privileged --serviceaccount=weave:default</code></pre></div>
 <p><br></p>
 
 <p>あと、CoreDNS用のPodSecurityPolicyとロールを作ってバインドする。</p>
-
-<pre><code class="language-shell"># kubectl apply -f- &lt;&lt;EOF
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># kubectl apply -f- &lt;&lt;EOF
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
@@ -422,22 +401,20 @@ spec:
   - min: 0
     max: 65535
   volumes:
-  - &quot;configMap&quot;
-  - &quot;secret&quot;
+  - &#34;configMap&#34;
+  - &#34;secret&#34;
   fsGroup:
-    rule: &quot;RunAsAny&quot;
+    rule: &#34;RunAsAny&#34;
   runAsUser:
-    rule: &quot;RunAsAny&quot;
+    rule: &#34;RunAsAny&#34;
   supplementalGroups:
-    rule: &quot;RunAsAny&quot;
+    rule: &#34;RunAsAny&#34;
   allowPrivilegeEscalation: true
   seLinux:
-    rule: &quot;RunAsAny&quot;
+    rule: &#34;RunAsAny&#34;
 EOF
 # kubectl -n kube-system create role psp:coredns --verb=use --resource=podsecuritypolicy --resource-name=coredns
-# kubectl -n kube-system create rolebinding coredns:psp:coredns --role=psp:coredns --serviceaccount=kube-system:coredns
-</code></pre>
-
+# kubectl -n kube-system create rolebinding coredns:psp:coredns --role=psp:coredns --serviceaccount=kube-system:coredns</code></pre></div>
 <p><br></p>
 
 <p>これで晴れてkubeletから<code>--allow-privileged</code>を外せる、と思ったら、外したら動かなかった。
@@ -450,17 +427,16 @@ EOF
 
 <p>kube-proxyも<a href="https://github.com/kubernetes/kubernetes/blob/master/pkg/proxy/apis/config/types.go">Kube Proxy Config</a>というのがある。
 <a href="https://github.com/kubernetes/kubernetes/issues/50041">ドキュメントには載ってない</a>けど、使わないと警告が出るので適当に書いてみた。</p>
-
-<pre><code class="language-shell"># CLUSTER_CIDR=&quot;10.32.0.0/16&quot;
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># CLUSTER_CIDR=&#34;10.32.0.0/16&#34;
 # cat &gt; /etc/kubernetes/kube-proxy.conf &lt;&lt; EOF
 kind: KubeProxyConfiguration
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 featureGates:
   RotateKubeletServerCertificate: true
-bindAddress: &quot;0.0.0.0&quot;
+bindAddress: &#34;0.0.0.0&#34;
 clientConnection:
-  kubeconfig: &quot;/etc/kubernetes/kube-proxy.kubeconfig&quot;
-clusterCIDR: &quot;${CLUSTER_CIDR}&quot;
+  kubeconfig: &#34;/etc/kubernetes/kube-proxy.kubeconfig&#34;
+clusterCIDR: &#34;${CLUSTER_CIDR}&#34;
 EOF
 # cat &gt; /etc/systemd/system/kube-proxy.service &lt;&lt; EOF
 [Unit]
@@ -481,22 +457,19 @@ RestartSec=10s
 WantedBy=multi-user.target
 EOF
 # systemctl daemon-reload
-# systemctl restart kube-proxy
-</code></pre>
-
+# systemctl restart kube-proxy</code></pre></div>
 <h2 id="kube-scheduler-confファイル">Kube Scheduler Confファイル</h2>
 
 <p>kube-schedulerも<a href="https://github.com/kubernetes/kubernetes/blob/master/pkg/apis/componentconfig/v1alpha1/types.go">Kube Scheduler Conf</a>というのがある。
 例によってドキュメントには載ってないけど、使わないと警告が出るので適当に書いてみた。</p>
-
-<pre><code class="language-shell"># cat &gt; /etc/kubernetes/kube-scheduler.conf &lt;&lt; EOF
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># cat &gt; /etc/kubernetes/kube-scheduler.conf &lt;&lt; EOF
 kind: KubeSchedulerConfiguration
 apiVersion: componentconfig/v1alpha1
 featureGates:
   RotateKubeletServerCertificate: true
-healthzBindAddress: &quot;0.0.0.0&quot;
+healthzBindAddress: &#34;0.0.0.0&#34;
 clientConnection:
-  kubeconfig: &quot;/etc/kubernetes/kube-scheduler.kubeconfig&quot;
+  kubeconfig: &#34;/etc/kubernetes/kube-scheduler.kubeconfig&#34;
 EOF
 # cat &gt; /etc/systemd/system/kube-scheduler.service &lt;&lt; EOF
 [Unit]
@@ -517,9 +490,7 @@ RestartSec=10s
 WantedBy=multi-user.target
 EOF
 # systemctl daemon-reload
-# systemctl restart kube-scheduler
-</code></pre>
-</div>
+# systemctl restart kube-scheduler</code></pre></div></div>
 
         <section class="share-buttons">
           <div class="share-button">

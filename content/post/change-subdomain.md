@@ -85,7 +85,7 @@ GooglebotもこのステータスコードでブログURLの変更を知るこ�
 このブログのドメインは[バリュードメイン](https://www.value-domain.com/)で買ったもので、ここがXREAと提携していたので無料サーバも合わせて確保していたもののほとんど使っていなかったので調度よかった。
 調べたらこのサーバで、[Apache HTTP Server](https://httpd.apache.org/)の設定ファイルである`.htaccess`が使えることが分かったので、以下の内容で作って`/public_html/`に置いた。
 
-```
+```apache
 <Files ~ "^\.ht">
 deny from all
 </Files>

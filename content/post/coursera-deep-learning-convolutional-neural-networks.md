@@ -42,7 +42,7 @@ title = "CourseraのDeep Learning SpecializationのConvolutional Neural Networks
             この行列をフィルタ(filter)という。カーネルと呼ばれることもある。
             例えば縦なら以下。
 
-            ```
+            ```plain
             [[1, 0, -1],
              [1, 0, -1],
              [1, 0, -1]]
@@ -50,7 +50,7 @@ title = "CourseraのDeep Learning SpecializationのConvolutional Neural Networks
 
             縦でもいろいろフィルタはあって、以下はSobelフィルタというもの。
 
-            ```
+            ```plain
             [[1, 0, -1],
              [2, 0, -2],
              [1, 0, -1]]
@@ -58,7 +58,7 @@ title = "CourseraのDeep Learning SpecializationのConvolutional Neural Networks
 
             以下はScharrフィルタ。
 
-            ```
+            ```plain
             [[ 3, 0,  -3],
              [10, 0, -10],
              [ 3, 0,  -3]]

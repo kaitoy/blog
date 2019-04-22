@@ -43,7 +43,7 @@ VMは、Windows 7に入れたVMware Workstation 11.1.0 build-2496824に付属の
 Windows 10を起動し、以下、Windows Containers on Windows 10に従って進める。
  containers機能有効化
 PowerShellプロンプトを管理者権限でひらき、以下のコマンドでcontainers機能を有効化。
-PS C:\Windows\system32&amp;gt;Enable-WindowsOptionalFeature -Online -FeatureName containers -All  1分程度経つと再起動を促されるので再起動。</description>
+Enable-WindowsOptionalFeature -Online -FeatureName containers -All 1分程度経つと再起動を促されるので再起動。</description>
     </item>
     
     <item>
@@ -82,17 +82,18 @@ Issuesが 52個、プルリクエストが 16個。 自分ではIssuesもプル�
 以降はWindows Server Containersのクイックスタートガイドに沿ってセットアップを進める。 TP4からは大分変わっていて、単一のPowershellスクリプトを実行する形式から、Powershellのコマンドレットを逐次手動実行する形式になっている。 面倒だけど何やってるかわかりやすくて好き。
 コンテナ機能のインストール  管理者権限のパワーシェルウィンドウを開く
 コマンドプロンプトから以下のコマンドを実行。
-powershell start-process powershell -Verb runas  コンテナ機能のインストール
+powershell start-process powershell -Verb runas コンテナ機能のインストール
 開いた青いパワーシェルウィンドウで以下のコマンドを実行するとコンテナ機能がインストールされる。
-Install-WindowsFeature containers  数分で終わる。
+Install-WindowsFeature containers 数分で終わる。
 インストールされたのはHyper-V ContainersじゃなくてWindows Server Containersの方。 クイックスタートガイドをみると、前者がWindows 10向け、後者がWindows Server向けというように住み分けされているっぽい。TP4では両方ともWindows Serverで使えたんだけど。
  再起動
 変更を有効にするために再起動が必要。
-Restart-Computer -Force   Dockerインストール Dockerは、コンテナイメージの管理やコンテナの起動などもろもろの機能を提供するDockerデーモンと、その機能を利用するためのCLIを提供するDockerクライアントからなる。この節ではそれら両方をインストールする。
+Restart-Computer -Force  Dockerインストール Dockerは、コンテナイメージの管理やコンテナの起動などもろもろの機能を提供するDockerデーモンと、その機能を利用するためのCLIを提供するDockerクライアントからなる。この節ではそれら両方をインストールする。
  Dockerインストールフォルダ作成
 管理者権限のパワーシェルウィンドウを開いて、以下のコマンドでDockerインストールフォルダを作成。
-New-Item -Type Directory -Path &#39;C:\Program Files\docker\&#39;  Dockerデーモンインストール
-まずはデーモンの方をインストール。</description>
+New-Item -Type Directory -Path &amp;#39;C:\Program Files\docker\&amp;#39; Dockerデーモンインストール
+まずはデーモンの方をインストール。
+Invoke-WebRequest https://aka.ms/tp5/b/dockerd -OutFile $env:ProgramFiles\docker\dockerd.exe -UseBasicParsing 数分。</description>
     </item>
     
     <item>
@@ -145,9 +146,10 @@ Java 6以降が前提なので、JAVA_HOMEにJDK 1.7.0_17のパスをセット�
  メインクラスを書かなくていいところが大きい。 変数の型を書かなくていいのも楽。 ラムダ式でクロージャも作れるし補間文字列(String interpolation)も使える。
 また、ここでは使っていないが、オープンクラスなどのメタプログラミングもサポートされている。
 上記コードは、Pcap4J 1.6.2、Slf4J 1.7.12、JNA 4.2.1を使って、以下のコマンドで実行できることを確認した。
-groovy -cp &amp;quot;pcap4j-core.jar;jna.jar;slf4j-api.jar;pcap4j-packetfactory-static.jar&amp;quot; Pcap4jLoop.groovy tcp  これはスクリプト的な実行方法だが、groovycコマンドで事前にコンパイルしてclassファイルを生成し、javaコマンドで実行することもできる。
+groovy -cp &amp;#34;pcap4j-core.jar;jna.jar;slf4j-api.jar;pcap4j-packetfactory-static.jar&amp;#34; Pcap4jLoop.groovy tcp これはスクリプト的な実行方法だが、groovycコマンドで事前にコンパイルしてclassファイルを生成し、javaコマンドで実行することもできる。
 困ったところ  本家サイトのドキュメントが分かり辛い。
-頭から読んでいくと急にディープな部分に引き込まれ、なかなかコードを書き始められなかった。</description>
+頭から読んでいくと急にディープな部分に引き込まれ、なかなかコードを書き始められなかった。
+最近の言語やフレームワークのサイトはチュートリアルに従って動くコードを見ながら概要から詳細に理解を深められる形になっていることが多いので、仕様の詳細が羅列されている感じのGroovyサイトはなんとも読みにくかった。</description>
     </item>
     
     <item>
@@ -166,11 +168,11 @@ Javaの講義、試験が「自作関数を作り記述しなさい」って問�
    (adsbygoogle = window.adsbygoogle || []).push({});  ZUNDOKOプロトコル クライアントはサーバに「ズン」か「ドコ」を送る。
 サーバは「ズン」を4回受信した後に「ドコ」を受信するとクライアントに「キ・ヨ・シ！」を返す。
 クライアント/サーバ間でやり取りするメッセージ(Zundokoパケット)のフォーマットは下図。
- 0 15 31 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | zundoko (null-terminated string) | | | | | | | | | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  要はzundokoフィールドがあるだけ。 このzundokoフィールドは20 byte固定長で、NULL (0x00)で終わるUTF-8の文字列を保持する。
+0 15 31 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | zundoko (null-terminated string) | | | | | | | | | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 要はzundokoフィールドがあるだけ。 このzundokoフィールドは20 byte固定長で、NULL (0x00)で終わるUTF-8の文字列を保持する。
 このメッセージを運ぶ下位レイヤはEthernetで、EtherTypeは0x01FF。
 Ethernetにした理由は実装(下記)が楽だから。 EtherTypeはIANAでExperimentalとされている範囲から適当に選んだ。もちろんIANAに登録などはしていない。
 因みに、Ethernetヘッダを加えた、クライアント/サーバ間でやり取りする完全なパケットは以下の様になる。(プリアンブルとかは除く。)
- 0 15 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | Dst Hardware Address | + + | | + + | | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | Src Hardware Address | + + | | + + | | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | EtherType (0x01FF) | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | zundoko | | (null-terminated string) | | | | | | | | | | | | | | | | | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | padding | | |  実装 Pcap4Jを使ってクライアントとサーバを実装した。 書いたのは以下の3つのクラス。(といくつかのインナークラス。)</description>
+0 15 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | Dst Hardware Address | + + | | + + | | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | Src Hardware Address | + + | | + + | | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | EtherType (0x01FF) | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | zundoko | | (null-terminated string) | | | | | | | | | | | | | | | | | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | padding | | | 実装 Pcap4Jを使ってクライアントとサーバを実装した。 書いたのは以下の3つのクラス。(といくつかのインナークラス。)</description>
     </item>
     
     <item>
@@ -252,7 +254,7 @@ In the case of DHCP, its flags field includes two fields in itself as like below
       <description>I will show how to add a protocol support to Pcap4J in detail giving the example of DHCP (v4) via some posts.
 
    (adsbygoogle = window.adsbygoogle || []).push({});  Named Number Class First of all, we need to know the packet format. It&amp;rsquo;s explained in RFC 2131 as below:
-0 1 2 3 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | op (1) | htype (1) | hlen (1) | hops (1) | +---------------+---------------+---------------+---------------+ | xid (4) | +-------------------------------+-------------------------------+ | secs (2) | flags (2) | +-------------------------------+-------------------------------+ | ciaddr (4) | +---------------------------------------------------------------+ | yiaddr (4) | +---------------------------------------------------------------+ | siaddr (4) | +---------------------------------------------------------------+ | giaddr (4) | +---------------------------------------------------------------+ | | | chaddr (16) | | | | | +---------------------------------------------------------------+ | | | sname (64) | +---------------------------------------------------------------+ | | | file (128) | +---------------------------------------------------------------+ | | | options (variable) | +---------------------------------------------------------------+     FIELD OCTETS DESCRIPTION     op 1 Message op code / message type.</description>
+0 1 2 3 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | op (1) | htype (1) | hlen (1) | hops (1) | +---------------+---------------+---------------+---------------+ | xid (4) | +-------------------------------+-------------------------------+ | secs (2) | flags (2) | +-------------------------------+-------------------------------+ | ciaddr (4) | +---------------------------------------------------------------+ | yiaddr (4) | +---------------------------------------------------------------+ | siaddr (4) | +---------------------------------------------------------------+ | giaddr (4) | +---------------------------------------------------------------+ | | | chaddr (16) | | | | | +---------------------------------------------------------------+ | | | sname (64) | +---------------------------------------------------------------+ | | | file (128) | +---------------------------------------------------------------+ | | | options (variable) | +---------------------------------------------------------------+    FIELD OCTETS DESCRIPTION     op 1 Message op code / message type.</description>
     </item>
     
     <item>

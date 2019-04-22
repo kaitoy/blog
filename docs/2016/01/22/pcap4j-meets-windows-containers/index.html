@@ -64,7 +64,7 @@ Windows Containersセットアップ まず、Windows 7 x64のノートPCにVMwa
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&amp;subset=japanese">
 
 
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai.min.css"> 
+
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -72,14 +72,6 @@ Windows Containersセットアップ まず、Windows 7 x64のノートPCにVMwa
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/dockerfile.min.js"></script>  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/dos.min.js"></script> 
-
-    <script>hljs.initHighlightingOnLoad();</script>
-
 
 
 
@@ -297,19 +289,15 @@ Windows Server Containersよりコンテナ間の分離性が高く、カーネ�
 <h1 id="windows-server-containers味見">Windows Server Containers味見</h1>
 
 <p>コマンドプロンプトで <code>docker images</code> を実行すると、既に <code>windowsservercore</code> というコンテナイメージが入っていることがわかる。</p>
-
-<pre><code class="language-cmd">C:\Users\Administrator&gt;docker images
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">C:\Users\Administrator<span style="color:#999;font-style:italic">&gt;docker images</span>
 REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
 windowsservercore   10.0.10586.0        6801d964fda5        11 weeks ago        0 B
-windowsservercore   latest              6801d964fda5        11 weeks ago        0 B
-</code></pre>
-
+windowsservercore   latest              6801d964fda5        11 weeks ago        0 B</code></pre></div>
 <p><code>docker run -it windowsservercore cmd</code> を実行すると <code>windowsservercore</code> からコンテナを起動してその上でコマンドプロンプトを起動できる。
 コンテナの起動は非常に遅い。30秒以上かかる。これは今の時点での<a href="https://msdn.microsoft.com/virtualization/windowscontainers/about/work_in_progress#windows-containers-start-slowly">制限</a>らしい。</p>
 
 <p><code>docker login --help</code> するとわかるが、コンテナイメージのリポジトリは <code>https://registry-win-tp3.docker.io/v1/</code> という仮っぽいサーバにあって、<code>docker search *</code> を実行するとそこに登録されたイメージのリストが見れる。</p>
-
-<pre><code class="language-cmd">C:\Users\Administrator&gt;docker search *
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">C:\Users\Administrator<span style="color:#999;font-style:italic">&gt;docker search *</span>
 NAME                 DESCRIPTION                                     STARS     OFFICIAL   AUTOMATED
 microsoft/aspnet     ASP.NET 5 framework installed in a Windows...   1         [OK]       [OK]
 microsoft/django     Django installed in a Windows Server Core ...   1                    [OK]
@@ -326,50 +314,45 @@ microsoft/python     Python installed in a Windows Server Core ...   1          
 microsoft/rails      Ruby on Rails installed in a Windows Serve...   1                    [OK]
 microsoft/redis      Redis installed in a Windows Server Core b...   1                    [OK]
 microsoft/ruby       Ruby installed in a Windows Server Core ba...   1                    [OK]
-microsoft/sqlite     SQLite installed in a Windows Server Core ...   1                    [OK]
-</code></pre>
-
+microsoft/sqlite     SQLite installed in a Windows Server Core ...   1                    [OK]</code></pre></div>
 <p>これらはちゃんと <code>docker pull</code> して使える。
 けど多分 <code>docker push</code> はできない。</p>
 
 <h1 id="pcap4j-on-windows-container">Pcap4J on Windows Container</h1>
 
 <p>結論から言うと、以下の <code>Dockerfile</code> を書いて <code>docker build</code> してPcap4Jをコンテナ上でビルドするところまではできたが、それを実行してもNIFが全く検出できず、よってパケットキャプチャも実行できなかった。</p>
-
-<pre><code class="language-dockerfile">#
-# Dockerfile for Pcap4J on Windows
-#
-
-FROM windowsservercore:latest
-MAINTAINER Kaito Yamada &lt;kaitoy@pcap4j.org&gt;
-
-# Install Chocolatey.
-RUN mkdir C:\pcap4j
-WORKDIR /pcap4j
-ADD https://chocolatey.org/install.ps1 install.ps1
-RUN powershell .\install.ps1
-
-# Install dependencies.
-RUN choco install -y nmap maven git jdk7
-
-# Build Pcap4J.
-RUN git clone git://github.com/kaitoy/pcap4j.git
-WORKDIR pcap4j
-RUN powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;mvn '-Dmaven.repo.local=C:\pcap4j\repo' -P distribution-assembly install 2&gt;&amp;1 | add-content -Path build.log -pass
-
-# Collect libraries.
-RUN mkdir bin &amp;&amp; \
-    cd pcap4j-packetfactory-static &amp;&amp; \
-    mvn -Dmaven.repo.local=C:\pcap4j\repo -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeScope=compile dependency:copy-dependencies &amp;&amp; \
-    mvn -Dmaven.repo.local=C:\pcap4j\repo -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeGroupIds=ch.qos.logback dependency:copy-dependencies &amp;&amp; \
-    cd ../pcap4j-distribution &amp;&amp; \
-    mvn -Dmaven.repo.local=C:\pcap4j\repo -DoutputDirectory=..\bin -Dmdep.stripVersion=true -DincludeArtifactIds=pcap4j-packetfactory-static,pcap4j-sample dependency:copy-dependencies
-
-# Generate sample script. (C:\pcap4j\pcap4j\bin\capture.bat)
-RUN echo @echo off &gt; bin\capture.bat &amp;&amp; \
-    echo &quot;%JAVA_HOME%\bin\java&quot; -cp C:\pcap4j\pcap4j\bin\pcap4j-core.jar;C:\pcap4j\pcap4j\bin\pcap4j-packetfactory-static.jar;C:\pcap4j\pcap4j\bin\pcap4j-sample.jar;C:\pcap4j\pcap4j\bin\jna.jar;C:\pcap4j\pcap4j\bin\slf4j-api.jar;C:\pcap4j\pcap4j\bin\logback-classic.jar;C:\pcap4j\pcap4j\bin\logback-core.jar org.pcap4j.sample.GetNextPacketEx &gt;&gt; bin\capture.bat
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-dockerfile" data-lang="dockerfile"><span style="color:#999;font-style:italic">#</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#999;font-style:italic"># Dockerfile for Pcap4J on Windows</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#999;font-style:italic">#</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#6ab825;font-weight:bold">FROM</span><span style="color:#ed9d13"> windowsservercore:latest</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#6ab825;font-weight:bold">MAINTAINER</span><span style="color:#ed9d13"> Kaito Yamada &lt;kaitoy@pcap4j.org&gt;</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#999;font-style:italic"># Install Chocolatey.</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#6ab825;font-weight:bold">RUN</span> mkdir C:<span style="color:#ed9d13">\p</span>cap4j<span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#6ab825;font-weight:bold">WORKDIR</span><span style="color:#ed9d13"> /pcap4j</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#6ab825;font-weight:bold">ADD</span><span style="color:#ed9d13"> https://chocolatey.org/install.ps1 install.ps1</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#6ab825;font-weight:bold">RUN</span> powershell .<span style="color:#ed9d13">\i</span>nstall.ps1<span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#999;font-style:italic"># Install dependencies.</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#6ab825;font-weight:bold">RUN</span> choco install -y nmap maven git jdk7<span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#999;font-style:italic"># Build Pcap4J.</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#6ab825;font-weight:bold">RUN</span> git clone git://github.com/kaitoy/pcap4j.git<span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#6ab825;font-weight:bold">WORKDIR</span><span style="color:#ed9d13"> pcap4j</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#6ab825;font-weight:bold">RUN</span> powershell -NoProfile -ExecutionPolicy Bypass -Command <span style="color:#ed9d13">&#34;mvn &#39;-Dmaven.repo.local=C:\pcap4j\repo&#39; -P distribution-assembly install 2&gt;&amp;1 | add-content -Path build.log -pass</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#999;font-style:italic"># Collect libraries.</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#6ab825;font-weight:bold">RUN</span> mkdir bin &amp;&amp; <span style="color:#ed9d13">\
+</span><span style="color:#ed9d13"></span>    <span style="color:#24909d">cd</span> pcap4j-packetfactory-static &amp;&amp; <span style="color:#ed9d13">\
+</span><span style="color:#ed9d13"></span>    mvn -Dmaven.repo.local=C:<span style="color:#ed9d13">\p</span>cap4j<span style="color:#ed9d13">\r</span>epo -DoutputDirectory=..<span style="color:#ed9d13">\b</span>in -Dmdep.stripVersion=<span style="color:#24909d">true</span> -DincludeScope=compile dependency:copy-dependencies &amp;&amp; <span style="color:#ed9d13">\
+</span><span style="color:#ed9d13"></span>    mvn -Dmaven.repo.local=C:<span style="color:#ed9d13">\p</span>cap4j<span style="color:#ed9d13">\r</span>epo -DoutputDirectory=..<span style="color:#ed9d13">\b</span>in -Dmdep.stripVersion=<span style="color:#24909d">true</span> -DincludeGroupIds=ch.qos.logback dependency:copy-dependencies &amp;&amp; <span style="color:#ed9d13">\
+</span><span style="color:#ed9d13"></span>    <span style="color:#24909d">cd</span> ../pcap4j-distribution &amp;&amp; <span style="color:#ed9d13">\
+</span><span style="color:#ed9d13"></span>    mvn -Dmaven.repo.local=C:<span style="color:#ed9d13">\p</span>cap4j<span style="color:#ed9d13">\r</span>epo -DoutputDirectory=..<span style="color:#ed9d13">\b</span>in -Dmdep.stripVersion=<span style="color:#24909d">true</span> -DincludeArtifactIds=pcap4j-packetfactory-static,pcap4j-sample dependency:copy-dependencies<span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#999;font-style:italic"># Generate sample script. (C:\pcap4j\pcap4j\bin\capture.bat)</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#6ab825;font-weight:bold">RUN</span> <span style="color:#24909d">echo</span> @echo off &gt; bin<span style="color:#ed9d13">\c</span>apture.bat &amp;&amp; <span style="color:#ed9d13">\
+</span><span style="color:#ed9d13"></span>    <span style="color:#24909d">echo</span> <span style="color:#ed9d13">&#34;%JAVA_HOME%\bin\java&#34;</span> -cp C:<span style="color:#ed9d13">\p</span>cap4j<span style="color:#ed9d13">\p</span>cap4j<span style="color:#ed9d13">\b</span>in<span style="color:#ed9d13">\p</span>cap4j-core.jar;C:<span style="color:#ed9d13">\p</span>cap4j<span style="color:#ed9d13">\p</span>cap4j<span style="color:#ed9d13">\b</span>in<span style="color:#ed9d13">\p</span>cap4j-packetfactory-static.jar;C:<span style="color:#ed9d13">\p</span>cap4j<span style="color:#ed9d13">\p</span>cap4j<span style="color:#ed9d13">\b</span>in<span style="color:#ed9d13">\p</span>cap4j-sample.jar;C:<span style="color:#ed9d13">\p</span>cap4j<span style="color:#ed9d13">\p</span>cap4j<span style="color:#ed9d13">\b</span>in<span style="color:#ed9d13">\j</span>na.jar;C:<span style="color:#ed9d13">\p</span>cap4j<span style="color:#ed9d13">\p</span>cap4j<span style="color:#ed9d13">\b</span>in<span style="color:#ed9d13">\s</span>lf4j-api.jar;C:<span style="color:#ed9d13">\p</span>cap4j<span style="color:#ed9d13">\p</span>cap4j<span style="color:#ed9d13">\b</span>in<span style="color:#ed9d13">\l</span>ogback-classic.jar;C:<span style="color:#ed9d13">\p</span>cap4j<span style="color:#ed9d13">\p</span>cap4j<span style="color:#ed9d13">\b</span>in<span style="color:#ed9d13">\l</span>ogback-core.jar org.pcap4j.sample.GetNextPacketEx &gt;&gt; bin<span style="color:#ed9d13">\c</span>apture.bat</code></pre></div>
 <p>この <code>Dockerfile</code> でやっていることはだいたい以下。</p>
 
 <ol>
@@ -392,21 +375,15 @@ Nmapはサイレントインストールできて、インストール処理中�
 
 <ul>
 <li><p><code>WORKDIR</code> や <code>ENV</code> で環境変数が展開されない。</p>
-
-<pre><code class="language-cmd">  ENV hoge %tmp%
-  RUN echo %hoge%
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">  ENV hoge <span style="color:#40ffff">%tmp%</span>
+  RUN echo <span style="color:#40ffff">%hoge%</span></code></pre></div>
 <p>とすると <code>%tmp%</code> と表示される。</p></li>
 
 <li><p><code>WORKDIR</code> や <code>ENV</code> や <code>COPY</code> でパスの区切りは <code>\</code> 一つだと消えちゃうので <code>\\</code> か <code>/</code> を使わないといけない。</p></li>
 
 <li><p><code>WORKDIR</code> や <code>COPY</code> のコンテナ内のパスに絶対パスを指定したい場合、<code>C:\hoge</code>、<code>C:/hoge</code>、<code>C:\\hoge</code>、いずれもダメ。
 以下の様なエラーが出る。</p>
-
-<pre><code>  GetFileAttributesEx \\?\Volume{67df3c84-a0ef-11e5-9a63-000c2976fbc3}\C:: The filename, directory name, or volume label syntax is incorrect.
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">  GetFileAttributesEx \\?\Volume{67df3c84-a0ef-11e5-9a63-000c2976fbc3}\C:: The filename, directory name, or volume label syntax is incorrect.</code></pre></div>
 <p>UNIX式に <code>/hoge</code> とするといける。C以外のドライブを指定したいときはどうするんだろう。</p></li>
 
 <li><p>コンテナ内で <code>C:\</code> 直下に <code>.</code> で始まる名前のフォルダ作ると次のステップで消えてる。
@@ -416,40 +393,28 @@ Mavenのリポジトリがデフォルトで <code>C:\.m2\</code> 以下にで�
 
 <p>これらのバグを乗り越えて頑張って <code>Dockerfile</code> 書いたのに、NIFの検出すらできなかったという哀しい結果。
 <code>pcap_lookupdev</code> が以下のエラーを吐いて <code>NULL</code> を返してきてたので、なんとなくコンテナのNIFに長すぎる名前がついていて検出失敗しているんじゃないかと。</p>
-
-<pre><code>PacketGetAdapterNames: The data area passed to a system call is too small. (122)
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">PacketGetAdapterNames: The data area passed to a system call is too small. (122)</code></pre></div>
 <p>因みにコンテナ内から見えるNIFは一つで、以下の構成。</p>
-
-<pre><code>Ethernet adapter vEthernet (Virtual Switch-d206475ce13256766b9a16383540a740fe31da8d20499349fe98693393a8490f-0):
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">Ethernet adapter vEthernet (Virtual Switch-d206475ce13256766b9a16383540a740fe31da8d20499349fe98693393a8490f-0):
 
    Connection-specific DNS Suffix  . : localdomain
    Link-local IPv6 Address . . . . . : fe80::4086:d11e:5e6:28fe%26
    IPv4 Address. . . . . . . . . . . : 172.16.0.2
    Subnet Mask . . . . . . . . . . . : 255.240.0.0
-   Default Gateway . . . . . . . . . : 172.16.0.1
-</code></pre>
-
+   Default Gateway . . . . . . . . . : 172.16.0.1</code></pre></div>
 <p>コンテナ内から <code>www.google.com</code> とかにping届いたので、このNIFはちゃんと働いていはずなんだけどPcap4Jから見えない。</p>
 
 <p><br>
 <br></p>
 
 <p>後日上記 <code>Dockerfile</code> でビルドしてみたら、<code>RUN powershell .\install.ps1</code> で以下のエラーが出るようになった。</p>
-
-<pre><code>The request was aborted: Could not create SSL/TLS secure channel.
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">The request was aborted: Could not create SSL/TLS secure channel.</code></pre></div>
 <p>install.ps1の中でChocolateyのインストーラをHTTPSで取ってこようとしてエラーになっている模様。
 Windows Containersの<a href="https://msdn.microsoft.com/en-us/virtualization/windowscontainers/about/work_in_progress#https-and-tls-are-not-supported">ドキュメント</a>や<a href="https://social.msdn.microsoft.com/Forums/en-US/c0d93dda-37b7-4a2c-9a78-55e4ba0b88f5/https-support-in-windowsservercore-image?forum=windowscontainers">フォーラム</a>にHTTPSが使えないという制限が載っているけどこのせい?
 ちょっと前にやったときは同じ <code>Dockerfile</code> でビルドできたはずなんだけど。</p>
 
 <p>試しに以下の処理を挟んでChocolateyのインストーラをHTTPで取ってくるようにしたらChocolateyのインストールまではできた。</p>
-
-<pre><code class="language-dockerfile">RUN powershell $(Get-Content install.ps1) -replace \&quot;https\&quot;,\&quot;http\&quot; &gt; install.mod.ps1
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-dockerfile" data-lang="dockerfile"><span style="color:#6ab825;font-weight:bold">RUN</span> powershell <span style="color:#6ab825;font-weight:bold">$(</span>Get-Content install.ps1<span style="color:#6ab825;font-weight:bold">)</span> -replace <span style="color:#ed9d13">\&#34;</span>https<span style="color:#ed9d13">\&#34;</span>,<span style="color:#ed9d13">\&#34;</span>http<span style="color:#ed9d13">\&#34;</span> &gt; install.mod.ps1</code></pre></div>
 <p>けど <code>choco install</code> がHTTPS使うので結局駄目だった。</p>
 
 <p>もう面倒なのでHTTPSの制限がとれるのをまとう。</p>

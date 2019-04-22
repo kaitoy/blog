@@ -30,7 +30,7 @@
 そんな問題に対応する技術がCode Splitting。 バンドルを分割し、(理想的には)必要な時に必要な分だけロードする技術。
 Code Splittingのやりかたはいくつかあるが、ダイナミックインポートとReact.lazyとReact Suspenseとwebpackのプリフェッチディレクティブを使ったやつを、フォントモジュールに適用してみる。
 src/components/App.jsx:
--import React from &#39;react&#39;; &#43;import React, { Suspense } from &#39;react&#39;; import { Route, Redirect } from &#39;react-router-dom&#39;; import Home from &#39;./Home&#39;; -import Fonts from &#39;../fonts&#39;; &#43;const Fonts = React.lazy(() =&gt; import(/* webpackPrefetch: true */ &#39;../fonts&#39;)); const App = () =&gt; ( &lt;div&gt; &lt;Route exact path=&quot;/&quot; render={() =&gt; &lt;Redirect to=&quot;/home&quot; /&gt;} /&gt; &lt;Route exact path=&quot;/home&quot; component={Home} /&gt; - &lt;Fonts /&gt; &#43; &lt;Suspense fallback={&lt;div /&gt;}&gt; &#43; &lt;Fonts /&gt; &#43; &lt;/Suspense&gt; &lt;/div&gt; ); export default App;  コード変更はこれだけ。">
+-import React from &#39;react&#39;; &#43;import React, { Suspense } from &#39;react&#39;;  import { Route, Redirect } from &#39;react-router-dom&#39;; import Home from &#39;./Home&#39;; -import Fonts from &#39;../fonts&#39;;  &#43;const Fonts = React.lazy(() =&gt; import(/* webpackPrefetch: true */ &#39;../fonts&#39;));  const App = () =&gt; ( &lt;div&gt; &lt;Route exact path=&#34;/&#34; render={() =&gt; &lt;Redirect to=&#34;/home&#34; /&gt;} /&gt; &lt;Route exact path=&#34;/home&#34; component={Home} /&gt; - &lt;Fonts /&gt; &#43; &lt;Suspense fallback={&lt;div /&gt;}&gt; &#43; &lt;Fonts /&gt; &#43; &lt;/Suspense&gt;  &lt;/div&gt; ); export default App;  コード変更はこれだけ。">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/flow-jest-enzyme.png">
 
 
@@ -62,7 +62,7 @@ src/components/App.jsx:
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&amp;subset=japanese">
 
 
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai.min.css"> 
+
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -70,14 +70,6 @@ src/components/App.jsx:
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-
-    
-
-    <script>hljs.initHighlightingOnLoad();</script>
-
 
 
 
@@ -268,54 +260,47 @@ src/components/App.jsx:
 <p>Code Splittingのやりかたはいくつかあるが、<a href="https://reactjs.org/docs/code-splitting.html#import">ダイナミックインポート</a>と<a href="https://reactjs.org/docs/code-splitting.html#reactlazy">React.lazy</a>と<a href="https://reactjs.org/docs/code-splitting.html#suspense">React Suspense</a>とwebpackの<a href="https://webpack.js.org/guides/code-splitting/#prefetching-preloading-modules">プリフェッチディレクティブ</a>を使ったやつを、フォントモジュールに適用してみる。</p>
 
 <p><code>src/components/App.jsx</code>:</p>
-
-<pre><code class="language-diff">-import React from 'react';
-+import React, { Suspense } from 'react';
- import { Route, Redirect } from 'react-router-dom';
- import Home from './Home';
--import Fonts from '../fonts';
-
-+const Fonts = React.lazy(() =&gt; import(/* webpackPrefetch: true */ '../fonts'));
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"><span style="color:#d22323">-import React from &#39;react&#39;;
+</span><span style="color:#d22323"></span><span style="color:#589819">+import React, { Suspense } from &#39;react&#39;;
+</span><span style="color:#589819"></span> import { Route, Redirect } from &#39;react-router-dom&#39;;
+ import Home from &#39;./Home&#39;;
+<span style="color:#d22323">-import Fonts from &#39;../fonts&#39;;
+</span><span style="color:#d22323"></span>
+<span style="color:#589819">+const Fonts = React.lazy(() =&gt; import(/* webpackPrefetch: true */ &#39;../fonts&#39;));
+</span><span style="color:#589819"></span>
  const App = () =&gt; (
    &lt;div&gt;
-     &lt;Route exact path=&quot;/&quot; render={() =&gt; &lt;Redirect to=&quot;/home&quot; /&gt;} /&gt;
-     &lt;Route exact path=&quot;/home&quot; component={Home} /&gt;
--    &lt;Fonts /&gt;
-+    &lt;Suspense fallback={&lt;div /&gt;}&gt;
-+      &lt;Fonts /&gt;
-+    &lt;/Suspense&gt;
-   &lt;/div&gt;
+     &lt;Route exact path=&#34;/&#34; render={() =&gt; &lt;Redirect to=&#34;/home&#34; /&gt;} /&gt;
+     &lt;Route exact path=&#34;/home&#34; component={Home} /&gt;
+<span style="color:#d22323">-    &lt;Fonts /&gt;
+</span><span style="color:#d22323"></span><span style="color:#589819">+    &lt;Suspense fallback={&lt;div /&gt;}&gt;
+</span><span style="color:#589819">+      &lt;Fonts /&gt;
+</span><span style="color:#589819">+    &lt;/Suspense&gt;
+</span><span style="color:#589819"></span>   &lt;/div&gt;
  );
 
  export default App;
-</code></pre>
-
+</code></pre></div>
 <p>コード変更はこれだけ。</p>
 
 <p><code>import()</code>がダイナミックインポートで、<a href="https://github.com/tc39/proposal-dynamic-import">ECMAScriptで現在策定中</a>の機能。
 これを使えるようにするためには、Babelのプラグインを追加する必要がある。</p>
-
-<pre><code class="language-shell">yarn add -D @babel/plugin-syntax-dynamic-import
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">yarn add -D @babel/plugin-syntax-dynamic-import</code></pre></div>
 <p><code>.babelrc</code>:</p>
-
-<pre><code class="language-diff"> {
-   &quot;presets&quot;: [
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> {
+   &#34;presets&#34;: [
      [
-       &quot;@babel/preset-env&quot;,
+       &#34;@babel/preset-env&#34;,
        {
-         &quot;useBuiltIns&quot;: &quot;usage&quot;
+         &#34;useBuiltIns&#34;: &#34;usage&#34;
        }
      ],
-     &quot;@babel/preset-react&quot;
+     &#34;@babel/preset-react&#34;
    ],
--  &quot;plugins&quot;: [&quot;styled-components&quot;]
-+  &quot;plugins&quot;: [&quot;styled-components&quot;, &quot;@babel/plugin-syntax-dynamic-import&quot;]
- }
-</code></pre>
-
+<span style="color:#d22323">-  &#34;plugins&#34;: [&#34;styled-components&#34;]
+</span><span style="color:#d22323"></span><span style="color:#589819">+  &#34;plugins&#34;: [&#34;styled-components&#34;, &#34;@babel/plugin-syntax-dynamic-import&#34;]
+</span><span style="color:#589819"></span> }
+</code></pre></div>
 <p>ダイナミックインポートの設定も完了。
 これでフォントモジュールはメインのバンドルとは別ファイルになり、初期画面の表示時にはロードされず、ブラウザの空き時間に非同期にロードされるようになる。</p>
 
@@ -335,36 +320,28 @@ src/components/App.jsx:
 <p>Flowは、ソースに型情報を付けて静的型チェック可能にしつつ、実行時には型情報を取り去って普通のJavaScriptとして実行できるようにする仕組み。</p>
 
 <p>型チェックするツールは<a href="https://www.npmjs.com/package/flow-bin">flow-bin</a>パッケージで配布されていて、型情報の除去は<a href="https://www.npmjs.com/package/babel-preset-flow">@babel/preset-flow</a>を使ってBabelでできる。</p>
-
-<pre><code class="language-shell">yarn add -D flow-bin @babel/preset-flow
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">yarn add -D flow-bin @babel/preset-flow</code></pre></div>
 <p><code>.babelrc</code>:</p>
-
-<pre><code class="language-diff"> {
-   &quot;presets&quot;: [
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> {
+   &#34;presets&#34;: [
      [
-       &quot;@babel/preset-env&quot;,
+       &#34;@babel/preset-env&#34;,
        {
-         &quot;useBuiltIns&quot;: &quot;usage&quot;
+         &#34;useBuiltIns&#34;: &#34;usage&#34;
        }
      ],
-+    &quot;@babel/preset-flow&quot;,
-     &quot;@babel/preset-react&quot;
+<span style="color:#589819">+    &#34;@babel/preset-flow&#34;,
+</span><span style="color:#589819"></span>     &#34;@babel/preset-react&#34;
    ],
-   &quot;plugins&quot;: [&quot;styled-components&quot;, &quot;@babel/plugin-syntax-dynamic-import&quot;]
+   &#34;plugins&#34;: [&#34;styled-components&#34;, &#34;@babel/plugin-syntax-dynamic-import&#34;]
  }
-</code></pre>
-
+</code></pre></div>
 <p>これで、<code>yarn flow</code>でFlowを実行できるようになった。</p>
-
-<pre><code class="language-shell">$ yarn flow version
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">$ yarn flow version
 yarn run v1.7.0
 $ C:\Users\kaitoy\Desktop\bin\pleiades\workspace\react-redux-scaffold\node_modules\.bin\flow version
 Flow, a static type checker for JavaScript, version 0.77.0
-Done in 0.38s.
-</code></pre>
-
+Done in 0.38s.</code></pre></div>
 <p><br></p>
 
 <p>で、<code>yarn flow init</code>でFlowの設定ファイル<code>.flowconfig</code>を生成して、型チェックしたいファイルの頭に<code>// @flow</code>と書けばとりあえず機能する。</p>
@@ -373,46 +350,40 @@ Done in 0.38s.
 
 <p>それだけでもだいぶ型推論してくれてチェックが利くけど、<a href="https://flow.org/en/docs/types/">型アノテーション</a>を書いていくとよりいい。
 ただ、アノテートするとESLintとけんかするので、それ対策として<a href="https://github.com/gajus/eslint-plugin-flowtype">eslint-plugin-flowtype</a>を入れる必要がある。</p>
-
-<pre><code class="language-shell">yarn add -D babel-eslint eslint-plugin-flowtype
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">yarn add -D babel-eslint eslint-plugin-flowtype</code></pre></div>
 <p><code>.eslintrc.js</code>:</p>
-
-<pre><code class="language-diff"> module.exports = {
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> module.exports = {
    env: {
      browser: true,
    },
-+  parser: 'babel-eslint',
--  extends: ['airbnb', 'prettier'],
-+  extends: ['airbnb', 'plugin:flowtype/recommended', 'prettier'],
-+  plugins: ['flowtype'],
- };
-</code></pre>
-
+<span style="color:#589819">+  parser: &#39;babel-eslint&#39;,
+</span><span style="color:#589819"></span><span style="color:#d22323">-  extends: [&#39;airbnb&#39;, &#39;prettier&#39;],
+</span><span style="color:#d22323"></span><span style="color:#589819">+  extends: [&#39;airbnb&#39;, &#39;plugin:flowtype/recommended&#39;, &#39;prettier&#39;],
+</span><span style="color:#589819">+  plugins: [&#39;flowtype&#39;],
+</span><span style="color:#589819"></span> };
+</code></pre></div>
 <p><br></p>
 
 <p>例として、Reactコンポーネントのpropsに型を付けてみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-jsx" data-lang="jsx"><span style="color:#999;font-style:italic">// @flow
+</span><span style="color:#999;font-style:italic"></span>
+<span style="color:#6ab825;font-weight:bold">import</span> React from <span style="color:#ed9d13">&#39;react&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> Dialog from <span style="color:#ed9d13">&#39;@material-ui/core/Dialog&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> DialogTitle from <span style="color:#ed9d13">&#39;@material-ui/core/DialogTitle&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> PropTypes from <span style="color:#ed9d13">&#39;prop-types&#39;</span>;
 
-<pre><code class="language-javascript">// @flow
-
-import React from 'react';
-import Dialog from '@material-ui/core/Dialog';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import PropTypes from 'prop-types';
-
-// Propsという型の定義
-// text(string型)とopen(boolean型)というプロパティを持つオブジェクト
-type Props = {
+<span style="color:#999;font-style:italic">// Propsという型の定義
+</span><span style="color:#999;font-style:italic">// text(string型)とopen(boolean型)というプロパティを持つオブジェクト
+</span><span style="color:#999;font-style:italic"></span>type Props = {
   text: string,
-  open: boolean,
+  open: <span style="color:#6ab825;font-weight:bold">boolean</span>,
 };
 
-// Props型を受け取る関数
-const MyDialog = ({ text, open }: Props) =&gt; (
-  &lt;Dialog open={open}&gt;
-    &lt;DialogTitle&gt;{text}&lt;/DialogTitle&gt;
-  &lt;/Dialog&gt;
+<span style="color:#999;font-style:italic">// Props型を受け取る関数
+</span><span style="color:#999;font-style:italic"></span><span style="color:#6ab825;font-weight:bold">const</span> MyDialog = ({ text, open }: Props) =&gt; (
+  &lt;<span style="color:#6ab825;font-weight:bold">Dialog</span> <span style="color:#bbb">open</span>=<span style="color:#ed9d13">{open}</span>&gt;
+    &lt;<span style="color:#6ab825;font-weight:bold">DialogTitle</span>&gt;{text}&lt;/<span style="color:#6ab825;font-weight:bold">DialogTitle</span>&gt;
+  &lt;/<span style="color:#6ab825;font-weight:bold">Dialog</span>&gt;
 );
 
 MyDialog.propTypes = {
@@ -420,9 +391,7 @@ MyDialog.propTypes = {
   open: PropTypes.bool.isRequired,
 };
 
-export default MyDialog;
-</code></pre>
-
+<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">default</span> MyDialog;</code></pre></div>
 <p>こんな感じで型を付けておくと、MyDialogに渡すpropsを間違った場合にFlowがエラーにしてくれる。
 prop-typesによる型定義と冗長な感じに見えるけど、Flowは静的に型チェックするのに対し、prop-typesはアプリの動作中に型チェックしてくれるので、両方書いておくのがよさそう。
 (Flowの型定義からprop-typesの定義を生成してくれる<a href="https://github.com/atlassian/babel-plugin-react-flow-props-to-prop-types">babel-plugin-react-flow-props-to-prop-types</a>というのがあるけど、サポートされていない型があるし、メンテされていないし、微妙。)</p>
@@ -432,22 +401,18 @@ prop-typesによる型定義と冗長な感じに見えるけど、Flowは静的
 <p>上のコードで、<code>type</code>というキーワードで型を定義しているんだけど、Reactとかの3rdパーティライブラリの型情報(<a href="https://flow.org/en/docs/libdefs/">libdef</a>と呼ばれるもの)は、ライブラリ開発者などが作ったものが公開されていて、インストールして利用できる。</p>
 
 <p>libdefはそれようの<a href="https://github.com/flow-typed/flow-typed/tree/master/definitions">リポジトリ</a>で管理されていて、<a href="https://github.com/flow-typed/flow-typed/blob/master/README.md">flow-typed</a>で引っ張れる。</p>
-
-<pre><code class="language-shell">yarn add -D flow-typed
-yarn flow-typed --ignoreDeps dev install
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">yarn add -D flow-typed
+yarn flow-typed --ignoreDeps dev install</code></pre></div>
 <p>これで、package.jsonに書かれている依存(devDependenciesを除く)を見て、必要なlibdefをダウンロードしてきて、プロジェクトルートの<code>flow-typed</code>というディレクトリにインストールしてくれる。</p>
 
 <p>例えばさっきのReactコンポーネントのコードに、ReactのAPIの型の一つである<code>Node</code>を書くと以下のようになる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> // @flow
 
-<pre><code class="language-diff"> // @flow
-
- import React from 'react';
-+import type { Node } from 'react';
- import Dialog from '@material-ui/core/Dialog';
- import DialogTitle from '@material-ui/core/DialogTitle';
- import PropTypes from 'prop-types';
+ import React from &#39;react&#39;;
+<span style="color:#589819">+import type { Node } from &#39;react&#39;;
+</span><span style="color:#589819"></span> import Dialog from &#39;@material-ui/core/Dialog&#39;;
+ import DialogTitle from &#39;@material-ui/core/DialogTitle&#39;;
+ import PropTypes from &#39;prop-types&#39;;
 
  // Propsという型の定義
  // text(string型)とopen(boolean型)というプロパティを持つオブジェクト
@@ -457,9 +422,9 @@ yarn flow-typed --ignoreDeps dev install
  };
 
  // Props型を受け取る関数
--const MyDialog = ({ text, open }: Props) =&gt; (
-+const MyDialog = ({ text, open }: Props): Node =&gt; (
-   &lt;Dialog open={open}&gt;
+<span style="color:#d22323">-const MyDialog = ({ text, open }: Props) =&gt; (
+</span><span style="color:#d22323"></span><span style="color:#589819">+const MyDialog = ({ text, open }: Props): Node =&gt; (
+</span><span style="color:#589819"></span>   &lt;Dialog open={open}&gt;
      &lt;DialogTitle&gt;{text}&lt;/DialogTitle&gt;
    &lt;/Dialog&gt;
  );
@@ -470,8 +435,7 @@ yarn flow-typed --ignoreDeps dev install
  };
 
  export default MyDialog;
-</code></pre>
-
+</code></pre></div>
 <p>因みに<code>flow-typed</code>ディレクトリの中身はコミットすることが推奨されている。
 なんか違和感あるんだけど…</p>
 
@@ -496,10 +460,7 @@ JestもReactと開発元が同じFacebookで、Reactと相性がいいはずだ�
 <li><a href="https://www.npmjs.com/package/babel-core/v/7.0.0-bridge.0">babel-core@^7.0.0-bridge</a>: babel-jestをBabel 7で使うためのモジュール。<a href="https://github.com/facebook/jest/tree/master/packages/babel-jest#usage">現時点では必要</a>だけど、その内いらなくなるであろう。
 (2019/1/27追記: <a href="https://jestjs.io/blog/2019/01/25/jest-24-refreshing-polished-typescript-friendly">Jest v24でBabel 7にネイティブ対応して、bridgeは不要になった</a>。)</li>
 </ul>
-
-<pre><code class="language-shell">yarn add -D jest babel-jest react-test-renderer babel-core@^7.0.0-bridge
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">yarn add -D jest babel-jest react-test-renderer babel-core@^7.0.0-bridge</code></pre></div>
 <p>Jestはv23.6.0が入った。</p>
 
 <p><br></p>
@@ -507,233 +468,221 @@ JestもReactと開発元が同じFacebookで、Reactと相性がいいはずだ�
 <p>npm scriptにjestを追加しておくといい。</p>
 
 <p><code>package.json</code>:</p>
-
-<pre><code class="language-diff"> (前略)
-   &quot;scripts&quot;: {
-     &quot;format&quot;: &quot;prettier --write **/*.jsx **/*.js **/*.css&quot;,
-     &quot;build&quot;: &quot;webpack --config webpack.prod.js&quot;,
-+    &quot;test&quot;: &quot;jest&quot;,
-     &quot;start&quot;: &quot;webpack-dev-server --hot --config webpack.dev.js&quot;
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> (前略)
+   &#34;scripts&#34;: {
+     &#34;format&#34;: &#34;prettier --write **/*.jsx **/*.js **/*.css&#34;,
+     &#34;build&#34;: &#34;webpack --config webpack.prod.js&#34;,
+<span style="color:#589819">+    &#34;test&#34;: &#34;jest&#34;,
+</span><span style="color:#589819"></span>     &#34;start&#34;: &#34;webpack-dev-server --hot --config webpack.dev.js&#34;
    },
  (後略)
-</code></pre>
-
+</code></pre></div>
 <h2 id="jestセットアップ">Jestセットアップ</h2>
 
 <p>Jestの設定ファイルである<a href="https://jestjs.io/docs/en/configuration">jest.config.js</a>をプロジェクトルートに生成する。</p>
-
-<pre><code class="language-shell">yarn test --init
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">yarn test --init</code></pre></div>
 <p>プロンプトでいくつかのことを聞かれるが、「Choose the test environment that will be used for testing」に<code>jsdom</code>で答えるのがポイント。ブラウザで動かすアプリなので。</p>
 
 <p>設定ファイルはとりあえずおおむね生成されたままでいいけど、一点、v23.4.2時点では、テスト実行時に「SecurityError: localStorage is not available for opaque origins」というエラーが出る<a href="https://github.com/facebook/jest/issues/6769#issuecomment-408352345">問題がある</a>ので、testURLを「<code>http://localhost/</code>」に設定しておく必要がある。</p>
 
 <p><code>jest.config.js</code>:</p>
-
-<pre><code class="language-javascript">// For a detailed explanation regarding each configuration property, visit:
-// https://jestjs.io/docs/en/configuration.html
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#999;font-style:italic">// For a detailed explanation regarding each configuration property, visit:
+</span><span style="color:#999;font-style:italic">// https://jestjs.io/docs/en/configuration.html
+</span><span style="color:#999;font-style:italic"></span>
 module.exports = {
-  // All imported modules in your tests should be mocked automatically
-  // automock: false,
+  <span style="color:#999;font-style:italic">// All imported modules in your tests should be mocked automatically
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// automock: false,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// Stop running tests after the first failure
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// bail: false,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// Respect &#34;browser&#34; field in package.json when resolving modules
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// browser: false,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// The directory where Jest should store its cached dependency information
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// cacheDirectory: &#34;C:\\Users\\kaitoy\\AppData\\Local\\Temp\\jest&#34;,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// Automatically clear mock calls and instances between every test
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// clearMocks: false,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// Indicates whether the coverage information should be collected while executing the test
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// collectCoverage: false,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// An array of glob patterns indicating a set of files for which coverage information should be collected
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// collectCoverageFrom: null,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// The directory where Jest should output its coverage files
+</span><span style="color:#999;font-style:italic"></span>  coverageDirectory: <span style="color:#ed9d13">&#39;coverage&#39;</span>,
 
-  // Stop running tests after the first failure
-  // bail: false,
+  <span style="color:#999;font-style:italic">// An array of regexp pattern strings used to skip coverage collection
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// coveragePathIgnorePatterns: [
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">//   &#34;\\\\node_modules\\\\&#34;
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// ],
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// A list of reporter names that Jest uses when writing coverage reports
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// coverageReporters: [
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">//   &#34;json&#34;,
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">//   &#34;text&#34;,
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">//   &#34;lcov&#34;,
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">//   &#34;clover&#34;
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// ],
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// An object that configures minimum threshold enforcement for coverage results
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// coverageThreshold: null,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// Make calling deprecated APIs throw helpful error messages
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// errorOnDeprecated: false,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// Force coverage collection from ignored files usin a array of glob patterns
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// forceCoverageMatch: [],
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// A path to a module which exports an async function that is triggered once before all test suites
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// globalSetup: null,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// A path to a module which exports an async function that is triggered once after all test suites
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// globalTeardown: null,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// A set of global variables that need to be available in all test environments
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// globals: {},
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// An array of directory names to be searched recursively up from the requiring module&#39;s location
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// moduleDirectories: [
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">//   &#34;node_modules&#34;
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// ],
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// An array of file extensions your modules use
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// moduleFileExtensions: [
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">//   &#34;js&#34;,
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">//   &#34;json&#34;,
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">//   &#34;jsx&#34;,
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">//   &#34;node&#34;
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// ],
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// A map from regular expressions to module names that allow to stub out resources with a single module
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// moduleNameMapper: {},
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// An array of regexp pattern strings, matched against all module paths before considered &#39;visible&#39; to the module loader
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// modulePathIgnorePatterns: [],
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// Activates notifications for test results
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// notify: false,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// An enum that specifies notification mode. Requires { notify: true }
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// notifyMode: &#34;always&#34;,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// A preset that is used as a base for Jest&#39;s configuration
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// preset: null,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// Run tests from one or more projects
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// projects: null,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// Use this configuration option to add custom reporters to Jest
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// reporters: undefined,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// Automatically reset mock state between every test
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// resetMocks: false,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// Reset the module registry before running each individual test
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// resetModules: false,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// A path to a custom resolver
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// resolver: null,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// Automatically restore mock state between every test
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// restoreMocks: false,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// The root directory that Jest should scan for tests and modules within
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// rootDir: null,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// A list of paths to directories that Jest should use to search for files in
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// roots: [
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">//   &#34;&lt;rootDir&gt;&#34;
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// ],
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// Allows you to use a custom runner instead of Jest&#39;s default test runner
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// runner: &#34;jest-runner&#34;,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// The paths to modules that run some code to configure or set up the testing environment before each test
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// setupFiles: [],
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// The path to a module that runs some code to configure or set up the testing framework before each test
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// setupTestFrameworkScriptFile: null,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// A list of paths to snapshot serializer modules Jest should use for snapshot testing
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// snapshotSerializers: [],
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// The test environment that will be used for testing
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// testEnvironment: &#34;jest-environment-jsdom&#34;,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// Options that will be passed to the testEnvironment
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// testEnvironmentOptions: {},
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// Adds a location field to test results
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// testLocationInResults: false,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// The glob patterns Jest uses to detect test files
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// testMatch: [
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">//   &#34;**/__tests__/**/*.js?(x)&#34;,
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">//   &#34;**/?(*.)+(spec|test).js?(x)&#34;
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// ],
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// testPathIgnorePatterns: [
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">//   &#34;\\\\node_modules\\\\&#34;
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// ],
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// The regexp pattern Jest uses to detect test files
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// testRegex: &#34;&#34;,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// This option allows the use of a custom results processor
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// testResultsProcessor: null,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// This option allows use of a custom test runner
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// testRunner: &#34;jasmine2&#34;,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// This option sets the URL for the jsdom environment. It is reflected in properties such as location.href
+</span><span style="color:#999;font-style:italic"></span>  testURL: <span style="color:#ed9d13">&#39;http://localhost/&#39;</span>,
 
-  // Respect &quot;browser&quot; field in package.json when resolving modules
-  // browser: false,
-
-  // The directory where Jest should store its cached dependency information
-  // cacheDirectory: &quot;C:\\Users\\kaitoy\\AppData\\Local\\Temp\\jest&quot;,
-
-  // Automatically clear mock calls and instances between every test
-  // clearMocks: false,
-
-  // Indicates whether the coverage information should be collected while executing the test
-  // collectCoverage: false,
-
-  // An array of glob patterns indicating a set of files for which coverage information should be collected
-  // collectCoverageFrom: null,
-
-  // The directory where Jest should output its coverage files
-  coverageDirectory: 'coverage',
-
-  // An array of regexp pattern strings used to skip coverage collection
-  // coveragePathIgnorePatterns: [
-  //   &quot;\\\\node_modules\\\\&quot;
-  // ],
-
-  // A list of reporter names that Jest uses when writing coverage reports
-  // coverageReporters: [
-  //   &quot;json&quot;,
-  //   &quot;text&quot;,
-  //   &quot;lcov&quot;,
-  //   &quot;clover&quot;
-  // ],
-
-  // An object that configures minimum threshold enforcement for coverage results
-  // coverageThreshold: null,
-
-  // Make calling deprecated APIs throw helpful error messages
-  // errorOnDeprecated: false,
-
-  // Force coverage collection from ignored files usin a array of glob patterns
-  // forceCoverageMatch: [],
-
-  // A path to a module which exports an async function that is triggered once before all test suites
-  // globalSetup: null,
-
-  // A path to a module which exports an async function that is triggered once after all test suites
-  // globalTeardown: null,
-
-  // A set of global variables that need to be available in all test environments
-  // globals: {},
-
-  // An array of directory names to be searched recursively up from the requiring module's location
-  // moduleDirectories: [
-  //   &quot;node_modules&quot;
-  // ],
-
-  // An array of file extensions your modules use
-  // moduleFileExtensions: [
-  //   &quot;js&quot;,
-  //   &quot;json&quot;,
-  //   &quot;jsx&quot;,
-  //   &quot;node&quot;
-  // ],
-
-  // A map from regular expressions to module names that allow to stub out resources with a single module
-  // moduleNameMapper: {},
-
-  // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader
-  // modulePathIgnorePatterns: [],
-
-  // Activates notifications for test results
-  // notify: false,
-
-  // An enum that specifies notification mode. Requires { notify: true }
-  // notifyMode: &quot;always&quot;,
-
-  // A preset that is used as a base for Jest's configuration
-  // preset: null,
-
-  // Run tests from one or more projects
-  // projects: null,
-
-  // Use this configuration option to add custom reporters to Jest
-  // reporters: undefined,
-
-  // Automatically reset mock state between every test
-  // resetMocks: false,
-
-  // Reset the module registry before running each individual test
-  // resetModules: false,
-
-  // A path to a custom resolver
-  // resolver: null,
-
-  // Automatically restore mock state between every test
-  // restoreMocks: false,
-
-  // The root directory that Jest should scan for tests and modules within
-  // rootDir: null,
-
-  // A list of paths to directories that Jest should use to search for files in
-  // roots: [
-  //   &quot;&lt;rootDir&gt;&quot;
-  // ],
-
-  // Allows you to use a custom runner instead of Jest's default test runner
-  // runner: &quot;jest-runner&quot;,
-
-  // The paths to modules that run some code to configure or set up the testing environment before each test
-  // setupFiles: [],
-
-  // The path to a module that runs some code to configure or set up the testing framework before each test
-  // setupTestFrameworkScriptFile: null,
-
-  // A list of paths to snapshot serializer modules Jest should use for snapshot testing
-  // snapshotSerializers: [],
-
-  // The test environment that will be used for testing
-  // testEnvironment: &quot;jest-environment-jsdom&quot;,
-
-  // Options that will be passed to the testEnvironment
-  // testEnvironmentOptions: {},
-
-  // Adds a location field to test results
-  // testLocationInResults: false,
-
-  // The glob patterns Jest uses to detect test files
-  // testMatch: [
-  //   &quot;**/__tests__/**/*.js?(x)&quot;,
-  //   &quot;**/?(*.)+(spec|test).js?(x)&quot;
-  // ],
-
-  // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
-  // testPathIgnorePatterns: [
-  //   &quot;\\\\node_modules\\\\&quot;
-  // ],
-
-  // The regexp pattern Jest uses to detect test files
-  // testRegex: &quot;&quot;,
-
-  // This option allows the use of a custom results processor
-  // testResultsProcessor: null,
-
-  // This option allows use of a custom test runner
-  // testRunner: &quot;jasmine2&quot;,
-
-  // This option sets the URL for the jsdom environment. It is reflected in properties such as location.href
-  testURL: 'http://localhost/',
-
-  // Setting this value to &quot;fake&quot; allows the use of fake timers for functions such as &quot;setTimeout&quot;
-  // timers: &quot;real&quot;,
-
-  // A map from regular expressions to paths to transformers
-  // transform: null,
-
-  // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
-  // transformIgnorePatterns: [
-  //   &quot;\\\\node_modules\\\\&quot;
-  // ],
-
-  // An array of regexp pattern strings that are matched against all modules before the module loader will automatically return a mock for them
-  // unmockedModulePathPatterns: undefined,
-
-  // Indicates whether each individual test should be reported during the run
-  // verbose: null,
-
-  // An array of regexp patterns that are matched against all source file paths before re-running tests in watch mode
-  // watchPathIgnorePatterns: [],
-
-  // Whether to use watchman for file crawling
-  // watchman: true,
-};
-</code></pre>
-
+  <span style="color:#999;font-style:italic">// Setting this value to &#34;fake&#34; allows the use of fake timers for functions such as &#34;setTimeout&#34;
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// timers: &#34;real&#34;,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// A map from regular expressions to paths to transformers
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// transform: null,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// transformIgnorePatterns: [
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">//   &#34;\\\\node_modules\\\\&#34;
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// ],
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// An array of regexp pattern strings that are matched against all modules before the module loader will automatically return a mock for them
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// unmockedModulePathPatterns: undefined,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// Indicates whether each individual test should be reported during the run
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// verbose: null,
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// An array of regexp patterns that are matched against all source file paths before re-running tests in watch mode
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// watchPathIgnorePatterns: [],
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#999;font-style:italic">// Whether to use watchman for file crawling
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// watchman: true,
+</span><span style="color:#999;font-style:italic"></span>};
+</code></pre></div>
 <p><br></p>
 
 <p>また、例によって、(主にJestのグローバル変数のために、)JestのテストコードとESLintがけんかするので、ESLintをなだめるために<a href="https://www.npmjs.com/package/eslint-plugin-jest">eslint-plugin-jest</a>を入れる。</p>
-
-<pre><code class="language-shell">yarn add -D eslint-plugin-jest
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">yarn add -D eslint-plugin-jest</code></pre></div>
 <p><code>.eslintrc.js</code>:</p>
-
-<pre><code class="language-diff"> module.exports = {
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> module.exports = {
    env: {
      browser: true,
-+    'jest/globals': true,
-   },
-   parser: 'babel-eslint',
-   extends: ['airbnb', 'plugin:flowtype/recommended', 'prettier'],
--  plugins: ['flowtype'],
-+  plugins: ['flowtype', 'jest'],
- };
-</code></pre>
-
+<span style="color:#589819">+    &#39;jest/globals&#39;: true,
+</span><span style="color:#589819"></span>   },
+   parser: &#39;babel-eslint&#39;,
+   extends: [&#39;airbnb&#39;, &#39;plugin:flowtype/recommended&#39;, &#39;prettier&#39;],
+<span style="color:#d22323">-  plugins: [&#39;flowtype&#39;],
+</span><span style="color:#d22323"></span><span style="color:#589819">+  plugins: [&#39;flowtype&#39;, &#39;jest&#39;],
+</span><span style="color:#589819"></span> };
+</code></pre></div>
 <h2 id="jestのテスト作成">Jestのテスト作成</h2>
 
 <p>Jestのテストは、<code>jest.config.js</code>の<code>testMatch</code>にマッチするJavaScriptファイルに書く。
@@ -742,86 +691,79 @@ module.exports = {
 <p>テストコードはよくある感じの<a href="https://ja.wikipedia.org/wiki/%E3%83%93%E3%83%98%E3%82%A4%E3%83%93%E3%82%A2%E9%A7%86%E5%8B%95%E9%96%8B%E7%99%BA">BDD</a>風に書けばいいと思う。</p>
 
 <p><code>src/__tests__/reducers/reducers.test.js</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">import</span> { hoge } from <span style="color:#ed9d13">&#39;../../reducers/reducers&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> { hogeButtonClicked } from <span style="color:#ed9d13">&#39;../../actions/actions&#39;</span>;
 
-<pre><code class="language-javascript">import { hoge } from '../../reducers/reducers';
-import { hogeButtonClicked } from '../../actions/actions';
-
-const initialState = {
-  clicked: false,
+<span style="color:#6ab825;font-weight:bold">const</span> initialState = {
+  clicked: <span style="color:#6ab825;font-weight:bold">false</span>,
 };
 
-describe('reducers', () =&gt; {
-  describe('hoge()', () =&gt; {
-    test('returns a state with clicked:true when the action is HOGE_BUTTON_CLICKED', () =&gt; {
-      const state = hogeButtonClicked(initialState, hogeButtonClicked());
-      expect(state.clicked).toBe(true);
+describe(<span style="color:#ed9d13">&#39;reducers&#39;</span>, () =&gt; {
+  describe(<span style="color:#ed9d13">&#39;hoge()&#39;</span>, () =&gt; {
+    test(<span style="color:#ed9d13">&#39;returns a state with clicked:true when the action is HOGE_BUTTON_CLICKED&#39;</span>, () =&gt; {
+      <span style="color:#6ab825;font-weight:bold">const</span> state = hogeButtonClicked(initialState, hogeButtonClicked());
+      expect(state.clicked).toBe(<span style="color:#6ab825;font-weight:bold">true</span>);
     });
   });
 });
-</code></pre>
-
+</code></pre></div>
 <h2 id="スナップショットテスト">スナップショットテスト</h2>
 
 <p>Jestの目玉のひとつは<a href="https://jestjs.io/docs/ja/snapshot-testing">スナップショットテスト</a>。
 Reactコンポーネントのレンダリング結果が以前と変わってないかをテストできる。</p>
 
 <p><code>src/__tests__/components/HogeButton.test.jsx</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-jsx" data-lang="jsx"><span style="color:#6ab825;font-weight:bold">import</span> React from <span style="color:#ed9d13">&#39;react&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> renderer from <span style="color:#ed9d13">&#39;react-test-renderer&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> HogeButton from <span style="color:#ed9d13">&#39;../../components/HogeButton&#39;</span>;
 
-<pre><code class="language-javascript">import React from 'react';
-import renderer from 'react-test-renderer';
-import HogeButton from '../../components/HogeButton';
-
-describe('components', () =&gt; {
-  describe('HogeButton', () =&gt; {
-    test('renders correctly', () =&gt; {
-      const tree = renderer.create(
-        &lt;HogeButton variant=&quot;contained&quot; onClick={() =&gt; {}}&gt;
+describe(<span style="color:#ed9d13">&#39;components&#39;</span>, () =&gt; {
+  describe(<span style="color:#ed9d13">&#39;HogeButton&#39;</span>, () =&gt; {
+    test(<span style="color:#ed9d13">&#39;renders correctly&#39;</span>, () =&gt; {
+      <span style="color:#6ab825;font-weight:bold">const</span> tree = renderer.create(
+        &lt;<span style="color:#6ab825;font-weight:bold">HogeButton</span> <span style="color:#bbb">variant</span>=<span style="color:#ed9d13">&#34;contained&#34;</span> <span style="color:#bbb">onClick</span>=<span style="color:#ed9d13">{()</span> <span style="color:#a61717;background-color:#e3d2d2">=</span>&gt; {}}&gt;
           HOGE
-        &lt;/HogeButton&gt;
+        &lt;/<span style="color:#6ab825;font-weight:bold">HogeButton</span>&gt;
       ).toJSON();
       expect(tree).toMatchSnapshot();
     });
   });
-});
-</code></pre>
-
+});</code></pre></div>
 <p>このテストの初回実行時には、<code>src/__tests__/components/__snapshots__/HogeButton.test.jsx.snap</code>というスナップショットファイルが生成される。
 これはテキスト形式で、以下のような人が読み解ける内容。</p>
 
 <p><code>src/__tests__/components/__snapshots__/HogeButton.test.jsx.snap</code>:</p>
-
-<pre><code class="language-javascript">// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`components HogeButton renders correctly 1`] = `
-&lt;button
-  className=&quot;MuiButtonBase-root-25 MuiButton-root-1 MuiButton-contained-10 MuiButton-raised-13&quot;
-  disabled={false}
-  onBlur={[Function]}
-  onClick={[Function]}
-  onFocus={[Function]}
-  onKeyDown={[Function]}
-  onKeyUp={[Function]}
-  onMouseDown={[Function]}
-  onMouseLeave={[Function]}
-  onMouseUp={[Function]}
-  onTouchEnd={[Function]}
-  onTouchMove={[Function]}
-  onTouchStart={[Function]}
-  tabIndex=&quot;0&quot;
-  type=&quot;button&quot;
-&gt;
-  &lt;span
-    className=&quot;MuiButton-label-2&quot;
-  &gt;
-    HOGE
-  &lt;/span&gt;
-  &lt;span
-    className=&quot;MuiTouchRipple-root-28&quot;
-  /&gt;
-&lt;/button&gt;
-`;
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#999;font-style:italic">// Jest Snapshot v1, https://goo.gl/fbAQLP
+</span><span style="color:#999;font-style:italic"></span>
+exports[<span style="color:#ed9d13">`components HogeButton renders correctly 1`</span>] = <span style="color:#ed9d13">`
+</span><span style="color:#ed9d13">&lt;button
+</span><span style="color:#ed9d13">  className=&#34;MuiButtonBase-root-25 MuiButton-root-1 MuiButton-contained-10 MuiButton-raised-13&#34;
+</span><span style="color:#ed9d13">  disabled={false}
+</span><span style="color:#ed9d13">  onBlur={[Function]}
+</span><span style="color:#ed9d13">  onClick={[Function]}
+</span><span style="color:#ed9d13">  onFocus={[Function]}
+</span><span style="color:#ed9d13">  onKeyDown={[Function]}
+</span><span style="color:#ed9d13">  onKeyUp={[Function]}
+</span><span style="color:#ed9d13">  onMouseDown={[Function]}
+</span><span style="color:#ed9d13">  onMouseLeave={[Function]}
+</span><span style="color:#ed9d13">  onMouseUp={[Function]}
+</span><span style="color:#ed9d13">  onTouchEnd={[Function]}
+</span><span style="color:#ed9d13">  onTouchMove={[Function]}
+</span><span style="color:#ed9d13">  onTouchStart={[Function]}
+</span><span style="color:#ed9d13">  tabIndex=&#34;0&#34;
+</span><span style="color:#ed9d13">  type=&#34;button&#34;
+</span><span style="color:#ed9d13">&gt;
+</span><span style="color:#ed9d13">  &lt;span
+</span><span style="color:#ed9d13">    className=&#34;MuiButton-label-2&#34;
+</span><span style="color:#ed9d13">  &gt;
+</span><span style="color:#ed9d13">    HOGE
+</span><span style="color:#ed9d13">  &lt;/span&gt;
+</span><span style="color:#ed9d13">  &lt;span
+</span><span style="color:#ed9d13">    className=&#34;MuiTouchRipple-root-28&#34;
+</span><span style="color:#ed9d13">  /&gt;
+</span><span style="color:#ed9d13">&lt;/button&gt;
+</span><span style="color:#ed9d13">`</span>;
+</code></pre></div>
 <p>スナップショットファイルはコミットしてバージョン管理して、変更があったときには差分を確認する。</p>
 
 <h1 id="enzyme">Enzyme</h1>
@@ -842,10 +784,7 @@ Reactコンポーネントをレンダリングして、jQueryみたいなAPIで
 
 <p>Enzymeはv3から本体とアダプタという構成になっていて、Reactのバージョンによってアダプタを使い分ける。
 (<a href="https://preactjs.com/">preact</a>とか<a href="https://infernojs.org/">Inferno</a>のアダプタもある。)</p>
-
-<pre><code class="language-shell">yarn add -D enzyme enzyme-adapter-react-16
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">yarn add -D enzyme enzyme-adapter-react-16</code></pre></div>
 <p>Enzymeはv3.7.0が入った。</p>
 
 <p><a href="https://github.com/FormidableLabs/enzyme-matchers/tree/master/packages/jest-enzyme">jest-enzyme</a>も入れるとアサーションがいい感じに書けてよりいいかもしれない。</p>
@@ -857,38 +796,36 @@ Reactコンポーネントをレンダリングして、jQueryみたいなAPIで
 <p>ContainedButtonがクリックされたとき、<code>onClick</code>に指定した関数が呼ばれることを確認するテストは以下のように書ける。</p>
 
 <p><code>src/__tests__/components/HogeButton.test.jsx</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> import React from &#39;react&#39;;
+ import renderer from &#39;react-test-renderer&#39;;
+<span style="color:#589819">+import Enzyme, { mount } from &#39;enzyme&#39;;
+</span><span style="color:#589819">+import Adapter from &#39;enzyme-adapter-react-16&#39;;
+</span><span style="color:#589819"></span> import HogeButton from &#39;../../components/HogeButton&#39;;
 
-<pre><code class="language-diff"> import React from 'react';
- import renderer from 'react-test-renderer';
-+import Enzyme, { mount } from 'enzyme';
-+import Adapter from 'enzyme-adapter-react-16';
- import HogeButton from '../../components/HogeButton';
-
-+beforeAll(() =&gt; {
-+  Enzyme.configure({ adapter: new Adapter() });
-+});
-
- describe('components', () =&gt; {
-   describe('HogeButton', () =&gt; {
-     test('renders correctly', () =&gt; {
+<span style="color:#589819">+beforeAll(() =&gt; {
+</span><span style="color:#589819">+  Enzyme.configure({ adapter: new Adapter() });
+</span><span style="color:#589819">+});
+</span><span style="color:#589819"></span>
+ describe(&#39;components&#39;, () =&gt; {
+   describe(&#39;HogeButton&#39;, () =&gt; {
+     test(&#39;renders correctly&#39;, () =&gt; {
        const tree = renderer.create(
-         &lt;HogeButton variant=&quot;contained&quot; onClick={() =&gt; {}}&gt;
+         &lt;HogeButton variant=&#34;contained&#34; onClick={() =&gt; {}}&gt;
            HOGE
          &lt;/HogeButton&gt;
        ).toJSON();
        expect(tree).toMatchSnapshot();
      });
-+
-+    test(&quot;calls the passed handler when it's clicked&quot;, () =&gt; {
-+      const handler = jest.fn();
-+      const wrapper = mount(&lt;HogeButton onClick={handler} /&gt;);
-+      wrapper.find('button').simulate('click');
-+      expect(handler).toHaveBeenCalledTimes(1);
-+    });
-   });
+<span style="color:#589819">+
+</span><span style="color:#589819">+    test(&#34;calls the passed handler when it&#39;s clicked&#34;, () =&gt; {
+</span><span style="color:#589819">+      const handler = jest.fn();
+</span><span style="color:#589819">+      const wrapper = mount(&lt;HogeButton onClick={handler} /&gt;);
+</span><span style="color:#589819">+      wrapper.find(&#39;button&#39;).simulate(&#39;click&#39;);
+</span><span style="color:#589819">+      expect(handler).toHaveBeenCalledTimes(1);
+</span><span style="color:#589819">+    });
+</span><span style="color:#589819"></span>   });
  });
-</code></pre>
-
+</code></pre></div>
 <p><code>mount</code>がFull RenderingのAPIで、内部で<code>react-test-renderer</code>を使っているみたいなんだけど、<code>mount</code>のために<code>react-test-renderer</code>をimportする必要はない。</p>
 
 <p><br></p>

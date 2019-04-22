@@ -51,7 +51,7 @@ ReduxとReact Reduxについては、Qiitaの「[たぶんこれが一番分か�
 
 今回はReduxを導入する。
 
-```shell
+```tch
 yarn add redux
 ```
 

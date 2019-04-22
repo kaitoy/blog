@@ -28,7 +28,7 @@ Kubernetes Basics - モジュール 1: Kubernetesクラスタを作る Minikube�
 Kubernetes Basics - モジュール 2: アプリをデプロイする アプリ(i.e. コンテナ)をデプロイするにはDeploymentオブジェクトを作る。 MasterはDeploymentのspecに従って各ノードにアプリのインスタンスをスケジューリングする。 Deploymentは、アプリが落ちたら再起動してくれる、つまりself-healingも実現する。
 Deploymentオブジェクトを作るコマンドはkubectl run &amp;lt;オブジェクト名&amp;gt; --image=&amp;lt;Dockerイメージ名&amp;gt;。 Goslingsをこれでデプロイする。
 Goslingsコンテナは3つの引数を受け取り、指定したポートでWebサーバを起動する。 --portオプションでそのポートをexposeするようにして、--の後にコンテナに渡す引数を記述する。
-C:\Users\kaitoy&amp;gt;kubectl run goslings --image=kaitoy/goslings:latest --port 8080 -- 8080 /tmp https://github.com/kaitoy/ deployment &amp;quot;goslings&amp;quot; created C:\Users\kaitoy&amp;gt;kubectl get deployment NAME DESIRED CURRENT UP-TO-DATE AVAILABLE AGE goslings 1 1 1 1 27s  デプロイできた。 裏でPodも作られていて、アプリが起動されている。</description>
+C:\Users\kaitoy&amp;gt;kubectl run goslings --image=kaitoy/goslings:latest --port 8080 -- 8080 /tmp https://github.com/kaitoy/ deployment &amp;#34;goslings&amp;#34; created C:\Users\kaitoy&amp;gt;kubectl get deployment NAME DESIRED CURRENT UP-TO-DATE AVAILABLE AGE goslings 1 1 1 1 27s デプロイできた。 裏でPodも作られていて、アプリが起動されている。</description>
     </item>
     
     <item>
@@ -130,11 +130,12 @@ Spring Bootアプリにおけるロギング設定 Spring Bootが備えている
 以下この設定の変更方法などを書く。
 ファイルへのログ出力 ログをファイルにも吐くようにするには、logging.fileというプロパティでファイルパスを指定するか、logging.pathというプロパティでディレクトリパスを指定すればいい。 (後者の場合ログファイル名はspring.logになる。)
 Spring Bootアプリでプロパティを指定する方法は色々あり(こことかここ参照)、大抵はapplication.propertiesで指定するんだろうけど、手軽にコマンドラインで以下の様に指定することもできる。
-java -jar build/libs/goslings-0.0.1.jar --logging.file=build/hoge.log  
+java -jar build/libs/goslings-0.0.1.jar --logging.file=build/hoge.log 
 ログファイルはデフォルトで10MBでローテーションする。
 ログレベル ログレベルには重大度の低い方からTRACE、DEBUG、INFO、WARN、ERROR、FATALの6段階があり、指定したログレベル以上のログが出力される。(OFFというログ出力を止めるものもある。) つまりSpring BootのデフォルトのログレベルはINFOだということだ。(LogbackにはFATALがなくERRORとして出力される。)
 ログレベルはlogging.level.&amp;lt;ロガー名&amp;gt;という形式のプロパティで指定できる。 例えばコマンドラインから指定するなら以下の感じ。
-java -jar build/libs/goslings-0.0.1.jar --logging.level.org.springframework.web=DEBUG</description>
+java -jar build/libs/goslings-0.0.1.jar --logging.level.org.springframework.web=DEBUG 
+全ロガーのログレベルはlogging.level.rootで指定できる。</description>
     </item>
     
     <item>
@@ -156,9 +157,9 @@ Spring MVCアプリにおける例外処理には以下の3つの段階がある
  投げる例外をカスタマイズする 例外クラス毎の例外ハンドラをコントローラに実装する コントローラ間で共用する例外ハンドラクラスを作る  以下それぞれについて書く。
 1. 投げる例外をカスタマイズする リクエストハンドラから投げる例外に@ResponseStatusをつけることで、クライアントに返すHTTPステータスコード(とリーズンフレーズ)をカスタマイズできる。
 例えば以下のような例外を投げると、HTTPステータスコード500 (Internal Server Error)の代わりに400 (Bad Request)がクライアントに返る。
-@ResponseStatus(HttpStatus.BAD_REQUEST) public final class BadRequestException extends RuntimeException { // 省略 }  2. 例外クラス毎の例外ハンドラをコントローラに実装する コントローラのメソッドに@ExceptionHandlerをつけてやると、そのメソッドは例外ハンドラになり、そのコントローラのリクエストハンドラから特定の例外が投げられたときの処理を書くことができる。 さらに例外ハンドラに@ResponseStatusをつければ、HTTPステータスコードをカスタマイズできる。 例外ハンドラの戻り値はリクエストハンドラのと同様に処理されるので、遷移するページ等も自由にカスタマイズできる。
+@ResponseStatus(HttpStatus.BAD_REQUEST) public final class BadRequestException extends RuntimeException { // 省略 } 2. 例外クラス毎の例外ハンドラをコントローラに実装する コントローラのメソッドに@ExceptionHandlerをつけてやると、そのメソッドは例外ハンドラになり、そのコントローラのリクエストハンドラから特定の例外が投げられたときの処理を書くことができる。 さらに例外ハンドラに@ResponseStatusをつければ、HTTPステータスコードをカスタマイズできる。 例外ハンドラの戻り値はリクエストハンドラのと同様に処理されるので、遷移するページ等も自由にカスタマイズできる。
 Goslingsでは、上記BadRequestExceptionからは@ResponseStatusを削除したうえで、RestApiV1Controllerに以下の様に例外ハンドラを書いた。
-public final class RestApiV1Controller { // 例外ハンドラ @ResponseStatus(HttpStatus.</description>
+public final class RestApiV1Controller { // 例外ハンドラ  @ResponseStatus(HttpStatus.</description>
     </item>
     
     <item>
@@ -176,10 +177,10 @@ Spring FrameworkはもともとこのDI機能を提供するフレームワー�
 GoslingsでDI Goslingsサーバの内部機能はざっくり、クライアントからのREST API呼び出しを処理するユーザインタフェース層と、Gitリポジトリにアクセスするデータベース層に分かれる。
 Gitリポジトリにアクセスする部分は今回はJGitで実装するが、将来的に別のライブラリで実装しなおす可能性が微レ存なのと、Goslingsの開発自体がWebアプリ開発の練習でもあるので、ちゃんとしたアーキテクチャでと思い、DAOパターンを使ってやった。
 つまり例えば、GitのコミットオブジェクトはJGitのAPIではRevCommitクラスで表されるが、ユーザインタフェース層からはリソースクラスであるCommitクラス(前回参照)を扱う以下の様なDAOインターフェースを呼ぶようにし、JGit依存の実装とは切り離す。
-public interface ObjectDao { public Commit[] getCommits(String token) throws DaoException; }  (ObjectDao.javaの完全なソースはこれ)
+public interface ObjectDao { public Commit[] getCommits(String token) throws DaoException; } (ObjectDao.javaの完全なソースはこれ)
 
 ObjectDaoを実装するObjectDaoImplクラスでは、以下の様にJGitを使ってごりごりと実装を書く。
-public final class ObjectDaoImpl implements ObjectDao { // フィールド定義は省略 @Override public Commit[] getCommits(String token) { try { return StreamSupport.stream(resolver.getGit(token).log().all().call().spliterator(), false) .map(this::convertToCommit) .toArray(Commit[]::new); } catch (NoHeadException e) { // エラー処理 } } private Commit convertToCommit(RevCommit commit) { // RevCommitをCommitに変換する処理 } }</description>
+public final class ObjectDaoImpl implements ObjectDao { // フィールド定義は省略  @Override public Commit[] getCommits(String token) { try { return StreamSupport.stream(resolver.getGit(token).log().all().call().spliterator(), false) .map(this::convertToCommit) .toArray(Commit[]::new); } catch (NoHeadException e) { // エラー処理  } } private Commit convertToCommit(RevCommit commit) { // RevCommitをCommitに変換する処理  } }</description>
     </item>
     
     <item>

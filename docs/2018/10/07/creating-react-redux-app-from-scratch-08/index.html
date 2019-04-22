@@ -28,10 +28,10 @@
    (adsbygoogle = window.adsbygoogle || []).push({});  ReduxのMiddleware Redux単体では同期的なデータフローしか実装できない。 つまり、Actionを発生させたら、即座にディスパッチされ、stateが更新される。 一方、非同期なフローとは、REST APIを呼んでその結果でstateを更新するような処理。 REST API呼び出しが非同期なわけだが、これをReduxのピュアなフローのどこで実行するのかというと、Middlewareで実行する。
 MiddlewareはStoreのdispatch()をラップして、Actionをトラップして副作用を含む任意の処理をするための機能。 Middlewareの仕組みについてはこの記事が分かりやすい。
 Middlewareには例えば、発生したActionの内容と、それによるstateの変化をログに出力するredux-loggerがある。 デバッグに有用そうなので入れておく。
-yarn add redux-logger  v3.0.6が入った。
+yarn add redux-logger v3.0.6が入った。
 Middlewareは、ReduxのapplyMiddleware()というAPIを使って、createStore()実行時に適用できる。
 src/configureStore.js:
--import { createStore } from &#39;redux&#39;; &#43;import { createStore, applyMiddleware } from &#39;redux&#39;; &#43;import { logger } from &#39;redux-logger&#39;; import rootReducer from &#39;./reducers/rootReducer&#39;; export default function configureStore(initialState = {}) { &#43; const middlewares = []; &#43; if (process.">
+-import { createStore } from &#39;redux&#39;; &#43;import { createStore, applyMiddleware } from &#39;redux&#39;; &#43;import { logger } from &#39;redux-logger&#39;;  import rootReducer from &#39;./reducers/rootReducer&#39;; export default function configureStore(initialState = {}) { &#43; const middlewares = []; &#43; if (process.">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/redux-saga.png">
 
 
@@ -63,7 +63,7 @@ src/configureStore.js:
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&amp;subset=japanese">
 
 
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai.min.css"> 
+
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -71,14 +71,6 @@ src/configureStore.js:
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-
-    
-
-    <script>hljs.initHighlightingOnLoad();</script>
-
 
 
 
@@ -259,53 +251,42 @@ Middlewareの仕組みについては<a href="https://qiita.com/pirosikick/items
 
 <p>Middlewareには例えば、発生したActionの内容と、それによるstateの変化をログに出力する<a href="https://github.com/evgenyrodionov/redux-logger">redux-logger</a>がある。
 デバッグに有用そうなので入れておく。</p>
-
-<pre><code class="language-shell">yarn add redux-logger
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">yarn add redux-logger</code></pre></div>
 <p>v3.0.6が入った。</p>
 
 <p>Middlewareは、Reduxの<code>applyMiddleware()</code>というAPIを使って、<code>createStore()</code>実行時に適用できる。</p>
 
 <p><code>src/configureStore.js</code>:</p>
-
-<pre><code class="language-diff">-import { createStore } from 'redux';
-+import { createStore, applyMiddleware } from 'redux';
-+import { logger } from 'redux-logger';
- import rootReducer from './reducers/rootReducer';
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"><span style="color:#d22323">-import { createStore } from &#39;redux&#39;;
+</span><span style="color:#d22323"></span><span style="color:#589819">+import { createStore, applyMiddleware } from &#39;redux&#39;;
+</span><span style="color:#589819">+import { logger } from &#39;redux-logger&#39;;
+</span><span style="color:#589819"></span> import rootReducer from &#39;./reducers/rootReducer&#39;;
 
  export default function configureStore(initialState = {}) {
-+  const middlewares = [];
-+  if (process.env.NODE_ENV === `development`) {
-+    middlewares.push(logger);
-+  }
-+
-   const store = createStore(
+<span style="color:#589819">+  const middlewares = [];
+</span><span style="color:#589819">+  if (process.env.NODE_ENV === `development`) {
+</span><span style="color:#589819">+    middlewares.push(logger);
+</span><span style="color:#589819">+  }
+</span><span style="color:#589819">+
+</span><span style="color:#589819"></span>   const store = createStore(
      rootReducer,
      initialState,
-+    applyMiddleware(...middlewares),
-   );
+<span style="color:#589819">+    applyMiddleware(...middlewares),
+</span><span style="color:#589819"></span>   );
    return store;
  }
-</code></pre>
-
+</code></pre></div>
 <p>これだけ。
 これで、HOGEボタンをクリックしたときにコンソールに以下のようなログが出るようになる。
 (ログは<code>yarn start</code>とかの開発モードの時だけでる。)</p>
-
-<pre><code>action HOGE_BUTTON_CLICKED @ 23:19:35.190
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">action HOGE_BUTTON_CLICKED @ 23:19:35.190
  prev state Object { hoge: {…} }
- action Object { type: &quot;HOGE_BUTTON_CLICKED&quot;, payload: undefined }
- next state Object { hoge: {…} }
-</code></pre>
-
+ action Object { type: &#34;HOGE_BUTTON_CLICKED&#34;, payload: undefined }
+ next state Object { hoge: {…} }</code></pre></div>
 <h1 id="非同期処理">非同期処理</h1>
 
 <p>非同期処理をするためのMiddlewareには<a href="https://github.com/reduxjs/redux-thunk">redux-thunk</a>とか<a href="https://github.com/redux-utilities/redux-promise">redux-promise</a>とかがあるけど、なかでもGitHubのスター数が一番多い<a href="https://redux-saga.js.org/">Redux Saga</a>を使うことにする。</p>
-
-<pre><code class="language-shell">yarn add redux-saga
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">yarn add redux-saga</code></pre></div>
 <p>v0.16.2が入った。</p>
 
 <p><br></p>
@@ -352,10 +333,7 @@ REST API呼び出し処理は<code>call()</code>で実行するわけだけど�
 
 <p>ざっと調べたところ、<a href="https://www.npmjs.com/package/axios">axios</a>、<a href="https://www.npmjs.com/package/superagent">SuperAgent</a>、<a href="https://www.npmjs.com/package/r2">r2</a>あたりが選択肢。
 最も人気のあるaxiosを使うことにする。</p>
-
-<pre><code class="language-shell">yarn add axios
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">yarn add axios</code></pre></div>
 <p>v0.18.0が入った。</p>
 
 <p><br></p>
@@ -363,16 +341,14 @@ REST API呼び出し処理は<code>call()</code>で実行するわけだけど�
 <p>REST API呼び出しのコードは<code>src/services/</code>に置く。</p>
 
 <p><code>src/services/api.js</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">import</span> axios from <span style="color:#ed9d13">&#39;axios&#39;</span>;
 
-<pre><code class="language-javascript">import axios from 'axios';
+<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">const</span> HOGE_URL = <span style="color:#ed9d13">&#39;https://httpbin.org/get&#39;</span>;
 
-export const HOGE_URL = 'https://httpbin.org/get';
-
-export function getHoge() {
-  return axios.get(HOGE_URL);
+<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">function</span> getHoge() {
+  <span style="color:#6ab825;font-weight:bold">return</span> axios.get(HOGE_URL);
 }
-</code></pre>
-
+</code></pre></div>
 <p><code>getHoge()</code>はGETリクエストを送ってPromiseオブジェクトを返す。
 このPromiseオブジェクトはレスポンスボディやステータスコードを保持する<a href="https://github.com/axios/axios#response-schema">Response</a>オブジェクトに解決される。</p>
 
@@ -382,43 +358,39 @@ export function getHoge() {
 これら3種類を、同一のtypeのActionのプロパティ値を変えて表現するやりかたもあるけど、ここでは別々のtypeのアクションとする。</p>
 
 <p><code>src/actions/actionTypes.js</code>:</p>
-
-<pre><code class="language-diff"> export const HOGE_BUTTON_CLICKED = 'HOGE_BUTTON_CLICKED';
-+export const HOGE_FETCH_SUCCEEDED = 'HOGE_FETCH_SUCCEEDED';
-+export const HOGE_FETCH_FAILED = 'HOGE_FETCH_FAILED';
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> export const HOGE_BUTTON_CLICKED = &#39;HOGE_BUTTON_CLICKED&#39;;
+<span style="color:#589819">+export const HOGE_FETCH_SUCCEEDED = &#39;HOGE_FETCH_SUCCEEDED&#39;;
+</span><span style="color:#589819">+export const HOGE_FETCH_FAILED = &#39;HOGE_FETCH_FAILED&#39;;
+</span></code></pre></div>
 <p><code>src/actions/actions.js</code>:</p>
-
-<pre><code class="language-diff"> import {
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> import {
    HOGE_BUTTON_CLICKED,
-+  HOGE_FETCH_SUCCEEDED,
-+  HOGE_FETCH_FAILED,
- } from './actionTypes';
+<span style="color:#589819">+  HOGE_FETCH_SUCCEEDED,
+</span><span style="color:#589819">+  HOGE_FETCH_FAILED,
+</span><span style="color:#589819"></span> } from &#39;./actionTypes&#39;;
 
  export function hogeButtonClicked() {
    return {
      type: HOGE_BUTTON_CLICKED,
    };
  }
-+
-+export function hogeFetchSucceeded(payload, meta) {
-+  return {
-+    type: HOGE_FETCH_SUCCEEDED,
-+    payload,
-+    meta,
-+  };
-+}
-+
-+export function hogeFetchFailed(payload) {
-+  return {
-+    type: HOGE_FETCH_FAILED,
-+    error: true,
-+    payload,
-+  };
-+}
-</code></pre>
-
+<span style="color:#589819">+
+</span><span style="color:#589819">+export function hogeFetchSucceeded(payload, meta) {
+</span><span style="color:#589819">+  return {
+</span><span style="color:#589819">+    type: HOGE_FETCH_SUCCEEDED,
+</span><span style="color:#589819">+    payload,
+</span><span style="color:#589819">+    meta,
+</span><span style="color:#589819">+  };
+</span><span style="color:#589819">+}
+</span><span style="color:#589819">+
+</span><span style="color:#589819">+export function hogeFetchFailed(payload) {
+</span><span style="color:#589819">+  return {
+</span><span style="color:#589819">+    type: HOGE_FETCH_FAILED,
+</span><span style="color:#589819">+    error: true,
+</span><span style="color:#589819">+    payload,
+</span><span style="color:#589819">+  };
+</span><span style="color:#589819">+}
+</span></code></pre></div>
 <h1 id="sagaの実装">Sagaの実装</h1>
 
 <p>Sagaのソースは<code>src/sagas/</code>に置く。</p>
@@ -426,43 +398,39 @@ export function getHoge() {
 <p><code>HOGE_BUTTON_CLICKED</code>が来たら<code>getHoge()</code>を実行するSagaは以下のような感じ。</p>
 
 <p><code>src/sagas/hoge.js</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">import</span> { call, fork, put, take } from <span style="color:#ed9d13">&#39;redux-saga/effects&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> { getHoge } from <span style="color:#ed9d13">&#39;../services/apis&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> { HOGE_BUTTON_CLICKED } from <span style="color:#ed9d13">&#39;../actions/actionTypes&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> { hogeFetchSucceeded, hogeFetchFailed } from <span style="color:#ed9d13">&#39;../actions/actions&#39;</span>;
 
-<pre><code class="language-javascript">import { call, fork, put, take } from 'redux-saga/effects';
-import { getHoge } from '../services/apis';
-import { HOGE_BUTTON_CLICKED } from '../actions/actionTypes';
-import { hogeFetchSucceeded, hogeFetchFailed } from '../actions/actions';
-
-// Task
-function* fetchHoge() {
-  try {
-    const response = yield call(getHoge);
-    const payload = response.data;
-    const meta = { statusCode: response.status, statusText: response.statusText };
-    yield put(hogeFetchSucceeded(payload, meta));
-  } catch (ex) {
-    yield put(hogeFetchFailed(ex));
+<span style="color:#999;font-style:italic">// Task
+</span><span style="color:#999;font-style:italic"></span><span style="color:#6ab825;font-weight:bold">function</span>* fetchHoge() {
+  <span style="color:#6ab825;font-weight:bold">try</span> {
+    <span style="color:#6ab825;font-weight:bold">const</span> response = <span style="color:#6ab825;font-weight:bold">yield</span> call(getHoge);
+    <span style="color:#6ab825;font-weight:bold">const</span> payload = response.data;
+    <span style="color:#6ab825;font-weight:bold">const</span> meta = { statusCode: response.status, statusText: response.statusText };
+    <span style="color:#6ab825;font-weight:bold">yield</span> put(hogeFetchSucceeded(payload, meta));
+  } <span style="color:#6ab825;font-weight:bold">catch</span> (ex) {
+    <span style="color:#6ab825;font-weight:bold">yield</span> put(hogeFetchFailed(ex));
   }
 }
 
-// Watcher
-export function* watchHogeButtonClicked(): Generator&lt;any, void, Object&gt; {
-  while (true) {
-    const action = yield take(HOGE_BUTTON_CLICKED);
-    yield fork(fetchHoge, action); // actionはfetchHogeの引数に渡される。使ってないけど…
-  }
+<span style="color:#999;font-style:italic">// Watcher
+</span><span style="color:#999;font-style:italic"></span><span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">function</span>* watchHogeButtonClicked(): Generator&lt;any, <span style="color:#6ab825;font-weight:bold">void</span>, <span style="color:#24909d">Object</span>&gt; {
+  <span style="color:#6ab825;font-weight:bold">while</span> (<span style="color:#6ab825;font-weight:bold">true</span>) {
+    <span style="color:#6ab825;font-weight:bold">const</span> action = <span style="color:#6ab825;font-weight:bold">yield</span> take(HOGE_BUTTON_CLICKED);
+    <span style="color:#6ab825;font-weight:bold">yield</span> fork(fetchHoge, action); <span style="color:#999;font-style:italic">// actionはfetchHogeの引数に渡される。使ってないけど…
+</span><span style="color:#999;font-style:italic"></span>  }
 }
-</code></pre>
-
+</code></pre></div>
 <p>Watcherは<code>take</code>して<code>fork</code>するのを無限ループで回すのが常なので、これをもうちょっときれいに書けるAPIが用意されていて、以下のように書ける。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">import</span> { takeEvery } from <span style="color:#ed9d13">&#39;redux-saga/effects&#39;</span>
 
-<pre><code class="language-javascript">import { takeEvery } from 'redux-saga/effects'
-
-// Watcher
-export function* watchHogeButtonClicked(): Generator&lt;any, void, Object&gt; {
-  yield takeEvery(HOGE_BUTTON_CLICKED, fetchHoge)
+<span style="color:#999;font-style:italic">// Watcher
+</span><span style="color:#999;font-style:italic"></span><span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">function</span>* watchHogeButtonClicked(): Generator&lt;any, <span style="color:#6ab825;font-weight:bold">void</span>, <span style="color:#24909d">Object</span>&gt; {
+  <span style="color:#6ab825;font-weight:bold">yield</span> takeEvery(HOGE_BUTTON_CLICKED, fetchHoge)
 }
-</code></pre>
-
+</code></pre></div>
 <p>この場合、<code>fetchHoge()</code>の最後の引数に<code>take</code>したActionオブジェクトが渡される。</p>
 
 <p><br></p>
@@ -471,33 +439,29 @@ export function* watchHogeButtonClicked(): Generator&lt;any, void, Object&gt; {
 <code>call()</code>はブロッキングなAPIなので、パラレルに実行するために<code>all()</code>を使う。</p>
 
 <p><code>src/sagas/rootSaga.js</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">import</span> { call, all } from <span style="color:#ed9d13">&#39;redux-saga/effects&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> { watchHogeButtonClicked } from <span style="color:#ed9d13">&#39;./hoge&#39;</span>;
 
-<pre><code class="language-javascript">import { call, all } from 'redux-saga/effects';
-import { watchHogeButtonClicked } from './hoge';
-
-export default function* rootSaga() {
-  yield all([
+<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">default</span> <span style="color:#6ab825;font-weight:bold">function</span>* rootSaga() {
+  <span style="color:#6ab825;font-weight:bold">yield</span> all([
     call(watchHogeButtonClicked),
-    // call(watchAnotherAction),
-    // call(watchYetAnotherAction),
-  ]);
+    <span style="color:#999;font-style:italic">// call(watchAnotherAction),
+</span><span style="color:#999;font-style:italic"></span>    <span style="color:#999;font-style:italic">// call(watchYetAnotherAction),
+</span><span style="color:#999;font-style:italic"></span>  ]);
 }
-</code></pre>
-
+</code></pre></div>
 <p>そもそもブロッキングな<code>call()</code>を使うのがだめなので、代わりに<code>fork()</code>を使ってもいい。</p>
 
 <p><code>src/sagas/rootSaga.js</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">import</span> { fork } from <span style="color:#ed9d13">&#39;redux-saga/effects&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> { watchHogeButtonClicked } from <span style="color:#ed9d13">&#39;./hoge&#39;</span>;
 
-<pre><code class="language-javascript">import { fork } from 'redux-saga/effects';
-import { watchHogeButtonClicked } from './hoge';
-
-export default function* rootSaga() {
-  yield fork(watchHogeButtonClicked);
-  // yield fork(watchAnotherAction);
-  // yield fork(watchYetAnotherAction);
-}
-</code></pre>
-
+<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">default</span> <span style="color:#6ab825;font-weight:bold">function</span>* rootSaga() {
+  <span style="color:#6ab825;font-weight:bold">yield</span> fork(watchHogeButtonClicked);
+  <span style="color:#999;font-style:italic">// yield fork(watchAnotherAction);
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#999;font-style:italic">// yield fork(watchYetAnotherAction);
+</span><span style="color:#999;font-style:italic"></span>}
+</code></pre></div>
 <p>どっちがいいんだろう。</p>
 
 <h1 id="saga-middlewareの追加と起動">Saga Middlewareの追加と起動</h1>
@@ -505,32 +469,30 @@ export default function* rootSaga() {
 <p>Saga Middlewareは以下のように追加して起動する。</p>
 
 <p><code>src/configureStore.js</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> import { createStore, applyMiddleware } from &#39;redux&#39;;
+<span style="color:#589819">+import createSagaMiddleware from &#39;redux-saga&#39;;
+</span><span style="color:#589819"></span> import { logger } from &#39;redux-logger&#39;;
+<span style="color:#589819">+import rootSaga from &#39;./sagas/rootSaga&#39;;
+</span><span style="color:#589819"></span> import rootReducer from &#39;./reducers/rootReducer&#39;;
 
-<pre><code class="language-diff"> import { createStore, applyMiddleware } from 'redux';
-+import createSagaMiddleware from 'redux-saga';
- import { logger } from 'redux-logger';
-+import rootSaga from './sagas/rootSaga';
- import rootReducer from './reducers/rootReducer';
-
-+const sagaMiddleware = createSagaMiddleware();
-
+<span style="color:#589819">+const sagaMiddleware = createSagaMiddleware();
+</span><span style="color:#589819"></span>
  export default function configureStore(initialState = {}) {
    const middlewares = [];
    if (process.env.NODE_ENV === `development`) {
      middlewares.push(logger);
    }
-+  middlewares.push(sagaMiddleware);
-
+<span style="color:#589819">+  middlewares.push(sagaMiddleware);
+</span><span style="color:#589819"></span>
    const store = createStore(
      rootReducer,
      initialState,
      applyMiddleware(...middlewares),
    );
-+  sagaMiddleware.run(rootSaga);
-   return store;
+<span style="color:#589819">+  sagaMiddleware.run(rootSaga);
+</span><span style="color:#589819"></span>   return store;
  }
-</code></pre>
-
+</code></pre></div>
 <p><br></p>
 
 <p><a href="https://www.kaitoy.xyz/2018/11/02/creating-react-redux-app-from-scratch-09/">次回</a>は<a href="https://reacttraining.com/react-router/">React Router</a>。</p>

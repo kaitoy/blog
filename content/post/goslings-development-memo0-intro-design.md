@@ -83,7 +83,7 @@ URIを入力して`Browse`ボタンを[押下する](http://qiita.com/yaju/items
 # Goslingsの使い方
 Spring Bootを使ったおかげで、ビルド成果物は単一のjarで、これを以下の様に実行するだけでサーバが立ち上がる。Webアプリケーションコンテナいらず。
 
-```shell
+```tch
 $ java -jar goslings-server-0.0.1.jar --server.port=80
 ```
 
@@ -95,7 +95,7 @@ $ java -jar goslings-server-0.0.1.jar --server.port=80
 
 [Dockerコンテナイメージ](https://hub.docker.com/r/kaitoy/goslings/)もあって、以下のようなコマンドでダウンロードして起動できる。
 
-```shell
+```tch
 $ docker pull kaitoy/goslings
 $ docker run -p 80:80 -itd kaitoy/goslings 80 /goslings-repos https://github.com/kaitoy/
 ```

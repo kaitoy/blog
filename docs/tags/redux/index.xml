@@ -33,7 +33,7 @@ location.hash = newHash;  こういう処理を、例えばWeb UIのボタンを
 そのあと、ブラウザの戻るボタンなんかを押されると書き換える前のURLにもどるわけだけど、これを検知するためにsetInterval()とかで定期的にlocation.hashを監視してたりした。
 History APIによるルーティング ハッシュベースのルーティングは見るからにしょぼい。 URLのハッシュ以降しか使えないのもしょぼいし、内部の処理も泥臭い。
 これが、HTML 5でHistory APIがでて変わった。 History APIはJavaScriptのAPIで、ブラウザの履歴を操作できる。
-const state = { hoge: &amp;quot;hogeee&amp;quot; }; history.pushState(state, &amp;quot;&amp;quot;, &amp;quot;/foo/bar&amp;quot;);  こんな感じのを実行すると、URLが/foo/barに変わる。(が、もちろんサーバにはリクエストは飛ばない。) で、ブラウザの戻るボタンを押すと、popstateイベントが発生するので、それにイベントハンドラを登録しておけば、もとのURLに戻った時にも適時画面を書き換えられる。 popstateイベントからは、pushState()に渡したstateオブジェクトを取得できる。
+const state = { hoge: &amp;#34;hogeee&amp;#34; }; history.pushState(state, &amp;#34;&amp;#34;, &amp;#34;/foo/bar&amp;#34;);  こんな感じのを実行すると、URLが/foo/barに変わる。(が、もちろんサーバにはリクエストは飛ばない。) で、ブラウザの戻るボタンを押すと、popstateイベントが発生するので、それにイベントハンドラを登録しておけば、もとのURLに戻った時にも適時画面を書き換えられる。 popstateイベントからは、pushState()に渡したstateオブジェクトを取得できる。
 
 ところで、ブラウザのアドレスバーに/foo/barを直打ちするとどうなるかというと、普通にWebサーバを設定しておくと、/foo/bar/index.htmlを返そうとして、無いので404エラーになっちゃう。 ので、サーバ設定では、どのURLも同じリソース(e.g. /index.</description>
     </item>
@@ -50,10 +50,10 @@ const state = { hoge: &amp;quot;hogeee&amp;quot; }; history.pushState(state, &am
    (adsbygoogle = window.adsbygoogle || []).push({});  ReduxのMiddleware Redux単体では同期的なデータフローしか実装できない。 つまり、Actionを発生させたら、即座にディスパッチされ、stateが更新される。 一方、非同期なフローとは、REST APIを呼んでその結果でstateを更新するような処理。 REST API呼び出しが非同期なわけだが、これをReduxのピュアなフローのどこで実行するのかというと、Middlewareで実行する。
 MiddlewareはStoreのdispatch()をラップして、Actionをトラップして副作用を含む任意の処理をするための機能。 Middlewareの仕組みについてはこの記事が分かりやすい。
 Middlewareには例えば、発生したActionの内容と、それによるstateの変化をログに出力するredux-loggerがある。 デバッグに有用そうなので入れておく。
-yarn add redux-logger  v3.0.6が入った。
+yarn add redux-logger v3.0.6が入った。
 Middlewareは、ReduxのapplyMiddleware()というAPIを使って、createStore()実行時に適用できる。
 src/configureStore.js:
--import { createStore } from &#39;redux&#39;; +import { createStore, applyMiddleware } from &#39;redux&#39;; +import { logger } from &#39;redux-logger&#39;; import rootReducer from &#39;./reducers/rootReducer&#39;; export default function configureStore(initialState = {}) { + const middlewares = []; + if (process.</description>
+-import { createStore } from &amp;#39;redux&amp;#39;; +import { createStore, applyMiddleware } from &amp;#39;redux&amp;#39;; +import { logger } from &amp;#39;redux-logger&amp;#39;;  import rootReducer from &amp;#39;./reducers/rootReducer&amp;#39;; export default function configureStore(initialState = {}) { + const middlewares = []; + if (process.</description>
     </item>
     
     <item>
@@ -67,7 +67,7 @@ src/configureStore.js:
 (2018/11/21更新)
    (adsbygoogle = window.adsbygoogle || []).push({});  React Redux 前回はReduxをセットアップして、ActionをStoreにディスパッチしてstateを更新できるようになった。 今回はこれをReactにつなぐ。
 使うのはReact Redux。
-yarn add react-redux  v5.1.1が入った。
+yarn add react-redux v5.1.1が入った。
 Presentational Components と Container Components React Reduxの使い方を理解するには、Presentational Components と Container Components という概念を知らないといけない。 これはReactコンポーネントを役割別に分ける考え方で、それぞれ以下のような特徴をもつ。
     Presentational Components Container Components     主な役割 DOMをレンダリングする データを取得したりstateを更新したりする(Reduxとつなぐ)   Reduxとの関連 無し 有り   データの読み込み propsから読む Reduxのstateオブジェクトから読む   データの更新 propsで渡されたコールバックを呼ぶ ReduxのActionをディスパッチする   作り方 自前で書く React Reduxで生成する</description>
     </item>
@@ -91,11 +91,11 @@ ReduxではFluxのDispatcher辺りがReducerに置き換わっている。 Reduc
 また、ReduxからはViewが切り離されていて、Actionによってstateを更新する状態管理ライブラリの役割に徹している。 ReactコンポーネントのイベントハンドラからActionオブジェクトを生成したり、更新したstateをReactに渡したりするつなぎ目は、別途React Reduxというライブラリが担当する。
 ReduxとReact Reduxについては、Qiitaの「たぶんこれが一番分かりやすいと思います React + Redux のフロー図解」という記事が分かりやすい。
 今回はReduxを導入する。
-yarn add redux  Redux v4.0.1が入った。
+yarn add redux Redux v4.0.1が入った。
 以降、現時点で唯一のUIコンポーネントであるHOGEボタンの状態管理を実装してみる。
 Action まずActionを実装する。
 Actionオブジェクトはどんな形式でもいいけど、普通はFlux Standard Action(FSA)にする。 FSAは以下のプロパティを持つプレーンオブジェクト。
- type: Action種別を示す文字列定数。必須。 payload: Actionの情報を示す任意の型の値。任意。 error: Actionがエラーを表すものかを示す boolean プロパティ。エラーなら true にして、payload にエラーオブジェクトをセットする。任意。 meta: その他の情報を入れる任意の型の値。任意。  Actionのコードは、Actionのtypeに入れる値を定義するactionTypes.jsと、Action Creator(i.e. Actionオブジェクトを生成する関数)を定義するactions.</description>
+ type: Action種別を示す文字列定数。必須。 payload: Actionの情報を示す任意の型の値。任意。 error: Actionがエラーを表すものかを示す boolean プロパティ。エラーなら true にして、payload にエラーオブジェクトをセットする。任意。 meta: その他の情報を入れる任意の型の値。任意。  Actionのコードは、Actionのtypeに入れる値を定義するactionTypes.jsと、Action Creator(i.e. Actionオブジェクトを生成する関数)を定義するactions.jsからなり、ともにsrc/actions/に置く。</description>
     </item>
     
   </channel>

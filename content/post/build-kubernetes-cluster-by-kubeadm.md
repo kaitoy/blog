@@ -6,7 +6,7 @@ cover = "kubernetes.png"
 slug = "build-kubernetes-cluster-by-kubeadm"
 tags = ["kubernetes", "docker", "kubeadm"]
 title = "Kubernetes1.8のクラスタを構築する。kubeadmで。"
-highlightLanguages = ["dos"]
+
 +++
 
 「[Kubernetes 1.8が出たので、Minikubeを触ってみる](https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/)」でMinikubeをやったんだけど、もう一歩ステップアップすべく、[kubeadm](https://kubernetes.io/docs/admin/kubeadm/)でKubernetesクラスタを組んでみた話。
@@ -42,7 +42,7 @@ VM間で通信できることって要件があったけど、インターネッ
 ## OS設定
 [Kubernetesが使うポート](https://kubernetes.io/docs/setup/independent/install-kubeadm/#check-required-ports)をいろいろ開けなければいけないんだけど、めんどいのでfirewalldを無効にする。
 
-```shell
+```tch
 # systemctl stop firewalld
 # systemctl disable firewalld
 Removed symlink /etc/systemd/system/multi-user.target.wants/firewalld.service.
@@ -53,7 +53,7 @@ Removed symlink /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service.
 
 なんとなくIPアドレスをDHCPから静的割り当てに。(192.168.171.200)
 
-```shell
+```tch
 # nmcli c modify ens33 ipv4.method manual
 # nmcli c modify ens33 ipv4.addresses 192.168.171.200/24
 # nmcli c modify ens33 ipv4.dns 192.168.171.2
@@ -65,7 +65,7 @@ Removed symlink /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service.
 
 ホスト名をlocalhost.localdomainからk8s-masterに変更。
 
-```shell
+```tch
 # hostnamectl set-hostname k8s-master
 ```
 
@@ -84,7 +84,7 @@ Kubernetesがそれらでクラスタ内のノードを区別してるので。
 
 MACアドレスは`ip link`コマンドなどで確認できる。
 
-```shell
+```tch
 # ip link
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT qlen 1
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
@@ -95,7 +95,7 @@ MACアドレスは`ip link`コマンドなどで確認できる。
 product_uuidは、[SMBIOS](https://ja.wikipedia.org/wiki/SMBIOS)という、PC固有のデータを保存・参照するための仕様があって、それに従って保存されたシステムの識別子らしい。
 product_uuidは`dmidecode`コマンドなどで確認できる。
 
-```shell
+```tch
 # dmidecode -s system-uuid
 58114D56-A744-3610-C3C5-9B15A838DEAE
 ```
@@ -104,7 +104,7 @@ product_uuidは`dmidecode`コマンドなどで確認できる。
 
 kubeletがちゃんと動くためにはswapを無効にする必要がある。
 
-```shell
+```tch
 # swapoff -a
 ```
 
@@ -114,7 +114,7 @@ kubeletがちゃんと動くためにはswapを無効にする必要がある。
 
 ebtablesとethtoolを入れる必要がある。
 
-```shell
+```tch
 # yum install -y ebtables ethtool
 ```
 
@@ -124,7 +124,7 @@ Dockerも入れないと。
 v1.12が推奨で、v1.11かv1.13でもいい。
 適当に入れたらv1.12.6だった。
 
-```shell
+```tch
 # yum install -y docker
 # systemctl enable docker && systemctl start docker
 ```
@@ -133,7 +133,7 @@ v1.12が推奨で、v1.11かv1.13でもいい。
 
 Podネットワークなどが機能する要件として、コンテナがホストファイルシステムにアクセスできる必要があるが、そのためには現状、SELinuxを無効化する必要がある。
 
-```shell
+```tch
 # setenforce 0
 ```
 
@@ -143,7 +143,7 @@ Podネットワークなどが機能する要件として、コンテナがホ�
 
 RHEL系の場合、iptablesがバイパスされてトラフィックが変にルーティングされる問題があるため、`net.bridge.bridge-nf-call-iptables`を1にセットしておく必要がある。
 
-```shell
+```tch
 # cat <<EOF >  /etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
@@ -180,7 +180,7 @@ net.bridge.bridge-nf-call-iptables = 1
 Cgroup Driverを、Dockerとkubeletとの間で一致させておく必要がある。
 以下のようにして確認できる。
 
-```shell
+```tch
 # cat /etc/systemd/system/kubelet.service.d/10-kubeadm.conf | grep KUBELET_CGROUP_ARGS
 Environment="KUBELET_CGROUP_ARGS=--cgroup-driver=systemd"
 ExecStart=/usr/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_SYSTEM_PODS_ARGS $KUBELET_NETWORK_ARGS $KUBELET_DNS_ARGS $KUBELET_AUTHZ_ARGS $KUBELET_CADVISOR_ARGS $KUBELET_CGROUP_ARGS $KUBELET_CERTIFICATE_ARGS $KUBELET_EXTRA_ARGS
@@ -198,7 +198,7 @@ kubeletとkubectlも一緒にインストールする。
 
 まずYUMリポジトリを追加して、
 
-```shell
+```tch
 # cat <<EOF > /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
@@ -213,13 +213,13 @@ EOF
 
 インストール。
 
-```shell
+```tch
 # yum install kubelet kubeadm kubectl
 ```
 
 で、kubeletをサービス登録。
 
-```shell
+```tch
 # systemctl enable kubelet && systemctl start kubelet
 Created symlink from /etc/systemd/system/multi-user.target.wants/kubelet.service to /etc/systemd/system/kubelet.service.
 ```
@@ -233,7 +233,7 @@ Created symlink from /etc/systemd/system/multi-user.target.wants/kubelet.service
 Masterは`kubeadm init`で構築できる。
 `--apiserver-advertise-address`でkube-apiserverがlistenするIPアドレスを指定すべし。
 
-```shell
+```tch
 # kubeadm init --apiserver-advertise-address=192.168.171.200
 [kubeadm] WARNING: kubeadm is in beta, please do not use it for production clusters.
 [init] Using Kubernetes version: v1.8.1
@@ -300,7 +300,7 @@ couldn't initialize a Kubernetes cluster
 ググると、swapがあやしい。
 確認してみたら、
 
-```shell
+```tch
 # swapon -s
 Filename                                Type            Size    Used    Priority
 /dev/dm-1                               partition       2097148 0       -1
@@ -311,7 +311,7 @@ Filename                                Type            Size    Used    Priority
 
 永続的に無効にするため、`/etc/fstab`を編集して、以下の行を削除した。
 
-```
+```plain
 /dev/mapper/centos-swap swap                    swap    defaults        0 0
 ```
 
@@ -322,7 +322,7 @@ Filename                                Type            Size    Used    Priority
 
 kubeadm initをやり直す前に、いったん`kubeadm reset`して初期化する。
 
-```shell
+```tch
 # kubeadm reset
 [preflight] Running pre-flight checks
 [reset] Stopping the kubelet service
@@ -337,7 +337,7 @@ kubeadm initをやり直す前に、いったん`kubeadm reset`して初期化�
 
 2回目の`kubeadm init`。
 
-```shell
+```tch
 # kubeadm init --apiserver-advertise-address=192.168.171.200
 [kubeadm] WARNING: kubeadm is in beta, please do not use it for production clusters.
 [init] Using Kubernetes version: v1.8.1
@@ -384,14 +384,14 @@ couldn't initialize a Kubernetes cluster
 また違う感じのエラー。
 エラーメッセージに従って、`journalctl -xeu kubelet`でログを見てみたら、以下のようなエラーが。
 
-```
+```plain
 Post https://192.168.171.200:6443/api/v1/nodes: dial tcp 192.168.171.200:6443: getsockopt: connection refused
 ```
 
 [kubeadmにIssue](https://github.com/kubernetes/kubeadm/issues/228)にこのエラーが載っている。
 原因はいろいろあるっぽいけど、そのひとつにSELinuxがあったので確認してみたら、
 
-```shell
+```tch
 # getenforce
 Enforcing
 ```
@@ -405,7 +405,7 @@ SELinuxが有効になっていた。
 
 で、`kubeadm reset`したら3回目の`kubeadm init`する。
 
-```shell
+```tch
 # kubeadm init --apiserver-advertise-address=192.168.171.200
 [kubeadm] WARNING: kubeadm is in beta, please do not use it for production clusters.
 [init] Using Kubernetes version: v1.8.1
@@ -467,7 +467,7 @@ as root:
 
 kubectlがこのVM上のkube-apiserverと話せるように、コンテキストを設定する。
 
-```shell
+```tch
 # mkdir -p $HOME/.kube
 # cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 # chown $(id -u):$(id -g) $HOME/.kube/config
@@ -483,7 +483,7 @@ Podネットワークはアプリのデプロイの前にセットアップし�
 `kubeadm init`時に`--pod-network-cidr=10.244.0.0/16 `を渡さないといけなかった。
 やり直すのは面倒なので代わりに[Weave Net](https://www.weave.works/docs/net/latest/kube-addon/)にする。
 
-```shell
+```tch
 # export kubever=$(kubectl version | base64 | tr -d '\n')
 # kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$kubever"
 serviceaccount "weave-net" created
@@ -495,7 +495,7 @@ daemonset "weave-net" created
 これでPodネットワークアドオンインストール完了。
 しばらくして、`kube-dns`のPodが起動していれば(i.e. STATUSがRunningになってれば)OK。
 
-```shell
+```tch
 # kubectl get pods --all-namespaces
 NAMESPACE     NAME                                 READY     STATUS    RESTARTS   AGE
 kube-system   etcd-k8s-master                      1/1       Running   0          1m
@@ -511,7 +511,7 @@ kube-system   weave-net-s2kkw                      2/2       Running   0        
 デフォルトでは、セキュリティの都合でMasterコンポーネントが動くNodeにはPodがデプロイされない。
 けど、VM2個でPodを分散デプロイしてみたいので、この縛りを外しておく。
 
-```shell
+```tch
 # kubectl taint nodes --all node-role.kubernetes.io/master-
 node "k8s-master" untainted
 ```
@@ -528,7 +528,7 @@ k8s-masterで`kubeadm init`するまえに撮ったスナップショットを�
 
 k8s-nodeをクラスタに追加するには、このVM上で、`kubeadm init`成功時のメッセージの最後に表示されたコマンド(i.e. `kubeadm join`)を実行するだけ。
 
-```shell
+```tch
 # kubeadm join --token 957b7b.eaaf0cb656edba7b 192.168.171.200:6443 --discovery-token-ca-cert-hash sha256:7d16ade2b651ebac573368b1b4db5c0f1236979584e61833efe90a96ff34ae2e
 [kubeadm] WARNING: kubeadm is in beta, please do not use it for production clusters.
 [preflight] Running pre-flight checks
@@ -551,7 +551,7 @@ Run 'kubectl get nodes' on the master to see this machine join.
 できた。
 k8s-masterでNodeの状態を確認する。
 
-```shell
+```tch
 # kubectl get nodes
 NAME         STATUS    ROLES     AGE       VERSION
 k8s-master   Ready     master    42m       v1.8.1

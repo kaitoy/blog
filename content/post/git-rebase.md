@@ -26,7 +26,7 @@ Gitの最後の関門と言えよう。
 
 コマンドの基本形は次のようなものだ。
 
-```shell
+```tch
 $ git rebase --onto master dev bugfix
 ```
 
@@ -61,7 +61,7 @@ $ git rebase --onto master dev bugfix
 上記コマンドで`bugfix`のところを省略すると、ステップ1の`checkout`が省略される。
 言い換えると、上記コマンドは次の二つのコマンドに分解できる。
 
-```shell
+```tch
 $ git checkout bugfix
 $ git rebase --onto master dev
 ```
@@ -69,7 +69,7 @@ $ git rebase --onto master dev
 さらに、`--onto master`を省略すると、ステップ3の`reset`先が変わり、`dev`になる。
 このときのコマンドの形は、
 
-```shell
+```tch
 $ git rebase dev
 ```
 

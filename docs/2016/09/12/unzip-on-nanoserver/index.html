@@ -33,7 +33,7 @@ Windows 10のHyper-V Containersは、現時点でNano Serverしかサポート�
 
 以下、いろいろ試したことを書く。
 正攻法: Expand-Archive PowerShellの v5 で実装されたExpand-Archiveというコマンドレットでzipを解凍できる。 Nano ServerのPowerShellのバージョンを確認したら 5.1 だったのでこれでいけるかと思った。
-C:\&gt;powershell -command &quot;$PSVersionTable.PSVersion&quot; Major Minor Build Revision ----- ----- ----- -------- 5 1 14284 1000  
+C:\&gt;powershell -command &#34;$PSVersionTable.PSVersion&#34; Major Minor Build Revision ----- ----- ----- -------- 5 1 14284 1000 
 したらこのエラー。
 Add-Type : Cannot find path &#39;C:\System.">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/nanoserver.png">
@@ -67,7 +67,7 @@ Add-Type : Cannot find path &#39;C:\System.">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&amp;subset=japanese">
 
 
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai.min.css"> 
+
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -75,14 +75,6 @@ Add-Type : Cannot find path &#39;C:\System.">
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/dos.min.js"></script>  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/powershell.min.js"></script> 
-
-    <script>hljs.initHighlightingOnLoad();</script>
-
 
 
 
@@ -275,19 +267,15 @@ Add-Type : Cannot find path &#39;C:\System.">
 
 <p>PowerShellの v5 で実装されたExpand-Archiveというコマンドレットでzipを解凍できる。
 Nano ServerのPowerShellのバージョンを確認したら 5.1 だったのでこれでいけるかと思った。</p>
-
-<pre><code class="language-cmd">C:\&gt;powershell -command &quot;$PSVersionTable.PSVersion&quot;
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">C:\<span style="color:#999;font-style:italic">&gt;powershell -command &#34;$PSVersionTable.PSVersion&#34;</span>
 
 Major  Minor  Build  Revision
 -----  -----  -----  --------
-5      1      14284  1000
-</code></pre>
-
+5      1      14284  1000</code></pre></div>
 <p><br></p>
 
 <p>したらこのエラー。</p>
-
-<pre><code class="language-powershell">Add-Type : Cannot find path 'C:\System.IO.Compression.FileSystem.dll' because it does not exist.
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">Add-Type : Cannot find path &#39;C:\System.IO.Compression.FileSystem.dll&#39; because it does not exist.
 At
 C:\windows\system32\windowspowershell\v1.0\Modules\Microsoft.PowerShell.Archive\Microsoft.PowerShell.Archive.psm1:914
 char:5
@@ -295,9 +283,7 @@ char:5
 +     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : ObjectNotFound: (C:\System.IO.Compression.FileSystem.dll:String) [Add-Type], ItemNotFoun
    dException
-    + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.AddTypeCommand
-</code></pre>
-
+    + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.AddTypeCommand</code></pre></div>
 <p>どうもPowerShellの 5.1 以降には、.NET FrameworkベースのDesktop Editionと、そこから機能を絞った.NET CoreベースのCore Editionがあり、<a href="https://technet.microsoft.com/en-us/windows-server-docs/compute/nano-server/powershell-on-nano-server">Nano ServerのはCore Editionなんだそうな</a>。</p>
 
 <p>Expand-ArchiveはSystem.IO.Compression.FileSystem.dllの中のZipFileクラスに依存しているんだけど、.NET CoreにはSystem.IO.Compression.FileSystem.dllが含まれていないっぽい。</p>
@@ -309,23 +295,17 @@ Expand-Archiveと、System.IO.Compression.ZipFileを直接使う方法と、Shel
 
 <p>最初の2つはCore Editionでは使えないことが分かっているので、3つめにトライ。
 こんなの↓</p>
-
-<pre><code class="language-powershell">$shell = New-Object -ComObject shell.application
-$zip = $shell.NameSpace(&quot;C:\a.zip&quot;)
-MkDir(&quot;C:\a&quot;)
-foreach ($item in $zip.items()) {
-  $shell.Namespace(&quot;C:\a&quot;).CopyHere($item)
-}
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-powershell" data-lang="powershell"><span style="color:#40ffff">$shell</span> = <span style="color:#24909d">New-Object</span> -ComObject shell.application
+<span style="color:#40ffff">$zip</span> = <span style="color:#40ffff">$shell</span>.NameSpace(<span style="color:#ed9d13">&#34;C:\a.zip&#34;</span>)
+MkDir(<span style="color:#ed9d13">&#34;C:\a&#34;</span>)
+<span style="color:#6ab825;font-weight:bold">foreach</span> (<span style="color:#40ffff">$item</span> <span style="color:#6ab825;font-weight:bold">in</span> <span style="color:#40ffff">$zip</span>.items()) {
+  <span style="color:#40ffff">$shell</span>.Namespace(<span style="color:#ed9d13">&#34;C:\a&#34;</span>).CopyHere(<span style="color:#40ffff">$item</span>)
+}</code></pre></div>
 <p>調べたらこの方法は<a href="https://support.microsoft.com/ja-jp/kb/2679832">Microsoftから非推奨にされている</a>ことが分かったんだけど、一応やってみる。</p>
 
 <p>したら以下のエラー。</p>
-
-<pre><code>new-object : Retrieving the COM class factory for component with CLSID {00000000-0000-0000-0000-000000000000} failed
-due to the following error: 80040154 Class not registered (Exception from HRESULT: 0x80040154 (REGDB_E_CLASSNOTREG)).
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">new-object : Retrieving the COM class factory for component with CLSID {00000000-0000-0000-0000-000000000000} failed
+due to the following error: 80040154 Class not registered (Exception from HRESULT: 0x80040154 (REGDB_E_CLASSNOTREG)).</code></pre></div>
 <p>この方法で利用しようとしているのは<a href="https://en.wikipedia.org/wiki/Windows_shell">Windows shell</a>、つまり<a href="https://ja.wikipedia.org/wiki/Windows_Explorer">Windows Explorer</a>の機能らしく、そうであればまあGUIがないNano Serverで動かないのも当然か。</p>
 
 <h2 id="サードパーティツールに頼る">サードパーティツールに頼る</h2>
@@ -348,13 +328,10 @@ due to the following error: 80040154 Class not registered (Exception from HRESUL
 <p>が、ふと思い立って<a href="https://hub.docker.com/">Docker Hub</a>を検索してみたら、<a href="https://hub.docker.com/r/michaeltlombardi/nanoserveropenjdk/">OpenJDK入りのNano Server</a>をアップしてくれている人がいた。</p>
 
 <p>pullしてrunしてみたら確かにJDKがインストールされていた。</p>
-
-<pre><code class="language-cmd">C:\&gt;java -version
-openjdk version &quot;1.8.0_102-1-ojdkbuild&quot;
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">C:\<span style="color:#999;font-style:italic">&gt;java -version</span>
+openjdk version <span style="color:#ed9d13">&#34;1.8.0_102-1-ojdkbuild&#34;</span>
 OpenJDK Runtime Environment (build 1.8.0_102-1-ojdkbuild-b14)
-OpenJDK 64-Bit Server VM (build 25.102-b14, mixed mode)
-</code></pre>
-
+OpenJDK 64-Bit Server VM (build 25.102-b14, mixed mode)</code></pre></div>
 <p>で、無事<code>&quot;C:\Program Files\Java\bin\jar.exe&quot; xf hoge.zip</code>のようにしてunzipできた。</p>
 
 <p>ここまで1日かかった。</p>

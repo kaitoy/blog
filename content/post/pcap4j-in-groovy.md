@@ -6,7 +6,7 @@ cover = "pcap4j-groovy.png"
 slug = "pcap4j-in-groovy"
 tags = [ "pcap4j", "groovy", "jvm language" ]
 title = "Pcap4J in Groovy"
-highlightLanguages = ["dos"]
+
 +++
 
 [__Groovy__](http://www.groovy-lang.org/index.html)で[__Pcap4J__](https://github.com/kaitoy/pcap4j)を使ってパケットキャプチャしてみた。

@@ -6,7 +6,7 @@ cover = "goslings-spring.png"
 slug = "goslings-development-memo4-spring-boot-logging"
 tags = [ "goslings", "spring", "spring-boot" ]
 title = "Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)"
-highlightLanguages = ["dos"]
+
 +++
 
 「[Goslings開発メモ - その3: Spring Boot続続編 (例外処理)](https://www.kaitoy.xyz/2017/01/13/goslings-development-memo3-spring-boot-exception/)」の続き。

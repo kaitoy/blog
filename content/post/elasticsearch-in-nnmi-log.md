@@ -6,7 +6,7 @@ cover = "logo-elastic.png"
 slug = "elasticsearch-in-nnmi-log"
 tags = [ "elasticsearch", "logstash", "filebeat" ]
 title = "Elasticsearch、Logstash、Filebeat、elasticsearch-headでログを見てみた"
-highlightLanguages = ["yaml", "dos"]
+
 +++
 
 [NNMi](http://www8.hp.com/jp/ja/software-solutions/network-node-manager-i-network-management-software/)ログを[Filebeat](https://www.elastic.co/jp/products/beats/filebeat)で集めて[Logstash](https://www.elastic.co/jp/products/logstash)で構造化して[Elasticsearch](https://www.elastic.co/jp/products/elasticsearch)に入れて[elasticsearch-head](https://mobz.github.io/elasticsearch-head/)で見てみたけど、ログ量が少なかったせいかあんまり恩恵が感じられなかった話。
@@ -93,7 +93,7 @@ NNMiは無料のコミュニティエディションのv10.00をVMのCentOSに�
 
 ログはだいたい以下の様な一行のもの。
 
-```
+```plain
 2017-03-15 19:09:55.896 INFO  [com.hp.ov.nms.spi.common.deployment.deployers.ExtensionServicesDeployer] (Thread-2) Deploying arris-device
 2017-03-15 19:09:55.923 WARNING [com.hp.ov.nms.topo.spi.server.concurrent.NmsTimerTaskImpl] (NmsWorkManager Scheduler) Skipping task execution because previous execution has not completed: com.hp.ov.nnm.im.NnmIntegrationModule$EnablerTask@3abdac77
 2017-03-15 19:09:56.120 INFO  [com.hp.ov.nms.disco.spi.DiscoExtensionNotificationListener] (Thread-2) Disco deployed mapping rules: META-INF/disco/rules/cards/ArrisCard.xml
@@ -101,7 +101,7 @@ NNMiは無料のコミュニティエディションのv10.00をVMのCentOSに�
 
 たまに複数行のものがある。
 
-```
+```plain
 2017-03-15 19:13:30.872 INFO  [com.hp.ov.nms.trapd.narrowfilter.NarrowTrapAnalysis] (pool-1-thread-18)
 ***** Hosted Object Trap Rate Report *****
 Hosted object trap storm detection and suppression stage started: Wed Mar 15, 2017 19:09:00.746 PM.
@@ -151,7 +151,7 @@ output.logstash:
 
 Logstashの設定は、展開したディレクトリのトップに`pipeline.conf`というファイルを作ってそこに以下を書いた。
 
-```
+```ruby
 input {
     beats {
         port => "5043"
@@ -219,7 +219,7 @@ bin\elasticsearch.bat
 しばらく待つと起動完了し、`localhost:9200`でHTTPリクエストを待ち始める。
 試しにブラウザで`http://localhost:9200/_cluster/health`にアクセスすると、以下の様にElasticsearchクラスタのステータスがJSONで返ってきた。
 
-```
+```json
 {"cluster_name":"elasticsearch","status":"yellow","timed_out":false,"number_of_nodes":1,"number_of_data_nodes":1,"active_primary_shards":5,"active_shards":5,"relocating_shards":0,"initializing_shards":0,"unassigned_shards":5,"delayed_unassigned_shards":0,"number_of_pending_tasks":0,"number_of_in_flight_fetch":0,"task_max_waiting_in_queue_millis":0,"active_shards_percent_as_number":50.0}
 ```
 

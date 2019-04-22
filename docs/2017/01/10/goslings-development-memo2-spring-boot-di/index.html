@@ -31,10 +31,10 @@ Spring FrameworkはもともとこのDI機能を提供するフレームワー�
 GoslingsでDI Goslingsサーバの内部機能はざっくり、クライアントからのREST API呼び出しを処理するユーザインタフェース層と、Gitリポジトリにアクセスするデータベース層に分かれる。
 Gitリポジトリにアクセスする部分は今回はJGitで実装するが、将来的に別のライブラリで実装しなおす可能性が微レ存なのと、Goslingsの開発自体がWebアプリ開発の練習でもあるので、ちゃんとしたアーキテクチャでと思い、DAOパターンを使ってやった。
 つまり例えば、GitのコミットオブジェクトはJGitのAPIではRevCommitクラスで表されるが、ユーザインタフェース層からはリソースクラスであるCommitクラス(前回参照)を扱う以下の様なDAOインターフェースを呼ぶようにし、JGit依存の実装とは切り離す。
-public interface ObjectDao { public Commit[] getCommits(String token) throws DaoException; }  (ObjectDao.javaの完全なソースはこれ)
+public interface ObjectDao { public Commit[] getCommits(String token) throws DaoException; } (ObjectDao.javaの完全なソースはこれ)
 
 ObjectDaoを実装するObjectDaoImplクラスでは、以下の様にJGitを使ってごりごりと実装を書く。
-public final class ObjectDaoImpl implements ObjectDao { // フィールド定義は省略 @Override public Commit[] getCommits(String token) { try { return StreamSupport.stream(resolver.getGit(token).log().all().call().spliterator(), false) .map(this::convertToCommit) .toArray(Commit[]::new); } catch (NoHeadException e) { // エラー処理 } } private Commit convertToCommit(RevCommit commit) { // RevCommitをCommitに変換する処理 } }">
+public final class ObjectDaoImpl implements ObjectDao { // フィールド定義は省略  @Override public Commit[] getCommits(String token) { try { return StreamSupport.stream(resolver.getGit(token).log().all().call().spliterator(), false) .map(this::convertToCommit) .toArray(Commit[]::new); } catch (NoHeadException e) { // エラー処理  } } private Commit convertToCommit(RevCommit commit) { // RevCommitをCommitに変換する処理  } }">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/goslings-spring.png">
 
 
@@ -66,7 +66,7 @@ public final class ObjectDaoImpl implements ObjectDao { // フィールド定義
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&amp;subset=japanese">
 
 
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai.min.css"> 
+
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -74,14 +74,6 @@ public final class ObjectDaoImpl implements ObjectDao { // フィールド定義
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-
-    
-
-    <script>hljs.initHighlightingOnLoad();</script>
-
 
 
 
@@ -259,60 +251,51 @@ public final class ObjectDaoImpl implements ObjectDao { // フィールド定義
 <p>Gitリポジトリにアクセスする部分は今回は<a href="https://eclipse.org/jgit/">JGit</a>で実装するが、将来的に別のライブラリで実装しなおす可能性が微レ存なのと、Goslingsの開発自体がWebアプリ開発の練習でもあるので、ちゃんとしたアーキテクチャでと思い、<a href="https://ja.wikipedia.org/wiki/Data_Access_Object">DAO</a>パターンを使ってやった。</p>
 
 <p>つまり例えば、GitのコミットオブジェクトはJGitのAPIでは<a href="http://download.eclipse.org/jgit/site/3.7.1.201504261725-r/apidocs/org/eclipse/jgit/revwalk/RevCommit.html"><code>RevCommitクラス</code></a>で表されるが、ユーザインタフェース層からはリソースクラスである<a href="https://github.com/kaitoy/goslings/blob/dba65bf4ca7ad1dd91b927d623b6ea9a39870b62/goslings-server/src/main/java/com/github/kaitoy/goslings/server/resource/Commit.java">Commitクラス</a>(<a href="https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/#5-%E3%83%AA%E3%82%BD%E3%83%BC%E3%82%B9%E3%82%AF%E3%83%A9%E3%82%B9%E4%BD%9C%E6%88%90">前回</a>参照)を扱う以下の様なDAOインターフェースを呼ぶようにし、JGit依存の実装とは切り離す。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">interface</span> <span style="color:#447fcf;text-decoration:underline">ObjectDao</span> {
 
-<pre><code class="language-java">public interface ObjectDao {
+  <span style="color:#6ab825;font-weight:bold">public</span> Commit[] <span style="color:#447fcf">getCommits</span>(String token) <span style="color:#6ab825;font-weight:bold">throws</span> DaoException;
 
-  public Commit[] getCommits(String token) throws DaoException;
-
-}
-</code></pre>
-
+}</code></pre></div>
 <p>(ObjectDao.javaの完全なソースは<a href="https://github.com/kaitoy/goslings/blob/dba65bf4ca7ad1dd91b927d623b6ea9a39870b62/goslings-server/src/main/java/com/github/kaitoy/goslings/server/dao/ObjectDao.java">これ</a>)</p>
 
 <p><br></p>
 
 <p><code>ObjectDao</code>を実装する<code>ObjectDaoImpl</code>クラスでは、以下の様にJGitを使ってごりごりと実装を書く。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">final</span> <span style="color:#6ab825;font-weight:bold">class</span> <span style="color:#447fcf;text-decoration:underline">ObjectDaoImpl</span> <span style="color:#6ab825;font-weight:bold">implements</span> ObjectDao {
 
-<pre><code class="language-java">public final class ObjectDaoImpl implements ObjectDao {
-
-  // フィールド定義は省略
-
-  @Override
-  public Commit[] getCommits(String token) {
-    try {
-      return StreamSupport.stream(resolver.getGit(token).log().all().call().spliterator(), false)
-               .map(this::convertToCommit)
-               .toArray(Commit[]::new);
-    } catch (NoHeadException e) {
-      // エラー処理
-    }
+  <span style="color:#999;font-style:italic">// フィールド定義は省略
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#ffa500">@Override</span>
+  <span style="color:#6ab825;font-weight:bold">public</span> Commit[] <span style="color:#447fcf">getCommits</span>(String token) {
+    <span style="color:#6ab825;font-weight:bold">try</span> {
+      <span style="color:#6ab825;font-weight:bold">return</span> StreamSupport.<span style="color:#bbb">stream</span>(resolver.<span style="color:#bbb">getGit</span>(token).<span style="color:#bbb">log</span>().<span style="color:#bbb">all</span>().<span style="color:#bbb">call</span>().<span style="color:#bbb">spliterator</span>(), <span style="color:#6ab825;font-weight:bold">false</span>)
+               .<span style="color:#bbb">map</span>(<span style="color:#6ab825;font-weight:bold">this</span>::convertToCommit)
+               .<span style="color:#bbb">toArray</span>(Commit[]::<span style="color:#6ab825;font-weight:bold">new</span>);
+    } <span style="color:#6ab825;font-weight:bold">catch</span> (NoHeadException e) {
+      <span style="color:#999;font-style:italic">// エラー処理
+</span><span style="color:#999;font-style:italic"></span>    }
   }
 
-  private Commit convertToCommit(RevCommit commit) {
-    // RevCommitをCommitに変換する処理
-  }
+  <span style="color:#6ab825;font-weight:bold">private</span> Commit <span style="color:#447fcf">convertToCommit</span>(RevCommit commit) {
+    <span style="color:#999;font-style:italic">// RevCommitをCommitに変換する処理
+</span><span style="color:#999;font-style:italic"></span>  }
 
-}
-</code></pre>
-
+}</code></pre></div>
 <p><br></p>
 
 <p>ユーザインターフェース層は<code>RestApiV1Controller</code>クラス(<a href="https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/#6-%E3%82%B3%E3%83%B3%E3%83%88%E3%83%AD%E3%83%BC%E3%83%A9-rest-api%E3%82%B3%E3%83%B3%E3%83%88%E3%83%AD%E3%83%BC%E3%83%A9-%E4%BD%9C%E6%88%90">前回</a>参照)の<code>getCommits</code>メソッドで、以下の様にObjectDaoを使いたい。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">final</span> <span style="color:#6ab825;font-weight:bold">class</span> <span style="color:#447fcf;text-decoration:underline">RestApiV1Controller</span> {
 
-<pre><code class="language-java">public final class RestApiV1Controller {
+  <span style="color:#6ab825;font-weight:bold">private</span> ObjectDao objectDao;
 
-  private ObjectDao objectDao;
-
-  @RequestMapping(path=&quot;{token}/objects/commits&quot;)
-  public Commit[] getCommits(@PathVariable String token) {
-    return objectDao.getCommits(token);
+  <span style="color:#ffa500">@RequestMapping</span>(path=<span style="color:#ed9d13">&#34;{token}/objects/commits&#34;</span>)
+  <span style="color:#6ab825;font-weight:bold">public</span> Commit[] <span style="color:#447fcf">getCommits</span>(<span style="color:#ffa500">@PathVariable</span> String token) {
+    <span style="color:#6ab825;font-weight:bold">return</span> objectDao.<span style="color:#bbb">getCommits</span>(token);
   }
 
-  // 以下他のメソッド
-
-}
-</code></pre>
-
+  <span style="color:#999;font-style:italic">// 以下他のメソッド
+</span><span style="color:#999;font-style:italic"></span>
+}</code></pre></div>
 <p><br></p>
 
 <p>ここで問題になるのが、<code>RestApiV1Controller</code>の<code>objectDao</code>フィールドへのインスタンスの代入だが、<code>RestApiV1Controller</code>内(e.g. <code>RestApiV1Controller</code>のコンストラクタ)で<code>ObjectDaoImpl</code>をインスタンス化して代入するのでは、<code>ObjectDaoImpl</code>というデータベース層の具象クラスへの直接的な依存(i.e. <code>import ObjectDaoImpl</code>)が発生してしまってまずい。
@@ -342,27 +325,21 @@ public final class ObjectDaoImpl implements ObjectDao { // フィールド定義
 <p><br></p>
 
 <p><code>ObjectDaoImpl</code>はDAOコンポーネントで、これはもちろん<code>@Repository</code>にあたるのでこれを付ける。</p>
-
-<pre><code class="language-java">@Repository
-public final class ObjectDaoImpl implements ObjectDao {
-  // 省略
-}
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#ffa500">@Repository</span>
+<span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">final</span> <span style="color:#6ab825;font-weight:bold">class</span> <span style="color:#447fcf;text-decoration:underline">ObjectDaoImpl</span> <span style="color:#6ab825;font-weight:bold">implements</span> ObjectDao {
+  <span style="color:#999;font-style:italic">// 省略
+</span><span style="color:#999;font-style:italic"></span>}</code></pre></div>
 <p><br></p>
 
 <p>これで<code>ObjectDaoImpl</code>がSpring Beanとして登録されるので、あとは<code>RestApiV1Controller</code>に<code>@Autowired</code>で注入してやればいい。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">final</span> <span style="color:#6ab825;font-weight:bold">class</span> <span style="color:#447fcf;text-decoration:underline">RestApiV1Controller</span> {
 
-<pre><code class="language-java">public final class RestApiV1Controller {
+  <span style="color:#ffa500">@Autowired</span>
+  <span style="color:#6ab825;font-weight:bold">private</span> ObjectDao objectDao;
 
-  @Autowired
-  private ObjectDao objectDao;
-
-  // 以下省略。
-
-}
-</code></pre>
-
+  <span style="color:#999;font-style:italic">// 以下省略。
+</span><span style="color:#999;font-style:italic"></span>
+}</code></pre></div>
 <p><br></p>
 
 <p><code>@Autowired</code>を付けたことにより、<code>RestApiV1Controller</code>のインスタンス化直後に、<code>objectDao</code>フィールドに適切なSpring Beanが注入されるようになった。</p>
@@ -372,31 +349,25 @@ public final class ObjectDaoImpl implements ObjectDao {
 今はこれでもいいが、将来<code>ObjectDao</code>の実装が増えた場合、どの実装を注入すべきかSpring Frameworkには分からなくなるので、今のうちに<a href="http://docs.spring.io/spring/docs/4.3.4.RELEASE/javadoc-api/org/springframework/beans/factory/annotation/Qualifier.html"><code>@Qualifier</code></a>を使って明示しておくことにする。(<a href="https://docs.spring.io/spring/docs/4.3.4.RELEASE/spring-framework-reference/html/beans.html#beans-autowired-annotation-qualifiers">参考</a>)</p>
 
 <p>まずSpring Beanの方に<code>jgit</code>という値を持つ<code>@Qualifier</code>をつける。</p>
-
-<pre><code class="language-java">@Repository
-@Qualifier(&quot;jgit&quot;)
-public final class ObjectDaoImpl implements ObjectDao {
-  // 省略
-}
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#ffa500">@Repository</span>
+<span style="color:#ffa500">@Qualifier</span>(<span style="color:#ed9d13">&#34;jgit&#34;</span>)
+<span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">final</span> <span style="color:#6ab825;font-weight:bold">class</span> <span style="color:#447fcf;text-decoration:underline">ObjectDaoImpl</span> <span style="color:#6ab825;font-weight:bold">implements</span> ObjectDao {
+  <span style="color:#999;font-style:italic">// 省略
+</span><span style="color:#999;font-style:italic"></span>}</code></pre></div>
 <p>(ObjectDaoImpl.javaの完全なソースは<a href="https://github.com/kaitoy/goslings/blob/dba65bf4ca7ad1dd91b927d623b6ea9a39870b62/goslings-server/src/main/java/com/github/kaitoy/goslings/server/dao/jgit/ObjectDaoImpl.java">これ</a>)</p>
 
 <p><br></p>
 
 <p>Spring Beanを使う側にも同じ<code>@Qualifier</code>をつける。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">final</span> <span style="color:#6ab825;font-weight:bold">class</span> <span style="color:#447fcf;text-decoration:underline">RestApiV1Controller</span> {
 
-<pre><code class="language-java">public final class RestApiV1Controller {
+  <span style="color:#ffa500">@Autowired</span>
+  <span style="color:#ffa500">@Qualifier</span>(<span style="color:#ed9d13">&#34;jgit&#34;</span>)
+  <span style="color:#6ab825;font-weight:bold">private</span> ObjectDao objectDao;
 
-  @Autowired
-  @Qualifier(&quot;jgit&quot;)
-  private ObjectDao objectDao;
-
-  // 以下省略。
-
-}
-</code></pre>
-
+  <span style="color:#999;font-style:italic">// 以下省略。
+</span><span style="color:#999;font-style:italic"></span>
+}</code></pre></div>
 <p>(RestApiV1Controller.javaの完全なソースは<a href="https://github.com/kaitoy/goslings/blob/dba65bf4ca7ad1dd91b927d623b6ea9a39870b62/goslings-server/src/main/java/com/github/kaitoy/goslings/server/controller/RestApiV1Controller.java">こちら</a>)</p>
 
 <p><br></p>

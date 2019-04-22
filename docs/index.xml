@@ -93,7 +93,7 @@ TypeScript vs Flow 個人的には、静的型付けだけを目的にするな�
 そんな問題に対応する技術がCode Splitting。 バンドルを分割し、(理想的には)必要な時に必要な分だけロードする技術。
 Code Splittingのやりかたはいくつかあるが、ダイナミックインポートとReact.lazyとReact Suspenseとwebpackのプリフェッチディレクティブを使ったやつを、フォントモジュールに適用してみる。
 src/components/App.jsx:
--import React from &#39;react&#39;; +import React, { Suspense } from &#39;react&#39;; import { Route, Redirect } from &#39;react-router-dom&#39;; import Home from &#39;./Home&#39;; -import Fonts from &#39;../fonts&#39;; +const Fonts = React.lazy(() =&amp;gt; import(/* webpackPrefetch: true */ &#39;../fonts&#39;)); const App = () =&amp;gt; ( &amp;lt;div&amp;gt; &amp;lt;Route exact path=&amp;quot;/&amp;quot; render={() =&amp;gt; &amp;lt;Redirect to=&amp;quot;/home&amp;quot; /&amp;gt;} /&amp;gt; &amp;lt;Route exact path=&amp;quot;/home&amp;quot; component={Home} /&amp;gt; - &amp;lt;Fonts /&amp;gt; + &amp;lt;Suspense fallback={&amp;lt;div /&amp;gt;}&amp;gt; + &amp;lt;Fonts /&amp;gt; + &amp;lt;/Suspense&amp;gt; &amp;lt;/div&amp;gt; ); export default App;  コード変更はこれだけ。</description>
+-import React from &amp;#39;react&amp;#39;; +import React, { Suspense } from &amp;#39;react&amp;#39;;  import { Route, Redirect } from &amp;#39;react-router-dom&amp;#39;; import Home from &amp;#39;./Home&amp;#39;; -import Fonts from &amp;#39;../fonts&amp;#39;;  +const Fonts = React.lazy(() =&amp;gt; import(/* webpackPrefetch: true */ &amp;#39;../fonts&amp;#39;));  const App = () =&amp;gt; ( &amp;lt;div&amp;gt; &amp;lt;Route exact path=&amp;#34;/&amp;#34; render={() =&amp;gt; &amp;lt;Redirect to=&amp;#34;/home&amp;#34; /&amp;gt;} /&amp;gt; &amp;lt;Route exact path=&amp;#34;/home&amp;#34; component={Home} /&amp;gt; - &amp;lt;Fonts /&amp;gt; + &amp;lt;Suspense fallback={&amp;lt;div /&amp;gt;}&amp;gt; + &amp;lt;Fonts /&amp;gt; + &amp;lt;/Suspense&amp;gt;  &amp;lt;/div&amp;gt; ); export default App;  コード変更はこれだけ。</description>
     </item>
     
     <item>
@@ -117,7 +117,7 @@ location.hash = newHash;  こういう処理を、例えばWeb UIのボタンを
 そのあと、ブラウザの戻るボタンなんかを押されると書き換える前のURLにもどるわけだけど、これを検知するためにsetInterval()とかで定期的にlocation.hashを監視してたりした。
 History APIによるルーティング ハッシュベースのルーティングは見るからにしょぼい。 URLのハッシュ以降しか使えないのもしょぼいし、内部の処理も泥臭い。
 これが、HTML 5でHistory APIがでて変わった。 History APIはJavaScriptのAPIで、ブラウザの履歴を操作できる。
-const state = { hoge: &amp;quot;hogeee&amp;quot; }; history.pushState(state, &amp;quot;&amp;quot;, &amp;quot;/foo/bar&amp;quot;);  こんな感じのを実行すると、URLが/foo/barに変わる。(が、もちろんサーバにはリクエストは飛ばない。) で、ブラウザの戻るボタンを押すと、popstateイベントが発生するので、それにイベントハンドラを登録しておけば、もとのURLに戻った時にも適時画面を書き換えられる。 popstateイベントからは、pushState()に渡したstateオブジェクトを取得できる。
+const state = { hoge: &amp;#34;hogeee&amp;#34; }; history.pushState(state, &amp;#34;&amp;#34;, &amp;#34;/foo/bar&amp;#34;);  こんな感じのを実行すると、URLが/foo/barに変わる。(が、もちろんサーバにはリクエストは飛ばない。) で、ブラウザの戻るボタンを押すと、popstateイベントが発生するので、それにイベントハンドラを登録しておけば、もとのURLに戻った時にも適時画面を書き換えられる。 popstateイベントからは、pushState()に渡したstateオブジェクトを取得できる。
 
 ところで、ブラウザのアドレスバーに/foo/barを直打ちするとどうなるかというと、普通にWebサーバを設定しておくと、/foo/bar/index.htmlを返そうとして、無いので404エラーになっちゃう。 ので、サーバ設定では、どのURLも同じリソース(e.g. /index.</description>
     </item>
@@ -134,10 +134,10 @@ const state = { hoge: &amp;quot;hogeee&amp;quot; }; history.pushState(state, &am
    (adsbygoogle = window.adsbygoogle || []).push({});  ReduxのMiddleware Redux単体では同期的なデータフローしか実装できない。 つまり、Actionを発生させたら、即座にディスパッチされ、stateが更新される。 一方、非同期なフローとは、REST APIを呼んでその結果でstateを更新するような処理。 REST API呼び出しが非同期なわけだが、これをReduxのピュアなフローのどこで実行するのかというと、Middlewareで実行する。
 MiddlewareはStoreのdispatch()をラップして、Actionをトラップして副作用を含む任意の処理をするための機能。 Middlewareの仕組みについてはこの記事が分かりやすい。
 Middlewareには例えば、発生したActionの内容と、それによるstateの変化をログに出力するredux-loggerがある。 デバッグに有用そうなので入れておく。
-yarn add redux-logger  v3.0.6が入った。
+yarn add redux-logger v3.0.6が入った。
 Middlewareは、ReduxのapplyMiddleware()というAPIを使って、createStore()実行時に適用できる。
 src/configureStore.js:
--import { createStore } from &#39;redux&#39;; +import { createStore, applyMiddleware } from &#39;redux&#39;; +import { logger } from &#39;redux-logger&#39;; import rootReducer from &#39;./reducers/rootReducer&#39;; export default function configureStore(initialState = {}) { + const middlewares = []; + if (process.</description>
+-import { createStore } from &amp;#39;redux&amp;#39;; +import { createStore, applyMiddleware } from &amp;#39;redux&amp;#39;; +import { logger } from &amp;#39;redux-logger&amp;#39;;  import rootReducer from &amp;#39;./reducers/rootReducer&amp;#39;; export default function configureStore(initialState = {}) { + const middlewares = []; + if (process.</description>
     </item>
     
     <item>
@@ -151,7 +151,7 @@ src/configureStore.js:
 (2018/11/21更新)
    (adsbygoogle = window.adsbygoogle || []).push({});  React Redux 前回はReduxをセットアップして、ActionをStoreにディスパッチしてstateを更新できるようになった。 今回はこれをReactにつなぐ。
 使うのはReact Redux。
-yarn add react-redux  v5.1.1が入った。
+yarn add react-redux v5.1.1が入った。
 Presentational Components と Container Components React Reduxの使い方を理解するには、Presentational Components と Container Components という概念を知らないといけない。 これはReactコンポーネントを役割別に分ける考え方で、それぞれ以下のような特徴をもつ。
     Presentational Components Container Components     主な役割 DOMをレンダリングする データを取得したりstateを更新したりする(Reduxとつなぐ)   Reduxとの関連 無し 有り   データの読み込み propsから読む Reduxのstateオブジェクトから読む   データの更新 propsで渡されたコールバックを呼ぶ ReduxのActionをディスパッチする   作り方 自前で書く React Reduxで生成する</description>
     </item>
@@ -175,11 +175,11 @@ ReduxではFluxのDispatcher辺りがReducerに置き換わっている。 Reduc
 また、ReduxからはViewが切り離されていて、Actionによってstateを更新する状態管理ライブラリの役割に徹している。 ReactコンポーネントのイベントハンドラからActionオブジェクトを生成したり、更新したstateをReactに渡したりするつなぎ目は、別途React Reduxというライブラリが担当する。
 ReduxとReact Reduxについては、Qiitaの「たぶんこれが一番分かりやすいと思います React + Redux のフロー図解」という記事が分かりやすい。
 今回はReduxを導入する。
-yarn add redux  Redux v4.0.1が入った。
+yarn add redux Redux v4.0.1が入った。
 以降、現時点で唯一のUIコンポーネントであるHOGEボタンの状態管理を実装してみる。
 Action まずActionを実装する。
 Actionオブジェクトはどんな形式でもいいけど、普通はFlux Standard Action(FSA)にする。 FSAは以下のプロパティを持つプレーンオブジェクト。
- type: Action種別を示す文字列定数。必須。 payload: Actionの情報を示す任意の型の値。任意。 error: Actionがエラーを表すものかを示す boolean プロパティ。エラーなら true にして、payload にエラーオブジェクトをセットする。任意。 meta: その他の情報を入れる任意の型の値。任意。  Actionのコードは、Actionのtypeに入れる値を定義するactionTypes.jsと、Action Creator(i.e. Actionオブジェクトを生成する関数)を定義するactions.</description>
+ type: Action種別を示す文字列定数。必須。 payload: Actionの情報を示す任意の型の値。任意。 error: Actionがエラーを表すものかを示す boolean プロパティ。エラーなら true にして、payload にエラーオブジェクトをセットする。任意。 meta: その他の情報を入れる任意の型の値。任意。  Actionのコードは、Actionのtypeに入れる値を定義するactionTypes.jsと、Action Creator(i.e. Actionオブジェクトを生成する関数)を定義するactions.jsからなり、ともにsrc/actions/に置く。</description>
     </item>
     
     <item>
@@ -196,11 +196,11 @@ Actionオブジェクトはどんな形式でもいいけど、普通はFlux Sta
  Material-UI: GoogleのマテリアルデザインのReact実装。 Semantic UI React: Semantic UIのReactバインディング。 antd: Ant DesignのReact実装。 Blueprint: 複雑でデータ量の多いUI向けに作られたReact UIツールキット。 React-Bootstrap: BootstrapのReactバインディング。現時点ではv4未対応。 Grommet: HPEによるエンタープライズレディなデザインシステム。 Office UI Fabric React: OfficeなどのMicrosoft製品に使われているReactコンポーネントセット。  
 今回はこの中でも圧倒的に人気なMaterial-UIを導入する。
 Material-UI Material-UIは簡単に使える。 とりあえずコアパッケージをインストールする。
-yarn add @material-ui/core  v3.5.1が入った。
+yarn add @material-ui/core v3.5.1が入った。
 
 あとはパッケージに入っている色々なコンポーネントをMaterial-UIのドキュメント見ながら使えばいいだけ。
 src/components/App.jsx:
-import React from &#39;react&#39;; import styled from &#39;styled-components&#39;; +import Button from &#39;@material-ui/core/Button&#39;; const Wrapper = styled.</description>
+import React from &amp;#39;react&amp;#39;; import styled from &amp;#39;styled-components&amp;#39;; +import Button from &amp;#39;@material-ui/core/Button&amp;#39;;  const Wrapper = styled.</description>
     </item>
     
     <item>
@@ -245,14 +245,14 @@ Prettierは2017年1月にリリースされた新しいツール。 構文解析
 JavaScriptの他、JSX、CSS、Markdown、GraphQLのフォーマットにも対応している。
 
 まずプロジェクトにインストールする。
-yarn add -D prettier  v1.15.2が入った。
+yarn add -D prettier v1.15.2が入った。
 
 設定はprettier.config.jsというファイルを書いてプロジェクトルートに置けばいい。
 prettier.config.js:
-module.exports = { printWidth: 100, // 行の最大長 tabWidth: 2, // インデント長 singleQuote: true, // 文字列をシングルクオートで囲う trailingComma: &#39;all&#39;, // オブジェクトのプロパティとか関数の引数を複数行で書いたときに、全行の末尾にカンマをつける };  
+module.exports = { printWidth: 100, // 行の最大長  tabWidth: 2, // インデント長  singleQuote: true, // 文字列をシングルクオートで囲う  trailingComma: &amp;#39;all&amp;#39;, // オブジェクトのプロパティとか関数の引数を複数行で書いたときに、全行の末尾にカンマをつける };  
 また、フォーマット対象外のファイルを指定するファイルである.prettierignoreをプロジェクトルートに置く。
 .prettierignore:
-node_modules/ dist/  node_modulesはnpmパッケージが入るディレクトリ。 実際はnode_modulesはデフォルトで無視されるから書かなくていいんだけど。</description>
+node_modules/ dist/ node_modulesはnpmパッケージが入るディレクトリ。 実際はnode_modulesはデフォルトで無視されるから書かなくていいんだけど。</description>
     </item>
     
     <item>
@@ -268,9 +268,9 @@ node_modules/ dist/  node_modulesはnpmパッケージが入るディレクト�
 ReactはViewを記述するためのライブラリで、特徴はVirtual DOMとJSX。
 Virtual DOM Virtual DOMはDOMを仮想化するもので、JavaScriptからVirtual DOMでUIを記述してやると、それが実DOMに効率的に反映されるようになっている。
 JSX Virtual DOMはJSXというHTMLみたいな言語で記述できる。
-import React from &#39;react&#39;; import ReactDOM from &#39;react-dom&#39;; ReactDOM.render( &amp;lt;h1&amp;gt;Hello, world!&amp;lt;/h1&amp;gt;, document.getElementById(&#39;root&#39;) );  こんな風に書くと、idがrootであるHTML要素の中に、&amp;lt;h1&amp;gt;Hello, world!&amp;lt;/h1&amp;gt;がレンダリングされる。 上記コードの&amp;lt;h1&amp;gt;Hello, world!&amp;lt;/h1&amp;gt;の部分がJSX。
+import React from &amp;#39;react&amp;#39;; import ReactDOM from &amp;#39;react-dom&amp;#39;; ReactDOM.render( &amp;lt;h1&amp;gt;Hello, world!&amp;lt;/h1&amp;gt;, document.getElementById(&amp;#39;root&amp;#39;) ); こんな風に書くと、idがrootであるHTML要素の中に、&amp;lt;h1&amp;gt;Hello, world!&amp;lt;/h1&amp;gt;がレンダリングされる。 上記コードの&amp;lt;h1&amp;gt;Hello, world!&amp;lt;/h1&amp;gt;の部分がJSX。
 コンポーネント JSXではコンポーネントを定義して新たなタグとして使うことができるので、再利用できるコンポーネントを作って、それらを組み合わせてUIを構築することで、効率的な開発ができる。
-import React from &#39;react&#39;; import ReactDOM from &#39;react-dom&#39;; // Welcomeコンポーネントの定義 function Welcome() { return &amp;lt;h1&amp;gt;Hello, World&amp;lt;/h1&amp;gt;; } // Welcomeコンポーネントのレンダリング ReactDOM.render( &amp;lt;Welcome /&amp;gt;, document.getElementById(&#39;root&#39;) );  上記コードではコンポーネントをfunctionで定義しているが、アロー関数で書いても全く一緒。</description>
+import React from &amp;#39;react&amp;#39;; import ReactDOM from &amp;#39;react-dom&amp;#39;; // Welcomeコンポーネントの定義 function Welcome() { return &amp;lt;h1&amp;gt;Hello, World&amp;lt;/h1&amp;gt;; } // Welcomeコンポーネントのレンダリング ReactDOM.render( &amp;lt;Welcome /&amp;gt;, document.getElementById(&amp;#39;root&amp;#39;) ); 上記コードではコンポーネントをfunctionで定義しているが、アロー関数で書いても全く一緒。</description>
     </item>
     
     <item>
@@ -305,13 +305,13 @@ C:\&amp;gt;nvm install 8.11.4 Downloading node.js version 8.11.4 (64-bit)... Com
 1990年代前半、まだWebアプリケーションという言葉が無かった時代。 静的にHTMLファイルを配信するだけのWebサイト(静的サイト)だけがあった。 静的サイトでは、HTTPサーバーに複数のHTMLファイルを置いておいて、クライアントのHTTPリクエストのURLのパスによって配信するHTMLファイルを変える。
 例えば、HTTPサーバーをhttpdで立てて、ドキュメントルートを/var/www/htmlに設定して、以下のようにファイルを配置したとする。
 
-/var/www/html/ | +-- index.html | +-- sub/ | +-- hoge.html  
+/var/www/html/ | +-- index.html | +-- sub/ | +-- hoge.html 
 この場合、ブラウザでhttp://&amp;lt;HTTPサーバアドレス&amp;gt;/index.htmlにアクセスすれば/var/www/html/index.htmlが配信されてレンダリングされて表示される。 http://&amp;lt;HTTPサーバアドレス&amp;gt;/sub/hoge.htmlにアクセスすれば/var/www/html/sub/hoge.htmlが配信される。
 古のWebサイトは、こんな感じにコンテンツごとにHTMLファイルを書いてサーバに置いておいて、その間にリンクを張って辿れるようにすることで構成されていた。
 まあ今も大体そんな感じだけど。
 動的HTML生成 (プログラムでHTMLを書き出す) 静的サイトだと表現できることが非常に限られるので、クライアントからのリクエストの内容をサーバが解釈し、DBの情報やなんかをもとにサーバ側でHTMLドキュメントを動的に生成し、クライアントに返す、ということをするようになった。
 原始的(1990年代中盤から後半)には、プログラム中で一連のHTMLドキュメントを出力する方法がとられた。
-public void doGet( HttpServletRequest request, HttpServletResponse response ) throws IOException, ServletException { response.setContentType(&amp;quot;text/html;&amp;quot;); PrintWriter out = response.getWriter(); out.println(&amp;quot;&amp;lt;html&amp;gt;&amp;quot;); out.println(&amp;quot; &amp;lt;head&amp;gt;&amp;quot;); out.println(&amp;quot; &amp;lt;title&amp;gt;Hoge&amp;lt;/title&amp;gt;&amp;quot;); out.println(&amp;quot; &amp;lt;/head&amp;gt;&amp;quot;); out.println(&amp;quot; &amp;lt;body&amp;gt;&amp;quot;); out.println(new java.util.Date()); out.println(&amp;quot; &amp;lt;/body&amp;gt;&amp;quot;); out.println(&amp;quot;&amp;lt;/html&amp;gt;&amp;quot;); }  使われた技術は、CGI (Perl)とか、Java Servletとか。 Jakarta ECSなんてのもあった。</description>
+public void doGet( HttpServletRequest request, HttpServletResponse response ) throws IOException, ServletException { response.setContentType(&amp;#34;text/html;&amp;#34;); PrintWriter out = response.getWriter(); out.println(&amp;#34;&amp;lt;html&amp;gt;&amp;#34;); out.println(&amp;#34; &amp;lt;head&amp;gt;&amp;#34;); out.println(&amp;#34; &amp;lt;title&amp;gt;Hoge&amp;lt;/title&amp;gt;&amp;#34;); out.println(&amp;#34; &amp;lt;/head&amp;gt;&amp;#34;); out.println(&amp;#34; &amp;lt;body&amp;gt;&amp;#34;); out.println(new java.util.Date()); out.println(&amp;#34; &amp;lt;/body&amp;gt;&amp;#34;); out.println(&amp;#34;&amp;lt;/html&amp;gt;&amp;#34;); } 使われた技術は、CGI (Perl)とか、Java Servletとか。 Jakarta ECSなんてのもあった。</description>
     </item>
     
     <item>
@@ -383,7 +383,7 @@ Ansibleインストール AnsibleはYUMとかpipとかでインストールで�
 今回はOracle Linux 7.4で動かすため、以下のようにインストールした。
  AnsibleのYUMリポジトリ追加
 以下の内容を/etc/yum.repos.d/の適当な.repoファイルに書く。
-[ansible] name=Ansible baseurl=http://releases.ansible.com/ansible/rpm/release/epel-7-x86_64/ gpgcheck=0 enabled=1  依存するPythonパッケージのYUMリポジトリを有効化</description>
+[ansible] name=Ansible baseurl=http://releases.ansible.com/ansible/rpm/release/epel-7-x86_64/ gpgcheck=0 enabled=1 依存するPythonパッケージのYUMリポジトリを有効化</description>
     </item>
     
     <item>
@@ -396,7 +396,7 @@ Ansibleインストール AnsibleはYUMとかpipとかでインストールで�
 kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPodSecurityPolicyを使うように変更した話。
 ついでにkube-proxyとkube-schedulerもConfigファイルを使うようにした。
    (adsbygoogle = window.adsbygoogle || []).push({});  Kubelet Configファイル journalctl -u kubeletすると、以下の警告が出ている。
-Apr 28 15:31:39 k8s-master kubelet[1370]: Flag --address has been deprecated, This parameter should be set via the config file specified by the Kubelet&#39;s - -config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information. Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --pod-manifest-path has been deprecated, This parameter should be set via the config file specified by the K ubelet&#39;s --config flag.</description>
+Apr 28 15:31:39 k8s-master kubelet[1370]: Flag --address has been deprecated, This parameter should be set via the config file specified by the Kubelet&amp;#39;s - -config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information. Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --pod-manifest-path has been deprecated, This parameter should be set via the config file specified by the K ubelet&amp;#39;s --config flag.</description>
     </item>
     
     <item>
@@ -445,12 +445,12 @@ Skaffoldを使うには、Skaffoldの実行バイナリ、Kubernetesクラスタ
 
 Kubernetesクラスタは、Windows 10 Home上にminikube 0.22.2で作ったKubernetes 1.7.0のクラスタ。 minikubeは以前インストールしたものを使う。
 minikubeを起動。
-&amp;gt; minikube start --kubernetes-version v1.7.0  kubectlもminikubeと一緒にインストール済み。
+&amp;gt; minikube start --kubernetes-version v1.7.0 kubectlもminikubeと一緒にインストール済み。
 
 Dockerについては、デーモンはminikube上のを使えばいいとして、クライアント(Docker Client)はskaffoldコマンドから実行するのでWindows上にないとだめはなず。
 WindowsでDockerと言えば今ならDocker for Windowsだけど、これはWindows 10 Proじゃないと使えなかったはずなので、Docker Toolboxでクライアントをいれた。
 このクライアントはデフォルトではローカルのデーモンを見てるので、minikubeのデーモンを見させる。 そのための設定はminikubeのコマンドで分かるようになっている。
-&amp;gt; minikube docker-env SET DOCKER_TLS_VERIFY=1 SET DOCKER_HOST=tcp://192.168.99.100:2376 SET DOCKER_CERT_PATH=C:\Users\kaitoy\.minikube\certs SET DOCKER_API_VERSION=1.23 REM Run this command to configure your shell: REM @FOR /f &amp;quot;tokens=*&amp;quot; %i IN (&#39;minikube docker-env&#39;) DO @%i  これに従って以下のコマンドを実行するとクライアントの設定完了。</description>
+&amp;gt; minikube docker-env SET DOCKER_TLS_VERIFY=1 SET DOCKER_HOST=tcp://192.168.99.100:2376 SET DOCKER_CERT_PATH=C:\Users\kaitoy\.minikube\certs SET DOCKER_API_VERSION=1.23 REM Run this command to configure your shell: REM @FOR /f &amp;#34;tokens=*&amp;#34; %i IN (&amp;#39;minikube docker-env&amp;#39;) DO @%i これに従って以下のコマンドを実行するとクライアントの設定完了。</description>
     </item>
     
     <item>
@@ -474,7 +474,7 @@ VGGを図にすると以下の構造。
 VGG-16は244×244×3の画像を入力して1000クラスに分類するのに対し、MNISTは28×28×1を入れて10クラスに分類するので、以下のような7層版を作った。
 これでパラメータ数は27万個くらい。 訓練データのサンプル数が6万個なので、パラメータ数が大分多い感じではある。
 コードは以下。
-inputs: Tensor = Input(shape=(IMAGE_NUM_ROWS, IMAGE_NUM_COLS, 1)) x: Tensor = Conv2D(filters=8, kernel_size=(2, 2), padding=&#39;same&#39;, activation=&#39;relu&#39;)(inputs) x = Conv2D(filters=8, kernel_size=(2, 2), padding=&#39;same&#39;, activation=&#39;relu&#39;)(x) x = MaxPooling2D(pool_size=(2, 2))(x) x = Conv2D(filters=16, kernel_size=(2, 2), padding=&#39;same&#39;, activation=&#39;relu&#39;)(x) x = Conv2D(filters=16, kernel_size=(2, 2), padding=&#39;same&#39;, activation=&#39;relu&#39;)(x) x = Conv2D(filters=16, kernel_size=(2, 2), padding=&#39;same&#39;, activation=&#39;relu&#39;)(x) x = MaxPooling2D(pool_size=(2, 2))(x) x = Flatten()(x) x = Dense(units=256, activation=&#39;relu&#39;)(x) x = Dense(units=256, activation=&#39;relu&#39;)(x) predictions: Tensor = Dense(NUM_CLASSES, activation=&#39;softmax&#39;)(x) model: Model = Model(inputs=inputs, outputs=predictions) model.</description>
+inputs: Tensor = Input(shape=(IMAGE_NUM_ROWS, IMAGE_NUM_COLS, 1)) x: Tensor = Conv2D(filters=8, kernel_size=(2, 2), padding=&amp;#39;same&amp;#39;, activation=&amp;#39;relu&amp;#39;)(inputs) x = Conv2D(filters=8, kernel_size=(2, 2), padding=&amp;#39;same&amp;#39;, activation=&amp;#39;relu&amp;#39;)(x) x = MaxPooling2D(pool_size=(2, 2))(x) x = Conv2D(filters=16, kernel_size=(2, 2), padding=&amp;#39;same&amp;#39;, activation=&amp;#39;relu&amp;#39;)(x) x = Conv2D(filters=16, kernel_size=(2, 2), padding=&amp;#39;same&amp;#39;, activation=&amp;#39;relu&amp;#39;)(x) x = Conv2D(filters=16, kernel_size=(2, 2), padding=&amp;#39;same&amp;#39;, activation=&amp;#39;relu&amp;#39;)(x) x = MaxPooling2D(pool_size=(2, 2))(x) x = Flatten()(x) x = Dense(units=256, activation=&amp;#39;relu&amp;#39;)(x) x = Dense(units=256, activation=&amp;#39;relu&amp;#39;)(x) predictions: Tensor = Dense(NUM_CLASSES, activation=&amp;#39;softmax&amp;#39;)(x) model: Model = Model(inputs=inputs, outputs=predictions) model.</description>
     </item>
     
     <item>
@@ -529,9 +529,9 @@ RNNのaの活性化関数にはtanhがよく使われる。 ReLUもあり。 y�
 画像認識でよく使われるNNのアーキテクチャ。
 低層ではエッジを検出し、層が進むにつれて複雑な特徴を学習する。
 画像を特定の行列(普通は奇数の正方行列。3×3が多い。)で畳み込むことで、特定の方向のエッジを検出できる。 この行列をフィルタ(filter)という。カーネルと呼ばれることもある。 例えば縦なら以下。
-[[1, 0, -1], [1, 0, -1], [1, 0, -1]]  縦でもいろいろフィルタはあって、以下はSobelフィルタというもの。
-[[1, 0, -1], [2, 0, -2], [1, 0, -1]]  以下はScharrフィルタ。
-[[ 3, 0, -3], [10, 0, -10], [ 3, 0, -3]]  縦のフィルタを90度回転すると横のフィルタになる。</description>
+[[1, 0, -1], [1, 0, -1], [1, 0, -1]] 縦でもいろいろフィルタはあって、以下はSobelフィルタというもの。
+[[1, 0, -1], [2, 0, -2], [1, 0, -1]] 以下はScharrフィルタ。
+[[ 3, 0, -3], [10, 0, -10], [ 3, 0, -3]] 縦のフィルタを90度回転すると横のフィルタになる。</description>
     </item>
     
     <item>
@@ -644,7 +644,7 @@ CourseraのMachine Learningコースとは Machine Learningコースは、Course
 ので、/etc/hostsからk8s-masterとk8s-nodeのエントリを削除してから、kubeadm initからやり直してみた。
 結果 したらちゃんと動いた。
 VMのホストでkubectl proxyして、
-C:\Users\kaitoy\Desktop&amp;gt;kubectl proxy Starting to serve on 127.0.0.1:8001  http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/にブラウザでつないだらサインイン画面が表示された。
+C:\Users\kaitoy\Desktop&amp;gt;kubectl proxy Starting to serve on 127.0.0.1:8001 http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/にブラウザでつないだらサインイン画面が表示された。
 
 Dashboardのサインイン処理はKubernetes(というかkube-apiserver)のそれに移譲している。 Dashboardはそこで認証されたユーザでクラスタのリソースにアクセスし、情報を取得して表示する。多分。
 Dashboardへのサインイン方法はいくつかあるが、それらを理解するにはKubernetesのアクセス制御について学ぶことを推奨とあったのでちょっとKubernetesのドキュメントを読んだ。
@@ -654,7 +654,8 @@ Kubernetesが認証するユーザには、Kubernetesが管理するService Acco
 ServiceAccountはNamespaceと関連付き(つまりnamespace毎にユニーク)、Secretに紐づく。 Secretオブジェクトはクレデンシャルのセットを定義し、Podにマウントされる。 ServiceAccountとSecretは、ふつうは自動で作られ、Podに割り当てられる。
 kube-apiserverには一つ以上のAuthenticatorモジュールを設定できて、どれかで認証できれば次の段階に進める。 認証失敗するとHTTPステータスコード401が返る。
 Authenticatorモジュールには以下のようなものがある。
- クライアント証明書: X.509のディジタル証明書を使うモジュール。kube-apiserver起動時に--client-ca-fileオプションで証明書ファイルを渡してやると有効になる。証明書のCommon Nameがユーザ名になり、Organizationがグループになる。クライアント側は、その証明書と対応する秘密鍵をクレデンシャルとして指定する。 Bearer Token: 無記名トークンを使うモジュール。kube-apiserver起動時に--token-auth-fileオプションでトークン情報を渡してやると有効になる。トークン情報はCSVで、「token,user,uid,&amp;quot;group1,group2,group3&amp;quot;」という形式で書く。クライアント側は、トークン文字列をクレデンシャルとして指定する。 ベーシック認証: ユーザ名とパスワードで認証するモジュール。kube-apiserver起動時に--basic-auth-fileオプションでユーザ名とパスワードのリストを渡してやると有効になる。このリストはCSVで、「password,user,uid,&amp;quot;group1,group2,group3&amp;quot;」という形式で書く。クライアント側は、ユーザ名とパスワードをクレデンシャルとして指定する。HTTPクライアントの時はAuthorizationヘッダが使える。 Service Account Token: Service Accountを署名付きBearer Tokenで認証するモジュール。デフォルトで有効になる。  このあたり、Qiitaの「kubernetesがサポートする認証方法の全パターンを動かす」という記事をみると理解が深まる。</description>
+ クライアント証明書: X.509のディジタル証明書を使うモジュール。kube-apiserver起動時に--client-ca-fileオプションで証明書ファイルを渡してやると有効になる。証明書のCommon Nameがユーザ名になり、Organizationがグループになる。クライアント側は、その証明書と対応する秘密鍵をクレデンシャルとして指定する。 Bearer Token: 無記名トークンを使うモジュール。kube-apiserver起動時に--token-auth-fileオプションでトークン情報を渡してやると有効になる。トークン情報はCSVで、「token,user,uid,&amp;quot;group1,group2,group3&amp;quot;」という形式で書く。クライアント側は、トークン文字列をクレデンシャルとして指定する。 ベーシック認証: ユーザ名とパスワードで認証するモジュール。kube-apiserver起動時に--basic-auth-fileオプションでユーザ名とパスワードのリストを渡してやると有効になる。このリストはCSVで、「password,user,uid,&amp;quot;group1,group2,group3&amp;quot;」という形式で書く。クライアント側は、ユーザ名とパスワードをクレデンシャルとして指定する。HTTPクライアントの時はAuthorizationヘッダが使える。 Service Account Token: Service Accountを署名付きBearer Tokenで認証するモジュール。デフォルトで有効になる。  このあたり、Qiitaの「kubernetesがサポートする認証方法の全パターンを動かす」という記事をみると理解が深まる。
+Authorization Authenticationをパスすると、クライアントのユーザ(とグループ)が認証され、第二段階のAuthorizationモジュールの処理に移る。 ここでは、リクエストの内容(操作対象、操作種別(メソッド)等)を見て、それがユーザに許されたものなら認可する。 何を許すかは事前にクラスタにポリシーを定義しておく。</description>
     </item>
     
     <item>
@@ -673,9 +674,9 @@ VM作成 kubeadmのサポートOSは、Ubuntu 16.04+、Debian 9、CentOS 7、RHE
 自前のノートPCのWindows 10 x64 Home Edition上のVMware Player 12のVMにCentOS 7を入れた。 メモリは1GB以上が要件なので、味を付けて1.4GBで。 VM間で通信できることって要件があったけど、インターネット接続も必要なはずなので、NICはNATのやつで。
 このVMはMasterになる。
 OS設定 Kubernetesが使うポートをいろいろ開けなければいけないんだけど、めんどいのでfirewalldを無効にする。
-# systemctl stop firewalld # systemctl disable firewalld Removed symlink /etc/systemd/system/multi-user.target.wants/firewalld.service. Removed symlink /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service.  
+# systemctl stop firewalld # systemctl disable firewalld Removed symlink /etc/systemd/system/multi-user.target.wants/firewalld.service. Removed symlink /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service. 
 なんとなくIPアドレスをDHCPから静的割り当てに。(192.168.171.200)
-# nmcli c modify ens33 ipv4.</description>
+# nmcli c modify ens33 ipv4.method manual # nmcli c modify ens33 ipv4.</description>
     </item>
     
     <item>
@@ -694,7 +695,7 @@ Kubernetes Basics - モジュール 1: Kubernetesクラスタを作る Minikube�
 Kubernetes Basics - モジュール 2: アプリをデプロイする アプリ(i.e. コンテナ)をデプロイするにはDeploymentオブジェクトを作る。 MasterはDeploymentのspecに従って各ノードにアプリのインスタンスをスケジューリングする。 Deploymentは、アプリが落ちたら再起動してくれる、つまりself-healingも実現する。
 Deploymentオブジェクトを作るコマンドはkubectl run &amp;lt;オブジェクト名&amp;gt; --image=&amp;lt;Dockerイメージ名&amp;gt;。 Goslingsをこれでデプロイする。
 Goslingsコンテナは3つの引数を受け取り、指定したポートでWebサーバを起動する。 --portオプションでそのポートをexposeするようにして、--の後にコンテナに渡す引数を記述する。
-C:\Users\kaitoy&amp;gt;kubectl run goslings --image=kaitoy/goslings:latest --port 8080 -- 8080 /tmp https://github.com/kaitoy/ deployment &amp;quot;goslings&amp;quot; created C:\Users\kaitoy&amp;gt;kubectl get deployment NAME DESIRED CURRENT UP-TO-DATE AVAILABLE AGE goslings 1 1 1 1 27s  デプロイできた。 裏でPodも作られていて、アプリが起動されている。</description>
+C:\Users\kaitoy&amp;gt;kubectl run goslings --image=kaitoy/goslings:latest --port 8080 -- 8080 /tmp https://github.com/kaitoy/ deployment &amp;#34;goslings&amp;#34; created C:\Users\kaitoy&amp;gt;kubectl get deployment NAME DESIRED CURRENT UP-TO-DATE AVAILABLE AGE goslings 1 1 1 1 27s デプロイできた。 裏でPodも作られていて、アプリが起動されている。</description>
     </item>
     
     <item>
@@ -774,11 +775,11 @@ Facebook、それが君らの考えるオープンソースなのか?</descripti
    (adsbygoogle = window.adsbygoogle || []).push({});  とりあえずAlpine Linux テスト環境の作成は自宅でやってるけど、DockerイメージにしてDocker Hubとかに上げておけば、社内でダウンロードしてそのまま再現できる。 ダウンロードに係る社内手続きも、Dockerイメージだけに対してやればいいので、中に何を詰め込んでも、後でライブラリとか追加しても、一回こっきりで済む。
 というわけでWebdriverIO環境をDockerコンテナとしてつくることにする。 とりあえず、自PC(Windows 10 Home x64)に入ってるVMware Workstation Player 12.5.5でCentOS 7 x64のVMを作り、そこにDockerをインストールした。
 次に、そのDockerを使って、WebdriverIO環境のベースにするAlpine Linuxをpullする。
-$ docker pull alpine:edge  
+$ docker pull alpine:edge 
 Alpine LinuxはBusyBoxとmusl libcで構成された軽量な Linuxディストリビューション。 2016年2月にすべてのオフィシャルDockerイメージがAlpine Linuxベースになるというアナウンスがあったし、他にそれっぽいものもなかったので、これをベースに環境を作ることにした。 glibcじゃないのがちょっと気になるけど、まあ問題ないか。
 現在、Chrome 59のAlpine Linuxパッケージはedgeブランチ(i.e. 開発ブランチ)でしか作られていない。 pullするタグをedgeにしたのはそのため。 (因みに現時点でAlpine Linuxのlatestは3.6。)
 で、起動。
-$ docker run -it alpine:edge sh  Chrome(Chromium)インストール まずはChrome(がAlpine Linuxパッケージにはないので、実際にはChromium)と、ついでにChromeDriverをインストールする。 Alpine Linux独自のパッケージマネージャーであるapkを使う。
+$ docker run -it alpine:edge sh Chrome(Chromium)インストール まずはChrome(がAlpine Linuxパッケージにはないので、実際にはChromium)と、ついでにChromeDriverをインストールする。 Alpine Linux独自のパッケージマネージャーであるapkを使う。
 コンテナ内:
 # apk add --update chromium chromium-chromedriver # chromium-browser -version Chromium 59.</description>
     </item>
@@ -861,7 +862,7 @@ APIの裏ではドライバなるものが暗躍していて、OSやブラウザ
    (adsbygoogle = window.adsbygoogle || []).push({});  git rebaseがもつたった一つの機能 git rebaseにはいろんなオプションがあって、ちょっと調べただけだと、コミットを移動する機能とコミットを修正する機能の二つがあるように見えるかもしれないが、実際は単一の機能しかないシンプルなコマンドだ。
 その機能とは、指定した範囲のコミットが含む変更を、別に指定したコミットのコードベースに適用するというもの。
 コマンドの基本形は次のようなものだ。
-$ git rebase --onto master dev bugfix  このコマンドは、bugfixから辿れるコミット群から、devから辿れるコミット群を除いたコミット群が含む変更を、masterのコードベースに適用する。
+$ git rebase --onto master dev bugfix このコマンドは、bugfixから辿れるコミット群から、devから辿れるコミット群を除いたコミット群が含む変更を、masterのコードベースに適用する。
 と書いても分からないので図解する。
 
        
@@ -869,7 +870,7 @@ $ git rebase --onto master dev bugfix  このコマンドは、bugfixから辿�
 git rebase --onto master dev bugfixが実行する処理をもっと正確に言うと、
  bugfixをcheckoutして(i.e. HEADをbugfixにして)、 dev..HEADのコミット群が含む変更を、それぞれ仮領域にパッチとして保存して、 git reset --hard masterして、 仮領域に保存した変更を、HEADが指すコミットのコードベースにひとつひとつ順番に適用する。  
 上記コマンドでbugfixのところを省略すると、ステップ1のcheckoutが省略される。 言い換えると、上記コマンドは次の二つのコマンドに分解できる。
-$ git checkout bugfix $ git rebase --onto master dev  さらに、--onto masterを省略すると、ステップ3のreset先が変わり、devになる。 このときのコマンドの形は、</description>
+$ git checkout bugfix $ git rebase --onto master dev さらに、--onto masterを省略すると、ステップ3のreset先が変わり、devになる。 このときのコマンドの形は、</description>
     </item>
     
     <item>
@@ -1002,11 +1003,12 @@ Spring Bootアプリにおけるロギング設定 Spring Bootが備えている
 以下この設定の変更方法などを書く。
 ファイルへのログ出力 ログをファイルにも吐くようにするには、logging.fileというプロパティでファイルパスを指定するか、logging.pathというプロパティでディレクトリパスを指定すればいい。 (後者の場合ログファイル名はspring.logになる。)
 Spring Bootアプリでプロパティを指定する方法は色々あり(こことかここ参照)、大抵はapplication.propertiesで指定するんだろうけど、手軽にコマンドラインで以下の様に指定することもできる。
-java -jar build/libs/goslings-0.0.1.jar --logging.file=build/hoge.log  
+java -jar build/libs/goslings-0.0.1.jar --logging.file=build/hoge.log 
 ログファイルはデフォルトで10MBでローテーションする。
 ログレベル ログレベルには重大度の低い方からTRACE、DEBUG、INFO、WARN、ERROR、FATALの6段階があり、指定したログレベル以上のログが出力される。(OFFというログ出力を止めるものもある。) つまりSpring BootのデフォルトのログレベルはINFOだということだ。(LogbackにはFATALがなくERRORとして出力される。)
 ログレベルはlogging.level.&amp;lt;ロガー名&amp;gt;という形式のプロパティで指定できる。 例えばコマンドラインから指定するなら以下の感じ。
-java -jar build/libs/goslings-0.0.1.jar --logging.level.org.springframework.web=DEBUG</description>
+java -jar build/libs/goslings-0.0.1.jar --logging.level.org.springframework.web=DEBUG 
+全ロガーのログレベルはlogging.level.rootで指定できる。</description>
     </item>
     
     <item>
@@ -1028,9 +1030,9 @@ Spring MVCアプリにおける例外処理には以下の3つの段階がある
  投げる例外をカスタマイズする 例外クラス毎の例外ハンドラをコントローラに実装する コントローラ間で共用する例外ハンドラクラスを作る  以下それぞれについて書く。
 1. 投げる例外をカスタマイズする リクエストハンドラから投げる例外に@ResponseStatusをつけることで、クライアントに返すHTTPステータスコード(とリーズンフレーズ)をカスタマイズできる。
 例えば以下のような例外を投げると、HTTPステータスコード500 (Internal Server Error)の代わりに400 (Bad Request)がクライアントに返る。
-@ResponseStatus(HttpStatus.BAD_REQUEST) public final class BadRequestException extends RuntimeException { // 省略 }  2. 例外クラス毎の例外ハンドラをコントローラに実装する コントローラのメソッドに@ExceptionHandlerをつけてやると、そのメソッドは例外ハンドラになり、そのコントローラのリクエストハンドラから特定の例外が投げられたときの処理を書くことができる。 さらに例外ハンドラに@ResponseStatusをつければ、HTTPステータスコードをカスタマイズできる。 例外ハンドラの戻り値はリクエストハンドラのと同様に処理されるので、遷移するページ等も自由にカスタマイズできる。
+@ResponseStatus(HttpStatus.BAD_REQUEST) public final class BadRequestException extends RuntimeException { // 省略 } 2. 例外クラス毎の例外ハンドラをコントローラに実装する コントローラのメソッドに@ExceptionHandlerをつけてやると、そのメソッドは例外ハンドラになり、そのコントローラのリクエストハンドラから特定の例外が投げられたときの処理を書くことができる。 さらに例外ハンドラに@ResponseStatusをつければ、HTTPステータスコードをカスタマイズできる。 例外ハンドラの戻り値はリクエストハンドラのと同様に処理されるので、遷移するページ等も自由にカスタマイズできる。
 Goslingsでは、上記BadRequestExceptionからは@ResponseStatusを削除したうえで、RestApiV1Controllerに以下の様に例外ハンドラを書いた。
-public final class RestApiV1Controller { // 例外ハンドラ @ResponseStatus(HttpStatus.</description>
+public final class RestApiV1Controller { // 例外ハンドラ  @ResponseStatus(HttpStatus.</description>
     </item>
     
     <item>
@@ -1048,10 +1050,10 @@ Spring FrameworkはもともとこのDI機能を提供するフレームワー�
 GoslingsでDI Goslingsサーバの内部機能はざっくり、クライアントからのREST API呼び出しを処理するユーザインタフェース層と、Gitリポジトリにアクセスするデータベース層に分かれる。
 Gitリポジトリにアクセスする部分は今回はJGitで実装するが、将来的に別のライブラリで実装しなおす可能性が微レ存なのと、Goslingsの開発自体がWebアプリ開発の練習でもあるので、ちゃんとしたアーキテクチャでと思い、DAOパターンを使ってやった。
 つまり例えば、GitのコミットオブジェクトはJGitのAPIではRevCommitクラスで表されるが、ユーザインタフェース層からはリソースクラスであるCommitクラス(前回参照)を扱う以下の様なDAOインターフェースを呼ぶようにし、JGit依存の実装とは切り離す。
-public interface ObjectDao { public Commit[] getCommits(String token) throws DaoException; }  (ObjectDao.javaの完全なソースはこれ)
+public interface ObjectDao { public Commit[] getCommits(String token) throws DaoException; } (ObjectDao.javaの完全なソースはこれ)
 
 ObjectDaoを実装するObjectDaoImplクラスでは、以下の様にJGitを使ってごりごりと実装を書く。
-public final class ObjectDaoImpl implements ObjectDao { // フィールド定義は省略 @Override public Commit[] getCommits(String token) { try { return StreamSupport.stream(resolver.getGit(token).log().all().call().spliterator(), false) .map(this::convertToCommit) .toArray(Commit[]::new); } catch (NoHeadException e) { // エラー処理 } } private Commit convertToCommit(RevCommit commit) { // RevCommitをCommitに変換する処理 } }</description>
+public final class ObjectDaoImpl implements ObjectDao { // フィールド定義は省略  @Override public Commit[] getCommits(String token) { try { return StreamSupport.stream(resolver.getGit(token).log().all().call().spliterator(), false) .map(this::convertToCommit) .toArray(Commit[]::new); } catch (NoHeadException e) { // エラー処理  } } private Commit convertToCommit(RevCommit commit) { // RevCommitをCommitに変換する処理  } }</description>
     </item>
     
     <item>
@@ -1222,7 +1224,7 @@ VMは、Windows 7に入れたVMware Workstation 11.1.0 build-2496824に付属の
 Windows 10を起動し、以下、Windows Containers on Windows 10に従って進める。
  containers機能有効化
 PowerShellプロンプトを管理者権限でひらき、以下のコマンドでcontainers機能を有効化。
-PS C:\Windows\system32&amp;gt;Enable-WindowsOptionalFeature -Online -FeatureName containers -All  1分程度経つと再起動を促されるので再起動。</description>
+Enable-WindowsOptionalFeature -Online -FeatureName containers -All 1分程度経つと再起動を促されるので再起動。</description>
     </item>
     
     <item>
@@ -1242,9 +1244,9 @@ Windows 10のHyper-V Containersは、現時点でNano Serverしかサポート�
 
 以下、いろいろ試したことを書く。
 正攻法: Expand-Archive PowerShellの v5 で実装されたExpand-Archiveというコマンドレットでzipを解凍できる。 Nano ServerのPowerShellのバージョンを確認したら 5.1 だったのでこれでいけるかと思った。
-C:\&amp;gt;powershell -command &amp;quot;$PSVersionTable.PSVersion&amp;quot; Major Minor Build Revision ----- ----- ----- -------- 5 1 14284 1000  
+C:\&amp;gt;powershell -command &amp;#34;$PSVersionTable.PSVersion&amp;#34; Major Minor Build Revision ----- ----- ----- -------- 5 1 14284 1000 
 したらこのエラー。
-Add-Type : Cannot find path &#39;C:\System.</description>
+Add-Type : Cannot find path &amp;#39;C:\System.</description>
     </item>
     
     <item>
@@ -1327,17 +1329,18 @@ Docker for Windowsもだいたい同じで、Docker EngineとDocker ComposeとDo
 以降はWindows Server Containersのクイックスタートガイドに沿ってセットアップを進める。 TP4からは大分変わっていて、単一のPowershellスクリプトを実行する形式から、Powershellのコマンドレットを逐次手動実行する形式になっている。 面倒だけど何やってるかわかりやすくて好き。
 コンテナ機能のインストール  管理者権限のパワーシェルウィンドウを開く
 コマンドプロンプトから以下のコマンドを実行。
-powershell start-process powershell -Verb runas  コンテナ機能のインストール
+powershell start-process powershell -Verb runas コンテナ機能のインストール
 開いた青いパワーシェルウィンドウで以下のコマンドを実行するとコンテナ機能がインストールされる。
-Install-WindowsFeature containers  数分で終わる。
+Install-WindowsFeature containers 数分で終わる。
 インストールされたのはHyper-V ContainersじゃなくてWindows Server Containersの方。 クイックスタートガイドをみると、前者がWindows 10向け、後者がWindows Server向けというように住み分けされているっぽい。TP4では両方ともWindows Serverで使えたんだけど。
  再起動
 変更を有効にするために再起動が必要。
-Restart-Computer -Force   Dockerインストール Dockerは、コンテナイメージの管理やコンテナの起動などもろもろの機能を提供するDockerデーモンと、その機能を利用するためのCLIを提供するDockerクライアントからなる。この節ではそれら両方をインストールする。
+Restart-Computer -Force  Dockerインストール Dockerは、コンテナイメージの管理やコンテナの起動などもろもろの機能を提供するDockerデーモンと、その機能を利用するためのCLIを提供するDockerクライアントからなる。この節ではそれら両方をインストールする。
  Dockerインストールフォルダ作成
 管理者権限のパワーシェルウィンドウを開いて、以下のコマンドでDockerインストールフォルダを作成。
-New-Item -Type Directory -Path &#39;C:\Program Files\docker\&#39;  Dockerデーモンインストール
-まずはデーモンの方をインストール。</description>
+New-Item -Type Directory -Path &amp;#39;C:\Program Files\docker\&amp;#39; Dockerデーモンインストール
+まずはデーモンの方をインストール。
+Invoke-WebRequest https://aka.ms/tp5/b/dockerd -OutFile $env:ProgramFiles\docker\dockerd.exe -UseBasicParsing 数分。</description>
     </item>
     
     <item>
@@ -1434,9 +1437,10 @@ Java 6以降が前提なので、JAVA_HOMEにJDK 1.7.0_17のパスをセット�
  メインクラスを書かなくていいところが大きい。 変数の型を書かなくていいのも楽。 ラムダ式でクロージャも作れるし補間文字列(String interpolation)も使える。
 また、ここでは使っていないが、オープンクラスなどのメタプログラミングもサポートされている。
 上記コードは、Pcap4J 1.6.2、Slf4J 1.7.12、JNA 4.2.1を使って、以下のコマンドで実行できることを確認した。
-groovy -cp &amp;quot;pcap4j-core.jar;jna.jar;slf4j-api.jar;pcap4j-packetfactory-static.jar&amp;quot; Pcap4jLoop.groovy tcp  これはスクリプト的な実行方法だが、groovycコマンドで事前にコンパイルしてclassファイルを生成し、javaコマンドで実行することもできる。
+groovy -cp &amp;#34;pcap4j-core.jar;jna.jar;slf4j-api.jar;pcap4j-packetfactory-static.jar&amp;#34; Pcap4jLoop.groovy tcp これはスクリプト的な実行方法だが、groovycコマンドで事前にコンパイルしてclassファイルを生成し、javaコマンドで実行することもできる。
 困ったところ  本家サイトのドキュメントが分かり辛い。
-頭から読んでいくと急にディープな部分に引き込まれ、なかなかコードを書き始められなかった。</description>
+頭から読んでいくと急にディープな部分に引き込まれ、なかなかコードを書き始められなかった。
+最近の言語やフレームワークのサイトはチュートリアルに従って動くコードを見ながら概要から詳細に理解を深められる形になっていることが多いので、仕様の詳細が羅列されている感じのGroovyサイトはなんとも読みにくかった。</description>
     </item>
     
     <item>
@@ -1455,11 +1459,11 @@ Javaの講義、試験が「自作関数を作り記述しなさい」って問�
    (adsbygoogle = window.adsbygoogle || []).push({});  ZUNDOKOプロトコル クライアントはサーバに「ズン」か「ドコ」を送る。
 サーバは「ズン」を4回受信した後に「ドコ」を受信するとクライアントに「キ・ヨ・シ！」を返す。
 クライアント/サーバ間でやり取りするメッセージ(Zundokoパケット)のフォーマットは下図。
- 0 15 31 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | zundoko (null-terminated string) | | | | | | | | | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  要はzundokoフィールドがあるだけ。 このzundokoフィールドは20 byte固定長で、NULL (0x00)で終わるUTF-8の文字列を保持する。
+0 15 31 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | zundoko (null-terminated string) | | | | | | | | | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 要はzundokoフィールドがあるだけ。 このzundokoフィールドは20 byte固定長で、NULL (0x00)で終わるUTF-8の文字列を保持する。
 このメッセージを運ぶ下位レイヤはEthernetで、EtherTypeは0x01FF。
 Ethernetにした理由は実装(下記)が楽だから。 EtherTypeはIANAでExperimentalとされている範囲から適当に選んだ。もちろんIANAに登録などはしていない。
 因みに、Ethernetヘッダを加えた、クライアント/サーバ間でやり取りする完全なパケットは以下の様になる。(プリアンブルとかは除く。)
- 0 15 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | Dst Hardware Address | + + | | + + | | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | Src Hardware Address | + + | | + + | | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | EtherType (0x01FF) | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | zundoko | | (null-terminated string) | | | | | | | | | | | | | | | | | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | padding | | |  実装 Pcap4Jを使ってクライアントとサーバを実装した。 書いたのは以下の3つのクラス。(といくつかのインナークラス。)</description>
+0 15 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | Dst Hardware Address | + + | | + + | | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | Src Hardware Address | + + | | + + | | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | EtherType (0x01FF) | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | zundoko | | (null-terminated string) | | | | | | | | | | | | | | | | | +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | padding | | | 実装 Pcap4Jを使ってクライアントとサーバを実装した。 書いたのは以下の3つのクラス。(といくつかのインナークラス。)</description>
     </item>
     
     <item>
@@ -1570,13 +1574,14 @@ Windows Containersセットアップ まず、Windows 7 x64のノートPCにVMwa
    (adsbygoogle = window.adsbygoogle || []).push({});  ユーティリティクラス(またはヘルパークラス)は、スタティックメソッドだけを持っていて、状態を内包しない「構造体」だ。 Apache CommonsのStringUtils、IOUtils、FileUtilsや、GuavaのIterables、Iterators、またJDK7のFilesはユーティリティクラスのいい例だ。
 ユーティリティクラスはよく使われる共通機能を提供するので、この設計手法はJava(やC#、Rubyなど)の世界でとても人気だ。
 要するに我々は、DRY原則に従い、重複を避けたい。 だから、共通コードをユーティリティクラスに入れて必要に応じて再利用する。
-// これはひどい設計なので再利用しないように。 public class NumberUtils { public static int max(int a, int b) { return a &amp;gt; b ? a : b; } }  実際、これはとても便利なテクニックだ!?
+// これはひどい設計なので再利用しないように。 public class NumberUtils { public static int max(int a, int b) { return a &amp;gt; b ? a : b; } } 実際、これはとても便利なテクニックだ!?
 ユーティリティクラスは悪だ しかし、オブジェクト指向の世界では、ユーティリティクラスはかなり悪い(酷いという人さえいるかもしれない)手法だ。
 これについては多くの議論がある。 いくつか挙げると、Nick Malikの「ヘルパークラスは悪か?」、Simon Hartの「なぜヘルパー、シングルトン、ユーティリティクラスはだいたい間違っているのか」、Marshal Wardの「ユーティリティクラスを避ける」、Dhaval Dalalの「ユーティルクラスを殺せ!」、Rob Bagbyの「ヘルパークラスは問題の兆候」。
 また、StackExchangeにはユーティリティクラスについての質問がいくつかある。 例えば、「ユーティリティクラスが悪なら、どこに共通コードを書けばいい?」とか、「ユーティリティクラスは悪」とか。
 これらの主張は要するに、ユーティリティクラスは適切なオブジェクトではないということだ。 だから、オブジェクト指向の世界に適合しない。 ユーティリティクラスは、当時の人々が機能分割パラダイムに慣れていたために、手続き型言語から受け継がれた。
 君がこの主張に同意し、ユーティリティクラスを使うのをやめたがっていると想定し、そいつをどのように適切なオブジェクトに置き換えるかを例を挙げながら教えよう。
-手続き型の例 例えば、テキストファイルを読んで、行で分割し、各行をトリムして、その結果を別のファイルに保存したいとする。 これはApache CommonsのFileUtilsを使えばできる。</description>
+手続き型の例 例えば、テキストファイルを読んで、行で分割し、各行をトリムして、その結果を別のファイルに保存したいとする。 これはApache CommonsのFileUtilsを使えばできる。
+void transform(File in, File out) { Collection&amp;lt;String&amp;gt; src = FileUtils.</description>
     </item>
     
     <item>
@@ -1616,8 +1621,9 @@ git pushでデータを送る先をアップストリームと呼ぶことはあ
 リモート追跡ブランチ リモート追跡ブランチは、ローカルリポジトリの.git/refs/remotes/に格納される参照で、リモートリポジトリ内のローカルブランチのコミットグラフを取得してローカルリポジトリ内に保持するために使われる。 git branch -rでその一覧が見れる。
 「追跡」ブランチというだけあって、リモートリポジトリ内でコミットグラフが成長した場合、この変更に追随することができる。 このためのコマンドがgit fetch。 因みにgit pullは、git fetchでリモート追跡ブランチを更新した後、git merge(オプションによってはgit rebase)でそのリモート追跡ブランチをローカルブランチにマージするのと同じ。
 リモート リモートとは、リモートリポジトリのこと、またはリモートリポジトリに接続するための定義のこと。 この定義は、ローカルリポジトリの.git/configにremoteセクションとして書かれている。 以下がその例。
-[remote &amp;quot;origin&amp;quot;] fetch = +refs/heads/*:refs/remotes/origin/* url = git@github.com:kaitoy/blog.git  セクション名のところに&amp;quot;origin&amp;quot;とあるがこれは、この定義で接続するリモートリポジトリをGitコマンドなどでoriginと指定できるということ。 ここで定義されているのはurlとfetchで、それぞれ以下を意味する。
- url</description>
+[remote &amp;#34;origin&amp;#34;] fetch = +refs/heads/*:refs/remotes/origin/* url = git@github.com:kaitoy/blog.git セクション名のところに&amp;quot;origin&amp;quot;とあるがこれは、この定義で接続するリモートリポジトリをGitコマンドなどでoriginと指定できるということ。 ここで定義されているのはurlとfetchで、それぞれ以下を意味する。
+ url
+リモートリポジトリのURL。 つまり、リモートリポジトリがどのサーバのどのディレクトリにあって、それとのデータのやり取りをどのプロトコルでやるかという定義。 このURLには以下の書式が使える。</description>
     </item>
     
     <item>
@@ -1694,7 +1700,7 @@ Reactを触った感想 Reactは本当にちょっとしか触っていないの
 Reactは仮想DOMを作るところしか助けてくれないので、他のことは全部自分でやらないといけない。 FacebookはReact用のウィジェットすら提供していない。 昔仕事で全部入りのDojoを使っていたので、それとのギャップをすごい感じた。
 そのうえ、他のフレームワークやライブラリと組み合わせて使おうとすると仮想DOMが壁になってくる。普通のフレームワークはリアルDOMを扱うからだ。 例えば、JavaScriptを書いているとすぐjQueryを使いたくなるが、これでリアルDOMを直接いじってしまってはReactを使う意味がない気がする。
 AtomパッケージでReactを使う Reactはnpmでも提供されていて、Atomパッケージの開発に簡単に使える。 パッケージのpackage.jsonのdependenciesにreactとreact-domを入れておけば、パッケージコード中で以下の様に仮想DOMを作れるようになる。
-var React = require(&#39;react&#39;); var ReactDOM = require(&#39;react-dom&#39;); class MyComponent extends React.Component { render() { return &amp;lt;div&amp;gt;Hello World&amp;lt;/div&amp;gt;; } } ReactDOM.render(&amp;lt;MyComponent /&amp;gt;, node);  BabelによるJSXの手動コンパイル JSXのコンパイルにはBabelを使うのがいい。 手動コンパイルにはBabelのコマンドラインツールが必要で、これはnpmで提供されている。 npmコマンドはAtomに同梱されているので別途インストールは不要。</description>
+var React = require(&amp;#39;react&amp;#39;); var ReactDOM = require(&amp;#39;react-dom&amp;#39;); class MyComponent extends React.Component { render() { return &amp;lt;div&amp;gt;Hello World&amp;lt;/div&amp;gt;; } } ReactDOM.render(&amp;lt;MyComponent /&amp;gt;, node); BabelによるJSXの手動コンパイル JSXのコンパイルにはBabelを使うのがいい。 手動コンパイルにはBabelのコマンドラインツールが必要で、これはnpmで提供されている。 npmコマンドはAtomに同梱されているので別途インストールは不要。</description>
     </item>
     
     <item>
@@ -1790,7 +1796,7 @@ japanese-wrapにはずっとお世話になってきたので申し訳なく名�
 では、なにが適切なオブジェクトなのか? どれが不適切なオブジェクトなのか? その違いは何か? これは論争を呼ぶ主題ではあるが、とても重要だ。 オブジェクトが何かを理解しなければ、オブジェクト指向ソフトウェアをどうやって書くんだ? まあ、JavaやRubyなどのおかげで、書けることは書ける。 しかし、はたして良いものができるだろうか? 不幸にも、これは厳密な科学ではなく、様々な意見がある。 ここに、良いオブジェクトの特性を私なりにリストアップする。
 クラス vs オブジェクト オブジェクトについて議論を始める前に、クラスとは何かを定義しよう。 それはオブジェクトが生まれる(インスタント化される)場所だ。 クラスの主な責任は、要求に応じて新しいオブジェクトを構築し、使われなくなったオブジェクトを破壊することだ。 クラスはその子供たちがどのように見えどのように振る舞うべきかを知っている。 言い換えれば、子供たちが従うべき契約を知っている。
 クラスが「オブジェクトのテンプレート」であると言われることもある。(例えばWikipediaにはそう書いてある。) この定義はクラスを受動的なポジションに置いているので正しくない。 この定義は、だれかがテンプレートを取得してそこからオブジェクトを構築するということを想定している。 これは、技術的には正しいかもしれないが、概念的には間違っている。 クラスとその子供たちだけが居るのであって、他の誰も関係すべきではない。 あるオブジェクトがクラスに他のオブジェクトを作るように頼み、そのクラスがオブジェクトを構築する。それだけだ。 RubyはJavaやC++に比べてこの概念をかなりうまく表現している。
-photo = File.new(&#39;/tmp/photo.png&#39;)  photoオブジェクトはFileクラスによって構築される。(newはそのクラスへのエントリポイント。) オブジェクトは、いったん構築されると、自身に基づいて行動する。 オブジェクトは、自身を誰が構築したかとか、何人兄弟姉妹がいるかとかを知っているべきではない。 そう、リフレクションは酷いアイデアだと言っている。 それについては他の記事で詳しく書くとして、ここでは、オブジェクトについてと、その最高と最悪の両面について話そう。
+photo = File.new(&amp;#39;/tmp/photo.png&amp;#39;) photoオブジェクトはFileクラスによって構築される。(newはそのクラスへのエントリポイント。) オブジェクトは、いったん構築されると、自身に基づいて行動する。 オブジェクトは、自身を誰が構築したかとか、何人兄弟姉妹がいるかとかを知っているべきではない。 そう、リフレクションは酷いアイデアだと言っている。 それについては他の記事で詳しく書くとして、ここでは、オブジェクトについてと、その最高と最悪の両面について話そう。
 1. 彼は実世界に存在している まず第一に、オブジェクトは生きた有機体だ。 もっと言えば、オブジェクトは擬人化されるべきだ。 つまり、人間(もしくは、君がより好むならペット)のように扱われるべきだ。 基本的にこれは、オブジェクトはデータ構造体や関数の集合ではないということを意味している。 代わりに、オブジェクトは独立したエンティティで、それ自身のライフサイクル、振る舞い、性質を持つ。
 従業員、部署、HTTPリクエスト、MySQLのテーブル、ファイルの行、ファイルそのもの、これらは適切なオブジェクトだ。 なぜならこれらは、ソフトウェアを停止した時でも実世界に存在しているから。 より正確には、オブジェクトは実世界のモノの表現のひとつだ。 オブジェクトは実世界のモノと他のオブジェクトとの間のプロキシだ。 そのようなモノが存在しなければ、明らかにオブジェクトは存在しない。</description>
     </item>
@@ -1819,7 +1825,7 @@ In the case of DHCP, its flags field includes two fields in itself as like below
    (adsbygoogle = window.adsbygoogle || []).push({});  結論から言えば、ORMはオブジェクト指向プログラミングの原則の全てに違反するひどいアンチパターンだ。オブジェクトをバラバラに引き裂き、もの言わぬ受身なデータ入れに変えてしまう。 小さいWebアプリケーションから、数千のテーブルをCRUD操作するエンタープライズシステムまで、どんなアプリケーションにもORMが存在することはゆるせない。 代わりになるものは? SQLを話すオブジェクトだ。
 ORMの仕組み オブジェクト関係マッピング (Object-relatinal mapping、ORM)は、オブジェクト指向言語(例えばJava)からリレーショナルデータベースにアクセスする技術(またはデザインパターン)だ。 ほとんどの言語で複数のORM実装がある。 例えば、JavaのHibernate、Ruby on RalsのActiveRecord、PHPのDoctrine、PythonのSQLAlchemy。 Javaでは、ORMデザインはJPAとして標準化されてさえいる。
 最初に、ORMがどう動くかを見てみよう。JavaとPostgreSQLとHibernateを使い、データベースにpost (訳注: ブログポスト、ブログの記事)という単一のテーブルがあるとする。
-+-----+------------+--------------------------+ | id | date | title | +-----+------------+--------------------------+ | 9 | 10/24/2014 | How to cook a sandwich | | 13 | 11/03/2014 | My favorite movies | | 27 | 11/17/2014 | How much I love my job | +-----+------------+--------------------------+  で、このテーブルをJavaアプリケーションからCRUD操作したい。(CRUDはcreate、read、update、deleteの略。) まず、Postクラスを書く。(長くてごめん。けどなるべく短くしたんだ。)</description>
++-----+------------+--------------------------+ | id | date | title | +-----+------------+--------------------------+ | 9 | 10/24/2014 | How to cook a sandwich | | 13 | 11/03/2014 | My favorite movies | | 27 | 11/17/2014 | How much I love my job | +-----+------------+--------------------------+ で、このテーブルをJavaアプリケーションからCRUD操作したい。(CRUDはcreate、read、update、deleteの略。) まず、Postクラスを書く。(長くてごめん。けどなるべく短くしたんだ。)</description>
     </item>
     
     <item>
@@ -1861,7 +1867,7 @@ disturb-meの作り方 以前別のエントリでAtomパッケージの作り�
 addメソッドの引数は、第一引数から順に、
  target: コマンドを有効にするDOM要素か、それを示すCSSセレクタ。 commandName: コマンドパレットに表示するコマンド名。全部小文字で、単語をハイフンでつないで、パッケージ名を先頭につけるのがルール。 callback(event): コマンドを実行したときに呼ばれるメソッド。  
 disturb-meのコマンドはAtomウィンドウ内のどこでも有効にしたいので、第一引数にはAtomウィンドウを表すカスタムタグであるatom-workspaceを指定する。 コードは以下の感じ。
-activate: (state) -&amp;gt; @subscriptions = new CompositeDisposable @subscriptions.add atom.commands.add &#39;atom-workspace&#39;, &#39;disturb-me:toggle&#39;: =&amp;gt; @toggle() toggle: -&amp;gt; # 画像を挿入したり削除したりするコード。  
+activate: (state) -&amp;gt; @subscriptions = new CompositeDisposable @subscriptions.add atom.commands.add &amp;#39;atom-workspace&amp;#39;, &amp;#39;disturb-me:toggle&amp;#39;: =&amp;gt; @toggle() toggle: -&amp;gt; # 画像を挿入したり削除したりするコード。 
 toggleの中では画像を挿入したり削除したりするわけだけど、この処理は、その画像を表す別のクラスにまかせることにする。 のでtoggleは以下のように書く。
 @disturber: null toggle: -&amp;gt; if @disturber? @disturber.stop() @disturber = null else @disturber = new Disturber() document.</description>
     </item>
@@ -1880,12 +1886,12 @@ toggleの中では画像を挿入したり削除したりするわけだけど�
 Hugoのインストール インストールガイドに従ってHugoをインストールする。
 HugoのGitHub ReleasesからWindows用バイナリをダウンロード。このときはバージョン0.14が最新だったので、hugo_0.14_windows_amd64.zipをダウンロードした。
 このzipの中身はhugo_0.14_windows_amd64.exeというバイナリ一つとLICENSE.mdとREADME.mdだけ。 このhugo_0.14_windows_amd64.exeがHugoのすべてなので、これを適当な場所において実行できるようにしとけばよい。 今回は、hugo.batというファイルに以下の内容を書き、PATHの通ったフォルダにいれた。
-@echo off C:\Users\Kaito\Desktop\tool\hugo_0.14_windows_amd64\hugo_0.14_windows_amd64.exe %*  
+@echo off C:\Users\Kaito\Desktop\tool\hugo_0.14_windows_amd64\hugo_0.14_windows_amd64.exe%* 
 これで、どこからでもhugo [arguments]と打てばHugoコマンドが実行できる。
 Hugoのシンタックスハイライト ドキュメントによると、Hugoではシンタックスハイライトを実現する方法を以下の2つから選べる。
  サーバサイド: Hugoでのブログサイト生成時にハイライトしておく方法。 クライアントサイド: クライアントがブログを読み込んだ時にJavaScriptでハイライトする方法。  前者の方が当然クライアントの負荷が軽くなるが、Pygmentsのインストールが必要だったりめんどくさそうなので後者にする。(PygmentsはJekyllのときにすでに入れたけど…)
 クライアントサイドでやるのもいくつかやり方があるが、例えばHighlight.jsを使うなら以下をHTMLヘッダに加えるだけでいい。
-&amp;lt;link rel=&amp;quot;stylesheet&amp;quot; href=&amp;quot;https://yandex.st/highlightjs/8.0/styles/default.min.css&amp;quot;&amp;gt; &amp;lt;script src=&amp;quot;https://yandex.st/highlightjs/8.0/highlight.min.js&amp;quot;&amp;gt;&amp;lt;/script&amp;gt; &amp;lt;script&amp;gt;hljs.initHighlightingOnLoad();&amp;lt;/script&amp;gt;  このdefault.min.cssの部分を変えると色々なスタイルが選べる。 このブログではZenburnを使うことにした。
+&amp;lt;link rel=&amp;#34;stylesheet&amp;#34; href=&amp;#34;https://yandex.st/highlightjs/8.0/styles/default.min.css&amp;#34;&amp;gt; &amp;lt;script src=&amp;#34;https://yandex.st/highlightjs/8.0/highlight.min.js&amp;#34;&amp;gt;&amp;lt;/script&amp;gt; &amp;lt;script&amp;gt;hljs.initHighlightingOnLoad();&amp;lt;/script&amp;gt; このdefault.min.cssの部分を変えると色々なスタイルが選べる。 このブログではZenburnを使うことにした。
 Hugo味見 Hugoコマンドリファレンスを見つつ、Hugoの味見をする。
 サイトのひな形を作るコマンドはhugo new site [path]。hugo new site blogを実行して、blogという名のフォルダにサイトの初期ソースを生成。blogの部分はファイルもフォルダも存在しないパスを指定する。
 この時点で、blogフォルダ内には以下のものが入っている。
@@ -1998,7 +2004,7 @@ JekyllはRubyで書かれてるので、まずはRubyをインストールする
       <description>I will show how to add a protocol support to Pcap4J in detail giving the example of DHCP (v4) via some posts.
 
    (adsbygoogle = window.adsbygoogle || []).push({});  Named Number Class First of all, we need to know the packet format. It&amp;rsquo;s explained in RFC 2131 as below:
-0 1 2 3 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | op (1) | htype (1) | hlen (1) | hops (1) | +---------------+---------------+---------------+---------------+ | xid (4) | +-------------------------------+-------------------------------+ | secs (2) | flags (2) | +-------------------------------+-------------------------------+ | ciaddr (4) | +---------------------------------------------------------------+ | yiaddr (4) | +---------------------------------------------------------------+ | siaddr (4) | +---------------------------------------------------------------+ | giaddr (4) | +---------------------------------------------------------------+ | | | chaddr (16) | | | | | +---------------------------------------------------------------+ | | | sname (64) | +---------------------------------------------------------------+ | | | file (128) | +---------------------------------------------------------------+ | | | options (variable) | +---------------------------------------------------------------+     FIELD OCTETS DESCRIPTION     op 1 Message op code / message type.</description>
+0 1 2 3 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | op (1) | htype (1) | hlen (1) | hops (1) | +---------------+---------------+---------------+---------------+ | xid (4) | +-------------------------------+-------------------------------+ | secs (2) | flags (2) | +-------------------------------+-------------------------------+ | ciaddr (4) | +---------------------------------------------------------------+ | yiaddr (4) | +---------------------------------------------------------------+ | siaddr (4) | +---------------------------------------------------------------+ | giaddr (4) | +---------------------------------------------------------------+ | | | chaddr (16) | | | | | +---------------------------------------------------------------+ | | | sname (64) | +---------------------------------------------------------------+ | | | file (128) | +---------------------------------------------------------------+ | | | options (variable) | +---------------------------------------------------------------+    FIELD OCTETS DESCRIPTION     op 1 Message op code / message type.</description>
     </item>
     
     <item>
@@ -2022,7 +2028,7 @@ Today, I was reading Docker Docs and found another way to do it. I&amp;rsquo;m w
       <description>このエントリでは、Yegor Bugayenkoによる記事、Why NULL is Bad?を紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。
 
    (adsbygoogle = window.adsbygoogle || []).push({});  JavaでNULLを使う単純な例を以下に示す。
-public Employee getByName(String name) { int id = database.find(name); if (id == 0) { return null; } return new Employee(id); }  このメソッドの何が間違っているのか? オブジェクトの代わりにNULLを返す可能性がある、というのが間違っているところだ。 NULLはオブジェクト指向パラダイムにおけるひどい慣習で、全力で避けるべきものだ。 これについては多くの意見が既に発表されている。 たとえば、Tony HoareによるプレゼンNull References, The Billion Dollar Mistakeや、David Westの著書Object Thinkingの全体に渡って述べられている。
+public Employee getByName(String name) { int id = database.find(name); if (id == 0) { return null; } return new Employee(id); } このメソッドの何が間違っているのか? オブジェクトの代わりにNULLを返す可能性がある、というのが間違っているところだ。 NULLはオブジェクト指向パラダイムにおけるひどい慣習で、全力で避けるべきものだ。 これについては多くの意見が既に発表されている。 たとえば、Tony HoareによるプレゼンNull References, The Billion Dollar Mistakeや、David Westの著書Object Thinkingの全体に渡って述べられている。
 ここで、その論拠のすべてをまとめ、NULLの使用を回避して適切なオブジェクト指向構造に置き換える方法の例を紹介したいと思う。
 基本的に、NULLの代わりになり得るものはふたつある。
 ひとつはNullオブジェクトデザインパターンだ。(それをひとつの不変オブジェクトにするのが最善。)

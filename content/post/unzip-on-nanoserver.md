@@ -6,7 +6,7 @@ cover = "nanoserver.png"
 slug = "unzip-on-nanoserver"
 tags = ["windows", "nanoserver", "docker"]
 title = "Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え"
-highlightLanguages = ["dos", "powershell"]
+
 +++
 
 Nano Serverでunzipしたかっただけだったのに、妙に苦労した話。
@@ -51,7 +51,7 @@ Major  Minor  Build  Revision
 
 したらこのエラー。
 
-```powershell
+```plain
 Add-Type : Cannot find path 'C:\System.IO.Compression.FileSystem.dll' because it does not exist.
 At
 C:\windows\system32\windowspowershell\v1.0\Modules\Microsoft.PowerShell.Archive\Microsoft.PowerShell.Archive.psm1:914
@@ -87,7 +87,7 @@ foreach ($item in $zip.items()) {
 
 したら以下のエラー。
 
-```
+```plain
 new-object : Retrieving the COM class factory for component with CLSID {00000000-0000-0000-0000-000000000000} failed
 due to the following error: 80040154 Class not registered (Exception from HRESULT: 0x80040154 (REGDB_E_CLASSNOTREG)).
 ```

@@ -25,7 +25,7 @@
   <meta property="og:description" content="このエントリでは、Yegor Bugayenkoによる記事、Why NULL is Bad?を紹介する。 (Yegorから和訳と転載の許可は得た。) 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。
 
    (adsbygoogle = window.adsbygoogle || []).push({});  JavaでNULLを使う単純な例を以下に示す。
-public Employee getByName(String name) { int id = database.find(name); if (id == 0) { return null; } return new Employee(id); }  このメソッドの何が間違っているのか? オブジェクトの代わりにNULLを返す可能性がある、というのが間違っているところだ。 NULLはオブジェクト指向パラダイムにおけるひどい慣習で、全力で避けるべきものだ。 これについては多くの意見が既に発表されている。 たとえば、Tony HoareによるプレゼンNull References, The Billion Dollar Mistakeや、David Westの著書Object Thinkingの全体に渡って述べられている。
+public Employee getByName(String name) { int id = database.find(name); if (id == 0) { return null; } return new Employee(id); } このメソッドの何が間違っているのか? オブジェクトの代わりにNULLを返す可能性がある、というのが間違っているところだ。 NULLはオブジェクト指向パラダイムにおけるひどい慣習で、全力で避けるべきものだ。 これについては多くの意見が既に発表されている。 たとえば、Tony HoareによるプレゼンNull References, The Billion Dollar Mistakeや、David Westの著書Object Thinkingの全体に渡って述べられている。
 ここで、その論拠のすべてをまとめ、NULLの使用を回避して適切なオブジェクト指向構造に置き換える方法の例を紹介したいと思う。
 基本的に、NULLの代わりになり得るものはふたつある。
 ひとつはNullオブジェクトデザインパターンだ。(それをひとつの不変オブジェクトにするのが最善。)
@@ -61,7 +61,7 @@ public Employee getByName(String name) { int id = database.find(name); if (id ==
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&amp;subset=japanese">
 
 
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai.min.css"> 
+
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -69,14 +69,6 @@ public Employee getByName(String name) { int id = database.find(name); if (id ==
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-
-    
-
-    <script>hljs.initHighlightingOnLoad();</script>
-
 
 
 
@@ -241,16 +233,13 @@ public Employee getByName(String name) { int id = database.find(name); if (id ==
 <hr />
 
 <p>Javaで<code>NULL</code>を使う単純な例を以下に示す。</p>
-
-<pre><code class="language-java">public Employee getByName(String name) {
-  int id = database.find(name);
-  if (id == 0) {
-    return null;
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">public</span> Employee <span style="color:#447fcf">getByName</span>(String name) {
+  <span style="color:#6ab825;font-weight:bold">int</span> id = database.<span style="color:#bbb">find</span>(name);
+  <span style="color:#6ab825;font-weight:bold">if</span> (id == 0) {
+    <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#6ab825;font-weight:bold">null</span>;
   }
-  return new Employee(id);
-}
-</code></pre>
-
+  <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#6ab825;font-weight:bold">new</span> Employee(id);
+}</code></pre></div>
 <p>このメソッドの何が間違っているのか? オブジェクトの代わりに<code>NULL</code>を返す可能性がある、というのが間違っているところだ。
 <code>NULL</code>はオブジェクト指向パラダイムにおけるひどい慣習で、全力で避けるべきものだ。
 これについては多くの意見が既に発表されている。
@@ -261,27 +250,21 @@ public Employee getByName(String name) { int id = database.find(name); if (id ==
 <p>基本的に、<code>NULL</code>の代わりになり得るものはふたつある。</p>
 
 <p>ひとつは<a href="https://en.wikipedia.org/wiki/Null_Object_pattern">Nullオブジェクト</a>デザインパターンだ。(それをひとつの不変オブジェクトにするのが最善。)</p>
-
-<pre><code class="language-java">public Employee getByName(String name) {
-  int id = database.find(name);
-  if (id == 0) {
-    return Employee.NOBODY;
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">public</span> Employee <span style="color:#447fcf">getByName</span>(String name) {
+  <span style="color:#6ab825;font-weight:bold">int</span> id = database.<span style="color:#bbb">find</span>(name);
+  <span style="color:#6ab825;font-weight:bold">if</span> (id == 0) {
+    <span style="color:#6ab825;font-weight:bold">return</span> Employee.<span style="color:#bbb">NOBODY</span>;
   }
-  return Employee(id);
-}
-</code></pre>
-
+  <span style="color:#6ab825;font-weight:bold">return</span> Employee(id);
+}</code></pre></div>
 <p>もうひとつは、オブジェクトを返せないときに例外を投げて<a href="http://martinfowler.com/ieeeSoftware/failFast.pdf">フェイルファスト</a>することだ。</p>
-
-<pre><code class="language-java">public Employee getByName(String name) {
-  int id = database.find(name);
-  if (id == 0) {
-    throw new EmployeeNotFoundException(name);
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">public</span> Employee <span style="color:#447fcf">getByName</span>(String name) {
+  <span style="color:#6ab825;font-weight:bold">int</span> id = database.<span style="color:#bbb">find</span>(name);
+  <span style="color:#6ab825;font-weight:bold">if</span> (id == 0) {
+    <span style="color:#6ab825;font-weight:bold">throw</span> <span style="color:#6ab825;font-weight:bold">new</span> EmployeeNotFoundException(name);
   }
-  return Employee(id);
-}
-</code></pre>
-
+  <span style="color:#6ab825;font-weight:bold">return</span> Employee(id);
+}</code></pre></div>
 <p>さて、<code>NULL</code>に反対する論拠を見てみよう。</p>
 
 <p>因みに、上記Tony HoareのプレゼンやDavid Westの著書に加えて、私はこの記事を書く前に以下の本や記事を読んだ。</p>
@@ -298,24 +281,18 @@ public Employee getByName(String name) { int id = database.find(name); if (id ==
 <p>インプットとしてオブジェクトを受け取った場合は常に、それが<code>NULL</code>でないか、また有効なオブジェクト参照かどうかを確認しないといけない。
 その確認を忘れると、<code>NullPointerException</code> (NPE)が実行時に処理を止めてしまう恐れがある。
 このため、ロジックが複数の確認処理やif/then/else分岐に汚染されてしまう。</p>
-
-<pre><code class="language-java">// this is a terrible design, don't reuse
-Employee employee = dept.getByName(&quot;Jeffrey&quot;);
-if (employee == null) {
-  System.out.println(&quot;can't find an employee&quot;);
-  System.exit(-1);
-} else {
-  employee.transferTo(dept2);
-}
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#999;font-style:italic">// this is a terrible design, don&#39;t reuse
+</span><span style="color:#999;font-style:italic"></span>Employee employee = dept.<span style="color:#bbb">getByName</span>(<span style="color:#ed9d13">&#34;Jeffrey&#34;</span>);
+<span style="color:#6ab825;font-weight:bold">if</span> (employee == <span style="color:#6ab825;font-weight:bold">null</span>) {
+  System.<span style="color:#bbb">out</span>.<span style="color:#bbb">println</span>(<span style="color:#ed9d13">&#34;can&#39;t find an employee&#34;</span>);
+  System.<span style="color:#bbb">exit</span>(-1);
+} <span style="color:#6ab825;font-weight:bold">else</span> {
+  employee.<span style="color:#bbb">transferTo</span>(dept2);
+}</code></pre></div>
 <p>これは、<a href="https://ja.wikipedia.org/wiki/C%E8%A8%80%E8%AA%9E">C</a>などの命令文を並べる手続き型言語において、例外的な状況に対応する手法だ。
 OOPは、主にこういったアドホックエラー処理のブロックを排除する目的で、<a href="https://ja.wikipedia.org/wiki/%E4%BE%8B%E5%A4%96%E5%87%A6%E7%90%86">例外処理</a>を導入した。
 OOPでは、例外処理をアプリケーションレベルのエラーハンドラにまかせることで、コードをかなりきれいで短いものにできる。</p>
-
-<pre><code class="language-java">dept.getByName(&quot;Jeffrey&quot;).transferTo(dept2);
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">dept.<span style="color:#bbb">getByName</span>(<span style="color:#ed9d13">&#34;Jeffrey&#34;</span>).<span style="color:#bbb">transferTo</span>(dept2);</code></pre></div>
 <p><code>NULL</code>参照は手続き型言語から受け継がれたものだと認識し、Nullオブジェクトか例外を変わりに使うべきだ。</p>
 
 <h1 id="あいまいな意図">あいまいな意図</h1>
@@ -328,35 +305,26 @@ OOPでは、例外処理をアプリケーションレベルのエラーハン�
 
 <p>性能を考慮すると<code>NULL</code>を返さざるを得ない場合もあるだろうと主張する人がいるかもしれない。
 たとえば、Javaの<code><a href="http://docs.oracle.com/javase/jp/7/api/java/util/Map.html">Map</a></code>インターフェースの<code>get()</code>メソッドは、指定された要素がないときに<code>NULL</code>を返す。</p>
-
-<pre><code class="language-java">Employee employee = employees.get(&quot;Jeffrey&quot;);
-if (employee == null) {
-  throw new EmployeeNotFoundException();
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">Employee employee = employees.<span style="color:#bbb">get</span>(<span style="color:#ed9d13">&#34;Jeffrey&#34;</span>);
+<span style="color:#6ab825;font-weight:bold">if</span> (employee == <span style="color:#6ab825;font-weight:bold">null</span>) {
+  <span style="color:#6ab825;font-weight:bold">throw</span> <span style="color:#6ab825;font-weight:bold">new</span> EmployeeNotFoundException();
 }
-return employee;
-</code></pre>
-
+<span style="color:#6ab825;font-weight:bold">return</span> employee;</code></pre></div>
 <p>このコードでは、<code>Map</code>が<code>NULL</code>を使っているおかげで、mapを一回しか検索しない。
 もし、<code>Map</code>の<code>get()</code>を、要素が見つからないときに例外を投げるように修正したら、以下のようなコードになる。</p>
-
-<pre><code class="language-java">if (!employees.containsKey(&quot;Jeffrey&quot;)) { // first search
-  throw new EmployeeNotFoundException();
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">if</span> (!employees.<span style="color:#bbb">containsKey</span>(<span style="color:#ed9d13">&#34;Jeffrey&#34;</span>)) { <span style="color:#999;font-style:italic">// first search
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#6ab825;font-weight:bold">throw</span> <span style="color:#6ab825;font-weight:bold">new</span> EmployeeNotFoundException();
 }
-return employees.get(&quot;Jeffrey&quot;); // second search
-</code></pre>
-
+<span style="color:#6ab825;font-weight:bold">return</span> employees.<span style="color:#bbb">get</span>(<span style="color:#ed9d13">&#34;Jeffrey&#34;</span>); // second search</code></pre></div>
 <p>明らかに、この方法は最初のものより2倍遅い。さて、どうする?</p>
 
 <p><code>Map</code>インターフェースは、(作者を攻めるわけではないが、)設計に問題がある。
 その<code>get()</code>メソッドは<code>Iterator</code>を返すべきで、その場合以下のようなコードになる。</p>
-
-<pre><code class="language-java">Iterator found = Map.search(&quot;Jeffrey&quot;);
-if (!found.hasNext()) {
-  throw new EmployeeNotFoundException();
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">Iterator found = Map.<span style="color:#bbb">search</span>(<span style="color:#ed9d13">&#34;Jeffrey&#34;</span>);
+<span style="color:#6ab825;font-weight:bold">if</span> (!found.<span style="color:#bbb">hasNext</span>()) {
+  <span style="color:#6ab825;font-weight:bold">throw</span> <span style="color:#6ab825;font-weight:bold">new</span> EmployeeNotFoundException();
 }
-return found.next();
-</code></pre>
-
+<span style="color:#6ab825;font-weight:bold">return</span> found.<span style="color:#bbb">next</span>();</code></pre></div>
 <p>因みに、C++の標準ライブラリの<a href="http://www.cppll.jp/cppreference/cppmap_details.html">map::find()</a>はまさにこのように設計されている。</p>
 
 <h1 id="コンピュータ思考-vs-オブジェクト思考">コンピュータ思考 vs. オブジェクト思考</h1>
@@ -364,15 +332,12 @@ return found.next();
 <p>Javaのオブジェクトはデータ構造を指すポインタで、<code>NULL</code>は何も指さないポインタ(Intel x86プロセッサでは0x00000000)であることを知っている人にとっては、<code>if (employee == null)</code>という文は理解できる。</p>
 
 <p>しかし、もし君がオブジェクトになって考えたとすると、この文はかなり意味のないものになる。オブジェクト視点で上記コードは以下のように見える。</p>
-
-<pre><code>- もしもし、ソフトウェア部ですか?
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">- もしもし、ソフトウェア部ですか?
 - はい。
 - Jeffreyと話したいのですが。
 - 少々お待ちください。。。
 - もしもし。
-- あなたはNULLですか?
-</code></pre>
-
+- あなたはNULLですか?</code></pre></div>
 <p>会話の最後の質問が変だろ?</p>
 
 <p>代わりに、もしJeffreyへの取り次ぎをお願いした後で電話が切れたら、自分に問題(例外)が発生した、ということにする。
@@ -393,48 +358,42 @@ Jeffreyにしかわからない用事だから無理、と拒否してくるか�
 <p>メソッドを、それが扱うデータに対してできるだけ厳しくさせ、与えられたデータに不備があったりメソッドの使用方法に反していたら、例外を投げるようにすべきだ。</p>
 
 <p>もしくは、共通的な挙動をする他は常に例外を投げるNullオブジェクトを返すべきだ。</p>
-
-<pre><code class="language-java">public Employee getByName(String name) {
-  int id = database.find(name);
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">public</span> Employee <span style="color:#447fcf">getByName</span>(String name) {
+  <span style="color:#6ab825;font-weight:bold">int</span> id = database.<span style="color:#bbb">find</span>(name);
   Employee employee;
-  if (id == 0) {
-    employee = new Employee() {
-      @Override
-      public String name() {
-        return &quot;anonymous&quot;;
+  <span style="color:#6ab825;font-weight:bold">if</span> (id == 0) {
+    employee = <span style="color:#6ab825;font-weight:bold">new</span> Employee() {
+      <span style="color:#ffa500">@Override</span>
+      <span style="color:#6ab825;font-weight:bold">public</span> String <span style="color:#447fcf">name</span>() {
+        <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#ed9d13">&#34;anonymous&#34;</span>;
       }
-      @Override
-      public void transferTo(Department dept) {
-        throw new AnonymousEmployeeException(
-          &quot;I can't be transferred, I'm anonymous&quot;
+      <span style="color:#ffa500">@Override</span>
+      <span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">void</span> <span style="color:#447fcf">transferTo</span>(Department dept) {
+        <span style="color:#6ab825;font-weight:bold">throw</span> <span style="color:#6ab825;font-weight:bold">new</span> AnonymousEmployeeException(
+          <span style="color:#ed9d13">&#34;I can&#39;t be transferred, I&#39;m anonymous&#34;</span>
         );
       }
     };
-  } else {
+  } <span style="color:#6ab825;font-weight:bold">else</span> {
     employee = Employee(id);
   }
-  return employee;
-}
-</code></pre>
-
+  <span style="color:#6ab825;font-weight:bold">return</span> employee;
+}</code></pre></div>
 <h1 id="可変で不完全なオブジェクト">可変で不完全なオブジェクト</h1>
 
 <p>一般的に、オブジェクトは<a href="http://www.yegor256.com/2014/06/09/objects-should-be-immutable.html">不変的</a>に設計することが望ましい。
 これはつまり、オブジェクトはインスタンス化の際に必要な情報を全て受け取り、その後そのライフサイクル全体に渡ってその状態を変えないということだ。</p>
 
 <p><code>NULL</code>は、<a href="https://ja.wikipedia.org/wiki/%E9%81%85%E5%BB%B6%E8%AA%AD%E3%81%BF%E8%BE%BC%E3%81%BF">遅延読み込み</a>をする際によく使われ、オブジェクトを不完全で可変にしてしまう。以下が例だ。</p>
-
-<pre><code class="language-java">public class Department {
-  private Employee found = null;
-  public synchronized Employee manager() {
-    if (this.found == null) {
-      this.found = new Employee(&quot;Jeffrey&quot;);
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">class</span> <span style="color:#447fcf;text-decoration:underline">Department</span> {
+  <span style="color:#6ab825;font-weight:bold">private</span> Employee found = <span style="color:#6ab825;font-weight:bold">null</span>;
+  <span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">synchronized</span> Employee <span style="color:#447fcf">manager</span>() {
+    <span style="color:#6ab825;font-weight:bold">if</span> (<span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">found</span> == <span style="color:#6ab825;font-weight:bold">null</span>) {
+      <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">found</span> = <span style="color:#6ab825;font-weight:bold">new</span> Employee(<span style="color:#ed9d13">&#34;Jeffrey&#34;</span>);
     }
-    return this.found;
+    <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">found</span>;
   }
-}
-</code></pre>
-
+}</code></pre></div>
 <p>この手法は、広く使われてはいるが、OOPにおけるアンチパターンだ。
 主な理由は、実行環境の性能問題の責任をオブジェクトに負わせているからだ。本来それは<code>Employee</code>オブジェクトが気にすべきことではない。</p>
 
@@ -447,16 +406,13 @@ Jeffreyにしかわからない用事だから無理、と拒否してくるか�
 
 <p>たとえば、Javaなら、アスペクト指向プログラミングのアスペクトが使える。
 たとえば、<a href="http://aspects.jcabi.com/">jcabi-aspects</a>には<code><a href="http://aspects.jcabi.com/annotation-cacheable.html">@Cacheable</a></code>というアノテーションがあり、メソッドの戻り値をキャッシュできる。</p>
-
-<pre><code class="language-java">import com.jcabi.aspects.Cacheable;
-public class Department {
-  @Cacheable(forever = true)
-  public Employee manager() {
-    return new Employee(&quot;Jacky Brown&quot;);
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">import</span> <span style="color:#447fcf;text-decoration:underline">com.jcabi.aspects.Cacheable</span>;
+<span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">class</span> <span style="color:#447fcf;text-decoration:underline">Department</span> {
+  <span style="color:#ffa500">@Cacheable</span>(forever = <span style="color:#6ab825;font-weight:bold">true</span>)
+  <span style="color:#6ab825;font-weight:bold">public</span> Employee <span style="color:#447fcf">manager</span>() {
+    <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#6ab825;font-weight:bold">new</span> Employee(<span style="color:#ed9d13">&#34;Jacky Brown&#34;</span>);
   }
-}
-</code></pre>
-
+}</code></pre></div>
 <p>君がこの分析に納得して<code>NULL</code>を使うのをやめることを願う。</p>
 
 <div class="embed video-player" style="text-align: center">

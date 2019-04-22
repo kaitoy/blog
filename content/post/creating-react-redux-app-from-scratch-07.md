@@ -25,7 +25,7 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 
 使うのは[React Redux](https://redux.js.org/basics/usagewithreact)。
 
-```shell
+```tch
 yarn add react-redux
 ```
 

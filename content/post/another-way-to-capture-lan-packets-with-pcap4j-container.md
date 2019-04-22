@@ -35,7 +35,7 @@ In the same environment with [2 days ago](https://www.kaitoy.xyz/2015/07/25/how-
 
 1. Start a Pcap4J container with the network mode set to host
 
-      ```shell
+      ```tch
       # docker run --name pcap4j-hostnet --net=host kaitoy/pcap4j:latest
       ```
 

@@ -42,7 +42,7 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 Material-UIは簡単に使える。
 とりあえずコアパッケージをインストールする。
 
-```shell
+```tch
 yarn add @material-ui/core
 ```
 
@@ -87,7 +87,7 @@ Material-UIは[Robotoフォント](https://fonts.google.com/specimen/Roboto)を�
 
 Robotoフォントのフォントファイルはnpmで配布されていて、Yarnでプロジェクトにインストールできる。
 
-```shell
+```tch
 yarn add typeface-roboto
 ```
 
@@ -101,7 +101,7 @@ yarn add typeface-roboto
 
 url-loaderを使う場合は、url-loaderとフォールバック用のfile-loaderをインストールする。
 
-```
+```tch
 yarn add -D url-loader file-loader
 ```
 
@@ -174,7 +174,7 @@ webpackのローダ設定は以下のようなのを追加すればいい。
 
 file-loaderを使う場合は、file-loaderだけインストールすればいい。
 
-```
+```tch
 yarn add -D file-loader
 ```
 

@@ -78,7 +78,7 @@ AnsibleはYUMとかpipとかでインストールできる。
 
 3. インストール
 
-    ```shell
+    ```tch
     # yum install -y ansible
     ```
 

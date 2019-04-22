@@ -6,7 +6,7 @@ cover = "kubernetes.png"
 slug = "retry-dashboard-on-k8s-cluster-by-kubeadm"
 tags = ["kubernetes", "docker"]
 title = "Kubernetes 1.8のアクセス制御について。あとDashboard。"
-highlightLanguages = ["dos", "yaml"]
+
 +++
 
 「[Kubernetes1.8のクラスタを構築する。kubeadmで。](https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/)」で、Dashboardがうまく動かない問題が発生したんだけど、それを解決した話。
@@ -201,7 +201,7 @@ DashboardのPodのService Accountである`kubernetes-dashboard`にAdmin権限�
 
 ので、以下のようなYAMLファイルを書いて、
 
-```yml
+```yaml
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:

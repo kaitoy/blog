@@ -22,7 +22,7 @@ We should create such classes instead of using a primitive types in some cases.
 
 In the case of DHCP, its __flags__ field includes two fields in itself as like below:
 
-```
+```plain
                     1 1 1 1 1 1
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+

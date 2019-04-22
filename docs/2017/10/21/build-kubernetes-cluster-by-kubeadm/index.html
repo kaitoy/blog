@@ -32,9 +32,9 @@ VM作成 kubeadmのサポートOSは、Ubuntu 16.04&#43;、Debian 9、CentOS 7�
 自前のノートPCのWindows 10 x64 Home Edition上のVMware Player 12のVMにCentOS 7を入れた。 メモリは1GB以上が要件なので、味を付けて1.4GBで。 VM間で通信できることって要件があったけど、インターネット接続も必要なはずなので、NICはNATのやつで。
 このVMはMasterになる。
 OS設定 Kubernetesが使うポートをいろいろ開けなければいけないんだけど、めんどいのでfirewalldを無効にする。
-# systemctl stop firewalld # systemctl disable firewalld Removed symlink /etc/systemd/system/multi-user.target.wants/firewalld.service. Removed symlink /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service.  
+# systemctl stop firewalld # systemctl disable firewalld Removed symlink /etc/systemd/system/multi-user.target.wants/firewalld.service. Removed symlink /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service. 
 なんとなくIPアドレスをDHCPから静的割り当てに。(192.168.171.200)
-# nmcli c modify ens33 ipv4.">
+# nmcli c modify ens33 ipv4.method manual # nmcli c modify ens33 ipv4.">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
 
 
@@ -66,7 +66,7 @@ OS設定 Kubernetesが使うポートをいろいろ開けなければいけな�
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&amp;subset=japanese">
 
 
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai.min.css"> 
+
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -74,14 +74,6 @@ OS設定 Kubernetesが使うポートをいろいろ開けなければいけな�
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/dos.min.js"></script> 
-
-    <script>hljs.initHighlightingOnLoad();</script>
-
 
 
 
@@ -284,31 +276,22 @@ VM間で通信できることって要件があったけど、インターネッ
 <h2 id="os設定">OS設定</h2>
 
 <p><a href="https://kubernetes.io/docs/setup/independent/install-kubeadm/#check-required-ports">Kubernetesが使うポート</a>をいろいろ開けなければいけないんだけど、めんどいのでfirewalldを無効にする。</p>
-
-<pre><code class="language-shell"># systemctl stop firewalld
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># systemctl stop firewalld
 # systemctl disable firewalld
 Removed symlink /etc/systemd/system/multi-user.target.wants/firewalld.service.
-Removed symlink /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service.
-</code></pre>
-
+Removed symlink /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service.</code></pre></div>
 <p><br></p>
 
 <p>なんとなくIPアドレスをDHCPから静的割り当てに。(192.168.171.200)</p>
-
-<pre><code class="language-shell"># nmcli c modify ens33 ipv4.method manual
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># nmcli c modify ens33 ipv4.method manual
 # nmcli c modify ens33 ipv4.addresses 192.168.171.200/24
 # nmcli c modify ens33 ipv4.dns 192.168.171.2
 # nmcli c modify ens33 ipv4.gateway 192.168.171.2
-# systemctl restart network
-</code></pre>
-
+# systemctl restart network</code></pre></div>
 <p><br></p>
 
 <p>ホスト名をlocalhost.localdomainからk8s-masterに変更。</p>
-
-<pre><code class="language-shell"># hostnamectl set-hostname k8s-master
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># hostnamectl set-hostname k8s-master</code></pre></div>
 <p>ログアウトログインで反映。</p>
 
 <p><br></p>
@@ -323,61 +306,42 @@ Removed symlink /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service.
 Kubernetesがそれらでクラスタ内のノードを区別してるので。</p>
 
 <p>MACアドレスは<code>ip link</code>コマンドなどで確認できる。</p>
-
-<pre><code class="language-shell"># ip link
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># ip link
 1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT qlen 1
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
 2: ens33: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP mode DEFAULT qlen 1000
-    link/ether 00:0c:29:38:de:ae brd ff:ff:ff:ff:ff:ff
-</code></pre>
-
+    link/ether 00:0c:29:38:de:ae brd ff:ff:ff:ff:ff:ff</code></pre></div>
 <p>product_uuidは、<a href="https://ja.wikipedia.org/wiki/SMBIOS">SMBIOS</a>という、PC固有のデータを保存・参照するための仕様があって、それに従って保存されたシステムの識別子らしい。
 product_uuidは<code>dmidecode</code>コマンドなどで確認できる。</p>
-
-<pre><code class="language-shell"># dmidecode -s system-uuid
-58114D56-A744-3610-C3C5-9B15A838DEAE
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># dmidecode -s system-uuid
+58114D56-A744-3610-C3C5-9B15A838DEAE</code></pre></div>
 <p><br></p>
 
 <p>kubeletがちゃんと動くためにはswapを無効にする必要がある。</p>
-
-<pre><code class="language-shell"># swapoff -a
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># swapoff -a</code></pre></div>
 <p>(このコマンドはよくなかった。詳細は後述。)</p>
 
 <p><br></p>
 
 <p>ebtablesとethtoolを入れる必要がある。</p>
-
-<pre><code class="language-shell"># yum install -y ebtables ethtool
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># yum install -y ebtables ethtool</code></pre></div>
 <p><br></p>
 
 <p>Dockerも入れないと。
 v1.12が推奨で、v1.11かv1.13でもいい。
 適当に入れたらv1.12.6だった。</p>
-
-<pre><code class="language-shell"># yum install -y docker
-# systemctl enable docker &amp;&amp; systemctl start docker
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># yum install -y docker
+# systemctl enable docker &amp;&amp; systemctl start docker</code></pre></div>
 <p><br></p>
 
 <p>Podネットワークなどが機能する要件として、コンテナがホストファイルシステムにアクセスできる必要があるが、そのためには現状、SELinuxを無効化する必要がある。</p>
-
-<pre><code class="language-shell"># setenforce 0
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># setenforce 0</code></pre></div>
 <p>(このコマンドもよくなかった。詳細は後述。)</p>
 
 <p><br></p>
 
 <p>RHEL系の場合、iptablesがバイパスされてトラフィックが変にルーティングされる問題があるため、<code>net.bridge.bridge-nf-call-iptables</code>を1にセットしておく必要がある。</p>
-
-<pre><code class="language-shell"># cat &lt;&lt;EOF &gt;  /etc/sysctl.d/k8s.conf
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># cat &lt;&lt;EOF &gt;  /etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 EOF
@@ -405,22 +369,17 @@ fs.may_detach_mounts = 1
 * Applying /etc/sysctl.d/k8s.conf ...
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
-* Applying /etc/sysctl.conf ...
-</code></pre>
-
+* Applying /etc/sysctl.conf ...</code></pre></div>
 <p><br></p>
 
 <p>Cgroup Driverを、Dockerとkubeletとの間で一致させておく必要がある。
 以下のようにして確認できる。</p>
-
-<pre><code class="language-shell"># cat /etc/systemd/system/kubelet.service.d/10-kubeadm.conf | grep KUBELET_CGROUP_ARGS
-Environment=&quot;KUBELET_CGROUP_ARGS=--cgroup-driver=systemd&quot;
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># cat /etc/systemd/system/kubelet.service.d/10-kubeadm.conf | grep KUBELET_CGROUP_ARGS
+Environment=&#34;KUBELET_CGROUP_ARGS=--cgroup-driver=systemd&#34;
 ExecStart=/usr/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_SYSTEM_PODS_ARGS $KUBELET_NETWORK_ARGS $KUBELET_DNS_ARGS $KUBELET_AUTHZ_ARGS $KUBELET_CADVISOR_ARGS $KUBELET_CGROUP_ARGS $KUBELET_CERTIFICATE_ARGS $KUBELET_EXTRA_ARGS
 # docker info |grep -i cgroup
  WARNING: Usage of loopback devices is strongly discouraged for production use. Use `--storage-opt dm.thinpooldev` to specify a custom block storage device.
-Cgroup Driver: systemd
-</code></pre>
-
+Cgroup Driver: systemd</code></pre></div>
 <p>どっちもsystemdだったので問題なし。
 (違ってたら<a href="https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/#troubleshooting"><code>KUBELET_CGROUP_ARGS</code>を変更する必要がある</a>。)</p>
 
@@ -430,8 +389,7 @@ Cgroup Driver: systemd
 kubeletとkubectlも一緒にインストールする。</p>
 
 <p>まずYUMリポジトリを追加して、</p>
-
-<pre><code class="language-shell"># cat &lt;&lt;EOF &gt; /etc/yum.repos.d/kubernetes.repo
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># cat &lt;&lt;EOF &gt; /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
 baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
@@ -440,20 +398,12 @@ gpgcheck=1
 repo_gpgcheck=1
 gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
         https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-EOF
-</code></pre>
-
+EOF</code></pre></div>
 <p>インストール。</p>
-
-<pre><code class="language-shell"># yum install kubelet kubeadm kubectl
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># yum install kubelet kubeadm kubectl</code></pre></div>
 <p>で、kubeletをサービス登録。</p>
-
-<pre><code class="language-shell"># systemctl enable kubelet &amp;&amp; systemctl start kubelet
-Created symlink from /etc/systemd/system/multi-user.target.wants/kubelet.service to /etc/systemd/system/kubelet.service.
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># systemctl enable kubelet &amp;&amp; systemctl start kubelet
+Created symlink from /etc/systemd/system/multi-user.target.wants/kubelet.service to /etc/systemd/system/kubelet.service.</code></pre></div>
 <p><br></p>
 
 <p>ここでVMのスナップショットをとっておいて、後でNodeを追加するときに使う。</p>
@@ -462,13 +412,12 @@ Created symlink from /etc/systemd/system/multi-user.target.wants/kubelet.service
 
 <p>Masterは<code>kubeadm init</code>で構築できる。
 <code>--apiserver-advertise-address</code>でkube-apiserverがlistenするIPアドレスを指定すべし。</p>
-
-<pre><code class="language-shell"># kubeadm init --apiserver-advertise-address=192.168.171.200
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># kubeadm init --apiserver-advertise-address=192.168.171.200
 [kubeadm] WARNING: kubeadm is in beta, please do not use it for production clusters.
 [init] Using Kubernetes version: v1.8.1
 [init] Using Authorization modes: [Node RBAC]
 [preflight] Running pre-flight checks
-[preflight] WARNING: Running with swap on is not supported. Please disable swap or set kubelet's --fail-swap-on flag to false.
+[preflight] WARNING: Running with swap on is not supported. Please disable swap or set kubelet&#39;s --fail-swap-on flag to false.
 [kubeadm] WARNING: starting in 1.8, tokens expire after 24 hours by default (if you require a non-expiring token use --token-ttl 0)
 [certificates] Generated ca certificate and key.
 [certificates] Generated apiserver certificate and key.
@@ -477,35 +426,35 @@ Created symlink from /etc/systemd/system/multi-user.target.wants/kubelet.service
 [certificates] Generated sa key and public key.
 [certificates] Generated front-proxy-ca certificate and key.
 [certificates] Generated front-proxy-client certificate and key.
-[certificates] Valid certificates and keys now exist in &quot;/etc/kubernetes/pki&quot;
-[kubeconfig] Wrote KubeConfig file to disk: &quot;admin.conf&quot;
-[kubeconfig] Wrote KubeConfig file to disk: &quot;kubelet.conf&quot;
-[kubeconfig] Wrote KubeConfig file to disk: &quot;controller-manager.conf&quot;
-[kubeconfig] Wrote KubeConfig file to disk: &quot;scheduler.conf&quot;
-[controlplane] Wrote Static Pod manifest for component kube-apiserver to &quot;/etc/kubernetes/manifests/kube-apiserver.yaml&quot;
-[controlplane] Wrote Static Pod manifest for component kube-controller-manager to &quot;/etc/kubernetes/manifests/kube-controller-manager.yaml&quot;
-[controlplane] Wrote Static Pod manifest for component kube-scheduler to &quot;/etc/kubernetes/manifests/kube-scheduler.yaml&quot;
-[etcd] Wrote Static Pod manifest for a local etcd instance to &quot;/etc/kubernetes/manifests/etcd.yaml&quot;
-[init] Waiting for the kubelet to boot up the control plane as Static Pods from directory &quot;/etc/kubernetes/manifests&quot;
+[certificates] Valid certificates and keys now exist in &#34;/etc/kubernetes/pki&#34;
+[kubeconfig] Wrote KubeConfig file to disk: &#34;admin.conf&#34;
+[kubeconfig] Wrote KubeConfig file to disk: &#34;kubelet.conf&#34;
+[kubeconfig] Wrote KubeConfig file to disk: &#34;controller-manager.conf&#34;
+[kubeconfig] Wrote KubeConfig file to disk: &#34;scheduler.conf&#34;
+[controlplane] Wrote Static Pod manifest for component kube-apiserver to &#34;/etc/kubernetes/manifests/kube-apiserver.yaml&#34;
+[controlplane] Wrote Static Pod manifest for component kube-controller-manager to &#34;/etc/kubernetes/manifests/kube-controller-manager.yaml&#34;
+[controlplane] Wrote Static Pod manifest for component kube-scheduler to &#34;/etc/kubernetes/manifests/kube-scheduler.yaml&#34;
+[etcd] Wrote Static Pod manifest for a local etcd instance to &#34;/etc/kubernetes/manifests/etcd.yaml&#34;
+[init] Waiting for the kubelet to boot up the control plane as Static Pods from directory &#34;/etc/kubernetes/manifests&#34;
 [init] This often takes around a minute; or longer if the control plane images have to be pulled.
-[kubelet-check] It seems like the kubelet isn't running or healthy.
-[kubelet-check] The HTTP call equal to 'curl -sSL http://localhost:10255/healthz' failed with error: Get http://localhost:10255/healthz: dial tcp [::1]:10255: getsockopt: connection refused.
-[kubelet-check] It seems like the kubelet isn't running or healthy.
-[kubelet-check] The HTTP call equal to 'curl -sSL http://localhost:10255/healthz' failed with error: Get http://localhost:10255/healthz: dial tcp [::1]:10255: getsockopt: connection refused.
-[kubelet-check] It seems like the kubelet isn't running or healthy.
-[kubelet-check] The HTTP call equal to 'curl -sSL http://localhost:10255/healthz' failed with error: Get http://localhost:10255/healthz: dial tcp [::1]:10255: getsockopt: connection refused.
-[kubelet-check] It seems like the kubelet isn't running or healthy.
-[kubelet-check] The HTTP call equal to 'curl -sSL http://localhost:10255/healthz/syncloop' failed with error: Get http://localhost:10255/healthz/syncloop: dial tcp [::1]:10255: getsockopt: connection refused.
-[kubelet-check] It seems like the kubelet isn't running or healthy.
-[kubelet-check] The HTTP call equal to 'curl -sSL http://localhost:10255/healthz/syncloop' failed with error: Get http://localhost:10255/healthz/syncloop: dial tcp [::1]:10255: getsockopt: connection refused.
-[kubelet-check] It seems like the kubelet isn't running or healthy.
-[kubelet-check] The HTTP call equal to 'curl -sSL http://localhost:10255/healthz/syncloop' failed with error: Get http://localhost:10255/healthz/syncloop: dial tcp [::1]:10255: getsockopt: connection refused.
-[kubelet-check] It seems like the kubelet isn't running or healthy.
-[kubelet-check] The HTTP call equal to 'curl -sSL http://localhost:10255/healthz' failed with error: Get http://localhost:10255/healthz: dial tcp [::1]:10255: getsockopt: connection refused.
-[kubelet-check] It seems like the kubelet isn't running or healthy.
-[kubelet-check] The HTTP call equal to 'curl -sSL http://localhost:10255/healthz/syncloop' failed with error: Get http://localhost:10255/healthz/syncloop: dial tcp [::1]:10255: getsockopt: connection refused.
-[kubelet-check] It seems like the kubelet isn't running or healthy.
-[kubelet-check] The HTTP call equal to 'curl -sSL http://localhost:10255/healthz' failed with error: Get http://localhost:10255/healthz: dial tcp [::1]:10255: getsockopt: connection refused.
+[kubelet-check] It seems like the kubelet isn&#39;t running or healthy.
+[kubelet-check] The HTTP call equal to &#39;curl -sSL http://localhost:10255/healthz&#39; failed with error: Get http://localhost:10255/healthz: dial tcp [::1]:10255: getsockopt: connection refused.
+[kubelet-check] It seems like the kubelet isn&#39;t running or healthy.
+[kubelet-check] The HTTP call equal to &#39;curl -sSL http://localhost:10255/healthz&#39; failed with error: Get http://localhost:10255/healthz: dial tcp [::1]:10255: getsockopt: connection refused.
+[kubelet-check] It seems like the kubelet isn&#39;t running or healthy.
+[kubelet-check] The HTTP call equal to &#39;curl -sSL http://localhost:10255/healthz&#39; failed with error: Get http://localhost:10255/healthz: dial tcp [::1]:10255: getsockopt: connection refused.
+[kubelet-check] It seems like the kubelet isn&#39;t running or healthy.
+[kubelet-check] The HTTP call equal to &#39;curl -sSL http://localhost:10255/healthz/syncloop&#39; failed with error: Get http://localhost:10255/healthz/syncloop: dial tcp [::1]:10255: getsockopt: connection refused.
+[kubelet-check] It seems like the kubelet isn&#39;t running or healthy.
+[kubelet-check] The HTTP call equal to &#39;curl -sSL http://localhost:10255/healthz/syncloop&#39; failed with error: Get http://localhost:10255/healthz/syncloop: dial tcp [::1]:10255: getsockopt: connection refused.
+[kubelet-check] It seems like the kubelet isn&#39;t running or healthy.
+[kubelet-check] The HTTP call equal to &#39;curl -sSL http://localhost:10255/healthz/syncloop&#39; failed with error: Get http://localhost:10255/healthz/syncloop: dial tcp [::1]:10255: getsockopt: connection refused.
+[kubelet-check] It seems like the kubelet isn&#39;t running or healthy.
+[kubelet-check] The HTTP call equal to &#39;curl -sSL http://localhost:10255/healthz&#39; failed with error: Get http://localhost:10255/healthz: dial tcp [::1]:10255: getsockopt: connection refused.
+[kubelet-check] It seems like the kubelet isn&#39;t running or healthy.
+[kubelet-check] The HTTP call equal to &#39;curl -sSL http://localhost:10255/healthz/syncloop&#39; failed with error: Get http://localhost:10255/healthz/syncloop: dial tcp [::1]:10255: getsockopt: connection refused.
+[kubelet-check] It seems like the kubelet isn&#39;t running or healthy.
+[kubelet-check] The HTTP call equal to &#39;curl -sSL http://localhost:10255/healthz&#39; failed with error: Get http://localhost:10255/healthz: dial tcp [::1]:10255: getsockopt: connection refused.
 
 Unfortunately, an error has occurred:
         timed out waiting for the condition
@@ -513,56 +462,44 @@ Unfortunately, an error has occurred:
 This error is likely caused by that:
         - The kubelet is not running
         - The kubelet is unhealthy due to a misconfiguration of the node in some way (required cgroups disabled)
-        - There is no internet connection; so the kubelet can't pull the following control plane images:
+        - There is no internet connection; so the kubelet can&#39;t pull the following control plane images:
                 - gcr.io/google_containers/kube-apiserver-amd64:v1.8.1
                 - gcr.io/google_containers/kube-controller-manager-amd64:v1.8.1
                 - gcr.io/google_containers/kube-scheduler-amd64:v1.8.1
 
-You can troubleshoot this for example with the following commands if you're on a systemd-powered system:
-        - 'systemctl status kubelet'
-        - 'journalctl -xeu kubelet'
-couldn't initialize a Kubernetes cluster
-</code></pre>
-
+You can troubleshoot this for example with the following commands if you&#39;re on a systemd-powered system:
+        - &#39;systemctl status kubelet&#39;
+        - &#39;journalctl -xeu kubelet&#39;
+couldn&#39;t initialize a Kubernetes cluster</code></pre></div>
 <p>なんか失敗した。
 <code>getsockopt: connection refused.</code>ってのがたくさん出てる。
 ググると、swapがあやしい。
 確認してみたら、</p>
-
-<pre><code class="language-shell"># swapon -s
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># swapon -s
 Filename                                Type            Size    Used    Priority
-/dev/dm-1                               partition       2097148 0       -1
-</code></pre>
-
+/dev/dm-1                               partition       2097148 0       -1</code></pre></div>
 <p>無効になってない。
 <code>swapoff -a</code>でswap無効にしても、OS再起動したらもとに戻ってしまうのか。</p>
 
 <p>永続的に無効にするため、<code>/etc/fstab</code>を編集して、以下の行を削除した。</p>
-
-<pre><code>/dev/mapper/centos-swap swap                    swap    defaults        0 0
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">/dev/mapper/centos-swap swap                    swap    defaults        0 0</code></pre></div>
 <p>で、OSリブート。</p>
 
 <p><br></p>
 
 <p>kubeadm initをやり直す前に、いったん<code>kubeadm reset</code>して初期化する。</p>
-
-<pre><code class="language-shell"># kubeadm reset
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># kubeadm reset
 [preflight] Running pre-flight checks
 [reset] Stopping the kubelet service
-[reset] Unmounting mounted directories in &quot;/var/lib/kubelet&quot;
+[reset] Unmounting mounted directories in &#34;/var/lib/kubelet&#34;
 [reset] Removing kubernetes-managed containers
 [reset] Deleting contents of stateful directories: [/var/lib/kubelet /etc/cni/net.d /var/lib/dockershim /var/run/kubernetes /var/lib/etcd]
 [reset] Deleting contents of config directories: [/etc/kubernetes/manifests /etc/kubernetes/pki]
-[reset] Deleting files: [/etc/kubernetes/admin.conf /etc/kubernetes/kubelet.conf /etc/kubernetes/controller-manager.conf /etc/kubernetes/scheduler.conf]
-</code></pre>
-
+[reset] Deleting files: [/etc/kubernetes/admin.conf /etc/kubernetes/kubelet.conf /etc/kubernetes/controller-manager.conf /etc/kubernetes/scheduler.conf]</code></pre></div>
 <p><br></p>
 
 <p>2回目の<code>kubeadm init</code>。</p>
-
-<pre><code class="language-shell"># kubeadm init --apiserver-advertise-address=192.168.171.200
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># kubeadm init --apiserver-advertise-address=192.168.171.200
 [kubeadm] WARNING: kubeadm is in beta, please do not use it for production clusters.
 [init] Using Kubernetes version: v1.8.1
 [init] Using Authorization modes: [Node RBAC]
@@ -576,16 +513,16 @@ Filename                                Type            Size    Used    Priority
 [certificates] Generated sa key and public key.
 [certificates] Generated front-proxy-ca certificate and key.
 [certificates] Generated front-proxy-client certificate and key.
-[certificates] Valid certificates and keys now exist in &quot;/etc/kubernetes/pki&quot;
-[kubeconfig] Wrote KubeConfig file to disk: &quot;admin.conf&quot;
-[kubeconfig] Wrote KubeConfig file to disk: &quot;kubelet.conf&quot;
-[kubeconfig] Wrote KubeConfig file to disk: &quot;controller-manager.conf&quot;
-[kubeconfig] Wrote KubeConfig file to disk: &quot;scheduler.conf&quot;
-[controlplane] Wrote Static Pod manifest for component kube-apiserver to &quot;/etc/kubernetes/manifests/kube-apiserver.yaml&quot;
-[controlplane] Wrote Static Pod manifest for component kube-controller-manager to &quot;/etc/kubernetes/manifests/kube-controller-manager.yaml&quot;
-[controlplane] Wrote Static Pod manifest for component kube-scheduler to &quot;/etc/kubernetes/manifests/kube-scheduler.yaml&quot;
-[etcd] Wrote Static Pod manifest for a local etcd instance to &quot;/etc/kubernetes/manifests/etcd.yaml&quot;
-[init] Waiting for the kubelet to boot up the control plane as Static Pods from directory &quot;/etc/kubernetes/manifests&quot;
+[certificates] Valid certificates and keys now exist in &#34;/etc/kubernetes/pki&#34;
+[kubeconfig] Wrote KubeConfig file to disk: &#34;admin.conf&#34;
+[kubeconfig] Wrote KubeConfig file to disk: &#34;kubelet.conf&#34;
+[kubeconfig] Wrote KubeConfig file to disk: &#34;controller-manager.conf&#34;
+[kubeconfig] Wrote KubeConfig file to disk: &#34;scheduler.conf&#34;
+[controlplane] Wrote Static Pod manifest for component kube-apiserver to &#34;/etc/kubernetes/manifests/kube-apiserver.yaml&#34;
+[controlplane] Wrote Static Pod manifest for component kube-controller-manager to &#34;/etc/kubernetes/manifests/kube-controller-manager.yaml&#34;
+[controlplane] Wrote Static Pod manifest for component kube-scheduler to &#34;/etc/kubernetes/manifests/kube-scheduler.yaml&#34;
+[etcd] Wrote Static Pod manifest for a local etcd instance to &#34;/etc/kubernetes/manifests/etcd.yaml&#34;
+[init] Waiting for the kubelet to boot up the control plane as Static Pods from directory &#34;/etc/kubernetes/manifests&#34;
 [init] This often takes around a minute; or longer if the control plane images have to be pulled.
 
 Unfortunately, an error has occurred:
@@ -594,30 +531,22 @@ Unfortunately, an error has occurred:
 This error is likely caused by that:
         - The kubelet is not running
         - The kubelet is unhealthy due to a misconfiguration of the node in some way (required cgroups disabled)
-        - There is no internet connection; so the kubelet can't pull the following control plane images:
+        - There is no internet connection; so the kubelet can&#39;t pull the following control plane images:
                 - gcr.io/google_containers/kube-apiserver-amd64:v1.8.1
                 - gcr.io/google_containers/kube-controller-manager-amd64:v1.8.1
                 - gcr.io/google_containers/kube-scheduler-amd64:v1.8.1
 
-You can troubleshoot this for example with the following commands if you're on a systemd-powered system:
-        - 'systemctl status kubelet'
-        - 'journalctl -xeu kubelet'
-couldn't initialize a Kubernetes cluster
-</code></pre>
-
+You can troubleshoot this for example with the following commands if you&#39;re on a systemd-powered system:
+        - &#39;systemctl status kubelet&#39;
+        - &#39;journalctl -xeu kubelet&#39;
+couldn&#39;t initialize a Kubernetes cluster</code></pre></div>
 <p>また違う感じのエラー。
 エラーメッセージに従って、<code>journalctl -xeu kubelet</code>でログを見てみたら、以下のようなエラーが。</p>
-
-<pre><code>Post https://192.168.171.200:6443/api/v1/nodes: dial tcp 192.168.171.200:6443: getsockopt: connection refused
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">Post https://192.168.171.200:6443/api/v1/nodes: dial tcp 192.168.171.200:6443: getsockopt: connection refused</code></pre></div>
 <p><a href="https://github.com/kubernetes/kubeadm/issues/228">kubeadmにIssue</a>にこのエラーが載っている。
 原因はいろいろあるっぽいけど、そのひとつにSELinuxがあったので確認してみたら、</p>
-
-<pre><code class="language-shell"># getenforce
-Enforcing
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># getenforce
+Enforcing</code></pre></div>
 <p>SELinuxが有効になっていた。
 <code>setenforce 0</code>もOS再起動で元に戻ってしまった模様。</p>
 
@@ -626,8 +555,7 @@ Enforcing
 <p><br></p>
 
 <p>で、<code>kubeadm reset</code>したら3回目の<code>kubeadm init</code>する。</p>
-
-<pre><code class="language-shell"># kubeadm init --apiserver-advertise-address=192.168.171.200
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># kubeadm init --apiserver-advertise-address=192.168.171.200
 [kubeadm] WARNING: kubeadm is in beta, please do not use it for production clusters.
 [init] Using Kubernetes version: v1.8.1
 [init] Using Authorization modes: [Node RBAC]
@@ -640,26 +568,26 @@ Enforcing
 [certificates] Generated sa key and public key.
 [certificates] Generated front-proxy-ca certificate and key.
 [certificates] Generated front-proxy-client certificate and key.
-[certificates] Valid certificates and keys now exist in &quot;/etc/kubernetes/pki&quot;
-[kubeconfig] Wrote KubeConfig file to disk: &quot;admin.conf&quot;
-[kubeconfig] Wrote KubeConfig file to disk: &quot;kubelet.conf&quot;
-[kubeconfig] Wrote KubeConfig file to disk: &quot;controller-manager.conf&quot;
-[kubeconfig] Wrote KubeConfig file to disk: &quot;scheduler.conf&quot;
-[controlplane] Wrote Static Pod manifest for component kube-apiserver to &quot;/etc/kubernetes/manifests/kube-apiserver.yaml&quot;
-[controlplane] Wrote Static Pod manifest for component kube-controller-manager to &quot;/etc/kubernetes/manifests/kube-controller-manager.yaml&quot;
-[controlplane] Wrote Static Pod manifest for component kube-scheduler to &quot;/etc/kubernetes/manifests/kube-scheduler.yaml&quot;
-[etcd] Wrote Static Pod manifest for a local etcd instance to &quot;/etc/kubernetes/manifests/etcd.yaml&quot;
-[init] Waiting for the kubelet to boot up the control plane as Static Pods from directory &quot;/etc/kubernetes/manifests&quot;
+[certificates] Valid certificates and keys now exist in &#34;/etc/kubernetes/pki&#34;
+[kubeconfig] Wrote KubeConfig file to disk: &#34;admin.conf&#34;
+[kubeconfig] Wrote KubeConfig file to disk: &#34;kubelet.conf&#34;
+[kubeconfig] Wrote KubeConfig file to disk: &#34;controller-manager.conf&#34;
+[kubeconfig] Wrote KubeConfig file to disk: &#34;scheduler.conf&#34;
+[controlplane] Wrote Static Pod manifest for component kube-apiserver to &#34;/etc/kubernetes/manifests/kube-apiserver.yaml&#34;
+[controlplane] Wrote Static Pod manifest for component kube-controller-manager to &#34;/etc/kubernetes/manifests/kube-controller-manager.yaml&#34;
+[controlplane] Wrote Static Pod manifest for component kube-scheduler to &#34;/etc/kubernetes/manifests/kube-scheduler.yaml&#34;
+[etcd] Wrote Static Pod manifest for a local etcd instance to &#34;/etc/kubernetes/manifests/etcd.yaml&#34;
+[init] Waiting for the kubelet to boot up the control plane as Static Pods from directory &#34;/etc/kubernetes/manifests&#34;
 [init] This often takes around a minute; or longer if the control plane images have to be pulled.
 [apiclient] All control plane components are healthy after 99.510003 seconds
-[uploadconfig]?Storing the configuration used in ConfigMap &quot;kubeadm-config&quot; in the &quot;kube-system&quot; Namespace
+[uploadconfig]?Storing the configuration used in ConfigMap &#34;kubeadm-config&#34; in the &#34;kube-system&#34; Namespace
 [markmaster] Will mark node k8s-master as master by adding a label and a taint
-[markmaster] Master k8s-master tainted and labelled with key/value: node-role.kubernetes.io/master=&quot;&quot;
+[markmaster] Master k8s-master tainted and labelled with key/value: node-role.kubernetes.io/master=&#34;&#34;
 [bootstraptoken] Using token: 957b7b.eaaf0cb656edba7b
 [bootstraptoken] Configured RBAC rules to allow Node Bootstrap tokens to post CSRs in order for nodes to get long term certificate credentials
 [bootstraptoken] Configured RBAC rules to allow the csrapprover controller automatically approve CSRs from a Node Bootstrap Token
 [bootstraptoken] Configured RBAC rules to allow certificate rotation for all node client certificates in the cluster
-[bootstraptoken] Creating the &quot;cluster-info&quot; ConfigMap in the &quot;kube-public&quot; namespace
+[bootstraptoken] Creating the &#34;cluster-info&#34; ConfigMap in the &#34;kube-public&#34; namespace
 [addons] Applied essential addon: kube-dns
 [addons] Applied essential addon: kube-proxy
 
@@ -672,30 +600,25 @@ To start using your cluster, you need to run (as a regular user):
   sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 You should now deploy a pod network to the cluster.
-Run &quot;kubectl apply -f [podnetwork].yaml&quot; with one of the options listed at:
+Run &#34;kubectl apply -f [podnetwork].yaml&#34; with one of the options listed at:
   http://kubernetes.io/docs/admin/addons/
 
 You can now join any number of machines by running the following on each node
 as root:
 
-  kubeadm join --token 957b7b.eaaf0cb656edba7b 192.168.171.200:6443 --discovery-token-ca-cert-hash sha256:7d16ade2b651ebac573368b1b4db5c0f1236979584e61833efe90a96ff34ae2e
-</code></pre>
-
+  kubeadm join --token 957b7b.eaaf0cb656edba7b 192.168.171.200:6443 --discovery-token-ca-cert-hash sha256:7d16ade2b651ebac573368b1b4db5c0f1236979584e61833efe90a96ff34ae2e</code></pre></div>
 <p>できた。
 このメッセージの最後に書かれたコマンドを、後でNodeを追加するときに使う。</p>
 
 <p><br></p>
 
 <p>kubectlがこのVM上のkube-apiserverと話せるように、コンテキストを設定する。</p>
-
-<pre><code class="language-shell"># mkdir -p $HOME/.kube
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># mkdir -p $HOME/.kube
 # cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 # chown $(id -u):$(id -g) $HOME/.kube/config
 # kubectl get nodes
 NAME         STATUS     ROLES     AGE       VERSION
-k8s-master   NotReady   master    16m       v1.8.1
-</code></pre>
-
+k8s-master   NotReady   master    16m       v1.8.1</code></pre></div>
 <h2 id="podネットワークアドオンインストール">Podネットワークアドオンインストール</h2>
 
 <p>Podネットワークはアプリのデプロイの前にセットアップしておく必要がある。</p>
@@ -703,19 +626,15 @@ k8s-master   NotReady   master    16m       v1.8.1
 <p>多くの選択肢があるなか、有名な<a href="https://github.com/coreos/flannel">Flannel</a>にしようと思ったけど、Flannelを使うには
 <code>kubeadm init</code>時に<code>--pod-network-cidr=10.244.0.0/16</code>を渡さないといけなかった。
 やり直すのは面倒なので代わりに<a href="https://www.weave.works/docs/net/latest/kube-addon/">Weave Net</a>にする。</p>
-
-<pre><code class="language-shell"># export kubever=$(kubectl version | base64 | tr -d '\n')
-# kubectl apply -f &quot;https://cloud.weave.works/k8s/net?k8s-version=$kubever&quot;
-serviceaccount &quot;weave-net&quot; created
-clusterrole &quot;weave-net&quot; created
-clusterrolebinding &quot;weave-net&quot; created
-daemonset &quot;weave-net&quot; created
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># export kubever=$(kubectl version | base64 | tr -d &#39;\n&#39;)
+# kubectl apply -f &#34;https://cloud.weave.works/k8s/net?k8s-version=$kubever&#34;
+serviceaccount &#34;weave-net&#34; created
+clusterrole &#34;weave-net&#34; created
+clusterrolebinding &#34;weave-net&#34; created
+daemonset &#34;weave-net&#34; created</code></pre></div>
 <p>これでPodネットワークアドオンインストール完了。
 しばらくして、<code>kube-dns</code>のPodが起動していれば(i.e. STATUSがRunningになってれば)OK。</p>
-
-<pre><code class="language-shell"># kubectl get pods --all-namespaces
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># kubectl get pods --all-namespaces
 NAMESPACE     NAME                                 READY     STATUS    RESTARTS   AGE
 kube-system   etcd-k8s-master                      1/1       Running   0          1m
 kube-system   kube-apiserver-k8s-master            1/1       Running   0          1m
@@ -723,18 +642,13 @@ kube-system   kube-controller-manager-k8s-master   1/1       Running   0        
 kube-system   kube-dns-545bc4bfd4-xtlnh            3/3       Running   0          6m
 kube-system   kube-proxy-922wk                     1/1       Running   0          6m
 kube-system   kube-scheduler-k8s-master            1/1       Running   0          1m
-kube-system   weave-net-s2kkw                      2/2       Running   0          2m
-</code></pre>
-
+kube-system   weave-net-s2kkw                      2/2       Running   0          2m</code></pre></div>
 <h2 id="masterにpodをデプロイさせる設定">MasterにPodをデプロイさせる設定</h2>
 
 <p>デフォルトでは、セキュリティの都合でMasterコンポーネントが動くNodeにはPodがデプロイされない。
 けど、VM2個でPodを分散デプロイしてみたいので、この縛りを外しておく。</p>
-
-<pre><code class="language-shell"># kubectl taint nodes --all node-role.kubernetes.io/master-
-node &quot;k8s-master&quot; untainted
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># kubectl taint nodes --all node-role.kubernetes.io/master-
+node &#34;k8s-master&#34; untainted</code></pre></div>
 <p><br></p>
 
 <p>以上でMasterのセットアップは完了。</p>
@@ -747,15 +661,14 @@ node &quot;k8s-master&quot; untainted
 クローンしたらMACアドレスもproduct_uuidも変わったので、問題なく使えそう。</p>
 
 <p>k8s-nodeをクラスタに追加するには、このVM上で、<code>kubeadm init</code>成功時のメッセージの最後に表示されたコマンド(i.e. <code>kubeadm join</code>)を実行するだけ。</p>
-
-<pre><code class="language-shell"># kubeadm join --token 957b7b.eaaf0cb656edba7b 192.168.171.200:6443 --discovery-token-ca-cert-hash sha256:7d16ade2b651ebac573368b1b4db5c0f1236979584e61833efe90a96ff34ae2e
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># kubeadm join --token 957b7b.eaaf0cb656edba7b 192.168.171.200:6443 --discovery-token-ca-cert-hash sha256:7d16ade2b651ebac573368b1b4db5c0f1236979584e61833efe90a96ff34ae2e
 [kubeadm] WARNING: kubeadm is in beta, please do not use it for production clusters.
 [preflight] Running pre-flight checks
-[discovery] Trying to connect to API Server &quot;192.168.171.200:6443&quot;
-[discovery] Created cluster-info discovery client, requesting info from &quot;https://192.168.171.200:6443&quot;
-[discovery] Requesting info from &quot;https://192.168.171.200:6443&quot; again to validate TLS against the pinned public key
-[discovery] Cluster info signature and contents are valid and TLS certificate validates against pinned roots, will use API Server &quot;192.168.171.200:6443&quot;
-[discovery] Successfully established connection with API Server &quot;192.168.171.200:6443&quot;
+[discovery] Trying to connect to API Server &#34;192.168.171.200:6443&#34;
+[discovery] Created cluster-info discovery client, requesting info from &#34;https://192.168.171.200:6443&#34;
+[discovery] Requesting info from &#34;https://192.168.171.200:6443&#34; again to validate TLS against the pinned public key
+[discovery] Cluster info signature and contents are valid and TLS certificate validates against pinned roots, will use API Server &#34;192.168.171.200:6443&#34;
+[discovery] Successfully established connection with API Server &#34;192.168.171.200:6443&#34;
 [bootstrap] Detected server version: v1.8.1
 [bootstrap] The server supports the Certificates API (certificates.k8s.io/v1beta1)
 
@@ -764,18 +677,13 @@ Node join complete:
   received.
 * Kubelet informed of new secure connection details.
 
-Run 'kubectl get nodes' on the master to see this machine join.
-</code></pre>
-
+Run &#39;kubectl get nodes&#39; on the master to see this machine join.</code></pre></div>
 <p>できた。
 k8s-masterでNodeの状態を確認する。</p>
-
-<pre><code class="language-shell"># kubectl get nodes
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># kubectl get nodes
 NAME         STATUS    ROLES     AGE       VERSION
 k8s-master   Ready     master    42m       v1.8.1
-k8s-node     Ready     &lt;none&gt;    45s       v1.8.1
-</code></pre>
-
+k8s-node     Ready     &lt;none&gt;    45s       v1.8.1</code></pre></div>
 <p>k8s-masterもk8s-nodeもReady。</p>
 
 <h1 id="vmホストのkubectlの設定">VMホストのkubectlの設定</h1>
@@ -784,13 +692,10 @@ k8s-node     Ready     &lt;none&gt;    45s       v1.8.1
 VMのホスト(i.e. Windows 10 PC)で使えるようにしたい。</p>
 
 <p>kubectlの接続先情報は、<code>kubeadm init</code>時に生成された<code>/etc/kubernetes/admin.conf</code>に書かれているので、これをホストに持ってきてkubectlに渡してやればいい。</p>
-
-<pre><code class="language-cmd">C:\Users\kaitoy\Desktop&gt;kubectl --kubeconfig admin.conf get nodes
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">C:\Users\kaitoy\Desktop<span style="color:#999;font-style:italic">&gt;kubectl --kubeconfig admin.conf get nodes</span>
 NAME         STATUS    ROLES     AGE       VERSION
 k8s-master   Ready     master    51m       v1.8.1
-k8s-node     Ready     &lt;none&gt;    10m       v1.8.1
-</code></pre>
-
+k8s-node     Ready     &lt;none&gt;    10m       v1.8.1</code></pre></div>
 <p>できた。</p>
 
 <p>admin.confを<code>%UserProfile%\.kube\</code>の下に<code>config</code>という名前で置いてやると、<code>--kubeconfig</code>で指定しなくても読んでくれる。</p>
@@ -798,25 +703,22 @@ k8s-node     Ready     &lt;none&gt;    10m       v1.8.1
 <h1 id="goslingsデプロイ">Goslingsデプロイ</h1>
 
 <p><a href="https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/#%E7%95%AA%E5%A4%96%E7%B7%A82-%E5%91%BD%E4%BB%A4%E7%9A%84%E3%82%AA%E3%83%96%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88%E8%A8%AD%E5%AE%9A">「Kubernetesのチュートリアルをやる」の番外編</a>で作ったオブジェクト定義ファイルを使って、今回作ったクラスタに<a href="https://www.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/">Goslings</a>をデプロイしてみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">C:\Users\kaitoy\Desktop<span style="color:#999;font-style:italic">&gt;kubectl --kubeconfig admin.conf create -f deploy_goslings.yml</span>
+deployment <span style="color:#ed9d13">&#34;goslings-sample&#34;</span> created
 
-<pre><code class="language-cmd">C:\Users\kaitoy\Desktop&gt;kubectl --kubeconfig admin.conf create -f deploy_goslings.yml
-deployment &quot;goslings-sample&quot; created
+C:\Users\kaitoy\Desktop<span style="color:#999;font-style:italic">&gt;kubectl --kubeconfig admin.conf create -f service_goslings.yml</span>
+service <span style="color:#ed9d13">&#34;goslings-sample&#34;</span> created
 
-C:\Users\kaitoy\Desktop&gt;kubectl --kubeconfig admin.conf create -f service_goslings.yml
-service &quot;goslings-sample&quot; created
-
-C:\Users\kaitoy\Desktop&gt;kubectl --kubeconfig admin.conf get po -o wide
+C:\Users\kaitoy\Desktop<span style="color:#999;font-style:italic">&gt;kubectl --kubeconfig admin.conf get po -o wide</span>
 NAME                              READY     STATUS    RESTARTS   AGE       IP           NODE
 goslings-sample-dfd84c69c-4mgh9   1/1       Running   0          12m       10.244.1.3   k8s-node
 goslings-sample-dfd84c69c-cd5mm   1/1       Running   0          12m       10.244.0.3   k8s-master
 goslings-sample-dfd84c69c-nwwh7   1/1       Running   0          12m       10.244.1.2   k8s-node
 
-C:\Users\kaitoy\Desktop&gt;kubectl --kubeconfig admin.conf get svc
+C:\Users\kaitoy\Desktop<span style="color:#999;font-style:italic">&gt;kubectl --kubeconfig admin.conf get svc</span>
 NAME              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
 goslings-sample   NodePort    10.109.174.204   &lt;none&gt;        8080:30004/TCP   7m
-kubernetes        ClusterIP   10.96.0.1        &lt;none&gt;        443/TCP          1h
-</code></pre>
-
+kubernetes        ClusterIP   10.96.0.1        &lt;none&gt;        443/TCP          1h</code></pre></div>
 <p>普通にデプロイできた。
 レプリカ3つがちゃんと2つのNodeに分散されてる。</p>
 
@@ -830,14 +732,11 @@ kubernetes        ClusterIP   10.96.0.1        &lt;none&gt;        443/TCP      
 
 <p>試しにk8s-nodeのVMを落としてみる。
 k8s-node上のPodがk8s-masterに移動してくれることを期待してたけど、</p>
-
-<pre><code class="language-cmd">C:\Users\kaitoy\Desktop&gt;kubectl --kubeconfig admin.conf get po -o wide
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">C:\Users\kaitoy\Desktop<span style="color:#999;font-style:italic">&gt;kubectl --kubeconfig admin.conf get po -o wide</span>
 NAME                              READY     STATUS    RESTARTS   AGE       IP           NODE
 goslings-sample-dfd84c69c-4mgh9   1/1       Running   0          55m       10.244.1.3   k8s-node
 goslings-sample-dfd84c69c-cd5mm   1/1       Running   0          55m       10.244.0.3   k8s-master
-goslings-sample-dfd84c69c-nwwh7   1/1       Running   0          55m       10.244.1.2   k8s-node
-</code></pre>
-
+goslings-sample-dfd84c69c-nwwh7   1/1       Running   0          55m       10.244.1.2   k8s-node</code></pre></div>
 <p>なんかk8s-nodeで動き続けていることになってる。</p>
 
 <p>クラスタうまく動いていないんだろうか…</p>
@@ -845,16 +744,13 @@ goslings-sample-dfd84c69c-nwwh7   1/1       Running   0          55m       10.24
 <h1 id="ダッシュボードデプロイ">ダッシュボードデプロイ</h1>
 
 <p>Kubernetesクラスタの状態をWeb UIで確認できる、<a href="https://github.com/kubernetes/dashboard">Dashboard</a>をデプロイしてみる。</p>
-
-<pre><code class="language-cmd">C:\Users\kaitoy\Desktop&gt;kubectl --kubeconfig admin.conf apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
-secret &quot;kubernetes-dashboard-certs&quot; created
-serviceaccount &quot;kubernetes-dashboard&quot; created
-role &quot;kubernetes-dashboard-minimal&quot; created
-rolebinding &quot;kubernetes-dashboard-minimal&quot; created
-deployment &quot;kubernetes-dashboard&quot; created
-service &quot;kubernetes-dashboard&quot; created
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">C:\Users\kaitoy\Desktop<span style="color:#999;font-style:italic">&gt;kubectl --kubeconfig admin.conf apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml</span>
+secret <span style="color:#ed9d13">&#34;kubernetes-dashboard-certs&#34;</span> created
+serviceaccount <span style="color:#ed9d13">&#34;kubernetes-dashboard&#34;</span> created
+role <span style="color:#ed9d13">&#34;kubernetes-dashboard-minimal&#34;</span> created
+rolebinding <span style="color:#ed9d13">&#34;kubernetes-dashboard-minimal&#34;</span> created
+deployment <span style="color:#ed9d13">&#34;kubernetes-dashboard&#34;</span> created
+service <span style="color:#ed9d13">&#34;kubernetes-dashboard&#34;</span> created</code></pre></div>
 <p>できた。</p>
 
 <p>Dashboardが起動するまでしばらくまってから、<code>kubectl proxy</code>して、

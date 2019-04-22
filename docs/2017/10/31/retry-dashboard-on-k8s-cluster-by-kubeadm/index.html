@@ -28,7 +28,7 @@
 ので、/etc/hostsからk8s-masterとk8s-nodeのエントリを削除してから、kubeadm initからやり直してみた。
 結果 したらちゃんと動いた。
 VMのホストでkubectl proxyして、
-C:\Users\kaitoy\Desktop&gt;kubectl proxy Starting to serve on 127.0.0.1:8001  http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/にブラウザでつないだらサインイン画面が表示された。
+C:\Users\kaitoy\Desktop&gt;kubectl proxy Starting to serve on 127.0.0.1:8001 http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/にブラウザでつないだらサインイン画面が表示された。
 
 Dashboardのサインイン処理はKubernetes(というかkube-apiserver)のそれに移譲している。 Dashboardはそこで認証されたユーザでクラスタのリソースにアクセスし、情報を取得して表示する。多分。
 Dashboardへのサインイン方法はいくつかあるが、それらを理解するにはKubernetesのアクセス制御について学ぶことを推奨とあったのでちょっとKubernetesのドキュメントを読んだ。
@@ -38,7 +38,8 @@ Kubernetesが認証するユーザには、Kubernetesが管理するService Acco
 ServiceAccountはNamespaceと関連付き(つまりnamespace毎にユニーク)、Secretに紐づく。 Secretオブジェクトはクレデンシャルのセットを定義し、Podにマウントされる。 ServiceAccountとSecretは、ふつうは自動で作られ、Podに割り当てられる。
 kube-apiserverには一つ以上のAuthenticatorモジュールを設定できて、どれかで認証できれば次の段階に進める。 認証失敗するとHTTPステータスコード401が返る。
 Authenticatorモジュールには以下のようなものがある。
- クライアント証明書: X.509のディジタル証明書を使うモジュール。kube-apiserver起動時に--client-ca-fileオプションで証明書ファイルを渡してやると有効になる。証明書のCommon Nameがユーザ名になり、Organizationがグループになる。クライアント側は、その証明書と対応する秘密鍵をクレデンシャルとして指定する。 Bearer Token: 無記名トークンを使うモジュール。kube-apiserver起動時に--token-auth-fileオプションでトークン情報を渡してやると有効になる。トークン情報はCSVで、「token,user,uid,&quot;group1,group2,group3&quot;」という形式で書く。クライアント側は、トークン文字列をクレデンシャルとして指定する。 ベーシック認証: ユーザ名とパスワードで認証するモジュール。kube-apiserver起動時に--basic-auth-fileオプションでユーザ名とパスワードのリストを渡してやると有効になる。このリストはCSVで、「password,user,uid,&quot;group1,group2,group3&quot;」という形式で書く。クライアント側は、ユーザ名とパスワードをクレデンシャルとして指定する。HTTPクライアントの時はAuthorizationヘッダが使える。 Service Account Token: Service Accountを署名付きBearer Tokenで認証するモジュール。デフォルトで有効になる。  このあたり、Qiitaの「kubernetesがサポートする認証方法の全パターンを動かす」という記事をみると理解が深まる。">
+ クライアント証明書: X.509のディジタル証明書を使うモジュール。kube-apiserver起動時に--client-ca-fileオプションで証明書ファイルを渡してやると有効になる。証明書のCommon Nameがユーザ名になり、Organizationがグループになる。クライアント側は、その証明書と対応する秘密鍵をクレデンシャルとして指定する。 Bearer Token: 無記名トークンを使うモジュール。kube-apiserver起動時に--token-auth-fileオプションでトークン情報を渡してやると有効になる。トークン情報はCSVで、「token,user,uid,&quot;group1,group2,group3&quot;」という形式で書く。クライアント側は、トークン文字列をクレデンシャルとして指定する。 ベーシック認証: ユーザ名とパスワードで認証するモジュール。kube-apiserver起動時に--basic-auth-fileオプションでユーザ名とパスワードのリストを渡してやると有効になる。このリストはCSVで、「password,user,uid,&quot;group1,group2,group3&quot;」という形式で書く。クライアント側は、ユーザ名とパスワードをクレデンシャルとして指定する。HTTPクライアントの時はAuthorizationヘッダが使える。 Service Account Token: Service Accountを署名付きBearer Tokenで認証するモジュール。デフォルトで有効になる。  このあたり、Qiitaの「kubernetesがサポートする認証方法の全パターンを動かす」という記事をみると理解が深まる。
+Authorization Authenticationをパスすると、クライアントのユーザ(とグループ)が認証され、第二段階のAuthorizationモジュールの処理に移る。 ここでは、リクエストの内容(操作対象、操作種別(メソッド)等)を見て、それがユーザに許されたものなら認可する。 何を許すかは事前にクラスタにポリシーを定義しておく。">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
 
 
@@ -70,7 +71,7 @@ Authenticatorモジュールには以下のようなものがある。
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&amp;subset=japanese">
 
 
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai.min.css"> 
+
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -78,14 +79,6 @@ Authenticatorモジュールには以下のようなものがある。
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/dos.min.js"></script>  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script> 
-
-    <script>hljs.initHighlightingOnLoad();</script>
-
 
 
 
@@ -264,11 +257,8 @@ Authenticatorモジュールには以下のようなものがある。
 <p>したらちゃんと動いた。</p>
 
 <p>VMのホストで<code>kubectl proxy</code>して、</p>
-
-<pre><code class="language-cmd">C:\Users\kaitoy\Desktop&gt;kubectl proxy
-Starting to serve on 127.0.0.1:8001
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">C:\Users\kaitoy\Desktop<span style="color:#999;font-style:italic">&gt;kubectl proxy</span>
+Starting to serve on 127.0.0.1:8001</code></pre></div>
 <p><code>http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/</code>にブラウザでつないだらサインイン画面が表示された。</p>
 
 <p><img src="/images/retry-dashboard-on-k8s-cluster-by-kubeadm/dashboard.png" alt="dashboard" /></p>
@@ -365,8 +355,7 @@ ServiceAccountとSecretは、ふつうは自動で作られ、Podに割り当て
 そのいずれかのSecretのTokenを使ってDashboardへサインインできるらしい。</p>
 
 <p>以下のコマンドで<code>kube-system</code>というNamespaceのSecretを一覧できる。</p>
-
-<pre><code class="language-cmd">C:\Users\kaitoy&gt;kubectl -n kube-system get secret
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">C:\Users\kaitoy<span style="color:#999;font-style:italic">&gt;kubectl -n kube-system get secret</span>
 NAME                                     TYPE                                  DATA      AGE
 attachdetach-controller-token-skzmj      kubernetes.io/service-account-token   3         18m
 bootstrap-signer-token-mhqfh             kubernetes.io/service-account-token   3         18m
@@ -398,28 +387,23 @@ service-controller-token-9cw7k           kubernetes.io/service-account-token   3
 statefulset-controller-token-8z8w9       kubernetes.io/service-account-token   3         18m
 token-cleaner-token-cxbkc                kubernetes.io/service-account-token   3         18m
 ttl-controller-token-k7gh7               kubernetes.io/service-account-token   3         18m
-weave-net-token-lqdgm                    kubernetes.io/service-account-token   3         17m
-</code></pre>
-
+weave-net-token-lqdgm                    kubernetes.io/service-account-token   3         17m</code></pre></div>
 <p>で、適当にそれっぽいSecret、<code>deployment-controller-token-86bp9</code>を選んで、<code>kubectl describe</code>したらTokenが見れた。
 (Dataセクションの<code>token</code>のとこ。)</p>
-
-<pre><code class="language-cmd">C:\Users\kaitoy&gt;kubectl -n kube-system describe secret deployment-controller-token-86bp9
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">C:\Users\kaitoy<span style="color:#999;font-style:italic">&gt;kubectl -n kube-system describe secret deployment-controller-token-86bp9</span>
 Name:         deployment-controller-token-86bp9
 Namespace:    kube-system
 Labels:       &lt;none&gt;
 Annotations:  kubernetes.io/service-account.name=deployment-controller
               kubernetes.io/service-account.uid=17fc5207-b627-11e7-9867-000c2938deae
 
-Type:  kubernetes.io/service-account-token
+<span style="color:#6ab825;font-weight:bold">Type</span>:  kubernetes.io/service-account-token
 
 Data
 ====
 ca.crt:     1025 bytes
 namespace:  11 bytes
-token:      eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJkZXBsb3ltZW50LWNvbnRyb2xsZXItdG9rZW4tODZicDkiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiZGVwbG95bWVudC1jb250cm9sbGVyIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQudWlkIjoiMTdmYzUyMDctYjYyNy0xMWU3LTk4NjctMDAwYzI5MzhkZWFlIiwic3ViIjoic3lzdGVtOnNlcnZpY2VhY2NvdW50Omt1YmUtc3lzdGVtOmRlcGxveW1lbnQtY29udHJvbGxlciJ9.ZGV9XDd-GQjAwRuLKpdsWL_dTeF0Mr_2gF117OW4BhEuLwPujnsfOuysAQ-DUtNOp1NHKGitlfxjh6fKo4tFsdwLVJWrRK6i4YH1Mm2No7Sheks7IQn1FnwSmr7yCuvjlHD2e4RpZH0wupOFoY7FHntilhOWbXTJzJzi7TozLX02EKbkVGAsvch3LZ6p8jmUH5hr8DdKc4jbmTRp86SOiFS4_-TJ3RtAHCxiioAuKzXm3-rAWdeGLLcKrM2pAFSAGaBNu8MO5BZlAi6h3Xt4x-8-1ZXs4mudtJiECvjB-XIwiwzhpq8wIPZvvQQ-f1khixOyk1RfIXRJhIE5Gqvi8g
-</code></pre>
-
+token:      eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJkZXBsb3ltZW50LWNvbnRyb2xsZXItdG9rZW4tODZicDkiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiZGVwbG95bWVudC1jb250cm9sbGVyIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQudWlkIjoiMTdmYzUyMDctYjYyNy0xMWU3LTk4NjctMDAwYzI5MzhkZWFlIiwic3ViIjoic3lzdGVtOnNlcnZpY2VhY2NvdW50Omt1YmUtc3lzdGVtOmRlcGxveW1lbnQtY29udHJvbGxlciJ9.ZGV9XDd-GQjAwRuLKpdsWL_dTeF0Mr_2gF117OW4BhEuLwPujnsfOuysAQ-DUtNOp1NHKGitlfxjh6fKo4tFsdwLVJWrRK6i4YH1Mm2No7Sheks7IQn1FnwSmr7yCuvjlHD2e4RpZH0wupOFoY7FHntilhOWbXTJzJzi7TozLX02EKbkVGAsvch3LZ6p8jmUH5hr8DdKc4jbmTRp86SOiFS4_-TJ3RtAHCxiioAuKzXm3-rAWdeGLLcKrM2pAFSAGaBNu8MO5BZlAi6h3Xt4x-8-1ZXs4mudtJiECvjB-XIwiwzhpq8wIPZvvQQ-f1khixOyk1RfIXRJhIE5Gqvi8g</code></pre></div>
 <p>サインイン画面でTokenを選択し、
 この、<code>eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJkZXBsb3ltZW50LWNvbnRyb2xsZXItdG9rZW4tODZicDkiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiZGVwbG95bWVudC1jb250cm9sbGVyIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQudWlkIjoiMTdmYzUyMDctYjYyNy0xMWU3LTk4NjctMDAwYzI5MzhkZWFlIiwic3ViIjoic3lzdGVtOnNlcnZpY2VhY2NvdW50Omt1YmUtc3lzdGVtOmRlcGxveW1lbnQtY29udHJvbGxlciJ9.ZGV9XDd-GQjAwRuLKpdsWL_dTeF0Mr_2gF117OW4BhEuLwPujnsfOuysAQ-DUtNOp1NHKGitlfxjh6fKo4tFsdwLVJWrRK6i4YH1Mm2No7Sheks7IQn1FnwSmr7yCuvjlHD2e4RpZH0wupOFoY7FHntilhOWbXTJzJzi7TozLX02EKbkVGAsvch3LZ6p8jmUH5hr8DdKc4jbmTRp86SOiFS4_-TJ3RtAHCxiioAuKzXm3-rAWdeGLLcKrM2pAFSAGaBNu8MO5BZlAi6h3Xt4x-8-1ZXs4mudtJiECvjB-XIwiwzhpq8wIPZvvQQ-f1khixOyk1RfIXRJhIE5Gqvi8g</code>を入力したらサインインできて、GoslingsのDeploymentの情報が見れた。</p>
 
@@ -448,29 +432,23 @@ token:      eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZ
 <p><code>cluster-admin</code>というClusterRoleがあって、これを<code>kubernetes-dashboard</code>にバインドするClusterRoleBindingを作ってやればいい。</p>
 
 <p>ので、以下のようなYAMLファイルを書いて、</p>
-
-<pre><code class="language-yml">apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: ClusterRoleBinding
-metadata:
-  name: kubernetes-dashboard
-  labels:
-    k8s-app: kubernetes-dashboard
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-- kind: ServiceAccount
-  name: kubernetes-dashboard
-  namespace: kube-system
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>rbac.authorization.k8s.io/v1beta1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>ClusterRoleBinding<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>kubernetes-dashboard<span style="color:#666">
+</span><span style="color:#666">  </span>labels:<span style="color:#666">
+</span><span style="color:#666">    </span>k8s-app:<span style="color:#666"> </span>kubernetes-dashboard<span style="color:#666">
+</span><span style="color:#666"></span>roleRef:<span style="color:#666">
+</span><span style="color:#666">  </span>apiGroup:<span style="color:#666"> </span>rbac.authorization.k8s.io<span style="color:#666">
+</span><span style="color:#666">  </span>kind:<span style="color:#666"> </span>ClusterRole<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>cluster-admin<span style="color:#666">
+</span><span style="color:#666"></span>subjects:<span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span>kind:<span style="color:#666"> </span>ServiceAccount<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>kubernetes-dashboard<span style="color:#666">
+</span><span style="color:#666">  </span>namespace:<span style="color:#666"> </span>kube-system</code></pre></div>
 <p><code>kubectl</code>で投げる。</p>
-
-<pre><code class="language-cmd">C:\Users\kaitoy\Desktop&gt;kubectl create -f dashboard-admin.yml
-clusterrolebinding &quot;kubernetes-dashboard&quot; created
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">C:\Users\kaitoy\Desktop<span style="color:#999;font-style:italic">&gt;kubectl create -f dashboard-admin.yml</span>
+clusterrolebinding <span style="color:#ed9d13">&#34;kubernetes-dashboard&#34;</span> created</code></pre></div>
 <p><br></p>
 
 <p>したらServiceも見えるようになった。</p>

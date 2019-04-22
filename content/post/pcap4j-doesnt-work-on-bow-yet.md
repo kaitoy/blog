@@ -6,7 +6,7 @@ cover = "pcap4jlogo.png"
 slug = "pcap4j-doesnt-work-on-bow-yet"
 tags = [ "bow", "windows", "pcap4j" ]
 title = "Currently Pcap4J Doesn't Work on Bash on Windows"
-highlightLanguages = ["dos"]
+
 +++
 
 # TL;DR

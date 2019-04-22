@@ -6,7 +6,7 @@ cover = "hugo-logo.png"
 slug = "using-hugo"
 tags = [ "blog", "github", "hugo" ]
 title = "GitHub Pagesでブログ立ち上げ - Hugoを使う"
-highlightLanguages = ["dos"]
+
 +++
 
 [__GitHub Pagesでブログ立ち上げ - Jekyllのためのツール__](https://www.kaitoy.xyz/2015/08/25/tools-for-jekyll/)の続き。
@@ -34,7 +34,7 @@ Hugoは、国内では2014年末くらいから盛り上がってきているブ
 このhugo_0.14_windows_amd64.exeがHugoのすべてなので、これを適当な場所において実行できるようにしとけばよい。
 今回は、__hugo.bat__というファイルに以下の内容を書き、PATHの通ったフォルダにいれた。
 
-```dos
+```dosbatch
 @echo off
 C:\Users\Kaito\Desktop\tool\hugo_0.14_windows_amd64\hugo_0.14_windows_amd64.exe %*
 ```

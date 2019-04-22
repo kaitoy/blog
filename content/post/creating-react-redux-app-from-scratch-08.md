@@ -31,7 +31,7 @@ Middlewareの仕組みについては[この記事](https://qiita.com/pirosikick
 Middlewareには例えば、発生したActionの内容と、それによるstateの変化をログに出力する[redux-logger](https://github.com/evgenyrodionov/redux-logger)がある。
 デバッグに有用そうなので入れておく。
 
-```shell
+```tch
 yarn add redux-logger
 ```
 
@@ -65,7 +65,7 @@ Middlewareは、Reduxの`applyMiddleware()`というAPIを使って、`createSto
 これで、HOGEボタンをクリックしたときにコンソールに以下のようなログが出るようになる。
 (ログは`yarn start`とかの開発モードの時だけでる。)
 
-```
+```plain
 action HOGE_BUTTON_CLICKED @ 23:19:35.190
  prev state Object { hoge: {…} }
  action Object { type: "HOGE_BUTTON_CLICKED", payload: undefined }
@@ -76,7 +76,7 @@ action HOGE_BUTTON_CLICKED @ 23:19:35.190
 
 非同期処理をするためのMiddlewareには[redux-thunk](https://github.com/reduxjs/redux-thunk)とか[redux-promise](https://github.com/redux-utilities/redux-promise)とかがあるけど、なかでもGitHubのスター数が一番多い[Redux Saga](https://redux-saga.js.org/)を使うことにする。
 
-```shell
+```tch
 yarn add redux-saga
 ```
 
@@ -121,7 +121,7 @@ REST API呼び出し処理は`call()`で実行するわけだけど、`call()`�
 ざっと調べたところ、[axios](https://www.npmjs.com/package/axios)、[SuperAgent](https://www.npmjs.com/package/superagent)、[r2](https://www.npmjs.com/package/r2)あたりが選択肢。
 最も人気のあるaxiosを使うことにする。
 
-```shell
+```tch
 yarn add axios
 ```
 

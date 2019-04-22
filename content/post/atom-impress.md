@@ -93,7 +93,7 @@ impressパッケージは、新規資料プロジェクトの雛形生成機能�
 これを使ってimpressパッケージを構成しなおしてみたら件の問題が解決した。
 因みにやりかたは、impressパッケージプロジェクトのルートに`impress.js`というフォルダを作った後、以下のコマンドを実行しただけ。
 
-```shell
+```tch
 # git subtree add --prefix impress.js git@github.com:kaitoy/impress.js.git master --squash
 ```
 

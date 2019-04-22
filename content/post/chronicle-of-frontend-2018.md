@@ -25,7 +25,7 @@ __1990年代前半__、まだWebアプリケーションという言葉が無か
 
 <br>
 
-```
+```plain
 /var/www/html/
     |
     +-- index.html
@@ -77,7 +77,7 @@ public void doGet(
 プログラムでHTMLを書き出すことにより、かなり動的な感じにはなったが、書き出す処理を書くのがめんどくさすぎるし、読みにくい。
 そのため、__1990年代後半から2000年代初頭__ にかけ、HTMLを主体にして、そのなかの動的な部分だけにプログラムを埋め込む技術がいくつも生まれた。
 
-```jsp
+```plain
 <%@ page contentType="text/html %>
 
 <html>
@@ -103,7 +103,7 @@ __1990年代後半__、クライアントサイドのJavaScriptでHTMLドキュ�
 DHTMLの肝はJavaScriptの[DOM](https://ja.wikipedia.org/wiki/Document_Object_Model) APIだ。
 このAPIでは、HTML文書が各要素(タグなど)をノードとするツリー構造(DOMツリー)で表され、任意の要素を検索して取得したり、属性などを書き換えたり、要素の追加・削除ができる。
 
-```javascript
+```html
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
   <head>

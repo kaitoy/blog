@@ -73,7 +73,7 @@ Atomを起動して、Ctrl&#43;Shift&#43;Pでコマンドパレットを開い�
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&amp;subset=japanese">
 
 
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai.min.css"> 
+
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -81,14 +81,6 @@ Atomを起動して、Ctrl&#43;Shift&#43;Pでコマンドパレットを開い�
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-
-    
-
-    <script>hljs.initHighlightingOnLoad();</script>
-
 
 
 
@@ -336,15 +328,13 @@ Package Generatorがサンプルコードを書いてくれているので、そ
 </ul>
 
 <p>JapaneseWordSelectionには、activateとdeactivateを実装して、前者の中でワード境界判定処理をいじり、後者の中で元に戻すようにする。つまり、japanese-word-selection.coffeeはだいたい以下のようなコードになる。</p>
-
-<pre><code class="language-coffeescript">module.exports = JapaneseWordSelection =
-
-  activate: -&gt;
-    # ワード境界判定処理を日本語対応させる。
-
-  deactivate: -&gt;
-    # ワード境界判定処理を元に戻す。
-</code></pre></li>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-coffeescript" data-lang="coffeescript"><span style="color:#40ffff">module.exports = JapaneseWordSelection =
+</span><span style="color:#40ffff"></span>
+  <span style="color:#40ffff">activate: </span><span style="color:#447fcf">-&gt;</span>
+    <span style="color:#999;font-style:italic"># ワード境界判定処理を日本語対応させる。
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#40ffff">deactivate: </span><span style="color:#447fcf">-&gt;</span>
+    <span style="color:#a61717;background-color:#e3d2d2">#</span> <span style="color:#a61717;background-color:#e3d2d2">ワード境界判定処理を元に戻す。</span></code></pre></div></li>
 
 <li><p>メインスクリプト編集 - activate</p>
 
@@ -353,74 +343,63 @@ Package Generatorがサンプルコードを書いてくれているので、そ
 <p>パッケージのスクリプトからは、Atomクラスのインスタンスである <strong>atom</strong> というグローバル変数が使えて、これを入り口にAtomウィンドウ内の各要素のViewModelオブジェクトをいじることができる。</p>
 
 <p>イベントを扱うときには、<a href="https://atom.io/docs/api/v1.0.7/CompositeDisposable">CompositeDisposable</a>が便利。これを使うと、以下のようにして、ViewModelオブジェクトとかに登録したイベントハンドラを後で簡単に削除できる。</p>
-
-<pre><code class="language-coffeescript">@disposables = new CompositeDisposable
-editor = atom.workspace.getActiveTextEditor()
-@disposables.add editor.onDidChange -&gt;  # editorにイベントハンドラを登録。
-@disposables.add editor.onDidChangePath -&gt;  # editorに別のイベントハンドラを登録。
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-coffeescript" data-lang="coffeescript">@disposables = <span style="color:#6ab825;font-weight:bold">new</span> CompositeDisposable
+<span style="color:#40ffff">editor = </span>atom.workspace.getActiveTextEditor()
+@disposables.add editor.onDidChange <span style="color:#447fcf">-&gt;</span>  <span style="color:#999;font-style:italic"># editorにイベントハンドラを登録。
+</span><span style="color:#999;font-style:italic"></span>@disposables.add editor.onDidChangePath <span style="color:#447fcf">-&gt;</span>  <span style="color:#999;font-style:italic"># editorに別のイベントハンドラを登録。
+</span><span style="color:#999;font-style:italic"></span>
 (snip)
 
-@disposables.dispose()  # 全てのイベントハンドラを削除。
-</code></pre>
-
+@disposables.dispose()  <span style="color:#a61717;background-color:#e3d2d2">#</span> <span style="color:#a61717;background-color:#e3d2d2">全てのイベントハンドラを削除。</span></code></pre></div>
 <p>JapaneseWordSelection#activate()では、<a href="https://atom.io/docs/api/v1.0.7/Workspace#instance-observeTextEditors">atom.workspace.observeTextEditors(callback)</a>というAPIを利用して<a href="https://atom.io/docs/api/v1.0.7/TextEditor">TextEditor</a>オブジェクトを取得して、それが持っている<a href="https://atom.io/docs/api/v1.0.7/Cursor">Cursor</a>オブジェクトの振る舞いを変更する。
 この、observeXXXXというAPIは他にもいろいろあって、実行すると既存の全てのXXXXのインスタンスをcallbackに渡してくれて、さらに、それ以降XXXXのインスタンスが作られるたびにcallbackを呼び出すイベントハンドラを登録してくれる。</p>
 
 <p>このobserveXXXXとかに上記CompositeDisposableが使えて、observeXXXXの場合、その戻り値をCompositeDisposableにaddしておくと、後でCompositeDisposable#dispose()でイベントハンドラを削除できる。</p>
 
 <p>まとめると、JapaneseWordSelection#activate()は以下のようになる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-coffeescript" data-lang="coffeescript"><span style="color:#40ffff">module.exports = JapaneseWordSelection =
+</span><span style="color:#40ffff"></span>
+  <span style="color:#40ffff">disposables: </span><span style="color:#6ab825;font-weight:bold">null</span>
 
-<pre><code class="language-coffeescript">module.exports = JapaneseWordSelection =
+  <span style="color:#40ffff">activate: </span><span style="color:#447fcf">-&gt;</span>
+    @disposables = <span style="color:#6ab825;font-weight:bold">new</span> CompositeDisposable
+    @disposables.add atom.workspace.observeTextEditors <span style="color:#447fcf">(editor) -&gt;</span>
+      JapaneseWordSelection.japanizeWordBoundary(editor, cursor) <span style="color:#6ab825;font-weight:bold">for</span> cursor <span style="color:#6ab825;font-weight:bold">in</span> editor.getCursors()
 
-  disposables: null
-
-  activate: -&gt;
-    @disposables = new CompositeDisposable
-    @disposables.add atom.workspace.observeTextEditors (editor) -&gt;
-      JapaneseWordSelection.japanizeWordBoundary(editor, cursor) for cursor in editor.getCursors()
-
-  japanizeWordBoundary: (editor, cursor) -&gt;
-    # Cursorオブジェクトの振る舞いを変更する処理
-</code></pre>
-
+  <span style="color:#40ffff">japanizeWordBoundary: </span><span style="color:#447fcf">(editor, cursor) -&gt;</span>
+    <span style="color:#a61717;background-color:#e3d2d2">#</span> Cursorオブジェクトの振る舞いを変更する処理</code></pre></div>
 <p>(今見ると、Cursorの方もobserveした方がいいか。後で直そう。)</p></li>
 
 <li><p>メインスクリプト編集 - deactivate</p>
 
 <p>JapaneseWordSelection#deactivate()は、追加したイベントハンドラを削除して、全てのCursorオブジェクトの振る舞いを元に戻すだけ。</p>
-
-<pre><code class="language-coffeescript">  deactivate: -&gt;
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-coffeescript" data-lang="coffeescript">  <span style="color:#40ffff">deactivate: </span><span style="color:#447fcf">-&gt;</span>
     @disposables.dispose()
-    for i, editor of atom.workspace.getTextEditors()
-      for j, cursor of editor.getCursors()
-        # Cursorオブジェクトの振る舞いを元に戻す処理
-</code></pre></li>
+    <span style="color:#6ab825;font-weight:bold">for</span> i, editor <span style="color:#6ab825;font-weight:bold">of</span> atom.workspace.getTextEditors()
+      <span style="color:#6ab825;font-weight:bold">for</span> j, cursor <span style="color:#6ab825;font-weight:bold">of</span> editor.getCursors()
+        <span style="color:#a61717;background-color:#e3d2d2">#</span> Cursorオブジェクトの振る舞いを元に戻す処理</code></pre></div></li>
 
 <li><p>package.json編集</p>
 
 <p>package.jsonは、Package Generatorが以下のようなひな形を作ってくれている。</p>
-
-<pre><code class="language-json">{
-  &quot;name&quot;: &quot;japanese-word-selection&quot;,
-  &quot;main&quot;: &quot;./lib/japanese-word-selection&quot;,
-  &quot;version&quot;: &quot;0.0.0&quot;,
-  &quot;description&quot;: &quot;A short description of your package&quot;,
-  &quot;keywords&quot;: [
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
+  <span style="color:#6ab825;font-weight:bold">&#34;name&#34;</span>: <span style="color:#ed9d13">&#34;japanese-word-selection&#34;</span>,
+  <span style="color:#6ab825;font-weight:bold">&#34;main&#34;</span>: <span style="color:#ed9d13">&#34;./lib/japanese-word-selection&#34;</span>,
+  <span style="color:#6ab825;font-weight:bold">&#34;version&#34;</span>: <span style="color:#ed9d13">&#34;0.0.0&#34;</span>,
+  <span style="color:#6ab825;font-weight:bold">&#34;description&#34;</span>: <span style="color:#ed9d13">&#34;A short description of your package&#34;</span>,
+  <span style="color:#6ab825;font-weight:bold">&#34;keywords&#34;</span>: [
   ],
-  &quot;activationCommands&quot;: {
-    &quot;atom-workspace&quot;: &quot;japanese-word-selection:toggle&quot;
+  <span style="color:#6ab825;font-weight:bold">&#34;activationCommands&#34;</span>: {
+    <span style="color:#6ab825;font-weight:bold">&#34;atom-workspace&#34;</span>: <span style="color:#ed9d13">&#34;japanese-word-selection:toggle&#34;</span>
   },
-  &quot;repository&quot;: &quot;https://github.com/atom/japanese-word-selection&quot;,
-  &quot;license&quot;: &quot;MIT&quot;,
-  &quot;engines&quot;: {
-    &quot;atom&quot;: &quot;&gt;=1.0.0 &lt;2.0.0&quot;
+  <span style="color:#6ab825;font-weight:bold">&#34;repository&#34;</span>: <span style="color:#ed9d13">&#34;https://github.com/atom/japanese-word-selection&#34;</span>,
+  <span style="color:#6ab825;font-weight:bold">&#34;license&#34;</span>: <span style="color:#ed9d13">&#34;MIT&#34;</span>,
+  <span style="color:#6ab825;font-weight:bold">&#34;engines&#34;</span>: {
+    <span style="color:#6ab825;font-weight:bold">&#34;atom&#34;</span>: <span style="color:#ed9d13">&#34;&gt;=1.0.0 &lt;2.0.0&#34;</span>
   },
-  &quot;dependencies&quot;: {
+  <span style="color:#6ab825;font-weight:bold">&#34;dependencies&#34;</span>: {
   }
-}
-</code></pre>
-
+}</code></pre></div>
 <p>これに以下の編集を加える。</p>
 
 <ul>
@@ -431,27 +410,24 @@ editor = atom.workspace.getActiveTextEditor()
 </ul>
 
 <p>これだけ。以下のようになる。</p>
-
-<pre><code class="language-json">{
-  &quot;name&quot;: &quot;japanese-word-selection&quot;,
-  &quot;main&quot;: &quot;./lib/japanese-word-selection&quot;,
-  &quot;version&quot;: &quot;0.0.0&quot;,
-  &quot;description&quot;: &quot;Japanize word boundary.&quot;,
-  &quot;keywords&quot;: [
-    &quot;japanese&quot;,
-    &quot;selection&quot;,
-    &quot;word&quot;
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
+  <span style="color:#6ab825;font-weight:bold">&#34;name&#34;</span>: <span style="color:#ed9d13">&#34;japanese-word-selection&#34;</span>,
+  <span style="color:#6ab825;font-weight:bold">&#34;main&#34;</span>: <span style="color:#ed9d13">&#34;./lib/japanese-word-selection&#34;</span>,
+  <span style="color:#6ab825;font-weight:bold">&#34;version&#34;</span>: <span style="color:#ed9d13">&#34;0.0.0&#34;</span>,
+  <span style="color:#6ab825;font-weight:bold">&#34;description&#34;</span>: <span style="color:#ed9d13">&#34;Japanize word boundary.&#34;</span>,
+  <span style="color:#6ab825;font-weight:bold">&#34;keywords&#34;</span>: [
+    <span style="color:#ed9d13">&#34;japanese&#34;</span>,
+    <span style="color:#ed9d13">&#34;selection&#34;</span>,
+    <span style="color:#ed9d13">&#34;word&#34;</span>
   ],
-  &quot;repository&quot;: &quot;https://github.com/kaitoy/japanese-word-selection&quot;,
-  &quot;license&quot;: &quot;MIT&quot;,
-  &quot;engines&quot;: {
-    &quot;atom&quot;: &quot;&gt;=1.0.0 &lt;2.0.0&quot;
+  <span style="color:#6ab825;font-weight:bold">&#34;repository&#34;</span>: <span style="color:#ed9d13">&#34;https://github.com/kaitoy/japanese-word-selection&#34;</span>,
+  <span style="color:#6ab825;font-weight:bold">&#34;license&#34;</span>: <span style="color:#ed9d13">&#34;MIT&#34;</span>,
+  <span style="color:#6ab825;font-weight:bold">&#34;engines&#34;</span>: {
+    <span style="color:#6ab825;font-weight:bold">&#34;atom&#34;</span>: <span style="color:#ed9d13">&#34;&gt;=1.0.0 &lt;2.0.0&#34;</span>
   },
-  &quot;dependencies&quot;: {
+  <span style="color:#6ab825;font-weight:bold">&#34;dependencies&#34;</span>: {
   }
-}
-</code></pre>
-
+}</code></pre></div>
 <p><strong>version</strong> はパッケージリリース(パブリッシュ)時に自動でインクリメントされるので、0.0.0のままほっておく。</p>
 
 <p><strong>dependencies</strong> には依存するnpmパッケージを定義できるが、japanese-word-selectionは一人で動くので何も書かない。
@@ -503,12 +479,11 @@ Atomのドキュメントによると、今のところ、GitHubへのソース�
 
 <p>私の場合、初回だったので、コマンド実行中にatom.ioのアカウントを作ってAPIトークンを取得する手順があった。
 以下がコマンドのメッセージ。</p>
-
-<pre><code class="language-shell"># cd japanese-word-selection
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># cd japanese-word-selection
 # apm publish minor
 Welcome to Atom!
 
-Before you can publish packages, you'll need an API token.
+Before you can publish packages, you&#39;ll need an API token.
 
 Visit your account page on Atom.io https://atom.io/account,
 copy the token and paste it below when prompted.
@@ -521,9 +496,7 @@ Preparing and tagging a new version done
 Pushing v0.1.0 tag done
 Publishing japanese-word-selection@v0.1.0 done
 Congrats on publishing a new package!
-Check it out at https://atom.io/packages/japanese-word-selection
-</code></pre>
-
+Check it out at https://atom.io/packages/japanese-word-selection</code></pre></div>
 <p><a href="https://atom.io/packages/japanese-word-selection">https://atom.io/packages/japanese-word-selection</a> に行ったらちゃんとjapanese-word-selectionのページができていた。
 これでパブリッシュまで完了。</p>
 

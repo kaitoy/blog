@@ -62,7 +62,7 @@ CSSの処理にはPostCSSを使うとして、プロジェクトに以下のパ�
 * stylelint-config-standard: stylelintのルール設定集。
 * stylelint-config-prettier: [Prettier](https://prettier.io/)が施すコード整形とコンフリクトするルールを無効にするstylelintルール設定集。
 
-```shell
+```tch
 yarn add -D css-loader style-loader postcss-loader postcss-preset-env autoprefixer postcss-flexbugs-fixes cssnano stylelint stylelint-config-standard stylelint-config-prettier
 ```
 
@@ -174,7 +174,7 @@ ReactによるUIコンポーネントごとにCSSモジュールを作り、コ�
 CSS Modulesを使うには、[babel-plugin-react-css-modules](https://github.com/gajus/babel-plugin-react-css-modules)というBabelのプラグインをセットアップすればいい。
 まずはそれをプロジェクトにインストールする。
 
-```shell
+```tch
 yarn add -D babel-plugin-react-css-modules
 ```
 
@@ -269,7 +269,7 @@ styled-componentsを使う場合、プロジェクトに追加する必要があ
 * styled-components: styled-components本体。
 * [babel-plugin-styled-components](https://github.com/styled-components/babel-plugin-styled-components): styled-componentsのサポートを強化するBabelプラグイン。実際には必須ではないけど、バンドルサイズを削減出来たり、SSRしやすくなったりする。ベンダプレフィックスの付与とかミニファイもしてくれる。
 
-```shell
+```tch
 yarn add styled-components
 yarn add -D babel-plugin-styled-components
 ```
@@ -338,7 +338,7 @@ JavaScriptの構文としては単なる文字列なので、変数を使った�
 * [stylelint-config-styled-components](https://github.com/styled-components/stylelint-config-styled-components): stylelint-processor-styled-componentsを使うのに必要なstylelint設定集。
 * [stylelint-custom-processor-loader](https://github.com/emilgoldsmith/stylelint-custom-processor-loader): stylelintでカスタムプロセッサを使う場合に必要なwebpackのローダ。
 
-```shell
+```tch
 yarn add -D stylelint stylelint-config-standard stylelint-processor-styled-components stylelint-config-styled-components stylelint-custom-processor-loader
 ```
 

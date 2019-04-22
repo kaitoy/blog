@@ -53,7 +53,7 @@ FacebookはReact用のウィジェットすら提供していない。
 Reactは[npm](https://www.npmjs.com/)でも提供されていて、Atomパッケージの開発に簡単に使える。
 パッケージの`package.json`の`dependencies`に[react](https://www.npmjs.com/package/react)と[react-dom](https://www.npmjs.com/package/react-dom)を入れておけば、パッケージコード中で以下の様に仮想DOMを作れるようになる。
 
-```javascript
+```jsx
 var React = require('react');
 var ReactDOM = require('react-dom');
 
@@ -77,7 +77,7 @@ npmコマンドはAtomに同梱されているので別途インストールは�
 
     任意の場所で、
 
-    ```shell
+    ```tch
     # npm install -g babel-cli
     ```
 
@@ -98,7 +98,7 @@ npmコマンドはAtomに同梱されているので別途インストールは�
     `.babelrc`に書いた`presets`の値は、コンパイルにReactプラグインを使うという意味。
     なので、以下のコマンドでReactプラグインを(ローカルに)インストールする必要がある。
 
-    ```shell
+    ```tch
     # cd <.babelrcを置いたフォルダ>
     # npm install babel-preset-react
     ```
@@ -107,7 +107,7 @@ npmコマンドはAtomに同梱されているので別途インストールは�
 
     `babel`コマンドでコンパイルを実行する。例えば以下を実行すると、
 
-    ```shell
+    ```tch
     # cd <.babelrcを置いたフォルダ>
     # babel src -d lib
     ```
@@ -173,7 +173,7 @@ JavaScript + JSXで書かないといけない。
 # Minified exception
 React周りでバグを作りこんでエラーが発生した場合、コンソールに以下のようなエラーメッセージが出ることがある。
 
-```
+```plain
 Uncaught Error: Minified exception occured; use the non-minified dev environment for the full error message and additional helpful warnings.
 ```
 

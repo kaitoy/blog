@@ -42,7 +42,7 @@ TypeScript vs Flow 個人的には、静的型付けだけを目的にするな�
 そんな問題に対応する技術がCode Splitting。 バンドルを分割し、(理想的には)必要な時に必要な分だけロードする技術。
 Code Splittingのやりかたはいくつかあるが、ダイナミックインポートとReact.lazyとReact Suspenseとwebpackのプリフェッチディレクティブを使ったやつを、フォントモジュールに適用してみる。
 src/components/App.jsx:
--import React from &#39;react&#39;; +import React, { Suspense } from &#39;react&#39;; import { Route, Redirect } from &#39;react-router-dom&#39;; import Home from &#39;./Home&#39;; -import Fonts from &#39;../fonts&#39;; +const Fonts = React.lazy(() =&amp;gt; import(/* webpackPrefetch: true */ &#39;../fonts&#39;)); const App = () =&amp;gt; ( &amp;lt;div&amp;gt; &amp;lt;Route exact path=&amp;quot;/&amp;quot; render={() =&amp;gt; &amp;lt;Redirect to=&amp;quot;/home&amp;quot; /&amp;gt;} /&amp;gt; &amp;lt;Route exact path=&amp;quot;/home&amp;quot; component={Home} /&amp;gt; - &amp;lt;Fonts /&amp;gt; + &amp;lt;Suspense fallback={&amp;lt;div /&amp;gt;}&amp;gt; + &amp;lt;Fonts /&amp;gt; + &amp;lt;/Suspense&amp;gt; &amp;lt;/div&amp;gt; ); export default App;  コード変更はこれだけ。</description>
+-import React from &amp;#39;react&amp;#39;; +import React, { Suspense } from &amp;#39;react&amp;#39;;  import { Route, Redirect } from &amp;#39;react-router-dom&amp;#39;; import Home from &amp;#39;./Home&amp;#39;; -import Fonts from &amp;#39;../fonts&amp;#39;;  +const Fonts = React.lazy(() =&amp;gt; import(/* webpackPrefetch: true */ &amp;#39;../fonts&amp;#39;));  const App = () =&amp;gt; ( &amp;lt;div&amp;gt; &amp;lt;Route exact path=&amp;#34;/&amp;#34; render={() =&amp;gt; &amp;lt;Redirect to=&amp;#34;/home&amp;#34; /&amp;gt;} /&amp;gt; &amp;lt;Route exact path=&amp;#34;/home&amp;#34; component={Home} /&amp;gt; - &amp;lt;Fonts /&amp;gt; + &amp;lt;Suspense fallback={&amp;lt;div /&amp;gt;}&amp;gt; + &amp;lt;Fonts /&amp;gt; + &amp;lt;/Suspense&amp;gt;  &amp;lt;/div&amp;gt; ); export default App;  コード変更はこれだけ。</description>
     </item>
     
     <item>
@@ -66,7 +66,7 @@ location.hash = newHash;  こういう処理を、例えばWeb UIのボタンを
 そのあと、ブラウザの戻るボタンなんかを押されると書き換える前のURLにもどるわけだけど、これを検知するためにsetInterval()とかで定期的にlocation.hashを監視してたりした。
 History APIによるルーティング ハッシュベースのルーティングは見るからにしょぼい。 URLのハッシュ以降しか使えないのもしょぼいし、内部の処理も泥臭い。
 これが、HTML 5でHistory APIがでて変わった。 History APIはJavaScriptのAPIで、ブラウザの履歴を操作できる。
-const state = { hoge: &amp;quot;hogeee&amp;quot; }; history.pushState(state, &amp;quot;&amp;quot;, &amp;quot;/foo/bar&amp;quot;);  こんな感じのを実行すると、URLが/foo/barに変わる。(が、もちろんサーバにはリクエストは飛ばない。) で、ブラウザの戻るボタンを押すと、popstateイベントが発生するので、それにイベントハンドラを登録しておけば、もとのURLに戻った時にも適時画面を書き換えられる。 popstateイベントからは、pushState()に渡したstateオブジェクトを取得できる。
+const state = { hoge: &amp;#34;hogeee&amp;#34; }; history.pushState(state, &amp;#34;&amp;#34;, &amp;#34;/foo/bar&amp;#34;);  こんな感じのを実行すると、URLが/foo/barに変わる。(が、もちろんサーバにはリクエストは飛ばない。) で、ブラウザの戻るボタンを押すと、popstateイベントが発生するので、それにイベントハンドラを登録しておけば、もとのURLに戻った時にも適時画面を書き換えられる。 popstateイベントからは、pushState()に渡したstateオブジェクトを取得できる。
 
 ところで、ブラウザのアドレスバーに/foo/barを直打ちするとどうなるかというと、普通にWebサーバを設定しておくと、/foo/bar/index.htmlを返そうとして、無いので404エラーになっちゃう。 ので、サーバ設定では、どのURLも同じリソース(e.g. /index.</description>
     </item>
@@ -83,10 +83,10 @@ const state = { hoge: &amp;quot;hogeee&amp;quot; }; history.pushState(state, &am
    (adsbygoogle = window.adsbygoogle || []).push({});  ReduxのMiddleware Redux単体では同期的なデータフローしか実装できない。 つまり、Actionを発生させたら、即座にディスパッチされ、stateが更新される。 一方、非同期なフローとは、REST APIを呼んでその結果でstateを更新するような処理。 REST API呼び出しが非同期なわけだが、これをReduxのピュアなフローのどこで実行するのかというと、Middlewareで実行する。
 MiddlewareはStoreのdispatch()をラップして、Actionをトラップして副作用を含む任意の処理をするための機能。 Middlewareの仕組みについてはこの記事が分かりやすい。
 Middlewareには例えば、発生したActionの内容と、それによるstateの変化をログに出力するredux-loggerがある。 デバッグに有用そうなので入れておく。
-yarn add redux-logger  v3.0.6が入った。
+yarn add redux-logger v3.0.6が入った。
 Middlewareは、ReduxのapplyMiddleware()というAPIを使って、createStore()実行時に適用できる。
 src/configureStore.js:
--import { createStore } from &#39;redux&#39;; +import { createStore, applyMiddleware } from &#39;redux&#39;; +import { logger } from &#39;redux-logger&#39;; import rootReducer from &#39;./reducers/rootReducer&#39;; export default function configureStore(initialState = {}) { + const middlewares = []; + if (process.</description>
+-import { createStore } from &amp;#39;redux&amp;#39;; +import { createStore, applyMiddleware } from &amp;#39;redux&amp;#39;; +import { logger } from &amp;#39;redux-logger&amp;#39;;  import rootReducer from &amp;#39;./reducers/rootReducer&amp;#39;; export default function configureStore(initialState = {}) { + const middlewares = []; + if (process.</description>
     </item>
     
     <item>
@@ -100,7 +100,7 @@ src/configureStore.js:
 (2018/11/21更新)
    (adsbygoogle = window.adsbygoogle || []).push({});  React Redux 前回はReduxをセットアップして、ActionをStoreにディスパッチしてstateを更新できるようになった。 今回はこれをReactにつなぐ。
 使うのはReact Redux。
-yarn add react-redux  v5.1.1が入った。
+yarn add react-redux v5.1.1が入った。
 Presentational Components と Container Components React Reduxの使い方を理解するには、Presentational Components と Container Components という概念を知らないといけない。 これはReactコンポーネントを役割別に分ける考え方で、それぞれ以下のような特徴をもつ。
     Presentational Components Container Components     主な役割 DOMをレンダリングする データを取得したりstateを更新したりする(Reduxとつなぐ)   Reduxとの関連 無し 有り   データの読み込み propsから読む Reduxのstateオブジェクトから読む   データの更新 propsで渡されたコールバックを呼ぶ ReduxのActionをディスパッチする   作り方 自前で書く React Reduxで生成する</description>
     </item>
@@ -124,11 +124,11 @@ ReduxではFluxのDispatcher辺りがReducerに置き換わっている。 Reduc
 また、ReduxからはViewが切り離されていて、Actionによってstateを更新する状態管理ライブラリの役割に徹している。 ReactコンポーネントのイベントハンドラからActionオブジェクトを生成したり、更新したstateをReactに渡したりするつなぎ目は、別途React Reduxというライブラリが担当する。
 ReduxとReact Reduxについては、Qiitaの「たぶんこれが一番分かりやすいと思います React + Redux のフロー図解」という記事が分かりやすい。
 今回はReduxを導入する。
-yarn add redux  Redux v4.0.1が入った。
+yarn add redux Redux v4.0.1が入った。
 以降、現時点で唯一のUIコンポーネントであるHOGEボタンの状態管理を実装してみる。
 Action まずActionを実装する。
 Actionオブジェクトはどんな形式でもいいけど、普通はFlux Standard Action(FSA)にする。 FSAは以下のプロパティを持つプレーンオブジェクト。
- type: Action種別を示す文字列定数。必須。 payload: Actionの情報を示す任意の型の値。任意。 error: Actionがエラーを表すものかを示す boolean プロパティ。エラーなら true にして、payload にエラーオブジェクトをセットする。任意。 meta: その他の情報を入れる任意の型の値。任意。  Actionのコードは、Actionのtypeに入れる値を定義するactionTypes.jsと、Action Creator(i.e. Actionオブジェクトを生成する関数)を定義するactions.</description>
+ type: Action種別を示す文字列定数。必須。 payload: Actionの情報を示す任意の型の値。任意。 error: Actionがエラーを表すものかを示す boolean プロパティ。エラーなら true にして、payload にエラーオブジェクトをセットする。任意。 meta: その他の情報を入れる任意の型の値。任意。  Actionのコードは、Actionのtypeに入れる値を定義するactionTypes.jsと、Action Creator(i.e. Actionオブジェクトを生成する関数)を定義するactions.jsからなり、ともにsrc/actions/に置く。</description>
     </item>
     
     <item>
@@ -145,11 +145,11 @@ Actionオブジェクトはどんな形式でもいいけど、普通はFlux Sta
  Material-UI: GoogleのマテリアルデザインのReact実装。 Semantic UI React: Semantic UIのReactバインディング。 antd: Ant DesignのReact実装。 Blueprint: 複雑でデータ量の多いUI向けに作られたReact UIツールキット。 React-Bootstrap: BootstrapのReactバインディング。現時点ではv4未対応。 Grommet: HPEによるエンタープライズレディなデザインシステム。 Office UI Fabric React: OfficeなどのMicrosoft製品に使われているReactコンポーネントセット。  
 今回はこの中でも圧倒的に人気なMaterial-UIを導入する。
 Material-UI Material-UIは簡単に使える。 とりあえずコアパッケージをインストールする。
-yarn add @material-ui/core  v3.5.1が入った。
+yarn add @material-ui/core v3.5.1が入った。
 
 あとはパッケージに入っている色々なコンポーネントをMaterial-UIのドキュメント見ながら使えばいいだけ。
 src/components/App.jsx:
-import React from &#39;react&#39;; import styled from &#39;styled-components&#39;; +import Button from &#39;@material-ui/core/Button&#39;; const Wrapper = styled.</description>
+import React from &amp;#39;react&amp;#39;; import styled from &amp;#39;styled-components&amp;#39;; +import Button from &amp;#39;@material-ui/core/Button&amp;#39;;  const Wrapper = styled.</description>
     </item>
     
     <item>
@@ -194,14 +194,14 @@ Prettierは2017年1月にリリースされた新しいツール。 構文解析
 JavaScriptの他、JSX、CSS、Markdown、GraphQLのフォーマットにも対応している。
 
 まずプロジェクトにインストールする。
-yarn add -D prettier  v1.15.2が入った。
+yarn add -D prettier v1.15.2が入った。
 
 設定はprettier.config.jsというファイルを書いてプロジェクトルートに置けばいい。
 prettier.config.js:
-module.exports = { printWidth: 100, // 行の最大長 tabWidth: 2, // インデント長 singleQuote: true, // 文字列をシングルクオートで囲う trailingComma: &#39;all&#39;, // オブジェクトのプロパティとか関数の引数を複数行で書いたときに、全行の末尾にカンマをつける };  
+module.exports = { printWidth: 100, // 行の最大長  tabWidth: 2, // インデント長  singleQuote: true, // 文字列をシングルクオートで囲う  trailingComma: &amp;#39;all&amp;#39;, // オブジェクトのプロパティとか関数の引数を複数行で書いたときに、全行の末尾にカンマをつける };  
 また、フォーマット対象外のファイルを指定するファイルである.prettierignoreをプロジェクトルートに置く。
 .prettierignore:
-node_modules/ dist/  node_modulesはnpmパッケージが入るディレクトリ。 実際はnode_modulesはデフォルトで無視されるから書かなくていいんだけど。</description>
+node_modules/ dist/ node_modulesはnpmパッケージが入るディレクトリ。 実際はnode_modulesはデフォルトで無視されるから書かなくていいんだけど。</description>
     </item>
     
     <item>
@@ -217,9 +217,9 @@ node_modules/ dist/  node_modulesはnpmパッケージが入るディレクト�
 ReactはViewを記述するためのライブラリで、特徴はVirtual DOMとJSX。
 Virtual DOM Virtual DOMはDOMを仮想化するもので、JavaScriptからVirtual DOMでUIを記述してやると、それが実DOMに効率的に反映されるようになっている。
 JSX Virtual DOMはJSXというHTMLみたいな言語で記述できる。
-import React from &#39;react&#39;; import ReactDOM from &#39;react-dom&#39;; ReactDOM.render( &amp;lt;h1&amp;gt;Hello, world!&amp;lt;/h1&amp;gt;, document.getElementById(&#39;root&#39;) );  こんな風に書くと、idがrootであるHTML要素の中に、&amp;lt;h1&amp;gt;Hello, world!&amp;lt;/h1&amp;gt;がレンダリングされる。 上記コードの&amp;lt;h1&amp;gt;Hello, world!&amp;lt;/h1&amp;gt;の部分がJSX。
+import React from &amp;#39;react&amp;#39;; import ReactDOM from &amp;#39;react-dom&amp;#39;; ReactDOM.render( &amp;lt;h1&amp;gt;Hello, world!&amp;lt;/h1&amp;gt;, document.getElementById(&amp;#39;root&amp;#39;) ); こんな風に書くと、idがrootであるHTML要素の中に、&amp;lt;h1&amp;gt;Hello, world!&amp;lt;/h1&amp;gt;がレンダリングされる。 上記コードの&amp;lt;h1&amp;gt;Hello, world!&amp;lt;/h1&amp;gt;の部分がJSX。
 コンポーネント JSXではコンポーネントを定義して新たなタグとして使うことができるので、再利用できるコンポーネントを作って、それらを組み合わせてUIを構築することで、効率的な開発ができる。
-import React from &#39;react&#39;; import ReactDOM from &#39;react-dom&#39;; // Welcomeコンポーネントの定義 function Welcome() { return &amp;lt;h1&amp;gt;Hello, World&amp;lt;/h1&amp;gt;; } // Welcomeコンポーネントのレンダリング ReactDOM.render( &amp;lt;Welcome /&amp;gt;, document.getElementById(&#39;root&#39;) );  上記コードではコンポーネントをfunctionで定義しているが、アロー関数で書いても全く一緒。</description>
+import React from &amp;#39;react&amp;#39;; import ReactDOM from &amp;#39;react-dom&amp;#39;; // Welcomeコンポーネントの定義 function Welcome() { return &amp;lt;h1&amp;gt;Hello, World&amp;lt;/h1&amp;gt;; } // Welcomeコンポーネントのレンダリング ReactDOM.render( &amp;lt;Welcome /&amp;gt;, document.getElementById(&amp;#39;root&amp;#39;) ); 上記コードではコンポーネントをfunctionで定義しているが、アロー関数で書いても全く一緒。</description>
     </item>
     
     <item>
@@ -254,13 +254,13 @@ C:\&amp;gt;nvm install 8.11.4 Downloading node.js version 8.11.4 (64-bit)... Com
 1990年代前半、まだWebアプリケーションという言葉が無かった時代。 静的にHTMLファイルを配信するだけのWebサイト(静的サイト)だけがあった。 静的サイトでは、HTTPサーバーに複数のHTMLファイルを置いておいて、クライアントのHTTPリクエストのURLのパスによって配信するHTMLファイルを変える。
 例えば、HTTPサーバーをhttpdで立てて、ドキュメントルートを/var/www/htmlに設定して、以下のようにファイルを配置したとする。
 
-/var/www/html/ | +-- index.html | +-- sub/ | +-- hoge.html  
+/var/www/html/ | +-- index.html | +-- sub/ | +-- hoge.html 
 この場合、ブラウザでhttp://&amp;lt;HTTPサーバアドレス&amp;gt;/index.htmlにアクセスすれば/var/www/html/index.htmlが配信されてレンダリングされて表示される。 http://&amp;lt;HTTPサーバアドレス&amp;gt;/sub/hoge.htmlにアクセスすれば/var/www/html/sub/hoge.htmlが配信される。
 古のWebサイトは、こんな感じにコンテンツごとにHTMLファイルを書いてサーバに置いておいて、その間にリンクを張って辿れるようにすることで構成されていた。
 まあ今も大体そんな感じだけど。
 動的HTML生成 (プログラムでHTMLを書き出す) 静的サイトだと表現できることが非常に限られるので、クライアントからのリクエストの内容をサーバが解釈し、DBの情報やなんかをもとにサーバ側でHTMLドキュメントを動的に生成し、クライアントに返す、ということをするようになった。
 原始的(1990年代中盤から後半)には、プログラム中で一連のHTMLドキュメントを出力する方法がとられた。
-public void doGet( HttpServletRequest request, HttpServletResponse response ) throws IOException, ServletException { response.setContentType(&amp;quot;text/html;&amp;quot;); PrintWriter out = response.getWriter(); out.println(&amp;quot;&amp;lt;html&amp;gt;&amp;quot;); out.println(&amp;quot; &amp;lt;head&amp;gt;&amp;quot;); out.println(&amp;quot; &amp;lt;title&amp;gt;Hoge&amp;lt;/title&amp;gt;&amp;quot;); out.println(&amp;quot; &amp;lt;/head&amp;gt;&amp;quot;); out.println(&amp;quot; &amp;lt;body&amp;gt;&amp;quot;); out.println(new java.util.Date()); out.println(&amp;quot; &amp;lt;/body&amp;gt;&amp;quot;); out.println(&amp;quot;&amp;lt;/html&amp;gt;&amp;quot;); }  使われた技術は、CGI (Perl)とか、Java Servletとか。 Jakarta ECSなんてのもあった。</description>
+public void doGet( HttpServletRequest request, HttpServletResponse response ) throws IOException, ServletException { response.setContentType(&amp;#34;text/html;&amp;#34;); PrintWriter out = response.getWriter(); out.println(&amp;#34;&amp;lt;html&amp;gt;&amp;#34;); out.println(&amp;#34; &amp;lt;head&amp;gt;&amp;#34;); out.println(&amp;#34; &amp;lt;title&amp;gt;Hoge&amp;lt;/title&amp;gt;&amp;#34;); out.println(&amp;#34; &amp;lt;/head&amp;gt;&amp;#34;); out.println(&amp;#34; &amp;lt;body&amp;gt;&amp;#34;); out.println(new java.util.Date()); out.println(&amp;#34; &amp;lt;/body&amp;gt;&amp;#34;); out.println(&amp;#34;&amp;lt;/html&amp;gt;&amp;#34;); } 使われた技術は、CGI (Perl)とか、Java Servletとか。 Jakarta ECSなんてのもあった。</description>
     </item>
     
   </channel>

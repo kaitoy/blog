@@ -6,7 +6,7 @@ cover = "keras.png"
 slug = "hello-world-to-ml-with-keras"
 tags = ["machine learning", "deep learning", "neural network", "tensorflow", "keras"]
 title = "機械学習のHello World: MNISTの分類モデルをKerasで作ってみた"
-highlightLanguages = ["dos"]
+
 +++
 
 機械学習のHello Worldとしてよくやられる[MNIST](http://yann.lecun.com/exdb/mnist/)の分類モデルを[Keras](https://keras.io/ja/) on [TensorFlow](https://www.tensorflow.org/)で作ってみた話。
@@ -217,7 +217,7 @@ MNISTのサイトに載ってるので一番いいのが99.77%。
 まず、エラーが多かった数字を調べる。
 数字をエラー数順に並べると、
 
-```
+```plain
 ラベル: エラー数
 9: 18
 7: 18
@@ -237,7 +237,7 @@ MNISTのサイトに載ってるので一番いいのが99.77%。
 
 次にエラーのパターンを見てみる。
 
-```
+```plain
 (予測した数字, ラベル): 出現数
 (9, 4): 10
 (3, 5): 9

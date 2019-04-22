@@ -46,7 +46,7 @@ JavaScriptの他、JSX、CSS、Markdown、GraphQLのフォーマットにも対�
 
 まずプロジェクトにインストールする。
 
-```shell
+```tch
 yarn add -D prettier
 ```
 
@@ -71,7 +71,7 @@ module.exports = {
 また、フォーマット対象外のファイルを指定するファイルである`.prettierignore`をプロジェクトルートに置く。
 
 `.prettierignore`:
-```
+```plain
 node_modules/
 dist/
 ```
@@ -127,7 +127,7 @@ ESLintを導入するために、以下のパッケージをプロジェクト�
 
 今回は以下のコマンドでインストールした。
 
-```shell
+```tch
 yarn add -D "eslint@>=1.6.0 <5.0.0" eslint-loader eslint-config-airbnb "eslint-plugin-import@^2.12.0" "eslint-plugin-jsx-a11y@^6.0.3" "eslint-plugin-react@^7.9.1" eslint-config-prettier
 ```
 
@@ -158,7 +158,7 @@ module.exports = {
 また、[リンティング対象外のファイルを指定するファイル](https://eslint.org/docs/user-guide/configuring#ignoring-files-and-directories)をプロジェクトルートに置く。
 
 `.eslintignore`:
-```
+```plain
 node_modules/*
 dist/*
 ```

@@ -6,7 +6,7 @@ cover = "babel-webpack.png"
 slug = "creating-react-redux-app-from-scratch-01"
 tags = ["react", "frontend", "webpack", "babel"]
 title = "React + Reduxアプリケーションプロジェクトのテンプレートを作る ― その1: Node.jsとYarnとBabelとwebpack"
-highlightLanguages = ["dos"]
+
 +++
 
 昔、[Dojo Toolkit](https://dojotoolkit.org/)を使ってFlashなUIをJavaScriptに書き換えた時以来、仕事でWeb UIを触ることはなかったんだけど、最近になってWeb UIを書かなければいけなくなるような気がして再学習を始めた。

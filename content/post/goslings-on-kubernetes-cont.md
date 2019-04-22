@@ -6,7 +6,7 @@ cover = "kubernetes_goslings.png"
 slug = "goslings-on-kubernetes-cont"
 tags = [ "goslings", "kubernetes", "minikube", "docker" ]
 title = "Kubernetesのチュートリアルをやる"
-highlightLanguages = ["dos", "yaml"]
+
 +++
 
 「[Kubernetes 1.8が出たので、Minikubeを触ってみる](https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/)」の続き。
@@ -100,7 +100,7 @@ Starting to serve on 127.0.0.1:8001
 
 各Podへも以下のURLでアクセスできる。
 
-```
+```plain
 http://localhost:8001/api/v1/proxy/namespaces/default/pods/<Pod名>/
 ```
 
@@ -498,7 +498,7 @@ Kubernetes Basicsでやってた手法は一番上の命令的コマンド。
 
 命令的オブジェクト設定は以下のような形でやる。
 
-```shell
+```tch
 $ kubectl create -f nginx.yaml
 $ kubectl delete -f nginx.yaml -f redis.yaml
 $ kubectl replace -f nginx.yaml
@@ -515,7 +515,7 @@ $ kubectl replace -f nginx.yaml
 
 宣言的オブジェクト設定は以下のような形でやる。
 
-```shell
+```tch
 $ kubectl apply -R -f configs/
 ```
 

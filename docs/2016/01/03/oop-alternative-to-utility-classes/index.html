@@ -27,13 +27,14 @@
    (adsbygoogle = window.adsbygoogle || []).push({});  ユーティリティクラス(またはヘルパークラス)は、スタティックメソッドだけを持っていて、状態を内包しない「構造体」だ。 Apache CommonsのStringUtils、IOUtils、FileUtilsや、GuavaのIterables、Iterators、またJDK7のFilesはユーティリティクラスのいい例だ。
 ユーティリティクラスはよく使われる共通機能を提供するので、この設計手法はJava(やC#、Rubyなど)の世界でとても人気だ。
 要するに我々は、DRY原則に従い、重複を避けたい。 だから、共通コードをユーティリティクラスに入れて必要に応じて再利用する。
-// これはひどい設計なので再利用しないように。 public class NumberUtils { public static int max(int a, int b) { return a &gt; b ? a : b; } }  実際、これはとても便利なテクニックだ!?
+// これはひどい設計なので再利用しないように。 public class NumberUtils { public static int max(int a, int b) { return a &gt; b ? a : b; } } 実際、これはとても便利なテクニックだ!?
 ユーティリティクラスは悪だ しかし、オブジェクト指向の世界では、ユーティリティクラスはかなり悪い(酷いという人さえいるかもしれない)手法だ。
 これについては多くの議論がある。 いくつか挙げると、Nick Malikの「ヘルパークラスは悪か?」、Simon Hartの「なぜヘルパー、シングルトン、ユーティリティクラスはだいたい間違っているのか」、Marshal Wardの「ユーティリティクラスを避ける」、Dhaval Dalalの「ユーティルクラスを殺せ!」、Rob Bagbyの「ヘルパークラスは問題の兆候」。
 また、StackExchangeにはユーティリティクラスについての質問がいくつかある。 例えば、「ユーティリティクラスが悪なら、どこに共通コードを書けばいい?」とか、「ユーティリティクラスは悪」とか。
 これらの主張は要するに、ユーティリティクラスは適切なオブジェクトではないということだ。 だから、オブジェクト指向の世界に適合しない。 ユーティリティクラスは、当時の人々が機能分割パラダイムに慣れていたために、手続き型言語から受け継がれた。
 君がこの主張に同意し、ユーティリティクラスを使うのをやめたがっていると想定し、そいつをどのように適切なオブジェクトに置き換えるかを例を挙げながら教えよう。
-手続き型の例 例えば、テキストファイルを読んで、行で分割し、各行をトリムして、その結果を別のファイルに保存したいとする。 これはApache CommonsのFileUtilsを使えばできる。">
+手続き型の例 例えば、テキストファイルを読んで、行で分割し、各行をトリムして、その結果を別のファイルに保存したいとする。 これはApache CommonsのFileUtilsを使えばできる。
+void transform(File in, File out) { Collection&lt;String&gt; src = FileUtils.">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/teamedio_logo.svg">
 
 
@@ -65,7 +66,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&amp;subset=japanese">
 
 
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai.min.css"> 
+
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -73,14 +74,6 @@
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-
-    
-
-    <script>hljs.initHighlightingOnLoad();</script>
-
 
 
 
@@ -250,15 +243,12 @@
 
 <p>要するに我々は、<a href="https://ja.wikipedia.org/wiki/Don't_repeat_yourself">DRY原則</a>に従い、重複を避けたい。
 だから、共通コードをユーティリティクラスに入れて必要に応じて再利用する。</p>
-
-<pre><code class="language-java">// これはひどい設計なので再利用しないように。
-public class NumberUtils {
-  public static int max(int a, int b) {
-    return a &gt; b ? a : b;
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#999;font-style:italic">// これはひどい設計なので再利用しないように。
+</span><span style="color:#999;font-style:italic"></span><span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">class</span> <span style="color:#447fcf;text-decoration:underline">NumberUtils</span> {
+  <span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">static</span> <span style="color:#6ab825;font-weight:bold">int</span> <span style="color:#447fcf">max</span>(<span style="color:#6ab825;font-weight:bold">int</span> a, <span style="color:#6ab825;font-weight:bold">int</span> b) {
+    <span style="color:#6ab825;font-weight:bold">return</span> a &gt; b ? a : b;
   }
-}
-</code></pre>
-
+}</code></pre></div>
 <p>実際、これはとても便利なテクニックだ!?</p>
 
 <h1 id="ユーティリティクラスは悪だ">ユーティリティクラスは悪だ</h1>
@@ -281,17 +271,14 @@ public class NumberUtils {
 
 <p>例えば、テキストファイルを読んで、行で分割し、各行をトリムして、その結果を別のファイルに保存したいとする。
 これはApache Commonsの<code>FileUtils</code>を使えばできる。</p>
-
-<pre><code class="language-java">void transform(File in, File out) {
-  Collection&lt;String&gt; src = FileUtils.readLines(in, &quot;UTF-8&quot;);
-  Collection&lt;String&gt; dest = new ArrayList&lt;&gt;(src.size());
-  for (String line : src) {
-    dest.add(line.trim());
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">void</span> <span style="color:#447fcf">transform</span>(File in, File out) {
+  Collection&lt;String&gt; src = FileUtils.<span style="color:#bbb">readLines</span>(in, <span style="color:#ed9d13">&#34;UTF-8&#34;</span>);
+  Collection&lt;String&gt; dest = <span style="color:#6ab825;font-weight:bold">new</span> ArrayList&lt;&gt;(src.<span style="color:#bbb">size</span>());
+  <span style="color:#6ab825;font-weight:bold">for</span> (String line : src) {
+    dest.<span style="color:#bbb">add</span>(line.<span style="color:#bbb">trim</span>());
   }
-  FileUtils.writeLines(out, dest, &quot;UTF-8&quot;);
-}
-</code></pre>
-
+  FileUtils.<span style="color:#bbb">writeLines</span>(out, dest, <span style="color:#ed9d13">&#34;UTF-8&#34;</span>);
+}</code></pre></div>
 <p>上のコードはきれいに見える。
 しかし、これは手続き型プログラミングであって、オブジェクト指向じゃない。
 コードの各行で、データ(byteとbit)を操作し、コンピューターにどこからデータを取ってどこに書き込むかを明示的に指示している。
@@ -302,31 +289,22 @@ public class NumberUtils {
 <p>オブジェクト指向パラダイムでは、オブジェクトをインスタンス化して合成すべきだ。
 これはオブジェクトにオブジェクト自身のやり方でデータを管理させるためだ。
 補足的なスタティックメソッドを呼ぶ代わりに、求めている挙動を提供できるオブジェクトを生成するべきだ。</p>
-
-<pre><code class="language-java">public class Max implements Number {
-  private final int a;
-  private final int b;
-  public Max(int x, int y) {
-    this.a = x;
-    this.b = y;
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">class</span> <span style="color:#447fcf;text-decoration:underline">Max</span> <span style="color:#6ab825;font-weight:bold">implements</span> Number {
+  <span style="color:#6ab825;font-weight:bold">private</span> <span style="color:#6ab825;font-weight:bold">final</span> <span style="color:#6ab825;font-weight:bold">int</span> a;
+  <span style="color:#6ab825;font-weight:bold">private</span> <span style="color:#6ab825;font-weight:bold">final</span> <span style="color:#6ab825;font-weight:bold">int</span> b;
+  <span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#447fcf">Max</span>(<span style="color:#6ab825;font-weight:bold">int</span> x, <span style="color:#6ab825;font-weight:bold">int</span> y) {
+    <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">a</span> = x;
+    <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">b</span> = y;
   }
-  @Override
-  public int intValue() {
-    return this.a &gt; this.b ? this.a : this.b;
+  <span style="color:#ffa500">@Override</span>
+  <span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">int</span> <span style="color:#447fcf">intValue</span>() {
+    <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">a</span> &gt; <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">b</span> ? <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">a</span> : <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">b</span>;
   }
-}
-</code></pre>
-
+}</code></pre></div>
 <p>以下の手続き型のメソッド呼び出しは、</p>
-
-<pre><code class="language-java">int max = NumberUtils.max(10, 5);
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">int</span> max = NumberUtils.<span style="color:#bbb">max</span>(10, 5);</code></pre></div>
 <p>以下の様にオブジェクト指向的になる。</p>
-
-<pre><code class="language-java">int max = new Max(10, 5).intValue();
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">int</span> max = <span style="color:#6ab825;font-weight:bold">new</span> Max(10, 5).<span style="color:#bbb">intValue</span>();</code></pre></div>
 <p>どっちでも同じ?
 いや、そうでもない。
 もう少し読み進めて欲しい。</p>
@@ -334,31 +312,25 @@ public class NumberUtils {
 <h1 id="データ構造ではなくオブジェクト">データ構造ではなくオブジェクト</h1>
 
 <p>私なら、上と同じファイル編集機能をオブジェクト指向なやり方で以下の様に設計する。</p>
-
-<pre><code class="language-java">void transform(File in, File out) {
-  Collection&lt;String&gt; src = new Trimmed(
-    new FileLines(new UnicodeFile(in))
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">void</span> <span style="color:#447fcf">transform</span>(File in, File out) {
+  Collection&lt;String&gt; src = <span style="color:#6ab825;font-weight:bold">new</span> Trimmed(
+    <span style="color:#6ab825;font-weight:bold">new</span> FileLines(<span style="color:#6ab825;font-weight:bold">new</span> UnicodeFile(in))
   );
-  Collection&lt;String&gt; dest = new FileLines(
-    new UnicodeFile(out)
+  Collection&lt;String&gt; dest = <span style="color:#6ab825;font-weight:bold">new</span> FileLines(
+    <span style="color:#6ab825;font-weight:bold">new</span> UnicodeFile(out)
   );
-  dest.addAll(src);
-}
-</code></pre>
-
+  dest.<span style="color:#bbb">addAll</span>(src);
+}</code></pre></div>
 <p>(訳注: 上のコードは以下のコードの誤記だと思われる。</p>
-
-<pre><code class="language-java">void transform(File in, File out) {
-  Trimmed src = new Trimmed(
-    new FileLines(new UnicodeFile(in))
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">void</span> <span style="color:#447fcf">transform</span>(File in, File out) {
+  Trimmed src = <span style="color:#6ab825;font-weight:bold">new</span> Trimmed(
+    <span style="color:#6ab825;font-weight:bold">new</span> FileLines(<span style="color:#6ab825;font-weight:bold">new</span> UnicodeFile(in))
   );
-  FileLines dest = new FileLines(
-    new UnicodeFile(out)
+  FileLines dest = <span style="color:#6ab825;font-weight:bold">new</span> FileLines(
+    <span style="color:#6ab825;font-weight:bold">new</span> UnicodeFile(out)
   );
-  dest.addAll(src);
-}
-</code></pre>
-
+  dest.<span style="color:#bbb">addAll</span>(src);
+}</code></pre></div>
 <p>)</p>
 
 <p><code>FileLines</code>は<code>Collection&lt;String&gt;</code>を実装していて、ファイルの読み込みと書き込みの処理を内包している。

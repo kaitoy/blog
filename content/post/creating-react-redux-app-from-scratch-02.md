@@ -32,7 +32,7 @@ Virtual DOMはDOMを仮想化するもので、JavaScriptからVirtual DOMでUI�
 
 Virtual DOMはJSXというHTMLみたいな言語で記述できる。
 
-```javascript
+```jsx
 import React from 'react';
 import ReactDOM from 'react-dom';
 
@@ -49,7 +49,7 @@ ReactDOM.render(
 
 JSXではコンポーネントを定義して新たなタグとして使うことができるので、再利用できるコンポーネントを作って、それらを組み合わせてUIを構築することで、効率的な開発ができる。
 
-```javascript
+```jsx
 import React from 'react';
 import ReactDOM from 'react-dom';
 
@@ -67,7 +67,7 @@ ReactDOM.render(
 
 上記コードではコンポーネントをfunctionで定義しているが、アロー関数で書いても全く一緒。
 
-```javascript
+```jsx
 const Welcome = () => (
   <h1>Hello, World</h1>;
 );
@@ -77,7 +77,7 @@ const Welcome = () => (
 
 関数の代わりにclassで定義することもできる。
 
-```javascript
+```jsx
 class Welcome extends React.Component {
   render() {
     return <h1>Hello, World</h1>;
@@ -94,7 +94,7 @@ class Welcome extends React.Component {
 
 コンポーネントはレンダリングの際に`props`というパラメータを受け取って使うことができるので、上手く設計すれば汎用的なコンポーネントが書ける。
 
-```javascript
+```jsx
 import React from 'react';
 import ReactDOM from 'react-dom';
 
@@ -120,7 +120,7 @@ ReactDOM.render(
 
 前節で作ったWelcomeコンポーネントの`props`の`name`はStringオブジェクトを受け取ることを期待するので、prop-typesを以下のように定義する。
 
-```javascript
+```jsx
 function Welcome(props) {
   return <h1>Hello, {props.name}</h1>;
 }
@@ -136,7 +136,7 @@ Welcome.propTypes = {
 
 上記のコードを実行するためのライブラリを一通りプロジェクトに追加する。
 
-```shell
+```tch
 yarn add react react-dom prop-types
 ```
 
@@ -171,7 +171,7 @@ Reactはv16.6.3が入った。
 最初のReactコンポーネントとして、適当なものを作る。
 
 `src/components/App.jsx`:
-```javascript
+```jsx
 import React from 'react';
 
 const App = () => (
@@ -186,7 +186,7 @@ export default App;
 で、これを`index.jsx`でインポートしてレンダリングしてやる。
 
 `src/index.jsx`:
-```javascript
+```jsx
 import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './components/App';

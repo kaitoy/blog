@@ -6,7 +6,7 @@ cover = "nanoserver.png"
 slug = "pcap4j-on-hyper-v-container-on-win10"
 tags = ["windows", "nanoserver", "pcap4j", "docker"]
 title = "Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ"
-highlightLanguages = ["dockerfile", "dos"]
+
 +++
 
 [Pcap4J](https://github.com/kaitoy/pcap4j)が動くHyper-VコンテナをWindows 10上でビルドしようとしたけど3合目あたりで息絶えた話。
@@ -45,8 +45,8 @@ Windows 10を起動し、以下、[Windows Containers on Windows 10](https://msd
 
     [PowerShellプロンプトを管理者権限でひらき](http://www.thewindowsclub.com/how-to-open-an-elevated-powershell-prompt-in-windows-10)、以下のコマンドで`containers`機能を有効化。
 
-    ```
-    PS C:\Windows\system32>Enable-WindowsOptionalFeature -Online -FeatureName containers -All
+    ```powershell
+    Enable-WindowsOptionalFeature -Online -FeatureName containers -All
     ```
 
     1分程度経つと再起動を促されるので再起動。
@@ -55,8 +55,8 @@ Windows 10を起動し、以下、[Windows Containers on Windows 10](https://msd
 
     再度PowerShellプロンプトを管理者権限で開いて、以下のコマンドでHyper-Vを有効化。
 
-    ```
-    PS C:\Windows\system32>Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
+    ```powershell
+    Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
     ```
 
     1分程度経つと再起動を促されるので再起動。
@@ -66,43 +66,43 @@ Windows 10を起動し、以下、[Windows Containers on Windows 10](https://msd
     現在のHyper-Vコンテナは、安定性を上げるためにOpLocksという機能を無効にすべきらしい。
     再度PowerShellプロンプトを管理者権限で開いて、以下のコマンドを実行する。
 
-    ```
-    PS C:\Windows\system32>Set-ItemProperty -Path 'HKLM:SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\Containers' -Name VSmbDisableOplocks -Type DWord -Value 1 -Force
+    ```powershell
+    Set-ItemProperty -Path 'HKLM:SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\Containers' -Name VSmbDisableOplocks -Type DWord -Value 1 -Force
     ```
 
 4. Dockerインストール
 
     同じPowerShellプロンプトで以下のコマンドを実行してDocker(EngineとClient)のアーカイブをダウンロード。
 
-    ```
-    PS C:\Windows\system32>Invoke-WebRequest "https://master.dockerproject.org/windows/amd64/docker-1.13.0-dev.zip" -OutFile "$env:TEMP\docker-1.13.0-dev.zip" -UseBasicParsing
+    ```powershell
+    Invoke-WebRequest "https://master.dockerproject.org/windows/amd64/docker-1.13.0-dev.zip" -OutFile "$env:TEMP\docker-1.13.0-dev.zip" -UseBasicParsing
     ```
 
     ダウンロードしたアーカイブを解凍。
 
-    ```
-    PS C:\Windows\system32>Expand-Archive -Path "$env:TEMP\docker-1.13.0-dev.zip" -DestinationPath $env:ProgramFiles
+    ```powershell
+    Expand-Archive -Path "$env:TEMP\docker-1.13.0-dev.zip" -DestinationPath $env:ProgramFiles
     ```
 
     ここまででDockerが`C:\Program Files\docker\`に入るので、このパスを環境変数`PATH`に追加。
 
     `PATH`の変更を反映させるために再度PowerShellプロンプトを管理者権限で開いて、以下のコマンドでDockerデーモンをサービスに登録。
 
-    ```
-    PS C:\Windows\system32>dockerd --register-service
+    ```powershell
+    dockerd --register-service
     ```
 
     Dockerサービスを起動。
 
-    ```
-    PS C:\Windows\system32>Start-Service Docker
+    ```powershell
+    Start-Service Docker
     ```
 
     (Dockerサービスは自動起動に設定されているので、OS再起動時は上記`Start-Service`は不要。)
 
     これでDockerが使えるようになった。
 
-    ```
+    ```cmd
     PS C:\Windows\system32>docker version
     Client:
      Version:      1.13.0-dev
@@ -127,13 +127,13 @@ Windows 10を起動し、以下、[Windows Containers on Windows 10](https://msd
 
     `docker pull`でNano Serverのコンテナイメージをダウンロード。
 
-    ```
+    ```cmd
     PS C:\Windows\system32>docker pull microsoft/nanoserver
     ```
 
     `docker images`で確認。
 
-    ```
+    ```cmd
     PS C:\Windows\system32>docker images
     REPOSITORY             TAG                 IMAGE ID            CREATED             SIZE
     microsoft/nanoserver   latest              3a703c6e97a2        12 weeks ago        970 MB
@@ -197,7 +197,7 @@ RUN echo @echo off > bin\capture.bat && `
 ## Nano ServerでSystem.Net.WebClient使えない問題
 このDockerfileでビルドしたら、[Chocolatey](https://chocolatey.org/)のダウンロード・インストールスクリプトを実行する`RUN powershell .\install.ps1`のステップで`System.Net.WebClient`が見つからないというエラー。
 
-```
+```plain
 new-object : Cannot find type [System.Net.WebClient]: verify that the assembly
 containing this type is loaded.
 At C:\pcap4j\install.ps1:84 char:17
@@ -214,13 +214,13 @@ Nano Serverに入っているPowerShellは[Core Editionなる機能限定版](ht
 ## Hyper-V ContainersでServer Core使えない問題
 Nano Serverめんどくさそうなので、Server Coreをpullする。
 
-```
+```cmd
 PS C:\Windows\system32>docker pull microsoft/windowsservercore
 ```
 
 Dockerfileの`FROM`を`microsoft/windowsservercore`に書き変えてビルドしたら、最初の`RUN`で以下のエラー。
 
-```
+```plain
 container 4bc8d8d38993426fa7a3c76e4aabbe6a229cbd025754723ff396aec04ffbfa1d encountered an error during Start failed in Win32: The operating system of the container does not match the operating system of the host. (0xc0370101)
 ```
 
@@ -269,7 +269,7 @@ RUN npcap.exe /S
 
 このDockerfileでビルドしたら、`RUN npcap.exe /S`で以下のエラー。
 
-```
+```plain
 The subsystem needed to support the image type is not present.
 ```
 

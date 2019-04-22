@@ -33,7 +33,7 @@ disturb-meの作り方 以前別のエントリでAtomパッケージの作り�
 addメソッドの引数は、第一引数から順に、
  target: コマンドを有効にするDOM要素か、それを示すCSSセレクタ。 commandName: コマンドパレットに表示するコマンド名。全部小文字で、単語をハイフンでつないで、パッケージ名を先頭につけるのがルール。 callback(event): コマンドを実行したときに呼ばれるメソッド。  
 disturb-meのコマンドはAtomウィンドウ内のどこでも有効にしたいので、第一引数にはAtomウィンドウを表すカスタムタグであるatom-workspaceを指定する。 コードは以下の感じ。
-activate: (state) -&gt; @subscriptions = new CompositeDisposable @subscriptions.add atom.commands.add &#39;atom-workspace&#39;, &#39;disturb-me:toggle&#39;: =&gt; @toggle() toggle: -&gt; # 画像を挿入したり削除したりするコード。  
+activate: (state) -&gt; @subscriptions = new CompositeDisposable @subscriptions.add atom.commands.add &#39;atom-workspace&#39;, &#39;disturb-me:toggle&#39;: =&gt; @toggle() toggle: -&gt; # 画像を挿入したり削除したりするコード。 
 toggleの中では画像を挿入したり削除したりするわけだけど、この処理は、その画像を表す別のクラスにまかせることにする。 のでtoggleは以下のように書く。
 @disturber: null toggle: -&gt; if @disturber? @disturber.stop() @disturber = null else @disturber = new Disturber() document.">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/atom_editor_logo.svg.png">
@@ -67,7 +67,7 @@ toggleの中では画像を挿入したり削除したりするわけだけど�
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&amp;subset=japanese">
 
 
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai.min.css"> 
+
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -75,14 +75,6 @@ toggleの中では画像を挿入したり削除したりするわけだけど�
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-
-    
-
-    <script>hljs.initHighlightingOnLoad();</script>
-
 
 
 
@@ -271,32 +263,26 @@ CommandRegistryのインスタンスには<strong>atom.commands</strong>でア�
 
 <p>disturb-meのコマンドはAtomウィンドウ内のどこでも有効にしたいので、第一引数にはAtomウィンドウを表すカスタムタグである<strong>atom-workspace</strong>を指定する。
 コードは以下の感じ。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-coffeescript" data-lang="coffeescript">  <span style="color:#40ffff">activate: </span><span style="color:#447fcf">(state) -&gt;</span>
+    @subscriptions = <span style="color:#6ab825;font-weight:bold">new</span> CompositeDisposable
+    @subscriptions.add atom.commands.add <span style="color:#ed9d13">&#39;atom-workspace&#39;</span>, <span style="color:#ed9d13">&#39;disturb-me:toggle&#39;</span>: <span style="color:#447fcf">=&gt;</span> @toggle()
 
-<pre><code class="language-coffeescript">  activate: (state) -&gt;
-    @subscriptions = new CompositeDisposable
-    @subscriptions.add atom.commands.add 'atom-workspace', 'disturb-me:toggle': =&gt; @toggle()
-
-  toggle: -&gt;
-    # 画像を挿入したり削除したりするコード。
-</code></pre>
-
+  <span style="color:#40ffff">toggle: </span><span style="color:#447fcf">-&gt;</span>
+    <span style="color:#a61717;background-color:#e3d2d2">#</span> <span style="color:#a61717;background-color:#e3d2d2">画像を挿入したり削除したりするコード。</span></code></pre></div>
 <p><br></p>
 
 <p><strong>toggle</strong>の中では画像を挿入したり削除したりするわけだけど、この処理は、その画像を表す別のクラスにまかせることにする。
 のでtoggleは以下のように書く。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-coffeescript" data-lang="coffeescript">  @disturber: <span style="color:#6ab825;font-weight:bold">null</span>
 
-<pre><code class="language-coffeescript">  @disturber: null
-
-  toggle: -&gt;
-    if @disturber?
+  <span style="color:#40ffff">toggle: </span><span style="color:#447fcf">-&gt;</span>
+    <span style="color:#6ab825;font-weight:bold">if</span> @disturber?
       @disturber.stop()
-      @disturber = null
-    else
-      @disturber = new Disturber()
-      document.body.appendChild(@disturber.getElement())
-      @disturber.start()
-</code></pre>
-
+      @disturber = <span style="color:#6ab825;font-weight:bold">null</span>
+    <span style="color:#6ab825;font-weight:bold">else</span>
+      @disturber = <span style="color:#6ab825;font-weight:bold">new</span> Disturber()
+      <span style="color:#24909d">document</span>.body.appendChild(@disturber.getElement())
+      @disturber.start()</code></pre></div>
 <p><strong>Disturber</strong>が画像を表すクラス。別のファイル(<strong>lib/disturber.coffee</strong>)の中で定義して、スクリプトの先頭辺りで<code>Disturber = require './disturber'</code>のようにインポートする。</p>
 
 <p><strong>document.body.appendChild</strong>しているところは、何かAtomのAPI(<a href="https://atom.io/docs/api/latest/ViewRegistry"><strong>ViewRegistry</strong></a>とか)を使うべきなのかも。</p></li>
@@ -304,28 +290,25 @@ CommandRegistryのインスタンスには<strong>atom.commands</strong>でア�
 <li><p>Disturber</p>
 
 <p>Disturberは以下のように書く。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-coffeescript" data-lang="coffeescript"><span style="color:#40ffff">module.exports =
+</span><span style="color:#40ffff"></span><span style="color:#6ab825;font-weight:bold">class</span> Disturber
 
-<pre><code class="language-coffeescript">module.exports =
-class Disturber
+  <span style="color:#40ffff">element: </span><span style="color:#6ab825;font-weight:bold">null</span>
 
-  element: null
-
-  constructor: -&gt;
-    # &lt;img&gt;を作って@elementに入れる。
-
-  destroy: -&gt;
-    # @elementをDOMツリーから削除する。
-
-  getElement: -&gt;
-    # @element返す。
-
-  start: -&gt;
-    # @elementのsrcを設定して、ランダムに動かし始める。
-
-  stop: -&gt;
-    # @elementを止める。
-</code></pre>
-
+  <span style="color:#40ffff">constructor: </span><span style="color:#447fcf">-&gt;</span>
+    <span style="color:#999;font-style:italic"># &lt;img&gt;を作って@elementに入れる。
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#40ffff">destroy: </span><span style="color:#447fcf">-&gt;</span>
+    <span style="color:#999;font-style:italic"># @elementをDOMツリーから削除する。
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#40ffff">getElement: </span><span style="color:#447fcf">-&gt;</span>
+    <span style="color:#999;font-style:italic"># @element返す。
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#40ffff">start: </span><span style="color:#447fcf">-&gt;</span>
+    <span style="color:#999;font-style:italic"># @elementのsrcを設定して、ランダムに動かし始める。
+</span><span style="color:#999;font-style:italic"></span>
+  <span style="color:#40ffff">stop: </span><span style="color:#447fcf">-&gt;</span>
+    <span style="color:#a61717;background-color:#e3d2d2">#</span> @elementを止める<span style="color:#a61717;background-color:#e3d2d2">。</span></code></pre></div>
 <p>あまり取り立てて書くことないな…。</p>
 
 <p>因みに画像を動かすのには<a href="https://www.npmjs.com/package/velocity-animate"><strong>Velocity</strong></a>を使い、DOMの操作とかにちょっと<a href="https://www.npmjs.com/package/jquery"><strong>jQuery</strong></a>を使う。</p></li>
@@ -336,22 +319,19 @@ class Disturber
 設定はメインスクリプトで定義でき、その値には<a href="https://atom.io/docs/api/latest/Config"><strong>Config</strong></a>クラスでアクセスできる。</p>
 
 <p>メインスクリプトでの定義は以下のように書く。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-coffeescript" data-lang="coffeescript"><span style="color:#40ffff">module.exports = DisturbMe =
+</span><span style="color:#40ffff"></span>  <span style="color:#40ffff">disturber: </span><span style="color:#6ab825;font-weight:bold">null</span>
+  <span style="color:#40ffff">subscriptions: </span><span style="color:#6ab825;font-weight:bold">null</span>
 
-<pre><code class="language-coffeescript">module.exports = DisturbMe =
-  disturber: null
-  subscriptions: null
-
-  config:
-    bornImage:
-      title: 'Born-Image'
-      type: 'string'
-      default: 'atom://disturb-me/assets/atom/white/atom_born.gif'
-    bornDuration:
-      title: 'Born-Duration'
-      type: 'integer'
-      default: 2000
-</code></pre>
-
+  <span style="color:#40ffff">config:
+</span><span style="color:#40ffff"></span>    <span style="color:#40ffff">bornImage:
+</span><span style="color:#40ffff"></span>      <span style="color:#40ffff">title: </span><span style="color:#ed9d13">&#39;Born-Image&#39;</span>
+      <span style="color:#40ffff">type: </span><span style="color:#ed9d13">&#39;string&#39;</span>
+      <span style="color:#40ffff">default: </span><span style="color:#ed9d13">&#39;atom://disturb-me/assets/atom/white/atom_born.gif&#39;</span>
+    <span style="color:#40ffff">bornDuration:
+</span><span style="color:#40ffff"></span>      <span style="color:#40ffff">title: </span><span style="color:#ed9d13">&#39;Born-Duration&#39;</span>
+      <span style="color:#40ffff">type: </span><span style="color:#ed9d13">&#39;integer&#39;</span>
+      <span style="color:#40ffff">default: </span><span style="color:#3677a9">2000</span></code></pre></div>
 <p>するとパッケージ設定画面が以下のようになる。</p>
 
 <p><img src="/images/disturb-me/settings.jpg" alt="settings" /></p>
@@ -363,21 +343,16 @@ typeには、<strong>string</strong>、<strong>integer</strong>、<strong>number
 詳しくは<a href="https://atom.io/docs/api/latest/Config"><strong>Config</strong></a>クラスの説明に載ってる。</p>
 
 <p>Configクラスのインスタンスには<strong>atom.config</strong>でアクセスでき、上で定義した設定を以下のように操作できる。</p>
-
-<pre><code class="language-coffeescript">imagePath = atom.config.get('disturb-me.bornImage')
-atom.config.set('disturb-me.bornDuration', '1000')
-</code></pre></li>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-coffeescript" data-lang="coffeescript"><span style="color:#40ffff">imagePath = </span>atom.config.get(<span style="color:#ed9d13">&#39;disturb-me.bornImage&#39;</span>)
+atom.config.set(<span style="color:#ed9d13">&#39;disturb-me.bornDuration&#39;</span>, <span style="color:#ed9d13">&#39;1000&#39;</span>)</code></pre></div></li>
 
 <li><p>キーバインディング</p>
 
 <p>メインスクリプト内でコマンドパレットに表示するコマンドを定義したが、これにキーボードショートカット(キーバインディング)を設定する。</p>
 
 <p>キーバインディングは<strong>keymaps</strong>フォルダの中の<strong>cson</strong>ファイルで以下のように定義する。</p>
-
-<pre><code class="language-cson">'atom-workspace':
-  'ctrl-alt-d ctrl-alt-m': 'disturb-me:toggle'
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cson" data-lang="cson">&#39;atom-workspace&#39;:
+  &#39;ctrl-alt-d ctrl-alt-m&#39;: &#39;disturb-me:toggle&#39;</code></pre></div>
 <p>これ見ればだいたい書き方はわかるはず。(詳細は<a href="https://atom.io/docs/latest/behind-atom-keymaps-in-depth">Atom Flight Manual</a>に。)</p>
 
 <p>特殊キーは<strong>cmd</strong>、<strong>ctrl</strong>、<strong>alt</strong>、<strong>shift</strong>、<strong>enter</strong>、<strong>escape</strong>、<strong>backspace</strong>、<strong>delete</strong>、<strong>tab</strong>、<strong>home</strong>、<strong>end</strong>、<strong>pageup</strong>、<strong>pagedown</strong>、<strong>left</strong>、<strong>right</strong>、<strong>up</strong>、<strong>down</strong>が使える。</p>
@@ -387,13 +362,10 @@ atom.config.set('disturb-me.bornDuration', '1000')
 <li><p>package.json</p>
 
 <p><a href="https://www.kaitoy.xyz/2015/08/21/japanese-word-selection/#5-package-json%E7%B7%A8%E9%9B%86">前回</a>と同様の編集に加えて、今回は二つのnpmパッケージに依存するので、<strong>dependencies</strong>を以下のように書く。</p>
-
-<pre><code class="language-json">  &quot;dependencies&quot;: {
-    &quot;velocity-animate&quot;: &quot;&gt;=1.2.0&quot;,
-    &quot;jquery&quot;: &quot;&gt;=2.0.0&quot;
-  }
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">  <span style="color:#ed9d13">&#34;dependencies&#34;</span><span style="color:#a61717;background-color:#e3d2d2">:</span> {
+    <span style="color:#6ab825;font-weight:bold">&#34;velocity-animate&#34;</span>: <span style="color:#ed9d13">&#34;&gt;=1.2.0&#34;</span>,
+    <span style="color:#6ab825;font-weight:bold">&#34;jquery&#34;</span>: <span style="color:#ed9d13">&#34;&gt;=2.0.0&#34;</span>
+  }</code></pre></div>
 <p>これを書いて、プロジェクトルートフォルダで<code>apm install</code>すると、ルート直下の<strong>node_modules</strong>フォルダに依存モジュールがインストールされる。</p>
 
 <p>node_modulesは<strong>Package Generator</strong>が生成する<strong>.gitignore</strong>に入っているので、リポジトリには入らない。</p></li>

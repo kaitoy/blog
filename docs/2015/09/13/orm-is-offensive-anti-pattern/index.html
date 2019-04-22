@@ -27,7 +27,7 @@
    (adsbygoogle = window.adsbygoogle || []).push({});  結論から言えば、ORMはオブジェクト指向プログラミングの原則の全てに違反するひどいアンチパターンだ。オブジェクトをバラバラに引き裂き、もの言わぬ受身なデータ入れに変えてしまう。 小さいWebアプリケーションから、数千のテーブルをCRUD操作するエンタープライズシステムまで、どんなアプリケーションにもORMが存在することはゆるせない。 代わりになるものは? SQLを話すオブジェクトだ。
 ORMの仕組み オブジェクト関係マッピング (Object-relatinal mapping、ORM)は、オブジェクト指向言語(例えばJava)からリレーショナルデータベースにアクセスする技術(またはデザインパターン)だ。 ほとんどの言語で複数のORM実装がある。 例えば、JavaのHibernate、Ruby on RalsのActiveRecord、PHPのDoctrine、PythonのSQLAlchemy。 Javaでは、ORMデザインはJPAとして標準化されてさえいる。
 最初に、ORMがどう動くかを見てみよう。JavaとPostgreSQLとHibernateを使い、データベースにpost (訳注: ブログポスト、ブログの記事)という単一のテーブルがあるとする。
-&#43;-----&#43;------------&#43;--------------------------&#43; | id | date | title | &#43;-----&#43;------------&#43;--------------------------&#43; | 9 | 10/24/2014 | How to cook a sandwich | | 13 | 11/03/2014 | My favorite movies | | 27 | 11/17/2014 | How much I love my job | &#43;-----&#43;------------&#43;--------------------------&#43;  で、このテーブルをJavaアプリケーションからCRUD操作したい。(CRUDはcreate、read、update、deleteの略。) まず、Postクラスを書く。(長くてごめん。けどなるべく短くしたんだ。)">
+&#43;-----&#43;------------&#43;--------------------------&#43; | id | date | title | &#43;-----&#43;------------&#43;--------------------------&#43; | 9 | 10/24/2014 | How to cook a sandwich | | 13 | 11/03/2014 | My favorite movies | | 27 | 11/17/2014 | How much I love my job | &#43;-----&#43;------------&#43;--------------------------&#43; で、このテーブルをJavaアプリケーションからCRUD操作したい。(CRUDはcreate、read、update、deleteの略。) まず、Postクラスを書く。(長くてごめん。けどなるべく短くしたんだ。)">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/teamedio_logo.svg">
 
 
@@ -59,7 +59,7 @@ ORMの仕組み オブジェクト関係マッピング (Object-relatinal mappin
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,700&amp;subset=japanese">
 
 
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai.min.css"> 
+
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -67,14 +67,6 @@ ORMの仕組み オブジェクト関係マッピング (Object-relatinal mappin
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-
-    
-
-    <script>hljs.initHighlightingOnLoad();</script>
-
 
 
 
@@ -257,81 +249,66 @@ SQLを話すオブジェクトだ。</p>
 Javaでは、ORMデザインは<a href="https://ja.wikipedia.org/wiki/Java_Persistence_API">JPA</a>として標準化されてさえいる。</p>
 
 <p>最初に、ORMがどう動くかを見てみよう。JavaとPostgreSQLとHibernateを使い、データベースに<code>post</code> (訳注: ブログポスト、ブログの記事)という単一のテーブルがあるとする。</p>
-
-<pre><code>+-----+------------+--------------------------+
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">+-----+------------+--------------------------+
 | id  | date       | title                    |
 +-----+------------+--------------------------+
 |   9 | 10/24/2014 | How to cook a sandwich   |
 |  13 | 11/03/2014 | My favorite movies       |
 |  27 | 11/17/2014 | How much I love my job   |
-+-----+------------+--------------------------+
-</code></pre>
-
++-----+------------+--------------------------+</code></pre></div>
 <p>で、このテーブルをJavaアプリケーションからCRUD操作したい。(CRUDはcreate、read、update、deleteの略。)
 まず、<code>Post</code>クラスを書く。(長くてごめん。けどなるべく短くしたんだ。)</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#ffa500">@Entity</span>
+<span style="color:#ffa500">@Table</span>(name = <span style="color:#ed9d13">&#34;post&#34;</span>)
+<span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">class</span> <span style="color:#447fcf;text-decoration:underline">Post</span> {
+  <span style="color:#6ab825;font-weight:bold">private</span> <span style="color:#6ab825;font-weight:bold">int</span> id;
+  <span style="color:#6ab825;font-weight:bold">private</span> Date date;
+  <span style="color:#6ab825;font-weight:bold">private</span> String title;
 
-<pre><code class="language-java">@Entity
-@Table(name = &quot;post&quot;)
-public class Post {
-  private int id;
-  private Date date;
-  private String title;
-
-  @Id
-  @GeneratedValue
-  public int getId() {
-    return this.id;
+  <span style="color:#ffa500">@Id</span>
+  <span style="color:#ffa500">@GeneratedValue</span>
+  <span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">int</span> <span style="color:#447fcf">getId</span>() {
+    <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">id</span>;
   }
 
-  @Temporal(TemporalType.TIMESTAMP)
-  public Date getDate() {
-    return this.date;
+  <span style="color:#ffa500">@Temporal</span>(TemporalType.<span style="color:#bbb">TIMESTAMP</span>)
+  <span style="color:#6ab825;font-weight:bold">public</span> Date <span style="color:#447fcf">getDate</span>() {
+    <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">date</span>;
   }
 
-  public Title getTitle() {
-    return this.title;
+  <span style="color:#6ab825;font-weight:bold">public</span> Title <span style="color:#447fcf">getTitle</span>() {
+    <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">title</span>;
   }
 
-  public void setDate(Date when) {
-    this.date = when;
+  <span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">void</span> <span style="color:#447fcf">setDate</span>(Date when) {
+    <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">date</span> = when;
   }
 
-  public void setTitle(String txt) {
-    this.title = txt;
+  <span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">void</span> <span style="color:#447fcf">setTitle</span>(String txt) {
+    <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">title</span> = txt;
   }
-}
-</code></pre>
-
+}</code></pre></div>
 <p>Hibernateでの処理をする前に、セッションファクトリを作らないといけない。</p>
-
-<pre><code class="language-java">SessionFactory factory = new AnnotationConfiguration()
-  .configure()
-  .addAnnotatedClass(Post.class)
-  .buildSessionFactory();
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">SessionFactory factory = <span style="color:#6ab825;font-weight:bold">new</span> AnnotationConfiguration()
+  .<span style="color:#bbb">configure</span>()
+  .<span style="color:#bbb">addAnnotatedClass</span>(Post.<span style="color:#bbb">class</span>)
+  .<span style="color:#bbb">buildSessionFactory</span>();</code></pre></div>
 <p>このファクトリは<code>Post</code>オブジェクトを操作したいときに「セッション」を作ってくれる。
 セッションを使う全ての操作は以下のようなコードブロックで囲わないといけない。</p>
-
-<pre><code class="language-java">Session session = factory.openSession(); try {
-  Transaction txn = session.beginTransaction();
-  // your manipulations with the ORM, see below
-  txn.commit();
-} catch (HibernateException ex) {
-  txn.rollback();
-} finally {
-  session.close();
-}
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">Session session = factory.<span style="color:#bbb">openSession</span>(); <span style="color:#6ab825;font-weight:bold">try</span> {
+  Transaction txn = session.<span style="color:#bbb">beginTransaction</span>();
+  <span style="color:#999;font-style:italic">// your manipulations with the ORM, see below
+</span><span style="color:#999;font-style:italic"></span>  txn.<span style="color:#bbb">commit</span>();
+} <span style="color:#6ab825;font-weight:bold">catch</span> (HibernateException ex) {
+  txn.<span style="color:#bbb">rollback</span>();
+} <span style="color:#6ab825;font-weight:bold">finally</span> {
+  session.<span style="color:#bbb">close</span>();
+}</code></pre></div>
 <p>セッションが準備できたら、以下のようにしてデータベーステーブルから全てのpostのリストを取得する。</p>
-
-<pre><code class="language-java">List posts = session.createQuery(&quot;FROM Post&quot;).list();
-for (Post post : (List&lt;Post&gt;) posts){
-  System.out.println(&quot;Title: &quot; + post.getTitle());
-}
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">List posts = session.<span style="color:#bbb">createQuery</span>(<span style="color:#ed9d13">&#34;FROM Post&#34;</span>).<span style="color:#bbb">list</span>();
+<span style="color:#6ab825;font-weight:bold">for</span> (Post post : (List&lt;Post&gt;) posts){
+  System.<span style="color:#bbb">out</span>.<span style="color:#bbb">println</span>(<span style="color:#ed9d13">&#34;Title: &#34;</span> + post.<span style="color:#bbb">getTitle</span>());
+}</code></pre></div>
 <p>ここで何が起こっているかは明確だと思う。
 Hibernateという巨大で強力なエンジンが、データベースへの接続、SQLの<code>SELECT</code>リクエスト発行、及びデータの取得をする。
 そして、<code>Post</code>クラスのインスタンスを作り、データをつめる。
@@ -339,12 +316,9 @@ Hibernateという巨大で強力なエンジンが、データベースへの�
 
 <p>逆の処理をしてオブジェクトをデータベースに送りたい場合は、同じことを逆の手順でやればいい。
 <code>Post</code>のインスタンスを作り、データを入れ、Hibernateに保存するよう頼む。</p>
-
-<pre><code class="language-java">Post post = new Post();
-post.setDate(new Date());
-post.setTitle(&quot;How to cook an omelette&quot;); session.save(post);
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">Post post = <span style="color:#6ab825;font-weight:bold">new</span> Post();
+post.<span style="color:#bbb">setDate</span>(<span style="color:#6ab825;font-weight:bold">new</span> Date());
+post.<span style="color:#bbb">setTitle</span>(<span style="color:#ed9d13">&#34;How to cook an omelette&#34;</span>); session.<span style="color:#bbb">save</span>(post);</code></pre></div>
 <p>これがほぼ全てのORMの仕組みだ。
 基本的な原則はいつも同じで、ORMオブジェクトは無気力なデータの包みだ。
 我々はORMフレームワークと話して、ORMフレームワークはデータベースと話す。
@@ -429,38 +403,26 @@ OOPにおいては、扱うふるまいは単一のエントリーポイント�
 <p>例の<a href="https://www.kaitoy.xyz/2015/10/28/seven-virtues-of-good-object/">記事</a>で既に述べたように、全てのオブジェクトは契約によって働き、インターフェースを実装すべきだ。
 我々の設計も二つのインターフェースから始めよう。
 もちろん、オブジェクトは不変だ。<code>Posts</code>は以下のようになる。</p>
-
-<pre><code class="language-java">@Immutable
-interface Posts {
-  Iterable&lt;Post&gt; iterate();
-  Post add(Date date, String title);
-}
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#ffa500">@Immutable</span>
+<span style="color:#6ab825;font-weight:bold">interface</span> <span style="color:#447fcf;text-decoration:underline">Posts</span> {
+  Iterable&lt;Post&gt; <span style="color:#447fcf">iterate</span>();
+  Post <span style="color:#447fcf">add</span>(Date date, String title);
+}</code></pre></div>
 <p><code>Post</code>は以下だ。</p>
-
-<pre><code class="language-java">@Immutable
-interface Post {
-  int id();
-  Date date();
-  String title();
-}
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#ffa500">@Immutable</span>
+<span style="color:#6ab825;font-weight:bold">interface</span> <span style="color:#447fcf;text-decoration:underline">Post</span> {
+  <span style="color:#6ab825;font-weight:bold">int</span> <span style="color:#447fcf">id</span>();
+  Date <span style="color:#447fcf">date</span>();
+  String <span style="color:#447fcf">title</span>();
+}</code></pre></div>
 <p>データベーステーブル内の全てのpostを表示するには以下のようにする。</p>
-
-<pre><code class="language-java">Posts posts = // we'll discuss this right now
-for (Post post : posts.iterate()){
-  System.out.println(&quot;Title: &quot; + post.title());
-}
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">Posts posts = <span style="color:#999;font-style:italic">// we&#39;ll discuss this right now
+</span><span style="color:#999;font-style:italic"></span><span style="color:#6ab825;font-weight:bold">for</span> (Post post : posts.<span style="color:#bbb">iterate</span>()){
+  System.<span style="color:#bbb">out</span>.<span style="color:#bbb">println</span>(<span style="color:#ed9d13">&#34;Title: &#34;</span> + post.<span style="color:#bbb">title</span>());
+}</code></pre></div>
 <p>新しいpostを作る場合は以下のようにする。</p>
-
-<pre><code class="language-java">Posts posts = // we'll discuss this right now
-posts.add(new Date(), &quot;How to cook an omelette&quot;);
-</code></pre>
-
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">Posts posts = <span style="color:#999;font-style:italic">// we&#39;ll discuss this right now
+</span><span style="color:#999;font-style:italic"></span>posts.<span style="color:#bbb">add</span>(<span style="color:#6ab825;font-weight:bold">new</span> Date(), <span style="color:#ed9d13">&#34;How to cook an omelette&#34;</span>);</code></pre></div>
 <p>このようにすると真のオブジェクトになる。
 これらのオブジェクトは全ての処理を受け持ち、実装の詳細を完璧に隠蔽する。
 トランザクションもセッションもファクトリもない。
@@ -472,78 +434,69 @@ posts.add(new Date(), &quot;How to cook an omelette&quot;);
 <p>ここではJDBCラッパに<a href="http://jdbc.jcabi.com/">jcabi-jdbc</a>を使うが、好みに応じてほかのものやJDBCを直接使ってもよい。
 それは全く重要ではない。重要なのは、データベースとのやり取りをオブジェクト内に隠蔽することだ。
 <code>Posts</code>から始めよう。<code>PgPosts</code>クラス(「pg」はPostgreSQLのこと)に実装する。</p>
-
-<pre><code class="language-java">@Immutable
-final class PgPosts implements Posts {
-  private final Source dbase;
-  public PgPosts(DataSource data) {
-    this.dbase = data;
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#ffa500">@Immutable</span>
+<span style="color:#6ab825;font-weight:bold">final</span> <span style="color:#6ab825;font-weight:bold">class</span> <span style="color:#447fcf;text-decoration:underline">PgPosts</span> <span style="color:#6ab825;font-weight:bold">implements</span> Posts {
+  <span style="color:#6ab825;font-weight:bold">private</span> <span style="color:#6ab825;font-weight:bold">final</span> Source dbase;
+  <span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#447fcf">PgPosts</span>(DataSource data) {
+    <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">dbase</span> = data;
   }
-  public Iterable&lt;Post&gt; iterate() {
-    return new JdbcSession(this.dbase)
-      .sql(&quot;SELECT id FROM post&quot;)
-      .select(
-        new ListOutcome&lt;Post&gt;(
-          new ListOutcome.Mapping&lt;Post&gt;() {
-            @Override
-            public Post map(final ResultSet rset) {
-              return new PgPost(rset.getInteger(1));
+  <span style="color:#6ab825;font-weight:bold">public</span> Iterable&lt;Post&gt; <span style="color:#447fcf">iterate</span>() {
+    <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#6ab825;font-weight:bold">new</span> JdbcSession(<span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">dbase</span>)
+      .<span style="color:#bbb">sql</span>(<span style="color:#ed9d13">&#34;SELECT id FROM post&#34;</span>)
+      .<span style="color:#bbb">select</span>(
+        <span style="color:#6ab825;font-weight:bold">new</span> ListOutcome&lt;Post&gt;(
+          <span style="color:#6ab825;font-weight:bold">new</span> ListOutcome.<span style="color:#bbb">Mapping</span>&lt;Post&gt;() {
+            <span style="color:#ffa500">@Override</span>
+            <span style="color:#6ab825;font-weight:bold">public</span> Post <span style="color:#447fcf">map</span>(<span style="color:#6ab825;font-weight:bold">final</span> ResultSet rset) {
+              <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#6ab825;font-weight:bold">new</span> PgPost(rset.<span style="color:#bbb">getInteger</span>(1));
             }
           }
         )
       );
   }
-  public Post add(Date date, String title) {
-    return new PgPost(
-      this.dbase,
-      new JdbcSession(this.dbase)
-        .sql(&quot;INSERT INTO post (date, title) VALUES (?, ?)&quot;)
-        .set(new Utc(date))
-        .set(title)
-        .insert(new SingleOutcome&lt;Integer&gt;(Integer.class))
+  <span style="color:#6ab825;font-weight:bold">public</span> Post <span style="color:#447fcf">add</span>(Date date, String title) {
+    <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#6ab825;font-weight:bold">new</span> PgPost(
+      <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">dbase</span>,
+      <span style="color:#6ab825;font-weight:bold">new</span> JdbcSession(<span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">dbase</span>)
+        .<span style="color:#bbb">sql</span>(<span style="color:#ed9d13">&#34;INSERT INTO post (date, title) VALUES (?, ?)&#34;</span>)
+        .<span style="color:#bbb">set</span>(<span style="color:#6ab825;font-weight:bold">new</span> Utc(date))
+        .<span style="color:#bbb">set</span>(title)
+        .<span style="color:#bbb">insert</span>(<span style="color:#6ab825;font-weight:bold">new</span> SingleOutcome&lt;Integer&gt;(Integer.<span style="color:#bbb">class</span>))
     );
   }
-}
-</code></pre>
-
+}</code></pre></div>
 <p>次に<code>Post</code>を<code>PgPost</code>クラスに実装する。</p>
-
-<pre><code class="language-java">@Immutable
-final class PgPost implements Post {
-  private final Source dbase;
-  private final int number;
-  public PgPost(DataSource data, int id) {
-    this.dbase = data;
-    this.number = id;
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#ffa500">@Immutable</span>
+<span style="color:#6ab825;font-weight:bold">final</span> <span style="color:#6ab825;font-weight:bold">class</span> <span style="color:#447fcf;text-decoration:underline">PgPost</span> <span style="color:#6ab825;font-weight:bold">implements</span> Post {
+  <span style="color:#6ab825;font-weight:bold">private</span> <span style="color:#6ab825;font-weight:bold">final</span> Source dbase;
+  <span style="color:#6ab825;font-weight:bold">private</span> <span style="color:#6ab825;font-weight:bold">final</span> <span style="color:#6ab825;font-weight:bold">int</span> number;
+  <span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#447fcf">PgPost</span>(DataSource data, <span style="color:#6ab825;font-weight:bold">int</span> id) {
+    <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">dbase</span> = data;
+    <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">number</span> = id;
   }
-  public int id() {
-    return this.number;
+  <span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">int</span> <span style="color:#447fcf">id</span>() {
+    <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">number</span>;
   }
-  public Date date() {
-    return new JdbcSession(this.dbase)
-      .sql(&quot;SELECT date FROM post WHERE id = ?&quot;)
-      .set(this.number)
-      .select(new SingleOutcome&lt;Utc&gt;(Utc.class));
+  <span style="color:#6ab825;font-weight:bold">public</span> Date <span style="color:#447fcf">date</span>() {
+    <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#6ab825;font-weight:bold">new</span> JdbcSession(<span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">dbase</span>)
+      .<span style="color:#bbb">sql</span>(<span style="color:#ed9d13">&#34;SELECT date FROM post WHERE id = ?&#34;</span>)
+      .<span style="color:#bbb">set</span>(<span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">number</span>)
+      .<span style="color:#bbb">select</span>(<span style="color:#6ab825;font-weight:bold">new</span> SingleOutcome&lt;Utc&gt;(Utc.<span style="color:#bbb">class</span>));
   }
-  public String title() {
-    return new JdbcSession(this.dbase)
-      .sql(&quot;SELECT title FROM post WHERE id = ?&quot;)
-      .set(this.number)
-      .select(new SingleOutcome&lt;String&gt;(String.class));
+  <span style="color:#6ab825;font-weight:bold">public</span> String <span style="color:#447fcf">title</span>() {
+    <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#6ab825;font-weight:bold">new</span> JdbcSession(<span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">dbase</span>)
+      .<span style="color:#bbb">sql</span>(<span style="color:#ed9d13">&#34;SELECT title FROM post WHERE id = ?&#34;</span>)
+      .<span style="color:#bbb">set</span>(<span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">number</span>)
+      .<span style="color:#bbb">select</span>(<span style="color:#6ab825;font-weight:bold">new</span> SingleOutcome&lt;String&gt;(String.<span style="color:#bbb">class</span>));
   }
-}
-</code></pre>
-
+}</code></pre></div>
 <p>今作ったクラスを使ってデータベースとやり取りする完全なシナリオは以下のようになる。</p>
-
-<pre><code class="language-java">Posts posts = new PgPosts(dbase);
-for (Post post : posts.iterate()){
-  System.out.println(&quot;Title: &quot; + post.title());
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">Posts posts = <span style="color:#6ab825;font-weight:bold">new</span> PgPosts(dbase);
+<span style="color:#6ab825;font-weight:bold">for</span> (Post post : posts.<span style="color:#bbb">iterate</span>()){
+  System.<span style="color:#bbb">out</span>.<span style="color:#bbb">println</span>(<span style="color:#ed9d13">&#34;Title: &#34;</span> + post.<span style="color:#bbb">title</span>());
 }
-Post post = posts.add(new Date(), &quot;How to cook an omelette&quot;);
-System.out.println(&quot;Just added post #&quot; + post.id());
-</code></pre>
-
+Post post = posts.<span style="color:#bbb">add</span>(<span style="color:#6ab825;font-weight:bold">new</span> Date(), <span style="color:#ed9d13">&#34;How to cook an omelette&#34;</span>);
+System.<span style="color:#bbb">out</span>.<span style="color:#bbb">println</span>(<span style="color:#ed9d13">&#34;Just added post #&#34;</span> + post.<span style="color:#bbb">id</span>());</code></pre></div>
 <p><a href="https://github.com/aintshy/hub/tree/0.7.2/src/main/java/com/aintshy/pgsql">ここ</a>で完全な実用的な例を見られる。
 これはオープンソースのWebアプリで、上で説明したのと全く同じアプローチ、つまりSQLを話すオブジェクトを使ってPostgreSQLにアクセスする。</p>
 
@@ -556,59 +509,53 @@ System.out.println(&quot;Just added post #&quot; + post.id());
 
 <p>心配はいらない。これはオブジェクト指向プログラミングであり、柔軟なんだ!
 <code>PgPost</code>のデコレータを作り、全てのデータをそのコンストラクタで受け取って内部で永遠にキャッシュしよう。</p>
-
-<pre><code class="language-java">@Immutable
-final class ConstPost implements Post {
-  private final Post origin;
-  private final Date dte;
-  private final String ttl;
-  public ConstPost(Post post, Date date, String title) {
-    this.origin = post;
-    this.dte = date;
-    this.ttl = title;
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#ffa500">@Immutable</span>
+<span style="color:#6ab825;font-weight:bold">final</span> <span style="color:#6ab825;font-weight:bold">class</span> <span style="color:#447fcf;text-decoration:underline">ConstPost</span> <span style="color:#6ab825;font-weight:bold">implements</span> Post {
+  <span style="color:#6ab825;font-weight:bold">private</span> <span style="color:#6ab825;font-weight:bold">final</span> Post origin;
+  <span style="color:#6ab825;font-weight:bold">private</span> <span style="color:#6ab825;font-weight:bold">final</span> Date dte;
+  <span style="color:#6ab825;font-weight:bold">private</span> <span style="color:#6ab825;font-weight:bold">final</span> String ttl;
+  <span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#447fcf">ConstPost</span>(Post post, Date date, String title) {
+    <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">origin</span> = post;
+    <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">dte</span> = date;
+    <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">ttl</span> = title;
   }
-  public int id() {
-    return this.origin.id();
+  <span style="color:#6ab825;font-weight:bold">public</span> <span style="color:#6ab825;font-weight:bold">int</span> <span style="color:#447fcf">id</span>() {
+    <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">origin</span>.<span style="color:#bbb">id</span>();
   }
-  public Date date() {
-    return this.dte;
+  <span style="color:#6ab825;font-weight:bold">public</span> Date <span style="color:#447fcf">date</span>() {
+    <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">dte</span>;
   }
-  public String title() {
-    return this.ttl;
+  <span style="color:#6ab825;font-weight:bold">public</span> String <span style="color:#447fcf">title</span>() {
+    <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">ttl</span>;
   }
-}
-</code></pre>
-
+}</code></pre></div>
 <p>このデコレータはPostgreSQLやJDBCについて何も関与しないことに注目してほしい。
 単に<code>Post</code>オブジェクトをデコレートして日付(date)とタイトル(title)をキャッシュするだけだ。
 例によってこのデコレータは不変だ。</p>
 
 <p>さて、<code>Posts</code>の別の実装を作って、「定数」オブジェクトを返すようにしてみよう。</p>
-
-<pre><code class="language-java">@Immutable
-final class ConstPgPosts implements Posts {
-  // ...
-  public Iterable&lt;Post&gt; iterate() {
-    return new JdbcSession(this.dbase)
-      .sql(&quot;SELECT * FROM post&quot;)
-      .select(
-        new ListOutcome&lt;Post&gt;(
-          new ListOutcome.Mapping&lt;Post&gt;() {
-            @Override
-            public Post map(final ResultSet rset) {
-              return new ConstPost(
-                new PgPost(rset.getInteger(1)),
-                Utc.getTimestamp(rset, 2),
-                rset.getString(3)
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#ffa500">@Immutable</span>
+<span style="color:#6ab825;font-weight:bold">final</span> <span style="color:#6ab825;font-weight:bold">class</span> <span style="color:#447fcf;text-decoration:underline">ConstPgPosts</span> <span style="color:#6ab825;font-weight:bold">implements</span> Posts {
+  <span style="color:#999;font-style:italic">// ...
+</span><span style="color:#999;font-style:italic"></span>  <span style="color:#6ab825;font-weight:bold">public</span> Iterable&lt;Post&gt; <span style="color:#447fcf">iterate</span>() {
+    <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#6ab825;font-weight:bold">new</span> JdbcSession(<span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">dbase</span>)
+      .<span style="color:#bbb">sql</span>(<span style="color:#ed9d13">&#34;SELECT * FROM post&#34;</span>)
+      .<span style="color:#bbb">select</span>(
+        <span style="color:#6ab825;font-weight:bold">new</span> ListOutcome&lt;Post&gt;(
+          <span style="color:#6ab825;font-weight:bold">new</span> ListOutcome.<span style="color:#bbb">Mapping</span>&lt;Post&gt;() {
+            <span style="color:#ffa500">@Override</span>
+            <span style="color:#6ab825;font-weight:bold">public</span> Post <span style="color:#447fcf">map</span>(<span style="color:#6ab825;font-weight:bold">final</span> ResultSet rset) {
+              <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#6ab825;font-weight:bold">new</span> ConstPost(
+                <span style="color:#6ab825;font-weight:bold">new</span> PgPost(rset.<span style="color:#bbb">getInteger</span>(1)),
+                Utc.<span style="color:#bbb">getTimestamp</span>(rset, 2),
+                rset.<span style="color:#bbb">getString</span>(3)
               );
             }
           }
         )
       );
   }
-}
-</code></pre>
-
+}</code></pre></div>
 <p>今、この新しいクラスの<code>iterate()</code>が返す全てのブログポストには、データベースとの一往復で取得された日付とタイトルが入っている。
 デコレータやインターフェースの複数の実装を使うことで、どんな機能も望みどおりに構成することができる。
 最も重要なことは、機能は拡張されたが設計は複雑になっていないことだ。クラスのサイズが大きくなっていないからね。
@@ -621,39 +568,33 @@ final class ConstPgPosts implements Posts {
 トランザクションのネストは、データベースサーバがサポートしていれば全く素晴らしいものだ。
 サポートされていなければ、セッション全体に渡るトランザクションを表すオブジェクトを作り、「callable」クラスを受け取ればいい。
 以下がその例。</p>
-
-<pre><code class="language-java">final class Txn {
-  private final DataSource dbase;
-  public &lt;T&gt; T call(Callable&lt;T&gt; callable) {
-    JdbcSession session = new JdbcSession(this.dbase);
-    try {
-      session.sql(&quot;START TRANSACTION&quot;).exec();
-      T result = callable.call();
-      session.sql(&quot;COMMIT&quot;).exec();
-      return result;
-    } catch (Exception ex) {
-      session.sql(&quot;ROLLBACK&quot;).exec();
-      throw ex;
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">final</span> <span style="color:#6ab825;font-weight:bold">class</span> <span style="color:#447fcf;text-decoration:underline">Txn</span> {
+  <span style="color:#6ab825;font-weight:bold">private</span> <span style="color:#6ab825;font-weight:bold">final</span> DataSource dbase;
+  <span style="color:#6ab825;font-weight:bold">public</span> &lt;T&gt; T <span style="color:#447fcf">call</span>(Callable&lt;T&gt; callable) {
+    JdbcSession session = <span style="color:#6ab825;font-weight:bold">new</span> JdbcSession(<span style="color:#6ab825;font-weight:bold">this</span>.<span style="color:#bbb">dbase</span>);
+    <span style="color:#6ab825;font-weight:bold">try</span> {
+      session.<span style="color:#bbb">sql</span>(<span style="color:#ed9d13">&#34;START TRANSACTION&#34;</span>).<span style="color:#bbb">exec</span>();
+      T result = callable.<span style="color:#bbb">call</span>();
+      session.<span style="color:#bbb">sql</span>(<span style="color:#ed9d13">&#34;COMMIT&#34;</span>).<span style="color:#bbb">exec</span>();
+      <span style="color:#6ab825;font-weight:bold">return</span> result;
+    } <span style="color:#6ab825;font-weight:bold">catch</span> (Exception ex) {
+      session.<span style="color:#bbb">sql</span>(<span style="color:#ed9d13">&#34;ROLLBACK&#34;</span>).<span style="color:#bbb">exec</span>();
+      <span style="color:#6ab825;font-weight:bold">throw</span> ex;
     }
   }
-}
-</code></pre>
-
+}</code></pre></div>
 <p>そして、ひとつのトランザクションに複数のオブジェクト操作をラップしたい場合はこのようにする。</p>
-
-<pre><code class="language-java">new Txn(dbase).call(
-  new Callable&lt;Integer&gt;() {
-    @Override
-    public Integer call() {
-      Posts posts = new PgPosts(dbase);
-      Post post = posts.add(new Date(), &quot;How to cook an omelette&quot;);
-      posts.comments().post(&quot;This is my first comment!&quot;);
-      return post.id();
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#6ab825;font-weight:bold">new</span> Txn(dbase).<span style="color:#bbb">call</span>(
+  <span style="color:#6ab825;font-weight:bold">new</span> Callable&lt;Integer&gt;() {
+    <span style="color:#ffa500">@Override</span>
+    <span style="color:#6ab825;font-weight:bold">public</span> Integer <span style="color:#447fcf">call</span>() {
+      Posts posts = <span style="color:#6ab825;font-weight:bold">new</span> PgPosts(dbase);
+      Post post = posts.<span style="color:#bbb">add</span>(<span style="color:#6ab825;font-weight:bold">new</span> Date(), <span style="color:#ed9d13">&#34;How to cook an omelette&#34;</span>);
+      posts.<span style="color:#bbb">comments</span>().<span style="color:#bbb">post</span>(<span style="color:#ed9d13">&#34;This is my first comment!&#34;</span>);
+      <span style="color:#6ab825;font-weight:bold">return</span> post.<span style="color:#bbb">id</span>();
     }
   }
-);
-</code></pre>
-
+);</code></pre></div>
 <p>このコードは新しいブログポストを作ってコメントを加える。
 もし処理に失敗したら、トランザクション全体がロールバックされる。</p>
 

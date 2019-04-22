@@ -53,7 +53,7 @@ Weave NetをKubernetesクラスタにデプロイするためのマニフェス�
 
 WEAVE_MTUはとりあえずデフォルトにしておいて、IPALLOC_RANGEもデフォルトにして、通信暗号化して、CHECKPOINT_DISABLEをtrueにするとすると、マニフェストは以下のようにダウンロードできる。
 
-```shell
+```tch
 # curl -fsSLo weave-daemonset.yaml "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')&env.CHECKPOINT_DISABLE=1&password-secret=weave-passwd"
 ```
 
@@ -75,7 +75,7 @@ kube-controller-managerの起動オプションの`--cluster-cidr`はIPALLOC_RAN
 
 password-secretに渡すSecretは以下のように作成できる。
 
-```shell
+```tch
 # WEAVE_PASSWORD=$(echo -n 'your_secure_password' | base64)
 # cat <<EOF | kubectl create -f -
 apiVersion: v1
@@ -97,7 +97,7 @@ EOF
 
 以下のコマンドでマニフェストを適用し、Weave Netをデプロイできる。
 
-```shell
+```tch
 # kubectl apply -f weave-daemonset.yaml
 ```
 
@@ -108,7 +108,7 @@ EOF
 
 マスタノード上で以下のコマンドを実行すると、Weave NetのAPIを叩いて状態を確認できる。
 
-```shell
+```tch
 # curl http://localhost:6784/status
         Version: 2.3.0 (version check update disabled)
 

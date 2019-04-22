@@ -6,7 +6,7 @@ cover = "jekyll_logo.png"
 slug = "github-pages-and-jekyll"
 tags = [ "blog", "github", "jekyll" ]
 title = "GitHub Pagesでブログ立ち上げ - GitHub PagesとJekyll"
-highlightLanguages = ["dos"]
+
 +++
 
 このブログを立ち上げたときの作業を、主に備忘録としていくつかのエントリに分けて書く。
@@ -128,7 +128,7 @@ GitHub PagesでJekyll使う場合は、GitHub Pagesと同じJekyll環境を手�
 
     Rubyをダウングレードするの面倒なので、試しにそのまま`jekyll serve`したら以下のメッセージが出たけど動いた。
 
-    ```
+    ```plain
       Please add the following to your Gemfile to avoid polling for changes:
         gem 'wdm', '>= 0.1.0' if Gem.win_platform?
      Auto-regeneration: enabled for 'c:/Users/Kaito/mirrored_data/pleiades/workspace/kaitoy.github.io/hoge'

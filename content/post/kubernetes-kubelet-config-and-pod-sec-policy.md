@@ -20,7 +20,7 @@ kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPo
 
 `journalctl -u kubelet`すると、以下の警告が出ている。
 
-```
+```plain
 Apr 28 15:31:39 k8s-master kubelet[1370]: Flag --address has been deprecated, This parameter should be set via the config file specified by the Kubelet's -
 -config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
 Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --pod-manifest-path has been deprecated, This parameter should be set via the config file specified by the K
@@ -45,7 +45,7 @@ kubeletのいくつかのオプションは、https://kubernetes.io/docs/tasks/a
 
 将来的に調整しそうなパラメータは、Kubelet Configファイルにデフォルト値とともにコメントとして書き出している。
 
-```shell
+```tch
 # DNS_SERVER_IP=10.0.0.10
 # DNS_DOMAIN="cluster.local"
 # cat > /etc/kubernetes/kubelet.conf << EOF
@@ -147,7 +147,7 @@ PodSecurityPolicyを使うにはまず、kube-apiserverの起動オプション�
 で、privilegedななんでもできるPodSecurityPolicyと、それを使うロールを作成する。
 因みにPodSecurityPolicyは名前空間に属さない。
 
-```shell
+```tch
 # kubectl create -f- <<EOF
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
@@ -182,7 +182,7 @@ EOF
 今のところ、privilegedなPodSecurityPolicyが必要なService AccountはWeave Netのkube-system:weave-netと、Weave Scopeのweave:weave-scopeとweave:default。
 こいつらに上記ロールをバインドする。
 
-```shell
+```tch
 # kubectl -n kube-system create rolebinding weave-net:psp:privileged --role=psp:privileged --serviceaccount=kube-system:weave-net
 # kubectl -n weave create rolebinding weave-scope:psp:privileged --role=psp:privileged --serviceaccount=weave:weave-scope
 # kubectl -n weave create rolebinding weave-default:psp:privileged --role=psp:privileged --serviceaccount=weave:default
@@ -192,7 +192,7 @@ EOF
 
 あと、CoreDNS用のPodSecurityPolicyとロールを作ってバインドする。
 
-```shell
+```tch
 # kubectl apply -f- <<EOF
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
@@ -235,7 +235,7 @@ EOF
 kube-proxyも[Kube Proxy Config](https://github.com/kubernetes/kubernetes/blob/master/pkg/proxy/apis/config/types.go)というのがある。
 [ドキュメントには載ってない](https://github.com/kubernetes/kubernetes/issues/50041)けど、使わないと警告が出るので適当に書いてみた。
 
-```shell
+```tch
 # CLUSTER_CIDR="10.32.0.0/16"
 # cat > /etc/kubernetes/kube-proxy.conf << EOF
 kind: KubeProxyConfiguration
@@ -273,7 +273,7 @@ EOF
 kube-schedulerも[Kube Scheduler Conf](https://github.com/kubernetes/kubernetes/blob/master/pkg/apis/componentconfig/v1alpha1/types.go)というのがある。
 例によってドキュメントには載ってないけど、使わないと警告が出るので適当に書いてみた。
 
-```shell
+```tch
 # cat > /etc/kubernetes/kube-scheduler.conf << EOF
 kind: KubeSchedulerConfiguration
 apiVersion: componentconfig/v1alpha1
