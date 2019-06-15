@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+         
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+    google_ad_client: "ca-pub-6244473643910448",
+    enable_page_level_ads: true
+  });
+</script>
+
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/2019/06/15/k8s-ecosystem-container-runtimes/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/2019/06/15/k8s-ecosystem-container-runtimes/">
+
+
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Kubernetesのエコシステム ー コンテナランタイム編 | To Be Decided">
+  <title>Kubernetesのエコシステム ー コンテナランタイム編 | To Be Decided</title>
+  <meta property="og:description" content="Kubernetesを仕事で使い始めて1年たったので、これまで使ったり見聞きして気になったKubernetesまわりのエコシステムについていくつかの記事にまとめていきたい。 第一弾はコンテナランタイム編。
+   (adsbygoogle = window.adsbygoogle || []).push({});  Kubernetes KubernetesはGoogleが2014年6月に発表したコンテナオーケストレーションツール。 単一または複数の物理・仮想マシンでクラスタを構築し、その上でコンテナを起動して、関連するリソース(e.g. 永続化ボリューム)とともに管理できる。 コンテナやコンテナ間の関連を宣言的に管理できるのと、拡張性が高くていろんなものと連携して一元管理できるのが特長。
+Kuberの部分はUserの要領で読んで、Kuとneにアクセントをつけて、クーバーネティスみたいに読むとネイティブっぽい。
+コンテナ コンテナは、ハードウェアをエミュレートしたりするハイパバイザの上で動く仮想マシンに対して、ホストOSのカーネルの機能で論理的に隔離された環境を作り、そこでアプリケーションプロセスを動かす技術。 仮想マシンよりホストとの分離が弱いが、起動が早く、消費リソースが少ない。
+中国語だと容器と書く。 容器…
+Pod Kubernetes上でのワークロードの最小単位はPodと呼ばれる。 Podは仮想マシンのような概念で、Podごとに論理リソースが隔離され、IPアドレスが割り当てられ、その中で一つないし複数のコンテナが動く。 Pod自体もサンドボックスコンテナという特殊なコンテナによって構成される。 隔離された論理リソース空間はサンドボックスコンテナ(pauseコンテナ)によって保持されるので、アプリケーションを動かすコンテナが再起動されたりしても論理リソース空間を維持できるという寸法。
+コンテナランタイム コンテナを実行するためのプログラムはコンテナランタイムと呼ばれる。
+実はKubernetes自身はコンテナを起動する機能は持ってない。 ので、kubeletというコンポーネントがコンテナランタイムのAPIやコマンドを叩いてコンテナを起動する。
+kubeletとコンテナランタイムとの関係は歴史的なものもあって結構複雑。 以下、いろいろあるコンテナランタイムを概ね時系列順に紹介する。
+Docker Dockerは、2013年3月に生まれたもっとも古くもっともよく知られたコンテナランタイム。 Linuxカーネルの機能であるnamespacesで論理リソースを隔離し、cgroupsでハードウェアリソースを隔離し、Overlay Filesystemでファイルシステムを隔離し、その中でプロセスを起動する。
+Dockerと一言で言っても、実際にコンテナを実行する低レベルなコンテナランタイムと、それを使ってコンテナを起動して管理するDocker Daemon (dockerd)と、そのデーモンにリクエストを送るためのDocker Clientに分けられて、さらに時代とともに機能が細分化されていくつかのモジュールで構成されるようになっている。
+初期のKubernetes(1.2まで?)はコンテナランタイムはDocker一択で、kubeletからdockerdの内部APIを呼ぶような密連携をしていたそうな。
+rkt rktはCoreOS社(現RedHat)が2014年12月に発表したコンテナランタイム。 当時はRocketと表記してロケットと読んでいたが、商標上の問題があったのかすぐにrktになった。
+当時クローズドな性質だったDockerに対抗してか、rktは発表当初からその仕様をApp Container (aka. appc)として公開し、オープン感を出していた。 appcにはコンテナイメージ形式やコンテナランタイムなどの仕様が定められ、いくつかの3rdパーティ実装も生まれた。
+rktはコンテナを様々な隔離レベルで起動できるのが特徴で、ホストと同じnamespaceで起動して緩く隔離したり、KVMの仮想マシン上で起動して厳密に隔離したりできる。
+もう一つの特徴として、Podをネイティブサポートしていることがある。 つまりrktでは、Kubernetes無しでもコンテナはPod内で実行される。
+Windows Containers Windowsにもコンテナ対応が。
+2015年4月にMicrosoftからWindows Containersが発表され、2015年8月にWindows Server 2016のプレビュー版で実際に触れるようになった。 Windows ContainersはWindows上でWindowsとLinuxのコンテナを動かせる機能で、Dockerのクライアントから操作できる。 (初期はPowerShellのコマンドレットでも操作できたけど、こちらのインターフェースはすぐに廃止された。)
+その後2017年1月、Windows Containersを実現するための機能を提供するサービスであるHost Compute Service (HCS)が発表された。 この頃はWindows版DockerはこのHCSにべったりな実装だった。">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
+
+
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <style>
+
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+<script>
+  var webFontConfig = {
+    google: {
+      families: ['Noto Sans JP:400,700:japanese'],
+      active: function() {
+        sessionStorage.fonts = true;
+      }
+    },
+    timeout: 3000
+  };
+  WebFont.load(webFontConfig);
+</script>
+
+
+
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
+        
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
+    
+
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v3.2"></script>
+
+        <nav class="navbar navbar-default navbar-fixed-top">
+
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">Kubernetesのエコシステム ー コンテナランタイム編</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    <div class="single-post">
+        <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/06/15/k8s-ecosystem-container-runtimes/">Kubernetesのエコシステム ー コンテナランタイム編</a></h4>
+    <h5>Sat, Jun 15, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+
+
+        <div class="cover">
+            <a href="/2019/06/15/k8s-ecosystem-container-runtimes/">
+                <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="Kubernetesのエコシステム ー コンテナランタイム編">
+            </a>
+        </div>
+
+        
+        <h4 class="page-header">Table of Contents</h4>
+        <aside>
+            <nav id="TableOfContents">
+<ul>
+<li><a href="#kubernetes">Kubernetes</a></li>
+<li><a href="#コンテナ">コンテナ</a></li>
+<li><a href="#pod">Pod</a></li>
+<li><a href="#コンテナランタイム">コンテナランタイム</a>
+<ul>
+<li><a href="#docker">Docker</a></li>
+<li><a href="#rkt">rkt</a></li>
+<li><a href="#windows-containers">Windows Containers</a></li>
+<li><a href="#open-container-initiative-oci">Open Container Initiative (OCI)</a></li>
+<li><a href="#runc">runC</a></li>
+<li><a href="#clear-containers">Clear Containers</a></li>
+<li><a href="#hyper-runv">hyper、runV</a></li>
+<li><a href="#containerd">containerd</a></li>
+<li><a href="#singularity">Singularity</a></li>
+<li><a href="#cri">CRI</a></li>
+<li><a href="#cri-o">CRI-O</a></li>
+<li><a href="#rktlet">rktlet</a></li>
+<li><a href="#frakti">Frakti</a></li>
+<li><a href="#moby">Moby</a></li>
+<li><a href="#railcar">railcar</a></li>
+<li><a href="#virtlet">virtlet</a></li>
+<li><a href="#cri-containerd">cri-containerd</a></li>
+<li><a href="#kata-containers">Kata Containers</a></li>
+<li><a href="#hcsshim-runhcs">hcsshim、runhcs</a></li>
+<li><a href="#gvisor">gVisor</a></li>
+<li><a href="#containerd-shim">containerd-shim</a></li>
+</ul></li>
+</ul>
+</nav>
+        </aside>
+        <hr>
+        
+
+        <br> <div class="text-justify">
+
+<p>Kubernetesを仕事で使い始めて1年たったので、これまで使ったり見聞きして気になったKubernetesまわりのエコシステムについていくつかの記事にまとめていきたい。
+第一弾はコンテナランタイム編。</p>
+
+
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+
+<h1 id="kubernetes">Kubernetes</h1>
+
+<p><a href="https://kubernetes.io/ja/">Kubernetes</a>はGoogleが2014年6月に発表したコンテナオーケストレーションツール。
+単一または複数の物理・仮想マシンでクラスタを構築し、その上でコンテナを起動して、関連するリソース(e.g. 永続化ボリューム)とともに管理できる。
+コンテナやコンテナ間の関連を宣言的に管理できるのと、拡張性が高くていろんなものと連携して一元管理できるのが特長。</p>
+
+<p>Kuberの部分はUserの要領で読んで、Kuとneにアクセントをつけて、クーバーネティスみたいに読むとネイティブっぽい。</p>
+
+<h1 id="コンテナ">コンテナ</h1>
+
+<p>コンテナは、ハードウェアをエミュレートしたりするハイパバイザの上で動く仮想マシンに対して、ホストOSのカーネルの機能で論理的に隔離された環境を作り、そこでアプリケーションプロセスを動かす技術。
+仮想マシンよりホストとの分離が弱いが、起動が早く、消費リソースが少ない。</p>
+
+<p>中国語だと容器と書く。
+容器…</p>
+
+<h1 id="pod">Pod</h1>
+
+<p>Kubernetes上でのワークロードの最小単位はPodと呼ばれる。
+Podは仮想マシンのような概念で、Podごとに論理リソースが隔離され、IPアドレスが割り当てられ、その中で一つないし複数のコンテナが動く。
+Pod自体もサンドボックスコンテナという特殊なコンテナによって構成される。
+隔離された論理リソース空間はサンドボックスコンテナ(pauseコンテナ)によって保持されるので、アプリケーションを動かすコンテナが再起動されたりしても論理リソース空間を維持できるという寸法。</p>
+
+<h1 id="コンテナランタイム">コンテナランタイム</h1>
+
+<p>コンテナを実行するためのプログラムはコンテナランタイムと呼ばれる。</p>
+
+<p>実はKubernetes自身はコンテナを起動する機能は持ってない。
+ので、kubeletというコンポーネントがコンテナランタイムのAPIやコマンドを叩いてコンテナを起動する。</p>
+
+<p>kubeletとコンテナランタイムとの関係は歴史的なものもあって結構複雑。
+以下、いろいろあるコンテナランタイムを概ね時系列順に紹介する。</p>
+
+<h2 id="docker">Docker</h2>
+
+<p><a href="https://www.docker.com/">Docker</a>は、2013年3月に生まれたもっとも古くもっともよく知られたコンテナランタイム。
+Linuxカーネルの機能である<a href="https://linuxjm.osdn.jp/html/LDP_man-pages/man7/namespaces.7.html">namespaces</a>で論理リソースを隔離し、<a href="http://man7.org/linux/man-pages/man7/cgroups.7.html">cgroups</a>でハードウェアリソースを隔離し、<a href="https://en.wikipedia.org/wiki/OverlayFS">Overlay Filesystem</a>でファイルシステムを隔離し、その中でプロセスを起動する。</p>
+
+<p>Dockerと一言で言っても、実際にコンテナを実行する低レベルなコンテナランタイムと、それを使ってコンテナを起動して管理するDocker Daemon (dockerd)と、そのデーモンにリクエストを送るためのDocker Clientに分けられて、さらに時代とともに機能が細分化されていくつかのモジュールで構成されるようになっている。</p>
+
+<p>初期のKubernetes(1.2まで?)はコンテナランタイムはDocker一択で、kubeletからdockerdの内部APIを呼ぶような密連携をしていたそうな。</p>
+
+<p><img src="/images/k8s-ecosystem-container-runtimes/cr1.png" alt="cr1.png" /></p>
+
+<h2 id="rkt">rkt</h2>
+
+<p><a href="https://github.com/rkt/rkt">rkt</a>はCoreOS社(現RedHat)が<a href="https://coreos.com/blog/rocket.html">2014年12月に発表した</a>コンテナランタイム。
+当時はRocketと表記してロケットと読んでいたが、商標上の問題があったのかすぐにrktになった。</p>
+
+<p>当時クローズドな性質だったDockerに対抗してか、rktは発表当初からその仕様を<a href="https://github.com/appc/spec/">App Container (aka. appc)</a>として公開し、オープン感を出していた。
+appcにはコンテナイメージ形式やコンテナランタイムなどの仕様が定められ、いくつかの3rdパーティ実装も生まれた。</p>
+
+<p>rktはコンテナを様々な隔離レベルで起動できるのが特徴で、ホストと同じnamespaceで起動して緩く隔離したり、KVMの仮想マシン上で起動して厳密に隔離したりできる。</p>
+
+<p>もう一つの特徴として、Podをネイティブサポートしていることがある。
+つまりrktでは、Kubernetes無しでもコンテナはPod内で実行される。</p>
+
+<h2 id="windows-containers">Windows Containers</h2>
+
+<p>Windowsにもコンテナ対応が。</p>
+
+<p><a href="https://blogs.msdn.microsoft.com/msgulfcommunity/2015/06/20/what-is-windows-server-containers-and-hyper-v-containers/">2015年4月</a>にMicrosoftから<a href="https://docs.microsoft.com/en-us/virtualization/windowscontainers/about/">Windows Containers</a>が発表され、2015年8月にWindows Server 2016のプレビュー版で<a href="https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/">実際に触れるようになった</a>。
+Windows ContainersはWindows上でWindowsとLinuxのコンテナを動かせる機能で、Dockerのクライアントから操作できる。
+(初期はPowerShellのコマンドレットでも操作できたけど、こちらのインターフェースはすぐに廃止された。)</p>
+
+<p>その後<a href="https://techcommunity.microsoft.com/t5/Containers/Introducing-the-Host-Compute-Service-HCS/ba-p/382332">2017年1月</a>、Windows Containersを実現するための機能を提供するサービスであるHost Compute Service (HCS)が発表された。
+この頃はWindows版DockerはこのHCSにべったりな実装だった。</p>
+
+<p><img src="/images/k8s-ecosystem-container-runtimes/cr7.png" alt="cr7.png" /></p>
+
+<h2 id="open-container-initiative-oci">Open Container Initiative (OCI)</h2>
+
+<p>Dockerが流行り過ぎて、コンテナ技術を独占するなオープンにしろという圧力が高まったため、2015年6月、Docker社がしぶしぶ<a href="https://www.opencontainers.org/">Open Container Initiative (OCI)</a>という団体を立ち上げ、コンテナ技術の標準化に乗り出した。</p>
+
+<p>OCIでは、<a href="https://github.com/opencontainers/runtime-spec">(低レベルな)コンテナランタイムの仕様</a>のほか、<a href="https://github.com/opencontainers/image-spec">コンテナイメージフォーマットの仕様</a>や<a href="https://github.com/opencontainers/distribution-spec">コンテナレジストリの仕様</a>の標準化などを進めた。
+OCIの標準に準拠したコンテナランタイムはOCIランタイムと呼ばれる。
+OCIランタイムは、JSONファイルでコンテナ構成を受け取り、コマンドラインインターフェースでコンテナの作成、起動、停止をキックする、シンプルな仕様。</p>
+
+<p>CoreOS社もOCIに立ち上げから加わり、appcは2016年後半くらいに更新停止した。
+当然の流れとしてrktもOCIに準拠し、2016年7月、rktは<a href="https://kubernetes.io/blog/2016/07/rktnetes-brings-rkt-container-engine-to-kubernetes/">Kubernetes 1.3でサポートされるにいたった</a>。</p>
+
+<h2 id="runc">runC</h2>
+
+<p>OCIの発足と同時に、Docker社がOCIランタイムのリファレンス実装として<a href="https://github.com/opencontainers/runc">runC</a>を<a href="https://blog.docker.com/2015/06/runc/">発表</a>。
+もともとdockerdに組み込まれていたコンテナランタイムを切り出したもので、Dockerの下請けとしても動くが、<a href="https://www.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/">単体で実行してコンテナを起動することもできる</a>。</p>
+
+<p><img src="/images/k8s-ecosystem-container-runtimes/cr2.png" alt="cr2.png" /></p>
+
+<p>この図ではrunCがコンテナの親プロセスみたいに見えるけど、実際はrunCはコンテナを起動するとexitして、コンテナの親プロセスはdockerdになる。</p>
+
+<h2 id="clear-containers">Clear Containers</h2>
+
+<p>少し遡って2015年5月、インテルもコンテナ業界に参戦していた。
+カーネルを共有するコンテナはセキュアじゃないから、仮想マシンでカーネルを分離しようと言い出し、そのための軽量Linuxとして<a href="https://clearlinux.org/">Clear Linux</a>を<a href="https://www.publickey1.jp/blog/15/clear_linux_project.html">発表</a>。
+これはKVM(QEMU)の仮想マシンで起動し、Intel VT-xのサポートを受けて200msくらいで高速に起動し、一つのコンテナをホストする。
+こうしたコンテナや、その周辺技術がClear Containersと呼ばれる。</p>
+
+<p>とりあえずコンセプトが近しいrktをサポートして、OCIが出てからはOCIランタイムの<a href="https://github.com/clearcontainers/runtime">cc-oci-runtime</a>とかcontainerd-shim(後述)である<a href="https://github.com/clearcontainers/shim">cc-shim</a>とかを作ってDockerとかからも使えるようになった。</p>
+
+<h2 id="hyper-runv">hyper、runV</h2>
+
+<p>Clear Containersの発表と同時期の2015年5月、中国のチーム(のちのHyper社)が<a href="https://github.com/hyperhq/hyperd/tree/v0.1">hyper</a>というコンテナランタイムを公開した。
+これは、Dockerクライアントのようなインターフェースで、QEMUの仮想マシンでコンテナを起動するClear Containersのようなツール。
+当初からPodネイティブ。</p>
+
+<p>2015年8月に出たv0.3では<a href="https://github.com/hyperhq/runv">runV</a>というOCIランタイムをスピンオフ。
+2016年5月に出たv0.6からはHyperContainerに名前を変えて、<a href="https://github.com/hyperhq/hyperd/tree/v0.6.0">デーモンのhyperdとクライアントのhyperctl</a>という構成になった。
+このあたりでHyper社は<a href="https://github.com/hyperhq/www.hyper.sh">Hyper.sh</a>というContainer as a Serviceを開始して、hyperコマンドはそのサービス上でコンテナを起動するツールになった。</p>
+
+<p>その後Hyper社は、<a href="https://github.com/hyperhq/hypernetes">Kubernetesのディストリビューション</a>を開発したり、インテルと協業(後述)したりして、業界でそれなりの存在感を示していたんだけど、Hyper.shは2019年1月に<a href="https://news.ycombinator.com/item?id=18734658">突然閉鎖</a>され、ブログも消えてしまったし、<a href="https://twitter.com/hyper_sh/status/994903266659110912">2018年5月に発表されたばかり</a>の<a href="https://github.com/hyperhq/pi">pi</a>というサーバレスKubernetesサービスもアクセスできなくなって、何だか中国の闇を感じる。</p>
+
+<h2 id="containerd">containerd</h2>
+
+<p>Dockerオープン化の流れは止まらず、Docker社はdockerdからさらに機能を切り出し、2015年12月に<a href="https://containerd.io/">containerd</a>を<a href="https://blog.docker.com/2015/12/containerd-daemon-to-control-runc/">発表</a>。
+runCがOS依存の低レベルな処理をして、containerdがもう少し上のレイヤでコンテナ管理やコンテナイメージ管理を受け持つ感じの役割分担。
+containerdはrunCを使ってコンテナを起動して監視する他、コンテナにストレージやネットワークのアタッチをしたり、コンテナイメージのpull・pushをしたりする機能を備え、後にイベントやメトリクスの収集・エクスポートまでするようになった。
+もはやdockerdはクライアントからのリクエストをcontainerdに丸投げしてるだけなのかも。</p>
+
+<p><a href="https://blog.docker.com/2016/04/docker-engine-1-11-runc/">2015年4月</a>にリリースされたDocker 1.11が、containerdとrunCをベースとした初のバージョンとなった。</p>
+
+<p><img src="/images/k8s-ecosystem-container-runtimes/cr3.png" alt="cr3.png" /></p>
+
+<p>(containerd-shimについては後述。)</p>
+
+<p>containerdは2017年3月に<a href="https://www.docker.com/docker-news-and-press/docker-extracts-and-donates-containerd-its-core-container-runtime-accelerate">コミュニティに寄贈</a>された。
+containerdの完全OSS化により、Dockerに依存せずともコンテナソリューションが作りやすくなり、コンテナエコシステムの成長が加速した。</p>
+
+<h2 id="singularity">Singularity</h2>
+
+<p><a href="https://www.sylabs.io/singularity/">Singularity</a>はHigh Performance Computing (HPC)向けコンテナランタイム。
+Sylabs社が開発していて、2016年4月にv1.0がリリースされて以来、現在も割と活発に更新されている。
+GPUや並列処理(MPI)のサポートがあって高性能で、それでいてセキュア。
+科学技術業界やアカデミックな世界では結構使われているらしい。
+OCI準拠。<a href="https://github.com/sylabs/singularity-cri">Singularity CRI</a>というCRI実装(後述)もある。</p>
+
+<h2 id="cri">CRI</h2>
+
+<p><a href="https://github.com/kubernetes/community/blob/master/contributors/devel/sig-node/container-runtime-interface.md">Container Runtime Interface (CRI)</a>は、2016年12月にKubernetes 1.5と合わせて<a href="https://kubernetes.io/blog/2016/12/container-runtime-interface-cri-in-kubernetes/">発表</a>された、kubeletとコンテナランタイムとの間のインターフェースを標準化する仕様。</p>
+
+<p>CRIの実装は、ImageServiceとRuntimeServiceという二つのgRPCサービスを起動する。
+ImageServiceはコンテナイメージのpull、解析、削除を担当し、RuntimeServiceはPodとコンテナのライフサイクルを管理し、コンテナへのexec、attach、port-forwardの仲介もする。</p>
+
+<p>CRIの最初の実装は、kubelet組み込みの<a href="https://github.com/kubernetes/kubernetes/tree/v1.14.3/pkg/kubelet/dockershim">dockershim</a>というコンポーネントで、kubeletがCRI対応していないdockerdと話すためのもの。</p>
+
+<p><img src="/images/k8s-ecosystem-container-runtimes/cr4.png" alt="cr4.png" /></p>
+
+<h2 id="cri-o">CRI-O</h2>
+
+<p>少し遡って<a href="https://www.redhat.com/en/blog/running-production-applications-containers-introducing-ocid">2016年9月22日</a>、RedHatがOCIDというコンテナランタイムを発表した。
+機能的にはDockerと同じで、runCを始めとしたOCIランタイムでコンテナを起動して管理したり、コンテナイメージを管理したりするものだけど、Dockerとは協力して仲良くやっていくよと言うわざとらしいアナウンスをしていた。</p>
+
+<p>発表直後の<a href="https://github.com/cri-o/cri-o/commit/2378800c9d6e520df0628abca4ca3378daf486ae">9月28日</a>に突如名前を<a href="https://cri-o.io">CRI-O</a>に変えて、当時まだ正式発表前でほとんど知られていなかったCRIにがっつり乗っかったのは、Kubernetesコミュニティと裏で連携をとって何かを企んだことを想像させる。
+ちょうどこのころ<a href="http://blog.gachapin-sensei.com/archives/5174099.html">Docker社は四面楚歌な感じ</a>だったし。
+(因みに、CRI実装で、OCIランタイムとつながるので、OCIのOをとってCRI-O、らしい。)</p>
+
+<p>CRI-Oは<a href="https://medium.com/cri-o/cri-o-1-0-is-here-d06b97b92a98">2017年10月に1.0.0リリースを迎えた</a>。
+時期的にはKubernetes 1.8がでたちょっと後くらいだったけど、まだKubernetes 1.7ベースだった。
+このリリース発表では、Dockerプロジェクトをちょっとディスりつつ、Kubernetesで使うならCRI-Oの方が安定してるしオープンだしコミュニティとも仲いいぜってメッセージを発信。
+この頃すでに、コンテナイメージレジストリと話す<a href="https://github.com/containers/skopeo">skopeo</a>、コンテナイメージをビルドする<a href="https://buildah.io/">Buildah</a>、Podを扱う<a href="https://medium.com/cri-o/introducing-kpod-f06109b96374">kpod</a>(現<a href="https://podman.io/">Podman</a>)の開発が進んでいて、1年後くらいには<code>Simply put: `alias docker=podman\`</code>とか公式マニュアルで言ってた。</p>
+
+<p>で、<a href="https://www.redhat.com/ja/blog/red-hat-enterprise-linux-8-beta-new-set-container-tools">2019年2月</a>についに、RHEL 8からDockerパッケージが無くなることが発表された。</p>
+
+<h2 id="rktlet">rktlet</h2>
+
+<p><a href="https://github.com/kubernetes-incubator/rktlet">rktlet</a>はrkt向けのCoreOS社製CRI実装。
+OCIDと同時期に開発されていたようで、CRIの発表のなかで触れられている。
+2017年末位にKubernetes 1.9対応して以来開発止まった。</p>
+
+<h2 id="frakti">Frakti</h2>
+
+<p><a href="https://github.com/kubernetes/frakti">Frakti</a>もCRIと同時に発表された、HyperContainer向けのCRI実装。
+2017年3月に初バージョンの0.1がリリースされ、Kubernetes 1.6.0で使えるようになった。</p>
+
+<p>Kata Containers (後述)が出たあと、<a href="https://events.linuxfoundation.org/wp-content/uploads/2017/11/How-Container-Runtime-Matters-in-Kubernetes_-OSS-Kunal-Kushwaha.pdf">Frakti v2でそっちに移行する計画</a>が示されていたけど実現せず、2018年11月にv1.12.0でKubernetes 1.12対応して以来開発止まった模様。
+Kata Containersプロジェクトに吸収された?</p>
+
+<h2 id="moby">Moby</h2>
+
+<p>様々な領域、プラットフォーム、ソリューションでコンテナ技術が使われるようになってきたため、エコシステムの発展をさらに加速する要望が高まった。
+これに応えるべく立ち上げられたのが、2017年4月にDocker社が<a href="https://blog.docker.com/2017/04/introducing-the-moby-project/">発表</a>した<a href="https://mobyproject.org/">Moby</a>プロジェクト。
+これは、コンテナ技術のライブラリ化とコンポーネント化を進めて再利用したり再構築しやすくし、重複開発や車輪の再発明を防ぎ、サードパーティが効率よく独自のコンテナシステムを開発できるようにすることを目的とするプロジェクト。
+この発表後のDockerのリリース(v17.06以降)はMobyをベースにしたものになっている。</p>
+
+<p>発表の少し前、<a href="https://blog.docker.com/2017/03/docker-enterprise-edition/">2017年3月</a>にDockerが有償版のDocker Enterprise Editionと無償版のDocker Community Editionに分かれ、またバージョニング方法が<code>1.&lt;メジャーバージョン&gt;.&lt;マイナーバージョン&gt;</code>という形式(v1.13.1まで)から<code>&lt;リリース年下2桁&gt;.&lt;リリース月2桁&gt;.&lt;リビジョン&gt;</code>という形式(v17.03.0以降)になったりしていたが、これらはMobyへの布石だったと言える。</p>
+
+<h2 id="railcar">railcar</h2>
+
+<p>Oracleがコンテナ業界に取り残されているのを危惧したのか、2017年6月にOCIランタイムの  <a href="https://github.com/oracle/railcar">railcar</a>をリリースした。
+今更感がすごいし、機能的にはrunCの劣化版だし、Rustで書かれている以外に特徴はなく、全くやる気が感じられない。</p>
+
+<p>ひと月くらいパッチ出してたけどすぐに開発止まった。</p>
+
+<h2 id="virtlet">virtlet</h2>
+
+<p><a href="https://github.com/Mirantis/virtlet">virtlet</a>はMirantisが開発するCRI実装。
+QEMUの仮想マシンをPodとしてKubernetesで管理できるようにしてくれる。
+2017年6月に公開版としては初版のv0.7.0がリリースされた。</p>
+
+<p>Fraktiとかとは異なり、コンテナを仮想マシンでラップするわけではなく、仮想マシン上で直接ワークロードを動かすのが特徴。
+virtlet用の<a href="https://docs.virtlet.cloud/reference/vm-pod-spec/">PodのKubernetesマニフェスト</a>はCRDじゃなくて標準の形式だけど、<code>containers</code>の<code>image</code>に書かれたものは、コンテナイメージとしてDocker Hubとかからpullされるのではなく、<a href="https://www.linux-kvm.org/page/Qcow2">qcow2</a>のイメージとしてvirtletのレジストリからダウンロードされる。
+<a href="https://github.com/Mirantis/criproxy">CRI Proxy</a>を使うことで、一つのKubernetesクラスタ上で普通のコンテナワークロードとvirtletの仮想マシンワークロードを同居させられる。</p>
+
+<p><img src="/images/k8s-ecosystem-container-runtimes/cr11.png" alt="cr11.png" /></p>
+
+<p>virtlet managerがCRIクライアント(e.g. kubelet)からのリクエストを受けて、vmwrapperがvirtlet managerからのリクエストを受けて<a href="https://ja.wikipedia.org/wiki/Libvirt">libvirt</a>で仮想マシンの起動などのライフサイクル管理する。
+CRI Proxyの下で動くdockershimはkubelet組み込みのやつで、kubeletに特定のオプションを付けて起動するもの。</p>
+
+<p>そんなに活発に開発されている感じではないけど、とりあえず現時点で最新のKubernetes 1.14まではついてきている。
+替えのないプロジェクトなので頑張ってほしい。</p>
+
+<h2 id="cri-containerd">cri-containerd</h2>
+
+<p><a href="https://github.com/containerd/cri">cri-containerd</a>はkubeletから独立したCRI実装で、<a href="https://kubernetes.io/blog/2017/11/containerd-container-runtime-options-kubernetes/">2017年9月</a>にKubernetes 1.8とcontainerd 1.0.0とともにv1.0.0のα版がリリースされた。
+containerdと直接話せるので、Kubernetesにはdockerdが要らなくなった。</p>
+
+<p><img src="/images/k8s-ecosystem-container-runtimes/cr5.png" alt="cr5.png" /></p>
+
+<p>cri-containerdは、2018年3月にv1.0.0のRC版として出た時にはcriプラグインという形に変わっていて、containerd 1.1.0に組み込まれた。</p>
+
+<p><img src="/images/k8s-ecosystem-container-runtimes/cr6.png" alt="cr6.png" /></p>
+
+<h2 id="kata-containers">Kata Containers</h2>
+
+<p><a href="https://www.openstack.org/news/view/365/kata-containers-project-launches-to-build-secure-container-infrastructure">2017年12月</a>、インテルのClear ContainersとHyper社のrunVの技術を組み合わせたコンテナランタイムのプロジェクトとして、<a href="https://katacontainers.io/">Kata Containers</a>がOpenStack Foundationのもとで立ち上げられた。
+プロジェクトをサポートする企業にはインテル、Google、Red Hatなんかもいるが、Huawei、ZTE、China Mobile、JD.com、99cloud、AWcloud、EasyStack、Fiberhome、Tencent、Ucloud、UnitedStackといった中国の名だたる企業が中心で、ロゴも赤く、なんか赤い。</p>
+
+<p>Clear Linux(等)の仮想マシンでコンテナを動かすのはClear Containersと一緒だけど、インテルから離れたことでAMDやARMなどを含む色んなハードウェアに対応する方針になった。
+ハイパバイザもQEMU以外もサポートする方針で、最近<a href="https://github.com/firecracker-microvm/firecracker">AWSのFirecracker</a>に<a href="https://aws.amazon.com/jp/blogs/opensource/kata-containers-1-5-firecracker-support/">対応した</a>。
+因みにKataはギリシャ語の信頼するという単語と、日本語の(舞踊の)型が由来。</p>
+
+<p>当初のKata Containersのコンポーネントには、OCIランタイムのkata-runtimeと、containerd-shimに対してコンテナのふりをするkata-shimと、仮想マシン上で動いてコンテナの面倒を見るkata-agentと、kata-shimとkata-agentとの間の通信を仲介するkata-proxyがあった。</p>
+
+<p><img src="/images/k8s-ecosystem-container-runtimes/cr9.png" alt="cr9.png" /></p>
+
+<p>kata-runtimeはコンテナ(とkata-proxyと仮想マシンとkata-shim)を起動したらexitするはず。
+kata-runtimeとkata-shimはコンテナごとに起動されて、kata-proxyと仮想マシンとkata-agentはPodごとに起動される。</p>
+
+<p>Kata Containers 1.5では、shim API (後述)が出たので、その実装であるcontainerd-shim-kata-v2がkata-runtimeとkata-shimとkata-proxyの役割を兼ねるようになり、起動するプロセス数がかなり減ったけど、containerdべったりになった。</p>
+
+<p><img src="/images/k8s-ecosystem-container-runtimes/cr10.png" alt="cr10.png" /></p>
+
+<p>containerd-shim-kata-v2はOCIランタイムの上位とのAPIは要らない形になって多分なくなった。
+CRI-Oとかと連携するためには従来のkata-runtime、kata-shim、kata-proxyを使う模様。</p>
+
+<h2 id="hcsshim-runhcs">hcsshim、runhcs</h2>
+
+<p>KubernetesのWindows Containers対応も進み、2017年12月にでた<a href="https://kubernetes.io/blog/2017/12/kubernetes-19-workloads-expanded-ecosystem/">Kubernetes 1.9</a>でWindows Containersのサポートがベータになり、KubernetesクラスタのノードにWindows Serverが使えるようになった。</p>
+
+<p>この頃には、コンテナランタイムの標準化とDockerのモジュール化の流れを汲み、Windows版DockerとHCSとの間にWindows版containerdと<a href="https://github.com/microsoft/hcsshim">hcsshim</a>と<a href="https://github.com/microsoft/hcsshim/tree/master/cmd/runhcs">runhcs</a>が入るようになっていたようだ。
+runhcsはrunCのフォークでOCIランタイム。
+hcsshimは下記shim API実装のrunhcs向け版。</p>
+
+<p>KubernetesのWindows Containers対応は、2019年3月にリリースされた<a href="https://kubernetes.io/blog/2019/03/25/kubernetes-1-14-release-announcement/">Kubernetes 1.14</a>でGAになった。</p>
+
+<p><img src="/images/k8s-ecosystem-container-runtimes/cr8.png" alt="cr8.png" /></p>
+
+<h2 id="gvisor">gVisor</h2>
+
+<p><a href="https://cloud.google.com/blog/products/gcp/open-sourcing-gvisor-a-sandboxed-container-runtime">2018年5月</a>、Googleが<a href="https://gvisor.dev/">gVisor</a>を発表した。
+これはGoで書かれた<a href="https://ja.wikipedia.org/wiki/User_Mode_Linux">UML</a>のようなもので、ユーザーランドで動き、カーネルをエミュレートする。
+gVisorの上でコンテナを起動するためのOCIランタイムとして<a href="https://github.com/google/gvisor/tree/master/runsc">runsc</a> (Run Sandboxed Containerの略)が提供されている。
+OCIランタイムなので当然DockerとかcontainerdとかKubernetesとかと使える。</p>
+
+<p>普通のコンテナみたいにホストとカーネルを共有しないのでセキュアだけど、Kata Containersとかみたいに仮想マシンベースでもないので軽いのが特徴。
+ただしすべてのシステムコールをサポートするわけではないので、動かせないアプリもあるけど、Node.js、Java、MySQL、Apache HTTP Server、Redisなんかは動くらしいのでだいたい大丈夫そう。</p>
+
+<h2 id="containerd-shim">containerd-shim</h2>
+
+<p>2018年10月、<a href="https://github.com/containerd/containerd/releases/tag/v1.2.0">containerd v1.2.0</a>がリリースされ、同時に<a href="https://github.com/containerd/containerd/blob/v1.2.6/runtime/v2/README.md">Runtime v2</a>という名のもとにshim API v2を公開した。(v1はクローズドだったので公開APIとしては初版。)
+shim APIの実装は<a href="https://github.com/containerd/containerd/tree/master/runtime/v2">containerd-shim</a>と呼ばれ、上位(i.e. containerd)からgRPCのAPIでリクエストを受けて、下位のOCIランタイムを実行する。
+実はcontainerd-shim自体はDocker 1.11の頃から存在していたので、このタイミングでAPIがオープンになったというだけ。
+このオープン化により、containerd連携したいOCIランタイムが実装すべきAPIが安定して開発しやすくなった。</p>
+
+<p>OCIランタイムは、containerd-shimから実行されてコンテナを起動するとexitする。
+containerd-shimは<a href="http://man7.org/linux/man-pages/man2/prctl.2.html">subreaper</a>として動いていて、<a href="https://github.com/crosbymichael/dockercon-2016/blob/master/Creating%20Containerd.pdf">そのコンテナの親プロセス役を引き継ぎ、コンテナのexitまで面倒をみる</a>。
+この機能により、containerd-shimさえ動いていれば、dockerdやcontainerdが死んでもコンテナが動き続けられるので、コンテナ無停止のDockerアップデートが可能になるなど利点がある。</p>
+</div>
+
+        <section class="share-buttons">
+          <div class="share-button">
+            <div class="fb-share-button" data-href="https://www.kaitoy.xyz/2019/06/15/k8s-ecosystem-container-runtimes/" data-layout="box_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fwww.kaitoy.xyz%2f2019%2f06%2f15%2fk8s-ecosystem-container-runtimes%2f&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Share</a></div>
+          </div>
+          <div class="share-button">
+            <a class="twitter-share-button"
+              href="https://twitter.com/intent/tweet?text=Kubernetes%e3%81%ae%e3%82%a8%e3%82%b3%e3%82%b7%e3%82%b9%e3%83%86%e3%83%a0%20%e3%83%bc%20%e3%82%b3%e3%83%b3%e3%83%86%e3%83%8a%e3%83%a9%e3%83%b3%e3%82%bf%e3%82%a4%e3%83%a0%e7%b7%a8&amp;url=https%3a%2f%2fwww.kaitoy.xyz%2f2019%2f06%2f15%2fk8s-ecosystem-container-runtimes%2f"
+              data-size="large">
+            Tweet</a>
+          </div>
+          <div class="share-button">
+            <a href="http://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="vertical-normal" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+          </div>
+          <div class="share-button">
+            <a data-pocket-label="pocket" data-pocket-count="vertical" class="pocket-btn" data-lang="en"></a>
+            <script type="text/javascript">!function(d,i){if(!d.getElementById(i)){var j=d.createElement("script");j.id=i;j.src="https://widgets.getpocket.com/v1/j/btn.js?v=1";var w=d.getElementById(i);d.body.appendChild(j);}}(document,"pocket-btn-js");</script>
+          </div>
+        </section>
+    </div>
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-6244473643910448"
+         data-ad-slot="1845600530"
+         data-ad-format="auto"></ins>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+    <section class="tbd-pagination">
+      <div class="row">
+        <div class="col-sm-6">
+          <div class="prev">
+            
+            <a href="https://www.kaitoy.xyz/2019/04/11/essence-of-agile-dry/">
+              <i class="fa fa-angle-left"></i>
+              アジャイル開発の真髄 ― DRY
+            </a>
+            
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="next text-right">
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    
+
+    
+
+        <h4 class="page-header">Related</h4>
+
+        <div class="related-links">
+           <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/03/08/k8s-zundoko-operator/">ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</a></h4>
+    <h5>Fri, Mar 8, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubebuilder"><kbd class="item-tag">kubebuilder</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/golang"><kbd class="item-tag">golang</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/17/packer-k8s/">Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</a></h4>
+    <h5>Sun, Jun 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/packer"><kbd class="item-tag">packer</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/msys2"><kbd class="item-tag">msys2</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/03/build-k8s-cluster-by-ansible/">Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</a></h4>
+    <h5>Sun, Jun 3, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a></h4>
+    <h5>Sat, May 5, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a></h4>
+    <h5>Fri, May 4, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a></h4>
+    <h5>Tue, Apr 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/01/hello-skaffold/">Skaffoldを触ってみた</a></h4>
+    <h5>Sun, Apr 1, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/skaffold"><kbd class="item-tag">skaffold</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">Kubernetes 1.8のアクセス制御について。あとDashboard。</a></h4>
+    <h5>Tue, Oct 31, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a></h4>
+    <h5>Sat, Oct 21, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubeadm"><kbd class="item-tag">kubeadm</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></h4>
+    <h5>Wed, Oct 11, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a></h4>
+    <h5>Tue, Oct 10, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/08/14/webdriverio-chrome/">WebdriverIOとChromeのヘッドレスモードで自動ブラウザテストするDockerイメージ: webdriverio-chrome</a></h4>
+    <h5>Mon, Aug 14, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/servicenow"><kbd class="item-tag">servicenow</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/selenium"><kbd class="item-tag">selenium</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/webdriverio"><kbd class="item-tag">webdriverio</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ</a></h4>
+    <h5>Thu, Sep 15, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag">windows</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/nanoserver"><kbd class="item-tag">nanoserver</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/09/12/unzip-on-nanoserver/">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</a></h4>
+    <h5>Mon, Sep 12, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag">windows</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/nanoserver"><kbd class="item-tag">nanoserver</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/07/31/docker-for-windows/">Docker for Windowsがコレジャナかった</a></h4>
+    <h5>Sun, Jul 31, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag"> windows</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/07/11/windows_containers_on_tp5/">Windows Server 2016 TP5でWindows Containersにリトライ</a></h4>
+    <h5>Mon, Jul 11, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag">windows</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/01/22/pcap4j-meets-windows-containers/">Pcap4J Meets Windows Containers</a></h4>
+    <h5>Fri, Jan 22, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag">windows</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></h4>
+    <h5>Mon, Jul 27, 2015</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></h4>
+    <h5>Sat, Jul 25, 2015</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></h4>
+    <h5>Sun, Jul 19, 2015</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/runc"><kbd class="item-tag">runc</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+ 
+        </div>
+    
+
+    
+
+        <h4 class="page-header">Comments</h4>
+
+        <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "kaitoy-tobedecided" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+
+</main>
+
+        <footer>
+
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script>window.twttr = (function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0],
+            t = window.twttr || {};
+          if (d.getElementById(id)) return t;
+          js = d.createElement(s);
+          js.id = id;
+          js.src = "https://platform.twitter.com/widgets.js";
+          fjs.parentNode.insertBefore(js, fjs);
+
+          t._e = [];
+          t.ready = function(f) {
+            t._e.push(f);
+          };
+
+          return t;
+        }(document, "script", "twitter-wjs"));</script>
+
+    </body>
+
+</html>
+

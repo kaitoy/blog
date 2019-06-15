@@ -7,10 +7,37 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>© 2015 Kaito Yamada</copyright>
-    <lastBuildDate>Thu, 11 Apr 2019 23:34:53 +0900</lastBuildDate>
+    <lastBuildDate>Sat, 15 Jun 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://www.kaitoy.xyz/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Kubernetesのエコシステム ー コンテナランタイム編</title>
+      <link>https://www.kaitoy.xyz/2019/06/15/k8s-ecosystem-container-runtimes/</link>
+      <pubDate>Sat, 15 Jun 2019 00:00:00 +0000</pubDate>
+      
+      <guid>https://www.kaitoy.xyz/2019/06/15/k8s-ecosystem-container-runtimes/</guid>
+      <description>Kubernetesを仕事で使い始めて1年たったので、これまで使ったり見聞きして気になったKubernetesまわりのエコシステムについていくつかの記事にまとめていきたい。 第一弾はコンテナランタイム編。
+   (adsbygoogle = window.adsbygoogle || []).push({});  Kubernetes KubernetesはGoogleが2014年6月に発表したコンテナオーケストレーションツール。 単一または複数の物理・仮想マシンでクラスタを構築し、その上でコンテナを起動して、関連するリソース(e.g. 永続化ボリューム)とともに管理できる。 コンテナやコンテナ間の関連を宣言的に管理できるのと、拡張性が高くていろんなものと連携して一元管理できるのが特長。
+Kuberの部分はUserの要領で読んで、Kuとneにアクセントをつけて、クーバーネティスみたいに読むとネイティブっぽい。
+コンテナ コンテナは、ハードウェアをエミュレートしたりするハイパバイザの上で動く仮想マシンに対して、ホストOSのカーネルの機能で論理的に隔離された環境を作り、そこでアプリケーションプロセスを動かす技術。 仮想マシンよりホストとの分離が弱いが、起動が早く、消費リソースが少ない。
+中国語だと容器と書く。 容器…
+Pod Kubernetes上でのワークロードの最小単位はPodと呼ばれる。 Podは仮想マシンのような概念で、Podごとに論理リソースが隔離され、IPアドレスが割り当てられ、その中で一つないし複数のコンテナが動く。 Pod自体もサンドボックスコンテナという特殊なコンテナによって構成される。 隔離された論理リソース空間はサンドボックスコンテナ(pauseコンテナ)によって保持されるので、アプリケーションを動かすコンテナが再起動されたりしても論理リソース空間を維持できるという寸法。
+コンテナランタイム コンテナを実行するためのプログラムはコンテナランタイムと呼ばれる。
+実はKubernetes自身はコンテナを起動する機能は持ってない。 ので、kubeletというコンポーネントがコンテナランタイムのAPIやコマンドを叩いてコンテナを起動する。
+kubeletとコンテナランタイムとの関係は歴史的なものもあって結構複雑。 以下、いろいろあるコンテナランタイムを概ね時系列順に紹介する。
+Docker Dockerは、2013年3月に生まれたもっとも古くもっともよく知られたコンテナランタイム。 Linuxカーネルの機能であるnamespacesで論理リソースを隔離し、cgroupsでハードウェアリソースを隔離し、Overlay Filesystemでファイルシステムを隔離し、その中でプロセスを起動する。
+Dockerと一言で言っても、実際にコンテナを実行する低レベルなコンテナランタイムと、それを使ってコンテナを起動して管理するDocker Daemon (dockerd)と、そのデーモンにリクエストを送るためのDocker Clientに分けられて、さらに時代とともに機能が細分化されていくつかのモジュールで構成されるようになっている。
+初期のKubernetes(1.2まで?)はコンテナランタイムはDocker一択で、kubeletからdockerdの内部APIを呼ぶような密連携をしていたそうな。
+rkt rktはCoreOS社(現RedHat)が2014年12月に発表したコンテナランタイム。 当時はRocketと表記してロケットと読んでいたが、商標上の問題があったのかすぐにrktになった。
+当時クローズドな性質だったDockerに対抗してか、rktは発表当初からその仕様をApp Container (aka. appc)として公開し、オープン感を出していた。 appcにはコンテナイメージ形式やコンテナランタイムなどの仕様が定められ、いくつかの3rdパーティ実装も生まれた。
+rktはコンテナを様々な隔離レベルで起動できるのが特徴で、ホストと同じnamespaceで起動して緩く隔離したり、KVMの仮想マシン上で起動して厳密に隔離したりできる。
+もう一つの特徴として、Podをネイティブサポートしていることがある。 つまりrktでは、Kubernetes無しでもコンテナはPod内で実行される。
+Windows Containers Windowsにもコンテナ対応が。
+2015年4月にMicrosoftからWindows Containersが発表され、2015年8月にWindows Server 2016のプレビュー版で実際に触れるようになった。 Windows ContainersはWindows上でWindowsとLinuxのコンテナを動かせる機能で、Dockerのクライアントから操作できる。 (初期はPowerShellのコマンドレットでも操作できたけど、こちらのインターフェースはすぐに廃止された。)
+その後2017年1月、Windows Containersを実現するための機能を提供するサービスであるHost Compute Service (HCS)が発表された。 この頃はWindows版DockerはこのHCSにべったりな実装だった。</description>
+    </item>
     
     <item>
       <title>アジャイル開発の真髄 ― DRY</title>
