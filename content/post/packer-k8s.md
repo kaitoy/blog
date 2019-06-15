@@ -68,9 +68,9 @@ PackerはGoで書かれていてビルド済みのバイナリが配布されて
 
 今回はPacker 1.2.4のWindows版をインストールした。
 
-# Packerの[テンプレート](https://www.packer.io/docs/templates/index.html)概要
+# Packerのテンプレート概要
 
-Packerのテンプレートにはビルド、プロビジョニング、ポストプロセスの定義を複数かけて、複数環境のVM生成を1ファイルで定義できる。
+Packerの[テンプレート](https://www.packer.io/docs/templates/index.html)にはビルド、プロビジョニング、ポストプロセスの定義を複数かけて、複数環境のVM生成を1ファイルで定義できる。
 
 テンプレートには以下のプロパティを書く。
 

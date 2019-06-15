@@ -859,9 +859,9 @@ EOF
     # kubectl get componentstatuses
     ```
 
-## 7. [TLS Bootstrapping](https://kubernetes.io/docs/admin/kubelet-tls-bootstrapping/)の設定
+## 7. TLS Bootstrappingの設定
 
-TLS Bootstrappingは、Kubernetesクラスタのコンポーネント間の通信がTLSで暗号化されている環境で、ノードが新たにクラスタに参加するとき、自動的にセキュアに[CSR](https://ja.wikipedia.org/wiki/%E8%A8%BC%E6%98%8E%E6%9B%B8%E7%BD%B2%E5%90%8D%E8%A6%81%E6%B1%82)を処理する仕組み。
+[TLS Bootstrapping](https://kubernetes.io/docs/admin/kubelet-tls-bootstrapping/)は、Kubernetesクラスタのコンポーネント間の通信がTLSで暗号化されている環境で、ノードが新たにクラスタに参加するとき、自動的にセキュアに[CSR](https://ja.wikipedia.org/wiki/%E8%A8%BC%E6%98%8E%E6%9B%B8%E7%BD%B2%E5%90%8D%E8%A6%81%E6%B1%82)を処理する仕組み。
 
 TLS Bootstrappingでは、kubeletは起動時にBootstrap kubeconfigを読んで、kubeletとノード用のCSRを生成し、それらがkube-controller-managerに承認されると、kubelet用のクライアント証明書と秘密鍵を生成する。
 その証明書と鍵を使ってkubeconfigを生成し、以降のクラスタへの接続に使う。
