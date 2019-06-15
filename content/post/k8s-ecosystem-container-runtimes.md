@@ -161,6 +161,10 @@ CRI-Oは[2017年10月に1.0.0リリースを迎えた](https://medium.com/cri-o/
 
 で、[2019年2月](https://www.redhat.com/ja/blog/red-hat-enterprise-linux-8-beta-new-set-container-tools)についに、RHEL 8からDockerパッケージが無くなることが発表された。
 
+![cr12.png](/images/k8s-ecosystem-container-runtimes/cr12.png)
+
+commonというのはcontainerd-shim (後述)と同様の働きをするデーモン。
+
 ## rktlet
 [rktlet](https://github.com/kubernetes-incubator/rktlet)はrkt向けのCoreOS社製CRI実装。
 OCIDと同時期に開発されていたようで、CRIの発表のなかで触れられている。
@@ -265,3 +269,10 @@ shim APIの実装は[containerd-shim](https://github.com/containerd/containerd/t
 OCIランタイムは、containerd-shimから実行されてコンテナを起動するとexitする。
 containerd-shimは[subreaper](http://man7.org/linux/man-pages/man2/prctl.2.html)として動いていて、[そのコンテナの親プロセス役を引き継ぎ、コンテナのexitまで面倒をみる](https://github.com/crosbymichael/dockercon-2016/blob/master/Creating%20Containerd.pdf)。
 この機能により、containerd-shimさえ動いていれば、dockerdやcontainerdが死んでもコンテナが動き続けられるので、コンテナ無停止のDockerアップデートが可能になるなど利点がある。
+
+# まとめ
+コンテナランタイムは奥が深くてまだ進化の過程。
+
+結局どのコンテナランタイムにすればいいか迷ったときのためのフローチャートを書いた。
+
+![flow.png](/images/k8s-ecosystem-container-runtimes/flow.png)
