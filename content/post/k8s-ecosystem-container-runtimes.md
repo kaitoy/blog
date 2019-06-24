@@ -56,7 +56,7 @@ Dockerと一言で言っても、実際にコンテナを実行する低レベ�
 ![cr1.png](/images/k8s-ecosystem-container-runtimes/cr1.png)
 
 ## rkt
-[rkt](https://github.com/rkt/rkt)はCoreOS社(現RedHat)が[2014年12月に発表した](https://coreos.com/blog/rocket.html)コンテナランタイム。
+[rkt](https://github.com/rkt/rkt)はCoreOS社(現Red Hat)が[2014年12月に発表した](https://coreos.com/blog/rocket.html)コンテナランタイム。
 当時はRocketと表記してロケットと読んでいたが、商標上の問題があったのかすぐにrktになった。
 
 当時クローズドな性質だったDockerに対抗してか、rktは発表当初からその仕様を[App Container (aka. appc)](https://github.com/appc/spec/)として公開し、オープン感を出していた。
@@ -150,7 +150,7 @@ CRIの最初の実装は、kubelet組み込みの[dockershim](https://github.com
 ![cr4.png](/images/k8s-ecosystem-container-runtimes/cr4.png)
 
 ## CRI-O
-少し遡って[2016年9月22日](https://www.redhat.com/en/blog/running-production-applications-containers-introducing-ocid)、RedHatがOCIDというコンテナランタイムを発表した。
+少し遡って[2016年9月22日](https://www.redhat.com/en/blog/running-production-applications-containers-introducing-ocid)、Red HatがOCIDというコンテナランタイムを発表した。
 機能的にはDockerと同じで、runCを始めとしたOCIランタイムでコンテナを起動して管理したり、コンテナイメージを管理したりするものだけど、Dockerとは協力して仲良くやっていくよと言うわざとらしいアナウンスをしていた。
 
 発表直後の[9月28日](https://github.com/cri-o/cri-o/commit/2378800c9d6e520df0628abca4ca3378daf486ae)に突如名前を[CRI-O](https://cri-o.io)に変えて、当時まだ正式発表前でほとんど知られていなかったCRIにがっつり乗っかったのは、Kubernetesコミュニティと裏で連携をとって何かを企んだことを想像させる。
