@@ -527,7 +527,7 @@ kata-runtimeとkata-shimはコンテナごとに起動されて、kata-proxyと�
 
 <p><img src="/images/k8s-ecosystem-container-runtimes/cr10.png" alt="cr10.png" /></p>
 
-<p>containerd-shim-kata-v2はOCIランタイムの上位とのAPIは要らない形になって多分なくなった。
+<p>containerd-shim-kata-v2のOCIランタイムの上位とのAPIは要らない形になって多分なくなった。
 CRI-Oとかと連携するためには従来のkata-runtime、kata-shim、kata-proxyを使う模様。</p>
 
 <h2 id="hcsshim-runhcs">hcsshim、runhcs</h2>
@@ -561,19 +561,21 @@ OCIランタイムなので当然DockerとかcontainerdとかKubernetesとかと
 
 <p>普通のコンテナみたいにホストとカーネルを共有しないのでセキュアだけど、Kata Containersとかみたいに仮想マシンベースでもないので軽いのが特徴。
 ただしすべてのシステムコールをサポートするわけではないので、動かせないアプリもある。
-Node.js、Java、MySQL、Apache HTTP Server、Redisなんかは動くらしいのでだいたい大丈夫そうだけど。
-システムコールが本当のカーネルよりも遅いので、じゃんじゃんシステムコールするアプリには向かない。</p>
+Node.js、Java、MySQL、Apache HTTP Server、Redisなんかは動くらしいのでだいたい大丈夫そうだけど。</p>
+
+<p>システムコールが本当のカーネルよりも遅いので、じゃんじゃんシステムコールするアプリには向かない。</p>
 
 <h2 id="nabla-containers">Nabla Containers</h2>
 
 <p><a href="https://nabla-containers.github.io/">Nabla Containers</a>はIBM Researchが開発したもう一つのコンテナランタイム。
-2018年7月に<a href="https://japan.zdnet.com/article/35122760/">発表</a>された。
-コンテナをホストカーネルから分離するために間に仮想化レイヤを挟むという点はgVisorやKata Containersと似ているけど、プロセスとしての<a href="https://en.wikipedia.org/wiki/Unikernel">Unikernel</a>というアイデアに基づいているのが最大の特徴。</p>
+2018年7月に<a href="https://japan.zdnet.com/article/35122760/">発表</a>された。</p>
+
+<p>コンテナをホストカーネルから分離するために間に仮想化レイヤを挟むという点はgVisorやKata Containersと似ているけど、プロセスとしての<a href="https://en.wikipedia.org/wiki/Unikernel">Unikernel</a>というアイデアに基づいているのが最大の特徴。</p>
 
 <p>Unikernelは、<a href="https://en.wikipedia.org/wiki/Operating_system#Library">ライブラリOS</a>というOSの個々の機能をライブラリ化したものと、アプリケーションのコードを一つにビルドして生成する、軽量な単一目的なVMイメージと捉えられる。
 Unikernelは特殊なハイパバイザの上で直接起動し、<a href="https://en.wikipedia.org/wiki/Single_address_space_operating_system">単一アドレス空間</a>で動くので、仮想メモリのオーバヘッドやユーザ空間とカーネル空間との間のメモリコピーなどが無くて高速。</p>
 
-<p>Nabla ContainersはこれもIBM Research製の<a href="https://github.com/Solo5/solo5">Solo5</a>というハイパバイザ上で、<a href="https://github.com/rumpkernel/rumprun">Rumprun</a>ベースのUnikernelを実行する。
+<p>Nabla ContainersはこれもIBM Research製の<a href="https://github.com/Solo5/solo5">Solo5</a>というハイパバイザ上で、<a href="https://github.com/rumpkernel/rumprun">Rumprun</a>(等)ベースのUnikernelを実行する。
 Unikernelからのカーネル機能実行(hypercall)はSolo5によってホストカーネルへのシステムコールに変換されるんだけど、Solo5は7つのシステムコールしか使わないのでかなりセキュア。</p>
 
 <p>Nabla Containers用のOCIランタイムとして、<a href="https://github.com/nabla-containers/runnc">runnc</a>が提供されている。
@@ -581,8 +583,9 @@ Unikernelからのカーネル機能実行(hypercall)はSolo5によってホス�
 特殊なベースイメージからビルドしなおす必要がある。</p>
 
 <p>Nabla Containersはまだまだ開発途上で、そもそもUnikernel自体が成熟した技術ではないのもあって制限事項が沢山ある。
-書き込めるファイルシステムが<code>/tmp</code>しかないとか、ボリュームマウントできないとか、<a href="https://github.com/rumpkernel/rumprun-packages">提供されているパッケージ</a>が全然少ないとか、プロセスforkできないとか。
-ちょっとまだ使い物にならない…</p>
+書き込めるファイルシステムが<code>/tmp</code>しかないとか、ボリュームマウントできないとか、<a href="https://github.com/rumpkernel/rumprun-packages">提供されているパッケージ</a>が全然少ないとか、プロセスforkできないとか。</p>
+
+<p>ちょっとまだ使い物にならない…</p>
 
 <h2 id="containerd-shim">containerd-shim</h2>
 

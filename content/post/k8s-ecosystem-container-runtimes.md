@@ -242,7 +242,7 @@ Kata Containers 1.5では、shim API (後述)が出たので、その実装で�
 
 ![cr10.png](/images/k8s-ecosystem-container-runtimes/cr10.png)
 
-containerd-shim-kata-v2はOCIランタイムの上位とのAPIは要らない形になって多分なくなった。
+containerd-shim-kata-v2のOCIランタイムの上位とのAPIは要らない形になって多分なくなった。
 CRI-Oとかと連携するためには従来のkata-runtime、kata-shim、kata-proxyを使う模様。
 
 ## hcsshim、runhcs
@@ -274,17 +274,19 @@ OCIランタイムなので当然DockerとかcontainerdとかKubernetesとかと
 普通のコンテナみたいにホストとカーネルを共有しないのでセキュアだけど、Kata Containersとかみたいに仮想マシンベースでもないので軽いのが特徴。
 ただしすべてのシステムコールをサポートするわけではないので、動かせないアプリもある。
 Node.js、Java、MySQL、Apache HTTP Server、Redisなんかは動くらしいのでだいたい大丈夫そうだけど。
+
 システムコールが本当のカーネルよりも遅いので、じゃんじゃんシステムコールするアプリには向かない。
 
 ## Nabla Containers
 [Nabla Containers](https://nabla-containers.github.io/)はIBM Researchが開発したもう一つのコンテナランタイム。
 2018年7月に[発表](https://japan.zdnet.com/article/35122760/)された。
+
 コンテナをホストカーネルから分離するために間に仮想化レイヤを挟むという点はgVisorやKata Containersと似ているけど、プロセスとしての[Unikernel](https://en.wikipedia.org/wiki/Unikernel)というアイデアに基づいているのが最大の特徴。
 
 Unikernelは、[ライブラリOS](https://en.wikipedia.org/wiki/Operating_system#Library)というOSの個々の機能をライブラリ化したものと、アプリケーションのコードを一つにビルドして生成する、軽量な単一目的なVMイメージと捉えられる。
 Unikernelは特殊なハイパバイザの上で直接起動し、[単一アドレス空間](https://en.wikipedia.org/wiki/Single_address_space_operating_system)で動くので、仮想メモリのオーバヘッドやユーザ空間とカーネル空間との間のメモリコピーなどが無くて高速。
 
-Nabla ContainersはこれもIBM Research製の[Solo5](https://github.com/Solo5/solo5)というハイパバイザ上で、[Rumprun](https://github.com/rumpkernel/rumprun)ベースのUnikernelを実行する。
+Nabla ContainersはこれもIBM Research製の[Solo5](https://github.com/Solo5/solo5)というハイパバイザ上で、[Rumprun](https://github.com/rumpkernel/rumprun)(等)ベースのUnikernelを実行する。
 Unikernelからのカーネル機能実行(hypercall)はSolo5によってホストカーネルへのシステムコールに変換されるんだけど、Solo5は7つのシステムコールしか使わないのでかなりセキュア。
 
 Nabla Containers用のOCIランタイムとして、[runnc](https://github.com/nabla-containers/runnc)が提供されている。
@@ -293,6 +295,7 @@ Nabla Containers用のOCIランタイムとして、[runnc](https://github.com/n
 
 Nabla Containersはまだまだ開発途上で、そもそもUnikernel自体が成熟した技術ではないのもあって制限事項が沢山ある。
 書き込めるファイルシステムが`/tmp`しかないとか、ボリュームマウントできないとか、[提供されているパッケージ](https://github.com/rumpkernel/rumprun-packages)が全然少ないとか、プロセスforkできないとか。
+
 ちょっとまだ使い物にならない…
 
 ## containerd-shim
