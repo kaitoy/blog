@@ -213,7 +213,7 @@ CRI Proxyの下で動くdockershimはkubelet組み込みのやつで、kubelet�
 替えのないプロジェクトなので頑張ってほしい。
 
 ## cri-containerd
-[cri-containerd](https://github.com/containerd/cri)はkubeletから独立したCRI実装で、[2017年9月](https://kubernetes.io/blog/2017/11/containerd-container-runtime-options-kubernetes/)にKubernetes 1.8とcontainerd 1.0.0とともにv1.0.0のα版がリリースされた。
+[cri-containerd](https://github.com/containerd/cri)はkubeletから独立したCRI実装(cf. dockershim)で、[2017年9月](https://kubernetes.io/blog/2017/11/containerd-container-runtime-options-kubernetes/)にKubernetes 1.8とcontainerd 1.0.0とともにv1.0.0のα版がリリースされた。
 containerdと直接話せるので、Kubernetesにはdockerdが要らなくなった。
 
 ![cr5.png](/images/k8s-ecosystem-container-runtimes/cr5.png)
@@ -229,6 +229,7 @@ cri-containerdは、2018年3月にv1.0.0のRC版として出た時にはcriプ�
 Clear Linux(等)の仮想マシンでコンテナを動かすのはClear Containersと一緒だけど、インテルから離れたことでAMDやARMなどを含む色んなハードウェアに対応する方針になった。
 ハイパバイザもQEMU以外もサポートする方針で、最近[AWSのFirecracker](https://github.com/firecracker-microvm/firecracker)に[対応した](https://aws.amazon.com/jp/blogs/opensource/kata-containers-1-5-firecracker-support/)。
 因みにKataはギリシャ語の信頼するという単語と、日本語の(舞踊の)型が由来。
+(いまいちピンとこない。)
 
 当初のKata Containersのコンポーネントには、OCIランタイムのkata-runtimeと、containerd-shimに対してコンテナのふりをするkata-shimと、仮想マシン上で動いてコンテナの面倒を見るkata-agentと、kata-shimとkata-agentとの間の通信を仲介するkata-proxyがあった。
 
