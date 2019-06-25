@@ -48,6 +48,7 @@ kubeletとコンテナランタイムとの関係は歴史的なものもあっ�
 ## Docker
 [Docker](https://www.docker.com/)は、2013年3月に生まれたもっとも古くもっともよく知られたコンテナランタイム。
 Linuxカーネルの機能である[namespaces](https://linuxjm.osdn.jp/html/LDP_man-pages/man7/namespaces.7.html)で論理リソースを隔離し、[cgroups](http://man7.org/linux/man-pages/man7/cgroups.7.html)でハードウェアリソースを隔離し、[Overlay Filesystem](https://en.wikipedia.org/wiki/OverlayFS)でファイルシステムを隔離し、その中でプロセスを起動する。
+さらに[SELinux](https://ja.wikipedia.org/wiki/Security-Enhanced_Linux)でファイルアクセスを制限したり、[seccomp](http://man7.org/linux/man-pages/man2/seccomp.2.html)でシステムコールを制限したり、[AppArmor](https://ja.wikipedia.org/wiki/AppArmor)でcapabilityを制限したりもできる。
 
 Dockerと一言で言っても、実際にコンテナを実行する低レベルなコンテナランタイムと、それを使ってコンテナを起動して管理するDocker Daemon (dockerd)と、そのデーモンにリクエストを送るためのDocker Clientに分けられて、さらに時代とともに機能が細分化されていくつかのモジュールで構成されるようになっている。
 
