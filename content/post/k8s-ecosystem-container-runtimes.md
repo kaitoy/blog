@@ -254,6 +254,15 @@ KubernetesのWindows Containers対応は、2019年3月にリリースされた[K
 
 ![cr8.png](/images/k8s-ecosystem-container-runtimes/cr8.png)
 
+## runq
+[runq](https://github.com/gotoz/runq)はIBM Researchが開発し、[2018年3月](http://containerz.blogspot.com/2018/03/runq.html)に公開したOCIランタイム。
+もともと[IBM Blockchain Platform](https://www.ibm.com/blockchain/platform)で使われていたものをOSS化したもの。
+
+QEMUで軽量VMを動かしてその中でコンテナを実行するので、Kata Containersみたいな感じ。
+x86の普通のLinuxに加えて、[IBM Z](https://www.ibm.com/jp-ja/it-infrastructure/z)というメインフレーム上で動く(!)のが大きな特徴。
+
+runqの成果は[2018年12月にKata Containersに取り込まれ](https://containersonibmz.com/2018/12/19/kata-containers-now-also-on-ibm-z/)、Kata ContainersもIBM Zをサポートした。
+
 ## gVisor
 [2018年5月](https://cloud.google.com/blog/products/gcp/open-sourcing-gvisor-a-sandboxed-container-runtime)、Googleが[gVisor](https://gvisor.dev/)を発表した。
 これはGoで書かれた[UML](https://ja.wikipedia.org/wiki/User_Mode_Linux)のようなもので、ユーザーランドで動き、カーネルをエミュレートする。
@@ -261,7 +270,28 @@ gVisorの上でコンテナを起動するためのOCIランタイムとして[r
 OCIランタイムなので当然DockerとかcontainerdとかKubernetesとかと使える。
 
 普通のコンテナみたいにホストとカーネルを共有しないのでセキュアだけど、Kata Containersとかみたいに仮想マシンベースでもないので軽いのが特徴。
-ただしすべてのシステムコールをサポートするわけではないので、動かせないアプリもあるけど、Node.js、Java、MySQL、Apache HTTP Server、Redisなんかは動くらしいのでだいたい大丈夫そう。
+ただしすべてのシステムコールをサポートするわけではないので、動かせないアプリもある。
+Node.js、Java、MySQL、Apache HTTP Server、Redisなんかは動くらしいのでだいたい大丈夫そうだけど。
+システムコールが本当のカーネルよりも遅いので、じゃんじゃんシステムコールするアプリには向かない。
+
+## Nabla Containers
+[Nabla Containers](https://nabla-containers.github.io/)はIBM Researchが開発したもう一つのコンテナランタイム。
+2018年7月に[発表](https://japan.zdnet.com/article/35122760/)された。
+コンテナをホストカーネルから分離するために間に仮想化レイヤを挟むという点はgVisorやKata Containersと似ているけど、プロセスとしての[Unikernel](https://en.wikipedia.org/wiki/Unikernel)というアイデアに基づいているのが最大の特徴。
+
+Unikernelは、[ライブラリOS](https://en.wikipedia.org/wiki/Operating_system#Library)というOSの個々の機能をライブラリ化したものと、アプリケーションのコードを一つにビルドして生成する、軽量な単一目的なVMイメージと捉えられる。
+Unikernelは特殊なハイパバイザの上で直接起動し、[単一アドレス空間](https://en.wikipedia.org/wiki/Single_address_space_operating_system)で動くので、仮想メモリのオーバヘッドやユーザ空間とカーネル空間との間のメモリコピーなどが無くて高速。
+
+Nabla ContainersはこれもIBM Research製の[Solo5](https://github.com/Solo5/solo5)というハイパバイザ上で、[Rumprun](https://github.com/rumpkernel/rumprun)ベースのUnikernelを実行する。
+Unikernelからのカーネル機能実行(hypercall)はSolo5によってホストカーネルへのシステムコールに変換されるんだけど、Solo5は7つのシステムコールしか使わないのでかなりセキュア。
+
+Nabla Containers用のOCIランタイムとして、[runnc](https://github.com/nabla-containers/runnc)が提供されている。
+ランタイムはOCI準拠なのでDockerからも使えるけど、コンテナイメージがOCI準拠じゃないので、Dockerイメージは動かせない。
+特殊なベースイメージからビルドしなおす必要がある。
+
+Nabla Containersはまだまだ開発途上で、そもそもUnikernel自体が成熟した技術ではないのもあって制限事項が沢山ある。
+書き込めるファイルシステムが`/tmp`しかないとか、ボリュームマウントできないとか、[提供されているパッケージ](https://github.com/rumpkernel/rumprun-packages)が全然少ないとか、プロセスforkできないとか。
+ちょっとまだ使い物にならない…
 
 ## containerd-shim
 2018年10月、[containerd v1.2.0](https://github.com/containerd/containerd/releases/tag/v1.2.0)がリリースされ、同時に[Runtime v2](https://github.com/containerd/containerd/blob/v1.2.6/runtime/v2/README.md)という名のもとにshim API v2を公開した。(v1はクローズドだったので公開APIとしては初版。)
