@@ -23,22 +23,11 @@
   <meta property="og:title" content="Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した | To Be Decided">
   <title>Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した | To Be Decided</title>
   <meta property="og:description" content="「Kubernetes 1.10をスクラッチから全手動で構築」、「Kubernetes 1.10のクラスタにWeave Netをデプロイする」、「Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える」のまとめとして、Kubernetes 1.10のクラスタを構築するAnsible Playbookを書いた。
-書いたものはGitHubに置いた。
-   (adsbygoogle = window.adsbygoogle || []).push({});  Ansibleとは Ansibleは、Ansible社が開発したOSSのIT自動化ツール。 Ansible社は2015年10月にRedHatが買収したので、現在はRedHatが開発している。 似たようなツールにPuppetやChefがあるが、最近はAnsibleが最も支持されている気がする。
-構成管理ツールと紹介されることが多い気がするが、2014年末位からはIT自動化ツールを自称していて、構成管理は実現するユースケースの一つという位置づけになっているので、そろそろ認識を改めてあげたい。
-ユースケースは以下のようなもの。
- プロビジョニング (ベアメタル、VM、クラウドインスタンス) 構成管理 アプリケーションデプロイメント CI/CD セキュリティ・コンプライアンス管理 オーケストレーション  
-以下のような特徴を持つ。
- Python(とPowerShell)で作られてる。  昔はPython 2じゃないと動かなかったけど、2.2からPython 3でも動くようになった。  YAMLで書いた定義(Playbook)に従って処理を実行する。 シンプルで簡便であることを売りにしている。  多数のモジュールがビルトインされていて、様々な操作を簡潔な定義で宣言的に実行できる。  エージェントレスで、SSH(等)で対象のサーバにつないで処理を実行する。 処理を冪等にできるような仕組みが備わっていて、特にビルトインモジュールを活用すると簡単に冪等性を持たせられる。  
-Pythonで書かれているのでどこでも動くかと思いきや、fcntlとかgrpやらUnix特有のモジュールを使っているため、WindowsのPythonでは動かない。
-MSYS2とかWSLでは動く模様。 (Git Bashでは動かない…)
 
-今回使ったのは最新版の2.5.3。
-Ansibleインストール AnsibleはYUMとかpipとかでインストールできる。
-今回はOracle Linux 7.4で動かすため、以下のようにインストールした。
- AnsibleのYUMリポジトリ追加
-以下の内容を/etc/yum.repos.d/の適当な.repoファイルに書く。
-[ansible] name=Ansible baseurl=http://releases.ansible.com/ansible/rpm/release/epel-7-x86_64/ gpgcheck=0 enabled=1 依存するPythonパッケージのYUMリポジトリを有効化">
+書いたものはGitHubに置いた。">
+  <meta name="description" content="「Kubernetes 1.10をスクラッチから全手動で構築」、「Kubernetes 1.10のクラスタにWeave Netをデプロイする」、「Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える」のまとめとして、Kubernetes 1.10のクラスタを構築するAnsible Playbookを書いた。
+
+書いたものはGitHubに置いた。">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes-ansible.png">
 
 
@@ -230,15 +219,9 @@ Ansibleインストール AnsibleはYUMとかpipとかでインストールで�
         <hr>
         
 
-        <br> <div class="text-justify">
-
-<p>「<a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a>」、「<a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a>」、「<a href="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a>」のまとめとして、Kubernetes 1.10のクラスタを構築するAnsible Playbookを書いた。</p>
+        <br> <div class="text-justify"><p>「<a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a>」、「<a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a>」、「<a href="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a>」のまとめとして、Kubernetes 1.10のクラスタを構築するAnsible Playbookを書いた。</p>
 
 <p>書いたものは<a href="https://github.com/kaitoy/ansible-k8s">GitHub</a>に置いた。</p>
-
-
-
-
 
 <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 <ins class="adsbygoogle"
@@ -395,8 +378,7 @@ Ansible社は2015年10月にRedHatが買収したので、現在はRedHatが開�
 <p>一通り作った後で、<a href="https://github.com/kubernetes-incubator/kubespray">kubespray</a>というものを知った。
 これ使うと、Ansibleでマルチノードのk8sクラスタ作れて、ネットワークプロバイダ切り替えたり、<a href="https://istio.io/">istio</a>とか<a href="https://helm.sh/">Helm</a>とかDocker Registryとか簡単にデプロイできたり、AWSやAzureにクラスタ作れたり、すごい。</p>
 
-<p>あ、いや、けどこれOracle Linuxサポートしてないし…</p>
-</div>
+<p>あ、いや、けどこれOracle Linuxサポートしてないし…</p></div>
 
         <section class="share-buttons">
           <div class="share-button">

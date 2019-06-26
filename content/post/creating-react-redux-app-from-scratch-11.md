@@ -16,6 +16,8 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 
 前回でこのシリーズを終わりにするつもりだったけど、型システムをFlowから[TypeScript](https://www.typescriptlang.org/)に移行したのでそれについて書く。
 
+<!--more-->
+
 {{< google-adsense >}}
 
 # TypeScript

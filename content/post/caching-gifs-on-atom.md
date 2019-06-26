@@ -11,7 +11,7 @@ title = "AtomにおけるGIF画像のキャッシュ"
 以前、[__disturb-me__](https://atom.io/packages/disturb-me)という[__Atom__](https://atom.io/)パッケージを作ったという[エントリ](https://www.kaitoy.xyz/2015/09/06/disturb-me/)を書いた。
 このエントリでは、disturb-meに見つけたバグの修正のなかで、AtomがGIF画像をキャッシュする問題に対応したという話を書く。
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

@@ -12,7 +12,7 @@ title = "Goslings開発メモ - その3: Spring Boot続続編 (例外処理)"
 
 Spring Boot続続編で、例外処理について。
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

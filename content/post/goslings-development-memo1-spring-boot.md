@@ -13,7 +13,7 @@ title = "Goslings開発メモ - その1: Spring Boot編"
 
 Spring Boot編。
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

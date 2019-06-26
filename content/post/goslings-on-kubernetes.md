@@ -14,6 +14,8 @@ title = "Kubernetes 1.8が出たので、Minikubeを触ってみる"
 
 具体的には、[Kubernetes Basics](https://kubernetes.io/docs/tutorials/kubernetes-basics/)というチュートリアルをやりながら、[Minikube](https://github.com/kubernetes/minikube)に[Goslings](https://kaitoy.github.io/goslings/)をデプロイしたんだけど、この記事ではMinikubeをセットアップしたところまで。
 
+<!--more-->
+
 {{< google-adsense >}}
 
 # Kubernetesとは

@@ -11,6 +11,8 @@ title = "GitHub Pagesでブログ立ち上げ - Jekyllのためのツール"
 [__GitHub Pagesでブログ立ち上げ - GitHub PagesとJekyll__](https://www.kaitoy.xyz/2015/08/15/github-pages-and-jekyll/)の続き。
 前回は、[__GitHub Pages__](https://pages.github.com/)と[__Jekyll__](http://jekyllrb.com/docs/home/)でブログを始めることにして、Jekyllのセットアップに四苦八苦した。
 
+<!--more-->
+
 Jekyllがだいたいセットアップできたところで、どんなサイトデザインにしようか考え始めた。
 調べたところ、生のJekyllを使うよりも簡単に見栄えのいいサイトを作れる方法がある模様。
 

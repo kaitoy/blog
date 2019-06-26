@@ -11,6 +11,8 @@ title = "Elasticsearch、Logstash、Filebeat、elasticsearch-headでログを見
 
 [NNMi](http://www8.hp.com/jp/ja/software-solutions/network-node-manager-i-network-management-software/)ログを[Filebeat](https://www.elastic.co/jp/products/beats/filebeat)で集めて[Logstash](https://www.elastic.co/jp/products/logstash)で構造化して[Elasticsearch](https://www.elastic.co/jp/products/elasticsearch)に入れて[elasticsearch-head](https://mobz.github.io/elasticsearch-head/)で見てみたけど、ログ量が少なかったせいかあんまり恩恵が感じられなかった話。
 
+<!--more-->
+
 {{< google-adsense >}}
 
 # Elasticsearchとは

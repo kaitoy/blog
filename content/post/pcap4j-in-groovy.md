@@ -14,7 +14,7 @@ title = "Pcap4J in Groovy"
 GroovyからでもPcap4Jちゃんと動くよということを実証するのが主な目的。
 また、さすがにそろそろ[Maven](https://maven.apache.org/)を卒業してGradle(下記)使おうと思うので、予習も兼ねている。
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

@@ -14,7 +14,7 @@ title = "Pcap4J in Kotlin"
 KotlinからでもPcap4Jちゃんと動くよということを実証するのが主な目的。
 また、今後JavaなアプリはKotlinで書こうかと思っているので、その予習も兼ねている。
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

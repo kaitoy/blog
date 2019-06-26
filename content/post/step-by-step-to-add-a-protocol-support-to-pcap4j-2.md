@@ -12,7 +12,7 @@ This is continued from [the part 1](https://www.kaitoy.xyz/2015/08/09/step-by-st
 
 We are adding DHCP support to [Pcap4J](https://github.com/kaitoy/pcap4j).
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

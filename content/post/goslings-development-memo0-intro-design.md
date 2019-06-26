@@ -11,6 +11,9 @@ title = "Goslings開発メモ - その0: 紹介と概要と設計編"
 つい先日[__Goslings__](https://github.com/kaitoy/goslings)というものを作った。
 [Gitのリポジトリの中身](https://www.kaitoy.xyz/2015/12/27/git-repository/)をビジュアライズするWebアプリケーションだ。
 なんとなく見て楽しいという効用がある他は、Gitの勉強にちょっと使えるかもしれないという程度のものだが、もともと[Git Advent Calendar 2016](http://qiita.com/advent-calendar/2016/git)のネタを作るために作ろうと思ったものなので、とりあえずはこんなものでいいのだ。
+
+<!--more-->
+
 将来気が向いたら、リポジトリの変更をリアルタイムに反映したり、リポジトリの操作もできるように拡張してもいいかもしれないけど、実用性が感じられないので多分やらない。
 
 因みに、goslingsというのはgeese(雁)の子供を指す、ちょっとマイナーな英語。

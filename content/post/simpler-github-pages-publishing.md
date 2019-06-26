@@ -11,7 +11,7 @@ title = "GitHub Pagesの新機能、ソース設定が地味にいい"
 
 今日、[よりシンプルにGitHub Pagesを使えるようになった](https://github.com/blog/2228-simpler-github-pages-publishing)というアナウンスがあり、ソース設定という新機能が追加されていたので、さっそく試してみた話。
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

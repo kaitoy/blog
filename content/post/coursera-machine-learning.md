@@ -10,6 +10,8 @@ title = "CourseraのMachine Learningコースを修了した"
 
 機械学習の入門教材として有名な[CourseraのMachine Learningコース](https://www.coursera.org/learn/machine-learning)を修了した記念日記。
 
+<!--more-->
+
 {{< google-adsense >}}
 
 # Courseraとは

@@ -11,6 +11,8 @@ title = "Kubernetes1.8のクラスタを構築する。kubeadmで。"
 
 「[Kubernetes 1.8が出たので、Minikubeを触ってみる](https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/)」でMinikubeをやったんだけど、もう一歩ステップアップすべく、[kubeadm](https://kubernetes.io/docs/admin/kubeadm/)でKubernetesクラスタを組んでみた話。
 
+<!--more-->
+
 {{< google-adsense >}}
 
 # kubeadmとは

@@ -9,7 +9,7 @@ cover = "teamedio_logo.svg"
 
 初投稿。
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

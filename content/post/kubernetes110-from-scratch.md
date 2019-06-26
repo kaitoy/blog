@@ -9,6 +9,9 @@ title = "Kubernetes 1.10をスクラッチから全手動で構築"
 +++
 
 Oracle Linux 7.4.0のVMでKubernetes 1.10.0のクラスタをスクラッチから全手動で作った。
+
+<!--more-->
+
 参考にしたのは主に以下。
 
 * https://nixaid.com/deploying-kubernetes-cluster-from-scratch/

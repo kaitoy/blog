@@ -11,7 +11,7 @@ title = "pcap-ng support in Pcap4J"
 Sometimes I receive inquiries about support for __pcap-ng__ files in [__Pcap4J__](https://github.com/kaitoy/pcap4j).
 I wrote the result of my investigation on it in this article.
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

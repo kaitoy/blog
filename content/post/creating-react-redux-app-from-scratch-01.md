@@ -16,6 +16,8 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 
 [前回の記事でReactが生まれた経緯を学んだ](https://www.kaitoy.xyz/2018/08/16/chronicle-of-frontend-2018/)ので、今回から実習に入る。
 
+<!--more-->
+
 (2018/11/21更新)
 
 {{< google-adsense >}}

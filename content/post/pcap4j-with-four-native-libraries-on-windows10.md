@@ -17,7 +17,7 @@ I did some basic tests for __[Pcap4J](https://github.com/kaitoy/pcap4j)__ 1.6.2 
 
 This article explains each of the above libraries and tells the test results.
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

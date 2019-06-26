@@ -10,7 +10,7 @@ title = "ありがとうさようならjapanese-wrap"
 
 テキストエディタ[Atom](https://atom.io/)のとある有名なパッケージの話。
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

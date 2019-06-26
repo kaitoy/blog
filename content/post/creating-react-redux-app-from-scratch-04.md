@@ -13,6 +13,8 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 
 [前回](https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/)はPrettierとESLintをセットアップした。
 
+<!--more-->
+
 (2018/11/21更新)
 
 {{< google-adsense >}}

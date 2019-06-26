@@ -11,6 +11,8 @@ slide = true
 
 [この記事](https://www.kaitoy.xyz/2015/12/27/git-repository/)を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、[__Git__](https://git-scm.com/)の `git rebase` というコマンドについて説明する。
 
+<!--more-->
+
 このコマンドは、コミット履歴を改変できるGit特有のコマンドで、[分かり辛いGitコマンド](http://qiita.com/kaitoy/items/ed22474837b943eb6d97)の中でも最も分かり辛い部類のものだ。
 Gitの最後の関門と言えよう。
 けど、それだけに使いこなせばとても便利なものでもある。

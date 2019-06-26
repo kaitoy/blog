@@ -12,7 +12,7 @@ title = "Currently Pcap4J Doesn't Work on Bash on Windows"
 # TL;DR
 I've attempted to run [__Pcap4J__](https://github.com/kaitoy/pcap4j) on [__Bash on Windows__](https://msdn.microsoft.com/en-us/commandline/wsl/about) (BoW) but it didn't work due to lack of support for network staff in BoW.
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

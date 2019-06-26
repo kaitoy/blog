@@ -20,6 +20,8 @@ title = "CourseraのDeep Learning SpecializationのNeural Networks and Deep Lear
 
 この内、最初のNeural Networks and Deep Learningを修了したので、記念にブログしておく。
 
+<!--more-->
+
 {{< google-adsense >}}
 
 # Deep Learning Specializationとは

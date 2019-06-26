@@ -13,7 +13,7 @@ title = "Another way to capture LAN packets with pcap4j container"
 Today, I was reading [Docker Docs](https://docs.docker.com/reference/run/#network-settings) and found another way to do it.
 I'm writing about it here.
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

@@ -23,29 +23,11 @@
   <meta property="og:title" content="Kubernetesのエコシステム ー Kubernetesクラスタ構築編 | To Be Decided">
   <title>Kubernetesのエコシステム ー Kubernetesクラスタ構築編 | To Be Decided</title>
   <meta property="og:description" content="前回に続いて、Kubernetesのエコシステムをまとめていく。
-今回はKubernetesのクラスタの構築手段について書く。
-   (adsbygoogle = window.adsbygoogle || []).push({});  Kubernetesのアーキテクチャ とりあえず、Kubernetesのクラスタとは何かについて書く。
-Kubernetesはざっくりマスタコンポーネントとノードコンポーネントに分けられる。 これらは同一または別個のマシンにデプロイできて、HTTPS通信を介して一つのクラスタを構成する。
-マスタコンポーネントをデプロイしたマシン群はコントロールプレーンと呼ばれることがある。 ノードコンポーネントをデプロイした1マシンは単にノードと呼ばれるが、ワーカノードと呼ぶことも多い。 ノードは1クラスタに複数あるのが普通で、数百ノード～数千ノードという規模の構成も可能。
-Kubernetesクラスタに対してアプリのリソース(e.g. コンテナとかサービスとか永続化ボリューム)を定義してやると、Kubernetesがそれに従ってリソースを準備してアプリをデプロイしてくれる。 アプリを構成する各Podをどのノード上で動かすかはコントロールプレーンが動的に決める。
- マスタコンポーネント
-Kubernetesクラスタやその上で動くアプリケーションの構成を管理するコンポーネント群で、それぞれがGo製の単一バイナリのサーバアプリケーション。 以下の4つのコンポーネントがある。(実際にはもう一つあるけど、マネージドKubernetesを提供するクラウドプロバイダが使うやつなので普通は気にしなくていい。)
- kube-apiserver
-HTTPSのポートを開けて、REST API(とProtocol BuffersのAPI)でアプリのリソースを定義するためのKubernetes APIを提供するサーバ。 ユーザはkubectlというコマンドラインツールや任意のHTTPクライアントを使ってこれと話し、アプリのリソース定義を投入する。
-全てのリソースがwatch operation (aka. watch list)をサポートしていて、クライアントがリソースごとの定義や状態の更新通知をリアルタイムに受けられるようになっている。 (因みにwatch APIというのもあるが、Kubernetes 1.12で非推奨になった。)
- etcd
-kube-apiserverが受け取ったリソース定義、アプリケーションの状態、Kubernetesクラスタ内で発生したイベントなどの情報を永続化するデータベース。 データベースのアーキテクチャは分散キーバリューストア。 kube-apiserverだけが参照、更新する。
-実はKubernetesとは別のプロジェクトのもので、etcdはetcdでKubernetesとは別にクラスタを組める。
-gRPCのAPIでデータの変更をwatchできるので、Kubernetesはこれを利用してリアクティブな感じに動く。
- kube-scheduler
-kube-apiserverのwatch operationを使ってPod定義の作成をwatchして、各Podをどのノードにデプロイするかを決める。 決めるときには、Podの要求リソースとか、ノードや他Podとの親和性(i.e. Affinity)定義を鑑みてくれる。 この、Podをデプロイするノードを決める処理をスケジューリングという。
- kube-controller-manager
-kube-apiserverのwatch operationを使って色んなリソース定義をwatchする。 kube-controller-managerはそのプロセス内部でリソース種別毎にgoroutineでコントローラを実行し、リソース定義と実際のリソース状態を比較し、その差を埋めるように処理をするのが主な役割。
-  コンポーネント間はHTTPSやgRPCで通信するので、ネットワークさえつながっていればそれぞれがどこで動いていてもいいんだけど、普通はetcd以外の3つは同一マシンで動かして、冗長化構成にするときもその単位でする。
- ノードコンポーネント
-ノードのマシンやPodやコンテナを管理・監視するコンポーネント群で、それぞれがGo製の単一バイナリのサーバアプリケーション。 以下の2つのコンポーネントがある。
- kubelet
-kube-apiserverのwatch operationを使ってPod定義(など?">
+
+今回はKubernetesのクラスタの構築手段について書く。">
+  <meta name="description" content="前回に続いて、Kubernetesのエコシステムをまとめていく。
+
+今回はKubernetesのクラスタの構築手段について書く。">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
 
 
@@ -252,15 +234,9 @@ kube-apiserverのwatch operationを使ってPod定義(など?">
         <hr>
         
 
-        <br> <div class="text-justify">
-
-<p><a href="https://www.kaitoy.xyz/2019/06/15/k8s-ecosystem-container-runtimes/">前回</a>に続いて、Kubernetesのエコシステムをまとめていく。</p>
+        <br> <div class="text-justify"><p><a href="https://www.kaitoy.xyz/2019/06/15/k8s-ecosystem-container-runtimes/">前回</a>に続いて、Kubernetesのエコシステムをまとめていく。</p>
 
 <p>今回はKubernetesのクラスタの構築手段について書く。</p>
-
-
-
-
 
 <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 <ins class="adsbygoogle"
@@ -479,8 +455,7 @@ AKSもマスタはタダ。</p>
 これもマスタはタダ。
 ワーカノードにベアメタルマシンを使えるのが特徴のひとつ。</p>
 
-<p>使用例を聞いたことが無い…</p>
-</div>
+<p>使用例を聞いたことが無い…</p></div>
 
         <section class="share-buttons">
           <div class="share-button">

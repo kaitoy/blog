@@ -11,6 +11,8 @@ title = "機械学習のHello World: MNISTの分類モデルをKerasで作って
 
 機械学習のHello Worldとしてよくやられる[MNIST](http://yann.lecun.com/exdb/mnist/)の分類モデルを[Keras](https://keras.io/ja/) on [TensorFlow](https://www.tensorflow.org/)で作ってみた話。
 
+<!--more-->
+
 {{< google-adsense >}}
 
 # MNISTとは

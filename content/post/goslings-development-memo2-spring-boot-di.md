@@ -12,7 +12,7 @@ title = "Goslings開発メモ - その2: Spring Boot続編 (DI)"
 
 Spring Boot続編で、[DI](https://ja.wikipedia.org/wiki/%E4%BE%9D%E5%AD%98%E6%80%A7%E3%81%AE%E6%B3%A8%E5%85%A5)について。
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

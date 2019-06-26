@@ -18,24 +18,10 @@
       <pubDate>Fri, 02 Nov 2018 13:45:56 +0900</pubDate>
       
       <guid>https://www.kaitoy.xyz/2018/11/02/creating-react-redux-app-from-scratch-09/</guid>
-      <description>ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。)
-前回はRedux Sagaをセットアップした。
-(2018/11/21更新)
-   (adsbygoogle = window.adsbygoogle || []).push({});  フロントエンドのルーティング Webアプリケーションにおけるルーティングとは、クライアントがリクエストしたURLに対して、返すべきリソースを選択する処理。 昔はバックエンド(i.e. サーバサイド)でやってたけど、バックエンドでリソースを返すということは、ページ遷移が発生するということなので、ネイティブアプリケーションに比べてUXが落ちてしまう。
-一方、ページ遷移を発生させないようにAjaxでサーバとやりとりしつつ、ちまちまDOMをいじるのは大変。 DOMをごっそり書き換えて、ページ遷移なしに画面を切り替えることはできるけど、ナイーブにやると以下のような問題がある。
- URLと画面の紐づけがなく、URLを指定して直接開けない ブラウザの進む、戻るが使えない 宣言的に書けない  こういった問題に対応するため、フロントエンドでのルーティング技術が生まれた。
-フロントエンドのルーティングでは、URLが変わってもリクエストはサーバに飛ばない。 代わりに、フロントエンドフレームワークがそのURLを見て、適切な画面を選んでレンダリングする。
-ハッシュベースのルーティング URLが変わってもリクエストがサーバに飛ばないとは何事か。
-それを実現するやりかたは2通りある。 古くはハッシュ(#、フラグメント識別子)をつかったやり方。
-例えば、http://example.com/でUIをサーブしているとすると、http://example.com/#fooとか、http://example.com/#barで別々のページの状態を表現する。 ハッシュ以降が変わってもブラウザがサーバにリクエストを投げることはないので、クライアント側でハンドリングできる。 (因みに、ハッシュを含んだURLをブラウザのアドレスバーに入れても、ハッシュを除いたURLでリクエストが送られる。この挙動の根拠となる規格はRFCなどを調べても見つからなかったけど…)
-ハッシュの書き換えは、JavaScriptで以下のようにしてできる。
-location.hash = newHash;  こういう処理を、例えばWeb UIのボタンをクリックしたときなんかに実行してURLを変えて、その上で画面を更新してやればいい。
-そのあと、ブラウザの戻るボタンなんかを押されると書き換える前のURLにもどるわけだけど、これを検知するためにsetInterval()とかで定期的にlocation.hashを監視してたりした。
-History APIによるルーティング ハッシュベースのルーティングは見るからにしょぼい。 URLのハッシュ以降しか使えないのもしょぼいし、内部の処理も泥臭い。
-これが、HTML 5でHistory APIがでて変わった。 History APIはJavaScriptのAPIで、ブラウザの履歴を操作できる。
-const state = { hoge: &amp;#34;hogeee&amp;#34; }; history.pushState(state, &amp;#34;&amp;#34;, &amp;#34;/foo/bar&amp;#34;);  こんな感じのを実行すると、URLが/foo/barに変わる。(が、もちろんサーバにはリクエストは飛ばない。) で、ブラウザの戻るボタンを押すと、popstateイベントが発生するので、それにイベントハンドラを登録しておけば、もとのURLに戻った時にも適時画面を書き換えられる。 popstateイベントからは、pushState()に渡したstateオブジェクトを取得できる。
+      <description>&lt;p&gt;&lt;a href=&#34;https://reactjs.org/&#34;&gt;React&lt;/a&gt;と&lt;a href=&#34;https://redux.js.org/&#34;&gt;Redux&lt;/a&gt;を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
+(最終的な成果は&lt;a href=&#34;https://github.com/kaitoy/react-redux-scaffold&#34;&gt;GitHub&lt;/a&gt;に置いた。)&lt;/p&gt;
 
-ところで、ブラウザのアドレスバーに/foo/barを直打ちするとどうなるかというと、普通にWebサーバを設定しておくと、/foo/bar/index.htmlを返そうとして、無いので404エラーになっちゃう。 ので、サーバ設定では、どのURLも同じリソース(e.g. /index.</description>
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/&#34;&gt;前回&lt;/a&gt;は&lt;a href=&#34;https://redux-saga.js.org/&#34;&gt;Redux Saga&lt;/a&gt;をセットアップした。&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -44,16 +30,10 @@ const state = { hoge: &amp;#34;hogeee&amp;#34; }; history.pushState(state, &amp;
       <pubDate>Sun, 07 Oct 2018 13:26:22 +0900</pubDate>
       
       <guid>https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/</guid>
-      <description>ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。)
-前回はReact Reduxをセットアップした。
-(2018/11/21更新)
-   (adsbygoogle = window.adsbygoogle || []).push({});  ReduxのMiddleware Redux単体では同期的なデータフローしか実装できない。 つまり、Actionを発生させたら、即座にディスパッチされ、stateが更新される。 一方、非同期なフローとは、REST APIを呼んでその結果でstateを更新するような処理。 REST API呼び出しが非同期なわけだが、これをReduxのピュアなフローのどこで実行するのかというと、Middlewareで実行する。
-MiddlewareはStoreのdispatch()をラップして、Actionをトラップして副作用を含む任意の処理をするための機能。 Middlewareの仕組みについてはこの記事が分かりやすい。
-Middlewareには例えば、発生したActionの内容と、それによるstateの変化をログに出力するredux-loggerがある。 デバッグに有用そうなので入れておく。
-yarn add redux-logger v3.0.6が入った。
-Middlewareは、ReduxのapplyMiddleware()というAPIを使って、createStore()実行時に適用できる。
-src/configureStore.js:
--import { createStore } from &amp;#39;redux&amp;#39;; +import { createStore, applyMiddleware } from &amp;#39;redux&amp;#39;; +import { logger } from &amp;#39;redux-logger&amp;#39;;  import rootReducer from &amp;#39;./reducers/rootReducer&amp;#39;; export default function configureStore(initialState = {}) { + const middlewares = []; + if (process.</description>
+      <description>&lt;p&gt;&lt;a href=&#34;https://reactjs.org/&#34;&gt;React&lt;/a&gt;と&lt;a href=&#34;https://redux.js.org/&#34;&gt;Redux&lt;/a&gt;を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
+(最終的な成果は&lt;a href=&#34;https://github.com/kaitoy/react-redux-scaffold&#34;&gt;GitHub&lt;/a&gt;に置いた。)&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/&#34;&gt;前回&lt;/a&gt;は&lt;a href=&#34;https://redux.js.org/basics/usagewithreact&#34;&gt;React Redux&lt;/a&gt;をセットアップした。&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -62,14 +42,10 @@ src/configureStore.js:
       <pubDate>Mon, 01 Oct 2018 07:54:53 +0900</pubDate>
       
       <guid>https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/</guid>
-      <description>ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。)
-前回はReduxをセットアップした。
-(2018/11/21更新)
-   (adsbygoogle = window.adsbygoogle || []).push({});  React Redux 前回はReduxをセットアップして、ActionをStoreにディスパッチしてstateを更新できるようになった。 今回はこれをReactにつなぐ。
-使うのはReact Redux。
-yarn add react-redux v5.1.1が入った。
-Presentational Components と Container Components React Reduxの使い方を理解するには、Presentational Components と Container Components という概念を知らないといけない。 これはReactコンポーネントを役割別に分ける考え方で、それぞれ以下のような特徴をもつ。
-    Presentational Components Container Components     主な役割 DOMをレンダリングする データを取得したりstateを更新したりする(Reduxとつなぐ)   Reduxとの関連 無し 有り   データの読み込み propsから読む Reduxのstateオブジェクトから読む   データの更新 propsで渡されたコールバックを呼ぶ ReduxのActionをディスパッチする   作り方 自前で書く React Reduxで生成する</description>
+      <description>&lt;p&gt;&lt;a href=&#34;https://reactjs.org/&#34;&gt;React&lt;/a&gt;と&lt;a href=&#34;https://redux.js.org/&#34;&gt;Redux&lt;/a&gt;を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
+(最終的な成果は&lt;a href=&#34;https://github.com/kaitoy/react-redux-scaffold&#34;&gt;GitHub&lt;/a&gt;に置いた。)&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/09/26/creating-react-redux-app-from-scratch-06/&#34;&gt;前回&lt;/a&gt;はReduxをセットアップした。&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -78,24 +54,10 @@ Presentational Components と Container Components React Reduxの使い方を理
       <pubDate>Wed, 26 Sep 2018 23:03:04 +0900</pubDate>
       
       <guid>https://www.kaitoy.xyz/2018/09/26/creating-react-redux-app-from-scratch-06/</guid>
-      <description>ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。 (最終的な成果はGitHubに置いた。)
-前回はMaterial-UIをセットアップした。
-(2018/11/21更新)
-   (adsbygoogle = window.adsbygoogle || []).push({});  Reactの状態管理 Reactによるプログラミングをするとき、小さいUIコンポーネントをたくさん作って、それらを組み合わせてVirtual DOMツリーを作っておいて、そこにpropsをほうりこんでレンダリングする、という感じになる。 また、レンダリングした後はコンポーネントのstateをいじって状態を変化させる。
-このpropsやstateの扱いをReactの状態管理という。 propsやstateを適当にアドホックに設定してると、結局jQuery使ってるのとそんなに変わらなくなって辛くなるので、Reactの開発元であるFacebookはFluxというアーキテクチャを提案している。
+      <description>&lt;p&gt;&lt;a href=&#34;https://reactjs.org/&#34;&gt;React&lt;/a&gt;と&lt;a href=&#34;https://redux.js.org/&#34;&gt;Redux&lt;/a&gt;を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
+(最終的な成果は&lt;a href=&#34;https://github.com/kaitoy/react-redux-scaffold&#34;&gt;GitHub&lt;/a&gt;に置いた。)&lt;/p&gt;
 
-Fluxでは、単一の(またはドメイン毎くらいの単位の)オブジェクトでアプリケーション全体の状態(state)を表し、これをStoreに保持する。 ReactはStoreが保持するstateを受け取り、それをもとにViewをレンダリングする。 Viewに対するユーザの操作(など)はActionというオブジェクトで表現され、Dispatcherに渡され、Dispatcherに登録されたcallbackを通してstateを変化させる。
-データが常に一方向に流れて見通しがよく、各コンポーネントの独立性が高いのが特徴。 各コンポーネントは、受け取ったデータをピュアに処理すればよく、リアクティブにファンクショナルに実装できる。
-Redux Fluxの実装、というか発展形がRedux。
-ReduxではFluxのDispatcher辺りがReducerに置き換わっている。 ReducerはActionと現在のstateから次のstateを計算する純粋関数。
-また、ReduxからはViewが切り離されていて、Actionによってstateを更新する状態管理ライブラリの役割に徹している。 ReactコンポーネントのイベントハンドラからActionオブジェクトを生成したり、更新したstateをReactに渡したりするつなぎ目は、別途React Reduxというライブラリが担当する。
-ReduxとReact Reduxについては、Qiitaの「たぶんこれが一番分かりやすいと思います React + Redux のフロー図解」という記事が分かりやすい。
-今回はReduxを導入する。
-yarn add redux Redux v4.0.1が入った。
-以降、現時点で唯一のUIコンポーネントであるHOGEボタンの状態管理を実装してみる。
-Action まずActionを実装する。
-Actionオブジェクトはどんな形式でもいいけど、普通はFlux Standard Action(FSA)にする。 FSAは以下のプロパティを持つプレーンオブジェクト。
- type: Action種別を示す文字列定数。必須。 payload: Actionの情報を示す任意の型の値。任意。 error: Actionがエラーを表すものかを示す boolean プロパティ。エラーなら true にして、payload にエラーオブジェクトをセットする。任意。 meta: その他の情報を入れる任意の型の値。任意。  Actionのコードは、Actionのtypeに入れる値を定義するactionTypes.jsと、Action Creator(i.e. Actionオブジェクトを生成する関数)を定義するactions.jsからなり、ともにsrc/actions/に置く。</description>
+&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/09/06/creating-react-redux-app-from-scratch-05/&#34;&gt;前回&lt;/a&gt;はMaterial-UIをセットアップした。&lt;/p&gt;</description>
     </item>
     
   </channel>

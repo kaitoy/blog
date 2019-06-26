@@ -13,7 +13,7 @@ title = "Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)"
 
 Spring Boot続続続編で、ロギングについて。
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

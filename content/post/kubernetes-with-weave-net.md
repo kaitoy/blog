@@ -10,6 +10,8 @@ title = "Kubernetes 1.10のクラスタにWeave Netをデプロイする"
 
 「[Kubernetes 1.10をスクラッチから全手動で構築](https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/)」で、Kubernetes 1.10のクラスタに、ネットワークプロバイダとして[flannel](https://github.com/coreos/flannel)をデプロイしたけど、flannelは[Network Policy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)をサポートしていないので、代わりに[Weave Net](https://www.weave.works/oss/net/)をデプロイしてみた話。
 
+<!--more-->
+
 {{< google-adsense >}}
 
 # Weave Netにした理由

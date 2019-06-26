@@ -13,7 +13,7 @@ title = "スタートアップはReactを使うべきではない (BSD + patents
 (Raúlから和訳と転載の許可は得た。)
 以下はその全文の和訳だが、意訳超訳が混じっているので、もとのニュアンスを知りたければ元記事を読んでもいいし、読まなくてもいい。
 
-<br>
+<!--more-->
 
 2017/9/23追記: React、Jest、Flow、Immutable.jsが[MITにリライセンスされる](https://code.facebook.com/posts/300798627056246/relicensing-react-jest-flow-and-immutable-js/)というアナウンスがFacebookからあった。
 コミュニティの大勝利だ。

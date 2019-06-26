@@ -18,20 +18,8 @@
       <pubDate>Mon, 07 Sep 2015 20:10:31 -0600</pubDate>
       
       <guid>https://www.kaitoy.xyz/2015/09/07/caching-gifs-on-atom/</guid>
-      <description>以前、disturb-meというAtomパッケージを作ったというエントリを書いた。 このエントリでは、disturb-meに見つけたバグの修正のなかで、AtomがGIF画像をキャッシュする問題に対応したという話を書く。
-
-   (adsbygoogle = window.adsbygoogle || []).push({});  disturb-meのバグ 以前のエントリの最後にも書いた通り、disturb-me 1.0.0には、ループしないGIFアニメーション画像を設定で指定した場合、そのアニメーションが画像の初回表示時にしか再生されないというバグがある。
-disturb-meは、Ctrl+Alt+d Ctrl+Alt+mと入力すると画像を表示し、もう一度それを入力すると画像を消す。 デフォルトで表示する画像はAtomのロゴで、表示を始める時と消す時にGIF画像でループしないアニメーションを再生する。
-
-このデフォルトの状態で、一度Atomロゴを表示して消して、再度表示して消すと、消すときのアニメーションが再生されない。(表示を始める時のアニメーションはなぜか再生される。)
-バグの原因 disturb-meは、imgタグをAtomウィンドウ内に追加した後、そのsrc属性に画像へのパスをセットして画像を表示させるが、どうもAtom(のChromium)が画像をキャッシュしてくれるせいで、一度表示し終わったGIFアニメーションは二度と再生されない模様。 なぜ表示開始時のアニメーションが再生されるかは不明。
-バグ修正 外部リソースをロードするときにブラウザによるキャッシュを回避するには、URLにランダムな値をもつクエリストリングを付けるのが常套手段。
-今回のバグも、srcにセットするGIF画像のパス(URL)にそのようなクエリストリングをつければよい。 例えば、C:\images\hoge.gifを表示したいなら、&amp;lt;img src=&amp;quot;C:\images\hoge.gif?time=1441559906660&amp;quot;&amp;gt;&amp;lt;img&amp;gt;という風にする。 ここでtimeの値にはDate.now()とかで毎回違う値を生成して使う。
-Atomプロトコルの問題 ここで一つ問題が。disturb-meがデフォルトで使うAtomロゴの画像はパッケージに含まれていて、そういうリソースのURLにはAtomプロトコルを使うのが普通。 Atomプロトコルを使うと、atom://disturb-me/assets/atom/white/atom_born.gifみたいに書いて、パッケージ内の相対パスでリソースを指定できる。
-このAtomプロトコルが、今の時点(Atom v1.0.11)でクエリストリングに対応していない。困った。
-Atomプロトコルの問題への対応 いい機会なので、Atomのソースをfork、cloneして、Atomプロトコルを(簡易的に)クエリストリングに対応させ、ビルドして確認し、プルリクエストを送ってみた。これについてはまた別のエントリで書くかもしれない。
-このプルリクエストが取り込まれるまでの暫定対策として、Atomプロトコルハンドラのソースを見て、AtomプロトコルのURLからリソースのファイルシステム上での絶対パスを導いている部分をdisturb-me内にパクって、srcにセットする値としてatom://を使わないようにした。
-これでちゃんと動いた。</description>
+      <description>&lt;p&gt;以前、&lt;a href=&#34;https://atom.io/packages/disturb-me&#34;&gt;&lt;strong&gt;disturb-me&lt;/strong&gt;&lt;/a&gt;という&lt;a href=&#34;https://atom.io/&#34;&gt;&lt;strong&gt;Atom&lt;/strong&gt;&lt;/a&gt;パッケージを作ったという&lt;a href=&#34;https://www.kaitoy.xyz/2015/09/06/disturb-me/&#34;&gt;エントリ&lt;/a&gt;を書いた。
+このエントリでは、disturb-meに見つけたバグの修正のなかで、AtomがGIF画像をキャッシュする問題に対応したという話を書く。&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -40,20 +28,7 @@ Atomプロトコルの問題への対応 いい機会なので、Atomのソー�
       <pubDate>Sun, 06 Sep 2015 20:18:14 -0600</pubDate>
       
       <guid>https://www.kaitoy.xyz/2015/09/06/disturb-me/</guid>
-      <description>Atomのパッケージを見ていて、便利なパッケージが沢山あるなぁと思いつつ、真面目なパッケージばかりでもつまらないので、たまには不真面目で役に立たないパッケージがあってもいいかと思って作ったパッケージの話。
-
-   (adsbygoogle = window.adsbygoogle || []).push({});  disturb-me 作ったのはdisturb-meというパッケージ。 Ctrl+Altを押しながらdとmを押すとAtomウィンドウ内に画像が表示され、その画像がランダムに動き回り作業の邪魔をするというもの。
-画像はパッケージの設定から指定できる。デフォルトではAtomのロゴ。
-最初はpac-m●nというパッケージ名にして、ゲーム界のミッキーことパ●クマンが動き回るパッケージにしようと思ってたけど、バンダイナムコからダメだと言われてしまった。 この構想はいつかカタログIPオープン化プロジェクトを利用して実現しようと思う。
-disturb-meの作り方 以前別のエントリでAtomパッケージの作り方の基本について書いたので、ここではそこで書かなかったことを書く。
- メインスクリプト - コマンド
-今回はコマンドを追加するのでCommandRegistryを使う。 CommandRegistryのインスタンスにはatom.commandsでアクセスでき、そのaddメソッドでコマンドを追加できる。
-addメソッドの引数は、第一引数から順に、
- target: コマンドを有効にするDOM要素か、それを示すCSSセレクタ。 commandName: コマンドパレットに表示するコマンド名。全部小文字で、単語をハイフンでつないで、パッケージ名を先頭につけるのがルール。 callback(event): コマンドを実行したときに呼ばれるメソッド。  
-disturb-meのコマンドはAtomウィンドウ内のどこでも有効にしたいので、第一引数にはAtomウィンドウを表すカスタムタグであるatom-workspaceを指定する。 コードは以下の感じ。
-activate: (state) -&amp;gt; @subscriptions = new CompositeDisposable @subscriptions.add atom.commands.add &amp;#39;atom-workspace&amp;#39;, &amp;#39;disturb-me:toggle&amp;#39;: =&amp;gt; @toggle() toggle: -&amp;gt; # 画像を挿入したり削除したりするコード。 
-toggleの中では画像を挿入したり削除したりするわけだけど、この処理は、その画像を表す別のクラスにまかせることにする。 のでtoggleは以下のように書く。
-@disturber: null toggle: -&amp;gt; if @disturber? @disturber.stop() @disturber = null else @disturber = new Disturber() document.</description>
+      <description>&lt;p&gt;&lt;a href=&#34;https://atom.io/&#34;&gt;&lt;strong&gt;Atom&lt;/strong&gt;&lt;/a&gt;のパッケージを見ていて、便利なパッケージが沢山あるなぁと思いつつ、真面目なパッケージばかりでもつまらないので、たまには不真面目で役に立たないパッケージがあってもいいかと思って作ったパッケージの話。&lt;/p&gt;</description>
     </item>
     
   </channel>

@@ -11,7 +11,7 @@ title = "Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Pla
 
 [Pcap4J](https://github.com/kaitoy/pcap4j)が動くHyper-VコンテナをWindows 10上でビルドしようとしたけど3合目あたりで息絶えた話。
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

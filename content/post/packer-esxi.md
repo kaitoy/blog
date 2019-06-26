@@ -10,6 +10,8 @@ title = "PackerでESXiにVMを自動構築"
 
 前回「[Packer + Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築](https://www.kaitoy.xyz/2018/06/17/packer-k8s/)」で、やったことをESXiでやっただけ。
 
+<!--more-->
+
 書いたコードは[GitHub](https://github.com/kaitoy/packer-k8s)に置いてある。
 
 {{< google-adsense >}}

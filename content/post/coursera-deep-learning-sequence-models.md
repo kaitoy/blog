@@ -20,6 +20,8 @@ title = "CourseraのDeep Learning SpecializationのSequence Modelsコースを�
 22日間かかった。
 修了したらまた[Certifacate](https://www.coursera.org/account/accomplishments/certificate/NCW69X7UASJ6)もらえた。
 
+<!--more-->
+
 また、これでDeep Learning Specializationのすべてのコースを修了したので、全部まとめた[Certifacate](https://www.coursera.org/account/accomplishments/specialization/certificate/4487DSN9ARXN)ももらえた。
 結局2ヶ月ほどかかり、1万円以上課金してしまった…
 

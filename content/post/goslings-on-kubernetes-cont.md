@@ -12,6 +12,8 @@ title = "Kubernetesのチュートリアルをやる"
 「[Kubernetes 1.8が出たので、Minikubeを触ってみる](https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/)」の続き。
 Minikubeのセットアップまではできたので、[Kubernetes Basics](https://kubernetes.io/docs/tutorials/kubernetes-basics/)というチュートリアルをやりながら、[Goslings](https://kaitoy.github.io/goslings/)をデプロイする。
 
+<!--more-->
+
 {{< google-adsense >}}
 
 # Kubernetes Basics - 概要

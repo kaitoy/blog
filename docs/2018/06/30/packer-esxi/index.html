@@ -22,16 +22,8 @@
   <meta property="og:type" content="article">
   <meta property="og:title" content="PackerでESXiにVMを自動構築 | To Be Decided">
   <title>PackerでESXiにVMを自動構築 | To Be Decided</title>
-  <meta property="og:description" content="前回「Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築」で、やったことをESXiでやっただけ。
-書いたコードはGitHubに置いてある。
-   (adsbygoogle = window.adsbygoogle || []).push({});  前回との違い VirtualBoxとESXiとで変えないといけない部分は、主にPackerのbuilderの定義。 前回はvirtualbox-isoだったけど、今回はvmware-isoを使う。 それに伴ってパラメータが結構違ってくる。
-いっこトリッキーだったのが、cdrom_adapter_typeにideを明示的に指定しておかないと、CDロムドライブがSCSIになって、OSのインストールメディアのマウントか読み取り辺りでエラーになってしまったところ。 環境によっては指定しないでいいかも。
-また、&quot;vnc_disable_password&quot;: &quot;true&quot;をbuilderに指定しておかないと、Packerが「Error handshaking with VNC: no suitable auth schemes found. server supported: []byte{0x1}」というエラーを出す。
-あとは、Nested Virtualizationでやった(下記)ので、すごく遅くて、色々タイムアウトを伸ばしたりしてやる必要があった。
-ESXi環境 ESXi(というかVMware vSphere Hypervisor)は、現時点での最新の6.7を使用。 自前のWindows 10 HomeのノートPC上で動くVMware Player 12で作ったVMにESXiをインストールして環境を作った。
-(因みにVirtualBoxにもインストールしてみたESXi上ではVM作成できなかった。VirtualBoxは今の時点でNested Virtualization未サポートで、サポートする予定もない模様。)
-Packerから操作するには、以下の設定をする必要がある。
- 静的IPアドレスを設定。Packerからの接続先に指定するので。 SSH有効化。PackerがSSHで接続するので。  因みにSSHクライアントでESXiにつなぐときは、チャレンジ/レスポンス認証になる。  GuestIPHack の有効化  ESXiにSSHでログインして「esxcli system settings advanced set -o /Net/GuestIPHack -i 1」  ファイアウォール設定でVNCポート(TCP5900番台)を開ける。 これをしないとPackerが「Starting HTTP server on port xxxx」でハングする。 けどこれが一筋縄ではいかない。この記事にあるように、/etc/vmware/firewall/service.">
+  <meta property="og:description" content="前回「Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築」で、やったことをESXiでやっただけ。">
+  <meta name="description" content="前回「Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築」で、やったことをESXiでやっただけ。">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/packer-esxi.png">
 
 
@@ -220,9 +212,7 @@ Packerから操作するには、以下の設定をする必要がある。
         <hr>
         
 
-        <br> <div class="text-justify">
-
-<p>前回「<a href="https://www.kaitoy.xyz/2018/06/17/packer-k8s/">Packer + Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</a>」で、やったことをESXiでやっただけ。</p>
+        <br> <div class="text-justify"><p>前回「<a href="https://www.kaitoy.xyz/2018/06/17/packer-k8s/">Packer + Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</a>」で、やったことをESXiでやっただけ。</p>
 
 <p>書いたコードは<a href="https://github.com/kaitoy/packer-k8s">GitHub</a>に置いてある。</p>
 
@@ -316,8 +306,7 @@ esxcli network firewall refresh</code></pre></div></li>
 <p>設定ファイルが出来てESXi環境が用意できれば、Packer実行は前回と一緒。</p>
 
 <p>ただ結局、環境が激遅なせいでところどころでタイムアウトしたり、OSインストール中にランダムにパニックになったり、PackerのBoot Commandの入力がランダムに失敗したりして、最後までビルド成功させる前に心折れた。
-まあAnsibleのプロビジョニングの途中までは動いたので、だいたいよしとする。</p>
-</div>
+まあAnsibleのプロビジョニングの途中までは動いたので、だいたいよしとする。</p></div>
 
         <section class="share-buttons">
           <div class="share-button">

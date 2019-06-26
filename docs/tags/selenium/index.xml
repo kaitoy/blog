@@ -18,19 +18,11 @@
       <pubDate>Mon, 14 Aug 2017 10:53:17 +0900</pubDate>
       
       <guid>https://www.kaitoy.xyz/2017/08/14/webdriverio-chrome/</guid>
-      <description>「2017年夏、ブラウザテストフレームワーク」の続き。 ServiceNowアプリケーションのブラウザテストをしたくて色々調べている。 前回は、フレームワークにWebdriverIOを使うと決めたところまで書いた。
-今回、最終的に、WebdriverIO、WDIO、selenium-standalone、Jasmineと、Chromeのヘッドレスモードを使って、Dockerコンテナ(Alpine Linux)上でテストスクリプトを実行して、ServiceNowのログイン画面のスクリーンショットが取れるところまでできた。
-そのコンテナイメージのDockerfileはGitHubに置いた。
-   (adsbygoogle = window.adsbygoogle || []).push({});  とりあえずAlpine Linux テスト環境の作成は自宅でやってるけど、DockerイメージにしてDocker Hubとかに上げておけば、社内でダウンロードしてそのまま再現できる。 ダウンロードに係る社内手続きも、Dockerイメージだけに対してやればいいので、中に何を詰め込んでも、後でライブラリとか追加しても、一回こっきりで済む。
-というわけでWebdriverIO環境をDockerコンテナとしてつくることにする。 とりあえず、自PC(Windows 10 Home x64)に入ってるVMware Workstation Player 12.5.5でCentOS 7 x64のVMを作り、そこにDockerをインストールした。
-次に、そのDockerを使って、WebdriverIO環境のベースにするAlpine Linuxをpullする。
-$ docker pull alpine:edge 
-Alpine LinuxはBusyBoxとmusl libcで構成された軽量な Linuxディストリビューション。 2016年2月にすべてのオフィシャルDockerイメージがAlpine Linuxベースになるというアナウンスがあったし、他にそれっぽいものもなかったので、これをベースに環境を作ることにした。 glibcじゃないのがちょっと気になるけど、まあ問題ないか。
-現在、Chrome 59のAlpine Linuxパッケージはedgeブランチ(i.e. 開発ブランチ)でしか作られていない。 pullするタグをedgeにしたのはそのため。 (因みに現時点でAlpine Linuxのlatestは3.6。)
-で、起動。
-$ docker run -it alpine:edge sh Chrome(Chromium)インストール まずはChrome(がAlpine Linuxパッケージにはないので、実際にはChromium)と、ついでにChromeDriverをインストールする。 Alpine Linux独自のパッケージマネージャーであるapkを使う。
-コンテナ内:
-# apk add --update chromium chromium-chromedriver # chromium-browser -version Chromium 59.</description>
+      <description>&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2017/08/04/browser-test-framework/&#34;&gt;2017年夏、ブラウザテストフレームワーク&lt;/a&gt;」の続き。
+&lt;a href=&#34;https://www.servicenow.com/ja&#34;&gt;ServiceNow&lt;/a&gt;アプリケーションのブラウザテストをしたくて色々調べている。
+前回は、フレームワークに&lt;a href=&#34;http://webdriver.io/&#34;&gt;WebdriverIO&lt;/a&gt;を使うと決めたところまで書いた。&lt;/p&gt;
+
+&lt;p&gt;今回、最終的に、&lt;a href=&#34;http://webdriver.io/&#34;&gt;WebdriverIO&lt;/a&gt;、&lt;a href=&#34;http://webdriver.io/guide/testrunner/gettingstarted.html&#34;&gt;WDIO&lt;/a&gt;、&lt;a href=&#34;https://github.com/vvo/selenium-standalone&#34;&gt;selenium-standalone&lt;/a&gt;、&lt;a href=&#34;https://jasmine.github.io/&#34;&gt;Jasmine&lt;/a&gt;と、Chromeのヘッドレスモードを使って、Dockerコンテナ(&lt;a href=&#34;https://alpinelinux.org/&#34;&gt;Alpine Linux&lt;/a&gt;)上でテストスクリプトを実行して、ServiceNowのログイン画面のスクリーンショットが取れるところまでできた。&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -39,37 +31,11 @@ $ docker run -it alpine:edge sh Chrome(Chromium)インストール まずはChro
       <pubDate>Fri, 04 Aug 2017 15:29:37 +0900</pubDate>
       
       <guid>https://www.kaitoy.xyz/2017/08/04/browser-test-framework/</guid>
-      <description>「2017年夏、Selenium、ヘッドレスブラウザ」の続き。 ServiceNowアプリケーションのブラウザテストをしたくて色々調べている。 前回は、Selenium(WebDriver)とChromeのヘッドレスモードを使うのがよさそうというところまで書いた。
-この記事では、ブラウザテストフレームワークを選ぶ。
-   (adsbygoogle = window.adsbygoogle || []).push({});  ブラウザ操作ツールとかブラウザテストフレームワークとか Seleniumを直接使って、JUnitなんかのテストフレームワークでブラウザテストを書くこともできるけど、それは結構つらい。 Seleniumは低レベルなブラウザ操作APIを提供するので、単純にテスト書き辛いし、動的サイトを扱うときには、かなり気を使ってwait処理を入れていかないとテストが安定しない。 テスト前に、WebDriverの準備をしないといけなかったりするのも面倒。
-なので、昨今はもう少し高級なツールやフレームワークを使うのが普通な模様。 あまり知らなかったので色々記事を読んだ。
- Seleniumアレルギーのための処方箋 ブラウザテストツール総まとめ・2016年夏版 2017年JavaScriptのテスト概論  
-結果、ブラウザ操作ツールやブラウザテストフレームワークには以下のようなものがあることが分かった。 (SeleniumやWebDriver系じゃないのも含む。)
+      <description>&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2017/07/12/2017-selenium-headless-browsers/&#34;&gt;2017年夏、Selenium、ヘッドレスブラウザ&lt;/a&gt;」の続き。
+&lt;a href=&#34;https://www.servicenow.com/ja&#34;&gt;ServiceNow&lt;/a&gt;アプリケーションのブラウザテストをしたくて色々調べている。
+前回は、Selenium(WebDriver)とChromeのヘッドレスモードを使うのがよさそうというところまで書いた。&lt;/p&gt;
 
- Nightwatch.js
-GitHubの★は6835。
-JavaScriptでブラウザテストを書けるフレームワーク。 WebDriverプロトコルに対応していて、Seleniumと異なる独自のクライアントAPIを実装。 つまり使えるブラウザの幅が広い。
-テストフレームワークは独自のもの。
- WebdriverIO
-GitHubの★は3217。
-JavaScriptでブラウザを操作できるツール。 WebDriverプロトコルに対応していて、Seleniumと異なる独自のクライアントAPI(ラッパ?)を実装。 つまり使えるブラウザの幅が広い。
-独自のテストランナであるWDIO付きで、テストフレームワークにMocha、Jasmine、Cucumberなど、いろいろ利用できる。
- Protractor
-GitHubの★は6801。
-JavaScriptでブラウザテストを書けるフレームワーク。 WebDriverプロトコルに対応していて、selenium-webdriverをラップしたAPIを提供する。 WebDriverなのでブラウザはなんでも。
-テストフレームワークは、Jasmine、Mocha、Cucumberのほか、いろいろ選べる模様。
-AngularとAngularJS向けだけどそれ以外にも使える。 Google製なので信頼感があるし、ドキュメントもコミュニティもしっかりしてる。
- Casper.js
-GitHubの★は6337。
-JavaScriptでブラウザテストを書けるフレームワーク。 使えるブラウザはPhantomJSかSlimerJSだけで、多分WebDriver使ってない。
-テストフレームワークは独自のもの。
- Nightmare
-GitHubの★は12964。
-JavaScriptでブラウザを操作できるツール。 ブラウザは、昔の1系はPhantomJSを使ってたけど、今の2系はElectron。 WebDriverは使ってないはず。
-テストフレームワーク機能は付いてないけど、同じ作者のNiffyというNightmareベースのツールがちょっとそれっぽい。
- TestCafe
-GitHubの★は3029。
-JavaScriptでブラウザテストを書けるフレームワーク。 すごい多機能っぽいし、TypeScriptやasync/awaitをサポートしててなんかモダン。 WebDriverは使ってないっぽいけど、Chrome、Firefox、IE、Edge、Safariなど、一通りのブラウザが使える。 なぜかリモートテストもできる。</description>
+&lt;p&gt;この記事では、ブラウザテストフレームワークを選ぶ。&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -78,25 +44,7 @@ JavaScriptでブラウザテストを書けるフレームワーク。 すごい
       <pubDate>Wed, 12 Jul 2017 22:36:22 +0900</pubDate>
       
       <guid>https://www.kaitoy.xyz/2017/07/12/2017-selenium-headless-browsers/</guid>
-      <description>現在仕事でServiceNow上で動くアプリケーションを開発していて、それのブラウザテストをどうやろうかというのを少し考えたので、書き残しておく。
-   (adsbygoogle = window.adsbygoogle || []).push({});  ServiceNowとは 本題とほとんど関係ないけど、一応ServiceNowに簡単に触れる。
-ServiceNowはITサービス管理のSaaS。 世界的にはITサービス管理のデファクトスタンダードとなっているが、日本ではこれから盛り上がりそうといった感じ。
-アプリケーションを開発するプラットフォームとしての側面もあり、JavaScript(ブラウザ側とサーバ側両方)でServiceNowの機能を拡張し、他システムと連携させたり処理を自動化したりできる。
-アプリケーションがServiceNowプラットフォームで動くので、テスト方法が悩ましい。 Automated Test Frameworkというテストフレームワークが提供されてはいるが、2017年1月にリリースされたばかりということもあるのか、機能がしょぼく、大したことはできない。 これが自前でブラウザテスト環境を作ろうと思った理由。
-アプリケーションがJavaScriptなので、テストもJavaScriptで書きたい。
-ブラウザテストとは ここでブラウザテストとは、稼働しているWebアプリケーションに、HTTPクライアントで接続して、レンダリングされたWebページを操作して実行する自動E2Eテストのこととする。 HTTPでWebコンテンツを取得して、HTML・CSSをパースしてレンダリングして、JavaScriptを実行するツール、つまりWebブラウザを何にするかというのと、それを自動で操作するのをどうするかというのと、テストどう書くのかということと、書いたテストをどう実行するかということと、テスト結果をどう集計してレポートするかといった辺りを考える必要がある。
-Qiitaの記事「ブラウザテストツール総まとめ・2016年夏版」にブラウザテストのためのツールが色々載っている。 レイヤや目的が異なるツールがちょっとごっちゃになってる気がするけど。
-SeleniumとかWebDriverとか ブラウザテストはWebDriver抜きでは語れないので、とりあえずそれについて書く。 それにはまずSeleniumについて語らなければなるまい。
-ブラウザテスト創世記にはこうある。
- 神は「光あれ」と言われた。 するとSeleniumがあった。
-神はその光を見て、良しとされた。 神はその光と闇とを分けられた。
-神は光をSelenium RC (aka Selenium 1)と名づけ、 闇 をSelenium WebDriver (aka Selenium 2)と名づけられた。
- (Seleniumの歴史をもっとちゃんと知りたければこの記事を読むべし。)
-
-要は、今ブラウザテストと言ったらSelenium、Seleniumと言ったらSelenium WebDriverというわけだ。
-Selenium WebDriverは、WebDriver APIでブラウザやDOMエレメントを操作するツール。 このAPIを実装したクライアントライブラリが各言語(Java、Ruby、Python、JavaScriptなど)で提供されていて、テストコードから利用できる。
-APIの裏ではドライバなるものが暗躍していて、OSやブラウザのネイティブAPIを使ってブラウザを操作している。 このドライバはブラウザごと(Chrome、Firefox、IEなど)に用意されていて、その実装形式がドライバ毎に割と違っている。 例えばFirefox用のやつ(Firefox Driver)はFirefox のアドオンを使うし、Chrome用のやつ(ChromeDriver)は独立したネイティブアプリを介してブラウザを操作する。
-ドライバは(基本的に)ブラウザと同じマシンにある必要があり、実行するテストコードとも(基本的に)同居している必要がある。 テストを実行するマシンとは別のマシンのブラウザでテストしたければSelenium Server (aka Selenium Standalone Server)を使う。 Selenium Serverはブラウザとドライバと同じマシンで動き、テストコードから送信されたブラウザ操作コマンドを受信してドライバに伝える、プロキシ的な働きをしてくれる。</description>
+      <description>&lt;p&gt;現在仕事で&lt;a href=&#34;https://www.servicenow.com/ja&#34;&gt;ServiceNow&lt;/a&gt;上で動くアプリケーションを開発していて、それのブラウザテストをどうやろうかというのを少し考えたので、書き残しておく。&lt;/p&gt;</description>
     </item>
     
   </channel>

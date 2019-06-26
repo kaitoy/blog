@@ -22,24 +22,8 @@
   <meta property="og:type" content="article">
   <meta property="og:title" content="Kubernetes 1.8のアクセス制御について。あとDashboard。 | To Be Decided">
   <title>Kubernetes 1.8のアクセス制御について。あとDashboard。 | To Be Decided</title>
-  <meta property="og:description" content="「Kubernetes1.8のクラスタを構築する。kubeadmで。」で、Dashboardがうまく動かない問題が発生したんだけど、それを解決した話。
-   (adsbygoogle = window.adsbygoogle || []).push({});  問題の現象 kubeadmでKubernetesクラスタを組んで、自前のアプリ(Goslings)のデプロイまではうまくできたんだけど、Dashboardをデプロイしたら動かず、Web UIにkubectl proxy経由でつないでもタイムアウトしてしまった。
-対策 なんとなく、クラスタ内部での名前解決にはkube-dnsによるDNSサービスが使われているっぽいので、/etc/hostsに余計な事書いたのがいけなかったと思った。
-ので、/etc/hostsからk8s-masterとk8s-nodeのエントリを削除してから、kubeadm initからやり直してみた。
-結果 したらちゃんと動いた。
-VMのホストでkubectl proxyして、
-C:\Users\kaitoy\Desktop&gt;kubectl proxy Starting to serve on 127.0.0.1:8001 http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/にブラウザでつないだらサインイン画面が表示された。
-
-Dashboardのサインイン処理はKubernetes(というかkube-apiserver)のそれに移譲している。 Dashboardはそこで認証されたユーザでクラスタのリソースにアクセスし、情報を取得して表示する。多分。
-Dashboardへのサインイン方法はいくつかあるが、それらを理解するにはKubernetesのアクセス制御について学ぶことを推奨とあったのでちょっとKubernetesのドキュメントを読んだ。
-Kubernetesのアクセス制御 Kubernetesクラスタのエンドポイントはkube-apiserverであり、クラスタのリソースへのアクセス制御もkube-apiserverがやる。 クライアントとkube-apiserverとのTLSセッションが確立した後、HTTP層のデータを見てアクセス制御をするんだけど、その処理はAuthentication(認証)、Authorization(認可)、Admission(許可)の三段階からなる。
-Authentication 第一段階がAuthentication。 ここでは、kube-apiserverに仕込まれたAuthenticatorモジュールがユーザ認証をする。
-Kubernetesが認証するユーザには、Kubernetesが管理するService Accountと、クラスタ外部で管理される通常ユーザの二通りがある。 Service AccountはPodがkube-apiserverと話すためのユーザで、通常ユーザは主に人がkubectlとかでkube-apiserverと話すためのユーザ。(匿名で話すこともできる。) 前者はServiceAccountオブジェクトで定義されるけど、後者用のオブジェクトはない。
-ServiceAccountはNamespaceと関連付き(つまりnamespace毎にユニーク)、Secretに紐づく。 Secretオブジェクトはクレデンシャルのセットを定義し、Podにマウントされる。 ServiceAccountとSecretは、ふつうは自動で作られ、Podに割り当てられる。
-kube-apiserverには一つ以上のAuthenticatorモジュールを設定できて、どれかで認証できれば次の段階に進める。 認証失敗するとHTTPステータスコード401が返る。
-Authenticatorモジュールには以下のようなものがある。
- クライアント証明書: X.509のディジタル証明書を使うモジュール。kube-apiserver起動時に--client-ca-fileオプションで証明書ファイルを渡してやると有効になる。証明書のCommon Nameがユーザ名になり、Organizationがグループになる。クライアント側は、その証明書と対応する秘密鍵をクレデンシャルとして指定する。 Bearer Token: 無記名トークンを使うモジュール。kube-apiserver起動時に--token-auth-fileオプションでトークン情報を渡してやると有効になる。トークン情報はCSVで、「token,user,uid,&quot;group1,group2,group3&quot;」という形式で書く。クライアント側は、トークン文字列をクレデンシャルとして指定する。 ベーシック認証: ユーザ名とパスワードで認証するモジュール。kube-apiserver起動時に--basic-auth-fileオプションでユーザ名とパスワードのリストを渡してやると有効になる。このリストはCSVで、「password,user,uid,&quot;group1,group2,group3&quot;」という形式で書く。クライアント側は、ユーザ名とパスワードをクレデンシャルとして指定する。HTTPクライアントの時はAuthorizationヘッダが使える。 Service Account Token: Service Accountを署名付きBearer Tokenで認証するモジュール。デフォルトで有効になる。  このあたり、Qiitaの「kubernetesがサポートする認証方法の全パターンを動かす」という記事をみると理解が深まる。
-Authorization Authenticationをパスすると、クライアントのユーザ(とグループ)が認証され、第二段階のAuthorizationモジュールの処理に移る。 ここでは、リクエストの内容(操作対象、操作種別(メソッド)等)を見て、それがユーザに許されたものなら認可する。 何を許すかは事前にクラスタにポリシーを定義しておく。">
+  <meta property="og:description" content="「Kubernetes1.8のクラスタを構築する。kubeadmで。」で、Dashboardがうまく動かない問題が発生したんだけど、それを解決した話。">
+  <meta name="description" content="「Kubernetes1.8のクラスタを構築する。kubeadmで。」で、Dashboardがうまく動かない問題が発生したんだけど、それを解決した話。">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
 
 
@@ -236,13 +220,7 @@ Authorization Authenticationをパスすると、クライアントのユーザ(
         <hr>
         
 
-        <br> <div class="text-justify">
-
-<p>「<a href="https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a>」で、Dashboardがうまく動かない問題が発生したんだけど、それを解決した話。</p>
-
-
-
-
+        <br> <div class="text-justify"><p>「<a href="https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a>」で、Dashboardがうまく動かない問題が発生したんだけど、それを解決した話。</p>
 
 <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 <ins class="adsbygoogle"
@@ -476,8 +454,7 @@ clusterrolebinding <span style="color:#ed9d13">&#34;kubernetes-dashboard&#34;</s
 
 <p><br></p>
 
-<p>満足した。</p>
-</div>
+<p>満足した。</p></div>
 
         <section class="share-buttons">
           <div class="share-button">

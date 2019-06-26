@@ -18,17 +18,8 @@
       <pubDate>Wed, 11 Oct 2017 23:48:40 +0900</pubDate>
       
       <guid>https://www.kaitoy.xyz/2017/10/11/goslings-on-kubernetes-cont/</guid>
-      <description>「Kubernetes 1.8が出たので、Minikubeを触ってみる」の続き。 Minikubeのセットアップまではできたので、Kubernetes Basicsというチュートリアルをやりながら、Goslingsをデプロイする。
-   (adsbygoogle = window.adsbygoogle || []).push({});  Kubernetes Basics - 概要 Kubernetes Basicsは、公式のチュートリアルで、Kubernetesクラスタのオーケストレーションの基本を学ぶことができるもの。 以下の6つのモジュールからなる。
- Kubernetesクラスタを作る アプリをデプロイする アプリを調査する アプリを公開する アプリをスケールする アプリをアップデートする  チュートリアルで使うのはMinikubeだけど、自分でセットアップする必要はない。 Katacodaという、ブラウザ上でIT技術を学べるプラットフォームがあり、Kubernetes Basicsはそれを利用して、ブラウザ上のターミナルからホステッドMinikubeを操作できるようにしている。
-が、前回の記事で自PC上にMinikubeをセットアップしたので、そちらを使うことにする。
-
-Kubernetes Basics - モジュール 1: Kubernetesクラスタを作る Minikubeを起動してkubectlでクラスタの状態をみるだけのモジュール。
-これは前回の記事でカバーしている。
-Kubernetes Basics - モジュール 2: アプリをデプロイする アプリ(i.e. コンテナ)をデプロイするにはDeploymentオブジェクトを作る。 MasterはDeploymentのspecに従って各ノードにアプリのインスタンスをスケジューリングする。 Deploymentは、アプリが落ちたら再起動してくれる、つまりself-healingも実現する。
-Deploymentオブジェクトを作るコマンドはkubectl run &amp;lt;オブジェクト名&amp;gt; --image=&amp;lt;Dockerイメージ名&amp;gt;。 Goslingsをこれでデプロイする。
-Goslingsコンテナは3つの引数を受け取り、指定したポートでWebサーバを起動する。 --portオプションでそのポートをexposeするようにして、--の後にコンテナに渡す引数を記述する。
-C:\Users\kaitoy&amp;gt;kubectl run goslings --image=kaitoy/goslings:latest --port 8080 -- 8080 /tmp https://github.com/kaitoy/ deployment &amp;#34;goslings&amp;#34; created C:\Users\kaitoy&amp;gt;kubectl get deployment NAME DESIRED CURRENT UP-TO-DATE AVAILABLE AGE goslings 1 1 1 1 27s デプロイできた。 裏でPodも作られていて、アプリが起動されている。</description>
+      <description>&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/&#34;&gt;Kubernetes 1.8が出たので、Minikubeを触ってみる&lt;/a&gt;」の続き。
+Minikubeのセットアップまではできたので、&lt;a href=&#34;https://kubernetes.io/docs/tutorials/kubernetes-basics/&#34;&gt;Kubernetes Basics&lt;/a&gt;というチュートリアルをやりながら、&lt;a href=&#34;https://kaitoy.github.io/goslings/&#34;&gt;Goslings&lt;/a&gt;をデプロイする。&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -37,32 +28,10 @@ C:\Users\kaitoy&amp;gt;kubectl run goslings --image=kaitoy/goslings:latest --por
       <pubDate>Tue, 10 Oct 2017 00:10:59 +0900</pubDate>
       
       <guid>https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/</guid>
-      <description>Kubernetes1.8のリリースが話題になっていたので、ちょっと触って見たという話。 (1.8を触ったとは言っていない。)
-具体的には、Kubernetes Basicsというチュートリアルをやりながら、MinikubeにGoslingsをデプロイしたんだけど、この記事ではMinikubeをセットアップしたところまで。
-   (adsbygoogle = window.adsbygoogle || []).push({});  Kubernetesとは KubernetesはOSSのコンテナオーケストレーションツール。 英語だとクーバネティスみたいに発音する。 Googleが自身のコンテナ技術であるBorgの運用で培ったノウハウを活かして開発したもの。 2014年ころに開発が始まり、2015年夏にv1がリリースされたということで、かなり新しいツール。 よく比べられるものにはDockerのSwarmモードやApache Mesosがあるが、何が違うのかは調べてないので知らない。 ただ、Dockerコンテナ管理ツールとしてはKubernetesが一番勢いがある雰囲気を感じる。
-(2017/10/18追記: DockerがKubernetesとの統合を発表した。KubernetesはDockerネイティブなツールになり、Dockerとともにインストールされ、Docker ComposeのConposeファイルでデプロイできるようになったりする。Kubernetesの大勝利っぽい。)
-Kubernetesを使うと、複数の物理マシンからなるHAクラスタ(Kubernetesクラスタ)を構成し、その上にコンテナをデプロイして管理できる。 Kubernetesクラスタは、一組のMasterコンポーネント群(a.k.a. Kubernetes Control Plane、または単にMaster)と一つ以上のNode(昔はMinionと呼ばれてたもの)で構成される。 Nodeは、Masterの管理下でコンテナを実行する機能を備えた、一台のVMや物理マシン。 MasterはNode上で動き、クラスタを管理し、コンテナのスケジューリング、状態管理、スケーリング、アップデートなどを担う。
-Kubernetesのアーキテクチャを図にすると以下の感じ。 矢印の向きとかはちょっと間違ってるかも。
-ごちゃごちゃするので省いたけど、図の下部のNode内のコンポーネントは、他のNode内でも動いている。
+      <description>&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/&#34;&gt;Kubernetes&lt;/a&gt;1.8のリリースが話題になっていたので、ちょっと触って見たという話。
+(1.8を触ったとは言っていない。)&lt;/p&gt;
 
-Masterにはkube-apiserverが含まれていて、Kubernetes APIというREST APIを公開する。 このAPIを通してKubernetesオブジェクトを定義したりすることで、宣言的にコンテナの管理ができる仕組み。 ユーザは普通、kubectl(キューブシーティーエル)というコマンドでkube-apiserverとやり取りする。
-KubernetesオブジェクトはMasterのetcdによって分散キーバリューストアに永続化され、そのストアをkube-controller-managerとkube-schedulerが(kube-apiserver経由で)watchしてて、変更に応じた処理をする。
-kube-controller-managerは、ノードの管理や、オブジェクトのライフサイクルの管理や、コンテナのスケーリングなど、クラスタレベルの機能を実行する。 (よくわからない。)
-kube-schedulerは、コンテナを実行するホストを選出し、コンテナのスケジューリングをする。
-
-一方、各Nodeでは、kubelet(キューブレット)というMasterのエージェントになるプロセスが動く。
-kubeletはkube-apiserverからの指示で、コンテナイメージを取得してコンテナを起動したり監視したり止めたりする。
-kubeletがコンテナを扱うためのコンテナランタイムは、普通はDockerだけど、rktとかcri-oとかfraktiとかも使える。runcやRailCarはどうなんだろう。
-コンテナはデフォルトではクラスタ内のプライベートネットワークにつながるので、そこで動いているアプリにユーザからアクセスするには、何らかの形でトラフィックを中継してやる必要がある。 これをするのがkube-proxy。 ロードバランシングもしてくれる。
-Kubernetesオブジェクトとは Kubernetesオブジェクトは、Kubernetesクラスタ上で機能する構成要素を表現するもの。 オブジェクトはspecとstatusを持ち、オブジェクトに期待する状態やふるまい(spec)を定義しておくと、Kubernetesが実際の状態(status)をそれに合わせてくれる。 宣言的。
-オブジェクトには以下のようなものがある。
- Pod
-デプロイの最小単位。 一つ(またはリソースを共有する複数)のコンテナと、ストレージ、ネットワークなどを内包する。 一つのPodには一つのIPアドレスが付く。
-kubeletはPodの定義に従ってコンテナを起動する。
-因みに、etcd以外のMasterコンポーネントもPodとしてデプロイされる。
- Service
-Podの論理グループ。 PodのIPアドレスは外部に公開されないので、外とのやり取りをするためにServiceがある。 kube-proxyはこいつの定義に従って働く。
-Serviceには複数のEndpoint(i.e. Pod等)が紐づき、外部からのトラフィックをラウンドロビンでルーティングするので、冗長化やロードバランサ的な働きもする。 ServiceはPodを抽象化するので、Podが死んだり入れ替わったりしても外に影響が見えにくくなる。</description>
+&lt;p&gt;具体的には、&lt;a href=&#34;https://kubernetes.io/docs/tutorials/kubernetes-basics/&#34;&gt;Kubernetes Basics&lt;/a&gt;というチュートリアルをやりながら、&lt;a href=&#34;https://github.com/kubernetes/minikube&#34;&gt;Minikube&lt;/a&gt;に&lt;a href=&#34;https://kaitoy.github.io/goslings/&#34;&gt;Goslings&lt;/a&gt;をデプロイしたんだけど、この記事ではMinikubeをセットアップしたところまで。&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -71,22 +40,12 @@ Serviceには複数のEndpoint(i.e. Pod等)が紐づき、外部からのトラ�
       <pubDate>Sun, 05 Mar 2017 23:28:03 -0700</pubDate>
       
       <guid>https://www.kaitoy.xyz/2017/03/05/firedrop-private-beta/</guid>
-      <description>Firedropという現在開発中のサービスがある。 WebサイトのデザインをAIがサポートしてくれるサービスだ。
-2016年夏のニュースを見たとき、AIがテキストコンテンツを解析してサイトを自動構成してくれ、さらにA/Bテストなどを自動でやってサイトを継続的に改善すると言う衝撃的なふれこみだったので、即座にアーリーアクセスに登録した。
-それからしばらく忘れていたが、3月2日にプライベートベータへの招待メールが来たので早速試してみたら、かなりのスモールスタートをしたようで全く期待外れだった。
+      <description>&lt;p&gt;&lt;a href=&#34;https://firedrop.ai/&#34;&gt;Firedrop&lt;/a&gt;という現在開発中のサービスがある。
+WebサイトのデザインをAIがサポートしてくれるサービスだ。&lt;/p&gt;
 
-   (adsbygoogle = window.adsbygoogle || []).push({});  
-Firedrop(プライベートベータ)の機能 Firedrop(プライベートベータ)では、SachaというAIがWebサイトの構築をサポートしてくれる。 こいつが実のところほとんど知性を感じない単なるチャットボットで、なるほどこれは見事な人工無脳だと感心してしまうほどだ。
-Firedropのアカウントを作るとまず、Sachaとチャットしながらサイトの概要(タイトル、概要、画像など)を教えることになる。 するとSachaがざっくりとシングルページのサイトを作ってくれるので、それをまたSachaとのチャットで調整したりコンテンツ追加したりする。
-チャットと言っても、基本はこちらは5,6個ある選択肢の中からセリフを選ぶサウンドノベル方式で、一応任意の文章も入力できるがあいさつするくらいしか使い道がない。
-追加コンテンツはテキストと画像を渡すと自動でレイアウトしてくれるが、すごくいい感じにしてくれるというわけでもないし、むしろ画像が見切れたりするし、細かい調整はできないので、妥協できるレイアウトになるまでチェンジを繰り返すデリヘル方式を採ることになる。 デリヘルなんて利用したことないけど。
-画像は自分でアップロードもできるけどFiredropが提供しているものもあって、後者のやつはSachaにキーワードを伝えるとそれっぽい画像を探してくれるあたりに唯一知性を感じる。
-デザインができたらSachaに頼むとfiredrop.meドメインで公開してくれる。
-(FiredropのUIのスクリーンショットを載せようかと思ったけど、プライベートベータの規約を読んだ感じだめそうだったので載せない。)
-実際に作ってみた 今回実際にFiredropでGoslingsのサイトを作ってみて、できたのがこれ。
-ひどい。
-そもそも当初のテキストコンテンツを解析してサイトを自動構成というコンセプトはどこへ行ったのか。 GoslingsのReadmeを入力したらシャレオツなサイトをささっと作ってくれるイメージだったんだけど。
-まだまだ開発中の機能がたくさんあるそうなので、GAまでにはもうちょっとなんとかなるんだろう。 あまり期待はしない。</description>
+&lt;p&gt;2016年夏の&lt;a href=&#34;https://bita.jp/dml/dwango_dennosho2-1&#34;&gt;ニュース&lt;/a&gt;を見たとき、AIがテキストコンテンツを解析してサイトを自動構成してくれ、さらにA/Bテストなどを自動でやってサイトを継続的に改善すると言う衝撃的なふれこみだったので、即座にアーリーアクセスに登録した。&lt;/p&gt;
+
+&lt;p&gt;それからしばらく忘れていたが、3月2日にプライベートベータへの招待メールが来たので早速試してみたら、かなりのスモールスタートをしたようで全く期待外れだった。&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -95,19 +54,9 @@ Firedropのアカウントを作るとまず、Sachaとチャットしながら�
       <pubDate>Tue, 24 Jan 2017 09:01:49 -0700</pubDate>
       
       <guid>https://www.kaitoy.xyz/2017/01/24/goslings-development-memo5-spring-boot-static-resources/</guid>
-      <description>「Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)」の続き。
-Spring Boot最終編で、静的リソース処理について。
+      <description>&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2017/01/17/goslings-development-memo4-spring-boot-logging/&#34;&gt;Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)&lt;/a&gt;」の続き。&lt;/p&gt;
 
-   (adsbygoogle = window.adsbygoogle || []).push({});  Spring Boot(Spring MVC)での静的リソース処理 この時点でのGoslingsは単なるREST APIサーバで、アクセスしてもJSONを返すだけだ。 アプリとしての体を成すためには、そのAPIを利用するクライアントコード、つまりHTMLドキュメントやCSSファイルやJavaScriptファイル(静的リソース)も返すようにしないといけない。 HTMLドキュメントを返す場合、普通はなんらかのテンプレートエンジンを使うものだが、Goslingsは本当に単純なGUIなので、サーバに置いたHTMLファイルをそのまま返したい。
-「Getting Started Guides」にはServing Web Content with Spring MVCというのが乗っているが、これはThymeleafというテンプレートエンジンを使うものなのでちょっと違う。
-
-Spring Bootリファレンスガイドによると、クラスパス(またはServletContextのルート)の/static/、/public/、/resources/、/META-INF/resources/のいずれかに静的リソースを置けば、特にコードを書かなくてもクライアントからアクセスできるらしい。 (逆に、一般的に静的リソースを置く場所である、プロジェクトのsrc/main/webapp/には置くべきでないとのこと。これは、jarにパッケージングするときにビルドツールに無視されることが多いため。)
-この仕組みについて、この記事を参考にちょろっとソースを見た感じでは、これらのパスはResourcePropertiesのCLASSPATH_RESOURCE_LOCATIONSに定義されていて、これをWebMvcAutoConfigurationがResourceHandlerRegistryでリソースロケーションとして登録することで静的リソース置き場たらしめている模様。 (このResourceHandlerRegistryはResourceHttpRequestHandlerを設定するファサード的なものっぽい。)
-で、@SpringBootApplication(その1参照)が付いているクラスがあって、spring-webmvc.jarがクラスパスにあると、@EnableWebMvcがSpring Bootによって付けられ、そこからごにょごにょして上記WebMvcAutoConfigurationが実行される。 spring-webmvc.jarはspring-boot-starter-web.jar(その1参照)が引っ張ってくる。
-
-なお、Spring MVCの静的リソース処理の全体の流れについては 、ちょっと古いけど「handling static web resources」という記事が分かりやすい。 要は、URLに指定されたパスからサーバ上のリソースを探し当てるResourceResolverというものが優先度順に連なっているリゾルバチェイン(ResourceResolverChain)があって、まずこいつがリソースを取得する。 次に、そのリソースを加工するトランスフォーマチェイン(ResourceTransformerChain)というものに通し、その結果をクライアントに返す。 トランスフォーマチェインはResourceTransformerが連なったもの。 リゾルバチェインとトランスフォーマチェインは上記ResourceHttpRequestHandlerに設定される。
-リゾルバには以下の様なものがある。
- PathResourceResolver: ResourceHttpRequestHandlerに設定されたリソースロケーションからリソースを単純に検索するリゾルバ。 CachingResourceResolver: キャッシュからリソースを検索するリゾルバ。テンプレートエンジンの処理結果のキャッシュとかが返るのは多分ここから。 GzipResourceResolver: gzipで圧縮されたリソース、つまりURLで指定されたパスに.gzという拡張子を付けたリソースを検索するリゾルバ。 VersionResourceResolver: リソースバージョニングを実現するためのリゾルバ。 WebJarsResourceResolver: WebJarsのjarファイル内のリソースを検索するリゾルバ。  リゾルバの設定などについてはQiitaのこの記事ががよくまとまっている。 凝ったことをしたいときは参照しよう。</description>
+&lt;p&gt;Spring Boot最終編で、静的リソース処理について。&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -116,26 +65,9 @@ Spring Bootリファレンスガイドによると、クラスパス(またはSe
       <pubDate>Tue, 17 Jan 2017 00:15:25 -0700</pubDate>
       
       <guid>https://www.kaitoy.xyz/2017/01/17/goslings-development-memo4-spring-boot-logging/</guid>
-      <description>「Goslings開発メモ - その3: Spring Boot続続編 (例外処理)」の続き。
-Spring Boot続続続編で、ロギングについて。
+      <description>&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2017/01/13/goslings-development-memo3-spring-boot-exception/&#34;&gt;Goslings開発メモ - その3: Spring Boot続続編 (例外処理)&lt;/a&gt;」の続き。&lt;/p&gt;
 
-   (adsbygoogle = window.adsbygoogle || []).push({});  Spring Bootアプリにおけるロギング Spring Bootアプリにおけるロギングについては公式のマニュアルとHow-toガイドを読むべし。 この記事にはこれらの内容をまとめておく。
-
-Spring Bootは内部でのロギングにApacheのCommons Loggingを使っている。
-Commons Loggingはファサードライブラリだ。 つまり、Commons LoggingはロギングAPIだけをアプリケーションに提供し、実際のログ出力処理をするロギング実装ライブラリへの橋渡しとして機能する。 ロギング実装ライブラリには色々な選択肢があるが、Spring BootはJUL、 Log4j 2、Logback用のデフォルト設定を備えているので、これらのいずれかを使うのが楽であろう。
-全てのスターターはspring-boot-starter-loggingというロギングスターターに依存していて、これがLogbackを使うので、普通はそのままLogbackを使うことになる。 spring-boot-starter-loggingは、JUL、Commons Logging、Log4j、SLF4Jによるログ出力をLogbackにルーティングするため、アプリ側や他の依存ライブラリがこれらを使っていてもLogbackに一本化できる。
-spring-boot-starter-loggingの代わりにspring-boot-starter-log4j2に依存し、Log4j 2を使う方法もあるが、Goslingsには普通にspring-boot-starter-loggingを使った。
-また、Goslings本体のログ出力には、プレースホルダを使いたかったのでSLF4Jを使った。
-Spring Bootアプリにおけるロギング設定 Spring Bootが備えているデフォルトのロギング設定は、ERROR、WARN、INFOレベルのログをいい感じにフォーマットしてコンソールに吐くというものになっている。
-以下この設定の変更方法などを書く。
-ファイルへのログ出力 ログをファイルにも吐くようにするには、logging.fileというプロパティでファイルパスを指定するか、logging.pathというプロパティでディレクトリパスを指定すればいい。 (後者の場合ログファイル名はspring.logになる。)
-Spring Bootアプリでプロパティを指定する方法は色々あり(こことかここ参照)、大抵はapplication.propertiesで指定するんだろうけど、手軽にコマンドラインで以下の様に指定することもできる。
-java -jar build/libs/goslings-0.0.1.jar --logging.file=build/hoge.log 
-ログファイルはデフォルトで10MBでローテーションする。
-ログレベル ログレベルには重大度の低い方からTRACE、DEBUG、INFO、WARN、ERROR、FATALの6段階があり、指定したログレベル以上のログが出力される。(OFFというログ出力を止めるものもある。) つまりSpring BootのデフォルトのログレベルはINFOだということだ。(LogbackにはFATALがなくERRORとして出力される。)
-ログレベルはlogging.level.&amp;lt;ロガー名&amp;gt;という形式のプロパティで指定できる。 例えばコマンドラインから指定するなら以下の感じ。
-java -jar build/libs/goslings-0.0.1.jar --logging.level.org.springframework.web=DEBUG 
-全ロガーのログレベルはlogging.level.rootで指定できる。</description>
+&lt;p&gt;Spring Boot続続続編で、ロギングについて。&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -144,22 +76,9 @@ java -jar build/libs/goslings-0.0.1.jar --logging.level.org.springframework.web=
       <pubDate>Fri, 13 Jan 2017 14:01:01 -0700</pubDate>
       
       <guid>https://www.kaitoy.xyz/2017/01/13/goslings-development-memo3-spring-boot-exception/</guid>
-      <description>「Goslings開発メモ - その2: Spring Boot続編 (DI)」の続き。
-Spring Boot続続編で、例外処理について。
+      <description>&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2017/01/10/goslings-development-memo2-spring-boot-di/&#34;&gt;Goslings開発メモ - その2: Spring Boot続編 (DI)&lt;/a&gt;」の続き。&lt;/p&gt;
 
-   (adsbygoogle = window.adsbygoogle || []).push({});  Spring MVCアプリにおける例外処理 Goslingsは前々回書いたようにspring-boot-starter-webというスターターを使っていて、つまりSpring MVCアプリだ。
-Spring MVCアプリにおける例外処理についてはちょっと古いがこの記事に詳しい。
-まず、Goslingsの構成で例外処理を何も書かなかった場合、コントローラのリクエストハンドラから例外が投げられると、ログにスタックトレースが出力され、クライアントにはHTTPステータスコード500 (Internal Server Error)とともに以下の様なデフォルトのエラーページが返る。
-
-なんだかこれでも十分な気がするが、実際にはちゃんと明示的に例外処理をしたほうがいいだろう。 エラー時に返すHTTPステータスコードをカスタマイズしたり、遷移するページを変えたりしたくなるだろうから。
-記事によれば、リクエストハンドラ内で例外をキャッチして処理するのはイケてなくて、関心事の分離のために別の場所に処理を書くのが良いらしい。
-Spring MVCアプリにおける例外処理には以下の3つの段階がある。
- 投げる例外をカスタマイズする 例外クラス毎の例外ハンドラをコントローラに実装する コントローラ間で共用する例外ハンドラクラスを作る  以下それぞれについて書く。
-1. 投げる例外をカスタマイズする リクエストハンドラから投げる例外に@ResponseStatusをつけることで、クライアントに返すHTTPステータスコード(とリーズンフレーズ)をカスタマイズできる。
-例えば以下のような例外を投げると、HTTPステータスコード500 (Internal Server Error)の代わりに400 (Bad Request)がクライアントに返る。
-@ResponseStatus(HttpStatus.BAD_REQUEST) public final class BadRequestException extends RuntimeException { // 省略 } 2. 例外クラス毎の例外ハンドラをコントローラに実装する コントローラのメソッドに@ExceptionHandlerをつけてやると、そのメソッドは例外ハンドラになり、そのコントローラのリクエストハンドラから特定の例外が投げられたときの処理を書くことができる。 さらに例外ハンドラに@ResponseStatusをつければ、HTTPステータスコードをカスタマイズできる。 例外ハンドラの戻り値はリクエストハンドラのと同様に処理されるので、遷移するページ等も自由にカスタマイズできる。
-Goslingsでは、上記BadRequestExceptionからは@ResponseStatusを削除したうえで、RestApiV1Controllerに以下の様に例外ハンドラを書いた。
-public final class RestApiV1Controller { // 例外ハンドラ  @ResponseStatus(HttpStatus.</description>
+&lt;p&gt;Spring Boot続続編で、例外処理について。&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -168,19 +87,9 @@ public final class RestApiV1Controller { // 例外ハンドラ  @ResponseStatus(
       <pubDate>Tue, 10 Jan 2017 00:21:27 -0700</pubDate>
       
       <guid>https://www.kaitoy.xyz/2017/01/10/goslings-development-memo2-spring-boot-di/</guid>
-      <description>「Goslings開発メモ - その1: Spring Boot編」の続き。
-Spring Boot続編で、DIについて。
+      <description>&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/&#34;&gt;Goslings開発メモ - その1: Spring Boot編&lt;/a&gt;」の続き。&lt;/p&gt;
 
-   (adsbygoogle = window.adsbygoogle || []).push({});  DIとは DIはDependency Injectionの略。依存性注入と訳される。
-これは、Javaの文脈で具体的目に言うと、あるクラスが依存する具象クラスのインスタンス化と取得をフレームワークに任せることで、具象クラス間の直接的な依存を排除し、よってコンポーネント間を疎結合にする手法。 これにより、アプリの拡張性を高めたり、テストがしやすくなったりする。(参考記事)
-Spring FrameworkはもともとこのDI機能を提供するフレームワーク(i.e. DIコンテナ)として普及した。
-GoslingsでDI Goslingsサーバの内部機能はざっくり、クライアントからのREST API呼び出しを処理するユーザインタフェース層と、Gitリポジトリにアクセスするデータベース層に分かれる。
-Gitリポジトリにアクセスする部分は今回はJGitで実装するが、将来的に別のライブラリで実装しなおす可能性が微レ存なのと、Goslingsの開発自体がWebアプリ開発の練習でもあるので、ちゃんとしたアーキテクチャでと思い、DAOパターンを使ってやった。
-つまり例えば、GitのコミットオブジェクトはJGitのAPIではRevCommitクラスで表されるが、ユーザインタフェース層からはリソースクラスであるCommitクラス(前回参照)を扱う以下の様なDAOインターフェースを呼ぶようにし、JGit依存の実装とは切り離す。
-public interface ObjectDao { public Commit[] getCommits(String token) throws DaoException; } (ObjectDao.javaの完全なソースはこれ)
-
-ObjectDaoを実装するObjectDaoImplクラスでは、以下の様にJGitを使ってごりごりと実装を書く。
-public final class ObjectDaoImpl implements ObjectDao { // フィールド定義は省略  @Override public Commit[] getCommits(String token) { try { return StreamSupport.stream(resolver.getGit(token).log().all().call().spliterator(), false) .map(this::convertToCommit) .toArray(Commit[]::new); } catch (NoHeadException e) { // エラー処理  } } private Commit convertToCommit(RevCommit commit) { // RevCommitをCommitに変換する処理  } }</description>
+&lt;p&gt;Spring Boot続編で、&lt;a href=&#34;https://ja.wikipedia.org/wiki/%E4%BE%9D%E5%AD%98%E6%80%A7%E3%81%AE%E6%B3%A8%E5%85%A5&#34;&gt;DI&lt;/a&gt;について。&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -189,19 +98,9 @@ public final class ObjectDaoImpl implements ObjectDao { // フィールド定義
       <pubDate>Tue, 03 Jan 2017 23:36:01 -0700</pubDate>
       
       <guid>https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/</guid>
-      <description>「Goslings開発メモ - その0: 紹介と概要と設計編」の続き。
-Spring Boot編。
+      <description>&lt;p&gt;「&lt;a href=&#34;https://www.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/&#34;&gt;Goslings開発メモ - その0: 紹介と概要と設計編&lt;/a&gt;」の続き。&lt;/p&gt;
 
-   (adsbygoogle = window.adsbygoogle || []).push({});  Spring Bootとは Spring BootはSpring FrameworkというJavaのWebアプリケーションフレームワークを簡単に利用するためのツールやライブラリ群。
-これを使うと、Webアプリケーションコンテナ(e.g. Tomcat)なしで起動できるSpringアプリケーションを、自動コード生成も設定ファイル作成もせずに作ることができる。 必要な設定は自動で構成され、設定のカスタマイズもアノテーションでできる。
-GAになったのが2014年4月なのでかなり新しいものだが、JavaのWebアプリケーションを作るためのものとしては今世界的に最も流行っているもの。
-私が昔とあるWebアプリを作った時はSpring Rooという[RADツール](https://ja.wikipedia.org/wiki/RAD_(%E8%A8%88%E7%AE%97%E6%A9%9F%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%9F%E3%83%B3%E3%82%B0%E7%92%B0%E5%A2%83)が熱かったが、これはコード自動生成をして開発を助けてくれるもので、なんだか結局あまり流行らなかったようだ。
-Goslingsには最新バージョンの1.4.3.RELEASEを使った。
-Spring Bootことはじめ 包括的網羅的なドキュメントは「Spring Boot Reference Guide」だが、今回あまり深く学ぶ時間が取れなかったのでこれはちら見した程度。 それよりも、ユースケースごとのチュートリアルが60個以上も載っている「Getting Started Guides」を参考にした。
-Goslingsサーバは基本REST APIサーバなので、上記チュートリアルの内「Building a RESTful Web Service」を見ながら以下を実施した。
-1. プロジェクト作成 チュートリアルにはGradleプロジェクトのディレクトリ構成を手動で作るところから書いてあるけど、そこはIDEなどで楽できる。 私はEclipseを使っていて、いつのまにかGradleプラグインであるEclipse Buildship: Eclipse Plug-ins for GradleとGradle IDE Packがインストールされていたので、これらを使った。
-どちらのプラグインでもプロジェクトは作成できるが、Qiitaのこの記事にあるとおり、Gradle IDE Pack(に含まれるGradle (STS) Integration for Eclipse by Pivotal)で作った場合、Gradle Wrapperが生成されないなどの問題があるので、Buildshipの方で作成。 ただ、Gradle IDE Packの方がパッケージ・エクスプローラでの見え方がちょっとよかったので、こちらでプロジェクトをインポートしなおした。
-(上がBuildshipのやつで、下がGradle IDE Packのやつ)</description>
+&lt;p&gt;Spring Boot編。&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -210,24 +109,9 @@ Goslingsサーバは基本REST APIサーバなので、上記チュートリア�
       <pubDate>Sun, 11 Dec 2016 15:26:45 -0700</pubDate>
       
       <guid>https://www.kaitoy.xyz/2016/12/11/goslings-development-memo0-intro-design/</guid>
-      <description>つい先日Goslingsというものを作った。 Gitのリポジトリの中身をビジュアライズするWebアプリケーションだ。 なんとなく見て楽しいという効用がある他は、Gitの勉強にちょっと使えるかもしれないという程度のものだが、もともとGit Advent Calendar 2016のネタを作るために作ろうと思ったものなので、とりあえずはこんなものでいいのだ。 将来気が向いたら、リポジトリの変更をリアルタイムに反映したり、リポジトリの操作もできるように拡張してもいいかもしれないけど、実用性が感じられないので多分やらない。
-因みに、goslingsというのはgeese(雁)の子供を指す、ちょっとマイナーな英語。
-
-Gitオブジェクトを見るアプリだから、GOで始まる名前にしようかと思っていて、そういえば今住んでいるFort Collinsに大量にいるgeeseの子供がgoslingsというし、並んで歩いている姿がちょうどコミットグラフのようだと思い、Goslilngsと名付けた。 単数形だとカナダのイケメン俳優かと思われてしまうので、複数形にした。goslingが一人でいることってないし。
-GoslingsはSpring BootやJGitなどの習作でもある。 学んだことはアプリケーションとしてアウトプットするとよく身に付くものだ。 また文章としてもアウトプットしておくとさらによく身に付き、備忘録にもなるので、Goslingsの開発メモをいくつかのエントリに分けて書いていくことにする。
-まずはSpring Boot編を書こうかと思うが、その前にGoslingsの設計等について書いておく。
-
-   (adsbygoogle = window.adsbygoogle || []).push({});  Goslingsのアーキテクチャ GoslingsはWebサーバとして動き、始めにクライアントにHTML文書を返した後は、REST APIサーバとして働く。
-サーバ側はJavaでできていて、Spring BootとJGitを使っている。 JGitを使いたかったのでJavaにしたが、そうでなければNodeで書きたかった。
-因みに、今回はコーディングの詳細にあまりこだわらないつもりだったので、Lombokで楽をしようかと思ったけど、うっとうしいバグを踏み、どうやっても回避できなかったので使うのやめた。 二度と使うまい。
-クライアント側はJavaScript(ES2015 + async/await)のSPAで、禁jQuery縛り。 React + Reduxというのをやってみたかったが、なんか大げさだしそこまで時間がとれなそうだったので、フレームワークなしで作った。ので、 「You Don&amp;rsquo;t Need jQuery」とにらめっこしながら書いた。
-Gitのコミットグラフの描画には、vis.jsを使った。 Stack Overflowの回答から雰囲気で選んだけど、やりたかったことが全部できて、見た目もよかったのでよかった。
-サーバはDockerで動かすためにステートレスに作ったつもりで、後述の作業ディレクトリをコンテナ間で共有し、サーバの負荷に応じてコンテナを増やしたり減らしたり、簡単にスケールするようになっているはず。
-Goslingsの機能設計 Goslingsサーバにブラウザでアクセスすると、まず参照したいGitリポジトリのURIを入力するフォームが表示される。 ここにはローカルにあるリポジトリへのファイルシステム上のパス(e.g. C:\repos\project-hoge\.git)か、リモートにあるリポジトリのURL(e.g. https://repos.foo.com/project-hoge.git)を入力できる。
-
-URIを入力してBrowseボタンを押下すると、Goslingsの作業ディレクトリ(デフォルトではtmpディレクトリの下のgoslings)に、ローカルリポジトリの場合はそこへのsymlinkを、リモートリポジトリの場合はベアなクローンを作成する。 いずれの場合にも、正規化したURIから生成したUID(SHA-1ハッシュ)をsymlinkファイル名とクローンディレクトリ名に使う。 サーバはリポジトリの準備ができたら、そのUIDをトークン(i.e. リポジトリ引換券)としてクライアントに渡す。 クライアントはそのトークンを使って、リポジトリの情報をサーバに要求する。
-こうすることで、以下の様に後でリポジトリを取り扱いやすくなる。
- クライアントやサーバは、可変長の長ったらしい特殊文字の含まれたURIの代わりに、40文字の数字とアルファベットだけで構成されたトークンでリポジトリを特定でき、処理がしやすい。 後でサーバがリポジトリにアクセスする際、ローカルとリモートを区別する必要がないので、処理がしやすい。 サーバ内部でリポジトリというエンティティを扱う際、リポジトリに直接触るデータレイヤと、クライアントからのリクエストをさばくインターフェースレイヤとの間で、単なる文字列であるトークンをやりとりすればよく、データレイヤの実装の詳細をインターフェースレイヤに曝さなくてよくなり、レイヤをきれいに分離できる。これはJavaのインターフェースを作ってやってもできるが、インターフェースのAPIを考える手間を考えるとトークンの方が楽。  クライアントはトークンを受け取ったらコミットグラフビューに遷移する。</description>
+      <description>&lt;p&gt;つい先日&lt;a href=&#34;https://github.com/kaitoy/goslings&#34;&gt;&lt;strong&gt;Goslings&lt;/strong&gt;&lt;/a&gt;というものを作った。
+&lt;a href=&#34;https://www.kaitoy.xyz/2015/12/27/git-repository/&#34;&gt;Gitのリポジトリの中身&lt;/a&gt;をビジュアライズするWebアプリケーションだ。
+なんとなく見て楽しいという効用がある他は、Gitの勉強にちょっと使えるかもしれないという程度のものだが、もともと&lt;a href=&#34;http://qiita.com/advent-calendar/2016/git&#34;&gt;Git Advent Calendar 2016&lt;/a&gt;のネタを作るために作ろうと思ったものなので、とりあえずはこんなものでいいのだ。&lt;/p&gt;</description>
     </item>
     
   </channel>

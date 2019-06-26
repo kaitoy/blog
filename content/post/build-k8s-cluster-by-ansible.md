@@ -12,6 +12,8 @@ title = "Kubernetes 1.10のクラスタを全手動で構築するのをAnsible�
 
 書いたものは[GitHub](https://github.com/kaitoy/ansible-k8s)に置いた。
 
+<!--more-->
+
 {{< google-adsense >}}
 
 # Ansibleとは

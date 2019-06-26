@@ -10,7 +10,7 @@ title = "Bash on WindowsでWindows側からUbuntu側のファイルをいじる�
 
 Bash on WindowsでWindows側からUbuntu側のファイルをいじると危険という情報を見つけたので、試してみたら確かに困った状態になった話。
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

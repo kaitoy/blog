@@ -11,7 +11,7 @@ slide = true
 
 このエントリでは、[この記事](https://www.kaitoy.xyz/2015/12/27/git-repository/)を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、[__Git__](https://git-scm.com/)の分散バージョン管理の仕組みについて説明する。
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

@@ -11,7 +11,7 @@ title = "Pcap4JがSoftware Quality Award 2015で入賞"
 [Teamed.io](http://www.teamed.io/)が主催の、ソフトウェアの品質とその開発プロジェクトの品質への取り組みを競うコンテスト、[Software Quality Award](http://www.yegor256.com/2015/04/16/award.html)の第一回が2015年4月～11月にかけて開催された。
 Teamed.ioのCTOであるYegorとは、彼のブログを和訳してここに載せている関係でたまにメールしているが、そのやりとりの中で誘われたので私も[Pcap4J](https://github.com/kaitoy/pcap4j)をひっさげてそれに参加した。
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

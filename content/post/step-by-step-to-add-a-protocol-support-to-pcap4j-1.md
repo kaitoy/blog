@@ -11,7 +11,7 @@ title = "Step by Step to Add a Protocol Support to Pcap4J (Part 1)"
 
 I will show how to add a protocol support to [Pcap4J](https://github.com/kaitoy/pcap4j) in detail giving the example of DHCP (v4) via some posts.
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

@@ -24,6 +24,8 @@ title = "CourseraのDeep Learning SpecializationのConvolutional Neural Networks
 22日間かかった。
 修了したらまた[Certifacate](https://www.coursera.org/account/accomplishments/certificate/MVNK5ZA5CDKA)もらえた。
 
+<!--more-->
+
 以下、4週分の内容をメモ程度に書いておく。
 
 * 1週目

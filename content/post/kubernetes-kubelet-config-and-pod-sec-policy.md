@@ -14,6 +14,8 @@ kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPo
 
 ついでにkube-proxyとkube-schedulerもConfigファイルを使うようにした。
 
+<!--more-->
+
 {{< google-adsense >}}
 
 # Kubelet Configファイル

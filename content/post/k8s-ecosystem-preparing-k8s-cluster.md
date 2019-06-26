@@ -12,6 +12,8 @@ draft: false
 
 今回はKubernetesのクラスタの構築手段について書く。
 
+<!--more-->
+
 {{< google-adsense >}}
 
 # Kubernetesのアーキテクチャ

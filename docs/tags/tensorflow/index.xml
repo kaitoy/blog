@@ -18,22 +18,7 @@
       <pubDate>Sun, 25 Mar 2018 22:43:27 +0900</pubDate>
       
       <guid>https://www.kaitoy.xyz/2018/03/25/hello-world-to-ml-with-keras/</guid>
-      <description>機械学習のHello WorldとしてよくやられるMNISTの分類モデルをKeras on TensorFlowで作ってみた話。
-   (adsbygoogle = window.adsbygoogle || []).push({});  MNISTとは 手書き数字画像のラベル付きデータセット。 6万個の訓練データと1万個のテストデータからなる。 CC BY-SA 3.0で配布されているっぽい。
-一つの画像は28×28ピクセルの白黒画像で、0から9のアラビア数字が書かれている。
-画像とラベルがそれぞれ独特な形式でアーカイブされていて、画像一つ、ラベル一つ取り出すのも一苦労する。
-Kerasとは Pythonのニューラルネットワークライブラリ。 バックエンドとしてTensorFlowかCNTKかTheanoを使う。 今回はTensorFlowを使った。
-やったこと KerasのMNISTのAPIとかコードサンプルとかがあけどこれらはスルー。
-MNISTのサイトにあるデータセットをダウンロードしてきて、サイトに書いてあるデータ形式の説明を見ながらサンプルを取り出すコードを書いた。 で、KerasでVGGっぽいCNNを書いて、学習させてモデルをダンプして、ダンプしたモデルをロードしてテストデータで評価するコードを書いた。 コードはGitHubに。
-ネットワークアーキテクチャ 入力画像のサイズに合わせてVGGを小さくした感じのCNNを作った。
-VGGは2014年に発表されたアーキテクチャで、各層に同じフィルタを使い、フィルタ数を線形増加させるシンプルな構造でありながら、性能がよく、今でもよく使われるっぽい。
-VGGを図にすると以下の構造。
-実際はバッチ正規化とかDropoutもやるのかも。 プーリング層は数えないで16層なので、VGG-16とも呼ばれる。 パラメータ数は1億3800万個くらいで、結構深めなアーキテクチャ。
-
-VGG-16は244×244×3の画像を入力して1000クラスに分類するのに対し、MNISTは28×28×1を入れて10クラスに分類するので、以下のような7層版を作った。
-これでパラメータ数は27万個くらい。 訓練データのサンプル数が6万個なので、パラメータ数が大分多い感じではある。
-コードは以下。
-inputs: Tensor = Input(shape=(IMAGE_NUM_ROWS, IMAGE_NUM_COLS, 1)) x: Tensor = Conv2D(filters=8, kernel_size=(2, 2), padding=&amp;#39;same&amp;#39;, activation=&amp;#39;relu&amp;#39;)(inputs) x = Conv2D(filters=8, kernel_size=(2, 2), padding=&amp;#39;same&amp;#39;, activation=&amp;#39;relu&amp;#39;)(x) x = MaxPooling2D(pool_size=(2, 2))(x) x = Conv2D(filters=16, kernel_size=(2, 2), padding=&amp;#39;same&amp;#39;, activation=&amp;#39;relu&amp;#39;)(x) x = Conv2D(filters=16, kernel_size=(2, 2), padding=&amp;#39;same&amp;#39;, activation=&amp;#39;relu&amp;#39;)(x) x = Conv2D(filters=16, kernel_size=(2, 2), padding=&amp;#39;same&amp;#39;, activation=&amp;#39;relu&amp;#39;)(x) x = MaxPooling2D(pool_size=(2, 2))(x) x = Flatten()(x) x = Dense(units=256, activation=&amp;#39;relu&amp;#39;)(x) x = Dense(units=256, activation=&amp;#39;relu&amp;#39;)(x) predictions: Tensor = Dense(NUM_CLASSES, activation=&amp;#39;softmax&amp;#39;)(x) model: Model = Model(inputs=inputs, outputs=predictions) model.</description>
+      <description>&lt;p&gt;機械学習のHello Worldとしてよくやられる&lt;a href=&#34;http://yann.lecun.com/exdb/mnist/&#34;&gt;MNIST&lt;/a&gt;の分類モデルを&lt;a href=&#34;https://keras.io/ja/&#34;&gt;Keras&lt;/a&gt; on &lt;a href=&#34;https://www.tensorflow.org/&#34;&gt;TensorFlow&lt;/a&gt;で作ってみた話。&lt;/p&gt;</description>
     </item>
     
     <item>
@@ -42,26 +27,29 @@ inputs: Tensor = Input(shape=(IMAGE_NUM_ROWS, IMAGE_NUM_COLS, 1)) x: Tensor = Co
       <pubDate>Fri, 12 Jan 2018 23:41:57 +0900</pubDate>
       
       <guid>https://www.kaitoy.xyz/2018/01/12/coursera-deep-learning-improving-deep-neural-networks/</guid>
-      <description>CourseraのDeep Learning SpecializationのNeural Networks and Deep Learningコースを修了したのに続き、Improving Deep Neural Networks: Hyperparameter tuning, Regularization and Optimizationコースを修了した。
-   (adsbygoogle = window.adsbygoogle || []).push({});  このコースは、ディープニューラルネットワークのチューニングなどについて学べる3週間のコース。 今のところ全部英語。
-2018/1/5に始めて、1/12に完了。 8日間かかった。 修了したらまたCertifacateもらえた。
-以下、3週分の内容をメモ程度に書いておく。
- 1週目
-OverfittingやUnderfittingを防ぐテクニックについて。
- 動画
- データ分割
-深層学習のモデル構築は、検討(Idea)、実装(Code)、検証(Experiment)というサイクルの繰り返し(Iterative process)。 取り組む課題、課題のドメイン、データ量、マシンの構成などにより、ハイパーパラメータは変わるので、経験をもって事前に予測することは無理なので、サイクルをどれだけ速く回せるかが鍵。
-データは、訓練データ(Training set)、Devデータ(Development set))(a.k.a. Cross-validation set)、テストデータ(Test set)に分割する。 訓練データで学習し、Devデータでハイパーパラメータを評価し、テストデータで最終的な評価と性能見積をする。 テストデータは無くてもいい。
-サンプル数が1万くらいだった時代は、6:2:2くらいで分割してたけど、近年は数百万とかのデータを扱い、交差検証データやテストデータの割合はもっと小さくするのがトレンド。 98:1:1など。
-Devデータとテストデータは同じようなものを使うべき。 訓練データは必ずしも同様でなくてもいい。訓練データは沢山要るので、別のデータソースからとることもある。
- バイアス vs バリアンス
-でかいネットワークで正則化して大量データで学習させるのが吉。
- 正則化
-過学習(Overfitting)を防ぐため、コスト関数を正則化(Regularization)すべし。
-ロジスティック回帰ではL2ノルム(L2 norm)を使ったL2正則化が一般的。 L1正則化はあまり使われない。 L1正則化をすると、wがスパース行列になってモデルを圧縮できると言われることがあるが、経験上その効果はほとんどない。
-正則化パラメータλはハイパーパラメータで、Devデータで評価する。
-ニューラルネットワークでは正則化項にフロベニウスノルム(Frobenius norm)を使う。
- Dropout(Inverted Dropout)</description>
+      <description>&lt;p&gt;&lt;a href=&#34;https://www.kaitoy.xyz/2018/01/05/coursera-deep-learning-neural-networks-and-deep-learning/&#34;&gt;CourseraのDeep Learning SpecializationのNeural Networks and Deep Learningコースを修了した&lt;/a&gt;のに続き、&lt;a href=&#34;https://www.coursera.org/learn/deep-neural-network&#34;&gt;Improving Deep Neural Networks: Hyperparameter tuning, Regularization and Optimizationコース&lt;/a&gt;を修了した。&lt;/p&gt;
+
+
+
+
+
+&lt;script async src=&#34;//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&#34;&gt;&lt;/script&gt;
+&lt;ins class=&#34;adsbygoogle&#34;
+     style=&#34;display:block&#34;
+     data-ad-client=&#34;ca-pub-6244473643910448&#34;
+     data-ad-slot=&#34;1845600530&#34;
+     data-ad-format=&#34;auto&#34;&gt;&lt;/ins&gt;
+&lt;script&gt;
+(adsbygoogle = window.adsbygoogle || []).push({});
+&lt;/script&gt;
+
+
+&lt;p&gt;このコースは、ディープニューラルネットワークのチューニングなどについて学べる3週間のコース。
+今のところ全部英語。&lt;/p&gt;
+
+&lt;p&gt;2018/1/5に始めて、1/12に完了。
+8日間かかった。
+修了したらまた&lt;a href=&#34;https://www.coursera.org/account/accomplishments/certificate/5VS9EJJ6TJ3A&#34;&gt;Certifacate&lt;/a&gt;もらえた。&lt;/p&gt;</description>
     </item>
     
   </channel>

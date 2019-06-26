@@ -13,6 +13,8 @@ title = "Packer + Ansible on Windows 10でKubernetes 1.10のクラスタ on Virt
 
 AnsibleをWindows([MSYS2](https://www.msys2.org/))で動かした話でもある。
 
+<!--more-->
+
 書いたPackerテンプレートは[GitHub](https://github.com/kaitoy/packer-k8s)に置いた。
 
 {{< google-adsense >}}

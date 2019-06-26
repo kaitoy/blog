@@ -11,7 +11,7 @@ title = "Pcap4J Meets Windows Containers"
 
 __[Windows Containers](https://msdn.microsoft.com/en-us/virtualization/windowscontainers/about/about_overview)__ で __[Pcap4J](https://github.com/kaitoy/pcap4j)__ のコンテナをビルドしてみた話。
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

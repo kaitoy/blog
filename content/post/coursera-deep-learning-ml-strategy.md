@@ -23,6 +23,8 @@ title = "CourseraのDeep Learning SpecializationのStructuring Machine Learning 
 3日間かかった。
 修了したらまた[Certifacate](https://www.coursera.org/account/accomplishments/certificate/7MHFMLHP67C4)もらえた。
 
+<!--more-->
+
 以下、2週分の内容をメモ程度に書いておく。
 
 * 1週目

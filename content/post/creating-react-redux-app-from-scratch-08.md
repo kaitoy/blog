@@ -14,6 +14,8 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 
 [前回](https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/)は[React Redux](https://redux.js.org/basics/usagewithreact)をセットアップした。
 
+<!--more-->
+
 (2018/11/21更新)
 
 {{< google-adsense >}}

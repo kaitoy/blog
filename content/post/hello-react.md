@@ -12,6 +12,8 @@ title = "ReactをAtomパッケージ開発に使ってみた"
 HPEは最近、[React](https://facebook.github.io/react/)を使ったUXフレームワークである[Grommet](http://www.grommet.io/docs/)を開発していて、私が扱っている製品もそれを使う兆しが見えてきた。
 Grommetはいずれ仕事で触ることになりそうなので、まずはReactの勉強をと思い、[とあるAtomパッケージ](https://www.kaitoy.xyz/2015/12/19/atom-impress/)の開発に敢えて使ってみた。
 
+<!--more-->
+
 このエントリには、その作業の中で得た知識などについて書いた。
 ただし、Reactを使った開発のノウハウみたいなものまでは得ていないので書いていない。
 

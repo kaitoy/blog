@@ -22,24 +22,12 @@
   <meta property="og:type" content="article">
   <meta property="og:title" content="Goslings開発メモ - その0: 紹介と概要と設計編 | To Be Decided">
   <title>Goslings開発メモ - その0: 紹介と概要と設計編 | To Be Decided</title>
-  <meta property="og:description" content="つい先日Goslingsというものを作った。 Gitのリポジトリの中身をビジュアライズするWebアプリケーションだ。 なんとなく見て楽しいという効用がある他は、Gitの勉強にちょっと使えるかもしれないという程度のものだが、もともとGit Advent Calendar 2016のネタを作るために作ろうと思ったものなので、とりあえずはこんなものでいいのだ。 将来気が向いたら、リポジトリの変更をリアルタイムに反映したり、リポジトリの操作もできるように拡張してもいいかもしれないけど、実用性が感じられないので多分やらない。
-因みに、goslingsというのはgeese(雁)の子供を指す、ちょっとマイナーな英語。
-
-Gitオブジェクトを見るアプリだから、GOで始まる名前にしようかと思っていて、そういえば今住んでいるFort Collinsに大量にいるgeeseの子供がgoslingsというし、並んで歩いている姿がちょうどコミットグラフのようだと思い、Goslilngsと名付けた。 単数形だとカナダのイケメン俳優かと思われてしまうので、複数形にした。goslingが一人でいることってないし。
-GoslingsはSpring BootやJGitなどの習作でもある。 学んだことはアプリケーションとしてアウトプットするとよく身に付くものだ。 また文章としてもアウトプットしておくとさらによく身に付き、備忘録にもなるので、Goslingsの開発メモをいくつかのエントリに分けて書いていくことにする。
-まずはSpring Boot編を書こうかと思うが、その前にGoslingsの設計等について書いておく。
-
-   (adsbygoogle = window.adsbygoogle || []).push({});  Goslingsのアーキテクチャ GoslingsはWebサーバとして動き、始めにクライアントにHTML文書を返した後は、REST APIサーバとして働く。
-サーバ側はJavaでできていて、Spring BootとJGitを使っている。 JGitを使いたかったのでJavaにしたが、そうでなければNodeで書きたかった。
-因みに、今回はコーディングの詳細にあまりこだわらないつもりだったので、Lombokで楽をしようかと思ったけど、うっとうしいバグを踏み、どうやっても回避できなかったので使うのやめた。 二度と使うまい。
-クライアント側はJavaScript(ES2015 &#43; async/await)のSPAで、禁jQuery縛り。 React &#43; Reduxというのをやってみたかったが、なんか大げさだしそこまで時間がとれなそうだったので、フレームワークなしで作った。ので、 「You Don&rsquo;t Need jQuery」とにらめっこしながら書いた。
-Gitのコミットグラフの描画には、vis.jsを使った。 Stack Overflowの回答から雰囲気で選んだけど、やりたかったことが全部できて、見た目もよかったのでよかった。
-サーバはDockerで動かすためにステートレスに作ったつもりで、後述の作業ディレクトリをコンテナ間で共有し、サーバの負荷に応じてコンテナを増やしたり減らしたり、簡単にスケールするようになっているはず。
-Goslingsの機能設計 Goslingsサーバにブラウザでアクセスすると、まず参照したいGitリポジトリのURIを入力するフォームが表示される。 ここにはローカルにあるリポジトリへのファイルシステム上のパス(e.g. C:\repos\project-hoge\.git)か、リモートにあるリポジトリのURL(e.g. https://repos.foo.com/project-hoge.git)を入力できる。
-
-URIを入力してBrowseボタンを押下すると、Goslingsの作業ディレクトリ(デフォルトではtmpディレクトリの下のgoslings)に、ローカルリポジトリの場合はそこへのsymlinkを、リモートリポジトリの場合はベアなクローンを作成する。 いずれの場合にも、正規化したURIから生成したUID(SHA-1ハッシュ)をsymlinkファイル名とクローンディレクトリ名に使う。 サーバはリポジトリの準備ができたら、そのUIDをトークン(i.e. リポジトリ引換券)としてクライアントに渡す。 クライアントはそのトークンを使って、リポジトリの情報をサーバに要求する。
-こうすることで、以下の様に後でリポジトリを取り扱いやすくなる。
- クライアントやサーバは、可変長の長ったらしい特殊文字の含まれたURIの代わりに、40文字の数字とアルファベットだけで構成されたトークンでリポジトリを特定でき、処理がしやすい。 後でサーバがリポジトリにアクセスする際、ローカルとリモートを区別する必要がないので、処理がしやすい。 サーバ内部でリポジトリというエンティティを扱う際、リポジトリに直接触るデータレイヤと、クライアントからのリクエストをさばくインターフェースレイヤとの間で、単なる文字列であるトークンをやりとりすればよく、データレイヤの実装の詳細をインターフェースレイヤに曝さなくてよくなり、レイヤをきれいに分離できる。これはJavaのインターフェースを作ってやってもできるが、インターフェースのAPIを考える手間を考えるとトークンの方が楽。  クライアントはトークンを受け取ったらコミットグラフビューに遷移する。">
+  <meta property="og:description" content="つい先日Goslingsというものを作った。
+Gitのリポジトリの中身をビジュアライズするWebアプリケーションだ。
+なんとなく見て楽しいという効用がある他は、Gitの勉強にちょっと使えるかもしれないという程度のものだが、もともとGit Advent Calendar 2016のネタを作るために作ろうと思ったものなので、とりあえずはこんなものでいいのだ。">
+  <meta name="description" content="つい先日Goslingsというものを作った。
+Gitのリポジトリの中身をビジュアライズするWebアプリケーションだ。
+なんとなく見て楽しいという効用がある他は、Gitの勉強にちょっと使えるかもしれないという程度のものだが、もともとGit Advent Calendar 2016のネタを作るために作ろうと思ったものなので、とりあえずはこんなものでいいのだ。">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/goslings-logo.png">
 
 
@@ -239,12 +227,11 @@ URIを入力してBrowseボタンを押下すると、Goslingsの作業ディレ
         <hr>
         
 
-        <br> <div class="text-justify">
-
-<p>つい先日<a href="https://github.com/kaitoy/goslings"><strong>Goslings</strong></a>というものを作った。
+        <br> <div class="text-justify"><p>つい先日<a href="https://github.com/kaitoy/goslings"><strong>Goslings</strong></a>というものを作った。
 <a href="https://www.kaitoy.xyz/2015/12/27/git-repository/">Gitのリポジトリの中身</a>をビジュアライズするWebアプリケーションだ。
-なんとなく見て楽しいという効用がある他は、Gitの勉強にちょっと使えるかもしれないという程度のものだが、もともと<a href="http://qiita.com/advent-calendar/2016/git">Git Advent Calendar 2016</a>のネタを作るために作ろうと思ったものなので、とりあえずはこんなものでいいのだ。
-将来気が向いたら、リポジトリの変更をリアルタイムに反映したり、リポジトリの操作もできるように拡張してもいいかもしれないけど、実用性が感じられないので多分やらない。</p>
+なんとなく見て楽しいという効用がある他は、Gitの勉強にちょっと使えるかもしれないという程度のものだが、もともと<a href="http://qiita.com/advent-calendar/2016/git">Git Advent Calendar 2016</a>のネタを作るために作ろうと思ったものなので、とりあえずはこんなものでいいのだ。</p>
+
+<p>将来気が向いたら、リポジトリの変更をリアルタイムに反映したり、リポジトリの操作もできるように拡張してもいいかもしれないけど、実用性が感じられないので多分やらない。</p>
 
 <p>因みに、goslingsというのはgeese(雁)の子供を指す、ちょっとマイナーな英語。</p>
 
@@ -353,8 +340,7 @@ $ docker run -p 80:80 -itd kaitoy/goslings 80 /goslings-repos https://github.com
 
 <p><a href="https://aws.amazon.com/">AWS</a>の無料枠を活用して<a href="https://aws.amazon.com/ecs/">EC2 Container Service (ECS)</a>でホストしていて、<a href="http://www.freenom.com/ja/index.html">Freenom</a>で無料で取得した<code>goslings.tk</code>ドメインとこれまた無料のFreenomのネームサーバを利用して上記のアドレスにしている。</p>
 
-<p>AWSもFreenomも無料なのは12か月だけなので、それが過ぎたらGaaSは終了する予定。</p>
-</div>
+<p>AWSもFreenomも無料なのは12か月だけなので、それが過ぎたらGaaSは終了する予定。</p></div>
 
         <section class="share-buttons">
           <div class="share-button">

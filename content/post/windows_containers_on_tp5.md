@@ -12,7 +12,7 @@ title = "Windows Server 2016 TP5でWindows Containersにリトライ"
 [Windows Server 2016のTechnical Preview 5(TP5)が公開されていた](https://www.microsoft.com/ja-jp/evalcenter/evaluate-windows-server-technical-preview)ので、
 [TP4でバグに阻まれて挫折した](https://www.kaitoy.xyz/2016/01/22/pcap4j-meets-windows-containers/)、Windows Containersで[Pcap4J](https://github.com/kaitoy/pcap4j)を使ってパケットキャプチャする試みにリトライした話。
 
-<br>
+<!--more-->
 
 {{< google-adsense >}}
 

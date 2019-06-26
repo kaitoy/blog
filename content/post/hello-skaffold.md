@@ -11,6 +11,8 @@ title = "Skaffoldを触ってみた"
 
 [Skaffold](https://github.com/GoogleCloudPlatform/skaffold#run-a-deployment-pipeline-once)を試してみた話。
 
+<!--more-->
+
 {{< google-adsense >}}
 
 # Skaffoldとは

@@ -11,6 +11,8 @@ title = "Kubernetes 1.8のアクセス制御について。あとDashboard。"
 
 「[Kubernetes1.8のクラスタを構築する。kubeadmで。](https://www.kaitoy.xyz/2017/10/21/build-kubernetes-cluster-by-kubeadm/)」で、Dashboardがうまく動かない問題が発生したんだけど、それを解決した話。
 
+<!--more-->
+
 {{< google-adsense >}}
 
 # 問題の現象

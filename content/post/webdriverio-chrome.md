@@ -15,6 +15,8 @@ title = "WebdriverIOとChromeのヘッドレスモードで自動ブラウザテ
 
 今回、最終的に、[WebdriverIO](http://webdriver.io/)、[WDIO](http://webdriver.io/guide/testrunner/gettingstarted.html)、[selenium-standalone](https://github.com/vvo/selenium-standalone)、[Jasmine](https://jasmine.github.io/)と、Chromeのヘッドレスモードを使って、Dockerコンテナ([Alpine Linux](https://alpinelinux.org/))上でテストスクリプトを実行して、ServiceNowのログイン画面のスクリーンショットが取れるところまでできた。
 
+<!--more-->
+
 そのコンテナイメージのDockerfileは[GitHubに置いた](https://github.com/kaitoy/webdriverio-chrome)。
 
 {{< google-adsense >}}

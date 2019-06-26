@@ -19,6 +19,8 @@ title = "CourseraのDeep Learning SpecializationのImproving Deep Neural Network
 8日間かかった。
 修了したらまた[Certifacate](https://www.coursera.org/account/accomplishments/certificate/5VS9EJJ6TJ3A)もらえた。
 
+<!--more-->
+
 以下、3週分の内容をメモ程度に書いておく。
 
 * 1週目
