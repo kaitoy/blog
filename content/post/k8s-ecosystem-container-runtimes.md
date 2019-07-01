@@ -70,6 +70,12 @@ rktはコンテナを様々な隔離レベルで起動できるのが特徴で�
 もう一つの特徴として、Podをネイティブサポートしていることがある。
 つまりrktでは、Kubernetes無しでもコンテナはPod内で実行される。
 
+![cr13.png](/images/k8s-ecosystem-container-runtimes/cr13.png)
+
+図のstage 1の部分がプラガブルで、[そこを入れ替えることでコンテナの隔離レベルが変わる](https://github.com/rkt/rkt/blob/master/Documentation/devel/architecture.md)。
+[fly](https://github.com/rkt/rkt/blob/master/Documentation/running-fly-stage1.md)というのは一番緩いstage 1実装。
+Goで書かれた単一バイナリのrktコマンドがstage 0として実行され、stage 1実装に[exec()](https://linuxjm.osdn.jp/html/LDP_man-pages/man3/exec.3.html)で化け、stage 2としてアプリケーションを実行する。
+
 ## Windows Containers
 Windowsにもコンテナ対応が。
 
