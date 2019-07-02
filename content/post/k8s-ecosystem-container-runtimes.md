@@ -48,7 +48,8 @@ kubeletとコンテナランタイムとの関係は歴史的なものもあっ�
 以下、いろいろあるコンテナランタイムを概ね時系列順に紹介する。
 
 ## Docker
-[Docker](https://www.docker.com/)は、2013年3月に生まれたもっとも古くもっともよく知られたコンテナランタイム。
+[Docker](https://www.docker.com/)は、2013年3月に生まれた(Kubernetes関係では)もっとも古くもっともよく知られたコンテナランタイム。
+(実際にはDocker 0.8くらいまでは[LXC](https://linuxcontainers.org/ja/)のラッパ的な感じだったらしいので、コンテナ技術としてはLXCの方が古い。)
 Linuxカーネルの機能である[namespaces](https://linuxjm.osdn.jp/html/LDP_man-pages/man7/namespaces.7.html)で論理リソースを隔離し、[cgroups](http://man7.org/linux/man-pages/man7/cgroups.7.html)でハードウェアリソースを隔離し、union filesystem(e.g. [aufs](https://ja.wikipedia.org/wiki/Aufs), [OverlayFS](https://en.wikipedia.org/wiki/OverlayFS))でファイルシステムを隔離し、その中でプロセスを起動する。
 さらに[SELinux](https://ja.wikipedia.org/wiki/Security-Enhanced_Linux)でファイルアクセスを制限したり、[seccomp](http://man7.org/linux/man-pages/man2/seccomp.2.html)でシステムコールを制限したり、[AppArmor](https://ja.wikipedia.org/wiki/AppArmor)でcapabilityを制限したりもできる。
 
@@ -175,7 +176,7 @@ CRI-Oは[2017年10月に1.0.0リリースを迎えた](https://medium.com/cri-o/
 
 ![cr12.png](/images/k8s-ecosystem-container-runtimes/cr12.png)
 
-commonというのはcontainerd-shim (後述)と同様の働きをするデーモン。
+[conmon](https://github.com/containers/conmon)というのはcontainerd-shim (後述)と同様の働きをするデーモン。
 
 ## rktlet
 [rktlet](https://github.com/kubernetes-incubator/rktlet)はrkt向けのCoreOS社製CRI実装。
