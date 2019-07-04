@@ -112,6 +112,7 @@ OCIの発足と同時に、Docker社がOCIランタイムのリファレンス�
 少し遡って2015年5月、インテルもコンテナ業界に参戦していた。
 カーネルを共有するコンテナはセキュアじゃないから、仮想マシンでカーネルを分離しようと言い出し、そのための軽量Linuxとして[Clear Linux](https://clearlinux.org/)を[発表](https://www.publickey1.jp/blog/15/clear_linux_project.html)。
 これはKVM(QEMU)の仮想マシン上でIntel VT-xのサポートを受けて高速(200msくらい)に起動し、一つのコンテナをホストする。
+QEMUもインテルのカスタマイズ版([qemu-light](https://github.com/intel/qemu-lite))を使ったりしている。
 こうしたコンテナや、その周辺技術がClear Containersと呼ばれる。
 
 とりあえずコンセプトが近しいrktをサポートして、OCIが出てからはOCIランタイムの[cc-oci-runtime](https://github.com/intel/cc-oci-runtime/tree/master)(後の[cc-runtime](https://github.com/clearcontainers/runtime))に加えて[cc-shim](https://github.com/clearcontainers/shim)と[cc-proxy](https://github.com/clearcontainers/proxy)を作ってDockerとかからも使えるようになった。
