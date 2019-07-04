@@ -114,7 +114,8 @@ OCIの発足と同時に、Docker社がOCIランタイムのリファレンス�
 これはKVM(QEMU)の仮想マシン上でIntel VT-xのサポートを受けて高速(200msくらい)に起動し、一つのコンテナをホストする。
 こうしたコンテナや、その周辺技術がClear Containersと呼ばれる。
 
-とりあえずコンセプトが近しいrktをサポートして、OCIが出てからはOCIランタイムの[cc-oci-runtime](https://github.com/clearcontainers/runtime)とかcontainerd-shim(後述)である[cc-shim](https://github.com/clearcontainers/shim)とかを作ってDockerとかからも使えるようになった。
+とりあえずコンセプトが近しいrktをサポートして、OCIが出てからはOCIランタイムの[cc-oci-runtime](https://github.com/intel/cc-oci-runtime/tree/master)(後の[cc-runtime](https://github.com/clearcontainers/runtime))に加えて[cc-shim](https://github.com/clearcontainers/shim)と[cc-proxy](https://github.com/clearcontainers/proxy)を作ってDockerとかからも使えるようになった。
+これらのコンポーネントは、`kata-*`に名前を変えて後述のKata Containersに受け継がれることになる。
 
 ## hyper、runV
 Clear Containersの発表と同時期の2015年5月、中国のチーム(のちのHyper社)が[hyper](https://github.com/hyperhq/hyperd/tree/v0.1)というコンテナランタイムを公開した。
