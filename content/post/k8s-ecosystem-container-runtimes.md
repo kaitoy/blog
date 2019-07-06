@@ -135,7 +135,7 @@ runCがOS依存の低レベルな処理をして、containerdがもう少し上�
 containerdはrunCを使ってコンテナを起動して監視する他、コンテナにストレージやネットワークのアタッチをしたり、コンテナイメージのpull・pushをしたりする機能を備え、後にイベントやメトリクスの収集・エクスポートまでするようになった。
 もはやdockerdはクライアントからのリクエストをcontainerdに丸投げしてるだけなのかも。
 
-[2015年4月](https://blog.docker.com/2016/04/docker-engine-1-11-runc/)にリリースされたDocker 1.11が、containerdとrunCをベースとした初のバージョンとなった。
+[2016年4月](https://blog.docker.com/2016/04/docker-engine-1-11-runc/)にリリースされたDocker 1.11が、containerdとrunCをベースとした初のバージョンとなった。
 
 ![cr3.png](/images/k8s-ecosystem-container-runtimes/cr3.png)
 
