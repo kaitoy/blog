@@ -309,6 +309,8 @@ Nabla Containers用のOCIランタイムとして、[runnc](https://github.com/n
 ランタイムはOCI準拠なのでDockerからも使えるけど、コンテナイメージがOCI準拠じゃないので、Dockerイメージは動かせない。
 特殊なベースイメージからビルドしなおす必要がある。
 
+![nabla-descr.png](/images/k8s-ecosystem-container-runtimes/nabla-descr.png)
+
 Nabla Containersはまだまだ開発途上で、そもそもUnikernel自体が成熟した技術ではないのもあって制限事項が沢山ある。
 書き込めるファイルシステムが`/tmp`しかないとか、ボリュームマウントできないとか、[提供されているパッケージ](https://github.com/rumpkernel/rumprun-packages)が全然少ないとか、プロセスforkできないとか。
 
