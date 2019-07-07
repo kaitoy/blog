@@ -324,6 +324,15 @@ OCIランタイムは、containerd-shimから実行されてコンテナを起�
 containerd-shimは[subreaper](http://man7.org/linux/man-pages/man2/prctl.2.html)として動いていて、[そのコンテナの親プロセス役を引き継ぎ、コンテナのexitまで面倒をみる](https://github.com/crosbymichael/dockercon-2016/blob/master/Creating%20Containerd.pdf)。
 この機能により、containerd-shimさえ動いていれば、dockerdやcontainerdが死んでもコンテナが動き続けられるので、コンテナ無停止のDockerアップデートが可能になるなど利点がある。
 
+## crun
+[crun](https://github.com/giuseppe/crun)は2019年1月に公開されたOCIランタイム。
+Red Hatの中の人が開発しているが、現時点ではRed Hat公式のものではなさそう。
+
+Cで書かれているのが特徴で、Goで書かれているruncより倍ぐらい速いと自称している。
+CRI-Oでサポートされているので先は結構明るい。
+
+Red Hatによるコンテナエコシステムに唯一残っているDocker社の痕跡がrunCなので、これを排除するための刺客なのではなかろうか。
+
 # まとめ
 コンテナランタイムは奥が深くてまだ進化の過程。
 
