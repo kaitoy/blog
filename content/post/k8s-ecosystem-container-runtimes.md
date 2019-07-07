@@ -288,6 +288,11 @@ Node.js、Java、MySQL、Apache HTTP Server、Redisなんかは動くらしい�
 
 システムコールが本当のカーネルよりも遅いので、じゃんじゃんシステムコールするアプリには向かない。
 
+![gvisor-descr.png](/images/k8s-ecosystem-container-runtimes/gvisor-descr.png)
+
+[Sentry](https://gvisor.dev/docs/architecture_guide/overview/#sentry)がユーザーランドで動くカーネル。
+Sentryはファイルシステムにアクセスできないので、ファイルシステム周りの処理は9Pというプロトコルを介して[Gofer](https://gvisor.dev/docs/architecture_guide/overview/#gofer)に移譲する。
+
 ## Nabla Containers
 [Nabla Containers](https://nabla-containers.github.io/)はIBM Researchが開発したもう一つのコンテナランタイム。
 2018年7月に[発表](https://japan.zdnet.com/article/35122760/)された。
