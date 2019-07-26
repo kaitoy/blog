@@ -11,6 +11,8 @@ draft: false
 Kubernetesを仕事で使い始めて1年たったので、これまで使ったり見聞きして気になったKubernetesまわりのエコシステムについていくつかの記事にまとめていきたい。
 第一弾はコンテナランタイム編。
 
+DockerとかcontainerdとかKata ContainersとかgVisorとかの話。
+
 <!--more-->
 
 {{< google-adsense >}}
@@ -341,3 +343,11 @@ Red Hatによるコンテナエコシステムに唯一残っているDocker社�
 結局どのコンテナランタイムにすればいいか迷ったときのためのフローチャートを書いた。
 
 ![flow.png](/images/k8s-ecosystem-container-runtimes/flow.png)
+
+<br>
+
+社内勉強会向けに[impress.js](https://github.com/impress/impress.js/)で発表資料にもした。
+
+<iframe src="https://github.com/kaitoy/chronicle-container-runtimes"></iframe>
+
+https://github.com/kaitoy/chronicle-container-runtimes
