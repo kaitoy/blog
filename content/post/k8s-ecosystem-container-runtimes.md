@@ -348,6 +348,4 @@ Red Hatによるコンテナエコシステムに唯一残っているDocker社�
 
 社内勉強会向けに[impress.js](https://github.com/impress/impress.js/)で発表資料にもした。
 
-<iframe src="https://github.com/kaitoy/chronicle-container-runtimes"></iframe>
-
 https://github.com/kaitoy/chronicle-container-runtimes
