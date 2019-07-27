@@ -12,26 +12,36 @@
 </script>
 
 <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
-<meta property="og:url" content="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">
+<meta property="og:url" content="https://www.kaitoy.xyz/2019/07/27/introduction-to-k8s/">
 <meta property="og:site_name" content="To Be Decided">
 <meta name="twitter:card" content="summary"></meta>
-<link rel="canonical" href="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">
+<link rel="canonical" href="https://www.kaitoy.xyz/2019/07/27/introduction-to-k8s/">
 
 
 
   <meta property="og:type" content="article">
-  <meta property="og:title" content="Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える | To Be Decided">
-  <title>Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える | To Be Decided</title>
-  <meta property="og:description" content="「Kubernetes 1.10をスクラッチから全手動で構築」、「Kubernetes 1.10のクラスタにWeave Netをデプロイする」の続き。
+  <meta property="og:title" content="Kubernetes入門 | To Be Decided">
+  <title>Kubernetes入門 | To Be Decided</title>
+  <meta property="og:description" content="社内勉強会用にKubernetes入門というスライドをreveal.jsで作ってGitHub Pagesで公開したので晒しておく。
+コンテンツは以下。
 
-kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPodSecurityPolicyを使うように変更した話。
 
-ついでにkube-proxyとkube-schedulerもConfigファイルを使うようにした。">
-  <meta name="description" content="「Kubernetes 1.10をスクラッチから全手動で構築」、「Kubernetes 1.10のクラスタにWeave Netをデプロイする」の続き。
+Kubernetesとは
+なぜKubernetesを使うのか
+Kubernetesの機能
+Kubernetesのアーキテクチャ
+Kubernetesの使い方
+">
+  <meta name="description" content="社内勉強会用にKubernetes入門というスライドをreveal.jsで作ってGitHub Pagesで公開したので晒しておく。
+コンテンツは以下。
 
-kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPodSecurityPolicyを使うように変更した話。
 
-ついでにkube-proxyとkube-schedulerもConfigファイルを使うようにした。">
+Kubernetesとは
+なぜKubernetesを使うのか
+Kubernetesの機能
+Kubernetesのアーキテクチャ
+Kubernetesの使い方
+">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
 
 
@@ -130,7 +140,7 @@ kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPo
 
                 <div class="navbar-header">
 
-                    <a class="navbar-brand visible-xs" href="#">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a>
+                    <a class="navbar-brand visible-xs" href="#">Kubernetes入門</a>
 
                     <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
                         <span class="icon-bar"></span>
@@ -189,328 +199,49 @@ kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPo
     
     
 
-    <h4 class="post-title"><a href="/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a></h4>
-    <h5>Sat, May 5, 2018</h5>
+    <h4 class="post-title"><a href="/2019/07/27/introduction-to-k8s/">Kubernetes入門</a></h4>
+    <h5>Sat, Jul 27, 2019</h5>
     
     <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
     
     <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/microservices"><kbd class="item-tag">microservices</kbd></a>
     
 
 </div>
 
 
         <div class="cover">
-            <a href="/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">
-                <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える">
+            <a href="/2019/07/27/introduction-to-k8s/">
+                <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="Kubernetes入門">
             </a>
         </div>
 
         
-        <h4 class="page-header">Table of Contents</h4>
-        <aside>
-            <nav id="TableOfContents">
-<ul>
-<li><a href="#kubelet-configファイル">Kubelet Configファイル</a>
-<ul>
-<li><a href="#podsecuritypolicy">PodSecurityPolicy</a></li>
-<li><a href="#kube-proxy-configファイル">Kube Proxy Configファイル</a></li>
-<li><a href="#kube-scheduler-confファイル">Kube Scheduler Confファイル</a></li>
-</ul></li>
-</ul>
-</nav>
-        </aside>
-        <hr>
-        
 
-        <br> <div class="text-justify"><p>「<a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a>」、「<a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a>」の続き。</p>
+        <br> <div class="text-justify"><p>社内勉強会用にKubernetes入門というスライドを<a href="https://revealjs.com/">reveal.js</a>で作ってGitHub Pagesで公開したので晒しておく。
+コンテンツは以下。</p>
 
-<p>kubeletの起動オプションの代わりに、Kubelet ConfigファイルとPodSecurityPolicyを使うように変更した話。</p>
+<ol>
+<li>Kubernetesとは</li>
+<li>なぜKubernetesを使うのか</li>
+<li>Kubernetesの機能</li>
+<li>Kubernetesのアーキテクチャ</li>
+<li>Kubernetesの使い方</li>
+</ol>
 
-<p>ついでにkube-proxyとkube-schedulerもConfigファイルを使うようにした。</p>
-
-<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-6244473643910448"
-     data-ad-slot="1845600530"
-     data-ad-format="auto"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
-</script>
-
-
-<h1 id="kubelet-configファイル">Kubelet Configファイル</h1>
-
-<p><code>journalctl -u kubelet</code>すると、以下の警告が出ている。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">Apr 28 15:31:39 k8s-master kubelet[1370]: Flag --address has been deprecated, This parameter should be set via the config file specified by the Kubelet&#39;s -
--config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
-Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --pod-manifest-path has been deprecated, This parameter should be set via the config file specified by the K
-ubelet&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
-Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --cluster-dns has been deprecated, This parameter should be set via the config file specified by the Kubelet
-&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
-Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --cluster-domain has been deprecated, This parameter should be set via the config file specified by the Kube
-let&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
-Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --authorization-mode has been deprecated, This parameter should be set via the config file specified by the
-Kubelet&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
-Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --client-ca-file has been deprecated, This parameter should be set via the config file specified by the Kube
-let&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
-Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --cgroup-driver has been deprecated, This parameter should be set via the config file specified by the Kubel
-et&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
-Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --tls-min-version has been deprecated, This parameter should be set via the config file specified by the Kubelet&#39;s --config flag. See https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/ for more information.
-Apr 28 15:31:40 k8s-master kubelet[1370]: Flag --allow-privileged has been deprecated, will be removed in a future version</code></pre></div>
-<p>kubeletのいくつかのオプションは、<a href="https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/">https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/</a> を参照してKubelet Configファイルのほうに書けとある。</p>
-
-<p>参照先のマニュアルには現時点でほぼ何も書いてないし、ググっても情報が無いので、<a href="https://github.com/kubernetes/kubernetes/blob/release-1.10/pkg/kubelet/apis/kubeletconfig/v1beta1/types.go">ソース</a>を見てそれっぽく書いてみた。</p>
-
-<p>将来的に調整しそうなパラメータは、Kubelet Configファイルにデフォルト値とともにコメントとして書き出している。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># DNS_SERVER_IP=10.0.0.10
-# DNS_DOMAIN=&#34;cluster.local&#34;
-# cat &gt; /etc/kubernetes/kubelet.conf &lt;&lt; EOF
-kind: KubeletConfiguration
-apiVersion: kubelet.config.k8s.io/v1beta1
-featureGates:
-  RotateKubeletServerCertificate: true
-address: &#34;0.0.0.0&#34;
-staticPodPath: &#34;/etc/kubernetes/manifests&#34;
-clusterDNS: [&#34;${DNS_SERVER_IP}&#34;]
-clusterDomain: &#34;${DNS_DOMAIN}&#34;
-authorization:
-  mode: Webhook
-  webhook:
-    cacheAuthorizedTTL: &#34;5m0s&#34;
-    cacheUnauthorizedTTL: &#34;30s&#34;
-authentication:
-  x509:
-    clientCAFile: &#34;/etc/kubernetes/pki/ca.crt&#34;
-  webhook:
-    enabled: false
-    cacheTTL: &#34;0s&#34;
-  anonymous:
-    enabled: false
-cgroupDriver: &#34;cgroupfs&#34;
-tlsMinVersion: &#34;VersionTLS12&#34;
-tlsCipherSuites:
-- &#34;TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256&#34;
-- &#34;TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384&#34;
-- &#34;TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256&#34;
-- &#34;TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384&#34;
-readOnlyPort: 0
-# port: 10250
-# containerLogMaxSize: &#34;10Mi&#34;
-# containerLogMaxFiles: 5
-# evictionHard:
-#   imagefs.available: &#34;15%&#34;
-#   memory.available: &#34;100Mi&#34;
-#   nodefs.available: &#34;10%&#34;
-#   nodefs.inodesFree: &#34;5%&#34;
-# evictionMaxPodGracePeriod: 0
-# evictionPressureTransitionPeriod: &#34;5m0s&#34;
-# fileCheckFrequency: &#34;20s&#34;
-# imageGCHighThresholdPercent: 85
-# imageGCLowThresholdPercent: 80
-# maxOpenFiles: 1000000
-# maxPods: 110
-# imageMinimumGCAge: &#34;2m0s&#34;
-# nodeStatusUpdateFrequency: &#34;10s&#34;
-# runtimeRequestTimeout: &#34;2m0s&#34;
-# streamingConnectionIdleTimeout: &#34;4h0m0s&#34;
-# syncFrequency: &#34;1m0s&#34;
-# volumeStatsAggPeriod: &#34;1m0s&#34;
-EOF
-# PAUSE_IMAGE=k8s.gcr.io/pause-amd64:3.1
-# cat &gt; /etc/systemd/system/kubelet.service &lt;&lt; EOF
-[Unit]
-Description=Kubernetes Kubelet
-Documentation=https://github.com/kubernetes/kubernetes
-After=docker.service
-Requires=docker.service
-
-[Service]
-User=root
-Group=root
-ExecStart=/usr/bin/kubelet \\
-  --allow-privileged=true \\
-  --config=/etc/kubernetes/kubelet.conf \\
-  --bootstrap-kubeconfig=/etc/kubernetes/bootstrap.kubeconfig \\
-  --kubeconfig=/etc/kubernetes/kubelet.kubeconfig \\
-  --network-plugin=cni \\
-  --cni-conf-dir=/etc/cni/net.d \\
-  --cni-bin-dir=/opt/cni/bin \\
-  --cert-dir=/etc/kubernetes/pki \\
-  --rotate-certificates=true \\
-  --v=2 \\
-  --pod-infra-container-image=${PAUSE_IMAGE}
-Restart=always
-RestartSec=10s
-
-[Install]
-WantedBy=multi-user.target
-EOF
-# systemctl daemon-reload
-# systemctl restart kubelet</code></pre></div>
 <p><br></p>
 
-<p><code>--allow-privileged</code>だけは、警告が出てるけどKubelet Configファイルで設定できない。</p>
-
-<h2 id="podsecuritypolicy">PodSecurityPolicy</h2>
-
-<p><code>--allow-privileged</code>は非推奨。
-どうも代わりに<a href="https://kubernetes.io/docs/concepts/policy/pod-security-policy/">PodSecurityPolicy</a>で制御しろということのようだ。</p>
-
-<p>PodSecurityPolicyを使うにはまず、kube-apiserverの起動オプションの<code>--enable-admission-plugins</code>に<code>PodSecurityPolicy</code>を追加する必要がある。</p>
-
-<p>で、privilegedななんでもできるPodSecurityPolicyと、それを使うロールを作成する。
-因みにPodSecurityPolicyは名前空間に属さない。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># kubectl create -f- &lt;&lt;EOF
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  name: privileged
-spec:
-  privileged: true
-  hostIPC: true
-  hostPID: true
-  hostNetwork: true
-  hostPorts:
-  - min: 0
-    max: 65535
-  volumes:
-  - &#34;*&#34;
-  fsGroup:
-    rule: &#34;RunAsAny&#34;
-  runAsUser:
-    rule: &#34;RunAsAny&#34;
-  supplementalGroups:
-    rule: &#34;RunAsAny&#34;
-  allowPrivilegeEscalation: true
-  allowedCapabilities:
-  - &#34;*&#34;
-  seLinux:
-    rule: &#34;RunAsAny&#34;
-EOF
-# kubectl -n kube-system create role psp:privileged --verb=use --resource=podsecuritypolicy --resource-name=privileged
-# kubectl -n weave create role psp:privileged --verb=use --resource=podsecuritypolicy --resource-name=privileged</code></pre></div>
-<p>今のところ、privilegedなPodSecurityPolicyが必要なService AccountはWeave Netのkube-system:weave-netと、Weave Scopeのweave:weave-scopeとweave:default。
-こいつらに上記ロールをバインドする。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># kubectl -n kube-system create rolebinding weave-net:psp:privileged --role=psp:privileged --serviceaccount=kube-system:weave-net
-# kubectl -n weave create rolebinding weave-scope:psp:privileged --role=psp:privileged --serviceaccount=weave:weave-scope
-# kubectl -n weave create rolebinding weave-default:psp:privileged --role=psp:privileged --serviceaccount=weave:default</code></pre></div>
-<p><br></p>
-
-<p>あと、CoreDNS用のPodSecurityPolicyとロールを作ってバインドする。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># kubectl apply -f- &lt;&lt;EOF
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  name: coredns
-spec:
-  privileged: false
-  hostIPC: false
-  hostPID: false
-  hostNetwork: false
-  hostPorts:
-  - min: 0
-    max: 65535
-  volumes:
-  - &#34;configMap&#34;
-  - &#34;secret&#34;
-  fsGroup:
-    rule: &#34;RunAsAny&#34;
-  runAsUser:
-    rule: &#34;RunAsAny&#34;
-  supplementalGroups:
-    rule: &#34;RunAsAny&#34;
-  allowPrivilegeEscalation: true
-  seLinux:
-    rule: &#34;RunAsAny&#34;
-EOF
-# kubectl -n kube-system create role psp:coredns --verb=use --resource=podsecuritypolicy --resource-name=coredns
-# kubectl -n kube-system create rolebinding coredns:psp:coredns --role=psp:coredns --serviceaccount=kube-system:coredns</code></pre></div>
-<p><br></p>
-
-<p>これで晴れてkubeletから<code>--allow-privileged</code>を外せる、と思ったら、外したら動かなかった。
-どうも現時点では<a href="https://github.com/kubernetes/kubernetes/issues/58010">kubeletとPodSecurityPolicyが連携できていない</a>らしく、<code>--allow-privileged</code>は付けとかないといけないようだ。
-付けといても、PodSecurityPolicyでprivilegedをtrueにしないとprivilegedが許可されないので、動きとしては問題ない。</p>
-
-<p><code>--allow-privileged</code>はKubernetes 1.12で廃止される予定なので、それまでにはなんとかなるだろう。</p>
-
-<h2 id="kube-proxy-configファイル">Kube Proxy Configファイル</h2>
-
-<p>kube-proxyも<a href="https://github.com/kubernetes/kubernetes/blob/master/pkg/proxy/apis/config/types.go">Kube Proxy Config</a>というのがある。
-<a href="https://github.com/kubernetes/kubernetes/issues/50041">ドキュメントには載ってない</a>けど、使わないと警告が出るので適当に書いてみた。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># CLUSTER_CIDR=&#34;10.32.0.0/16&#34;
-# cat &gt; /etc/kubernetes/kube-proxy.conf &lt;&lt; EOF
-kind: KubeProxyConfiguration
-apiVersion: kubeproxy.config.k8s.io/v1alpha1
-featureGates:
-  RotateKubeletServerCertificate: true
-bindAddress: &#34;0.0.0.0&#34;
-clientConnection:
-  kubeconfig: &#34;/etc/kubernetes/kube-proxy.kubeconfig&#34;
-clusterCIDR: &#34;${CLUSTER_CIDR}&#34;
-EOF
-# cat &gt; /etc/systemd/system/kube-proxy.service &lt;&lt; EOF
-[Unit]
-Description=Kubernetes Kube Proxy
-Documentation=https://github.com/kubernetes/kubernetes
-After=network.target
-
-[Service]
-User=root
-Group=root
-ExecStart=/usr/bin/kube-proxy \\
-  --config=/etc/kubernetes/kube-proxy.conf \\
-  --v=2
-Restart=always
-RestartSec=10s
-
-[Install]
-WantedBy=multi-user.target
-EOF
-# systemctl daemon-reload
-# systemctl restart kube-proxy</code></pre></div>
-<h2 id="kube-scheduler-confファイル">Kube Scheduler Confファイル</h2>
-
-<p>kube-schedulerも<a href="https://github.com/kubernetes/kubernetes/blob/master/pkg/apis/componentconfig/v1alpha1/types.go">Kube Scheduler Conf</a>というのがある。
-例によってドキュメントには載ってないけど、使わないと警告が出るので適当に書いてみた。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># cat &gt; /etc/kubernetes/kube-scheduler.conf &lt;&lt; EOF
-kind: KubeSchedulerConfiguration
-apiVersion: componentconfig/v1alpha1
-featureGates:
-  RotateKubeletServerCertificate: true
-healthzBindAddress: &#34;0.0.0.0&#34;
-clientConnection:
-  kubeconfig: &#34;/etc/kubernetes/kube-scheduler.kubeconfig&#34;
-EOF
-# cat &gt; /etc/systemd/system/kube-scheduler.service &lt;&lt; EOF
-[Unit]
-Description=Kubernetes Scheduler
-Documentation=https://github.com/kubernetes/kubernetes
-After=network.target
-
-[Service]
-User=kubernetes
-Group=kubernetes
-ExecStart=/usr/bin/kube-scheduler \\
-  --config=/etc/kubernetes/kube-scheduler.conf \\
-  --v=2
-Restart=always
-RestartSec=10s
-
-[Install]
-WantedBy=multi-user.target
-EOF
-# systemctl daemon-reload
-# systemctl restart kube-scheduler</code></pre></div></div>
+<p><a href="https://kaitoy.github.io/hello-k8s/">Kubernetes入門</a></p></div>
 
         <section class="share-buttons">
           <div class="share-button">
-            <div class="fb-share-button" data-href="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/" data-layout="box_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f05%2f05%2fkubernetes-kubelet-config-and-pod-sec-policy%2f&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Share</a></div>
+            <div class="fb-share-button" data-href="https://www.kaitoy.xyz/2019/07/27/introduction-to-k8s/" data-layout="box_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fwww.kaitoy.xyz%2f2019%2f07%2f27%2fintroduction-to-k8s%2f&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Share</a></div>
           </div>
           <div class="share-button">
             <a class="twitter-share-button"
-              href="https://twitter.com/intent/tweet?text=Kubernetes%201.10%e3%81%aekubelet%e3%81%ae%e8%b5%b7%e5%8b%95%e3%82%aa%e3%83%97%e3%82%b7%e3%83%a7%e3%83%b3%e3%82%92Kubelet%20Config%e3%83%95%e3%82%a1%e3%82%a4%e3%83%ab%e3%81%a8PodSecurityPolicy%e3%81%a7%e7%bd%ae%e3%81%8d%e6%8f%9b%e3%81%88%e3%82%8b&amp;url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f05%2f05%2fkubernetes-kubelet-config-and-pod-sec-policy%2f"
+              href="https://twitter.com/intent/tweet?text=Kubernetes%e5%85%a5%e9%96%80&amp;url=https%3a%2f%2fwww.kaitoy.xyz%2f2019%2f07%2f27%2fintroduction-to-k8s%2f"
               data-size="large">
             Tweet</a>
           </div>
@@ -539,20 +270,15 @@ EOF
         <div class="col-sm-6">
           <div class="prev">
             
-            <a href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">
+            <a href="https://www.kaitoy.xyz/2019/07/26/k8s-meetup-tokyo-21/">
               <i class="fa fa-angle-left"></i>
-              Kubernetes 1.10のクラスタにWeave Netをデプロイする
+              Kubernetes Meetup Tokyo #21 - Cloud Native CI/CD に行ってきた
             </a>
             
           </div>
         </div>
         <div class="col-sm-6">
           <div class="next text-right">
-            
-            <a href="https://www.kaitoy.xyz/2018/06/03/build-k8s-cluster-by-ansible/">
-              Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した
-              <i class="fa fa-angle-right"></i>
-            </a>
             
           </div>
         </div>
@@ -568,26 +294,6 @@ EOF
 
         <div class="related-links">
            <div class="item">
-
-    
-    
-    
-
-    
-    
-
-    <h4 class="post-title"><a href="/2019/07/27/introduction-to-k8s/">Kubernetes入門</a></h4>
-    <h5>Sat, Jul 27, 2019</h5>
-    
-    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/microservices"><kbd class="item-tag">microservices</kbd></a>
-    
-
-</div>
-  <div class="item">
 
     
     
@@ -708,6 +414,24 @@ EOF
     <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
     
     <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a></h4>
+    <h5>Sat, May 5, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
     
 
 </div>
