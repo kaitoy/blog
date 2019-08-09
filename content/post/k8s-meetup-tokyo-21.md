@@ -61,11 +61,7 @@ Helmなどのテンプレートエンジンだと秘匿情報をマニフェス�
 
 ## コロプラが実践しているSpinnakerを用いたデプロイ戦略
 
-(資料は未公開)
-
-by Kenta Iso (@go_vargo), COLOPL, Inc
-
-<br>
+<script async class="speakerdeck-embed" data-id="cdf16019cfd148b1b8e5108332b480e0" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"></script>
 
 コロプラはGCPでk8sを使っていて、一タイトルあたり一クラスタというシングルテナント構成。
 ([freeeと同じ戦略](https://speakerdeck.com/foostan/awsfalsemanesitosahisuwohuo-kasita-kubernetes-yun-yong-toamazon-eks-niyorukurasutafalsesinkurutenantozhan-lue-nituite)か。)
