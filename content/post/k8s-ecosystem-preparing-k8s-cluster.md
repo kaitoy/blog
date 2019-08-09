@@ -129,6 +129,19 @@ Charm Storeに[KubernetesのCharm](https://jaas.ai/kubernetes)があって、こ
 
 GitHubに挙げているものはシングルノード構成しか対応してないけど、職場ではマルチノード構成(とHyper-V)に対応させたものを使ってる。
 
+## kind
+[kind](https://github.com/kubernetes-sigs/kind)はKubernetesコミュニティによるツール。
+`kind`というコマンドを一回実行するだけで、Dockerコンテナとして動くKubernetesクラスタを手軽に構築できる。
+マルチノードクラスタも作れるけど、あくまでテスト用途向けのツール。
+
+Kubernetes自身のテストに使われている。
+
+## Breeze
+[Breeze](https://github.com/wise2c-devops/breeze)はGUIでオンプレミス環境にプロダクションレディなKubernetesクラスタを構築できるツール。
+コアはAnsibleのPlaybookで、kubesprayと似てる。
+特徴的なのは、クラスタ構築に必要なKubernetesコンポーネント(のコンテナイメージ)、Docker、Dockerレジストリ([Harbor](https://goharbor.io/))、YUMリポジトリサーバ、aptリポジトリサーバを同梱していることで、オフラインでもクラスタ構築できること。
+Breeze自体がDockerコンテナとして動くので、実行も簡単。
+
 # 出来合いKubernetesクラスタ
 ツールを使って構築するのもそれなりの学習コストと作業が発生して簡単ではないので、出来合いのものを使う手もある。
 プロダクション用のものはなく、開発用ばかり。
