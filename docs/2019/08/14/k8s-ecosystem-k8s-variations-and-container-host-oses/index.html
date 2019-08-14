@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+         
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+    google_ad_client: "ca-pub-6244473643910448",
+    enable_page_level_ads: true
+  });
+</script>
+
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/2019/08/14/k8s-ecosystem-k8s-variations-and-container-host-oses/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/2019/08/14/k8s-ecosystem-k8s-variations-and-container-host-oses/">
+
+
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Kubernetesのエコシステム ー KubernetesバリエーションとコンテナホストOS編 | To Be Decided">
+  <title>Kubernetesのエコシステム ー KubernetesバリエーションとコンテナホストOS編 | To Be Decided</title>
+  <meta property="og:description" content="前回に続いて、Kubernetesのエコシステムをまとめていく。
+
+今回はKubernetesのバリエーションとコンテナホストOSについて書く。">
+  <meta name="description" content="前回に続いて、Kubernetesのエコシステムをまとめていく。
+
+今回はKubernetesのバリエーションとコンテナホストOSについて書く。">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
+
+
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <style>
+
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+<script>
+  var webFontConfig = {
+    google: {
+      families: ['Noto Sans JP:400,700:japanese'],
+      active: function() {
+        sessionStorage.fonts = true;
+      }
+    },
+    timeout: 3000
+  };
+  WebFont.load(webFontConfig);
+</script>
+
+
+
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
+        
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
+    
+
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v3.2"></script>
+
+        <nav class="navbar navbar-default navbar-fixed-top">
+
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">Kubernetesのエコシステム ー KubernetesバリエーションとコンテナホストOS編</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    <div class="single-post">
+        <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/08/14/k8s-ecosystem-k8s-variations-and-container-host-oses/">Kubernetesのエコシステム ー KubernetesバリエーションとコンテナホストOS編</a></h4>
+    <h5>Wed, Aug 14, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+
+
+        <div class="cover">
+            <a href="/2019/08/14/k8s-ecosystem-k8s-variations-and-container-host-oses/">
+                <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="Kubernetesのエコシステム ー KubernetesバリエーションとコンテナホストOS編">
+            </a>
+        </div>
+
+        
+        <h4 class="page-header">Table of Contents</h4>
+        <aside>
+            <nav id="TableOfContents">
+<ul>
+<li><a href="#kubernetesディストリビューション">Kubernetesディストリビューション</a>
+<ul>
+<li><a href="#openshift-v3-okd">OpenShift v3+、OKD</a></li>
+<li><a href="#ibm-cloud-private-icp">IBM Cloud Private (ICP)</a></li>
+<li><a href="#pivotal-container-service-pks">Pivotal Container Service (PKS)</a></li>
+<li><a href="#tectonic">Tectonic</a></li>
+<li><a href="#cisco-container-platform">Cisco Container Platform</a></li>
+<li><a href="#stackube">Stackube</a></li>
+<li><a href="#konvoy">Konvoy</a></li>
+<li><a href="#microk8s">MicroK8s</a></li>
+<li><a href="#rancher">Rancher</a></li>
+</ul></li>
+<li><a href="#kubernetes亜種">Kubernetes亜種</a>
+<ul>
+<li><a href="#k3s">k3s</a></li>
+<li><a href="#usernetes">Usernetes</a></li>
+<li><a href="#virtual-kubelet">virtual-kubelet</a></li>
+<li><a href="#k3v">k3v</a></li>
+</ul></li>
+<li><a href="#コンテナホストos">コンテナホストOS</a>
+<ul>
+<li><a href="#container-linux-a-k-a-coreos">Container Linux (a.k.a. CoreOS)</a></li>
+<li><a href="#atomic-host">Atomic Host</a></li>
+<li><a href="#coreos-red-hat製">CoreOS (Red Hat製)</a></li>
+<li><a href="#rancheros">RancherOS</a></li>
+<li><a href="#linuxkit">LinuxKit</a></li>
+<li><a href="#lcow">LCOW</a></li>
+<li><a href="#ubuntu-core-aka-snappy-ubuntu-core">Ubuntu Core (aka. Snappy Ubuntu Core)</a></li>
+<li><a href="#k3os">k3OS</a></li>
+</ul></li>
+</ul>
+</nav>
+        </aside>
+        <hr>
+        
+
+        <br> <div class="text-justify"><p><a href="https://www.kaitoy.xyz/2019/06/23/k8s-ecosystem-preparing-k8s-cluster/">前回</a>に続いて、Kubernetesのエコシステムをまとめていく。</p>
+
+<p>今回はKubernetesのバリエーションとコンテナホストOSについて書く。</p>
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+
+<h1 id="kubernetesディストリビューション">Kubernetesディストリビューション</h1>
+
+<p>オリジナルのKubernetesにいろいろくっつけてソリューションとして提供されているものたち。</p>
+
+<h2 id="openshift-v3-okd">OpenShift v3+、OKD</h2>
+
+<p><a href="https://www.redhat.com/ja/technologies/cloud-computing/openshift">OpenShift</a>はRed Hatが提供するプロダクトで、エンタープライズ対応のアプリケーションを開発、デプロイできるプラットフォーム。
+v3からRHEL + Docker + Kubernetesの構成になって、Kubernetesコンテナアプリケーションプラットフォームと名乗るようになった。
+v4からはRHELに代わって、買収したCoreOS社の<a href="https://coreos.com/os/docs/latest/">Container Linux</a>を使うようになった。</p>
+
+<p>OpenShiftは普通のKubernetesに、OAuth認証機能、コンテナレジストリ、ロギングスタック(<a href="https://www.elastic.co/jp/products/elasticsearch">Elasticsearch</a> + <a href="https://www.elastic.co/jp/products/kibana">Kibana</a> + <a href="https://www.fluentd.org/">Fluentd</a>)、<a href="https://prometheus.io/">Prometeus</a>による監視機能、ダッシュボード、<a href="https://jenkins.io/">Jenkins</a>によるCI/CD機能などをまとめて、シュっとエンタープレイズでセキュアに使える感じに仕上げたもの。</p>
+
+<p>Kubernetesの<a href="https://github.com/kubernetes/minikube">Minikube</a>に相当する<a href="https://github.com/minishift/minishift/">Minishift</a>というのがあって、Minikubeと同じようなハイパバイザの上で簡単にシングルノードOpenShiftを動かせる。</p>
+
+<p>OpenShiftのアップストリームがOSSの<a href="https://github.com/openshift/origin">Origin Community Distribution of Kubernetes (OKD)</a>。
+OKDは機能的にはOpenShiftとあまり変わらないらしいけど、サポートの有無が大きい。</p>
+
+<h2 id="ibm-cloud-private-icp">IBM Cloud Private (ICP)</h2>
+
+<p><a href="https://www.ibm.com/jp-ja/cloud/private">ICP</a>はIBMが提供するプロダクトで、エンタープライズ対応のアプリケーションを開発、デプロイできるプラットフォーム。
+Kubernetesによるコンテナ環境だけでなく、VMwareとかのハイパバイザ環境、<a href="https://www.openstack.org/">OpenStack</a>のIaaS、<a href="https://www.cloudfoundry.org/">Cloud Foundry</a>によるPaaSなんかも統合的に扱える。</p>
+
+<p>普通のKubernetes + Docker + <a href="https://istio.io/">Istio</a>のコンテナ基盤に、LDAP連携認証機能とコンテナレジストリと<a href="https://helm.sh/">Helm</a>のパッケージカタログを乗っけて、そのカタログから<a href="https://www.elastic.co/jp/products/">Elastic Stack</a>とPrometeusと<a href="https://grafana.com/">Grafana</a>をデプロイしてロギングと監視機能とダッシュボードを付けたり、<a href="https://www.ibm.com/us-en/marketplace/microclimate">Microclimate</a>とJenkinsをデプロイしてCI/CDできるようにしたり、 各種ミドルウェア(e.g. <a href="https://www.ibm.com/jp-ja/marketplace/java-ee-runtime">WebSphere</a>、<a href="https://www.rabbitmq.com/">RabbitMQ</a>)とフレームワーク(e.g. <a href="https://microprofile.io/">MicroProfile</a>、<a href="https://www.kitura.io/">Kitura</a>、<a href="https://spring.io/">Spring</a>)によるアプリケーションをデプロイしたりできる。</p>
+
+<h2 id="pivotal-container-service-pks">Pivotal Container Service (PKS)</h2>
+
+<p><a href="https://pivotal.io/jp/platform/pivotal-container-service">PKS</a>はVMwareとPivotalが提供するプロダクト。
+pkdコマンドでエンタープライズ用途向けKubernetesクラスタを構築、管理できる。
+Cloud Foundryのコンポーネントでもある<a href="https://bosh.io/docs/">BOSH</a>を利用していて、オンプレミス環境やGCPなどのクラウドやOpenStackによるPaaS環境といった色々な環境でのクラスタ構築をサポートしている。</p>
+
+<p>特に、VMwareのプロダクトだけあってvSphereとの統合が強く、NSX-Tネットワーク仮想化によってセキュアでプログラマブルなネットワークを利用できる。
+ストレージや監視回りなど、VMwareエコシステムの様々なツールとの連携もしやすくなっている。</p>
+
+<p><a href="https://pivotal.io/jp/platform/services-marketplace">Pivotal Services Marketplace</a>からアドオンをデプロイできるサービスブローカやコンテナレジストリである<a href="https://goharbor.io/">Harbor</a>も付いてくる。</p>
+
+<h2 id="tectonic">Tectonic</h2>
+
+<p><a href="https://coreos.com/tectonic/">Tectonic</a>はCoreOS社が開発していたもの。
+オンプレミス環境やGCPなどのクラウドやOpenStackによるPaaS環境といった色々な環境でのクラスタ構築をサポート。
+Kubernetesクラスタや、そのホストマシンの管理をGUIでできたり、PrometheusとAlertmanagerとGrafanaを載せてくれるのでメトリック監視もできる。
+ホストOSは当然CoreOS(下記)なので、セキュアで運用が楽。</p>
+
+<p>CoreOS社がRed Hatに買収されたため、TectonicはOpenShiftに吸収されることになった。</p>
+
+<h2 id="cisco-container-platform">Cisco Container Platform</h2>
+
+<p><a href="https://www.cisco.com/c/ja_jp/products/cloud-systems-management/container-platform/index.html">Cisco Container Platform</a>はCiscoによるKubernetesディストリビューション。</p>
+
+<p>プロダクション向けのKubernetesとして、モニタリングやログ管理やGUIとかを付けてくれているのは他のディストリビューションと同じだけど、特徴としては<a href="https://www.cisco.com/c/ja_jp/products/hyperconverged-infrastructure/index.html?dtid=pseggl000045&amp;ccid=cc000562&amp;oid=&amp;KEYCODE=001484868&amp;POSITION=SEM&amp;COUNTRY_SITE=jp&amp;CAMPAIGN=dc-11&amp;CREATIVE=JP_SEM_DCB_DC-hyper-converged-100PSOV_EM_NB-HyperFlex-&amp;REFERRING_SITE=Google&amp;KEYWORD=%2Bhyperflex%20%2Bcisco&amp;ds_rl=1260959&amp;gclid=Cj0KCQjwv8nqBRDGARIsAHfR9wAcgURP4pbCUklLgK_uAW8rjW3HdIjypuiwDx25cCfutKVVg__H6P8aArznEALw_wcB">HyperFlex</a>というCiscoのハイパーコンバージドインフラストラクチャに最適化されていること。
+CNIプラグインが自前の<a href="https://contiv.io/">Contiv</a>というやつで<a href="https://contiv.io/documents/networking/aci_ug.html">ACIと連携する</a>し、HyperFlexのストレージドライバを積んでいてPodにマウントできる。</p>
+
+<h2 id="stackube">Stackube</h2>
+
+<p><a href="https://github.com/openstack/stackube">Stackube</a>はOpenStackコミュニティによるもので、Kubernetesディストリビューションの章にいれたけど実際はKubernetesを組み込んだOpenStackディストリビューション。</p>
+
+<p>OpenStackにおいてVMの作成・管理をするNovaがKubernetesに置き換わっていて、VMがPodに代わっている。
+Podの永続化ボリュームであるPersistentVolumeがCinderに対応していて、Cinderが管理するボリュームをPodにマウントできる。
+また、Neuron CNIプラグインが組み込まれていて、PodからNeuronのネットワークを使える。</p>
+
+<p>2017年5月くらいにGitHubに公開されたけど、リリースが作られることなく3か月くらいで開発止まった。</p>
+
+<h2 id="konvoy">Konvoy</h2>
+
+<p>もともと<a href="http://mesos.apache.org/">Mesos</a>ベースの<a href="https://dcos.io/">DC/OS</a>を提供していたMesosphere社が、Mesos以外も頑張るという決意を込めて<a href="https://d2iq.com/blog/mesosphere-is-now-d2iq">社名をD2iQに変えた</a>。</p>
+
+<p>同時に発表したのが<a href="https://d2iq.com/solutions/ksphere">Ksphere</a>というKubernetesソリューションサービスで、<a href="https://d2iq.com/solutions/ksphere/konvoy">Konvoy</a>はその構成要素。</p>
+
+<p>Konvoyは、<a href="https://www.projectcalico.org/">Calico</a>によるネットワーク制御、<a href="https://metallb.universe.tf/">MetalLB</a>によるロードバランシング、<a href="https://docs.traefik.io/">Traefik</a>によるトラフィック制御、<a href="https://github.com/influxdata/telegraf">Telegraf</a>とPrometeusとGrafanaによるモニタリング、Elasticスタックと<a href="https://fluentbit.io/">Fluent Bit</a>によるログ管理、<a href="https://www.ansible.com/">Ansible</a>と<a href="https://www.terraform.io/">Terraform</a>によるオートメーション、<a href="https://velero.io/">Velero</a>によるバックアップを詰め込んだ、エンタープライズ向けのKubernetesディストリビューション。</p>
+
+<h2 id="microk8s">MicroK8s</h2>
+
+<p><a href="https://microk8s.io/">MicroK8s</a>はCanonical社によるKubernetesディストリビューション。
+snapパッケージとして配布されていて、Kubernetesに加えてcontainerdや<a href="https://nvidia.github.io/nvidia-container-runtime/">nvidia-container-runtime</a>が同梱されているので、簡単にGPUが使えるKubernetesをインストールできる。</p>
+
+<p>アドオンなどを扱えるmicrok8sコマンドが提供されていて、PrometheusとかGrafanaとかDockerレジストリとかIstioとかをシュっと有効化・無効化できる。</p>
+
+<p>シングルノードクラスタのみサポートで、テスト・開発環境用途向け。</p>
+
+<h2 id="rancher">Rancher</h2>
+
+<p><a href="https://rancher.com/">Rancher</a>はRancher社によるプロダクト。
+v1系はKubernetes、Mesos、Docker Swarmに加えて自前のCattleと、様々なコンテナオーケストレーションツールを一元的に扱うためのツールで、インフラレイヤの抽象化も自前で実装していた模様。</p>
+
+<p>v2になってKubernetes以外を切り捨て、インフラレイヤの制御もKubernetesに任せて、アーキテクチャを洗練させた。</p>
+
+<p>v2はRancherサーバが主たるコンポーネントで、これがKubernetesクラスタを管理したりAPIやGUIを提供したりする。
+<a href="https://rancher.com/docs/rke/latest/en/">Rancher Kubernetes Engine (RKE)</a>というコンポーネントもあって、これを使うとプロダクションレディなKubernetesクラスタを簡単目にインストールできる。</p>
+
+<p>Rancherサーバの管理対象のクラスタは、GCPやEKSなどのマネージドのものや、RKEで構築したものの他、既存の任意のKubernetesクラスタをインポートすることもできる。
+Rancherの管理下に入れたクラスタは、RancherのGUIから<a href="https://helm.sh/">Helm</a>のチャートをインストールしたり、etcdのバックアップ・リストアが出来たり、いい感じに運用できる。</p>
+
+<p>KubernetesディストリビューションというよりかはKubernetesクラスタ管理ツールと言うべきかも。</p>
+
+<h1 id="kubernetes亜種">Kubernetes亜種</h1>
+
+<p>Kubernetes自体に改造が入っていたり、Kubernetes(の一部)っぽく動くものたち。</p>
+
+<h2 id="k3s">k3s</h2>
+
+<p><a href="https://k3s.io/">k3s</a>はRancher社が開発した組込み向け軽量Kubernetes。
+ケースリーエスと読む。</p>
+
+<p>Kubernetesと完全互換(を目指し)ながら、組込み向けの以下のような特徴がある。</p>
+
+<ul>
+<li>etcdの代わりにSQLiteを使える。</li>
+<li>Kubernetesの全コンポーネント、SQLite、containerd、Flannel、CoreDNSとさらにiptablesなどのライブラリを全部静的リンクして単一バイナリになってる。
+
+<ul>
+<li>このためメモリ使用量が少ない。</li>
+<li>バイナリひとつ置いて実行するだけでKubernetesが動く。</li>
+</ul></li>
+<li>ARMをサポート。もちろんx64でも動く。</li>
+</ul>
+
+<p>CIとかにも便利。</p>
+
+<h2 id="usernetes">Usernetes</h2>
+
+<p><a href="https://github.com/rootless-containers/usernetes">Usernetes</a>はroot権限無しで動くKubernetesとDockerとcontainerdとかを作っているプロジェクト。</p>
+
+<p>k3sが使っている。</p>
+
+<p>Dockerは19.03で<a href="https://qiita.com/inductor/items/75db0c1c0d49646dd68a">rootlessモードを搭載</a>したし、その他のもrootlessで動かすためのパッチが<a href="https://github.com/rootless-containers/usernetes/issues/42">アップストリームに提示されている</a>ので、その内それぞれの本家がrootlessで動けるようになって、Usernetesプロジェクトは役目を終えることになりそう。</p>
+
+<h2 id="virtual-kubelet">virtual-kubelet</h2>
+
+<p><a href="https://github.com/virtual-kubelet/virtual-kubelet">virtual-kubelet</a>はMicrosoftが中心になって開発しているkubeletの実装。</p>
+
+<p>virtual-kubeletはエージェントとして働き、kube-apiserverからはkubeletに見えるけど、自身がPodを起動する代わりにどこかのAPIを呼んでPodの起動を委譲する。
+virtual-kubeletを使うことで、普通のkubeletが動けるLinuxマシン以外の計算リソースもKubernetesのノードとして扱えるようになる。
+例えば以下のようなのをノードにできる。</p>
+
+<ul>
+<li>AWS Fargate</li>
+<li>Azure Container Instances</li>
+<li>HashiCorp Nomad</li>
+<li>OpenStack Zun</li>
+</ul>
+
+<h2 id="k3v">k3v</h2>
+
+<p><a href="https://github.com/ibuildthecloud/k3v">k3v</a>はRancherが開発中のKubernetesの仮想コントロールプレーン(controllerとapi-server)。</p>
+
+<p>k3vはkubectlからは普通のKubernetesに見えるけど、k3vに対して作成されたPodやボリュームなどのリソースは、k3vが参照する実Kubernetesクラスタ上で構成される。</p>
+
+<p>マルチテナンシーやKubernetesアプリケーションのパッケージングに使えるはずとのことだけど、まだほとんどドキュメントが無くてよくわからない…</p>
+
+<p>まだ出たてでPoCレベルの品質。</p>
+
+<h1 id="コンテナホストos">コンテナホストOS</h1>
+
+<p>コンテナをホストするためのOS。
+いずれもコンテナを動かす以外の機能を削り、軽くてセキュアになっている。</p>
+
+<h2 id="container-linux-a-k-a-coreos">Container Linux (a.k.a. CoreOS)</h2>
+
+<p><a href="https://coreos.com/why/">Container Linux</a>はCoreOS社が開発しているOSで、昔はCoreOSという名前だった(はず)。
+コンテナホストOSとして最も広く使われている。</p>
+
+<p>Linuxカーネルにsystemd、dockerなど最低限のサービスを載せて、それ以外のサービスやアプリは全部コンテナとして動かすのが特徴。
+OS部分のコンテナやdockerは自動アップデートされるので、たくさんマシンがあっても運用が楽。</p>
+
+<p>OCIランタイムは<a href="https://github.com/rkt/rkt">rkt</a>っぽい。</p>
+
+<p>CoreOS社がRed Hatに買収された影響で消えゆく運命にある。</p>
+
+<h2 id="atomic-host">Atomic Host</h2>
+
+<p>Red Hatが主導する<a href="https://www.projectatomic.io/">Project Atmic</a>によるコンテナホストOSがAtomic Host。
+Dockerでコンテナを動かせる他、Kubernetesもサポートされている。</p>
+
+<p>OSS版としては<a href="https://wiki.centos.org/SpecialInterestGroup/Atomic/Download/">CentOS Atomic Host</a>と<a href="https://dl.fedoraproject.org/pub/alt/atomic/stable/">Fedora Atomic Host</a>があり、プロダクション向けには<a href="https://jp-redhat.com/migration/atomichost/index.html">RHEL Atomic Host</a>がある。
+それぞれ名前についているRHEL系OSがベースになっている。</p>
+
+<p>Red HatがCoreOS社を買収してContainer Linuxを手に入れたため、Atomic Hostの開発は停止する方向になった。</p>
+
+<h2 id="coreos-red-hat製">CoreOS (Red Hat製)</h2>
+
+<p><a href="https://getfedora.org/coreos/">CoreOS</a>は、CoreOS社を買収したRed Hatが自身のAtomic HostとCoreOS社のContainer Linuxを統合して後継にすべく開発しているコンテナホストOS。</p>
+
+<p>Project Atmicと同様、Red Hat CoreOS、Fedora CoreOS、CentOS CoreOSというバリエーションが出てくるはずだけど、今のところFedora版しか見当たらないような…</p>
+
+<h2 id="rancheros">RancherOS</h2>
+
+<p><a href="https://rancher.com/rancher-os/">RancherOS</a>はRancher社によるコンテナホストOS。</p>
+
+<p>Dockerを動かすことに特化していて、それ以外の機能は全てDockerコンテナとして動かす。
+システムサービスもDocker Composeで動かす。
+このDocker Compose上のシステムサービスのひとつとしてDockerがもうひとつ動き、そのDockerでユーザアプリケーションのコンテナは動くため、システムとの分離が強い。</p>
+
+<h2 id="linuxkit">LinuxKit</h2>
+
+<p><a href="https://github.com/linuxkit/linuxkit">LinuxKit</a>はDocker社が主導して開発したもの。
+コンテナホストOSそのものではなくて、コンテナホストOSを開発するためのツールキット。
+もともとDocker社は、Docker for WindowsとかDocker for AWSとかプラットフォームごとのDocker for Xを開発してたけど、それをもっと効率よくやりたいという欲求からLinuxKitは生まれた。</p>
+
+<p>LinuxKitによって作られたOSは、ベアメタル、AWSなどのクラウド、Hyper-Vなどのハイパバイザ上で動き、コンテナを動かすのに最低限の環境を提供する。
+その上でinitプロセスとかcontainerdとかのサービスがコンテナで動き、それらがユーザアプリケーションのコンテナを管理するような感じ。
+OS上に置くファイルはOS起動時に指定する形で、起動後はシステム全体がイミュータブルになる。</p>
+
+<p><a href="https://www.docker.com/products/docker-desktop">Docker Desktop</a>とかで使われている。</p>
+
+<h2 id="lcow">LCOW</h2>
+
+<p>LinuxKitで作られた、Windows上でLinuxコンテナを動かすためのOSが<a href="https://github.com/linuxkit/lcow">LCOW</a>。
+<a href="https://docs.microsoft.com/ja-jp/virtualization/windowscontainers/about/">Windows Containers</a>のHyper-V分離モードで動かせる。</p>
+
+<h2 id="ubuntu-core-aka-snappy-ubuntu-core">Ubuntu Core (aka. Snappy Ubuntu Core)</h2>
+
+<p><a href="https://ubuntu.com/core">Ubuntu Core</a>はCanonical社によるUbuntuベースのミニマルOS。
+Container Linuxよりもさらに小さいのが売りの一つ。</p>
+
+<p>snapというパッケージシステムが大きな特徴の一つで、これによってアプリケーション毎の依存ライブラリを分離して管理できる。</p>
+
+<p>Ubuntu Core自体はコンテナホスト向けというよりはIoT向けという感じだけど、軽量でセキュアなのでsnapでDockerやKubernetesを入れればコンテナホストOSとしていい感じになる。</p>
+
+<h2 id="k3os">k3OS</h2>
+
+<p><a href="https://k3os.io/">k3OS</a>はRancher社が開発したKubernetes OS。</p>
+
+<p>RancherOSと同様のアーキテクチャっぽくて、システムサービスを動かすのにDocker Composeの代わりにk3sを使うっぽい。</p></div>
+
+        <section class="share-buttons">
+          <div class="share-button">
+            <div class="fb-share-button" data-href="https://www.kaitoy.xyz/2019/08/14/k8s-ecosystem-k8s-variations-and-container-host-oses/" data-layout="box_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fwww.kaitoy.xyz%2f2019%2f08%2f14%2fk8s-ecosystem-k8s-variations-and-container-host-oses%2f&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Share</a></div>
+          </div>
+          <div class="share-button">
+            <a class="twitter-share-button"
+              href="https://twitter.com/intent/tweet?text=Kubernetes%e3%81%ae%e3%82%a8%e3%82%b3%e3%82%b7%e3%82%b9%e3%83%86%e3%83%a0%20%e3%83%bc%20Kubernetes%e3%83%90%e3%83%aa%e3%82%a8%e3%83%bc%e3%82%b7%e3%83%a7%e3%83%b3%e3%81%a8%e3%82%b3%e3%83%b3%e3%83%86%e3%83%8a%e3%83%9b%e3%82%b9%e3%83%88OS%e7%b7%a8&amp;url=https%3a%2f%2fwww.kaitoy.xyz%2f2019%2f08%2f14%2fk8s-ecosystem-k8s-variations-and-container-host-oses%2f"
+              data-size="large">
+            Tweet</a>
+          </div>
+          <div class="share-button">
+            <a href="http://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="vertical-normal" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+          </div>
+          <div class="share-button">
+            <a data-pocket-label="pocket" data-pocket-count="vertical" class="pocket-btn" data-lang="en"></a>
+            <script type="text/javascript">!function(d,i){if(!d.getElementById(i)){var j=d.createElement("script");j.id=i;j.src="https://widgets.getpocket.com/v1/j/btn.js?v=1";var w=d.getElementById(i);d.body.appendChild(j);}}(document,"pocket-btn-js");</script>
+          </div>
+        </section>
+    </div>
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-6244473643910448"
+         data-ad-slot="1845600530"
+         data-ad-format="auto"></ins>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+    <section class="tbd-pagination">
+      <div class="row">
+        <div class="col-sm-6">
+          <div class="prev">
+            
+            <a href="https://www.kaitoy.xyz/2019/08/04/git-deep-dive/">
+              <i class="fa fa-angle-left"></i>
+              Gitの社内勉強会資料
+            </a>
+            
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="next text-right">
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    
+
+    
+
+        <h4 class="page-header">Related</h4>
+
+        <div class="related-links">
+           <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/07/27/introduction-to-k8s/">Kubernetes入門</a></h4>
+    <h5>Sat, Jul 27, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/microservices"><kbd class="item-tag">microservices</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/07/26/k8s-meetup-tokyo-21/">Kubernetes Meetup Tokyo #21 - Cloud Native CI/CD に行ってきた</a></h4>
+    <h5>Fri, Jul 26, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/argo"><kbd class="item-tag">argo</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gitops"><kbd class="item-tag">gitops</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spinnaker"><kbd class="item-tag">spinnaker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/argo"><kbd class="item-tag">argo</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/06/23/k8s-ecosystem-preparing-k8s-cluster/">Kubernetesのエコシステム ー Kubernetesクラスタ構築編</a></h4>
+    <h5>Sun, Jun 23, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/06/15/k8s-ecosystem-container-runtimes/">Kubernetesのエコシステム ー コンテナランタイム編</a></h4>
+    <h5>Sat, Jun 15, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/03/08/k8s-zundoko-operator/">ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</a></h4>
+    <h5>Fri, Mar 8, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubebuilder"><kbd class="item-tag">kubebuilder</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/golang"><kbd class="item-tag">golang</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/17/packer-k8s/">Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</a></h4>
+    <h5>Sun, Jun 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/packer"><kbd class="item-tag">packer</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/msys2"><kbd class="item-tag">msys2</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/03/build-k8s-cluster-by-ansible/">Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</a></h4>
+    <h5>Sun, Jun 3, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a></h4>
+    <h5>Sat, May 5, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a></h4>
+    <h5>Fri, May 4, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a></h4>
+    <h5>Tue, Apr 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/01/hello-skaffold/">Skaffoldを触ってみた</a></h4>
+    <h5>Sun, Apr 1, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/skaffold"><kbd class="item-tag">skaffold</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">Kubernetes 1.8のアクセス制御について。あとDashboard。</a></h4>
+    <h5>Tue, Oct 31, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a></h4>
+    <h5>Sat, Oct 21, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubeadm"><kbd class="item-tag">kubeadm</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></h4>
+    <h5>Wed, Oct 11, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a></h4>
+    <h5>Tue, Oct 10, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+ 
+        </div>
+    
+
+    
+
+        <h4 class="page-header">Comments</h4>
+
+        <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "kaitoy-tobedecided" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+
+</main>
+
+        <footer>
+
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script>window.twttr = (function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0],
+            t = window.twttr || {};
+          if (d.getElementById(id)) return t;
+          js = d.createElement(s);
+          js.id = id;
+          js.src = "https://platform.twitter.com/widgets.js";
+          fjs.parentNode.insertBefore(js, fjs);
+
+          t._e = [];
+          t.ready = function(f) {
+            t._e.push(f);
+          };
+
+          return t;
+        }(document, "script", "twitter-wjs"));</script>
+
+    </body>
+
+</html>
+
