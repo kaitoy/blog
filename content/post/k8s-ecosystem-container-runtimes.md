@@ -194,6 +194,16 @@ OCIDと同時期に開発されていたようで、CRIの発表のなかで触�
 Kata Containers (後述)が出たあと、[Frakti v2でそっちに移行する計画](https://events.linuxfoundation.org/wp-content/uploads/2017/11/How-Container-Runtime-Matters-in-Kubernetes_-OSS-Kunal-Kushwaha.pdf)が示されていたけど実現せず、2018年11月にv1.12.0でKubernetes 1.12対応して以来開発止まった模様。
 Kata Containersプロジェクトに吸収された?
 
+## nvidia-docker、NVIDIA Container Runtime、NVIDIA Container Toolkit
+少し遡って2017年1月、GPUのリーディングベンダであるNVIDIAが、[nvidia-docker](https://github.com/NVIDIA/nvidia-docker/tree/v1.0.0)の初GA版をリリースした。
+これは、コンテナからNVIDIAのGPUを使うためのコンテナランタイム。
+この頃はOCIとかに対応してなくて、`docker`コマンドの代わりに`nvidia-docker`コマンドを使う、という使い方だった。
+
+その後、2017年12月にv2系である[nvidia-docker2](https://github.com/NVIDIA/nvidia-docker/tree/v2.0.2)に移行して、OCIランタイムである[NVIDIA Container Runtime](https://developer.nvidia.com/nvidia-container-runtime)を使うようになった。
+NVIDIA Container Runtimeはruncを改造してNVIDIAのGPUを使えるようにしたもので、普通のDockerから使える。
+
+さらに、2019年7月に[Docker 19.03](https://docs.docker.com/engine/release-notes/#19030)がリリースされてNVIDIA GPUがネイティブサポートされたのを受けて、v3系の[NVIDIA Container Toolkit](https://github.com/NVIDIA/nvidia-docker/tree/master)を開発中の模様。
+
 ## Moby
 様々な領域、プラットフォーム、ソリューションでコンテナ技術が使われるようになってきたため、エコシステムの発展をさらに加速する要望が高まった。
 これに応えるべく立ち上げられたのが、2017年4月にDocker社が[発表](https://blog.docker.com/2017/04/introducing-the-moby-project/)した[Moby](https://mobyproject.org/)プロジェクト。
