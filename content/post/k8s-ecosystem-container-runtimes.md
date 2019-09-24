@@ -102,7 +102,7 @@ CoreOS社もOCIに立ち上げから加わり、appcは2016年後半くらいに
 当然の流れとしてrktもOCIに準拠し、2016年7月、rktは[Kubernetes 1.3でサポートされるにいたった](https://kubernetes.io/blog/2016/07/rktnetes-brings-rkt-container-engine-to-kubernetes/)。
 
 ## runC
-OCIの発足と同時に、Docker社がOCIランタイムのリファレンス実装として[runC](https://github.com/opencontainers/runc)を[発表](https://blog.docker.com/2015/06/runc/)。
+OCIの発足と同時に、Docker社がOCIランタイムのリファレンス実装として[runC](https://github.com/opencontainers/runc)(ランシー)を[発表](https://blog.docker.com/2015/06/runc/)。
 もともとdockerdに組み込まれていたコンテナランタイムを切り出したもので、Dockerの下請けとしても動くが、[単体で実行してコンテナを起動することもできる](https://www.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/)。
 
 ![cr2.png](/images/k8s-ecosystem-container-runtimes/cr2.png)
@@ -167,7 +167,7 @@ CRIの最初の実装は、kubelet組み込みの[dockershim](https://github.com
 少し遡って[2016年9月22日](https://www.redhat.com/en/blog/running-production-applications-containers-introducing-ocid)、Red HatがOCIDというコンテナランタイムを発表した。
 機能的にはDockerと同じで、runCを始めとしたOCIランタイムでコンテナを起動して管理したり、コンテナイメージを管理したりするものだけど、Dockerとは協力して仲良くやっていくよと言うわざとらしいアナウンスをしていた。
 
-発表直後の[9月28日](https://github.com/cri-o/cri-o/commit/2378800c9d6e520df0628abca4ca3378daf486ae)に突如名前を[CRI-O](https://cri-o.io)に変えて、当時まだ正式発表前でほとんど知られていなかったCRIにがっつり乗っかったのは、Kubernetesコミュニティと裏で連携をとって何かを企んだことを想像させる。
+発表直後の[9月28日](https://github.com/cri-o/cri-o/commit/2378800c9d6e520df0628abca4ca3378daf486ae)に突如名前を[CRI-O](https://cri-o.io)(クライオ)に変えて、当時まだ正式発表前でほとんど知られていなかったCRIにがっつり乗っかったのは、Kubernetesコミュニティと裏で連携をとって何かを企んだことを想像させる。
 ちょうどこのころ[Docker社は四面楚歌な感じ](http://blog.gachapin-sensei.com/archives/5174099.html)だったし。
 (因みに、CRI実装で、OCIランタイムとつながるので、OCIのOをとってCRI-O、らしい。)
 
@@ -188,7 +188,7 @@ OCIDと同時期に開発されていたようで、CRIの発表のなかで触�
 2017年末位にKubernetes 1.9対応して以来開発止まった。
 
 ## Frakti
-[Frakti](https://github.com/kubernetes/frakti)もCRIと同時に発表された、HyperContainer向けのCRI実装。
+[Frakti](https://github.com/kubernetes/frakti)(フラクティ)もCRIと同時に発表された、HyperContainer向けのCRI実装。
 2017年3月に初バージョンの0.1がリリースされ、Kubernetes 1.6.0で使えるようになった。
 
 Kata Containers (後述)が出たあと、[Frakti v2でそっちに移行する計画](https://events.linuxfoundation.org/wp-content/uploads/2017/11/How-Container-Runtime-Matters-in-Kubernetes_-OSS-Kunal-Kushwaha.pdf)が示されていたけど実現せず、2018年11月にv1.12.0でKubernetes 1.12対応して以来開発止まった模様。
@@ -306,7 +306,7 @@ Node.js、Java、MySQL、Apache HTTP Server、Redisなんかは動くらしい�
 Sentryはファイルシステムにアクセスできないので、ファイルシステム周りの処理は9Pというプロトコルを介して[Gofer](https://gvisor.dev/docs/architecture_guide/overview/#gofer)に移譲する。
 
 ## Nabla Containers
-[Nabla Containers](https://nabla-containers.github.io/)はIBM Researchが開発したもう一つのコンテナランタイム。
+[Nabla Containers](https://nabla-containers.github.io/)(ナブラコンテイナーズ)はIBM Researchが開発したもう一つのコンテナランタイム。
 2018年7月に[発表](https://japan.zdnet.com/article/35122760/)された。
 
 コンテナをホストカーネルから分離するために間に仮想化レイヤを挟むという点はgVisorやKata Containersと似ているけど、プロセスとしての[Unikernel](https://en.wikipedia.org/wiki/Unikernel)というアイデアに基づいているのが最大の特徴。
