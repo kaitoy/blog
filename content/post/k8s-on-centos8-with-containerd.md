@@ -8,6 +8,8 @@ tags: ["kubernetes", "containerd"]
 draft: false
 ---
 
+この記事は [Kubernetes Advent Calendar 2019](https://qiita.com/advent-calendar/2019/kubernetes) の5日目の記事です。
+
 CentOS 8でKubernetesクラスタを作った話。
 
 結論から言うと、pythonコマンドが無くなったのと、iptablesがデフォルトでnf_tablesを使うようになったのと、YumがDNFになったのに対応するくらいでいけた。
