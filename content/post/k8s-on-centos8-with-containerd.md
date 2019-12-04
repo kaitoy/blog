@@ -168,8 +168,8 @@ containerdのconfig.tomlはバージョンによって結構変わるので、CR
 前置きが長くなったけど、CentOS 8でシングルノード(マスタコンポとノードコンポ同居)のKubernetseクラスタを構築する。
 
 構築に使うのは、いろいろカスタマイズするために自作したAnsibleプレイブックの[ansible-k8s](https://github.com/kaitoy/ansible-k8s)。
-今回のために、[DNFがあればDNFを使う](https://github.com/kaitoy/ansible-k8s/commit/1b22d6be7a2f3745293f6c6f8cdee40770ede03c)ようにエンハンスした。
-[containerdを使うようにもした](https://github.com/kaitoy/ansible-k8s/commit/ba53c08d260aba00f2977729b25594f786a4e7c2)。
+今回のために、[DNFがあればYumの代わりにDNFを使う](https://github.com/kaitoy/ansible-k8s/commit/1b22d6be7a2f3745293f6c6f8cdee40770ede03c)ようにエンハンスした。
+[コンテナランタイムにDockerの代わりにcontainerdを使うようにもした](https://github.com/kaitoy/ansible-k8s/commit/ba53c08d260aba00f2977729b25594f786a4e7c2)。
 
 また、iptablesはせっかくなので新しいやつを使いたくて、[nftables版のWeave Netコンテナ](https://github.com/kaitoy/weave-kube-nftables)も作って[DockerHubに挙げておいた](https://hub.docker.com/r/kaitoy/weave-kube)。
 
