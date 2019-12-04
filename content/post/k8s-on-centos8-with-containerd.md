@@ -224,7 +224,7 @@ kube-system   coredns-77b79c856-nv46g   1/1     Running   1          23d
 kube-system   weave-net-9msnk           2/2     Running   3          23d
 ```
 
-Dockerはいなくて、代わりにcontainerdが動いている。(`ctr`はcontainerdのクライアント。)
+Dockerはいなくて、代わりにcontainerdが動いている。(`ctr`はcontainerdのクライアント。TASKはコンテナにあたるもの。)
 
 ```tch
 $ docker ps
