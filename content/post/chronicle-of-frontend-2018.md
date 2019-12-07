@@ -528,7 +528,7 @@ Virtual DOMは、その名の通りDOMの仮想化であり、JavaScriptからRe
 さらに__2014年5月__、Reactにベストマッチするアプリケーションアーキテクチャとして[Flux](https://facebook.github.io/flux/)が発表された。
 これは単方向のデータフローが特徴のアーキテクチャで、斬新でかっこよくて未来だった。
 
-![Flux](https://github.com/facebook/flux/raw/master/docs/img/flux-diagram-white-background.png "Flux")
+![Flux](https://facebook.github.io/flux/img/overview/flux-simple-f8-diagram-explained-1300w.png "Flux")
 
 # JavaScriptフロントエンドフレームワーク (第3世代)
 
