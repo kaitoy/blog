@@ -12,6 +12,8 @@ Kubernetesクラスタ上で動く[Kong](https://konghq.com/kong/)の設定管�
 
 <!--more-->
 
+これは[Kubernetes Advent Calendar 2019](https://qiita.com/advent-calendar/2019/kubernetes)の11日目の記事。
+
 {{< google-adsense >}}
 
 ## Kongとは
