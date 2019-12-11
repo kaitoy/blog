@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+         
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+    google_ad_client: "ca-pub-6244473643910448",
+    enable_page_level_ads: true
+  });
+</script>
+
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/2019/12/11/kong-ingress-controller/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/2019/12/11/kong-ingress-controller/">
+
+
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Kong Ingress ControllerでKongの設定を管理する | To Be Decided">
+  <title>Kong Ingress ControllerでKongの設定を管理する | To Be Decided</title>
+  <meta property="og:description" content="Kubernetesクラスタ上で動くKongの設定管理にKong Ingress Controllerを使う、というのを試してみた話。">
+  <meta name="description" content="Kubernetesクラスタ上で動くKongの設定管理にKong Ingress Controllerを使う、というのを試してみた話。">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/kong.png">
+
+
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <style>
+
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+<script>
+  var webFontConfig = {
+    google: {
+      families: ['Noto Sans JP:400,700:japanese'],
+      active: function() {
+        sessionStorage.fonts = true;
+      }
+    },
+    timeout: 3000
+  };
+  WebFont.load(webFontConfig);
+</script>
+
+
+
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
+        
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
+    
+
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v3.2"></script>
+
+        <nav class="navbar navbar-default navbar-fixed-top">
+
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">Kong Ingress ControllerでKongの設定を管理する</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    <div class="single-post">
+        <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/12/11/kong-ingress-controller/">Kong Ingress ControllerでKongの設定を管理する</a></h4>
+    <h5>Wed, Dec 11, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kong"><kbd class="item-tag">kong</kbd></a>
+    
+
+</div>
+
+
+        <div class="cover">
+            <a href="/2019/12/11/kong-ingress-controller/">
+                <img src="https://www.kaitoy.xyz/images/kong.png" alt="Kong Ingress ControllerでKongの設定を管理する">
+            </a>
+        </div>
+
+        
+        <h4 class="page-header">Table of Contents</h4>
+        <aside>
+            <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#kongとは">Kongとは</a></li>
+<li><a href="#kongの設定管理における課題">Kongの設定管理における課題</a></li>
+<li><a href="#ingressとingress-controller">IngressとIngress Controller</a></li>
+<li><a href="#kong-ingress-controller">Kong Ingress Controller</a></li>
+<li><a href="#kong-ingress-controllerが扱うkubernetesリソース">Kong Ingress Controllerが扱うKubernetesリソース</a></li>
+<li><a href="#kong-ingress-controllerの公式マニフェストを読む">Kong Ingress Controllerの公式マニフェストを読む</a></li>
+<li><a href="#kong-ingress-controllerのデプロイ">Kong Ingress Controllerのデプロイ</a></li>
+<li><a href="#ingressを試す">Ingressを試す</a></li>
+<li><a href="#kongingressを試す">KongIngressを試す</a></li>
+<li><a href="#kongpluginを試す">KongPluginを試す</a></li>
+<li><a href="#まとめ">まとめ</a></li>
+</ul></li>
+</ul>
+</nav>
+        </aside>
+        <hr>
+        
+
+        <br> <div class="text-justify"><p>Kubernetesクラスタ上で動く<a href="https://konghq.com/kong/">Kong</a>の設定管理に<a href="https://github.com/Kong/kubernetes-ingress-controller">Kong Ingress Controller</a>を使う、というのを試してみた話。</p>
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+
+<h2 id="kongとは">Kongとは</h2>
+
+<p>KongはKong社によるOSSのリバースプロキシ。
+(Enterprise版もある。)
+GitHubで2万4000以上のスターを集めている人気なOSSで、コミュニティが大きく開発も活発に行われている。</p>
+
+<p>Kongは、マイクロサービスアーキテクチャにおける<a href="https://microservices.io/patterns/apigateway.html">API Gatewayパターン</a>を実現するべく開発されたものと言える。
+このパターンでは、ユーザからの全リクエストをひとつのマイクロサービスで受け付けることで、認証やTLS終端といった共通的な処理を集約したり、内部のマイクロサービスのAPIを隠蔽したりする。</p>
+
+<p>Kongの作りとしては、<a href="https://openresty.org/en/">OpenResty</a>という<a href="https://nginx.org/en/">nginx</a>と<a href="https://www.lua.org/">Lua言語</a>によるWebプラットフォームがベースになっていて、nginxによる高性能に加え、Luaで実装された柔軟で高度な機能と、プラグイン機構による拡張性を備えている。
+ルーティングやアクセス制御など、ほとんどの設定は<a href="https://www.postgresql.org/">PostgreSQL</a>か<a href="http://cassandra.apache.org/">Cassandra</a>のDBに保存され、KongのREST API(Admin API)で管理できる。
+(Kong 1.1.0からは宣言的な設定ファイルによるDBレスモードもサポートされている。)</p>
+
+<p>このAdmin APIで管理できる主なリソースにはService、Route、Pluginがある。
+ServiceはKongの裏で動いて実際にAPIを実装するバックエンドサービスを表し、主にリクエストのルーティング先を設定するために使う。
+RouteはひとつのServiceに紐づくリソースで、主にそのServiceにルーティングするリクエストの条件を設定するために使う。
+PluginはServiceやRouteに紐づけて、それらによってルーティングされるリクエストやそのレスポンスに様々な制御を設定するために使う。</p>
+
+<p>PluginはKong社やコミュニティによって<a href="https://docs.konghq.com/hub/">いろいろなもの</a>が提供されていて、<a href="https://docs.konghq.com/hub/kong-inc/basic-auth/">ベーシック認証</a>、<a href="https://docs.konghq.com/hub/kong-inc/ldap-auth/">LDAP連携</a>、<a href="https://docs.konghq.com/hub/kong-inc/acl/">アクセス制御リスト</a>、<a href="https://docs.konghq.com/hub/kong-inc/prometheus/">Prometheus連携</a>、<a href="https://docs.konghq.com/hub/kong-inc/response-transformer/">レスポンスの加工</a>など、いろいろできる。
+PluginもLua製なので、既存のPluginをちょっと改造ということもできるし、新しいのを作るのも割と簡単にできるようになっている。</p>
+
+<h2 id="kongの設定管理における課題">Kongの設定管理における課題</h2>
+
+<p>基本的にKongの設定は、Admin APIで投げるとそれがPostgreSQLなどのDBに保存されるというもの。
+Admin APIは典型的なREST APIで、命令的で逐次的な設定手順になるので、宣言的な操作がもてはやされる昨今、ちょっと古臭く見える。
+Kongをマイクロサービスのひとつとして見た時、ステートフルなPostgreSQLがくっついてくるのも運用の手間が増えそうで嫌な感じ。</p>
+
+<p><img src="/images/kong-ingress-controller/imparative.png" alt="imparative.png" /></p>
+
+<p><br></p>
+
+<p>KongをDBレスモードで動かせばDBMSは要らないけど、初期設定を起動時に設定ファイルから読み込んで、設定を変えるときには設定ファイルを書き換えてリロードさせるという手順になるので、それはそれで使いづらい。</p>
+
+<h2 id="ingressとingress-controller">IngressとIngress Controller</h2>
+
+<p>その課題解消に役立つKubernetesの機能が<a href="https://kubernetes.io/docs/concepts/services-networking/ingress/">Ingress</a>と<a href="https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/">Ingress Controller</a>というもの。</p>
+
+<p>IngressはL7のロードバランサとか、HTTP(S)のアクセスポイントを公開する仕組みとか、ふんわりした表現で説明されることが多いけど、端的に言ってしまえば、リバースプロキシの設定を表現するKubernetesリソースだ。
+<code>kind: Ingress</code>なAPIがKubernetesにビルトインされていて、そのマニフェストには汎用的なリバースプロキシの設定を書けて、それをKubernetesに登録できるようになっている。
+ただ、Kubernetes自体はリバースプロキシの機能を備えているわけではないので、Ingressリソースを登録してもそれだけでは何もおこらない。
+Ingressリソースを活用するにはIngress Controllerが必要になる。</p>
+
+<p>Ingress Controllerは、Ingressリソースの作成や変更を監視するコントローラサービスと、そのリソース定義に従って動くリバースプロキシを組み合わせたもの。
+このリバースプロキシのアクセスポートは、NodePortタイプかLoadBalancerタイプのServiceによってKubernetesクラスタの外部に公開して、ユーザからアクセスできるようにする。
+Ingress Controllerをデプロイし、Ingressリソースを登録することで、ユーザからのリクエストをリバースプロキシで受けて捌くことができるようになる。</p>
+
+<p>因みにLoadBalancer Serviceは、Kubernetesクラスタ外部のロードバランサとNodePortなServiceを制御して、ユーザからロードバランサへのリクエストをNodePort Service経由でいい感じにPodにルーティングしてくれるもの。
+つまり、外部のロードバランサとそれを制御する何らかのコントローラがなければ使えないServiceで、普通はGKEとかのマネージドKubernetes環境でしか使わない。
+(<a href="https://metallb.universe.tf/">MetalLB</a>とか使えばオンプレでも使えるけど。)</p>
+
+<h2 id="kong-ingress-controller">Kong Ingress Controller</h2>
+
+<p>Ingress Controllerには、リバースプロキシの実装ごとに<a href="https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/#additional-controllers">さまざまな実装がある</a>。
+そのひとつがKong Ingress Controller。
+Kong Ingress Controllerはリバースプロキシとして(当然ながら)Kongを使うもので、そのコントローラサービスはIngressリソースの定義を読んで、その通りの設定になるようにKongのAdmin APIを呼ぶ。</p>
+
+<p>Ingressリソースはリバースプロキシの汎用的な定義なので、高機能なKongの設定を表現するには全然足りない。
+なので、Kong Ingress Controllerは足りない分を<a href="https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/">Custom Resources</a>で補っている。
+Custom Resourceは簡単に言えばKubernetesのAPIの拡張。
+Kong Ingress ControllerはKongIngress、KongPluginなどのCustom Resource(詳細は後述)を提供し、Kongの細かい設定を表現できるようにしている。</p>
+
+<p><img src="/images/kong-ingress-controller/declarative.png" alt="declarative.png" /></p>
+
+<p><br></p>
+
+<p>Kong Ingress Controllerを使えば、Kongの設定をKubernetesのAPIで宣言的にできるようになるので、前述した課題が解消できる。</p>
+
+<h2 id="kong-ingress-controllerが扱うkubernetesリソース">Kong Ingress Controllerが扱うKubernetesリソース</h2>
+
+<p>Kong Ingress Controllerが扱うIngressリソースやCustom Resourceについてまとめる。</p>
+
+<ul>
+<li><p>Ingress</p>
+
+<p>Kubernetesのビルトインリソース。
+ルーティングするリクエストの条件と、ルーティング先の(Kubernetesの)Serviceなどを定義する。
+この定義からKong Ingress ControllerがKongのRouteとServiceを設定する。</p></li>
+
+<li><p>KongIngress</p>
+
+<p>Kong Ingress ControllerのCustom Resource。
+Ingressと組み合わせて使い、Ingressだけでは表現できないRoute設定を記述する。
+Ingressのannotationに<code>configuration.konghq.com</code>というキーでKongIngressの名前を指定することで紐づけられる。</p></li>
+
+<li><p>KongPlugin</p>
+
+<p>Kong Ingress ControllerのCustom Resource。
+KongのPlugin設定を定義するためのもの。
+IngressかServiceのannotationに<code>plugins.konghq.com</code>というキーでKongPluginの名前を指定することで紐づけられる。
+<code>global: &quot;true&quot;</code>というラベルを付けたKongPluginを作れば、そのPluginは全リクエストに適用される。</p></li>
+</ul>
+
+<p><br></p>
+
+<p>他にKongConsumerとKongCredentialという認証情報を扱うCustom Resourceがある。
+けど今回使わないので詳細は省略する。</p>
+
+<h2 id="kong-ingress-controllerの公式マニフェストを読む">Kong Ingress Controllerの公式マニフェストを読む</h2>
+
+<p><a href="https://github.com/Kong/kubernetes-ingress-controller/blob/0.6.2/deploy/single/all-in-one-dbless.yaml">Kong Ingress Controller 0.6.2の公式のマニフェスト</a>には以下のリソースが定義されている。</p>
+
+<ul>
+<li><p>Namespace</p>
+
+<p><code>kong</code>という名前の名前空間。以下のすべてのリソースが属する。</p></li>
+
+<li><p>CustomResourceDefinition (4つ)</p>
+
+<p>KongIngress、KongPluginなどのCustom Resourceの定義。</p></li>
+
+<li><p>ClusterRole</p>
+
+<p>Node、Pod、Ingress、Serviceなどのリソースや、上記Custom Resourceの参照権限等を与えるロール。</p></li>
+
+<li><p>ServiceAccount</p>
+
+<p>コントローラサービスに上記ClusterRoleを紐づけるためのアカウント名。</p></li>
+
+<li><p>ClusterRoleBinding</p>
+
+<p>コントローラサービスと上記ClusterRoleを紐づける定義。</p></li>
+
+<li><p>ConfigMap</p>
+
+<p>Kong(のnginx)にメトリクス取得やヘルスチェックのAPIを追加する定義ファイル。</p></li>
+
+<li><p>Service (kong-proxy)</p>
+
+<p>Kongのアクセスポートを外部公開するためのLoadBalancerタイプのService。</p></li>
+
+<li><p>Service (kong-validation-webhook)</p>
+
+<p>上記Custom Resourceの登録や変更時にバリデーションをできるようにするために、コントローラサービスのポートをクラスタ内部(のkube-apiserver)に公開するClusterIPタイプのService。</p></li>
+
+<li><p>Deployment</p>
+
+<p>Kongとコントローラサービスを起動する定義。
+KongはDBレスモードで動かすようになっている。</p></li>
+</ul>
+
+<p>なんだかたくさんのリソースがあるけど、ひとつひとつ見ていくとそれほど難しくない。</p>
+
+<h2 id="kong-ingress-controllerのデプロイ">Kong Ingress Controllerのデプロイ</h2>
+
+<p>いざデプロイ。</p>
+
+<p>デプロイ先のKubernetesクラスタは<a href="https://www.kaitoy.xyz/2019/12/05/k8s-on-centos8-with-containerd/">最近CentOS 8でつくったやつ</a>で、Kubernetesのバージョンは1.16.0。
+Kong Ingress Controllerは最新版の0.6.2。</p>
+
+<p>Kong Ingress Controller公式のマニフェストは、<code>kong-proxy</code>というServiceがLoadBalancerタイプで使いにくいので、今回はNodePortに変える。
+また、DeploymentのapiVersionが<code>extensions/v1beta1</code>になっていて古く、Kubernetes 1.16にデプロイできないので、<code>apps/v1</code>に直す。
+修正差分は↓こんな感じ。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"><span style="color:#fff;text-decoration:underline">@@ -448,17 +448,18 @@
+</span><span style="color:#fff;text-decoration:underline"></span>   ports:
+   - name: proxy
+     port: 80
+     protocol: TCP
+     targetPort: 8000
+<span style="color:#589819">+    nodePort: 30080
+</span><span style="color:#589819"></span>   - name: proxy-ssl
+     port: 443
+     protocol: TCP
+     targetPort: 8443
+   selector:
+     app: ingress-kong
+<span style="color:#d22323">-  type: LoadBalancer
+</span><span style="color:#d22323"></span><span style="color:#589819">+  type: NodePort
+</span><span style="color:#589819"></span> ---
+ apiVersion: v1
+ kind: Service
+ metadata:
+   name: kong-validation-webhook
+<span style="color:#fff;text-decoration:underline">@@ -470,11 +471,11 @@
+</span><span style="color:#fff;text-decoration:underline"></span>     protocol: TCP
+     targetPort: 8080
+   selector:
+     app: ingress-kong
+ ---
+<span style="color:#d22323">-apiVersion: extensions/v1beta1
+</span><span style="color:#d22323"></span><span style="color:#589819">+apiVersion: apps/v1
+</span><span style="color:#589819"></span> kind: Deployment
+ metadata:
+   labels:
+     app: ingress-kong
+   name: ingress-kong
+</code></pre></div>
+<p>Kongのアクセスポートを外部公開するNodePortのポート番号は<code>30080</code>にしてある。</p>
+
+<p>修正したマニフェストを<code>kubectl apply</code>したら普通に起動した。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ kubectl get po -n kong
+NAME                            READY   STATUS    RESTARTS   AGE
+ingress-kong-65fffbc76b-gvqmf   2/2     Running   2          10m</code></pre></div>
+<p>Kongコンテナが立ち上がらないとコントローラサービスが起動中に落ちるので、最初数回CrashLoopBackOffするのがちょっとダサい。</p>
+
+<p>Kongのアクセスポート(i.e. NodePort)に向かってGETリクエストを送ると、まだKongに何のルーティング設定もないので<code>no Route matched with those values</code>というメッセージが返ってくる。
+(KubernetesノードのIPアドレスは<code>192.168.1.200</code>)</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ NODE_IP=192.168.1.200
+$ curl http://${NODE_IP}:30080/
+{&#34;message&#34;:&#34;no Route matched with those values&#34;}</code></pre></div>
+<p>ともあれ、Kongが動いていることは確認できた。</p>
+
+<h2 id="ingressを試す">Ingressを試す</h2>
+
+<p>Ingressを登録して、Kongの設定を作ってみる。</p>
+
+<p>まず、Kongのルーティング先のバックエンドサービスとして、リクエストの内容を返してくるだけのechoサービスをデプロイするため、以下のマニフェストを<code>kubectl apply</code>する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>Service<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>echo<span style="color:#666">
+</span><span style="color:#666"></span>spec:<span style="color:#666">
+</span><span style="color:#666">  </span>selector:<span style="color:#666">
+</span><span style="color:#666">    </span>app:<span style="color:#666"> </span>echo<span style="color:#666">
+</span><span style="color:#666">  </span>ports:<span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>port:<span style="color:#666"> </span><span style="color:#3677a9">8080</span><span style="color:#666">
+</span><span style="color:#666">    </span>protocol:<span style="color:#666"> </span>TCP<span style="color:#666">
+</span><span style="color:#666"></span>---<span style="color:#666">
+</span><span style="color:#666"></span>apiVersion:<span style="color:#666"> </span>apps/v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>Deployment<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>echo<span style="color:#666">
+</span><span style="color:#666"></span>spec:<span style="color:#666">
+</span><span style="color:#666">  </span>replicas:<span style="color:#666"> </span><span style="color:#3677a9">1</span><span style="color:#666">
+</span><span style="color:#666">  </span>selector:<span style="color:#666">
+</span><span style="color:#666">    </span>matchLabels:<span style="color:#666">
+</span><span style="color:#666">      </span>app:<span style="color:#666"> </span>echo<span style="color:#666">
+</span><span style="color:#666">  </span>template:<span style="color:#666">
+</span><span style="color:#666">    </span>metadata:<span style="color:#666">
+</span><span style="color:#666">      </span>labels:<span style="color:#666">
+</span><span style="color:#666">        </span>app:<span style="color:#666"> </span>echo<span style="color:#666">
+</span><span style="color:#666">    </span>spec:<span style="color:#666">
+</span><span style="color:#666">      </span>containers:<span style="color:#666">
+</span><span style="color:#666">      </span>-<span style="color:#666"> </span>image:<span style="color:#666"> </span>gcr.io/kubernetes-e2e-test-images/echoserver:<span style="color:#3677a9">2.2</span><span style="color:#666">
+</span><span style="color:#666">        </span>name:<span style="color:#666"> </span>echo<span style="color:#666">
+</span><span style="color:#666">        </span>ports:<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>containerPort:<span style="color:#666"> </span><span style="color:#3677a9">8080</span></code></pre></div>
+<p>確認。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ kubectl get po
+NAME                    READY   STATUS    RESTARTS   AGE
+echo-588b79f67f-xxn56   1/1     Running   0          14h</code></pre></div>
+<p>動いた。
+このPodは<code>echo</code>というService(以下echoサービス)に紐づいていて、そのServiceのポートは8080に設定されている。
+試しにそのServiceにGETリクエストを投げてみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ curl http://$(kubectl get svc echo -o jsonpath=&#39;{.spec.clusterIP}&#39;):8080
+
+
+Hostname: echo-588b79f67f-xxn56
+
+Pod Information:
+        -no pod information available-
+
+Server values:
+        server_version=nginx: 1.12.2 - lua: 10010
+
+Request Information:
+        client_address=10.32.0.1
+        method=GET
+        real path=/
+        query=
+        request_version=1.1
+        request_scheme=http
+        request_uri=http://10.0.185.110:8080/
+
+Request Headers:
+        accept=*/*
+        host=10.0.185.110:8080
+        user-agent=curl/7.61.1
+
+Request Body:
+        -no body in request-</code></pre></div>
+<p>ちゃんとレスポンス返ってきた。</p>
+
+<p><br></p>
+
+<p>このechoサービスへルーティングするIngressを作るため、以下のマニフェストを<code>kubectl apply</code>する。
+<code>/echo</code>にアクセスするとechoサービスの<code>8080</code>ポートに送るという内容。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>extensions/v1beta1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>Ingress<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>echo<span style="color:#666">
+</span><span style="color:#666"></span>spec:<span style="color:#666">
+</span><span style="color:#666">  </span>rules:<span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>http:<span style="color:#666">
+</span><span style="color:#666">      </span>paths:<span style="color:#666">
+</span><span style="color:#666">      </span>-<span style="color:#666"> </span>path:<span style="color:#666"> </span>/echo<span style="color:#666">
+</span><span style="color:#666">        </span>backend:<span style="color:#666">
+</span><span style="color:#666">          </span>serviceName:<span style="color:#666"> </span>echo<span style="color:#666">
+</span><span style="color:#666">          </span>servicePort:<span style="color:#666"> </span><span style="color:#3677a9">8080</span></code></pre></div>
+<p>これでKongにechoサービスを表すServiceとそこへのRouteが設定されたはず。
+Kongコンテナの<code>8444</code>ポートでAdmin APIが公開されていて、そこにアクセスするとKongの設定が見れるので見てみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ kubectl exec -it -n kong ingress-kong-65fffbc76b-gvqmf -c proxy -- curl -k https://localhost:8444/routes | jq
+{
+  &#34;next&#34;: null,
+  &#34;data&#34;: [
+    {
+      &#34;strip_path&#34;: true,
+      &#34;tags&#34;: null,
+      &#34;updated_at&#34;: 1575845092,
+      &#34;destinations&#34;: null,
+      &#34;headers&#34;: null,
+      &#34;protocols&#34;: [
+        &#34;http&#34;,
+        &#34;https&#34;
+      ],
+      &#34;created_at&#34;: 1575845092,
+      &#34;snis&#34;: null,
+      &#34;service&#34;: {
+        &#34;id&#34;: &#34;dac20c80-66d8-59e2-8f57-66e046e18d45&#34;
+      },
+      &#34;name&#34;: &#34;default.echo.00&#34;,
+      &#34;preserve_host&#34;: true,
+      &#34;regex_priority&#34;: 0,
+      &#34;id&#34;: &#34;e97bc643-59d4-53c1-83e2-87169eaa28d5&#34;,
+      &#34;sources&#34;: null,
+      &#34;paths&#34;: [
+        &#34;/echo&#34;
+      ],
+      &#34;https_redirect_status_code&#34;: 426,
+      &#34;methods&#34;: null,
+      &#34;hosts&#34;: null
+    }
+  ]
+}
+$ kubectl exec -it -n kong ingress-kong-65fffbc76b-gvqmf -c proxy -- curl -k https://localhost:8444/services | jq
+{
+  &#34;next&#34;: null,
+  &#34;data&#34;: [
+    {
+      &#34;host&#34;: &#34;echo.default.svc&#34;,
+      &#34;created_at&#34;: 1575845092,
+      &#34;connect_timeout&#34;: 60000,
+      &#34;id&#34;: &#34;dac20c80-66d8-59e2-8f57-66e046e18d45&#34;,
+      &#34;protocol&#34;: &#34;http&#34;,
+      &#34;name&#34;: &#34;default.echo.8080&#34;,
+      &#34;read_timeout&#34;: 60000,
+      &#34;port&#34;: 80,
+      &#34;path&#34;: &#34;/&#34;,
+      &#34;updated_at&#34;: 1575845092,
+      &#34;client_certificate&#34;: null,
+      &#34;tags&#34;: null,
+      &#34;write_timeout&#34;: 60000,
+      &#34;retries&#34;: 5
+    }
+  ]
+}</code></pre></div>
+<p>できてた。</p>
+
+<p>KongのNodePortの<code>/echo</code>にアクセスしてみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ NODE_IP=192.168.1.200
+$ curl http://${NODE_IP}:30080/echo
+
+
+Hostname: echo-588b79f67f-xxn56
+
+Pod Information:
+        -no pod information available-
+
+Server values:
+        server_version=nginx: 1.12.2 - lua: 10010
+
+Request Information:
+        client_address=10.32.0.5
+        method=GET
+        real path=/
+        query=
+        request_version=1.1
+        request_scheme=http
+        request_uri=http://192.168.1.200:8080/
+
+Request Headers:
+        accept=*/*
+        connection=keep-alive
+        host=192.168.1.200:30080
+        user-agent=curl/7.61.1
+        x-forwarded-for=10.32.0.1
+        x-forwarded-host=192.168.1.200
+        x-forwarded-port=8000
+        x-forwarded-proto=http
+        x-real-ip=10.32.0.1
+
+Request Body:
+        -no body in request-</code></pre></div>
+<p>Kong経由でechoサービスにアクセスできた模様。
+<code>Request Headers</code>にKongが追加したであろう<code>x-forwarded-for</code>とかがあるのがわかる。</p>
+
+<p><code>Request Information</code>を見ると、<code>real path</code>が<code>/</code>になっている。
+これは、KongのRouteの<code>strip_path</code>設定がデフォルトでtrueなので、<code>curl</code>で送ったURLパスの<code>/echo</code>をKongが切り捨てるため。
+この設定はIngressでは変えられないので、そういうのを変えたい場合にはKongIngressが必要になる。</p>
+
+<h2 id="kongingressを試す">KongIngressを試す</h2>
+
+<p>前節で作ったRouteの<code>strip_path</code>をfalseにすべく、KongIngressを作ってみる。
+まず以下のKongIngressのマニフェストを<code>kubectl apply</code>する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>configuration.konghq.com/v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>KongIngress<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>keep-path<span style="color:#666">
+</span><span style="color:#666"></span>route:<span style="color:#666">
+</span><span style="color:#666">  </span>strip_path:<span style="color:#666"> </span><span style="color:#6ab825;font-weight:bold">false</span></code></pre></div>
+<p>で、このKongIngressを前節で作ったIngressに紐づけるため、次のコマンドで<code>configuration.konghq.com</code>というannotationをIngressに追加する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ kubectl patch ingress echo -p &#39;{&#34;metadata&#34;:{&#34;annotations&#34;:{&#34;configuration.konghq.com&#34;:&#34;keep-path&#34;}}}&#39;</code></pre></div>
+<p>これでKongのRoute設定の<code>strip_path</code>が変わったはず。
+見てみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ kubectl exec -it -n kong ingress-kong-65fffbc76b-gvqmf -c proxy -- curl -k https://localhost:8444/routes | jq &#39;.data[].strip_path&#39;
+false</code></pre></div>
+<p>ちゃんとfalseになっている。
+KongのNodePortの<code>/echo</code>にアクセスしてみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ NODE_IP=192.168.1.200
+$ curl -s http://${NODE_IP}:30080/echo | grep &#39;real path&#39;
+        real path=/echo</code></pre></div>
+<p>送ったURLパスが切り捨てられず、<code>real path</code>が<code>/echo</code>になるようになった。</p>
+
+<h2 id="kongpluginを試す">KongPluginを試す</h2>
+
+<p>最後にKongPluginで<a href="https://docs.konghq.com/hub/kong-inc/correlation-id/">Correlation IDプラグイン</a>を有効にしてみる。
+これは、適用されたリクエストのHTTPヘッダに、リクエスト毎にユニークなUUIDを付けるプラグイン。
+プラグインを有効にする対象としてServiceやRouteなどを指定することができるが、今回は全リクエストに適用するglobalにする。</p>
+
+<p>以下のマニフェストを<code>kubectl apply</code>する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>configuration.konghq.com/v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>KongPlugin<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>correlation-id<span style="color:#666">
+</span><span style="color:#666">  </span>labels:<span style="color:#666">
+</span><span style="color:#666">    </span>global:<span style="color:#666"> </span><span style="color:#ed9d13">&#34;true&#34;</span><span style="color:#666">
+</span><span style="color:#666"></span>config:<span style="color:#666">
+</span><span style="color:#666">  </span>header_name:<span style="color:#666"> </span>Global-Request-ID<span style="color:#666">
+</span><span style="color:#666"></span>plugin:<span style="color:#666"> </span>correlation-id</code></pre></div>
+<p><code>labels</code>に<code>global: &quot;true&quot;</code>を設定するのがポイント。</p>
+
+<p>これでKongにPlugin設定が作られるはず。
+KongのAdmin APIでPluginを取得して確認してみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ kubectl exec -it -n kong ingress-kong-65fffbc76b-gvqmf -c proxy -- curl -k https://localhost:8444/plugins | jq
+{
+  &#34;next&#34;: null,
+  &#34;data&#34;: [
+    {
+      &#34;created_at&#34;: 1575852780,
+      &#34;config&#34;: {
+        &#34;echo_downstream&#34;: false,
+        &#34;header_name&#34;: &#34;Global-Request-ID&#34;,
+        &#34;generator&#34;: &#34;uuid#counter&#34;
+      },
+      &#34;id&#34;: &#34;65d138a5-b9b3-5559-84d6-c459f3cc456a&#34;,
+      &#34;service&#34;: null,
+      &#34;enabled&#34;: true,
+      &#34;tags&#34;: null,
+      &#34;consumer&#34;: null,
+      &#34;run_on&#34;: &#34;first&#34;,
+      &#34;name&#34;: &#34;correlation-id&#34;,
+      &#34;route&#34;: null,
+      &#34;protocols&#34;: [
+        &#34;grpc&#34;,
+        &#34;grpcs&#34;,
+        &#34;http&#34;,
+        &#34;https&#34;
+      ]
+    }
+  ]
+}</code></pre></div>
+<p>できてた。
+実際にリクエストを送ってみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ NODE_IP=192.168.1.200
+$ curl -s http://${NODE_IP}:30080/echo
+
+
+Hostname: echo-588b79f67f-xxn56
+
+Pod Information:
+        -no pod information available-
+
+Server values:
+        server_version=nginx: 1.12.2 - lua: 10010
+
+Request Information:
+        client_address=10.32.0.5
+        method=GET
+        real path=/echo
+        query=
+        request_version=1.1
+        request_scheme=http
+        request_uri=http://192.168.1.200:8080/echo
+
+Request Headers:
+        accept=*/*
+        connection=keep-alive
+        global-request-id=caad53f7-2e95-483d-8515-79a45b6a52d3#2
+        host=192.168.1.200:30080
+        user-agent=curl/7.61.1
+        x-forwarded-for=10.32.0.1
+        x-forwarded-host=192.168.1.200
+        x-forwarded-port=8000
+        x-forwarded-proto=http
+        x-real-ip=10.32.0.1
+
+Request Body:
+        -no body in request-</code></pre></div>
+<p><code>Request Headers</code>に<code>global-request-id</code>としてUUIDが挿入されるようになった。</p>
+
+<h2 id="まとめ">まとめ</h2>
+
+<p>KubernetesクラスタにKong Ingress Controllerをデプロイし、Ingress、KongIngress、KongPluginによりKongの設定ができることを確認した。</p>
+
+<p>Kong Ingress Controllerを使えば、Kongの設定をKubernetesのAPIで宣言的に管理できるようになり、いろいろ捗りそう。</p></div>
+
+        <section class="share-buttons">
+          <div class="share-button">
+            <div class="fb-share-button" data-href="https://www.kaitoy.xyz/2019/12/11/kong-ingress-controller/" data-layout="box_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fwww.kaitoy.xyz%2f2019%2f12%2f11%2fkong-ingress-controller%2f&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Share</a></div>
+          </div>
+          <div class="share-button">
+            <a class="twitter-share-button"
+              href="https://twitter.com/intent/tweet?text=Kong%20Ingress%20Controller%e3%81%a7Kong%e3%81%ae%e8%a8%ad%e5%ae%9a%e3%82%92%e7%ae%a1%e7%90%86%e3%81%99%e3%82%8b&amp;url=https%3a%2f%2fwww.kaitoy.xyz%2f2019%2f12%2f11%2fkong-ingress-controller%2f"
+              data-size="large">
+            Tweet</a>
+          </div>
+          <div class="share-button">
+            <a href="http://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="vertical-normal" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+          </div>
+          <div class="share-button">
+            <a data-pocket-label="pocket" data-pocket-count="vertical" class="pocket-btn" data-lang="en"></a>
+            <script type="text/javascript">!function(d,i){if(!d.getElementById(i)){var j=d.createElement("script");j.id=i;j.src="https://widgets.getpocket.com/v1/j/btn.js?v=1";var w=d.getElementById(i);d.body.appendChild(j);}}(document,"pocket-btn-js");</script>
+          </div>
+        </section>
+    </div>
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-6244473643910448"
+         data-ad-slot="1845600530"
+         data-ad-format="auto"></ins>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+    <section class="tbd-pagination">
+      <div class="row">
+        <div class="col-sm-6">
+          <div class="prev">
+            
+            <a href="https://www.kaitoy.xyz/2019/12/05/k8s-on-centos8-with-containerd/">
+              <i class="fa fa-angle-left"></i>
+              Kubernetes 1.16 のクラスタを CentOS 8 と containerd で構築する
+            </a>
+            
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="next text-right">
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    
+
+    
+
+        <h4 class="page-header">Related</h4>
+
+        <div class="related-links">
+           <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/12/05/k8s-on-centos8-with-containerd/">Kubernetes 1.16 のクラスタを CentOS 8 と containerd で構築する</a></h4>
+    <h5>Thu, Dec 5, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/containerd"><kbd class="item-tag">containerd</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/09/23/k8s-ecosystem-misc/">Kubernetesのエコシステム ー その他雑多</a></h4>
+    <h5>Mon, Sep 23, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/08/14/k8s-ecosystem-k8s-variations-and-container-host-oses/">Kubernetesのエコシステム ー KubernetesバリエーションとコンテナホストOS編</a></h4>
+    <h5>Wed, Aug 14, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/07/27/introduction-to-k8s/">Kubernetes入門</a></h4>
+    <h5>Sat, Jul 27, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/microservices"><kbd class="item-tag">microservices</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/07/26/k8s-meetup-tokyo-21/">Kubernetes Meetup Tokyo #21 - Cloud Native CI/CD に行ってきた</a></h4>
+    <h5>Fri, Jul 26, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/argo"><kbd class="item-tag">argo</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gitops"><kbd class="item-tag">gitops</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spinnaker"><kbd class="item-tag">spinnaker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/argo"><kbd class="item-tag">argo</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/06/23/k8s-ecosystem-preparing-k8s-cluster/">Kubernetesのエコシステム ー Kubernetesクラスタ構築編</a></h4>
+    <h5>Sun, Jun 23, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/06/15/k8s-ecosystem-container-runtimes/">Kubernetesのエコシステム ー コンテナランタイム編</a></h4>
+    <h5>Sat, Jun 15, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/containerd"><kbd class="item-tag">containerd</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/03/08/k8s-zundoko-operator/">ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</a></h4>
+    <h5>Fri, Mar 8, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubebuilder"><kbd class="item-tag">kubebuilder</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/golang"><kbd class="item-tag">golang</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/17/packer-k8s/">Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</a></h4>
+    <h5>Sun, Jun 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/packer"><kbd class="item-tag">packer</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/msys2"><kbd class="item-tag">msys2</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/03/build-k8s-cluster-by-ansible/">Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</a></h4>
+    <h5>Sun, Jun 3, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a></h4>
+    <h5>Sat, May 5, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a></h4>
+    <h5>Fri, May 4, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a></h4>
+    <h5>Tue, Apr 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/01/hello-skaffold/">Skaffoldを触ってみた</a></h4>
+    <h5>Sun, Apr 1, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/skaffold"><kbd class="item-tag">skaffold</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">Kubernetes 1.8のアクセス制御について。あとDashboard。</a></h4>
+    <h5>Tue, Oct 31, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a></h4>
+    <h5>Sat, Oct 21, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubeadm"><kbd class="item-tag">kubeadm</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></h4>
+    <h5>Wed, Oct 11, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a></h4>
+    <h5>Tue, Oct 10, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+ 
+        </div>
+    
+
+    
+
+        <h4 class="page-header">Comments</h4>
+
+        <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "kaitoy-tobedecided" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+
+</main>
+
+        <footer>
+
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script>window.twttr = (function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0],
+            t = window.twttr || {};
+          if (d.getElementById(id)) return t;
+          js = d.createElement(s);
+          js.id = id;
+          js.src = "https://platform.twitter.com/widgets.js";
+          fjs.parentNode.insertBefore(js, fjs);
+
+          t._e = [];
+          t.ready = function(f) {
+            t._e.push(f);
+          };
+
+          return t;
+        }(document, "script", "twitter-wjs"));</script>
+
+    </body>
+
+</html>
+
