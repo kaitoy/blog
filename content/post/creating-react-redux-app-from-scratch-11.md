@@ -6,7 +6,9 @@ cover = "typescript.png"
 slug = "creating-react-redux-app-from-scratch-11"
 tags = ["react", "frontend", "typescript"]
 title = "React + Reduxアプリケーションプロジェクトのテンプレートを作る ― その11: FlowからTypeScriptへ移行"
-
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 +++
 
 [React](https://reactjs.org/)と[Redux](https://redux.js.org/)を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
@@ -83,7 +85,7 @@ FlowとTypeScriptとで型の表現方式や表現力にあまり差はなかっ
 
 とりあえずFlowを取り除く。
 
-```tch
+```console
 $ yarn remove flow-bin flow-typed @babel/preset-flow eslint-plugin-flowtype babel-eslint
 $ rm -f .flowconfig
 ```
@@ -135,7 +137,7 @@ $ rm -f .flowconfig
 * `@types/*`: 各3rdパーティライブラリの[型定義ファイル(DefinitelyTyped)](https://github.com/DefinitelyTyped/DefinitelyTyped)。(型定義はライブラリ本体のパッケージに含まれている場合もある。)
 * [awesome-typescript-loader](https://github.com/s-panferov/awesome-typescript-loader): TypeScriptを処理するためのwebpackのローダ。他の選択肢として[ts-loader](https://github.com/TypeStrong/ts-loader)があるが、[公式のチュートリアル](https://www.typescriptlang.org/docs/handbook/react-&-webpack.html)がawesome-typescript-loaderをメインで紹介してるのでこっちにする。
 
-```tch
+```console
 $ yarn add -D typescript @types/react @types/react-dom @types/react-redux @types/redux-logger @types/history @types/react-router-dom @types/uuid @types/styled-components awesome-typescript-loader
 ```
 
@@ -145,7 +147,7 @@ TypeScriptはv3.1.6、awesome-typescript-loaderはv5.2.1が入った。
 
 [TypeScriptの設定ファイル](https://www.typescriptlang.org/docs/handbook/tsconfig-json.html)であるtsconfig.jsonはtscコマンドでテンプレートを生成できる。
 
-```tch
+```console
 $ yarn tsc --init
 ```
 
@@ -308,7 +310,7 @@ $ yarn tsc --init
 awesome-typescript-loaderのドキュメントで推奨されている[HardSourceWebpackPlugin](https://github.com/mzgoddard/hard-source-webpack-plugin)も導入しておく。
 これを使うと、モジュールの中間キャッシュを生成して、二回目以降のビルドを高速化してくれる。
 
-```tch
+```console
 $ yarn add -D hard-source-webpack-plugin
 ```
 
@@ -362,7 +364,7 @@ TypeScriptのリンティングは普通はTSLintを使う。
 [この記事](https://hokaccha.hatenablog.com/entry/2018/01/23/232625)によれば、[typescript-eslint-parser](https://github.com/eslint/typescript-eslint-parser)を使えばそれらの面倒を回避できる。
 typescript-eslint-parserはESLintのカスタムパーサで、TypeScriptのコードをESLintでリンティングすることを可能にする。
 
-```tch
+```console
 $ yarn add -D typescript-eslint-parser
 ```
 
@@ -663,7 +665,7 @@ Jestを実行するときはwebpackを介さないので、別途TypeScript対�
 babel-jestは、Jest実行時にテストコードと関連モジュールをBabelで処理してピュアなJavaScriptにしてくれるやつ。
 TypeScriptをBabelで処理できるようにするには、[@babel/preset-typescript](https://babeljs.io/docs/en/babel-preset-typescript)を入れておく必要がある。
 
-```tch
+```console
 $ yarn add -D @babel/preset-typescript
 ```
 

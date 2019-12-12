@@ -6,7 +6,9 @@ cover = "flow-jest-enzyme.png"
 slug = "creating-react-redux-app-from-scratch-10"
 tags = ["react", "frontend", "flow", "jest", "enzyme"]
 title = "React + Reduxアプリケーションプロジェクトのテンプレートを作る ― その10: Code Splitting、Flow、Jest、Enzyme"
-
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 +++
 
 [React](https://reactjs.org/)と[Redux](https://redux.js.org/)を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
@@ -61,8 +63,8 @@ Code Splittingのやりかたはいくつかあるが、[ダイナミックイ�
 `import()`がダイナミックインポートで、[ECMAScriptで現在策定中](https://github.com/tc39/proposal-dynamic-import)の機能。
 これを使えるようにするためには、Babelのプラグインを追加する必要がある。
 
-```tch
-yarn add -D @babel/plugin-syntax-dynamic-import
+```console
+$ yarn add -D @babel/plugin-syntax-dynamic-import
 ```
 
 `.babelrc`:
@@ -102,8 +104,8 @@ Flowは、ソースに型情報を付けて静的型チェック可能にしつ�
 
 型チェックするツールは[flow-bin](https://www.npmjs.com/package/flow-bin)パッケージで配布されていて、型情報の除去は[@babel/preset-flow](https://www.npmjs.com/package/babel-preset-flow)を使ってBabelでできる。
 
-```tch
-yarn add -D flow-bin @babel/preset-flow
+```console
+$ yarn add -D flow-bin @babel/preset-flow
 ```
 
 `.babelrc`:
@@ -125,7 +127,7 @@ yarn add -D flow-bin @babel/preset-flow
 
 これで、`yarn flow`でFlowを実行できるようになった。
 
-```tch
+```console
 $ yarn flow version
 yarn run v1.7.0
 $ C:\Users\kaitoy\Desktop\bin\pleiades\workspace\react-redux-scaffold\node_modules\.bin\flow version
@@ -142,8 +144,8 @@ Done in 0.38s.
 それだけでもだいぶ型推論してくれてチェックが利くけど、[型アノテーション](https://flow.org/en/docs/types/)を書いていくとよりいい。
 ただ、アノテートするとESLintとけんかするので、それ対策として[eslint-plugin-flowtype](https://github.com/gajus/eslint-plugin-flowtype)を入れる必要がある。
 
-```tch
-yarn add -D babel-eslint eslint-plugin-flowtype
+```console
+$ yarn add -D babel-eslint eslint-plugin-flowtype
 ```
 
 `.eslintrc.js`:
@@ -203,9 +205,9 @@ prop-typesによる型定義と冗長な感じに見えるけど、Flowは静的
 
 libdefはそれようの[リポジトリ](https://github.com/flow-typed/flow-typed/tree/master/definitions)で管理されていて、[flow-typed](https://github.com/flow-typed/flow-typed/blob/master/README.md)で引っ張れる。
 
-```tch
-yarn add -D flow-typed
-yarn flow-typed --ignoreDeps dev install
+```console
+$ yarn add -D flow-typed
+$ yarn flow-typed --ignoreDeps dev install
 ```
 
 これで、package.jsonに書かれている依存(devDependenciesを除く)を見て、必要なlibdefをダウンロードしてきて、プロジェクトルートの`flow-typed`というディレクトリにインストールしてくれる。
@@ -267,8 +269,8 @@ ReactプロジェクトでJestを使うには以下のパッケージを入れ�
 * [babel-core@^7.0.0-bridge](https://www.npmjs.com/package/babel-core/v/7.0.0-bridge.0): babel-jestをBabel 7で使うためのモジュール。[現時点では必要](https://github.com/facebook/jest/tree/master/packages/babel-jest#usage)だけど、その内いらなくなるであろう。
 (2019/1/27追記: [Jest v24でBabel 7にネイティブ対応して、bridgeは不要になった](https://jestjs.io/blog/2019/01/25/jest-24-refreshing-polished-typescript-friendly)。)
 
-```tch
-yarn add -D jest babel-jest react-test-renderer babel-core@^7.0.0-bridge
+```console
+$ yarn add -D jest babel-jest react-test-renderer babel-core@^7.0.0-bridge
 ```
 
 Jestはv23.6.0が入った。
@@ -293,8 +295,8 @@ npm scriptにjestを追加しておくといい。
 
 Jestの設定ファイルである[jest.config.js](https://jestjs.io/docs/en/configuration)をプロジェクトルートに生成する。
 
-```tch
-yarn test --init
+```console
+$ yarn test --init
 ```
 
 プロンプトでいくつかのことを聞かれるが、「Choose the test environment that will be used for testing」に`jsdom`で答えるのがポイント。ブラウザで動かすアプリなので。
@@ -489,8 +491,8 @@ module.exports = {
 
 また、例によって、(主にJestのグローバル変数のために、)JestのテストコードとESLintがけんかするので、ESLintをなだめるために[eslint-plugin-jest](https://www.npmjs.com/package/eslint-plugin-jest)を入れる。
 
-```tch
-yarn add -D eslint-plugin-jest
+```console
+$ yarn add -D eslint-plugin-jest
 ```
 
 `.eslintrc.js`:
@@ -615,8 +617,8 @@ Enzymeによるレンダリングには以下の3種類があり、テスト内�
 Enzymeはv3から本体とアダプタという構成になっていて、Reactのバージョンによってアダプタを使い分ける。
 ([preact](https://preactjs.com/)とか[Inferno](https://infernojs.org/)のアダプタもある。)
 
-```tch
-yarn add -D enzyme enzyme-adapter-react-16
+```console
+$ yarn add -D enzyme enzyme-adapter-react-16
 ```
 
 Enzymeはv3.7.0が入った。

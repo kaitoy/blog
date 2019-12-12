@@ -80,7 +80,7 @@ CentOS 8でKubernetesクラスタを作った話。
 </script>
 
 
-
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"> 
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -88,6 +88,14 @@ CentOS 8でKubernetesクラスタを作った話。
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js"></script>
+
+    
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
 
 
 
@@ -264,7 +272,7 @@ CentOS 8でKubernetesクラスタを作った話。
 <p>CentOS 7以前はPython(の2系)がいろいろなシステムツールに使われていたため、Pythonが入っていて当然だった。
 CentOS 8でもまあPythonがシステムツールに使われているみたいなんだけど、それ用のはPATHの通っていない<code>/usr/libexec/platform-python</code>に置かれるようになり、ユーザが使ってはいけないことになった。
 しかもこれがPython 3。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">$ /usr/libexec/platform-python --version
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ /usr/libexec/platform-python --version
 Python 3.6.8</code></pre></div>
 <p>そんなわけなので、CentOS 8をMinimalインストールしたマシンにAnsibleで環境構築しようとすると、Ansibleが<code>python</code>コマンドを叩こうとしてエラーになる。</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">fatal: [k8s_master]: FAILED! =&gt; {&#34;changed&#34;: false, &#34;module_stderr&#34;: &#34;/bin/sh: /usr/bin/python: No such file or directory\n&#34;, &#34;module_stdout&#34;: &#34;&#34;, &#34;msg&#34;: &#34;MODULE FAILURE&#34;, &#34;rc&#34;: 127}</code></pre></div>
@@ -282,7 +290,7 @@ Python 3.6.8</code></pre></div>
 <p>CentOS 7のYumはバージョン3系で、Python 2で書かれているため、Python 3化したCentOS 8では廃止された。
 代わりに、YumのフォークであるDNF(Dandified Yum)が標準のパッケージマネージャになっている。
 とはいえ、yumコマンドもDNFへのリンクとして残っていて、従来と変わらないインターフェースで使える。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">$ ls -l /usr/bin/yum
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ ls -l /usr/bin/yum
 lrwxrwxrwx. 1 root root 5 May 14  2019 /usr/bin/yum -&gt; dnf-3</code></pre></div>
 <p>ただしAnsibleでパッケージインストールする場合、AnsibleのyumモジュールはPython 2が前提なので、使うと以下のようなエラーになる。</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">fatal: [k8s_master]: FAILED! =&gt; {&#34;changed&#34;: false, &#34;msg&#34;: &#34;The Python 2 yum module is needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.&#34;}</code></pre></div>
@@ -292,13 +300,13 @@ lrwxrwxrwx. 1 root root 5 May 14  2019 /usr/bin/yum -&gt; dnf-3</code></pre></di
 
 <p>CentOS 8ではiptablesのパッケージバージョンが1.8になって、iptablesの皮をかぶったnftablesになった。
 <code>iptables</code>コマンドは従来通りあるんだけど、</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">$ iptables --version
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ iptables --version
 iptables v1.8.2 (nf_tables)
 $ ls -l /usr/sbin/iptables
 lrwxrwxrwx. 1 root root 17 Jul  2 00:41 /usr/sbin/iptables -&gt; xtables-nft-multi</code></pre></div>
 <p>というように本体はnftablesであることが分かる。
 <code>xtables-nft-multi</code>というのはnftablesを従来の<code>iptables</code>(など)と同じインターフェースで扱うためのもので、いろんな<code>*tables</code>からリンクされている。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">find /usr/sbin/ -name &#34;*tables*&#34; | xargs ls -l
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">find /usr/sbin/ -name &#34;*tables*&#34; | xargs ls -l
 lrwxrwxrwx. 1 root root     17 Jul  2 00:41 /usr/sbin/ebtables -&gt; xtables-nft-multi
 lrwxrwxrwx. 1 root root     17 Jul  2 00:41 /usr/sbin/ebtables-restore -&gt; xtables-nft-multi
 lrwxrwxrwx. 1 root root     17 Jul  2 00:41 /usr/sbin/ebtables-save -&gt; xtables-nft-multi
@@ -411,7 +419,7 @@ Red Hatとしては、代わりに自製の<a href="https://podman.io/">Podman</
 <li><p>ansible-k8s実行</p>
 
 <p>Ansibleはすでに使えるものとして、以下のコマンドでansible-k8sをキック。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">$ cd ansible-k8s
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ cd ansible-k8s
 $ ./play.sh production k8s_single_node_cluster.yml</code></pre></div>
 <p>ansible-k8sの中の処理は<a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">昔書いた内容</a>と大きく変わっていない。</p></li>
 </ol>
@@ -419,7 +427,7 @@ $ ./play.sh production k8s_single_node_cluster.yml</code></pre></div>
 <p><br></p>
 
 <p>以上でKubernetesクラスタが構築出来て、Weave NetとCoreDNSがデプロイされた状態になる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">$ cat /etc/centos-release
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ cat /etc/centos-release
 CentOS Linux release 8.0.1905 (Core)
 $ kubectl get node
 NAME               STATUS   ROLES    AGE   VERSION
@@ -430,7 +438,7 @@ kube-system   coredns-77b79c856-b6dqh   1/1     Running   1          23d
 kube-system   coredns-77b79c856-nv46g   1/1     Running   1          23d
 kube-system   weave-net-9msnk           2/2     Running   3          23d</code></pre></div>
 <p>Dockerはいなくて、代わりにcontainerdが動いている。(<code>ctr</code>はcontainerdのクライアント。TASKはコンテナにあたるもの。)</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">$ docker ps
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ docker ps
 -bash: docker: command not found
 $ ctr -a /run/k8s-containerd/containerd.sock -n k8s.io task ls
 TASK                                                                PID     STATUS
@@ -442,7 +450,7 @@ e30a1ee0316bf299c74ae0e3bd026bb88a3ca78d133da419226ea04824de828b    1901    RUNN
 ebd5d32043d5d3db2f933162329353ce5db801db0bb78f6ca57e509e68dc7910    1559    RUNNING
 e23c6600bd232a8a08b77798a62c236979b166caa92aa33eadc130390ae60fb2    2187    RUNNING</code></pre></div>
 <p>iptablesもnftablesでちゃんと動いているっぽい。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">$ iptables --version
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ iptables --version
 iptables v1.8.2 (nf_tables)
 $ iptables -L
 Chain INPUT (policy ACCEPT)

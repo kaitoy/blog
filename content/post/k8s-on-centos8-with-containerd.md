@@ -6,6 +6,9 @@ cover: "kubernetes.png"
 slug: "k8s-on-centos8-with-containerd"
 tags: ["kubernetes", "containerd"]
 draft: false
+highlight: true
+highlightStyle: "monokai"
+highlightLanguages: []
 ---
 
 この記事は [Kubernetes Advent Calendar 2019](https://qiita.com/advent-calendar/2019/kubernetes) の5日目の記事です。
@@ -36,7 +39,7 @@ CentOS 7以前はPython(の2系)がいろいろなシステムツールに使わ
 CentOS 8でもまあPythonがシステムツールに使われているみたいなんだけど、それ用のはPATHの通っていない`/usr/libexec/platform-python`に置かれるようになり、ユーザが使ってはいけないことになった。
 しかもこれがPython 3。
 
-```tch
+```console
 $ /usr/libexec/platform-python --version
 Python 3.6.8
 ```
@@ -61,7 +64,7 @@ CentOS 7のYumはバージョン3系で、Python 2で書かれているため、
 代わりに、YumのフォークであるDNF(Dandified Yum)が標準のパッケージマネージャになっている。
 とはいえ、yumコマンドもDNFへのリンクとして残っていて、従来と変わらないインターフェースで使える。
 
-```tch
+```console
 $ ls -l /usr/bin/yum
 lrwxrwxrwx. 1 root root 5 May 14  2019 /usr/bin/yum -> dnf-3
 ```
@@ -78,7 +81,7 @@ fatal: [k8s_master]: FAILED! => {"changed": false, "msg": "The Python 2 yum modu
 CentOS 8ではiptablesのパッケージバージョンが1.8になって、iptablesの皮をかぶったnftablesになった。
 `iptables`コマンドは従来通りあるんだけど、
 
-```tch
+```console
 $ iptables --version
 iptables v1.8.2 (nf_tables)
 $ ls -l /usr/sbin/iptables
@@ -88,7 +91,7 @@ lrwxrwxrwx. 1 root root 17 Jul  2 00:41 /usr/sbin/iptables -> xtables-nft-multi
 というように本体はnftablesであることが分かる。
 `xtables-nft-multi`というのはnftablesを従来の`iptables`(など)と同じインターフェースで扱うためのもので、いろんな`*tables`からリンクされている。
 
-```tch
+```console
 find /usr/sbin/ -name "*tables*" | xargs ls -l
 lrwxrwxrwx. 1 root root     17 Jul  2 00:41 /usr/sbin/ebtables -> xtables-nft-multi
 lrwxrwxrwx. 1 root root     17 Jul  2 00:41 /usr/sbin/ebtables-restore -> xtables-nft-multi
@@ -200,7 +203,7 @@ containerdのconfig.tomlはバージョンによって結構変わるので、CR
 
     Ansibleはすでに使えるものとして、以下のコマンドでansible-k8sをキック。
 
-    ```tch
+    ```console
     $ cd ansible-k8s
     $ ./play.sh production k8s_single_node_cluster.yml
     ```
@@ -211,7 +214,7 @@ containerdのconfig.tomlはバージョンによって結構変わるので、CR
 
 以上でKubernetesクラスタが構築出来て、Weave NetとCoreDNSがデプロイされた状態になる。
 
-```tch
+```console
 $ cat /etc/centos-release
 CentOS Linux release 8.0.1905 (Core)
 $ kubectl get node
@@ -226,7 +229,7 @@ kube-system   weave-net-9msnk           2/2     Running   3          23d
 
 Dockerはいなくて、代わりにcontainerdが動いている。(`ctr`はcontainerdのクライアント。TASKはコンテナにあたるもの。)
 
-```tch
+```console
 $ docker ps
 -bash: docker: command not found
 $ ctr -a /run/k8s-containerd/containerd.sock -n k8s.io task ls
@@ -242,7 +245,7 @@ e23c6600bd232a8a08b77798a62c236979b166caa92aa33eadc130390ae60fb2    2187    RUNN
 
 iptablesもnftablesでちゃんと動いているっぽい。
 
-```tch
+```console
 $ iptables --version
 iptables v1.8.2 (nf_tables)
 $ iptables -L

@@ -8,7 +8,7 @@ tags = ["kubernetes", "kong"]
 draft = false
 highlight = true
 highlightStyle = "monokai"
-highlightLanguages = ["yaml"]
+highlightLanguages = []
 +++
 
 Kubernetesクラスタ上で動く[Kong](https://konghq.com/kong/)の設定管理に[Kong Ingress Controller](https://github.com/Kong/kubernetes-ingress-controller)を使う、というのを試してみた話。
