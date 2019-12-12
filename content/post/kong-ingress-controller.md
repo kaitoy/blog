@@ -6,6 +6,9 @@ cover = "kong.png"
 slug = "kong-ingress-controller"
 tags = ["kubernetes", "kong"]
 draft = false
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = ["yaml"]
 +++
 
 Kubernetesクラスタ上で動く[Kong](https://konghq.com/kong/)の設定管理に[Kong Ingress Controller](https://github.com/Kong/kubernetes-ingress-controller)を使う、というのを試してみた話。
@@ -16,7 +19,7 @@ Kubernetesクラスタ上で動く[Kong](https://konghq.com/kong/)の設定管�
 
 {{< google-adsense >}}
 
-## Kongとは
+# Kongとは
 KongはKong社によるOSSのリバースプロキシ。
 (Enterprise版もある。)
 GitHubで2万4000以上のスターを集めている人気なOSSで、コミュニティが大きく開発も活発に行われている。
@@ -36,7 +39,7 @@ PluginはServiceやRouteに紐づけて、それらによってルーティン�
 PluginはKong社やコミュニティによって[いろいろなもの](https://docs.konghq.com/hub/)が提供されていて、[ベーシック認証](https://docs.konghq.com/hub/kong-inc/basic-auth/)、[LDAP連携](https://docs.konghq.com/hub/kong-inc/ldap-auth/)、[アクセス制御リスト](https://docs.konghq.com/hub/kong-inc/acl/)、[Prometheus連携](https://docs.konghq.com/hub/kong-inc/prometheus/)、[レスポンスの加工](https://docs.konghq.com/hub/kong-inc/response-transformer/)など、いろいろできる。
 PluginもLua製なので、既存のPluginをちょっと改造ということもできるし、新しいのを作るのも割と簡単にできるようになっている。
 
-## Kongの設定管理における課題
+# Kongの設定管理における課題
 基本的にKongの設定は、Admin APIで投げるとそれがPostgreSQLなどのDBに保存されるというもの。
 Admin APIは典型的なREST APIで、命令的で逐次的な設定手順になるので、宣言的な操作がもてはやされる昨今、ちょっと古臭く見える。
 Kongをマイクロサービスのひとつとして見た時、ステートフルなPostgreSQLがくっついてくるのも運用の手間が増えそうで嫌な感じ。
@@ -47,7 +50,7 @@ Kongをマイクロサービスのひとつとして見た時、ステートフ�
 
 KongをDBレスモードで動かせばDBMSは要らないけど、初期設定を起動時に設定ファイルから読み込んで、設定を変えるときには設定ファイルを書き換えてリロードさせるという手順になるので、それはそれで使いづらい。
 
-## IngressとIngress Controller
+# IngressとIngress Controller
 その課題解消に役立つKubernetesの機能が[Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/)と[Ingress Controller](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/)というもの。
 
 IngressはL7のロードバランサとか、HTTP(S)のアクセスポイントを公開する仕組みとか、ふんわりした表現で説明されることが多いけど、端的に言ってしまえば、リバースプロキシの設定を表現するKubernetesリソースだ。
@@ -63,7 +66,7 @@ Ingress Controllerをデプロイし、Ingressリソースを登録すること�
 つまり、外部のロードバランサとそれを制御する何らかのコントローラがなければ使えないServiceで、普通はGKEとかのマネージドKubernetes環境でしか使わない。
 ([MetalLB](https://metallb.universe.tf/)とか使えばオンプレでも使えるけど。)
 
-## Kong Ingress Controller
+# Kong Ingress Controller
 Ingress Controllerには、リバースプロキシの実装ごとに[さまざまな実装がある](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/#additional-controllers)。
 そのひとつがKong Ingress Controller。
 Kong Ingress Controllerはリバースプロキシとして(当然ながら)Kongを使うもので、そのコントローラサービスはIngressリソースの定義を読んで、その通りの設定になるようにKongのAdmin APIを呼ぶ。
@@ -79,7 +82,7 @@ Kong Ingress ControllerはKongIngress、KongPluginなどのCustom Resource(詳�
 
 Kong Ingress Controllerを使えば、Kongの設定をKubernetesのAPIで宣言的にできるようになるので、前述した課題が解消できる。
 
-## Kong Ingress Controllerが扱うKubernetesリソース
+# Kong Ingress Controllerが扱うKubernetesリソース
 Kong Ingress Controllerが扱うIngressリソースやCustom Resourceについてまとめる。
 
 * Ingress
@@ -106,7 +109,7 @@ Kong Ingress Controllerが扱うIngressリソースやCustom Resourceについ�
 他にKongConsumerとKongCredentialという認証情報を扱うCustom Resourceがある。
 けど今回使わないので詳細は省略する。
 
-## Kong Ingress Controllerの公式マニフェストを読む
+# Kong Ingress Controllerの公式マニフェストを読む
 [Kong Ingress Controller 0.6.2の公式のマニフェスト](https://github.com/Kong/kubernetes-ingress-controller/blob/0.6.2/deploy/single/all-in-one-dbless.yaml)には以下のリソースが定義されている。
 
 * Namespace
@@ -148,7 +151,7 @@ Kong Ingress Controllerが扱うIngressリソースやCustom Resourceについ�
 
 なんだかたくさんのリソースがあるけど、ひとつひとつ見ていくとそれほど難しくない。
 
-## Kong Ingress Controllerのデプロイ
+# Kong Ingress Controllerのデプロイ
 いざデプロイ。
 
 デプロイ先のKubernetesクラスタは[最近CentOS 8でつくったやつ](https://www.kaitoy.xyz/2019/12/05/k8s-on-centos8-with-containerd/)で、Kubernetesのバージョンは1.16.0。
@@ -198,7 +201,7 @@ Kongのアクセスポートを外部公開するNodePortのポート番号は`3
 
 修正したマニフェストを`kubectl apply`したら普通に起動した。
 
-```shell-session
+```console
 $ kubectl get po -n kong
 NAME                            READY   STATUS    RESTARTS   AGE
 ingress-kong-65fffbc76b-gvqmf   2/2     Running   2          10m
@@ -209,7 +212,7 @@ Kongコンテナが立ち上がらないとコントローラサービスが起�
 Kongのアクセスポート(i.e. NodePort)に向かってGETリクエストを送ると、まだKongに何のルーティング設定もないので`no Route matched with those values`というメッセージが返ってくる。
 (KubernetesノードのIPアドレスは`192.168.1.200`)
 
-```shell-session
+```console
 $ NODE_IP=192.168.1.200
 $ curl http://${NODE_IP}:30080/
 {"message":"no Route matched with those values"}
@@ -217,7 +220,7 @@ $ curl http://${NODE_IP}:30080/
 
 ともあれ、Kongが動いていることは確認できた。
 
-## Ingressを試す
+# Ingressを試す
 Ingressを登録して、Kongの設定を作ってみる。
 
 まず、Kongのルーティング先のバックエンドサービスとして、リクエストの内容を返してくるだけのechoサービスをデプロイするため、以下のマニフェストを`kubectl apply`する。
@@ -257,7 +260,7 @@ spec:
 
 確認。
 
-```shell-session
+```console
 $ kubectl get po
 NAME                    READY   STATUS    RESTARTS   AGE
 echo-588b79f67f-xxn56   1/1     Running   0          14h
@@ -267,7 +270,7 @@ echo-588b79f67f-xxn56   1/1     Running   0          14h
 このPodは`echo`というService(以下echoサービス)に紐づいていて、そのServiceのポートは8080に設定されている。
 試しにそのServiceにGETリクエストを投げてみる。
 
-```shell-session
+```console
 $ curl http://$(kubectl get svc echo -o jsonpath='{.spec.clusterIP}'):8080
 
 
@@ -322,7 +325,7 @@ spec:
 これでKongにechoサービスを表すServiceとそこへのRouteが設定されたはず。
 Kongコンテナの`8444`ポートでAdmin APIが公開されていて、そこにアクセスするとKongの設定が見れるので見てみる。
 
-```shell-session
+```console
 $ kubectl exec -it -n kong ingress-kong-65fffbc76b-gvqmf -c proxy -- curl -k https://localhost:8444/routes | jq
 {
   "next": null,
@@ -384,7 +387,7 @@ $ kubectl exec -it -n kong ingress-kong-65fffbc76b-gvqmf -c proxy -- curl -k htt
 
 KongのNodePortの`/echo`にアクセスしてみる。
 
-```shell-session
+```console
 $ NODE_IP=192.168.1.200
 $ curl http://${NODE_IP}:30080/echo
 
@@ -428,7 +431,7 @@ Kong経由でechoサービスにアクセスできた模様。
 これは、KongのRouteの`strip_path`設定がデフォルトでtrueなので、`curl`で送ったURLパスの`/echo`をKongが切り捨てるため。
 この設定はIngressでは変えられないので、そういうのを変えたい場合にはKongIngressが必要になる。
 
-## KongIngressを試す
+# KongIngressを試す
 前節で作ったRouteの`strip_path`をfalseにすべく、KongIngressを作ってみる。
 まず以下のKongIngressのマニフェストを`kubectl apply`する。
 
@@ -443,14 +446,14 @@ route:
 
 で、このKongIngressを前節で作ったIngressに紐づけるため、次のコマンドで`configuration.konghq.com`というannotationをIngressに追加する。
 
-```shell-session
+```console
 $ kubectl patch ingress echo -p '{"metadata":{"annotations":{"configuration.konghq.com":"keep-path"}}}'
 ```
 
 これでKongのRoute設定の`strip_path`が変わったはず。
 見てみる。
 
-```shell-session
+```console
 $ kubectl exec -it -n kong ingress-kong-65fffbc76b-gvqmf -c proxy -- curl -k https://localhost:8444/routes | jq '.data[].strip_path'
 false
 ```
@@ -458,7 +461,7 @@ false
 ちゃんとfalseになっている。
 KongのNodePortの`/echo`にアクセスしてみる。
 
-```shell-session
+```console
 $ NODE_IP=192.168.1.200
 $ curl -s http://${NODE_IP}:30080/echo | grep 'real path'
         real path=/echo
@@ -466,7 +469,7 @@ $ curl -s http://${NODE_IP}:30080/echo | grep 'real path'
 
 送ったURLパスが切り捨てられず、`real path`が`/echo`になるようになった。
 
-## KongPluginを試す
+# KongPluginを試す
 最後にKongPluginで[Correlation IDプラグイン](https://docs.konghq.com/hub/kong-inc/correlation-id/)を有効にしてみる。
 これは、適用されたリクエストのHTTPヘッダに、リクエスト毎にユニークなUUIDを付けるプラグイン。
 プラグインを有効にする対象としてServiceやRouteなどを指定することができるが、今回は全リクエストに適用するglobalにする。
@@ -490,7 +493,7 @@ plugin: correlation-id
 これでKongにPlugin設定が作られるはず。
 KongのAdmin APIでPluginを取得して確認してみる。
 
-```shell-session
+```console
 $ kubectl exec -it -n kong ingress-kong-65fffbc76b-gvqmf -c proxy -- curl -k https://localhost:8444/plugins | jq
 {
   "next": null,
@@ -524,7 +527,7 @@ $ kubectl exec -it -n kong ingress-kong-65fffbc76b-gvqmf -c proxy -- curl -k htt
 できてた。
 実際にリクエストを送ってみる。
 
-```shell-session
+```console
 $ NODE_IP=192.168.1.200
 $ curl -s http://${NODE_IP}:30080/echo
 
@@ -564,7 +567,7 @@ Request Body:
 
 `Request Headers`に`global-request-id`としてUUIDが挿入されるようになった。
 
-## まとめ
+# まとめ
 KubernetesクラスタにKong Ingress Controllerをデプロイし、Ingress、KongIngress、KongPluginによりKongの設定ができることを確認した。
 
 Kong Ingress Controllerを使えば、Kongの設定をKubernetesのAPIで宣言的に管理できるようになり、いろいろ捗りそう。

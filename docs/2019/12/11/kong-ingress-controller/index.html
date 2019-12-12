@@ -68,7 +68,7 @@
 </script>
 
 
-
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"> 
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -76,6 +76,14 @@
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js"></script>
+
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/languages/yaml.min.js"></script> 
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
 
 
 
@@ -203,8 +211,6 @@
         <aside>
             <nav id="TableOfContents">
 <ul>
-<li>
-<ul>
 <li><a href="#kongとは">Kongとは</a></li>
 <li><a href="#kongの設定管理における課題">Kongの設定管理における課題</a></li>
 <li><a href="#ingressとingress-controller">IngressとIngress Controller</a></li>
@@ -216,7 +222,6 @@
 <li><a href="#kongingressを試す">KongIngressを試す</a></li>
 <li><a href="#kongpluginを試す">KongPluginを試す</a></li>
 <li><a href="#まとめ">まとめ</a></li>
-</ul></li>
 </ul>
 </nav>
         </aside>
@@ -242,7 +247,7 @@
 </script>
 
 
-<h2 id="kongとは">Kongとは</h2>
+<h1 id="kongとは">Kongとは</h1>
 
 <p>KongはKong社によるOSSのリバースプロキシ。
 (Enterprise版もある。)
@@ -263,7 +268,7 @@ PluginはServiceやRouteに紐づけて、それらによってルーティン�
 <p>PluginはKong社やコミュニティによって<a href="https://docs.konghq.com/hub/">いろいろなもの</a>が提供されていて、<a href="https://docs.konghq.com/hub/kong-inc/basic-auth/">ベーシック認証</a>、<a href="https://docs.konghq.com/hub/kong-inc/ldap-auth/">LDAP連携</a>、<a href="https://docs.konghq.com/hub/kong-inc/acl/">アクセス制御リスト</a>、<a href="https://docs.konghq.com/hub/kong-inc/prometheus/">Prometheus連携</a>、<a href="https://docs.konghq.com/hub/kong-inc/response-transformer/">レスポンスの加工</a>など、いろいろできる。
 PluginもLua製なので、既存のPluginをちょっと改造ということもできるし、新しいのを作るのも割と簡単にできるようになっている。</p>
 
-<h2 id="kongの設定管理における課題">Kongの設定管理における課題</h2>
+<h1 id="kongの設定管理における課題">Kongの設定管理における課題</h1>
 
 <p>基本的にKongの設定は、Admin APIで投げるとそれがPostgreSQLなどのDBに保存されるというもの。
 Admin APIは典型的なREST APIで、命令的で逐次的な設定手順になるので、宣言的な操作がもてはやされる昨今、ちょっと古臭く見える。
@@ -275,7 +280,7 @@ Kongをマイクロサービスのひとつとして見た時、ステートフ�
 
 <p>KongをDBレスモードで動かせばDBMSは要らないけど、初期設定を起動時に設定ファイルから読み込んで、設定を変えるときには設定ファイルを書き換えてリロードさせるという手順になるので、それはそれで使いづらい。</p>
 
-<h2 id="ingressとingress-controller">IngressとIngress Controller</h2>
+<h1 id="ingressとingress-controller">IngressとIngress Controller</h1>
 
 <p>その課題解消に役立つKubernetesの機能が<a href="https://kubernetes.io/docs/concepts/services-networking/ingress/">Ingress</a>と<a href="https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/">Ingress Controller</a>というもの。</p>
 
@@ -292,7 +297,7 @@ Ingress Controllerをデプロイし、Ingressリソースを登録すること�
 つまり、外部のロードバランサとそれを制御する何らかのコントローラがなければ使えないServiceで、普通はGKEとかのマネージドKubernetes環境でしか使わない。
 (<a href="https://metallb.universe.tf/">MetalLB</a>とか使えばオンプレでも使えるけど。)</p>
 
-<h2 id="kong-ingress-controller">Kong Ingress Controller</h2>
+<h1 id="kong-ingress-controller">Kong Ingress Controller</h1>
 
 <p>Ingress Controllerには、リバースプロキシの実装ごとに<a href="https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/#additional-controllers">さまざまな実装がある</a>。
 そのひとつがKong Ingress Controller。
@@ -309,7 +314,7 @@ Kong Ingress ControllerはKongIngress、KongPluginなどのCustom Resource(詳�
 
 <p>Kong Ingress Controllerを使えば、Kongの設定をKubernetesのAPIで宣言的にできるようになるので、前述した課題が解消できる。</p>
 
-<h2 id="kong-ingress-controllerが扱うkubernetesリソース">Kong Ingress Controllerが扱うKubernetesリソース</h2>
+<h1 id="kong-ingress-controllerが扱うkubernetesリソース">Kong Ingress Controllerが扱うKubernetesリソース</h1>
 
 <p>Kong Ingress Controllerが扱うIngressリソースやCustom Resourceについてまとめる。</p>
 
@@ -339,7 +344,7 @@ IngressかServiceのannotationに<code>plugins.konghq.com</code>というキー�
 <p>他にKongConsumerとKongCredentialという認証情報を扱うCustom Resourceがある。
 けど今回使わないので詳細は省略する。</p>
 
-<h2 id="kong-ingress-controllerの公式マニフェストを読む">Kong Ingress Controllerの公式マニフェストを読む</h2>
+<h1 id="kong-ingress-controllerの公式マニフェストを読む">Kong Ingress Controllerの公式マニフェストを読む</h1>
 
 <p><a href="https://github.com/Kong/kubernetes-ingress-controller/blob/0.6.2/deploy/single/all-in-one-dbless.yaml">Kong Ingress Controller 0.6.2の公式のマニフェスト</a>には以下のリソースが定義されている。</p>
 
@@ -384,7 +389,7 @@ KongはDBレスモードで動かすようになっている。</p></li>
 
 <p>なんだかたくさんのリソースがあるけど、ひとつひとつ見ていくとそれほど難しくない。</p>
 
-<h2 id="kong-ingress-controllerのデプロイ">Kong Ingress Controllerのデプロイ</h2>
+<h1 id="kong-ingress-controllerのデプロイ">Kong Ingress Controllerのデプロイ</h1>
 
 <p>いざデプロイ。</p>
 
@@ -431,19 +436,19 @@ Kong Ingress Controllerは最新版の0.6.2。</p>
 <p>Kongのアクセスポートを外部公開するNodePortのポート番号は<code>30080</code>にしてある。</p>
 
 <p>修正したマニフェストを<code>kubectl apply</code>したら普通に起動した。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ kubectl get po -n kong
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ kubectl get po -n kong
 NAME                            READY   STATUS    RESTARTS   AGE
 ingress-kong-65fffbc76b-gvqmf   2/2     Running   2          10m</code></pre></div>
 <p>Kongコンテナが立ち上がらないとコントローラサービスが起動中に落ちるので、最初数回CrashLoopBackOffするのがちょっとダサい。</p>
 
 <p>Kongのアクセスポート(i.e. NodePort)に向かってGETリクエストを送ると、まだKongに何のルーティング設定もないので<code>no Route matched with those values</code>というメッセージが返ってくる。
 (KubernetesノードのIPアドレスは<code>192.168.1.200</code>)</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ NODE_IP=192.168.1.200
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ NODE_IP=192.168.1.200
 $ curl http://${NODE_IP}:30080/
 {&#34;message&#34;:&#34;no Route matched with those values&#34;}</code></pre></div>
 <p>ともあれ、Kongが動いていることは確認できた。</p>
 
-<h2 id="ingressを試す">Ingressを試す</h2>
+<h1 id="ingressを試す">Ingressを試す</h1>
 
 <p>Ingressを登録して、Kongの設定を作ってみる。</p>
 
@@ -479,13 +484,13 @@ $ curl http://${NODE_IP}:30080/
 </span><span style="color:#666">        </span>ports:<span style="color:#666">
 </span><span style="color:#666">        </span>-<span style="color:#666"> </span>containerPort:<span style="color:#666"> </span><span style="color:#3677a9">8080</span></code></pre></div>
 <p>確認。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ kubectl get po
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ kubectl get po
 NAME                    READY   STATUS    RESTARTS   AGE
 echo-588b79f67f-xxn56   1/1     Running   0          14h</code></pre></div>
 <p>動いた。
 このPodは<code>echo</code>というService(以下echoサービス)に紐づいていて、そのServiceのポートは8080に設定されている。
 試しにそのServiceにGETリクエストを投げてみる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ curl http://$(kubectl get svc echo -o jsonpath=&#39;{.spec.clusterIP}&#39;):8080
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ curl http://$(kubectl get svc echo -o jsonpath=&#39;{.spec.clusterIP}&#39;):8080
 
 
 Hostname: echo-588b79f67f-xxn56
@@ -532,7 +537,7 @@ Request Body:
 </span><span style="color:#666">          </span>servicePort:<span style="color:#666"> </span><span style="color:#3677a9">8080</span></code></pre></div>
 <p>これでKongにechoサービスを表すServiceとそこへのRouteが設定されたはず。
 Kongコンテナの<code>8444</code>ポートでAdmin APIが公開されていて、そこにアクセスするとKongの設定が見れるので見てみる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ kubectl exec -it -n kong ingress-kong-65fffbc76b-gvqmf -c proxy -- curl -k https://localhost:8444/routes | jq
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ kubectl exec -it -n kong ingress-kong-65fffbc76b-gvqmf -c proxy -- curl -k https://localhost:8444/routes | jq
 {
   &#34;next&#34;: null,
   &#34;data&#34;: [
@@ -590,7 +595,7 @@ $ kubectl exec -it -n kong ingress-kong-65fffbc76b-gvqmf -c proxy -- curl -k htt
 <p>できてた。</p>
 
 <p>KongのNodePortの<code>/echo</code>にアクセスしてみる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ NODE_IP=192.168.1.200
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ NODE_IP=192.168.1.200
 $ curl http://${NODE_IP}:30080/echo
 
 
@@ -631,7 +636,7 @@ Request Body:
 これは、KongのRouteの<code>strip_path</code>設定がデフォルトでtrueなので、<code>curl</code>で送ったURLパスの<code>/echo</code>をKongが切り捨てるため。
 この設定はIngressでは変えられないので、そういうのを変えたい場合にはKongIngressが必要になる。</p>
 
-<h2 id="kongingressを試す">KongIngressを試す</h2>
+<h1 id="kongingressを試す">KongIngressを試す</h1>
 
 <p>前節で作ったRouteの<code>strip_path</code>をfalseにすべく、KongIngressを作ってみる。
 まず以下のKongIngressのマニフェストを<code>kubectl apply</code>する。</p>
@@ -642,19 +647,19 @@ Request Body:
 </span><span style="color:#666"></span>route:<span style="color:#666">
 </span><span style="color:#666">  </span>strip_path:<span style="color:#666"> </span><span style="color:#6ab825;font-weight:bold">false</span></code></pre></div>
 <p>で、このKongIngressを前節で作ったIngressに紐づけるため、次のコマンドで<code>configuration.konghq.com</code>というannotationをIngressに追加する。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ kubectl patch ingress echo -p &#39;{&#34;metadata&#34;:{&#34;annotations&#34;:{&#34;configuration.konghq.com&#34;:&#34;keep-path&#34;}}}&#39;</code></pre></div>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ kubectl patch ingress echo -p &#39;{&#34;metadata&#34;:{&#34;annotations&#34;:{&#34;configuration.konghq.com&#34;:&#34;keep-path&#34;}}}&#39;</code></pre></div>
 <p>これでKongのRoute設定の<code>strip_path</code>が変わったはず。
 見てみる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ kubectl exec -it -n kong ingress-kong-65fffbc76b-gvqmf -c proxy -- curl -k https://localhost:8444/routes | jq &#39;.data[].strip_path&#39;
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ kubectl exec -it -n kong ingress-kong-65fffbc76b-gvqmf -c proxy -- curl -k https://localhost:8444/routes | jq &#39;.data[].strip_path&#39;
 false</code></pre></div>
 <p>ちゃんとfalseになっている。
 KongのNodePortの<code>/echo</code>にアクセスしてみる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ NODE_IP=192.168.1.200
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ NODE_IP=192.168.1.200
 $ curl -s http://${NODE_IP}:30080/echo | grep &#39;real path&#39;
         real path=/echo</code></pre></div>
 <p>送ったURLパスが切り捨てられず、<code>real path</code>が<code>/echo</code>になるようになった。</p>
 
-<h2 id="kongpluginを試す">KongPluginを試す</h2>
+<h1 id="kongpluginを試す">KongPluginを試す</h1>
 
 <p>最後にKongPluginで<a href="https://docs.konghq.com/hub/kong-inc/correlation-id/">Correlation IDプラグイン</a>を有効にしてみる。
 これは、適用されたリクエストのHTTPヘッダに、リクエスト毎にユニークなUUIDを付けるプラグイン。
@@ -674,7 +679,7 @@ $ curl -s http://${NODE_IP}:30080/echo | grep &#39;real path&#39;
 
 <p>これでKongにPlugin設定が作られるはず。
 KongのAdmin APIでPluginを取得して確認してみる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ kubectl exec -it -n kong ingress-kong-65fffbc76b-gvqmf -c proxy -- curl -k https://localhost:8444/plugins | jq
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ kubectl exec -it -n kong ingress-kong-65fffbc76b-gvqmf -c proxy -- curl -k https://localhost:8444/plugins | jq
 {
   &#34;next&#34;: null,
   &#34;data&#34;: [
@@ -704,7 +709,7 @@ KongのAdmin APIでPluginを取得して確認してみる。</p>
 }</code></pre></div>
 <p>できてた。
 実際にリクエストを送ってみる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell-session" data-lang="shell-session">$ NODE_IP=192.168.1.200
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ NODE_IP=192.168.1.200
 $ curl -s http://${NODE_IP}:30080/echo
 
 
@@ -741,7 +746,7 @@ Request Body:
         -no body in request-</code></pre></div>
 <p><code>Request Headers</code>に<code>global-request-id</code>としてUUIDが挿入されるようになった。</p>
 
-<h2 id="まとめ">まとめ</h2>
+<h1 id="まとめ">まとめ</h1>
 
 <p>KubernetesクラスタにKong Ingress Controllerをデプロイし、Ingress、KongIngress、KongPluginによりKongの設定ができることを確認した。</p>
 
