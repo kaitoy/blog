@@ -6,6 +6,10 @@ cover = "goslings-spring.png"
 slug = "goslings-development-memo3-spring-boot-exception"
 tags = [ "goslings", "spring", "spring-boot" ]
 title = "Goslings開発メモ - その3: Spring Boot続続編 (例外処理)"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 「[Goslings開発メモ - その2: Spring Boot続編 (DI)](https://www.kaitoy.xyz/2017/01/10/goslings-development-memo2-spring-boot-di/)」の続き。

@@ -6,6 +6,9 @@ cover = "kubernetes.png"
 slug = "hello-skaffold"
 tags = ["docker", "kubernetes", "skaffold", "minikube"]
 title = "Skaffoldを触ってみた"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 
@@ -91,7 +94,7 @@ Skaffoldのリポジトリをcloneして、コマンドプロンプト開いて�
 
 エラーで終わった。
 
-```plain
+```
 [31mERRO[0m[0047] run: running skaffold steps: starting watch on file C:\Users\kaitoy\Desktop\skaffold\examples\getting-started\Dockerfile: adding watch for C:\Users\kaitoy\Desktop\skaffold\examples\getting-started\Dockerfile: The parameter is incorrect.
 ```
 
@@ -118,13 +121,13 @@ kubectlのLinux版バイナリもダウンロードしてPATHに入れたら準�
 
 `examples/getting-started`にcdして`skaffold dev`したらエラー。
 
-```plain
+```
 ERRO[0001] run: getting skaffold config: getting k8s client: Error creating kubeConfig: invalid configuration: no configuration has been provided
 ```
 
 ちょっと調べたら、kubectlのコンテクストが設定されていないのがだめっぽい。
 
-```tch
+```console
 # kubectl config current-context
 error: current-context is not set
 ```
@@ -157,7 +160,7 @@ users:
 
 再度`skaffold dev`したら違うエラー。
 
-```plain
+```
 WARN[0002] run: build: build step: running build: read auth configs: docker config: opening docker config: open /home/docker/.docker/config.json: no such file or directory
 ```
 
@@ -166,7 +169,7 @@ SkaffoldのREADME.mdにはminikube使うならDocker image registry要らない�
 
 色々あって、ファイルがあればいいだけっぽいので、以下で良し。
 
-```tch
+```console
 # echo {} > ~/.docker/config.json
 ```
 

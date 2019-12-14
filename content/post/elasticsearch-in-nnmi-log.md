@@ -6,6 +6,9 @@ cover = "logo-elastic.png"
 slug = "elasticsearch-in-nnmi-log"
 tags = [ "elasticsearch", "logstash", "filebeat" ]
 title = "Elasticsearch、Logstash、Filebeat、elasticsearch-headでログを見てみた"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 
@@ -95,7 +98,7 @@ NNMiは無料のコミュニティエディションのv10.00をVMのCentOSに�
 
 ログはだいたい以下の様な一行のもの。
 
-```plain
+```
 2017-03-15 19:09:55.896 INFO  [com.hp.ov.nms.spi.common.deployment.deployers.ExtensionServicesDeployer] (Thread-2) Deploying arris-device
 2017-03-15 19:09:55.923 WARNING [com.hp.ov.nms.topo.spi.server.concurrent.NmsTimerTaskImpl] (NmsWorkManager Scheduler) Skipping task execution because previous execution has not completed: com.hp.ov.nnm.im.NnmIntegrationModule$EnablerTask@3abdac77
 2017-03-15 19:09:56.120 INFO  [com.hp.ov.nms.disco.spi.DiscoExtensionNotificationListener] (Thread-2) Disco deployed mapping rules: META-INF/disco/rules/cards/ArrisCard.xml
@@ -103,7 +106,7 @@ NNMiは無料のコミュニティエディションのv10.00をVMのCentOSに�
 
 たまに複数行のものがある。
 
-```plain
+```
 2017-03-15 19:13:30.872 INFO  [com.hp.ov.nms.trapd.narrowfilter.NarrowTrapAnalysis] (pool-1-thread-18)
 ***** Hosted Object Trap Rate Report *****
 Hosted object trap storm detection and suppression stage started: Wed Mar 15, 2017 19:09:00.746 PM.

@@ -68,7 +68,7 @@
 </script>
 
 
-
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"> 
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -76,6 +76,14 @@
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js"></script>
+
+    
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
 
 
 
@@ -381,7 +389,8 @@ Dockerfileはとりあえず<a href="https://www.kaitoy.xyz/2016/07/11/windows_c
 <h2 id="nano-serverでsystem-net-webclient使えない問題">Nano ServerでSystem.Net.WebClient使えない問題</h2>
 
 <p>このDockerfileでビルドしたら、<a href="https://chocolatey.org/">Chocolatey</a>のダウンロード・インストールスクリプトを実行する<code>RUN powershell .\install.ps1</code>のステップで<code>System.Net.WebClient</code>が見つからないというエラー。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">new-object : Cannot find type [System.Net.WebClient]: verify that the assembly
+
+<pre><code>new-object : Cannot find type [System.Net.WebClient]: verify that the assembly
 containing this type is loaded.
 At C:\pcap4j\install.ps1:84 char:17
 +   $downloader = new-object System.Net.WebClient
@@ -389,7 +398,9 @@ At C:\pcap4j\install.ps1:84 char:17
     + CategoryInfo          : InvalidType: (:) [New-Object], PSArgumentExcepti
    on
     + FullyQualifiedErrorId : TypeNotFound,Microsoft.PowerShell.Commands.NewOb
-   jectCommand</code></pre></div>
+   jectCommand
+</code></pre>
+
 <p>Nano Serverに入っているPowerShellは<a href="https://technet.microsoft.com/en-us/windows-server-docs/compute/nano-server/powershell-on-nano-server">Core Editionなる機能限定版</a>で、System.Net.WebClientだけでなく、<a href="http://serverfault.com/questions/788949/download-a-file-with-powershell-on-nano-server">WebアクセスのためのAPIがいろいろ欠けているもよう</a>。</p>
 
 <h2 id="hyper-v-containersでserver-core使えない問題">Hyper-V ContainersでServer Core使えない問題</h2>
@@ -397,7 +408,10 @@ At C:\pcap4j\install.ps1:84 char:17
 <p>Nano Serverめんどくさそうなので、Server Coreをpullする。</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">PS C:\Windows\system32<span style="color:#999;font-style:italic">&gt;docker pull microsoft/windowsservercore</span></code></pre></div>
 <p>Dockerfileの<code>FROM</code>を<code>microsoft/windowsservercore</code>に書き変えてビルドしたら、最初の<code>RUN</code>で以下のエラー。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">container 4bc8d8d38993426fa7a3c76e4aabbe6a229cbd025754723ff396aec04ffbfa1d encountered an error during Start failed in Win32: The operating system of the container does not match the operating system of the host. (0xc0370101)</code></pre></div>
+
+<pre><code>container 4bc8d8d38993426fa7a3c76e4aabbe6a229cbd025754723ff396aec04ffbfa1d encountered an error during Start failed in Win32: The operating system of the container does not match the operating system of the host. (0xc0370101)
+</code></pre>
+
 <p>調べたら、Hyper-V Containersはまだ<a href="https://social.msdn.microsoft.com/Forums/en-US/9eea93ac-18de-4953-bc7c-efd76a155526/are-microsoftwindowsservercore-containers-working-on-windows-10?forum=windowscontainers">Nano Serverしかサポートしていない</a>ようだ。</p>
 
 <h2 id="unzip難しい問題">unzip難しい問題</h2>
@@ -440,7 +454,10 @@ At C:\pcap4j\install.ps1:84 char:17
 <p>(因みにこの時点で、<code>PATH</code>を設定するのに<code>GetEnvironmentVariable</code>と<code>SetEnvironmentVariable</code>がうまく使えない問題を乗り越えている。<code>Cannot find an overload for &quot;GetEnvironmentVariable&quot; and the argument count: &quot;2&quot;.</code>というエラーが出て、PowerShell Desktop Editionのものと仕様がちょっと違うようだったので、<code>GetEnvironmentVariable</code>も<code>SetEnvironmentVariable</code>も使わないようにした。)</p>
 
 <p>このDockerfileでビルドしたら、<code>RUN npcap.exe /S</code>で以下のエラー。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">The subsystem needed to support the image type is not present.</code></pre></div>
+
+<pre><code>The subsystem needed to support the image type is not present.
+</code></pre>
+
 <p>このsubsystemというのはどうも<a href="https://ja.wikipedia.org/wiki/WOW64">WoW64</a>を指しているようで、<a href="https://blogs.technet.microsoft.com/windowsserver/2016/02/10/exploring-nano-server-for-windows-server-2016/">Nano ServerがWoW64をサポートしていない</a>のにnpcap.exeが32bitバイナリであることが問題のようであった。</p>
 
 <p>ついでに<a href="https://ja.wikipedia.org/wiki/Microsoft_Windows_Installer">MSI</a>もサポートされていないことがわかった。大丈夫かこれ。</p>

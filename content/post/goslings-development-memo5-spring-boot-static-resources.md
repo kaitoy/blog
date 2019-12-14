@@ -6,6 +6,10 @@ cover = "goslings-spring.png"
 slug = "goslings-development-memo5-spring-boot-static-resources"
 tags = [ "goslings", "spring", "spring-boot" ]
 title = "Goslings開発メモ - その5: Spring Boot最終編 (静的リソース処理)"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 「[Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)](https://www.kaitoy.xyz/2017/01/17/goslings-development-memo4-spring-boot-logging/)」の続き。

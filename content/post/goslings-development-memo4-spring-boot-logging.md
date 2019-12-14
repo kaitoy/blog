@@ -6,6 +6,9 @@ cover = "goslings-spring.png"
 slug = "goslings-development-memo4-spring-boot-logging"
 tags = [ "goslings", "spring", "spring-boot" ]
 title = "Goslings開発メモ - その4: Spring Boot続続続編 (ロギング)"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 

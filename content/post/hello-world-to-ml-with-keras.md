@@ -6,6 +6,9 @@ cover = "keras.png"
 slug = "hello-world-to-ml-with-keras"
 tags = ["machine learning", "deep learning", "neural network", "tensorflow", "keras"]
 title = "機械学習のHello World: MNISTの分類モデルをKerasで作ってみた"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 

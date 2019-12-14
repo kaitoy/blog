@@ -68,7 +68,7 @@
 </script>
 
 
-
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"> 
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -76,6 +76,14 @@
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js"></script>
+
+    
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
 
 
 
@@ -288,7 +296,10 @@ minikubeは<a href="https://www.kaitoy.xyz/2017/10/10/goslings-on-kubernetes/">�
 <p>Skaffoldのリポジトリをcloneして、コマンドプロンプト開いて、<code>examples/getting-started</code>にcdして、以下のコマンドを実行。</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">&gt; skaffold dev</code></pre></div>
 <p>エラーで終わった。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">[31mERRO[0m[0047] run: running skaffold steps: starting watch on file C:\Users\kaitoy\Desktop\skaffold\examples\getting-started\Dockerfile: adding watch for C:\Users\kaitoy\Desktop\skaffold\examples\getting-started\Dockerfile: The parameter is incorrect.</code></pre></div>
+
+<pre><code>[31mERRO[0m[0047] run: running skaffold steps: starting watch on file C:\Users\kaitoy\Desktop\skaffold\examples\getting-started\Dockerfile: adding watch for C:\Users\kaitoy\Desktop\skaffold\examples\getting-started\Dockerfile: The parameter is incorrect.
+</code></pre>
+
 <p>MinGW(Git Bash)でやっても同じ結果。
 <a href="https://github.com/GoogleCloudPlatform/skaffold/issues/287">Issuesに登録されているやつ</a>と同じ問題っぽい。</p>
 
@@ -311,9 +322,12 @@ minikubeのVMがLinux(Boot2Docker)なので、そこで動かす。
 <p><br></p>
 
 <p><code>examples/getting-started</code>にcdして<code>skaffold dev</code>したらエラー。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">ERRO[0001] run: getting skaffold config: getting k8s client: Error creating kubeConfig: invalid configuration: no configuration has been provided</code></pre></div>
+
+<pre><code>ERRO[0001] run: getting skaffold config: getting k8s client: Error creating kubeConfig: invalid configuration: no configuration has been provided
+</code></pre>
+
 <p>ちょっと調べたら、kubectlのコンテクストが設定されていないのがだめっぽい。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># kubectl config current-context
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># kubectl config current-context
 error: current-context is not set</code></pre></div>
 <p>Windows上のkubectlに設定されたコンテクストを参考に、以下の内容を<code>~/.kube/config</code>に。</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>v1<span style="color:#666">
@@ -338,12 +352,15 @@ error: current-context is not set</code></pre></div>
 <p><br></p>
 
 <p>再度<code>skaffold dev</code>したら違うエラー。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">WARN[0002] run: build: build step: running build: read auth configs: docker config: opening docker config: open /home/docker/.docker/config.json: no such file or directory</code></pre></div>
+
+<pre><code>WARN[0002] run: build: build step: running build: read auth configs: docker config: opening docker config: open /home/docker/.docker/config.json: no such file or directory
+</code></pre>
+
 <p><code>.docker/config.json</code>は<code>docker login</code>すると生成されるものらしい。
 SkaffoldのREADME.mdにはminikube使うならDocker image registry要らないって書いてあるんだけど…</p>
 
 <p>色々あって、ファイルがあればいいだけっぽいので、以下で良し。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch"># echo {} &gt; ~/.docker/config.json</code></pre></div>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># echo {} &gt; ~/.docker/config.json</code></pre></div>
 <p><br></p>
 
 <p>再度<code>skaffold dev</code>したら動いた。

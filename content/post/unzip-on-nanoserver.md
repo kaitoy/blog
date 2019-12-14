@@ -6,6 +6,9 @@ cover = "nanoserver.png"
 slug = "unzip-on-nanoserver"
 tags = ["windows", "nanoserver", "docker"]
 title = "Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 
@@ -51,7 +54,7 @@ Major  Minor  Build  Revision
 
 したらこのエラー。
 
-```plain
+```
 Add-Type : Cannot find path 'C:\System.IO.Compression.FileSystem.dll' because it does not exist.
 At
 C:\windows\system32\windowspowershell\v1.0\Modules\Microsoft.PowerShell.Archive\Microsoft.PowerShell.Archive.psm1:914

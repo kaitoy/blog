@@ -6,6 +6,9 @@ cover = "kubernetes_goslings.png"
 slug = "goslings-on-kubernetes-cont"
 tags = [ "goslings", "kubernetes", "minikube", "docker" ]
 title = "Kubernetesのチュートリアルをやる"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 
@@ -500,7 +503,7 @@ Kubernetes Basicsでやってた手法は一番上の命令的コマンド。
 
 命令的オブジェクト設定は以下のような形でやる。
 
-```tch
+```console
 $ kubectl create -f nginx.yaml
 $ kubectl delete -f nginx.yaml -f redis.yaml
 $ kubectl replace -f nginx.yaml
@@ -517,7 +520,7 @@ $ kubectl replace -f nginx.yaml
 
 宣言的オブジェクト設定は以下のような形でやる。
 
-```tch
+```console
 $ kubectl apply -R -f configs/
 ```
 

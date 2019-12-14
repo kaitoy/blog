@@ -6,6 +6,10 @@ cover = "Google-search-console.png"
 slug = "change-subdomain"
 tags = [ "blog", "github", "hugo", "seo" ]
 title = "ブログアドレスを変更したときにやったこと"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 このブログの閲覧数がそこそこの規模になってきたので、[Google AdSense](https://www.google.co.jp/adsense/start/)で小遣い稼ぎを始めようとしたら、最近サブドメインが`www`じゃないとできないようになったようだったので、サブドメインを`tbd`から`www`に変更した話。

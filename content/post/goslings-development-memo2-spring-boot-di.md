@@ -6,6 +6,10 @@ cover = "goslings-spring.png"
 slug = "goslings-development-memo2-spring-boot-di"
 tags = [ "goslings", "spring", "spring-boot" ]
 title = "Goslings開発メモ - その2: Spring Boot続編 (DI)"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 「[Goslings開発メモ - その1: Spring Boot編](https://www.kaitoy.xyz/2017/01/03/goslings-development-memo1-spring-boot/)」の続き。

@@ -6,6 +6,9 @@ cover = "kubernetes.png"
 slug = "retry-dashboard-on-k8s-cluster-by-kubeadm"
 tags = ["kubernetes", "docker"]
 title = "Kubernetes 1.8のアクセス制御について。あとDashboard。"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 

@@ -6,6 +6,9 @@ cover = "servicenow-webdriverio.png"
 slug = "webdriverio-chrome"
 tags = [ "servicenow", "selenium", "webdriverio", "docker" ]
 title = "WebdriverIOとChromeのヘッドレスモードで自動ブラウザテストするDockerイメージ: webdriverio-chrome"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 
@@ -31,7 +34,7 @@ title = "WebdriverIOとChromeのヘッドレスモードで自動ブラウザテ
 
 次に、そのDockerを使って、WebdriverIO環境のベースにするAlpine Linuxをpullする。
 
-```tch
+```console
 $ docker pull alpine:edge
 ```
 
@@ -47,7 +50,7 @@ pullするタグをedgeにしたのはそのため。
 
 で、起動。
 
-```tch
+```console
 $ docker run -it alpine:edge sh
 ```
 
@@ -56,7 +59,7 @@ $ docker run -it alpine:edge sh
 Alpine Linux独自のパッケージマネージャーである[apk](https://wiki.alpinelinux.org/wiki/Alpine_Linux_package_management)を使う。
 
 コンテナ内:
-```tch
+```console
 # apk add --update chromium chromium-chromedriver
 # chromium-browser -version
 Chromium 59.0.3071.115
@@ -71,7 +74,7 @@ Chromium 59.0.3071.115
 (コンテナの権限不足回避には他に、`docker run`に`--privileged`や`--cap-add=SYS_ADMIN`付ける[方法がある](https://github.com/yukinying/chrome-headless-browser-docker)。)
 
 コンテナ内:
-```tch
+```console
 # chromium-browser --headless --no-sandbox --disable-gpu https://example.com/
 [0811/145902.894023:WARNING:dns_config_service_posix.cc(326)] Failed to read DnsConfig.
 [0811/145902.906137:FATAL:udev_loader.cc(38)] Check failed: false.
@@ -95,7 +98,7 @@ Calling _exit(1). Core file will not be generated.
 深く考えずにそれに従うことにする。
 
 コンテナ内:
-```tch
+```console
 # apk add udev ttf-freefont
 ```
 
@@ -105,7 +108,7 @@ Calling _exit(1). Core file will not be generated.
 (ちゃんと動いてるか分かりやすくするために`--dump-dom`も付けた。)
 
 コンテナ内:
-```tch
+```console
 # chromium-browser --headless --no-sandbox --disable-gpu --dump-dom https://example.com/
 [0811/151303.698629:WARNING:dns_config_service_posix.cc(326)] Failed to read DnsConfig.
 <body>
@@ -129,7 +132,7 @@ Calling _exit(1). Core file will not be generated.
 `--screenshot`オプションで。
 
 コンテナ内:
-```tch
+```console
 # chromium-browser --headless --no-sandbox --disable-gpu --screenshot https://www.google.co.jp/
 ```
 
@@ -143,7 +146,7 @@ Calling _exit(1). Core file will not be generated.
 (因みにNotoはNo Tofuの略で、文字化けした時に出る、クエスチョンマークが乗った豆腐の撲滅を目指して開発されたフォント。)
 
 コンテナ内:
-```tch
+```console
 # apk add curl
 # cd /tmp/
 # curl https://noto-website.storage.googleapis.com/pkgs/NotoSansCJKjp-hinte
@@ -163,7 +166,7 @@ Calling _exit(1). Core file will not be generated.
 [Yarn](https://yarnpkg.com/lang/en/)でインストールして[Node.js](https://nodejs.org/ja/)で動かすので、まずそれらをapkで入れる。
 
 コンテナ内:
-```tch
+```console
 # apk add nodejs yarn
 ```
 
@@ -172,7 +175,7 @@ Calling _exit(1). Core file will not be generated.
 で、プロジェクトを作ってWebdriverIOを追加。
 
 コンテナ内:
-```tch
+```console
 # mkdir /root/webdriverio-chrome
 # cd /root/webdriverio-chrome
 # yarn init
@@ -205,7 +208,7 @@ package.json:
 [WDIOのconfigコマンド](http://webdriver.io/guide/testrunner/gettingstarted.html)でWDIO Configuration Helperを起動し、設定ファイルwdio.conf.jsをインタラクティブに生成する。
 
 コンテナ内:
-```tch
+```console
 # yarn test -- config
 yarn test v0.27.5
 $ wdio "config"
@@ -251,7 +254,7 @@ ATFは今のところ使うつもりはないけど。
 でないとWDIOがnpm installしようとして、npmが無くて以下のようなエラーになるので。
 (apkでは、npmは[nodejs](https://pkgs.alpinelinux.org/package/edge/main/x86_64/nodejs)パッケージに入ってなくて、[nodejs-npm](https://pkgs.alpinelinux.org/package/edge/main/x86_64/nodejs-npm)に入ってる。)
 
-```plain
+```
 Installing wdio packages:
 /root/webdriverio-chrome/node_modules/webdriverio/build/lib/cli.js:278
                     throw err;
@@ -318,13 +321,13 @@ exports.config = {
 WDIO Configuration Helperの`Shall I install …`でnoした分は自分でインストールしておく。
 
 コンテナ内:
-```tch
+```console
 # yarn add wdio-jasmine-framework wdio-spec-reporter wdio-selenium-standalone-service selenium-standalone --dev
 ```
 
 したらエラー。
 
-```plain
+```
 error /root/webdriverio-chrome/node_modules/fibers: Command failed.
 Exit code: 127
 Command: sh
@@ -344,14 +347,14 @@ info Visit https://yarnpkg.com/en/docs/cli/add for documentation about this comm
 では追加する。
 
 コンテナ内:
-```tch
+```console
 # yarn global add node-gyp
 ```
 
 node-gypのREADME.md読むと、PythonとmakeとC/C++コンパイラが要るとあるので、それも入れる。
 
 コンテナ内:
-```tch
+```console
 # apk add python make gcc g++
 ```
 
@@ -360,7 +363,7 @@ node-gypのREADME.md読むと、PythonとmakeとC/C++コンパイラが要ると
 で、再度、
 
 コンテナ内:
-```tch
+```console
 # yarn add wdio-jasmine-framework wdio-spec-reporter wdio-selenium-standalone-service selenium-standalone --dev
 ```
 
@@ -371,7 +374,7 @@ node-gypのREADME.md読むと、PythonとmakeとC/C++コンパイラが要ると
 あと、Selenium ServerがJavaで動くので、Javaも入れておく。
 
 コンテナ内:
-```tch
+```console
 # apk add openjdk8
 ```
 
@@ -419,7 +422,7 @@ describe('Sample', function() {
 これを`~/webdriverio-chrome/test/specs/`において、
 
 コンテナ内:
-```tch
+```console
 # yarn test
 ```
 
@@ -427,7 +430,7 @@ describe('Sample', function() {
 したらエラー。
 
 コンテナ内:
-```tch
+```console
 # yarn test
 yarn test v0.27.5
 $ wdio
@@ -447,7 +450,7 @@ error Command failed with exit code 1.
 試しに手動でSelenium Serverを起動してみる。
 
 コンテナ内:
-```tch
+```console
 # node ./node_modules/.bin/selenium-standalone start
 ```
 
@@ -456,7 +459,7 @@ error Command failed with exit code 1.
 ChromeDriverはどうか。
 
 コンテナ内:
-```tch
+```console
 # /usr/bin/chromedriver
 ```
 
@@ -527,7 +530,7 @@ selenium-standaloneがこれを実行しようとしたせいでテスト実行�
 これで、テスト実行前に、以下みたいにproxy-login-automatorを起動しておけばいい。
 
 コンテナ内:
-```tch
+```console
 # node node_modules/.bin/proxy-login-automator.js -local_port 18080 -remote_host proxy.com -remote_port 8080 -usr userId -pwd password`
 ```
 

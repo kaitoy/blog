@@ -6,6 +6,9 @@ cover = "nanoserver.png"
 slug = "pcap4j-on-hyper-v-container-on-win10"
 tags = ["windows", "nanoserver", "pcap4j", "docker"]
 title = "Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 
@@ -197,7 +200,7 @@ RUN echo @echo off > bin\capture.bat && `
 ## Nano ServerでSystem.Net.WebClient使えない問題
 このDockerfileでビルドしたら、[Chocolatey](https://chocolatey.org/)のダウンロード・インストールスクリプトを実行する`RUN powershell .\install.ps1`のステップで`System.Net.WebClient`が見つからないというエラー。
 
-```plain
+```
 new-object : Cannot find type [System.Net.WebClient]: verify that the assembly
 containing this type is loaded.
 At C:\pcap4j\install.ps1:84 char:17
@@ -220,7 +223,7 @@ PS C:\Windows\system32>docker pull microsoft/windowsservercore
 
 Dockerfileの`FROM`を`microsoft/windowsservercore`に書き変えてビルドしたら、最初の`RUN`で以下のエラー。
 
-```plain
+```
 container 4bc8d8d38993426fa7a3c76e4aabbe6a229cbd025754723ff396aec04ffbfa1d encountered an error during Start failed in Win32: The operating system of the container does not match the operating system of the host. (0xc0370101)
 ```
 
@@ -269,7 +272,7 @@ RUN npcap.exe /S
 
 このDockerfileでビルドしたら、`RUN npcap.exe /S`で以下のエラー。
 
-```plain
+```
 The subsystem needed to support the image type is not present.
 ```
 

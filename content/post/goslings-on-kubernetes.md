@@ -6,6 +6,9 @@ cover = "kubernetes_goslings.png"
 slug = "goslings-on-kubernetes"
 tags = [ "goslings", "kubernetes", "minikube", "docker" ]
 title = "Kubernetes 1.8が出たので、Minikubeを触ってみる"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 
@@ -211,7 +214,7 @@ The following Kubernetes versions are available:
 ということで、kubectlの1.7.5をインストールする。
 kubectlもGoで書かれているので、以下のアドレスからWindowsバイナリをダウンロードしてPathの通ったところに置くだけ。
 
-```plain
+```
 https://storage.googleapis.com/kubernetes-release/release/v1.7.5/bin/windows/amd64/kubectl.exe
 ```
 
@@ -303,7 +306,7 @@ kubectl: Correctly Configured: pointing to minikube-vm at 192.168.99.100
 `minikube logs`でログを見てみると、エラーがたくさん出ていた。
 以下のようなログが最初のほうに出てたので、認証系がだめで、サービス間でやり取りができなかったんじゃないかという感じ。
 
-```plain
+```
 Oct 04 23:08:43 minikube localkube[2783]: W1004 23:08:43.599396    2783 authentication.go:368] AnonymousAuth is not allowed with the AllowAll authorizer.  Resetting AnonymousAuth to false. You should use a different authorizer
 ```
 

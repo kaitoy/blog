@@ -7,6 +7,10 @@ slug = "git-rebase"
 tags = [ "git", "vcs" ]
 title = "git rebaseを図解する"
 slide = true
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 [この記事](https://www.kaitoy.xyz/2015/12/27/git-repository/)を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、[__Git__](https://git-scm.com/)の `git rebase` というコマンドについて説明する。
@@ -28,7 +32,7 @@ Gitの最後の関門と言えよう。
 
 コマンドの基本形は次のようなものだ。
 
-```tch
+```console
 $ git rebase --onto master dev bugfix
 ```
 
@@ -63,7 +67,7 @@ $ git rebase --onto master dev bugfix
 上記コマンドで`bugfix`のところを省略すると、ステップ1の`checkout`が省略される。
 言い換えると、上記コマンドは次の二つのコマンドに分解できる。
 
-```tch
+```console
 $ git checkout bugfix
 $ git rebase --onto master dev
 ```
@@ -71,7 +75,7 @@ $ git rebase --onto master dev
 さらに、`--onto master`を省略すると、ステップ3の`reset`先が変わり、`dev`になる。
 このときのコマンドの形は、
 
-```tch
+```console
 $ git rebase dev
 ```
 

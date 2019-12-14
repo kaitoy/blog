@@ -6,6 +6,9 @@ cover = "pcap4jlogo.png"
 slug = "pcap4j-doesnt-work-on-bow-yet"
 tags = [ "bow", "windows", "pcap4j" ]
 title = "Currently Pcap4J Doesn't Work on Bash on Windows"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 
@@ -36,14 +39,14 @@ Linx DESKTOP-41L0NMU 3.4.0+ #1 PREEMPT Thu Aug 1 17:06:05 CST 2013 x86_64 x86_64
 
 In the bash, I ran the following commands to install Pcap4J dependencies:
 
-```bash
-sudo apt-get update
-sudo apt-get install openjdk-7-jdk libpcap-dev
+```console
+$ sudo apt-get update
+$ sudo apt-get install openjdk-7-jdk libpcap-dev
 ```
 
 Then, I executed Pcap4J (org.pcap4j.sample.GetNextPacketEx) and got an error as follows:
 
-```bash
+```console
 $ java -cp pcap4j-core-1.6.2.jar:pcap4j-packetfactory-static-1.6.2.jar:pcap4j-sample-1.6.2.jar:jna-4.2.1.jar:slf4j-api-1.7.12.jar:logback-classic-1.0.0.jar:logback-core-1.0.0.jar org.pcap4j.sample.GetNextPacketEx
 org.pcap4j.sample.GetNextPacketEx.count: 5
 org.pcap4j.sample.GetNextPacketEx.readTimeout: 10
