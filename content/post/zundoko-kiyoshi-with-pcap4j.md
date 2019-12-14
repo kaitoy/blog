@@ -6,6 +6,9 @@ cover = "pcap4jlogo.png"
 slug = "zundoko-kiyoshi-with-pcap4j"
 tags = [ "pcap4j", "zundoko" ]
 title = " ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = ["plaintext"]
 
 +++
 
@@ -32,7 +35,7 @@ title = " ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装し
 
 クライアント/サーバ間でやり取りするメッセージ(Zundokoパケット)のフォーマットは下図。
 
-```plain
+```plaintext
  0                            15                              31
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |             zundoko (null-terminated string)                  |
@@ -53,7 +56,7 @@ EtherTypeは[IANA](http://www.iana.org/assignments/ieee-802-numbers/ieee-802-num
 
 因みに、Ethernetヘッダを加えた、クライアント/サーバ間でやり取りする完全なパケットは以下の様になる。(プリアンブルとかは除く。)
 
-```plain
+```plaintext
  0                            15
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |    Dst Hardware Address       |

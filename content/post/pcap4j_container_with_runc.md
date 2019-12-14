@@ -6,6 +6,10 @@ cover = "runc.png"
 tags = [ "pcap4j", "runc", "docker" ]
 title = "Pcap4J container with runC"
 slug = "pcap4j-container-with-runc"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 I tried to run a [Pcap4J container](https://registry.hub.docker.com/u/kaitoy/pcap4j/) with [runC](https://runc.io/).
@@ -47,7 +51,7 @@ It seems currently it supports only Linux but Windows support is in the roadmap.
 * Step by step
     1. Install runC
 
-        ```tch
+        ```console
         # mkdir -p $GOPATH/src/github.com/opencontainers
         # cd $GOPATH/src/github.com/opencontainers
         # git clone https://github.com/opencontainers/runc
@@ -57,19 +61,19 @@ It seems currently it supports only Linux but Windows support is in the roadmap.
 
     2. Pull the Pcap4J docker image.
 
-        ```tch
+        ```console
         # docker pull kaitoy/pcap4j
         ```
 
     3. Create a container from the image.
 
-        ```tch
+        ```console
         # docker run -d --name pcap4j-tmp kaitoy/pcap4j:latest /bin/bash
         ```
 
     4. Export the container's file system.
 
-        ```tch
+        ```console
         # mkdir /tmp/pcap4j-test
         # cd /tmp/pcap4j-test
         # docker export pcap4j-tmp > pcap4j.tar
@@ -80,7 +84,7 @@ It seems currently it supports only Linux but Windows support is in the roadmap.
 
     5. Generate a container config file.
 
-        ```tch
+        ```console
         # runc spec | sed -e 's/rootfs/\/root\/Desktop\/pcap4j-container/' -e 's/"readonly": true/"readonly": false/' -e 's/"NET_BIND_SERVICE"/"NET_BIND_SERVICE","NET_ADMIN","NET_RAW"/' > config.json
         ```
 
@@ -88,7 +92,7 @@ It seems currently it supports only Linux but Windows support is in the roadmap.
 
     6. Run a container.
 
-        ```tch
+        ```console
         # runc
         ```
 
@@ -98,14 +102,14 @@ It seems currently it supports only Linux but Windows support is in the roadmap.
         So, I used it to capture packets.
 
         In container:
-        ```tch
+        ```console
         # ifconfig lo up
         ```
 
     8. Generate a script to ping localhost and run it background.
 
         In container:
-        ```tch
+        ```console
         # cd /usr/local/src/pcap4j/bin
         # echo ping 127.0.0.1 \> /dev/null > pinger.sh
         # chmod +x pinger.sh
@@ -117,7 +121,7 @@ It seems currently it supports only Linux but Windows support is in the roadmap.
     9. Generate a script to start capturing packets with Pcap4J and run it.
 
         In container:
-        ```tch
+        ```console
         # cat runGetNextPacket.sh | sed -e 's/eth0/lo/' > foo.sh
         # chmod +x foo.sh
         # ./foo.sh

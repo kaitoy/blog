@@ -6,6 +6,10 @@ cover = "pcap4jlogo.png"
 slug = "step-by-step-to-add-a-protocol-support-to-pcap4j-2"
 tags = [ "pcap4j" ]
 title = "Step by Step to Add a Protocol Support to Pcap4J (Part 2)"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = ["plaintext"]
+
 +++
 
 This is continued from [the part 1](https://www.kaitoy.xyz/2015/08/09/step-by-step-to-add-a-protocol-support-to-pcap4j-1/).
@@ -22,7 +26,7 @@ We should create such classes instead of using a primitive types in some cases.
 
 In the case of DHCP, its __flags__ field includes two fields in itself as like below:
 
-```plain
+```plaintext
                     1 1 1 1 1 1
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+

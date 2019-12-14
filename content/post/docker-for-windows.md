@@ -6,6 +6,9 @@ cover = "docker.png"
 slug = "docker-for-windows"
 tags = [ "docker", " windows" ]
 title = "Docker for Windowsがコレジャナかった"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 

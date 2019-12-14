@@ -6,6 +6,10 @@ cover = "pcap4jlogo.png"
 slug = "another-way-to-capture-lan-packets-with-pcap4j-container"
 tags = [ "docker", "pcap4j" ]
 title = "Another way to capture LAN packets with pcap4j container"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 2 days ago, I posted an article [How to capture packets on a local network with Pcap4J container](https://www.kaitoy.xyz/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/).
@@ -35,7 +39,7 @@ In the same environment with [2 days ago](https://www.kaitoy.xyz/2015/07/25/how-
 
 1. Start a Pcap4J container with the network mode set to host
 
-      ```tch
+      ```console
       # docker run --name pcap4j-hostnet --net=host kaitoy/pcap4j:latest
       ```
 

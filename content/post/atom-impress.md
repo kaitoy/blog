@@ -6,6 +6,10 @@ cover = "atom_editor_logo.svg.png"
 slug = "atom-impress"
 tags = [ "atom", "impress.js" ]
 title = "impress.jsでのプレゼン資料作成をサポートするAtomパッケージ - impress"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 [__Atom__](https://atom.io/)のパッケージを作った話。
@@ -93,7 +97,7 @@ impressパッケージは、新規資料プロジェクトの雛形生成機能�
 これを使ってimpressパッケージを構成しなおしてみたら件の問題が解決した。
 因みにやりかたは、impressパッケージプロジェクトのルートに`impress.js`というフォルダを作った後、以下のコマンドを実行しただけ。
 
-```tch
+```console
 # git subtree add --prefix impress.js git@github.com:kaitoy/impress.js.git master --squash
 ```
 

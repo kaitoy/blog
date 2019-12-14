@@ -6,6 +6,10 @@ cover = "teamedio_logo.svg"
 slug = "seven-virtues-of-good-object"
 tags = [ "yegor256", "oop" ]
 title = "よいオブジェクトの七つの美徳"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 このエントリでは、Yegor Bugayenkoによる記事、[Seven Virtues of a Good Object](http://www.yegor256.com/2014/11/20/seven-virtues-of-good-object.html)を紹介する。

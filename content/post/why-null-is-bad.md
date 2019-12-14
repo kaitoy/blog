@@ -6,6 +6,10 @@ cover = "teamedio_logo.svg"
 slug = "why-null-is-bad"
 tags = [ "yegor256", "oop" ]
 title = "なぜNullはダメか"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 このエントリでは、Yegor Bugayenkoによる記事、[Why NULL is Bad?](http://www.yegor256.com/2014/05/13/why-null-is-bad.html)を紹介する。

@@ -6,6 +6,9 @@ cover = "pcap4j-kotlin.png"
 slug = "pcap4j-in-kotlin"
 tags = [ "pcap4j", "kotlin", "jvm language" ]
 title = "Pcap4J in Kotlin"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 

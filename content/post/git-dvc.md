@@ -7,6 +7,10 @@ slug = "git-dvc"
 tags = [ "git", "vcs" ]
 title = "Gitの分散バージョン管理の仕組み"
 slide = true
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = ["plaintext"]
+
 +++
 
 このエントリでは、[この記事](https://www.kaitoy.xyz/2015/12/27/git-repository/)を読んだ、またはGitのオブジェクトモデルを理解していることを前提に、[__Git__](https://git-scm.com/)の分散バージョン管理の仕組みについて説明する。
@@ -183,7 +187,7 @@ Gitには、`git commit --amend`、[`git rebase`](https://www.kaitoy.xyz/2015/12
 (※1: と[O'Reillyの蝙蝠本](https://www.oreilly.co.jp/books/9784873114408/)には書いてあったが、これは[Git 1.6.xまでの話らしい](https://github.com/git/git/blob/master/Documentation/RelNotes/1.7.0.txt)。
 今はチェックアウトされたブランチにはデフォルトでプッシュできないので、この節に書いた問題は基本的に起きない。
 2.6.3で試したら以下のエラーになった。
-```plain
+```plaintext
 remote: error: refusing to update checked out branch: refs/heads/master
 remote: error: By default, updating the current branch in a non-bare repository
 remote: error: is denied, because it will make the index and work tree inconsistent

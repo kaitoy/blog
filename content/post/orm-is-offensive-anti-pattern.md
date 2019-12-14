@@ -6,6 +6,10 @@ cover = "teamedio_logo.svg"
 slug = "orm-is-offensive-anti-pattern"
 tags = [ "yegor256", "oop", "orm" ]
 title = "ORMは不快なアンチパターン"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = ["plaintext"]
+
 +++
 
 このエントリでは、Yegor Bugayenkoによる記事、[ORM Is an Offensive Anti-Pattern](http://www.yegor256.com/2014/12/01/orm-offensive-anti-pattern.html)を紹介する。
@@ -30,7 +34,7 @@ Javaでは、ORMデザインは[JPA](https://ja.wikipedia.org/wiki/Java_Persiste
 
 最初に、ORMがどう動くかを見てみよう。JavaとPostgreSQLとHibernateを使い、データベースに`post` (訳注: ブログポスト、ブログの記事)という単一のテーブルがあるとする。
 
-```plain
+```plaintext
 +-----+------------+--------------------------+
 | id  | date       | title                    |
 +-----+------------+--------------------------+

@@ -6,6 +6,10 @@ cover = "teamedio_logo.svg"
 slug = "getters-setters-evil"
 tags = [ "yegor256", "oop" ]
 title = "Getter/Setterは悪だ。以上。"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 このエントリでは、Yegor Bugayenkoによる記事、[Getters/Setters. Evil. Period.](http://www.yegor256.com/2014/09/16/getters-and-setters-are-evil.html)を紹介する。

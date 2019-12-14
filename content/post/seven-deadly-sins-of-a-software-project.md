@@ -6,6 +6,10 @@ cover = "teamedio_logo.svg"
 slug = "seven-deadly-sins-of-a-software-project"
 tags = [ "yegor256" ]
 title = "ソフトウェアプロジェクトの7つの大罪"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 このエントリでは、Yegor Bugayenkoによる記事、[Seven Deadly Sins of a Software Project](http://www.yegor256.com/2015/06/08/deadly-sins-software-project.html)を紹介する。
@@ -104,7 +108,7 @@ Javaのライブラリであれば`.jar`ファイルにパッケージングさ�
 
 理想的な解決策はこの手順を自動化し、コマンドラインから単一のコマンドで実行できるようにすることだ。
 
-```cmd
+```console
 $ ./release.sh
 ...
 DONE (took 98.7s)

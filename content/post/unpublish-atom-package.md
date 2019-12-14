@@ -6,6 +6,10 @@ cover = "atom_editor_logo.svg.png"
 slug = "unpublish-atom-package"
 tags = [ "atom" ]
 title = "Atomパッケージをアンパブリッシュする"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = ["plaintext"]
+
 +++
 
 [__Atom__](https://atom.io/)のパッケージをリリースすることをパブシッシュというが、リリースを取り消すことをアンパブリッシュという。
@@ -33,7 +37,7 @@ title = "Atomパッケージをアンパブリッシュする"
 # 注意すべき点 1: Git Bashでアンパブリッシュするとエラー
 [Git for Windows](https://git-for-windows.github.io/)のGit Bash上で、Windows版Atomに付属するapmで`apm unpublish`を実行すると以下のエラーが出る。
 
-```plain
+```plaintext
 Error: EINVAL, invalid argument
     at new Socket (net.js:157:18)
     at process.stdin (node.js:693:19)
@@ -67,7 +71,7 @@ Error: EINVAL, invalid argument
 
 3, 4 のタグ作成も取り消したいのであれば、
 
-```tch
+```console
 $ git tag -d v0.1.0
 $ git push origin :v0.1.0
 ```
@@ -76,7 +80,7 @@ $ git push origin :v0.1.0
 
 また、2 のpackage.jsonのversion変更を取り消したいのであれば、`git log`で`Prepare 0.1.0 release`みたいなログのコミットをさがしてそのハッシュをメモり、
 
-```tch
+```console
 $ git revert <ハッシュ>
 ```
 

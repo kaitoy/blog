@@ -6,6 +6,9 @@ cover = "pcap4jlogo.png"
 slug = "step-by-step-to-add-a-protocol-support-to-pcap4j-1"
 tags = [ "pcap4j" ]
 title = "Step by Step to Add a Protocol Support to Pcap4J (Part 1)"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = ["plaintext"]
 
 +++
 
@@ -18,7 +21,7 @@ I will show how to add a protocol support to [Pcap4J](https://github.com/kaitoy/
 # Named Number Class
 First of all, we need to know the packet format. It's explained in [RFC 2131](http://www.ietf.org/rfc/rfc2131.txt) as below:
 
-```plain
+```plaintext
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+

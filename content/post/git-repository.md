@@ -7,6 +7,10 @@ slug = "git-repository"
 tags = [ "git", "vcs" ]
 title = "Gitのリポジトリの中身をなるべく正確に理解する"
 slide = true
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = ["plaintext"]
+
 +++
 
 このエントリでは、[__Git__](https://git-scm.com/)の基本的な使い方は理解している前提で、そのリポジトリの構造をなるべく正確に説明する。
@@ -64,7 +68,7 @@ Gitのリポジトリは、プロジェクトをクローンしたときとか�
 `git cat-file -p <SHA1ハッシュ>`でオブジェクトのコンテンツを見れるので、いくつか見てみると面白い。
 たとえばコミットオブジェクトは以下の様になっている。
 
-```tch
+```console
 $ git cat-file -p d444447526f91a97f2edeefc65d4f58e8e006d78
 tree 5d43dfbb8dd89018b9a383d6b9f663166e3cf9f9
 parent adcf8b197c6c156860dc8aa66ccb9a0c0a3bebb6
@@ -84,7 +88,7 @@ committer kaitoy <kaitoy@pcap4j.org> 1480004891 -0700
 
 例として、`https://github.com/kaitoy/japanese-word-selection`をクローンして上記コマンドを実行すると以下の様に表示される。
 
-```tch
+```console
 $ git ls-files --stage
 100644 ade14b9196fcad03cd0177c25ec1c31000ecf86a 0       .gitignore
 100644 bbbbcd3415597bac39b0314f5c708d90684161fc 0       CHANGES.md
@@ -209,7 +213,7 @@ Gitのブランチを作るというのは単に参照を追加するだけだ�
 上図に見られるように、`HEAD`は通常ブランチを指す。
 実際に`.git/HEAD`ファイルの中身を見ると以下の様になっていて、確かにブランチを指していることが見て取れる。
 
-```plain
+```plaintext
 ref: refs/heads/master
 ```
 

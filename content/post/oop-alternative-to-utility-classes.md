@@ -6,6 +6,10 @@ cover = "teamedio_logo.svg"
 slug = "oop-alternative-to-utility-classes"
 tags = [ "yegor256", "oop" ]
 title = "オブジェクト指向プログラミングにおいてユーティリティクラスに代わるもの"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 このエントリでは、Yegor Bugayenkoによる記事、[OOP Alternative to Utility Classes](http://www.yegor256.com/2014/05/05/oop-alternative-to-utility-classes.html)を紹介する。

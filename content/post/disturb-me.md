@@ -6,6 +6,10 @@ cover = "atom_editor_logo.svg.png"
 slug = "disturb-me"
 tags = ["atom", "disturb-me"]
 title = "Atomウィンドウ内で画像を動かすパッケージ - disturb-me"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 [__Atom__](https://atom.io/)のパッケージを見ていて、便利なパッケージが沢山あるなぁと思いつつ、真面目なパッケージばかりでもつまらないので、たまには不真面目で役に立たないパッケージがあってもいいかと思って作ったパッケージの話。

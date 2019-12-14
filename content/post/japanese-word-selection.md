@@ -6,6 +6,10 @@ cover = "atom_editor_logo.svg.png"
 slug = "japanese-word-selection"
 tags = [ "atom", "japanese-word-selection" ]
 title = "Atomパッケージを作る - ワード境界を日本語対応させるパッケージ: japanese-word-selection"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 このブログは[__Atom__](https://atom.io/)というGitHubが開発したテキストエディタを使って書いている。
@@ -260,7 +264,7 @@ Atomは[MVVM](https://ja.wikipedia.org/wiki/Model_View_ViewModel)な感じの設
     私の場合、初回だったので、コマンド実行中にatom.ioのアカウントを作ってAPIトークンを取得する手順があった。
     以下がコマンドのメッセージ。
 
-    ```tch
+    ```console
     # cd japanese-word-selection
     # apm publish minor
     Welcome to Atom!

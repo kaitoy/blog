@@ -6,6 +6,10 @@ cover = "pcap4jlogo.png"
 slug = "pcap-ng-support-in-pcap4j"
 tags = [ "pcap4j" ]
 title = "pcap-ng support in Pcap4J"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = ["plaintext"]
+
 +++
 
 Sometimes I receive inquiries about support for __pcap-ng__ files in [__Pcap4J__](https://github.com/kaitoy/pcap4j).
@@ -83,7 +87,7 @@ public static void main(String args[]) throws PcapNativeException, NotOpenExcept
 
 If you try to read a pcap-ng file using Pcap4J with a native library which doesn't support pcap-ng format, Pcap4J throws [`PcapNativeException`](http://kaitoy.github.io/pcap4j/javadoc/latest/en/org/pcap4j/core/PcapNativeException.html) as follows:
 
-```plain
+```plaintext
 Exception in thread "main" org.pcap4j.core.PcapNativeException: bad dump file format
         at org.pcap4j.core.Pcaps.openOffline(Pcaps.java:203)
         at Test.main(Test.java:16)

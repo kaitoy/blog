@@ -70,7 +70,7 @@ TP4でバグに阻まれて挫折した、Windows ContainersでPcap4Jを使っ�
 </script>
 
 
-
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"> 
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -78,6 +78,14 @@ TP4でバグに阻まれて挫折した、Windows ContainersでPcap4Jを使っ�
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js"></script>
+
+    
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
 
 
 
@@ -465,8 +473,11 @@ TP4のときはなかったような。</p>
 <h2 id="ビルドエラー-hcsshim-importlayer-failed-in-win32-the-filename-or-extension-is-too-long-0xce">ビルドエラー: hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce)</h2>
 
 <p><code>choco install</code>の後で以下のエラーが出た。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain">re-exec error: exit status 1: output: time=&#34;2016-07-09T19:57:22-07:00&#34; level=error msg=&#34;hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce) layerId=\\\\?\\C:\\ProgramData\\docker\\windowsfilter\\103de6bf1358c506510ad67990f09ec3e2f10f9e866e846df5a88c04f5edf7aa flavour=1 folder=C:\\Windows\\TEMP\\hcs719016711&#34;
-hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce) layerId=\\?\C:\ProgramData\docker\windowsfilter\103de6bf1358c506510ad67990f09ec3e2f10f9e866e846df5a88c04f5edf7aa flavour=1 folder=C:\Windows\TEMP\hcs719016711</code></pre></div>
+
+<pre><code>re-exec error: exit status 1: output: time=&quot;2016-07-09T19:57:22-07:00&quot; level=error msg=&quot;hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce) layerId=\\\\?\\C:\\ProgramData\\docker\\windowsfilter\\103de6bf1358c506510ad67990f09ec3e2f10f9e866e846df5a88c04f5edf7aa flavour=1 folder=C:\\Windows\\TEMP\\hcs719016711&quot;
+hcsshim::ImportLayer failed in Win32: The filename or extension is too long. (0xce) layerId=\\?\C:\ProgramData\docker\windowsfilter\103de6bf1358c506510ad67990f09ec3e2f10f9e866e846df5a88c04f5edf7aa flavour=1 folder=C:\Windows\TEMP\hcs719016711
+</code></pre>
+
 <p>調べたら<a href="https://github.com/docker/docker/issues/22449">DockerのGitHub Issues</a>に登録されていた。
 ここのコメントを参考に以下のコマンドでコンテナホストのアップデートをしたら発生しなくなった。</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-powershell" data-lang="powershell"><span style="color:#24909d">Invoke-WebRequest</span> https<span style="color:#a61717;background-color:#e3d2d2">:</span>//aka.ms/tp5/<span style="color:#24909d">Update-Container</span>-Host -OutFile <span style="color:#24909d">update-containerhost</span>.ps1
@@ -521,7 +532,10 @@ java.io.IOException: No NIF to capture.
 <h2 id="userコマンド">USERコマンド</h2>
 
 <p>Dockerfileのコマンドに<a href="https://docs.docker.com/engine/reference/builder/#/user">USER</a>というのがあるので、<code>USER Administrator</code>をDockerfileの末尾に追加してみたら以下のエラー。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cmd" data-lang="cmd">The daemon on this platform does not support the command &#39;user&#39;</code></pre></div>
+
+<pre><code>The daemon on this platform does not support the command 'user'
+</code></pre>
+
 <h2 id="userオプション">&ndash;userオプション</h2>
 
 <p>docker runコマンドに<a href="https://docs.docker.com/compose/reference/run/">&ndash;user</a>というオプションがあるので以下のように試してみたところ、オプションは無視されて<code>ContainerAdministrator</code>でコンテナに入った。</p>
