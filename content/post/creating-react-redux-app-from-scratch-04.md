@@ -6,6 +6,10 @@ cover = "css-modules-postcss-stylelint-styled-components.png"
 slug = "creating-react-redux-app-from-scratch-04"
 tags = ["react", "frontend", "postcss", "stylelint", "css-modules", "styled-components"]
 title = "React + Reduxアプリケーションプロジェクトのテンプレートを作る ― その4: CSS ModulesとPostCSSとstylelintとstyled-components"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 [React](https://reactjs.org/)と[Redux](https://redux.js.org/)を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
@@ -64,8 +68,8 @@ CSSの処理にはPostCSSを使うとして、プロジェクトに以下のパ�
 * stylelint-config-standard: stylelintのルール設定集。
 * stylelint-config-prettier: [Prettier](https://prettier.io/)が施すコード整形とコンフリクトするルールを無効にするstylelintルール設定集。
 
-```tch
-yarn add -D css-loader style-loader postcss-loader postcss-preset-env autoprefixer postcss-flexbugs-fixes cssnano stylelint stylelint-config-standard stylelint-config-prettier
+```console
+$ yarn add -D css-loader style-loader postcss-loader postcss-preset-env autoprefixer postcss-flexbugs-fixes cssnano stylelint stylelint-config-standard stylelint-config-prettier
 ```
 
 <br>
@@ -176,8 +180,8 @@ ReactによるUIコンポーネントごとにCSSモジュールを作り、コ�
 CSS Modulesを使うには、[babel-plugin-react-css-modules](https://github.com/gajus/babel-plugin-react-css-modules)というBabelのプラグインをセットアップすればいい。
 まずはそれをプロジェクトにインストールする。
 
-```tch
-yarn add -D babel-plugin-react-css-modules
+```console
+$ yarn add -D babel-plugin-react-css-modules
 ```
 
 <br>
@@ -271,9 +275,9 @@ styled-componentsを使う場合、プロジェクトに追加する必要があ
 * styled-components: styled-components本体。
 * [babel-plugin-styled-components](https://github.com/styled-components/babel-plugin-styled-components): styled-componentsのサポートを強化するBabelプラグイン。実際には必須ではないけど、バンドルサイズを削減出来たり、SSRしやすくなったりする。ベンダプレフィックスの付与とかミニファイもしてくれる。
 
-```tch
-yarn add styled-components
-yarn add -D babel-plugin-styled-components
+```console
+$ yarn add styled-components
+$ yarn add -D babel-plugin-styled-components
 ```
 
 styled-componentsはv4.1.1が入った。
@@ -340,8 +344,8 @@ JavaScriptの構文としては単なる文字列なので、変数を使った�
 * [stylelint-config-styled-components](https://github.com/styled-components/stylelint-config-styled-components): stylelint-processor-styled-componentsを使うのに必要なstylelint設定集。
 * [stylelint-custom-processor-loader](https://github.com/emilgoldsmith/stylelint-custom-processor-loader): stylelintでカスタムプロセッサを使う場合に必要なwebpackのローダ。
 
-```tch
-yarn add -D stylelint stylelint-config-standard stylelint-processor-styled-components stylelint-config-styled-components stylelint-custom-processor-loader
+```console
+$ yarn add -D stylelint stylelint-config-standard stylelint-processor-styled-components stylelint-config-styled-components stylelint-custom-processor-loader
 ```
 
 <br>

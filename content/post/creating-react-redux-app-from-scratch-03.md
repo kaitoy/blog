@@ -6,6 +6,10 @@ cover = "prettier-eslint.png"
 slug = "creating-react-redux-app-from-scratch-03"
 tags = ["react", "frontend", "eslint", "prettier"]
 title = "React + Reduxアプリケーションプロジェクトのテンプレートを作る ― その3: PrettierとESLint"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 [React](https://reactjs.org/)と[Redux](https://redux.js.org/)を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
@@ -48,8 +52,8 @@ JavaScriptの他、JSX、CSS、Markdown、GraphQLのフォーマットにも対�
 
 まずプロジェクトにインストールする。
 
-```tch
-yarn add -D prettier
+```console
+$ yarn add -D prettier
 ```
 
 v1.15.2が入った。
@@ -129,8 +133,8 @@ ESLintを導入するために、以下のパッケージをプロジェクト�
 
 今回は以下のコマンドでインストールした。
 
-```tch
-yarn add -D "eslint@>=1.6.0 <5.0.0" eslint-loader eslint-config-airbnb "eslint-plugin-import@^2.12.0" "eslint-plugin-jsx-a11y@^6.0.3" "eslint-plugin-react@^7.9.1" eslint-config-prettier
+```console
+$ yarn add -D "eslint@>=1.6.0 <5.0.0" eslint-loader eslint-config-airbnb "eslint-plugin-import@^2.12.0" "eslint-plugin-jsx-a11y@^6.0.3" "eslint-plugin-react@^7.9.1" eslint-config-prettier
 ```
 
 ESlintはv4.19.1が入った。

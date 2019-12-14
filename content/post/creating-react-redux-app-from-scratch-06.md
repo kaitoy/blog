@@ -6,6 +6,9 @@ cover = "redux.png"
 slug = "creating-react-redux-app-from-scratch-06"
 tags = ["react", "frontend", "redux"]
 title = "React + Reduxアプリケーションプロジェクトのテンプレートを作る ― その6: Redux"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 
@@ -53,8 +56,8 @@ ReduxとReact Reduxについては、Qiitaの「[たぶんこれが一番分か�
 
 今回はReduxを導入する。
 
-```tch
-yarn add redux
+```console
+$ yarn add redux
 ```
 
 Redux v4.0.1が入った。

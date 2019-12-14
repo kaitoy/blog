@@ -6,6 +6,10 @@ cover = "weave-k8s.png"
 slug = "kubernetes-with-weave-net"
 tags = ["kubernetes", "docker"]
 title = "Kubernetes 1.10のクラスタにWeave Netをデプロイする"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 「[Kubernetes 1.10をスクラッチから全手動で構築](https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/)」で、Kubernetes 1.10のクラスタに、ネットワークプロバイダとして[flannel](https://github.com/coreos/flannel)をデプロイしたけど、flannelは[Network Policy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)をサポートしていないので、代わりに[Weave Net](https://www.weave.works/oss/net/)をデプロイしてみた話。
@@ -55,7 +59,7 @@ Weave NetをKubernetesクラスタにデプロイするためのマニフェス�
 
 WEAVE_MTUはとりあえずデフォルトにしておいて、IPALLOC_RANGEもデフォルトにして、通信暗号化して、CHECKPOINT_DISABLEをtrueにするとすると、マニフェストは以下のようにダウンロードできる。
 
-```tch
+```console
 # curl -fsSLo weave-daemonset.yaml "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')&env.CHECKPOINT_DISABLE=1&password-secret=weave-passwd"
 ```
 
@@ -77,7 +81,7 @@ kube-controller-managerの起動オプションの`--cluster-cidr`はIPALLOC_RAN
 
 password-secretに渡すSecretは以下のように作成できる。
 
-```tch
+```console
 # WEAVE_PASSWORD=$(echo -n 'your_secure_password' | base64)
 # cat <<EOF | kubectl create -f -
 apiVersion: v1
@@ -99,7 +103,7 @@ EOF
 
 以下のコマンドでマニフェストを適用し、Weave Netをデプロイできる。
 
-```tch
+```console
 # kubectl apply -f weave-daemonset.yaml
 ```
 
@@ -110,7 +114,7 @@ EOF
 
 マスタノード上で以下のコマンドを実行すると、Weave NetのAPIを叩いて状態を確認できる。
 
-```tch
+```console
 # curl http://localhost:6784/status
         Version: 2.3.0 (version check update disabled)
 

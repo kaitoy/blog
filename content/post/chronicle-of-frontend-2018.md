@@ -6,6 +6,9 @@ cover = "frontends.png"
 slug = "chronicle-of-frontend-2018"
 tags = ["react", "frontend"]
 title = "Webアプリケーションフロントエンド年代記 - 2018年夏編"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 

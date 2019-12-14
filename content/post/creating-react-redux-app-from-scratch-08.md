@@ -6,6 +6,9 @@ cover = "redux-saga.png"
 slug = "creating-react-redux-app-from-scratch-08"
 tags = ["react", "frontend", "redux", "redux-saga"]
 title = "React + Reduxアプリケーションプロジェクトのテンプレートを作る ― その8: Redux-Saga"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 
@@ -33,8 +36,8 @@ Middlewareの仕組みについては[この記事](https://qiita.com/pirosikick
 Middlewareには例えば、発生したActionの内容と、それによるstateの変化をログに出力する[redux-logger](https://github.com/evgenyrodionov/redux-logger)がある。
 デバッグに有用そうなので入れておく。
 
-```tch
-yarn add redux-logger
+```console
+$ yarn add redux-logger
 ```
 
 v3.0.6が入った。
@@ -78,8 +81,8 @@ action HOGE_BUTTON_CLICKED @ 23:19:35.190
 
 非同期処理をするためのMiddlewareには[redux-thunk](https://github.com/reduxjs/redux-thunk)とか[redux-promise](https://github.com/redux-utilities/redux-promise)とかがあるけど、なかでもGitHubのスター数が一番多い[Redux Saga](https://redux-saga.js.org/)を使うことにする。
 
-```tch
-yarn add redux-saga
+```console
+$ yarn add redux-saga
 ```
 
 v0.16.2が入った。
@@ -123,8 +126,8 @@ REST API呼び出し処理は`call()`で実行するわけだけど、`call()`�
 ざっと調べたところ、[axios](https://www.npmjs.com/package/axios)、[SuperAgent](https://www.npmjs.com/package/superagent)、[r2](https://www.npmjs.com/package/r2)あたりが選択肢。
 最も人気のあるaxiosを使うことにする。
 
-```tch
-yarn add axios
+```console
+$ yarn add axios
 ```
 
 v0.18.0が入った。

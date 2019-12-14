@@ -6,6 +6,10 @@ cover = "kubernetes-ansible.png"
 slug = "build-k8s-cluster-by-ansible"
 tags = ["kubernetes", "docker", "ansible"]
 title = "Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 「[Kubernetes 1.10をスクラッチから全手動で構築](https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/)」、「[Kubernetes 1.10のクラスタにWeave Netをデプロイする](https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/)」、「[Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える](https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/)」のまとめとして、Kubernetes 1.10のクラスタを構築するAnsible Playbookを書いた。
@@ -80,7 +84,7 @@ AnsibleはYUMとかpipとかでインストールできる。
 
 3. インストール
 
-    ```tch
+    ```console
     # yum install -y ansible
     ```
 

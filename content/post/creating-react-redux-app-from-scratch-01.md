@@ -6,6 +6,9 @@ cover = "babel-webpack.png"
 slug = "creating-react-redux-app-from-scratch-01"
 tags = ["react", "frontend", "webpack", "babel"]
 title = "React + Reduxアプリケーションプロジェクトのテンプレートを作る ― その1: Node.jsとYarnとBabelとwebpack"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 

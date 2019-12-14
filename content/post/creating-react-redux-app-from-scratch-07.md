@@ -6,6 +6,9 @@ cover = "redux.png"
 slug = "creating-react-redux-app-from-scratch-07"
 tags = ["react", "frontend", "redux"]
 title = "React + Reduxアプリケーションプロジェクトのテンプレートを作る ― その7: React Redux"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 
@@ -27,8 +30,8 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 
 使うのは[React Redux](https://redux.js.org/basics/usagewithreact)。
 
-```tch
-yarn add react-redux
+```console
+$ yarn add react-redux
 ```
 
 v5.1.1が入った。

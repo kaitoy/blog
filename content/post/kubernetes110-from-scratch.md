@@ -6,6 +6,10 @@ cover = "kubernetes.png"
 slug = "kubernetes110-from-scratch"
 tags = ["kubernetes", "docker"]
 title = "Kubernetes 1.10をスクラッチから全手動で構築"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 Oracle Linux 7.4.0のVMでKubernetes 1.10.0のクラスタをスクラッチから全手動で作った。
@@ -68,7 +72,7 @@ Oracle Linux 7.4.0のVMでKubernetes 1.10.0のクラスタをスクラッチか�
 kubeletの動作条件にあるので、swapをoffにする。
 Oracle Linuxにログインして、`/etc/fstab`のswapの行を削除して、以下のコマンドを実行。
 
-```tch
+```console
 # swapoff -a
 # cd /tmp
 ```
@@ -79,7 +83,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
 `/etc/selinux/config`を編集して、`SELINUX`を`permissive`にして、以下のコマンドを実行。
 
-```tch
+```console
 # setenforce 0
 ```
 
@@ -87,7 +91,7 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
 ファイアウォールもちゃんと設定すればいいんだけど面倒なのでとりあえず無効にする。
 
-```tch
+```console
 # systemctl stop firewalld
 # systemctl disable firewalld
 ```
@@ -105,14 +109,14 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
 まず、Bridge netfilterモジュールをロードする。
 
-```tch
+```console
 # modprobe br_netfilter
 # echo "br_netfilter" > /etc/modules-load.d/br_netfilter.conf
 ```
 
 Bridge netfilterとIP forwardingを有効化する。
 
-```tch
+```console
 # cat > /etc/sysctl.d/kubernetes.conf << EOF
 net.bridge.bridge-nf-call-iptables = 1
 net.bridge.bridge-nf-call-ip6tables = 1
@@ -125,7 +129,7 @@ EOF
 
 設定確認。
 
-```tch
+```console
 # lsmod |grep br_netfilter
 # sysctl -a | grep -E "net.bridge.bridge-nf-call-|net.ipv4.ip_forward"
 ```
@@ -134,7 +138,7 @@ EOF
 
 1. opensslの設定作成
 
-    ```tch
+    ```console
     # mkdir -p /etc/kubernetes/pki
     # HOSTNAME=k8s-master
     # K8S_SERVICE_IP=10.0.0.1
@@ -179,7 +183,7 @@ EOF
     以降で生成する証明書に署名するための証明書。
     後述のTLS Bootstrappingでの証明書生成にも使う。
 
-    ```tch
+    ```console
     # groupadd -r kubernetes
     # adduser -r -g kubernetes -M -s /sbin/nologin kubernetes
     # CA_DAYS=5475
@@ -193,7 +197,7 @@ EOF
 
     kube-apiserverのサーバ証明書。
 
-    ```tch
+    ```console
     # APISERVER_DAYS=5475
     # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/kube-apiserver.key
     # chown kubernetes:kubernetes /etc/kubernetes/pki/kube-apiserver.key
@@ -205,7 +209,7 @@ EOF
 
     kube-apiserverが[kubeletのAPIにアクセス](https://kubernetes.io/docs/concepts/architecture/master-node-communication/#apiserver-kubelet)するときのクライアント証明書。
 
-    ```tch
+    ```console
     # APISERVER_KUBELET_CLIENT_DAYS=5475
     # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/apiserver-kubelet-client.key
     # chown kubernetes:kubernetes /etc/kubernetes/pki/apiserver-kubelet-client.key
@@ -217,7 +221,7 @@ EOF
 
     kubectlがkube-apiserverのAPIにアクセスするときのクライアント証明書。
 
-    ```tch
+    ```console
     # groupadd -r kube-admin
     # adduser -r -g kube-admin -M -s /sbin/nologin kube-admin
     # ADMIN_DAYS=5475
@@ -232,7 +236,7 @@ EOF
     kube-controller-managerがkube-apiserverに接続するときのクライアント証明書。
     この証明書に対応する秘密鍵と公開鍵はそれぞれ、kube-controller-managerがService Accountトークンに署名するとき、kube-apiserverがトークンの署名を確認するときにも使う。
 
-    ```tch
+    ```console
     # CONTROLLER_MANAGER_DAYS=5475
     # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/kube-controller-manager.key
     # openssl ec -in /etc/kubernetes/pki/kube-controller-manager.key -outform PEM -pubout -out /etc/kubernetes/pki/kube-controller-manager.pub
@@ -246,7 +250,7 @@ EOF
 
     kube-schedulerがkube-apiserverにリクエストするときに使うクライアント証明書。
 
-    ```tch
+    ```console
     # SCHEDULER_DAYS=5475
     # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/kube-scheduler.key
     # chown kubernetes:kubernetes /etc/kubernetes/pki/kube-scheduler.key
@@ -259,7 +263,7 @@ EOF
 
     kube-proxyがkube-apiserverにリクエストするときに使うクライアント証明書。
 
-    ```tch
+    ```console
     # PROXY_DAYS=5475
     # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/kube-proxy.key
     # chown kubernetes:kubernetes /etc/kubernetes/pki/kube-proxy.key
@@ -277,7 +281,7 @@ EOF
     API AggregationしないならこのCA証明書と次のクライアント証明書はいらないはず。
     今回はしないけど、とりあえず作って設定したおく。
 
-    ```tch
+    ```console
     # FRONT_PROXY_CA_DAYS=5475
     # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/front-proxy-ca.key
     # chown kubernetes:kubernetes /etc/kubernetes/pki/front-proxy-ca.key
@@ -290,7 +294,7 @@ EOF
     Extension API ServerのAPIへのリクエストは、いったんkube-apiserverが受け取ってExtension API Serverに転送される。(多分。)
     この転送の暗号化と認証にTLSが使われていて、ここではそのクライアント証明書を生成する。
 
-    ```tch
+    ```console
     # FRONT_PROXY_CLIENT_DAYS=5475
     # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/front-proxy-client.key
     # chown kubernetes:kubernetes /etc/kubernetes/pki/front-proxy-client.key
@@ -302,7 +306,7 @@ EOF
 
     以降で生成するetcdの証明書に署名するための証明書。
 
-    ```tch
+    ```console
     # groupadd -r etcd
     # adduser -r -g etcd -M -s /sbin/nologin etcd
     # ETCD_CA_DAYS=5475
@@ -316,7 +320,7 @@ EOF
 
     etcdのサーバ証明書。
 
-    ```tch
+    ```console
     # ETCD_DAYS=5475
     # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/etcd.key
     # chown etcd:etcd /etc/kubernetes/pki/etcd.key
@@ -329,7 +333,7 @@ EOF
     etcdのクライアント証明書。
     kube-apiserverだけがetcdと話すので、kube-apiserverだけが使う。
 
-    ```tch
+    ```console
     # ETCD_CLIENT_DAYS=5475
     # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/etcd-client.key
     # chown kubernetes:kubernetes /etc/kubernetes/pki/etcd-client.key
@@ -342,7 +346,7 @@ EOF
     etcdサーバが冗長構成のとき、サーバ間の通信の暗号化に使う証明書。
     マスタが一つなら要らないはずだけど、今回とりあえず作って設定しておく。
 
-    ```tch
+    ```console
     # ETCD_PEER_DAYS=5475
     # openssl ecparam -name secp521r1 -genkey -noout -out /etc/kubernetes/pki/etcd-peer.key
     # chown etcd:etcd /etc/kubernetes/pki/etcd-peer.key
@@ -354,7 +358,7 @@ EOF
 
     以上で生成した証明書の内容を確認する。
 
-    ```tch
+    ```console
     # for i in /etc/kubernetes/pki/*crt; do
       echo $i:;
       openssl x509 -subject -issuer -noout -in $i;
@@ -395,7 +399,7 @@ EOF
 
 hyperkubeとkubeadmのバイナリを`/usr/bin/`において、以下のコマンドを実行。
 
-```tch
+```console
 # ln -s /usr/bin/hyperkube /usr/bin/kube-apiserver
 # ln -s /usr/bin/hyperkube /usr/bin/kube-controller-manager
 # ln -s /usr/bin/hyperkube /usr/bin/kube-scheduler
@@ -412,7 +416,7 @@ kubectlとマスタコンポーネントがkube-apiserverと話すときに使�
 
 1. kube-controller-managerのkubeconfig
 
-    ```tch
+    ```console
     # MASTER_IP=192.168.171.200
     # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
     # CLUSTER_NAME="k8s"
@@ -428,13 +432,13 @@ kubectlとマスタコンポーネントがkube-apiserverと話すときに使�
 
     設定確認。
 
-    ```tch
+    ```console
     # kubectl config view --kubeconfig=${KCONFIG}
     ```
 
 2. kube-schedulerのkubeconfig
 
-    ```tch
+    ```console
     # MASTER_IP=192.168.171.200
     # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
     # CLUSTER_NAME="k8s"
@@ -450,7 +454,7 @@ kubectlとマスタコンポーネントがkube-apiserverと話すときに使�
 
     設定確認。
 
-    ```tch
+    ```console
     # kubectl config view --kubeconfig=${KCONFIG}
     ```
 
@@ -458,7 +462,7 @@ kubectlとマスタコンポーネントがkube-apiserverと話すときに使�
 
     kubectl用。
 
-    ```tch
+    ```console
     # MASTER_IP=192.168.171.200
     # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
     # CLUSTER_NAME="k8s"
@@ -475,7 +479,7 @@ kubectlとマスタコンポーネントがkube-apiserverと話すときに使�
 
     設定確認。
 
-    ```tch
+    ```console
     # kubectl config view --kubeconfig=${KCONFIG}
     ```
 
@@ -484,7 +488,7 @@ kubectlとマスタコンポーネントがkube-apiserverと話すときに使�
 https://github.com/coreos/etcd/releases/download/v3.1.12/etcd-v3.1.12-linux-amd64.tar.gz
 からアーカイブをダウンロードして、中のetcdとetcdctlを`/usr/bin/`にいれて、以下のコマンドを実行。
 
-```tch
+```console
 # chown root:root /usr/bin/etcd*
 # chmod 0755 /usr/bin/etcd*
 # mkdir -p /var/lib/etcd
@@ -495,7 +499,7 @@ https://github.com/coreos/etcd/releases/download/v3.1.12/etcd-v3.1.12-linux-amd6
 
 (参考: [Kubernetesドキュメント](https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/)、[etcdドキュメント](https://github.com/coreos/etcd/blob/master/Documentation/op-guide/security.md))
 
-```tch
+```console
 # MASTER_IP=192.168.171.200
 # ETCD_MEMBER_NAME=etcd1
 # CLUSTER_NAME="k8s"
@@ -543,7 +547,7 @@ EOF
 
 確認。
 
-```tch
+```console
 # systemctl status etcd -l
 # MASTER_IP=192.168.171.200
 # etcdctl --endpoints https://${MASTER_IP}:2379 --ca-file=/etc/kubernetes/pki/etcd-ca.crt --cert-file=/etc/kubernetes/pki/etcd-client.crt --key-file=/etc/kubernetes/pki/etcd-client.key cluster-health
@@ -558,7 +562,7 @@ EOF
 
     * d
 
-    ```tch
+    ```console
     # mkdir -p /var/log/kubernetes
     # chown kubernetes:kubernetes /var/log/kubernetes
     # chmod 0700 /var/log/kubernetes
@@ -743,7 +747,7 @@ EOF
 
     確認。
 
-    ```tch
+    ```console
     # systemctl status kube-apiserver -l
     # journalctl -u kube-apiserver
     ```
@@ -752,7 +756,7 @@ EOF
 
     systemdのユニットファイルを書いてサービス化。
 
-    ```tch
+    ```console
     # CLUSTER_CIDR="10.244.0.0/16"
     # SERVICE_CLUSTER_IP_RANGE="10.0.0.0/16"
     # CLUSTER_NAME="k8s"
@@ -815,7 +819,7 @@ EOF
 
     確認。
 
-    ```tch
+    ```console
     # systemctl status kube-controller-manager -l
     ```
 
@@ -823,7 +827,7 @@ EOF
 
     systemdのユニットファイルを書いてサービス化。
 
-    ```tch
+    ```console
     # cat > /etc/systemd/system/kube-scheduler.service << EOF
     [Unit]
     Description=Kubernetes Scheduler
@@ -851,13 +855,13 @@ EOF
 
     確認。
 
-    ```tch
+    ```console
     # systemctl status kube-scheduler -l
     ```
 
 4. マスタコンポーネント状態確認
 
-    ```tch
+    ```console
     # kubectl version
     # kubectl get componentstatuses
     ```
@@ -877,7 +881,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     以下のように生成できる。
 
-    ```tch
+    ```console
     # TOKEN_PUB=$(openssl rand -hex 3)
     # TOKEN_SECRET=$(openssl rand -hex 8)
     # BOOTSTRAP_TOKEN="${TOKEN_PUB}.${TOKEN_SECRET}"
@@ -886,7 +890,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     けど、[kubeadm](https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-token/#cmd-token-generate)でも生成出来てこっちのほうが楽なので、それで。
 
-    ```tch
+    ```console
     # BOOTSTRAP_TOKEN=$(kubeadm token create --kubeconfig /etc/kubernetes/admin.kubeconfig)
     ```
 
@@ -896,7 +900,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     確認。
 
-    ```tch
+    ```console
     # TOKEN_PUB=$(echo $BOOTSTRAP_TOKEN | sed -e s/\\..*//)
     # kubectl -n kube-system get secret/bootstrap-token-${TOKEN_PUB} -o yaml
     ```
@@ -906,7 +910,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
     Bootstrap時は`kubelet-bootstrap`というユーザでkube-apiserverに接続する。
     `kubelet-bootstrap`は`system:node-bootstrapper`ロールを持って`system:bootstrappers`に属しているユーザとして認証される必要がある。
 
-    ```tch
+    ```console
     # mkdir -p /etc/kubernetes/manifests
     # MASTER_IP=192.168.171.200
     # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
@@ -922,7 +926,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     確認。
 
-    ```tch
+    ```console
     # kubectl config view --kubeconfig=${KCONFIG}
     ```
 
@@ -930,26 +934,26 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     kubeletはこのConfigMapを見てクラスタに参加する。
 
-    ```tch
+    ```console
     # kubectl -n kube-public create configmap cluster-info --from-file /etc/kubernetes/pki/ca.crt --from-file /etc/kubernetes/bootstrap.kubeconfig
     ```
 
     anonymousユーザにcluster-infoへのアクセスを許可する。
 
-    ```tch
+    ```console
     # kubectl -n kube-public create role system:bootstrap-signer-clusterinfo --verb get --resource configmaps
     # kubectl -n kube-public create rolebinding kubeadm:bootstrap-signer-clusterinfo --role system:bootstrap-signer-clusterinfo --user system:anonymous
     ```
 
     system:bootstrappersグループにsystem:node-bootstrapperロールを紐づける。
 
-    ```tch
+    ```console
     # kubectl create clusterrolebinding kubeadm:kubelet-bootstrap --clusterrole system:node-bootstrapper --group system:bootstrappers
     ```
 
 4. bootstrap.kubeconfigにトークンを追記
 
-    ```tch
+    ```console
     # kubectl config set-credentials kubelet-bootstrap --token=${BOOTSTRAP_TOKEN} --kubeconfig=/etc/kubernetes/bootstrap.kubeconfig
     ```
 
@@ -961,7 +965,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
     に従ってDocker CEをインストール。
     ストレージドライバにはoverlay2をつかうので、device-mapper-persistent-dataとlvm2は入れない。
 
-    ```tch
+    ```console
     # yum install -y yum-utils
     # yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
     # yum install -y docker-ce
@@ -973,7 +977,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     `/etc/yum.repos.d/public-yum-ol7.repo`の`ol7_addons`の`enabled`を1にして、以下のコマンドでdocker-engineをインストール。
 
-    ```tch
+    ```console
     # yum install -y docker-engine
     ```
 
@@ -992,7 +996,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     で、起動。
 
-    ```tch
+    ```console
     # systemctl daemon-reload
     # systemctl enable docker
     # systemctl start docker
@@ -1000,7 +1004,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     確認。
 
-    ```tch
+    ```console
     # cat /proc/$(pidof dockerd)/environ
     # systemctl status docker -l
     # docker version
@@ -1008,7 +1012,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
 2. CNI
 
-    ```tch
+    ```console
     # mkdir -p /etc/cni/net.d /opt/cni/bin/
     # cd /tmp
     # curl -OL https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz
@@ -1028,13 +1032,13 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     前提コマンド(conntrack)インストール。
 
-    ```tch
+    ```console
     # yum -y install conntrack-tools
     ```
 
     systemdのユニットファイルを書いてサービス化。
 
-    ```tch
+    ```console
     # DNS_SERVER_IP=10.0.0.10
     # PAUSE_IMAGE=k8s.gcr.io/pause-amd64:3.1
     # DNS_DOMAIN="cluster.local"
@@ -1111,7 +1115,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     起動確認。
 
-    ```tch
+    ```console
     # systemctl status kubelet -l
     ```
 
@@ -1121,7 +1125,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     CSRは以下のコマンドで見れる。
 
-    ```tch
+    ```console
     # kubectl get csr
     NAME                                                   AGE       REQUESTOR                 CONDITION
     csr-cf9hm                                              24m       system:node:k8s-master  Pending
@@ -1131,7 +1135,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
     `node-csr-…`がクライアント証明書のためのCSRで、`csr-…`がサーバ証明書の。
     これらを承認する。
 
-    ```tch
+    ```console
     # kubectl certificate approve node-csr-Vcw_4HioW1CI96eDH29RMKPrOchEN133053wm6DCXUk
     # kubectl certificate approve csr-cf9hm
     ```
@@ -1141,7 +1145,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
     これでクラスタにノードが追加されたはず。
     確認。
 
-    ```tch
+    ```console
     # kubectl get node
     NAME         STATUS    ROLES     AGE       VERSION
     k8s-master   Ready     <none>    36s       v1.10.0
@@ -1155,7 +1159,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     * s
 
-    ```tch
+    ```console
     # cat <<EOF | kubectl create -f -
     kind: ClusterRoleBinding
     apiVersion: rbac.authorization.k8s.io/v1
@@ -1174,7 +1178,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     また、kubeletのクライアント証明書を自動更新(i.e. RotateKubeletClientCertificate)するときのCSRを承認するClusterRoleとして`system:certificates.k8s.io:certificatesigningrequests:selfnodeclient`が自動生成されていて、これをノード毎のユーザにバインドしてやると、自動承認が有効になる。
 
-    ```tch
+    ```console
     # HOSTNAME=k8s-master
     # cat <<EOF | kubectl create -f -
     kind: ClusterRoleBinding
@@ -1194,7 +1198,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     kubeletのサーバ証明書を自動更新(i.e. RotateKubeletServerCertificate)するときのCSRを承認するClusterRoleは現時点で自動生成されないので、自分で作ってノード毎のユーザにバインドして、自動承認を有効にする。
 
-    ```tch
+    ```console
     # cat <<EOF | kubectl create -f -
     kind: ClusterRole
     apiVersion: rbac.authorization.k8s.io/v1
@@ -1228,7 +1232,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     kube-proxyのkubeconfigを作成。
 
-    ```tch
+    ```console
     # MASTER_IP=192.168.171.200
     # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP
     # CLUSTER_NAME="k8s"
@@ -1244,13 +1248,13 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     確認。
 
-    ```tch
+    ```console
     # kubectl config view --kubeconfig=${KCONFIG}
     ```
 
     systemdのユニットファイルを書いてサービス化。
 
-    ```tch
+    ```console
     # CLUSTER_CIDR="10.244.0.0/16"
     # cat > /etc/systemd/system/kube-proxy.service << EOF
     [Unit]
@@ -1280,7 +1284,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     確認。
 
-    ```tch
+    ```console
     # systemctl status kube-proxy -l
     ```
 
@@ -1294,7 +1298,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     デプロイ自体は以下のコマンドを実行するだけ。
 
-    ```tch
+    ```console
     # kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
     ```
 
@@ -1304,7 +1308,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     起動確認。
 
-    ```tch
+    ```console
     # kubectl -n kube-system get po
     NAME                    READY     STATUS    RESTARTS   AGE
     kube-flannel-ds-gkcqd   1/1       Running   0          1m
@@ -1323,7 +1327,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
     * https://coredns.io/2018/01/29/deploying-kubernetes-with-coredns-using-kubeadm/
     * https://github.com/coredns/deployment/tree/master/kubernetes
 
-    ```tch
+    ```console
     # cd /tmp
     # curl -LO https://raw.githubusercontent.com/coredns/deployment/master/kubernetes/coredns.yaml.sed
     # curl -LO https://raw.githubusercontent.com/coredns/deployment/master/kubernetes/deploy.sh
@@ -1339,7 +1343,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     起動確認。
 
-    ```tch
+    ```console
     # kubectl -n kube-system get pods -o wide | grep coredns
     coredns-8459d9f654-b585f   1/1       Running   0          48s       10.244.0.3        k8s-master
     coredns-8459d9f654-x7drc   1/1       Running   0          48s       10.244.0.2        k8s-master
@@ -1347,7 +1351,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     起動確認時にCoreDNSのIPアドレスを確認して、動作確認。
 
-    ```tch
+    ```console
     # dig @10.244.0.3 kubernetes.default.svc.cluster.local +noall +answer
 
     ; <<>> DiG 9.9.4-RedHat-9.9.4-61.el7 <<>> @10.244.0.3 kubernetes.default.svc.cluster.local +noall +answer
@@ -1365,7 +1369,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
 
     [ドキュメント](https://www.weave.works/docs/scope/latest/installing/#k8s)を参考に。
 
-    ```tch
+    ```console
     # cd /tmp
     # curl -sSL -o scope.yaml https://cloud.weave.works/k8s/scope.yaml?k8s-service-type=NodePort
     # kubectl apply -f scope.yaml

@@ -72,7 +72,7 @@ AnsibleをWindows(MSYS2)で動かした話でもある。">
 </script>
 
 
-
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"> 
 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -80,6 +80,14 @@ AnsibleをWindows(MSYS2)で動かした話でもある。">
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
  
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js"></script>
+
+    
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
 
 
 
@@ -352,36 +360,36 @@ AnsibleはWSLでは動くけど、VirtualBoxとかHyper-VはWindows上で動く�
 
 <p>何はともあれPythonを入れる。3系でいい。
 <code>MSYS2 MSYS</code>のショートカット(<code>MSYS2 MinGW 64-bit</code>じゃだめ)からターミナルを開いて、</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">$ pacman -S python</code></pre></div>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ pacman -S python</code></pre></div>
 <p>で、Python 3.6.2が入った。</p>
 
 <p>次に、Ansible(の依存)のビルドに必要なパッケージを入れる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">$ pacman -S gcc
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ pacman -S gcc
 $ pacman -S make
 $ pacman -S libffi-devel
 $ pacman -S openssl-devel</code></pre></div>
 <p>さらに、AnsibleからのSSH接続で(鍵ではなくて)パスワードを使う場合に必要なパッケージも入れる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">$ pacman -S sshpass</code></pre></div>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ pacman -S sshpass</code></pre></div>
 <p>sshpassの依存としてopensshも入った。</p>
 
 <p><br></p>
 
 <p>Ansibleはpipでインストールするんだけど、pacmanで入れたPython 3にはpipが付いてなかったので、<a href="https://pip.pypa.io/en/stable/installing/">別途入れる</a>。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">$ curl https://bootstrap.pypa.io/get-pip.py -LO
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ curl https://bootstrap.pypa.io/get-pip.py -LO
 $ python get-pip.py</code></pre></div>
 <p>(ちょっと古いけどpipは<code>pacman python3-pip</code>でも入る。)</p>
 
 <p><br></p>
 
 <p>で、ようやくAnsibleインストール。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">$ export CFLAGS=-I/usr/lib/libffi-3.2.1/include
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ export CFLAGS=-I/usr/lib/libffi-3.2.1/include
 $ pip install ansible</code></pre></div>
 <p>依存するPyNaClのビルドに20分くらいかかるのでゆっくり待つと、インストール完了するはず。</p>
 
 <p>今回はAnsible 2.5.4がインストールされた。</p>
 
 <p>AnsibleでJinja2のipaddrフィルターを使うために、もう一つPyPiパッケージ入れる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">$ pip install netaddr</code></pre></div>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ pip install netaddr</code></pre></div>
 <h1 id="packerテンプレート作成">Packerテンプレート作成</h1>
 
 <p>ビルドは、OSインストールメディアのISOファイルを使うVirtualBoxのビルダである<a href="https://www.packer.io/docs/builders/virtualbox-iso.html">virtualbox-iso</a>を指定して書いた。</p>
@@ -400,11 +408,11 @@ $ pip install ansible</code></pre></div>
 <h1 id="ビルド実行">ビルド実行</h1>
 
 <p><code>MSYS2 MSYS</code>のショートカットからターミナルを開いて、Packerを実行してみたら以下のエラー。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">$ packer build -var-file=variables.json k8s_single_node_cluster-vb.json
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ packer build -var-file=variables.json k8s_single_node_cluster-vb.json
 bash: packer: コマンドが見つかりません</code></pre></div>
 <p>WindowsのPathが通ったところにPackerバイナリを置いておいてもMSYS2からは見えない。
 のでpackerバイナリのフルパス(今回は<code>C:\Users\kaitoy\Desktop\bin\</code>にインストールしてたのでそのパス)を指定してやる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">$ /c/Users/kaitoy/Desktop/bin/packer.exe build -var-file=variables.json k8s_single_node_cluster-vb.json
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ /c/Users/kaitoy/Desktop/bin/packer.exe build -var-file=variables.json k8s_single_node_cluster-vb.json
 k8s-single-node-cluster output will be in this color.
 
 1 error(s) occurred:
@@ -459,7 +467,7 @@ C:\msys64\usr\bin\python<span style="color:#999;font-style:italic"> C:\msys64\us
 <li><code>MSYS2 MSYS</code>のターミナルでPython 3.6.2とAnsible 2.5.4とか(とGit)をインストールして、</li>
 
 <li><p>以下を実行すればいい。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">$ git clone --recursive https://github.com/kaitoy/packer-k8s.git
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ git clone --recursive https://github.com/kaitoy/packer-k8s.git
 $ cd packer-k8s
 $ /c/Users/kaitoy/Desktop/bin/packer.exe build -var-file=variables.json k8s_single_node_cluster-vb.json</code></pre></div></li>
 </ol>
@@ -469,10 +477,12 @@ $ /c/Users/kaitoy/Desktop/bin/packer.exe build -var-file=variables.json k8s_sing
 <p><br></p>
 
 <p>一回実行したらゴミができて、次回実行時にエラーになるので、以下でクリーンアップする必要がある。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-tch" data-lang="tch">$ rm -rf /tmp/ansible
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ rm -rf /tmp/ansible
 $ rm -f ~/.ssh/known_hosts</code></pre></div>
 <p>因みに、上記known_hostsを消し忘れると以下のようなエラーになる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plain" data-lang="plain"> k8s-single-node-cluster: fatal: [k8s_master]: UNREACHABLE! =&gt; {&#34;changed&#34;: false, &#34;msg&#34;: &#34;Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\n@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\r\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\nIT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\r\nSomeone could be eavesdropping on you right now (man-in-the-middle attack)!\r\nIt is also possible that a host key has just been changed.\r\nThe fingerprint for the ECDSA key sent by the remote host is\nSHA256:JNs/ZY38VpIuBE3QEzLHyLFGYe+Qg+bEWi8BOzgSNc0.\r\nPlease contact your system administrator.\r\nAdd correct host key in /home/kaitoy/.ssh/known_hosts to get rid of this message.\r\nOffending ECDSA key in /home/kaitoy/.ssh/known_hosts:1\r\nPassword authentication is disabled to avoid man-in-the-middle attacks.\r\nKeyboard-interactive authentication is disabled to avoid man-in-the-middle attacks.\r\nroot@127.0.0.1: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).\r\n&#34;, &#34;unreachable&#34;: true}</code></pre></div></div>
+
+<pre><code> k8s-single-node-cluster: fatal: [k8s_master]: UNREACHABLE! =&gt; {&quot;changed&quot;: false, &quot;msg&quot;: &quot;Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\n@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\r\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\nIT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\r\nSomeone could be eavesdropping on you right now (man-in-the-middle attack)!\r\nIt is also possible that a host key has just been changed.\r\nThe fingerprint for the ECDSA key sent by the remote host is\nSHA256:JNs/ZY38VpIuBE3QEzLHyLFGYe+Qg+bEWi8BOzgSNc0.\r\nPlease contact your system administrator.\r\nAdd correct host key in /home/kaitoy/.ssh/known_hosts to get rid of this message.\r\nOffending ECDSA key in /home/kaitoy/.ssh/known_hosts:1\r\nPassword authentication is disabled to avoid man-in-the-middle attacks.\r\nKeyboard-interactive authentication is disabled to avoid man-in-the-middle attacks.\r\nroot@127.0.0.1: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).\r\n&quot;, &quot;unreachable&quot;: true}
+</code></pre></div>
 
         <section class="share-buttons">
           <div class="share-button">

@@ -6,6 +6,10 @@ cover = "packer-esxi.png"
 slug = "packer-esxi"
 tags = ["packer", "esxi"]
 title = "PackerでESXiにVMを自動構築"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 前回「[Packer + Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築](https://www.kaitoy.xyz/2018/06/17/packer-k8s/)」で、やったことをESXiでやっただけ。
@@ -76,7 +80,7 @@ Packerから操作するには、以下の設定をする必要がある。
 
         `/etc/rc.local.d/local.sh`に以下を追記:
 
-        ```sh
+        ```shell
         cp /vmfs/volumes/datastore1/svc/packer.xml /etc/vmware/firewall/
         esxcli network firewall refresh
         ```

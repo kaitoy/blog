@@ -6,6 +6,9 @@ cover = "material-ui-logo.png"
 slug = "creating-react-redux-app-from-scratch-05"
 tags = ["react", "frontend", "material-ui"]
 title = "React + Reduxアプリケーションプロジェクトのテンプレートを作る ― その5: Material-UIとWebフォント"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 
@@ -44,8 +47,8 @@ title = "React + Reduxアプリケーションプロジェクトのテンプレ�
 Material-UIは簡単に使える。
 とりあえずコアパッケージをインストールする。
 
-```tch
-yarn add @material-ui/core
+```console
+$ yarn add @material-ui/core
 ```
 
 v3.5.1が入った。
@@ -89,8 +92,8 @@ Material-UIは[Robotoフォント](https://fonts.google.com/specimen/Roboto)を�
 
 Robotoフォントのフォントファイルはnpmで配布されていて、Yarnでプロジェクトにインストールできる。
 
-```tch
-yarn add typeface-roboto
+```console
+$ yarn add typeface-roboto
 ```
 
 <br>
@@ -103,8 +106,8 @@ yarn add typeface-roboto
 
 url-loaderを使う場合は、url-loaderとフォールバック用のfile-loaderをインストールする。
 
-```tch
-yarn add -D url-loader file-loader
+```console
+$ yarn add -D url-loader file-loader
 ```
 
 <br>
@@ -176,8 +179,8 @@ webpackのローダ設定は以下のようなのを追加すればいい。
 
 file-loaderを使う場合は、file-loaderだけインストールすればいい。
 
-```tch
-yarn add -D file-loader
+```console
+$ yarn add -D file-loader
 ```
 
 <br>

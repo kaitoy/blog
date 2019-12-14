@@ -6,6 +6,9 @@ cover = "kubernetes-ansible-packer.png"
 slug = "packer-k8s"
 tags = ["kubernetes", "docker", "ansible", "packer", "msys2"]
 title = "Packer + Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 
 +++
 
@@ -117,7 +120,7 @@ MSYS2でのパッケージ管理にはpacmanを使う。
 何はともあれPythonを入れる。3系でいい。
 `MSYS2 MSYS`のショートカット(`MSYS2 MinGW 64-bit`じゃだめ)からターミナルを開いて、
 
-```tch
+```console
 $ pacman -S python
 ```
 
@@ -125,7 +128,7 @@ $ pacman -S python
 
 次に、Ansible(の依存)のビルドに必要なパッケージを入れる。
 
-```tch
+```console
 $ pacman -S gcc
 $ pacman -S make
 $ pacman -S libffi-devel
@@ -134,7 +137,7 @@ $ pacman -S openssl-devel
 
 さらに、AnsibleからのSSH接続で(鍵ではなくて)パスワードを使う場合に必要なパッケージも入れる。
 
-```tch
+```console
 $ pacman -S sshpass
 ```
 
@@ -144,7 +147,7 @@ sshpassの依存としてopensshも入った。
 
 Ansibleはpipでインストールするんだけど、pacmanで入れたPython 3にはpipが付いてなかったので、[別途入れる](https://pip.pypa.io/en/stable/installing/)。
 
-```tch
+```console
 $ curl https://bootstrap.pypa.io/get-pip.py -LO
 $ python get-pip.py
 ```
@@ -155,7 +158,7 @@ $ python get-pip.py
 
 で、ようやくAnsibleインストール。
 
-```tch
+```console
 $ export CFLAGS=-I/usr/lib/libffi-3.2.1/include
 $ pip install ansible
 ```
@@ -166,7 +169,7 @@ $ pip install ansible
 
 AnsibleでJinja2のipaddrフィルターを使うために、もう一つPyPiパッケージ入れる。
 
-```tch
+```console
 $ pip install netaddr
 ```
 
@@ -189,7 +192,7 @@ Kickstartの定義ファイルは、普通に手動でOSをインストールし
 
 `MSYS2 MSYS`のショートカットからターミナルを開いて、Packerを実行してみたら以下のエラー。
 
-```tch
+```console
 $ packer build -var-file=variables.json k8s_single_node_cluster-vb.json
 bash: packer: コマンドが見つかりません
 ```
@@ -197,7 +200,7 @@ bash: packer: コマンドが見つかりません
 WindowsのPathが通ったところにPackerバイナリを置いておいてもMSYS2からは見えない。
 のでpackerバイナリのフルパス(今回は`C:\Users\kaitoy\Desktop\bin\`にインストールしてたのでそのパス)を指定してやる。
 
-```tch
+```console
 $ /c/Users/kaitoy/Desktop/bin/packer.exe build -var-file=variables.json k8s_single_node_cluster-vb.json
 k8s-single-node-cluster output will be in this color.
 
@@ -258,7 +261,7 @@ C:\msys64\usr\bin\python C:\msys64\usr\bin\ansible-playbook -v %args%
 4. `MSYS2 MSYS`のターミナルでPython 3.6.2とAnsible 2.5.4とか(とGit)をインストールして、
 5. 以下を実行すればいい。
 
-    ```tch
+    ```console
     $ git clone --recursive https://github.com/kaitoy/packer-k8s.git
     $ cd packer-k8s
     $ /c/Users/kaitoy/Desktop/bin/packer.exe build -var-file=variables.json k8s_single_node_cluster-vb.json
@@ -270,13 +273,13 @@ C:\msys64\usr\bin\python C:\msys64\usr\bin\ansible-playbook -v %args%
 
 一回実行したらゴミができて、次回実行時にエラーになるので、以下でクリーンアップする必要がある。
 
-```tch
+```console
 $ rm -rf /tmp/ansible
 $ rm -f ~/.ssh/known_hosts
 ```
 
 因みに、上記known_hostsを消し忘れると以下のようなエラーになる。
 
-```plain
+```
  k8s-single-node-cluster: fatal: [k8s_master]: UNREACHABLE! => {"changed": false, "msg": "Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\n@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\r\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\nIT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\r\nSomeone could be eavesdropping on you right now (man-in-the-middle attack)!\r\nIt is also possible that a host key has just been changed.\r\nThe fingerprint for the ECDSA key sent by the remote host is\nSHA256:JNs/ZY38VpIuBE3QEzLHyLFGYe+Qg+bEWi8BOzgSNc0.\r\nPlease contact your system administrator.\r\nAdd correct host key in /home/kaitoy/.ssh/known_hosts to get rid of this message.\r\nOffending ECDSA key in /home/kaitoy/.ssh/known_hosts:1\r\nPassword authentication is disabled to avoid man-in-the-middle attacks.\r\nKeyboard-interactive authentication is disabled to avoid man-in-the-middle attacks.\r\nroot@127.0.0.1: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).\r\n", "unreachable": true}
 ```

@@ -6,6 +6,10 @@ cover = "react.png"
 slug = "creating-react-redux-app-from-scratch-02"
 tags = ["react", "frontend"]
 title = "React + Reduxアプリケーションプロジェクトのテンプレートを作る ― その2: React"
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
+
 +++
 
 [React](https://reactjs.org/)と[Redux](https://redux.js.org/)を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
@@ -138,8 +142,8 @@ Welcome.propTypes = {
 
 上記のコードを実行するためのライブラリを一通りプロジェクトに追加する。
 
-```tch
-yarn add react react-dom prop-types
+```console
+$ yarn add react react-dom prop-types
 ```
 
 Reactはv16.6.3が入った。
