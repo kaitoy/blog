@@ -100,6 +100,13 @@ Rancherの管理下に入れたクラスタは、RancherのGUIから[Helm](https
 
 KubernetesディストリビューションというよりかはKubernetesクラスタ管理ツールと言うべきかも。
 
+## HPE Container Platform
+[HPE Container Platform](https://www.hpe.com/us/en/solutions/container-platform.html)はHPE社によるKubernetesディストリビューション。
+クラウドでもオンプレでも動き、HPEが以前から推進するハイブリッドクラウド戦略を支えるもの。
+
+OSSのKubernetesに、簡単にセキュアで安定したマルチクラスタを構築して監視できるというのが売り。
+HPEのストレージ、ネットワーク、サーバ、ネットワーク、HCI、エッジ機器なんかとがんがん連携していくものと思われる。
+
 # Kubernetes亜種
 
 Kubernetes自体に改造が入っていたり、Kubernetes(の一部)っぽく動くものたち。
