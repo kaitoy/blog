@@ -153,6 +153,16 @@ k3vはkubectlからは普通のKubernetesに見えるけど、k3vに対して作
 
 まだ出たてでPoCレベルの品質。
 
+## Project Pacific
+[Project Pacific](https://www.vmware.com/jp/products/vsphere/projectpacific.html)は[VMware Tanzu](https://cloud.vmware.com/jp/tanzu)の構成要素で、VMware vSphereにKubernetesを統合したもの。
+
+Project Pacificの肝はSupervisor Kubernetes Clusterというもので、これは、vSphereのハイパバイザ(i.e. ESXi)上で動くシステム管理用Kubernetesクラスタ。
+Supervisor Kubernetes ClusterのマスターコンポーネントはESXi上のマイクロVMで動き、ノードコンポーネントとしてはkubeletの代わりにvsphereletというのがESXi直上で動く。
+Supervisor Kubernetes Clusterにはカスタムコントローラが沢山組み込んであり、つまりカスタムリソースが色々使えるようになっていて、VMとかKubernetesクラスタとかNSX-Tネットワークとかストレージなんかを、KubernetesのAPIでデプロイできるようになっている。
+Supervisor Kubernetes ClusterにPodをデプロイすると、ESXi上にマイクロVMが立ち上がり、そこでコンテナが実行される。
+
+これがVMwareの本気か…と感嘆する。
+
 # コンテナホストOS
 
 コンテナをホストするためのOS。
