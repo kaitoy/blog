@@ -206,6 +206,10 @@ GitOpsできる。
 
 GitOpsできるツールとして、Weave Fluxより人気があるような気がする。
 
+## Argo Flux
+[Argo CDとFluxがくっついた](https://www.weave.works/blog/argo-flux-join-forces)。
+なんかすごい。
+
 ## Prow
 [Prow](https://github.com/kubernetes/test-infra/tree/master/prow)は、KubernetesコミュニティによるCI/CDツール。
 Kubernetesの開発などに使われていて、以下のような機能を持つ。
