@@ -15,6 +15,8 @@ Kubernetesの上で動くものであったり、Kubernetesクラスタに対し
 
 <!--more-->
 
+2020/1/26更新。
+
 {{< google-adsense >}}
 
 # セキュリティ
@@ -47,6 +49,11 @@ KubernetesクラスタやKubernetesアプリケーションのセキュリティ
 汎用的なものなのでKubernetes専用というわけではないけど、公式サイトでKubernetesリソースのアクセス制御に使うユースケースが最初に紹介されている。
 
 ポリシーは[Rego](https://www.openpolicyagent.org/docs/latest/how-does-opa-work/)という独自言語で柔軟に細かく書けるけど、書くの大変そう…
+
+## Kube-scan
+[Kube-scan](https://www.octarinesec.com/solution-item/kube-scan/)は[Octarine社](https://www.octarinesec.com/)によるKubernetesクラスタのセキュリティリスクアセスメントをするツール。
+クラスタ上でPodとして動作し、全Kubernetesマニフェストをスキャンして、セキュリティチェック結果をWeb GUIでレポートしてくれる。
+結果は、同じくOctarine社による[Kubernetes Common Configuration Scoring System (KCCSS)](https://www.octarinesec.com/solution-item/kccss/)というCVSSのKubernetes版によってスコアリングされた0～10の数値として出る。
 
 # Kubernetesアプリケーション開発ツール
 
