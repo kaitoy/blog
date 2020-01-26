@@ -14,6 +14,8 @@ draft: false
 
 <!--more-->
 
+2020/1/26更新。
+
 {{< google-adsense >}}
 
 # Kubernetesディストリビューション
@@ -106,6 +108,12 @@ KubernetesディストリビューションというよりかはKubernetesクラ
 
 OSSのKubernetesに、簡単にセキュアで安定したマルチクラスタを構築して監視できるというのが売り。
 HPEのストレージ、ネットワーク、サーバ、ネットワーク、HCI、エッジ機器なんかとがんがん連携していくものと思われる。
+
+## Diamanti
+[Diamanti](https://diamanti.com/)はKubernetes搭載ハイパーコンバージドインフラ(HCI)。
+国内ではネットワールドがディストリビュータとして展開している。
+
+搭載するKubernetesは普通のKubernetesかOpenShiftで、ネットワークインターフェースやストレージなどがコンテナやKubernetesに最適化されていて、高速にワークロードを処理できる。
 
 # Kubernetes亜種
 
