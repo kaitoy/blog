@@ -15,7 +15,7 @@ Kubernetesの上で動くものであったり、Kubernetesクラスタに対し
 
 <!--more-->
 
-2020/1/26更新。
+2020/1/28更新。
 
 {{< google-adsense >}}
 
@@ -159,6 +159,10 @@ Chartではマニフェストのテンプレートとパラメータを分けて
 デプロイせずにテンプレートからマニフェストをレンダリングすることもできるので、[kustomize](https://github.com/kubernetes-sigs/kustomize)の代わりにも使える。
 
 もうすぐ出るv3でアーキテクチャや思想が大きく変わる模様。
+
+## Tanka
+[Tanka](https://tanka.dev/)はGrafanaラボが開発したKubernetesマニフェストのレンダリング・デプロイツール。
+Helmみたいなものだけど、テンプレート言語として[Jsonnet](https://jsonnet.org/)を使っていて、よりプログラマブルに記述できるのが売り。
 
 ## Gravity
 [Gravity](https://github.com/gravitational/gravity)はKubernetes上のアプリケーションをKubernetesごとパッケージングしてtarファイルにしてくれるツール。
@@ -419,6 +423,16 @@ Helmチャートリポジトリを閲覧してアプリをデプロイしたり�
 
 ## Knative
 [Knative](https://knative.dev/docs/)はKubernetes上にイベントドリブンなサーバレスアプリケーションを構築できるフレームワーク。
+
+## Fission
+[Fission](https://fission.io/)は、Kubernetes上にサーバレスファンクションをデプロイしてHTTPのAPIとかで実行できるようにしてくれるフレームワーク。
+
+Kubernetes上でFissionのコンポーネントが色々動き、ファンクションの管理、ファンクションのビルド、HTTPリクエストの受付、ファンクションの実行をする。
+HTTPリクエスト以外にも、Kafkaとかのメッセージキューと連携してファンクションを実行したりもできる。
+ファンクションはJavaScriptとかのスクリプト言語で書けるだけでなく、Goとかのコンパイル言語もいける。
+
+## KubeFlow
+[Kubeflow](https://www.kubeflow.org/)はKubernetes上で動く、機械学習システムの開発・デプロイ・運用のためのプラットフォーム。
 
 ## Ambassador
 [Ambassador](https://www.getambassador.io/)はEnvoyベースのKubernetesネイティブなAPIゲートウェイ。
