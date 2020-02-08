@@ -15,7 +15,7 @@ Kubernetesの上で動くものであったり、Kubernetesクラスタに対し
 
 <!--more-->
 
-2020/1/28更新。
+2020/2/8更新。
 
 {{< google-adsense >}}
 
@@ -201,6 +201,10 @@ KubebuilderやOperator SDKはAPIがプリミティブな感じで、Reconciliati
 kubectlにkudoというサブコマンドを提供し、オペレータtarでパッケージングし、インストール、アップグレード、バックアップなどのライフサイクルの面倒を見てくれる。
 
 オペレータリポジトリも作ることができて、[公式のリポジトリ](https://kudo-repository.storage.googleapis.com/)もある。
+
+## java-operator-sdk
+[java-operator-sdk](https://github.com/ContainerSolutions/java-operator-sdk)はOperator FrameworkにインスパイアされたJavaでオペレータを書けるフレームワーク。
+Spring Bootのスターター(spring-boot-operator-framework-starter)が提供されている。
 
 # CI/CD
 
