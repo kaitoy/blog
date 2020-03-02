@@ -245,7 +245,10 @@
 </ul>
 
 <p>(2019/1/17追記: クラスタ全手動構築手順はKubernetes 1.13になってもほとんど変わっていない。ユニットファイルに指定するオプションが多少減ったりしたくらい。
-また、ホストがRHELでもほとんど変わらない。インストールするDockerがDocker-CE(もしくはRedhatのやつ)に変わるくらいで、あとはkubeletの<code>--cgroup-driver</code>を<code>systemd</code>にしないといけなかったかも。)
+また、ホストがRHELでもほとんど変わらない。インストールするDockerがDocker-CE(もしくはRedhatのやつ)に変わるくらいで、あとはkubeletの<code>--cgroup-driver</code>を<code>systemd</code>にしないといけなかったかも。)</p>
+
+<p>(2020/3/2更新。)</p>
+
 
 
 
@@ -259,7 +262,7 @@
 <script>
 (adsbygoogle = window.adsbygoogle || []).push({});
 </script>
-</p>
+
 
 <h1 id="構成">構成</h1>
 
@@ -355,9 +358,12 @@ Oracle Linuxにログインして、<code>/etc/fstab</code>のswapの行を削�
 
 <h2 id="1-bridge-netfilterとip-forwardingを設定">1. Bridge netfilterとIP forwardingを設定</h2>
 
-<p>まず、Bridge netfilterモジュールをロードする。</p>
+<p>まず、Bridge netfilterモジュールとoverlayモジュールをロードする。
+(kube-proxyをipvsモードで動かすなら、さらにip_vs、ip_vs_rr、ip_vs_wrr、ip_vs_sh、nf_conntrack_ipv4が要る。)</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># modprobe br_netfilter
-# echo &#34;br_netfilter&#34; &gt; /etc/modules-load.d/br_netfilter.conf</code></pre></div>
+# echo &#34;br_netfilter&#34; &gt; /etc/modules-load.d/99-k8s.conf
+# modprobe overlay
+# echo &#34;overlay&#34; &gt;&gt; /etc/modules-load.d/99-k8s.conf</code></pre></div>
 <p>Bridge netfilterとIP forwardingを有効化する。</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># cat &gt; /etc/sysctl.d/kubernetes.conf &lt;&lt; EOF
 net.bridge.bridge-nf-call-iptables = 1
@@ -881,6 +887,10 @@ EOF
 # systemctl daemon-reload
 # systemctl enable kube-apiserver
 # systemctl start kube-apiserver</code></pre></div>
+<p>(k8s 1.13から<code>EncryptionConfig</code>が<code>EncryptionConfiguration</code>に変わり、そのapiVersionも<code>v1</code>から<code>apiserver.config.k8s.io/v1</code>に変わった。)</p>
+
+<p>(audit-policy.confに書くapiVersionもk8s 1.13から<code>audit.k8s.io/v1</code>になった。)</p>
+
 <p><code>--allow-privileged</code>はflannelなどに必要。</p>
 
 <p><code>--enable-admission-plugins</code>には<a href="https://kubernetes.io/docs/admin/admission-controllers/#is-there-a-recommended-set-of-admission-controllers-to-use">公式推奨のプラグイン</a>に加えて、後述のTLS BootstrappingのためのNodeRestrictionを指定。
@@ -910,7 +920,8 @@ RSA鍵交換はNG、RC4と3DESもNG、AESの鍵長は128ビット以上、SHA1�
 
 <p><code>--feature-gates</code>でRotateKubeletServerCertificateを有効にして、kubeletのサーバ証明書を自動更新するようにしている。
 因みに、クライアント証明書を自動更新するRotateKubeletClientCertificateはデフォルトで有効。
-これらがCertificate Rotationと呼ばれる機能。</p>
+これらがCertificate Rotationと呼ばれる機能。
+(セキュリティの問題から、<code>RotateKubeletServerCertificate</code>のサーバ証明書自動更新はk8s 1.11以降<a href="https://github.com/kubernetes/kubernetes/pull/62471">使えなくなった</a>。)</p>
 
 <p><code>--feature-gates</code>は全Kubernetesコンポーネントで同じ値を指定するのがよさそう。</p>
 
@@ -1063,16 +1074,6 @@ EOF
 <p>確認。</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># kubectl config view --kubeconfig=${KCONFIG}</code></pre></div></li>
 
-<li><p>CA証明書とbootstrap kubeconfigをConfigMap(cluster-info)で公開</p>
-
-<p>kubeletはこのConfigMapを見てクラスタに参加する。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># kubectl -n kube-public create configmap cluster-info --from-file /etc/kubernetes/pki/ca.crt --from-file /etc/kubernetes/bootstrap.kubeconfig</code></pre></div>
-<p>anonymousユーザにcluster-infoへのアクセスを許可する。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># kubectl -n kube-public create role system:bootstrap-signer-clusterinfo --verb get --resource configmaps
-# kubectl -n kube-public create rolebinding kubeadm:bootstrap-signer-clusterinfo --role system:bootstrap-signer-clusterinfo --user system:anonymous</code></pre></div>
-<p>system:bootstrappersグループにsystem:node-bootstrapperロールを紐づける。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># kubectl create clusterrolebinding kubeadm:kubelet-bootstrap --clusterrole system:node-bootstrapper --group system:bootstrappers</code></pre></div></li>
-
 <li><p>bootstrap.kubeconfigにトークンを追記</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># kubectl config set-credentials kubelet-bootstrap --token=${BOOTSTRAP_TOKEN} --kubeconfig=/etc/kubernetes/bootstrap.kubeconfig</code></pre></div></li>
 </ol>
@@ -1115,22 +1116,20 @@ EOF
 <li><p>CNI</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># mkdir -p /etc/cni/net.d /opt/cni/bin/
 # cd /tmp
-# curl -OL https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz
 # curl -OL https://github.com/containernetworking/plugins/releases/download/v0.7.1/cni-plugins-amd64-v0.7.1.tgz
 # cd /opt/cni/bin
-# tar zxf /tmp/cni-amd64-v0.6.0.tgz
 # tar zxf /tmp/cni-plugins-amd64-v0.7.1.tgz
 # chmod +x /opt/cni/bin/*
 # cat &gt;/etc/cni/net.d/99-loopback.conf &lt;&lt;EOF
 {
+  &#34;cniVersion&#34;: &#34;0.3.1&#34;,
+  &#34;name&#34;: &#34;lo&#34;,
   &#34;type&#34;: &#34;loopback&#34;
 }
 EOF</code></pre></div></li>
 
 <li><p>kubelet</p>
 
-<p>前提コマンド(conntrack)インストール。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># yum -y install conntrack-tools</code></pre></div>
 <p>systemdのユニットファイルを書いてサービス化。</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># DNS_SERVER_IP=10.0.0.10
 # PAUSE_IMAGE=k8s.gcr.io/pause-amd64:3.1
@@ -1251,46 +1250,20 @@ roleRef:
   name: system:certificates.k8s.io:certificatesigningrequests:nodeclient
   apiGroup: rbac.authorization.k8s.io
 EOF</code></pre></div>
-<p>また、kubeletのクライアント証明書を自動更新(i.e. RotateKubeletClientCertificate)するときのCSRを承認するClusterRoleとして<code>system:certificates.k8s.io:certificatesigningrequests:selfnodeclient</code>が自動生成されていて、これをノード毎のユーザにバインドしてやると、自動承認が有効になる。</p>
+<p>また、kubeletのクライアント証明書を自動更新(i.e. RotateKubeletClientCertificate)するときのCSRを承認するClusterRoleとして<code>system:certificates.k8s.io:certificatesigningrequests:selfnodeclient</code>が自動生成されていて、これをsystem:nodesグループにバインドしてやると、自動承認が有効になる。</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># HOSTNAME=k8s-master
 # cat &lt;&lt;EOF | kubectl create -f -
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: ${HOSTNAME}-node-client-cert-renewal
+  name: auto-approve-renewals-for-nodes
 subjects:
-- kind: User
-  name: system:node:${HOSTNAME}
+- kind: Group
+  name: system:nodes
   apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
   name: system:certificates.k8s.io:certificatesigningrequests:selfnodeclient
-  apiGroup: rbac.authorization.k8s.io
-EOF</code></pre></div>
-<p>kubeletのサーバ証明書を自動更新(i.e. RotateKubeletServerCertificate)するときのCSRを承認するClusterRoleは現時点で自動生成されないので、自分で作ってノード毎のユーザにバインドして、自動承認を有効にする。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># cat &lt;&lt;EOF | kubectl create -f -
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: approve-node-server-renewal-csr
-rules:
-- apiGroups: [&#34;certificates.k8s.io&#34;]
-  resources: [&#34;certificatesigningrequests/selfnodeserver&#34;]
-  verbs: [&#34;create&#34;]
-EOF
-# HOSTNAME=k8s-master
-# cat &lt;&lt;EOF | kubectl create -f -
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: ${HOSTNAME}-server-client-cert-renewal
-subjects:
-- kind: User
-  name: system:node:${HOSTNAME}
-  apiGroup: rbac.authorization.k8s.io
-roleRef:
-  kind: ClusterRole
-  name: approve-node-server-renewal-csr
   apiGroup: rbac.authorization.k8s.io
 EOF</code></pre></div></li>
 </ol>
@@ -1300,6 +1273,9 @@ EOF</code></pre></div></li>
 <ol>
 <li><p>kube-proxy</p>
 
+<p>前提コマンド(conntrack)インストール。
+(kube-proxyをipvsモードで動かす場合にはさらにipsetも入れる必要がある。)</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># yum -y install conntrack-tools</code></pre></div>
 <p>kube-proxyのkubeconfigを作成。</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># MASTER_IP=192.168.171.200
 # KUBERNETES_PUBLIC_ADDRESS=$MASTER_IP

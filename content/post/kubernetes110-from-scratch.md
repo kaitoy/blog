@@ -28,6 +28,9 @@ Oracle Linux 7.4.0のVMでKubernetes 1.10.0のクラスタをスクラッチか�
 
 (2019/1/17追記: クラスタ全手動構築手順はKubernetes 1.13になってもほとんど変わっていない。ユニットファイルに指定するオプションが多少減ったりしたくらい。
 また、ホストがRHELでもほとんど変わらない。インストールするDockerがDocker-CE(もしくはRedhatのやつ)に変わるくらいで、あとはkubeletの`--cgroup-driver`を`systemd`にしないといけなかったかも。)
+
+(2020/3/2更新。)
+
 {{< google-adsense >}}
 
 # 構成
@@ -107,11 +110,14 @@ SELinuxはちゃんと設定すればKubernetes動かせるはずだけど、面
 
 ## 1. Bridge netfilterとIP forwardingを設定
 
-まず、Bridge netfilterモジュールをロードする。
+まず、Bridge netfilterモジュールとoverlayモジュールをロードする。
+(kube-proxyをipvsモードで動かすなら、さらにip_vs、ip_vs_rr、ip_vs_wrr、ip_vs_sh、nf_conntrack_ipv4が要る。)
 
 ```console
 # modprobe br_netfilter
-# echo "br_netfilter" > /etc/modules-load.d/br_netfilter.conf
+# echo "br_netfilter" > /etc/modules-load.d/99-k8s.conf
+# modprobe overlay
+# echo "overlay" >> /etc/modules-load.d/99-k8s.conf
 ```
 
 Bridge netfilterとIP forwardingを有効化する。
@@ -712,6 +718,10 @@ EOF
     # systemctl start kube-apiserver
     ```
 
+    (k8s 1.13から`EncryptionConfig`が`EncryptionConfiguration`に変わり、そのapiVersionも`v1`から`apiserver.config.k8s.io/v1`に変わった。)
+
+    (audit-policy.confに書くapiVersionもk8s 1.13から`audit.k8s.io/v1`になった。)
+
     `--allow-privileged`はflannelなどに必要。
 
     `--enable-admission-plugins`には[公式推奨のプラグイン](https://kubernetes.io/docs/admin/admission-controllers/#is-there-a-recommended-set-of-admission-controllers-to-use)に加えて、後述のTLS BootstrappingのためのNodeRestrictionを指定。
@@ -742,6 +752,7 @@ EOF
     `--feature-gates`でRotateKubeletServerCertificateを有効にして、kubeletのサーバ証明書を自動更新するようにしている。
     因みに、クライアント証明書を自動更新するRotateKubeletClientCertificateはデフォルトで有効。
     これらがCertificate Rotationと呼ばれる機能。
+    (セキュリティの問題から、`RotateKubeletServerCertificate`のサーバ証明書自動更新はk8s 1.11以降[使えなくなった](https://github.com/kubernetes/kubernetes/pull/62471)。)
 
     `--feature-gates`は全Kubernetesコンポーネントで同じ値を指定するのがよさそう。
 
@@ -929,29 +940,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
     ```console
     # kubectl config view --kubeconfig=${KCONFIG}
     ```
-
-3. CA証明書とbootstrap kubeconfigをConfigMap(cluster-info)で公開
-
-    kubeletはこのConfigMapを見てクラスタに参加する。
-
-    ```console
-    # kubectl -n kube-public create configmap cluster-info --from-file /etc/kubernetes/pki/ca.crt --from-file /etc/kubernetes/bootstrap.kubeconfig
-    ```
-
-    anonymousユーザにcluster-infoへのアクセスを許可する。
-
-    ```console
-    # kubectl -n kube-public create role system:bootstrap-signer-clusterinfo --verb get --resource configmaps
-    # kubectl -n kube-public create rolebinding kubeadm:bootstrap-signer-clusterinfo --role system:bootstrap-signer-clusterinfo --user system:anonymous
-    ```
-
-    system:bootstrappersグループにsystem:node-bootstrapperロールを紐づける。
-
-    ```console
-    # kubectl create clusterrolebinding kubeadm:kubelet-bootstrap --clusterrole system:node-bootstrapper --group system:bootstrappers
-    ```
-
-4. bootstrap.kubeconfigにトークンを追記
+3. bootstrap.kubeconfigにトークンを追記
 
     ```console
     # kubectl config set-credentials kubelet-bootstrap --token=${BOOTSTRAP_TOKEN} --kubeconfig=/etc/kubernetes/bootstrap.kubeconfig
@@ -1015,26 +1004,20 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
     ```console
     # mkdir -p /etc/cni/net.d /opt/cni/bin/
     # cd /tmp
-    # curl -OL https://github.com/containernetworking/cni/releases/download/v0.6.0/cni-amd64-v0.6.0.tgz
     # curl -OL https://github.com/containernetworking/plugins/releases/download/v0.7.1/cni-plugins-amd64-v0.7.1.tgz
     # cd /opt/cni/bin
-    # tar zxf /tmp/cni-amd64-v0.6.0.tgz
     # tar zxf /tmp/cni-plugins-amd64-v0.7.1.tgz
     # chmod +x /opt/cni/bin/*
     # cat >/etc/cni/net.d/99-loopback.conf <<EOF
     {
+      "cniVersion": "0.3.1",
+      "name": "lo",
       "type": "loopback"
     }
     EOF
     ```
 
 3. kubelet
-
-    前提コマンド(conntrack)インストール。
-
-    ```console
-    # yum -y install conntrack-tools
-    ```
 
     systemdのユニットファイルを書いてサービス化。
 
@@ -1176,7 +1159,7 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
     EOF
     ```
 
-    また、kubeletのクライアント証明書を自動更新(i.e. RotateKubeletClientCertificate)するときのCSRを承認するClusterRoleとして`system:certificates.k8s.io:certificatesigningrequests:selfnodeclient`が自動生成されていて、これをノード毎のユーザにバインドしてやると、自動承認が有効になる。
+    また、kubeletのクライアント証明書を自動更新(i.e. RotateKubeletClientCertificate)するときのCSRを承認するClusterRoleとして`system:certificates.k8s.io:certificatesigningrequests:selfnodeclient`が自動生成されていて、これをsystem:nodesグループにバインドしてやると、自動承認が有効になる。
 
     ```console
     # HOSTNAME=k8s-master
@@ -1184,10 +1167,10 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
     kind: ClusterRoleBinding
     apiVersion: rbac.authorization.k8s.io/v1
     metadata:
-      name: ${HOSTNAME}-node-client-cert-renewal
+      name: auto-approve-renewals-for-nodes
     subjects:
-    - kind: User
-      name: system:node:${HOSTNAME}
+    - kind: Group
+      name: system:nodes
       apiGroup: rbac.authorization.k8s.io
     roleRef:
       kind: ClusterRole
@@ -1196,39 +1179,16 @@ Bootstrap時の認証には[Bootstrap Tokens](https://kubernetes.io/docs/admin/b
     EOF
     ```
 
-    kubeletのサーバ証明書を自動更新(i.e. RotateKubeletServerCertificate)するときのCSRを承認するClusterRoleは現時点で自動生成されないので、自分で作ってノード毎のユーザにバインドして、自動承認を有効にする。
-
-    ```console
-    # cat <<EOF | kubectl create -f -
-    kind: ClusterRole
-    apiVersion: rbac.authorization.k8s.io/v1
-    metadata:
-      name: approve-node-server-renewal-csr
-    rules:
-    - apiGroups: ["certificates.k8s.io"]
-      resources: ["certificatesigningrequests/selfnodeserver"]
-      verbs: ["create"]
-    EOF
-    # HOSTNAME=k8s-master
-    # cat <<EOF | kubectl create -f -
-    kind: ClusterRoleBinding
-    apiVersion: rbac.authorization.k8s.io/v1
-    metadata:
-      name: ${HOSTNAME}-server-client-cert-renewal
-    subjects:
-    - kind: User
-      name: system:node:${HOSTNAME}
-      apiGroup: rbac.authorization.k8s.io
-    roleRef:
-      kind: ClusterRole
-      name: approve-node-server-renewal-csr
-      apiGroup: rbac.authorization.k8s.io
-    EOF
-    ```
-
 ## 9. kube-proxy、オーバレイネットワーク、DNSのデプロイ
 
 1. kube-proxy
+
+    前提コマンド(conntrack)インストール。
+    (kube-proxyをipvsモードで動かす場合にはさらにipsetも入れる必要がある。)
+
+    ```console
+    # yum -y install conntrack-tools
+    ```
 
     kube-proxyのkubeconfigを作成。
 
