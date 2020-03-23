@@ -12,6 +12,8 @@ draft: false
 
 今回はKubernetesのクラスタの構築手段について書く。
 
+(2020/3/23更新)
+
 <!--more-->
 
 {{< google-adsense >}}
@@ -141,6 +143,9 @@ Kubernetes自身のテストに使われている。
 コアはAnsibleのPlaybookで、kubesprayと似てる。
 特徴的なのは、クラスタ構築に必要なKubernetesコンポーネント(のコンテナイメージ)、Docker、Dockerレジストリ([Harbor](https://goharbor.io/))、YUMリポジトリサーバ、aptリポジトリサーバを同梱していることで、オフラインでもクラスタ構築できること。
 Breeze自体がDockerコンテナとして動くので、実行も簡単。
+
+## kublr
+[kublr](https://kublr.com/)は、サーバアプリケーションとして動き、そのGUIでAWS、Azure、GCPかオンプレのマシンにKubernetesクラスタを構築して管理できるツール。
 
 # 出来合いKubernetesクラスタ
 ツールを使って構築するのもそれなりの学習コストと作業が発生して簡単ではないので、出来合いのものを使う手もある。

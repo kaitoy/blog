@@ -12,9 +12,9 @@ draft: false
 
 今回はKubernetesのバリエーションとコンテナホストOSについて書く。
 
-<!--more-->
+(2020/3/23更新)
 
-2020/1/26更新。
+<!--more-->
 
 {{< google-adsense >}}
 
@@ -201,6 +201,10 @@ Red HatがCoreOS社を買収してContainer Linuxを手に入れたため、Atom
 
 Project Atmicと同様、Red Hat CoreOS、Fedora CoreOS、CentOS CoreOSというバリエーションが出てくるはずだけど、今のところFedora版しか見当たらないような…
 
+と思ってたらいつの間にかでてた。
+Red Hat Enterprise Linux CoreOS、略して[RHCOS](https://docs.openshift.com/container-platform/4.1/architecture/architecture-rhcos.html)と呼ぶ。
+なんて読むんだろう…
+
 ## RancherOS
 [RancherOS](https://rancher.com/rancher-os/)はRancher社によるコンテナホストOS。
 
@@ -235,3 +239,10 @@ Ubuntu Core自体はコンテナホスト向けというよりはIoT向けとい
 [k3OS](https://k3os.io/)はRancher社が開発したKubernetes OS。
 
 RancherOSと同様のアーキテクチャっぽくて、システムサービスを動かすのにDocker Composeの代わりにk3sを使うっぽい。
+
+## Container-Optimized OS
+[Container-Optimized OS](https://cloud.google.com/container-optimized-os/docs/concepts/features-and-benefits?hl=ja)はGoogleによるChromium OSベースのコンテナホストOSで、GCP専用。
+
+## Bottlerocket
+[Bottlerocket](https://aws.amazon.com/jp/bottlerocket/)はAWSが2020年3月に発表したOSSのコンテナホストOS。
+現時点のものはLinux Kernel 5.4ベースで、EKSで使えるのはもちろん、ベアメタルにもインストールできる。
