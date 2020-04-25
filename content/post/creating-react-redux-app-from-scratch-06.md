@@ -31,7 +31,7 @@ Reactによるプログラミングをするとき、小さいUIコンポーネ�
 このpropsやstateの扱いをReactの状態管理という。
 propsやstateを適当にアドホックに設定してると、結局jQuery使ってるのとそんなに変わらなくなって辛くなるので、Reactの開発元であるFacebookは[Flux](https://facebook.github.io/flux/)というアーキテクチャを提案している。
 
-![Flux](https://github.com/facebook/flux/raw/master/docs/img/flux-diagram-white-background.png "Flux")
+![Flux](https://github.com/facebook/flux/blob/3.1.3/docs/img/flux-diagram-white-background.png "Flux")
 
 <br>
 
@@ -121,7 +121,7 @@ HOGEボタンに一つ、クリックしたかどうかの状態(`clicked`)を�
 
 <br>
 
-Reducerはピュアじゃないといけないので、内部で[副作用](https://ja.wikipedia.org/wiki/%E5%89%AF%E4%BD%9C%E7%94%A8_(%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%A0)を起こしてはいけない。
+Reducerはピュアじゃないといけないので、内部で[副作用](https://ja.wikipedia.org/wiki/%E5%89%AF%E4%BD%9C%E7%94%A8_(%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%A0) を起こしてはいけない。
 副作用とは、具体的には以下のようなもの。
 
 * 引数で与えられたオブジェクトを変更する。
