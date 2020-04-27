@@ -99,11 +99,6 @@ ESLintのルールに[Airbnbのやつ](https://github.com/airbnb/javascript/tree
 `.eslintrc.js`:
 ```diff
 (snip)
-   extends: ['airbnb', 'prettier'],
-   plugins: ['jest'],
-   rules: {
-     'react/jsx-filename-extension': ['error', { extensions: ['.tsx', '.jsx'] }],
-   },
    overrides: [
      {
        files: ['**/*.ts', '**/*.tsx'],
@@ -115,8 +110,8 @@ ESLintのルールに[Airbnbのやつ](https://github.com/airbnb/javascript/tree
 +        'react/prop-types': 'off',
        },
      },
-  ],
-(snip)
+   ],
+ };
 ```
 
 (c.f. https://www.kaitoy.xyz/2018/08/22/creating-react-redux-app-from-scratch-02/)
