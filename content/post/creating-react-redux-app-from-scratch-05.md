@@ -19,7 +19,7 @@ highlightLanguages = []
 
 <!--more-->
 
-(2018/11/21更新)
+(2020/4/29更新)
 
 {{< google-adsense >}}
 
@@ -36,7 +36,7 @@ highlightLanguages = []
 * [Blueprint](https://blueprintjs.com/): 複雑でデータ量の多いUI向けに作られたReact UIツールキット。
 * [React-Bootstrap](https://react-bootstrap.github.io/): [Bootstrap](https://getbootstrap.com/)のReactバインディング。現時点ではv4未対応。
 * [Grommet](http://grommet.io/): HPEによるエンタープライズレディなデザインシステム。
-* [Office UI Fabric React](https://developer.microsoft.com/en-us/fabric#/components): OfficeなどのMicrosoft製品に使われているReactコンポーネントセット。
+* [Fluent UI (旧Office UI Fabric React)](https://developer.microsoft.com/en-us/fluentui#/): OfficeなどのMicrosoft製品に使われているReactコンポーネントセット。
 
 <br>
 

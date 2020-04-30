@@ -12,7 +12,7 @@ draft: false
 
 今回はKubernetesのバリエーションとコンテナホストOSについて書く。
 
-(2020/3/23更新)
+(2020/4/30更新)
 
 <!--more-->
 
@@ -115,6 +115,12 @@ HPEのストレージ、ネットワーク、サーバ、ネットワーク、HC
 
 搭載するKubernetesは普通のKubernetesかOpenShiftで、ネットワークインターフェースやストレージなどがコンテナやKubernetesに最適化されていて、高速にワークロードを処理できる。
 
+## Tanzu Kubernetes Grid
+[Tanzu Kubernetes Grid](https://tanzu.vmware.com/kubernetes-grid)はVMwareによるKubernetesディストリビューション。下記vSphere 7 with KubernetesのSupervisor Kubernetes Clusterに使われている。
+
+upstream-alignedなKubernetesということなので、オリジナルのKubernetesからは多少手が入っていると思われる。
+また、[Fluentbit](https://fluentbit.io/)とか[Contour](https://projectcontour.io/)とかがデフォルトで乗ってくるのと、tkgという管理用コマンドライン(兼Web GUIサーバ)ツールが付いてくる。
+
 # Kubernetes亜種
 
 Kubernetes自体に改造が入っていたり、Kubernetes(の一部)っぽく動くものたち。
@@ -161,8 +167,8 @@ k3vはkubectlからは普通のKubernetesに見えるけど、k3vに対して作
 
 まだ出たてでPoCレベルの品質。
 
-## Project Pacific
-[Project Pacific](https://www.vmware.com/jp/products/vsphere/projectpacific.html)は[VMware Tanzu](https://cloud.vmware.com/jp/tanzu)の構成要素で、VMware vSphereにKubernetesを統合したもの。
+## vSphere 7 with Kubernetes (Project Pacific)
+[Project Pacific](https://www.vmware.com/jp/products/vsphere/projectpacific.html)は[VMware Tanzu](https://cloud.vmware.com/jp/tanzu)の構成要素で、[VMware vSphere](https://www.vmware.com/jp/products/vsphere.html)にKubernetesを統合したもの。
 
 Project Pacificの肝はSupervisor Kubernetes Clusterというもので、これは、vSphereのハイパバイザ(i.e. ESXi)上で動くシステム管理用Kubernetesクラスタ。
 Supervisor Kubernetes ClusterのマスターコンポーネントはESXi上のマイクロVMで動き、ノードコンポーネントとしてはkubeletの代わりにvsphereletというのがESXi直上で動く。
@@ -170,6 +176,18 @@ Supervisor Kubernetes Clusterにはカスタムコントローラが沢山組み
 Supervisor Kubernetes ClusterにPodをデプロイすると、ESXi上にマイクロVMが立ち上がり、そこでコンテナが実行される。
 
 これがVMwareの本気か…と感嘆する。
+
+Project Pacificは、2020年3月にvSphere 7 with KubernetesとしてTanzuとともに正式リリースされた。
+
+## Krustlet
+[Krustlet](https://github.com/deislabs/krustlet)はMicrosoftが開発しているkubeletのRust実装。
+Podでコンテナで動かす代わりに[wasmtime](https://wasmtime.dev/)ベースの[WebAssembly](https://developer.mozilla.org/ja/docs/WebAssembly)ランタイムでWebAssemblyアプリを動かす。
+
+WebAssemblyアプリは[wasm-to-oci](https://github.com/engineerd/wasm-to-oci)というツールで事前にOCIイメージにしてコンテナレジストリに入れておいて、Podのデプロイ時にKrustletがpullして起動する。
+
+コンテナで動かす非WebAssemblyアプリに比べて、[省メモリで省ディスクで高パフォーマンスでセキュア](https://cloudblogs.microsoft.com/opensource/2020/04/07/announcing-krustlet-kubernetes-rust-kubelet-webassembly-wasm/)にできるのが売り。
+
+まだhighly experimental。
 
 # コンテナホストOS
 
