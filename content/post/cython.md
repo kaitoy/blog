@@ -241,7 +241,7 @@ def _neet_helper(x: cython.int) -> cython.int:
 
 ## Tips
 
-* `cdef`関数ではデコレータが使えない。ジェネレータも使えない。
+* `cdef`関数では[自作のデコレータが使えない](https://stackoverflow.com/a/39544561/1741893)。ジェネレータも使えない。
 * Cのコードで、Cの型として扱えないものはPyObjectという型になっている。このPyObjectをなるべく減らすのが高速化におおきく寄与する気がする。
 * `str`はPyObjectになるけど[strのままにしておくのが推奨されている](https://cython.readthedocs.io/en/stable/src/tutorial/strings.html#general-notes-about-c-strings)。Cの文字列(i.e. char*)は遅かったりunicodeのサポートが微妙だったりするので。
 * 戻り値がPyObjectじゃない`cdef`関数で発生した例外はデフォルトでは握りつぶされる。(Cに例外が無いから?)
@@ -250,3 +250,18 @@ def _neet_helper(x: cython.int) -> cython.int:
     - `@cython.cfunc`か`@cython.ccall`が付いている。
     - Pythonオブジェクトを返す。
     - 戻り値の型が型アノテーションで書かれている。
+* ループは変にPythonのAPIを呼んでPythonicなコードを書くより、愚直にforで回したほうがいい。例えば、
+
+    ```python
+    all([True, True, True, False])
+    ```
+
+    より、
+
+    ```python
+    for cond in [True, True, True, False]:
+        if not cond:
+            break
+    ```
+
+    の方が5倍以上速い。

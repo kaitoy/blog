@@ -503,7 +503,7 @@ Cython 0.27で<a href="https://www.python.org/dev/peps/pep-0526/">ローカル�
 <h2 id="tips">Tips</h2>
 
 <ul>
-<li><code>cdef</code>関数ではデコレータが使えない。ジェネレータも使えない。</li>
+<li><code>cdef</code>関数では<a href="https://stackoverflow.com/a/39544561/1741893">自作のデコレータが使えない</a>。ジェネレータも使えない。</li>
 <li>Cのコードで、Cの型として扱えないものはPyObjectという型になっている。このPyObjectをなるべく減らすのが高速化におおきく寄与する気がする。</li>
 <li><code>str</code>はPyObjectになるけど<a href="https://cython.readthedocs.io/en/stable/src/tutorial/strings.html#general-notes-about-c-strings">strのままにしておくのが推奨されている</a>。Cの文字列(i.e. char*)は遅かったりunicodeのサポートが微妙だったりするので。</li>
 <li>戻り値がPyObjectじゃない<code>cdef</code>関数で発生した例外はデフォルトでは握りつぶされる。(Cに例外が無いから?)
@@ -518,6 +518,14 @@ Cython 0.27で<a href="https://www.python.org/dev/peps/pep-0526/">ローカル�
 <li>Pythonオブジェクトを返す。</li>
 <li>戻り値の型が型アノテーションで書かれている。</li>
 </ul></li>
+
+<li><p>ループは変にPythonのAPIを呼んでPythonicなコードを書くより、愚直にforで回したほうがいい。例えば、</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#24909d">all</span>([True, True, True, False])</code></pre></div>
+<p>より、</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">for</span> cond <span style="color:#6ab825;font-weight:bold">in</span> [True, True, True, False]:
+    <span style="color:#6ab825;font-weight:bold">if</span> <span style="color:#6ab825;font-weight:bold">not</span> cond:
+        <span style="color:#6ab825;font-weight:bold">break</span></code></pre></div>
+<p>の方が5倍以上速い。</p></li>
 </ul></div>
 
         <section class="share-buttons">
