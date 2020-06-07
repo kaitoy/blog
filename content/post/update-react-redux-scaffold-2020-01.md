@@ -331,7 +331,7 @@ Viewの方でもURLやルーティングを気にするコンポーネントは�
 (c.f. https://www.kaitoy.xyz/2018/11/02/creating-react-redux-app-from-scratch-09/#react-router)
 
 # JestとReact Testing Library
-[Jest](https://jestjs.io/ja/)はv24.0.0からv25.1.0にメジャーバージョンアップ。
+[Jest](https://jestjs.io/ja/)はv24.0.0からv25.5.4にメジャーバージョンアップ。
 
 以前はReactコンポーネントのテスト用に[Enzyme](https://airbnb.io/enzyme/)を使ってたけど、[React Testing Library](https://testing-library.com/docs/react-testing-library/intro)に乗り換えた。
 React Testing Libraryの方が[Reactマニュアルで推されている](https://ja.reactjs.org/docs/testing.html)し、より[ユーザ視点のテストや設計を促進する](https://medium.com/@boyney123/my-experience-moving-from-enzyme-to-react-testing-library-5ac65d992ce)らしいので。

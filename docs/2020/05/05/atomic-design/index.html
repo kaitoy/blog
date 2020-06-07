@@ -327,9 +327,9 @@ Atomicデザインはコンポーネントを階層的に分類することを�
 <p>Templateもちょっとあやしい。
 ページレベルのコンポーネントはSPAでは一つになることも多く、分類のカテゴリのひとつとして有用とは言えないので。</p>
 
-<p>逆に、<a href="https://redux.js.org/">Redux</a>の<a href="https://redux.js.org/basics/usage-with-react#presentational-and-container-components">Preesntational ComponentとContainer Component</a>も考慮すると、Atomicデザインの分類では足りない。
-AtomとMoleculeはPreesntational Componentでいいとしても、OrganismはPreesntational ComponentとContainer Componentのいずれにもなる。
-あるいは、OrganismをPreesntational Componentとして、別のカテゴリでContainer Componentを実装する必要がある。</p>
+<p>逆に、<a href="https://redux.js.org/">Redux</a>の<a href="https://redux.js.org/basics/usage-with-react#presentational-and-container-components">Presentational ComponentとContainer Component</a>も考慮すると、Atomicデザインの分類では足りない。
+AtomとMoleculeはPresentational Componentでいいとしても、OrganismはPresentational ComponentとContainer Componentのいずれにもなる。
+あるいは、OrganismをPresentational Componentとして、別のカテゴリでContainer Componentを実装する必要がある。</p>
 
 <p>採用するフロントエンドフレームワークなどの特性によっても適した分類方法は変わってくるだろうから、コンポーネント設計にAtomicデザインを活用する場合、多分基本的になんらかのカスタマイズを加えるのがよさそう。
 あるプロジェクトでは、横断的な機能を提供するコンポーネントをイオンと分類しているらしい。</p>
@@ -349,16 +349,14 @@ AtomとMoleculeはPreesntational Componentでいいとしても、OrganismはPre
 <li>アプリのUIを構築するための基礎的な要素。</li>
 <li>Material UIのコンポーネントは汎用的過ぎるので、基本的にはより具体的な役割を与えて、機能を絞ったり、ラベルを付けたり、スタイルを付けたものに名づけをしてAtomとする。
 例えばMaterial UIのButtonから、OpenButtonみたいなAtomを作るなど。</li>
-<li>Preesntational Component。
-見た目に関する状態を持ってもいいけど、自コンポーネントで閉じたものにする。</li>
+<li>Presentational Component。</li>
 <li>再利用性を比較的重視。</li>
 </ul></li>
 <li>Molecule
 
 <ul>
 <li>Material UIのコンポーネントやAtomを組み合わせてつくる比較的シンプルな要素。</li>
-<li>Preesntational Component。
-見た目に関する状態を持ってもいいけど、自コンポーネントで閉じたものにする。</li>
+<li>Presentational Component。</li>
 <li>再利用性を比較的重視。</li>
 </ul></li>
 <li>Organism
@@ -366,9 +364,8 @@ AtomとMoleculeはPreesntational Componentでいいとしても、OrganismはPre
 <ul>
 <li>Material UIのコンポーネント、Atom、Moleculeを組み合わせてつくる比較的複雑な要素。</li>
 <li>ものによっては他のOrganismやEcosystemも組み合わせる。</li>
-<li>Preesntational Component。
-見た目に関する状態を持ってもいいけど、自コンポーネントで閉じたものにする。</li>
-<li>再利用性は比較的軽視。</li>
+<li>Presentational Component。</li>
+<li>1アプリ内での再利用性は比較的軽視。どちらかと言えばアプリ間での再利用性を気にする感じ。</li>
 <li>OrganismをEcosystemのコンポーネントでラップしてReduxのStoreにつなぐイメージ。</li>
 </ul></li>
 <li>Ecosystem
@@ -382,7 +379,7 @@ AtomとMoleculeはPreesntational Componentでいいとしても、OrganismはPre
 <li>当然Container Component。
 
 <ul>
-<li>Ecosystemのコンポーネントだけが<a href="https://react-redux.js.org/">React Redux</a>を使う。</li>
+<li>主にEcosystemのコンポーネントが<a href="https://react-redux.js.org/">React Redux</a>でRedux Storeにつなぐ。</li>
 </ul></li>
 <li>再利用性は気にしない。</li>
 </ul></li>
@@ -394,8 +391,13 @@ AtomとMoleculeはPreesntational Componentでいいとしても、OrganismはPre
 <ul>
 <li>必要に応じてMaterial UIのコンポーネント、Atom、Molecule、Organismを組み合わせる。</li>
 </ul></li>
+<li>どちらかと言えばContainer Component?。
+
+<ul>
+<li>必要に応じてReact Reduxを使ってもいい。</li>
+</ul></li>
 <li>React Routerのルーティング先ごとにNatureのコンポーネントを作る感じ。</li>
-<li>Natureのコンポーネントがルーティングの責務を負う。
+<li>NatureのコンポーネントがルーティングやURL遷移の責務を負う。
 
 <ul>
 <li>React RouterのHooksを使うのはNatureだけ。</li>
@@ -403,6 +405,14 @@ AtomとMoleculeはPreesntational Componentでいいとしても、OrganismはPre
 <li>再利用性は気にしない。</li>
 </ul></li>
 </ul>
+
+<p>Presentational Componentは見た目に関する状態を持ってもいいけど、自コンポーネントで閉じたものにする。(i.e. ローカルステートにする。)
+ロジックは持たず、渡されたPropsとローカルステートに従って愚直に描画したり、渡されたコールバックをユーザ入力イベントに応じてナイーブに呼ぶだけにする。</p>
+
+<p>ロジックはContainer Componentに詰める。
+より正確には、ロジックの詳細はステート管理側の<a href="https://redux-saga.js.org/">Saga</a>とか<a href="https://redux.js.org/basics/reducers">Reducer</a>とか<a href="https://react-redux.js.org/api/hooks#useselector">Selector</a>に書いて、それをContainer Componentが利用する。</p>
+
+<p><br></p>
 
 <p>この分類の狙いは、Atomicデザインもともとの効果に加えて以下がある。</p>
 
@@ -412,7 +422,7 @@ AtomとMoleculeはPreesntational Componentでいいとしても、OrganismはPre
 <ul>
 <li>代わりにEcosystemとNatureという生物学的な分類にして、統一感がアップしてかっこいい。</li>
 </ul></li>
-<li>Atomicデザインの分類とPreesntational Component/Container Componentの分類の融合。</li>
+<li>Atomicデザインの分類とPresentational Component/Container Componentの分類の融合。</li>
 <li>責務の分離と明確化。
 
 <ul>
@@ -467,6 +477,8 @@ AtomとMoleculeはPreesntational Componentでいいとしても、OrganismはPre
 <p><code>src/views/</code>の下にAtomicデザインの分類ごとのディレクトリを作って、その下にコンポーネントのソースを入れる。</p>
 
 <p><code>atoms/</code>のところに書いたように、さらにサブディレクトリを作ってコンポーネントを分類するといいけど、ここは自由に。</p>
+
+<p>1ファイル1コンポーネントで、コンポーネントをdefault exportしてPropsの型をnamed exportする。</p>
 
 <p><code>src/views/</code>の下には、他に<code>hooks/</code>とかのAtomicデザイン外のディレクトリを作ってもいい。</p></div>
 

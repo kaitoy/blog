@@ -100,9 +100,9 @@ Atomicデザインはコンポーネントを階層的に分類することを�
 Templateもちょっとあやしい。
 ページレベルのコンポーネントはSPAでは一つになることも多く、分類のカテゴリのひとつとして有用とは言えないので。
 
-逆に、[Redux](https://redux.js.org/)の[Preesntational ComponentとContainer Component](https://redux.js.org/basics/usage-with-react#presentational-and-container-components)も考慮すると、Atomicデザインの分類では足りない。
-AtomとMoleculeはPreesntational Componentでいいとしても、OrganismはPreesntational ComponentとContainer Componentのいずれにもなる。
-あるいは、OrganismをPreesntational Componentとして、別のカテゴリでContainer Componentを実装する必要がある。
+逆に、[Redux](https://redux.js.org/)の[Presentational ComponentとContainer Component](https://redux.js.org/basics/usage-with-react#presentational-and-container-components)も考慮すると、Atomicデザインの分類では足りない。
+AtomとMoleculeはPresentational Componentでいいとしても、OrganismはPresentational ComponentとContainer Componentのいずれにもなる。
+あるいは、OrganismをPresentational Componentとして、別のカテゴリでContainer Componentを実装する必要がある。
 
 採用するフロントエンドフレームワークなどの特性によっても適した分類方法は変わってくるだろうから、コンポーネント設計にAtomicデザインを活用する場合、多分基本的になんらかのカスタマイズを加えるのがよさそう。
 あるプロジェクトでは、横断的な機能を提供するコンポーネントをイオンと分類しているらしい。
@@ -118,40 +118,47 @@ AtomとMoleculeはPreesntational Componentでいいとしても、OrganismはPre
     - アプリのUIを構築するための基礎的な要素。
     - Material UIのコンポーネントは汎用的過ぎるので、基本的にはより具体的な役割を与えて、機能を絞ったり、ラベルを付けたり、スタイルを付けたものに名づけをしてAtomとする。
       例えばMaterial UIのButtonから、OpenButtonみたいなAtomを作るなど。
-    - Preesntational Component。
-      見た目に関する状態を持ってもいいけど、自コンポーネントで閉じたものにする。
+    - Presentational Component。
     - 再利用性を比較的重視。
 * Molecule
     - Material UIのコンポーネントやAtomを組み合わせてつくる比較的シンプルな要素。
-    - Preesntational Component。
-      見た目に関する状態を持ってもいいけど、自コンポーネントで閉じたものにする。
+    - Presentational Component。
     - 再利用性を比較的重視。
 * Organism
     - Material UIのコンポーネント、Atom、Moleculeを組み合わせてつくる比較的複雑な要素。
     - ものによっては他のOrganismやEcosystemも組み合わせる。
-    - Preesntational Component。
-      見た目に関する状態を持ってもいいけど、自コンポーネントで閉じたものにする。
-    - 再利用性は比較的軽視。
+    - Presentational Component。
+    - 1アプリ内での再利用性は比較的軽視。どちらかと言えばアプリ間での再利用性を気にする感じ。
     - OrganismをEcosystemのコンポーネントでラップしてReduxのStoreにつなぐイメージ。
 * Ecosystem
     - ひとつのOrganismを含み、それにロジックを与えるためのコンポーネント。
         - EcosystemのコンポーネントでReduxのStoreからデータを集めてきて、ディスパッチャとかを作って、Propsを整形して、Organismに流し込むイメージ。
     - 当然Container Component。
-        - Ecosystemのコンポーネントだけが[React Redux](https://react-redux.js.org/)を使う。
+        - 主にEcosystemのコンポーネントが[React Redux](https://react-redux.js.org/)でRedux Storeにつなぐ。
     - 再利用性は気にしない。
 * Nature
     - 主にEcosystemを組み合わせてつくる、ページレベルのコンポーネント
         - 必要に応じてMaterial UIのコンポーネント、Atom、Molecule、Organismを組み合わせる。
+    - どちらかと言えばContainer Component?。
+        - 必要に応じてReact Reduxを使ってもいい。
     - React Routerのルーティング先ごとにNatureのコンポーネントを作る感じ。
-    - Natureのコンポーネントがルーティングの責務を負う。
+    - NatureのコンポーネントがルーティングやURL遷移の責務を負う。
         - React RouterのHooksを使うのはNatureだけ。
     - 再利用性は気にしない。
+
+Presentational Componentは見た目に関する状態を持ってもいいけど、自コンポーネントで閉じたものにする。(i.e. ローカルステートにする。)
+ロジックは持たず、渡されたPropsとローカルステートに従って愚直に描画したり、渡されたコールバックをユーザ入力イベントに応じてナイーブに呼ぶだけにする。
+
+ロジックはContainer Componentに詰める。
+より正確には、ロジックの詳細はステート管理側の[Saga](https://redux-saga.js.org/)とか[Reducer](https://redux.js.org/basics/reducers)とか[Selector](https://react-redux.js.org/api/hooks#useselector)に書いて、それをContainer Componentが利用する。
+
+<br>
 
 この分類の狙いは、Atomicデザインもともとの効果に加えて以下がある。
 
 * PageとTemplateというSPAのコンポーネント設計に役立たない分類を排除。
     - 代わりにEcosystemとNatureという生物学的な分類にして、統一感がアップしてかっこいい。
-* Atomicデザインの分類とPreesntational Component/Container Componentの分類の融合。
+* Atomicデザインの分類とPresentational Component/Container Componentの分類の融合。
 * 責務の分離と明確化。
     - Organism以下は与えられたPropsに従った表示とユーザインタラクション。
     - EcosystemはViewとStoreとの接続、およびロジックの実装。
@@ -182,5 +189,7 @@ AtomとMoleculeはPreesntational Componentでいいとしても、OrganismはPre
 `src/views/`の下にAtomicデザインの分類ごとのディレクトリを作って、その下にコンポーネントのソースを入れる。
 
 `atoms/`のところに書いたように、さらにサブディレクトリを作ってコンポーネントを分類するといいけど、ここは自由に。
+
+1ファイル1コンポーネントで、コンポーネントをdefault exportしてPropsの型をnamed exportする。
 
 `src/views/`の下には、他に`hooks/`とかのAtomicデザイン外のディレクトリを作ってもいい。
