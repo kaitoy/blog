@@ -119,7 +119,7 @@ ESLintのルールに[Airbnbのやつ](https://github.com/airbnb/javascript/tree
 <br>
 
 さらに、Reactコンポーネントのデザインシステムとして[Atomicデザイン](https://bradfrost.com/blog/post/atomic-web-design/)を取り入れた。
-それについてはまた別の記事で書く。
+それについてはまた[別の記事](https://www.kaitoy.xyz/2020/05/05/atomic-design/)で書く。
 
 # Prettier
 [Prettier](https://prettier.io/)はメジャーバージョンアップがあってv1.14.0から2.0.2へ。
@@ -187,7 +187,7 @@ npm install -S @material-ui/icons @material-ui/pickers
 
 (c.f. https://www.kaitoy.xyz/2018/09/26/creating-react-redux-app-from-scratch-06/)
 
-ただ、Redux周りのファイル構成を[Railsスタイル](https://github.com/reduxjs/redux/blob/v4.0.5/docs/faq/CodeStructure.md)から[re-ducksスタイル](https://github.com/alexnm/re-ducks)に変えたので、それについては別の記事に書く。
+ただ、Redux周りのファイル構成を[Railsスタイル](https://github.com/reduxjs/redux/blob/v4.0.5/docs/faq/CodeStructure.md)から[re-ducksスタイル](https://github.com/alexnm/re-ducks)に変えたので、それについては[別の記事](https://www.kaitoy.xyz/2020/05/27/re-ducks/)に書く。
 
 # React Redux
 [React Redux](https://react-redux.js.org/)はv5.0.7からv7.1.3にメジャーバージョンアップして、React Hooksに対応。
