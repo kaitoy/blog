@@ -211,7 +211,7 @@ normalizrはREST APIとかで取得したネストしたデータ構造を正規
 Reduxのマニュアルに乗っている[ステート構造パターン](https://redux.js.org/recipes/structuring-reducers/normalizing-state-shape#organizing-normalized-data-in-state)を実現するのに役立つ。
 要はリレーショナルなデータをJOINした状態で取得したのを正規化してStoreに保存しておいて、使うときにはまたJOINしたりしなかったりするイメージ。
 
-以上の変更によってReduxによる状態管理がどう変わるかは別の記事で書く。
+以上の変更によってReduxによる状態管理がどう変わるかは[別の記事](https://www.kaitoy.xyz/2020/07/11/re-ducks-reducers-with-immer/)で書く。
 
 (c.f. https://www.kaitoy.xyz/2018/10/01/creating-react-redux-app-from-scratch-07/#presentational-components-%E3%81%A8-container-components)
 
@@ -474,4 +474,4 @@ npm install -D ts-loader source-map-loader
 
 <br>
 
-ReduxのActionとかの型の付け方も見直したので、また別の記事に書きたい。
+ReduxのActionとかの型の付け方も見直したので、また[別の記事](https://www.kaitoy.xyz/2020/07/11/re-ducks-reducers-with-immer/)に書きたい。
