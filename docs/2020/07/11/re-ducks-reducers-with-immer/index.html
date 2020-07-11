@@ -12,27 +12,27 @@
 </script>
 
 <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
-<meta property="og:url" content="https://www.kaitoy.xyz/2020/07/05/re-ducks-actions/">
+<meta property="og:url" content="https://www.kaitoy.xyz/2020/07/11/re-ducks-reducers-with-immer/">
 <meta property="og:site_name" content="To Be Decided">
 <meta name="twitter:card" content="summary"></meta>
-<link rel="canonical" href="https://www.kaitoy.xyz/2020/07/05/re-ducks-actions/">
+<link rel="canonical" href="https://www.kaitoy.xyz/2020/07/11/re-ducks-reducers-with-immer/">
 
 
 
   <meta property="og:type" content="article">
-  <meta property="og:title" content="Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Action Creator | To Be Decided">
-  <title>Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Action Creator | To Be Decided</title>
+  <meta property="og:title" content="Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Reducer with immer | To Be Decided">
+  <title>Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Reducer with immer | To Be Decided</title>
   <meta property="og:description" content="2018年後半にスクラッチから作ったReactとReduxのプロジェクトテンプレートを2020年版として色々アップデートしているなかで、re-ducksパターンに則ってステート管理のモジュール構成を整理しなおしたり、ステート管理に使うライブラリを見直したりした。
 
-この記事では、前回の続きで、React-Redux、Redux Saga、immer、normalizr、reselectを使ったre-ducksパターンの実践について書く。
+この記事では、前回に続いて、React-Redux、Redux Saga、immer、normalizr、reselectを使ったre-ducksパターンの実践について書く。
 
 言語はTypeScript。">
   <meta name="description" content="2018年後半にスクラッチから作ったReactとReduxのプロジェクトテンプレートを2020年版として色々アップデートしているなかで、re-ducksパターンに則ってステート管理のモジュール構成を整理しなおしたり、ステート管理に使うライブラリを見直したりした。
 
-この記事では、前回の続きで、React-Redux、Redux Saga、immer、normalizr、reselectを使ったre-ducksパターンの実践について書く。
+この記事では、前回に続いて、React-Redux、Redux Saga、immer、normalizr、reselectを使ったre-ducksパターンの実践について書く。
 
 言語はTypeScript。">
-  <meta property="og:image" content="https://www.kaitoy.xyz/images/redux.png">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/immer-logo.png">
 
 
 
@@ -138,7 +138,7 @@
 
                 <div class="navbar-header">
 
-                    <a class="navbar-brand visible-xs" href="#">Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Action Creator</a>
+                    <a class="navbar-brand visible-xs" href="#">Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Reducer with immer</a>
 
                     <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
                         <span class="icon-bar"></span>
@@ -197,8 +197,8 @@
     
     
 
-    <h4 class="post-title"><a href="/2020/07/05/re-ducks-actions/">Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Action Creator</a></h4>
-    <h5>Sun, Jul 5, 2020</h5>
+    <h4 class="post-title"><a href="/2020/07/11/re-ducks-reducers-with-immer/">Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Reducer with immer</a></h4>
+    <h5>Sat, Jul 11, 2020</h5>
     
     <a href="https://www.kaitoy.xyz/tags/react"><kbd class="item-tag">react</kbd></a>
     
@@ -208,13 +208,15 @@
     
     <a href="https://www.kaitoy.xyz/tags/typescript"><kbd class="item-tag">typescript</kbd></a>
     
+    <a href="https://www.kaitoy.xyz/tags/immer"><kbd class="item-tag">immer</kbd></a>
+    
 
 </div>
 
 
         <div class="cover">
-            <a href="/2020/07/05/re-ducks-actions/">
-                <img src="https://www.kaitoy.xyz/images/redux.png" alt="Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Action Creator">
+            <a href="/2020/07/11/re-ducks-reducers-with-immer/">
+                <img src="https://www.kaitoy.xyz/images/immer-logo.png" alt="Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Reducer with immer">
             </a>
         </div>
 
@@ -224,8 +226,13 @@
             <nav id="TableOfContents">
 <ul>
 <li><a href="#モジュール構成">モジュール構成</a></li>
-<li><a href="#action">Action</a></li>
-<li><a href="#action-creator">Action Creator</a></li>
+<li><a href="#reducer">Reducer</a></li>
+<li><a href="#re-ducksとreducer">re-ducksとReducer</a></li>
+<li><a href="#immer">immer</a></li>
+<li><a href="#stateの型">Stateの型</a></li>
+<li><a href="#reducerの型">Reducerの型</a></li>
+<li><a href="#stateの型とreducerをduckからexport">Stateの型とReducerをduckからexport</a></li>
+<li><a href="#stateとreducerの統合">StateとReducerの統合</a></li>
 </ul>
 </nav>
         </aside>
@@ -234,7 +241,7 @@
 
         <br> <div class="text-justify"><p><a href="https://www.kaitoy.xyz/2018/11/26/creating-react-redux-app-from-scratch-11/">2018年後半</a>にスクラッチから作った<a href="https://github.com/kaitoy/react-redux-scaffold">ReactとReduxのプロジェクトテンプレート</a>を2020年版として色々アップデートしているなかで、<a href="https://github.com/alexnm/re-ducks">re-ducks</a>パターンに則ってステート管理のモジュール構成を整理しなおしたり、ステート管理に使うライブラリを見直したりした。</p>
 
-<p>この記事では、<a href="https://www.kaitoy.xyz/2020/05/27/re-ducks/">前回</a>の続きで、<a href="https://react-redux.js.org/">React-Redux</a>、<a href="https://redux-saga.js.org/">Redux Saga</a>、<a href="https://immerjs.github.io/immer/docs/introduction">immer</a>、<a href="https://github.com/paularmstrong/normalizr">normalizr</a>、<a href="https://github.com/reduxjs/reselect">reselect</a>を使ったre-ducksパターンの実践について書く。</p>
+<p>この記事では、<a href="https://www.kaitoy.xyz/2020/07/05/re-ducks-actions/">前回</a>に続いて、<a href="https://react-redux.js.org/">React-Redux</a>、<a href="https://redux-saga.js.org/">Redux Saga</a>、<a href="https://immerjs.github.io/immer/docs/introduction">immer</a>、<a href="https://github.com/paularmstrong/normalizr">normalizr</a>、<a href="https://github.com/reduxjs/reselect">reselect</a>を使ったre-ducksパターンの実践について書く。</p>
 
 <p>言語は<a href="https://www.typescriptlang.org/">TypeScript</a>。</p>
 
@@ -250,6 +257,12 @@
 
 
 <h1 id="モジュール構成">モジュール構成</h1>
+
+<p>次節以降の解説の前提として、React・Redux・React-Redux・redux-sagaのコンポーネントアーキテクチャ図とモジュール構成を再掲しておく。</p>
+
+<p>アーキテクチャ図はこれ:</p>
+
+<p><img src="/images/re-ducks/saga.png" alt="react-redux-saga" /></p>
 
 <p>モジュールはviewsとstateに分かれていて、viewsの下はReactコンポーネントが<a href="https://www.kaitoy.xyz/2020/05/05/atomic-design/">Atomicデザイン風</a>に整理されていて、stateの下はReduxステート管理モジュールがre-ducksパターンで整理されている。</p>
 
@@ -315,157 +328,249 @@
 </ul></li>
 </ul>
 
-<p>これらのモジュールの中身について解説していく。</p>
+<p>これらのモジュールの中身について解説していく。
+<a href="https://www.kaitoy.xyz/2020/07/05/re-ducks-actions/">前回</a>は<code>actions.ts</code>を解説した。
+今回は<code>reducers.ts</code>と<code>store.ts</code>について書く。</p>
 
-<p>理解を助けるため、<a href="https://www.kaitoy.xyz/2020/05/27/re-ducks/">前回</a>書いたReact、Redux、React-Redux、redux-sagaのコンポーネントアーキテクチャ図を再掲しておく。</p>
+<h1 id="reducer">Reducer</h1>
 
-<p><img src="/images/re-ducks/saga.png" alt="react-redux-saga" /></p>
+<p><code>reducers.ts</code>にはReducer、Stateの型、初期Stateを書く。</p>
 
-<h1 id="action">Action</h1>
+<p>Reducerは、現在のStateとdispatchされたActionを受け取って次のStateを返す関数で、<code>(previousState, action) =&gt; nextState</code>という形式のもの。
+ReducerはStoreに一つだけ登録できて、Storeに任意のActionがdispatchされる度に1回ずつ呼び出される。</p>
 
-<p><code>actions.ts</code>にはAction Creatorを書く。
-Action CreatorはReduxのStoreにdispatchするActionを生成して返す関数なので、Action Creator自体のまえにActionについて解説しておく。</p>
+<p>State全体を一つのフラットなReducerで処理するのはかなり厳しいので、普通は、ルートReducerでStateをサブツリーに分解して、それぞれのサブツリーをサブReducerに渡して処理させて、その結果をルートReducerでまとめて返す、という<a href="https://redux.js.org/basics/reducers#splitting-reducers">分割統治をする</a>。
+このような分割統治のために、<a href="https://redux.js.org/api/combinereducers">combineReducers()</a>というヘルパー関数がReduxから提供されている。</p>
 
-<p>Actionは<a href="https://github.com/redux-utilities/flux-standard-action">Flux Standard Action (FSA)</a>に従ったものにするべきで、これは以下のプロパティを持つプレーンなオブジェクト。</p>
+<h1 id="re-ducksとreducer">re-ducksとReducer</h1>
 
-<ul>
-<li><code>type</code>: Actionの意味を表す文字列。ReducerやSagaはここを見て実行する処理を決定する。</li>
-<li><code>payload</code>: Reducerによる状態計算とかSagaによる副作用の実行に必要なデータを渡すために使う任意の型のオブジェクト。</li>
-<li><code>error</code>: Actionがエラーを表すものかどうかを示すフラグ。</li>
-<li><code>meta</code>: <code>payload</code>に入れる感じでもないかなというメタ情報を入れる任意の型のオブジェクト。</li>
-</ul>
-
-<p>型で見ると以下の感じ。</p>
+<p>re-ducks流の分割統治では、Stateをduckごとに分割して、duckごとのReducerに処理させる。
+例えば、userとarticleというduckがあるとすると、Stateの型は次のようになる。</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript">{
-  type: string;
-  payload?: object;
-  error?: <span style="color:#6ab825;font-weight:bold">boolean</span>;
-  meta?: object;
+  user: UserState;
+  article: ArticleState;
 }
 </code></pre></div>
-<p><br></p>
+<p>で、UserStateを計算するサブReducerと、ArticleStateを計算するサブReducerを書いて、<code>combineReducers()</code>で統合してルートReducerを生成する、という感じ。</p>
 
-<p><code>type</code>は、</p>
+<p><code>reducers.ts</code>に書くのはduckごとのサブReducerとなる。</p>
+
+<h1 id="immer">immer</h1>
+
+<p>Reducerを書くときは、副作用が無く参照透過性のある<a href="https://redux.js.org/style-guide/style-guide#reducers-must-not-have-side-effects">純粋関数でなければいけない</a>ことに注意する。
+つまり、Ajax通信をしたり、Actionをdispatchしたり、UUIDなどのランダムな値の生成とかはNG。
+そういうのはSagaとかに書くべし。
+さらに、受け取ったStateとかActionを変更してもいけない。
+とくにStateは注意で、ReducerにはStateの計算処理を書くので、Stateに配列とかオブジェクトがあるとうっかり変更してしまうことがあるし、変更しないようにすると配列やオブジェクトのクローンをする記述が多くなって煩雑。</p>
+
+<p>そこを助けてくれるのがimmer。
+immerは、Reducerに渡された現在のStateを<a href="https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Proxy">Proxy</a>でラップして、Proxyに対する操作とラップしたStateを基に新しいStateを生成してくれる。
+ProxyはStateを透過的にラップしつつStateを変更から守ってくれるので、ユーザはStateを直接いじっているかのようにコードを書けて、且つうっかり変更してしまうという恐れから解放される。</p>
+
+<p>immerは軽量で、提供するAPIはほぼ<a href="https://immerjs.github.io/immer/docs/produce">produce()</a>しかない。
+<code>produce()</code>を使うとReducerは以下のように書ける。</p>
+
+<p><code>src/state/ducks/user/reducers.ts</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">import</span> produce from <span style="color:#ed9d13">&#39;immer&#39;</span>;
+
+<span style="color:#6ab825;font-weight:bold">const</span> initialState = {};
+
+<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">const</span> userReducer = produce((draft, action) =&gt; {
+  <span style="color:#6ab825;font-weight:bold">switch</span> (action.type) {
+    <span style="color:#6ab825;font-weight:bold">case</span> <span style="color:#ed9d13">&#39;user/entitiesFetchSucceeded&#39;</span>:
+      draft.entities = action.payload.user.entities;
+      draft.fetching = <span style="color:#6ab825;font-weight:bold">false</span>;
+      <span style="color:#6ab825;font-weight:bold">break</span>;
+    <span style="color:#6ab825;font-weight:bold">case</span> <span style="color:#ed9d13">&#39;user/entitiesFetchFailed&#39;</span>:
+      draft.fetching = <span style="color:#6ab825;font-weight:bold">false</span>;
+      <span style="color:#6ab825;font-weight:bold">break</span>;
+  };
+}, initialState)
+</code></pre></div>
+<p>このように、<code>produce()</code>にReducerの処理を実装する関数と初期Stateを渡してやると、元のStateをいじる恐れのないReducerを生成してくれる。</p>
+
+<p><code>produce()</code>に渡す関数は<code>draft</code>と<code>action</code>を受け取る。
+<code>draft</code>は、生成するReducerが受け取るStateをProxyでラップしたもので、そのStateと同じプロパティを持っていて、直接変更していい。
+<code>actoin</code>は生成するReducerが受け取るAction。</p>
+
+<p><code>produce()</code>に渡す関数を書くときのtipsは以下。</p>
 
 <ul>
-<li>FSAであるためにはstringであればいいけど、<a href="https://typescript-jp.gitbook.io/deep-dive/type-system/literal-types#riteraru">文字列リテラル型</a>にしておくとエディタの補完が利いたり型チェックが利いてうれしい。</li>
-<li><a href="https://redux.js.org/style-guide/style-guide#write-action-types-as-domaineventname">domain/eventName</a>というコンベンションで書くのがいい。つまり、ドメインで名前空間を分けて、キャメルケースで書く。ドメインは大抵はモデル名にしておけばいい。(ただし、そのドメインのReducerやSaga<strong>だけ</strong>がそのActionに反応するというわけでは<strong>必ずしもない</strong>。)</li>
-<li><code>eventName</code>の部分は<a href="https://medium.com/magnetis-backstage/why-action-is-a-bad-name-for-a-redux-action-68bec375539e">命令的より宣言的</a>であるべき。(<a href="https://decembersoft.com/posts/a-simple-naming-convention-for-action-creators-in-redux-js/">AffectよりEffect、動詞的より名詞的</a>という意見もあるけど、意図することはだいたい同じな気がする。)特に、<a href="https://mobile.twitter.com/dan_abramov/status/800310624009994240">setXXXXみたいなsetterにしてしまうのはありがちな間違い</a>。ReduxはView側で何が起こったかと、それによってStateがどう変わるかとを分離することで保守性を高めるライブラリだけど、setterなActionは明らかにそれらがごっちゃになっている。ごっちゃになると、Stateの内部構造がView側のイベントハンドラ(など)に<a href="https://en.wikipedia.org/wiki/Leaky_abstraction">リーク</a>して、Reduxのうまみが減る。</li>
-<li><code>eventName</code>を<code>xxxButtonClicked</code>みたいな感じにしてViewのイベントと紐づけちゃうのも、ViewとStateとの結合度が不必要に高まるのでよくない。例えば、あるモデルをフェッチするというActionは状態管理の観点ではひとつでいいわけだけど、ViewのイベントベースでActionを考えると、XX画面ロードActionでフェッチして、YYボタンクリックActionでも同じモデルをフェッチして、という感じで、State側が冗長になったり複雑になったりしてしまう。</li>
+<li>draftをreturnする必要はない。してもいいけど。</li>
+<li>draftのプロパティの操作はいいけど、draft自体への代入(e.g. <code>draft = {}</code>)はNG。</li>
+<li>draftと関係ないオブジェクトを返すのは一応リーガル。ふつうやらないだろうけど。</li>
 </ul>
 
-<p><br></p>
+<p>なお、immerに特にオプションを与えなければ、<code>produce()</code>で作ったReducerは開発ビルドでは<a href="https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze">freeze</a>したStateを返すので、Stateを使う側でいじっちゃってる箇所が無いかをチェックアウトしやすい。</p>
 
-<p><code>payload</code>は、</p>
+<p>因みに、Stateを変更から守るのに昔は<a href="https://immutable-js.github.io/immutable-js/">Immutable.js</a>が人気だったけど、Immutable.jsを使うとクラスをたくさん書かなければいけなかったり、Reducerの処理が書き辛くなったり、型が消えたりするので、現代ではRedux公式も<a href="https://redux.js.org/style-guide/style-guide#use-immer-for-writing-immutable-updates">immerを推奨している</a>。</p>
+
+<h1 id="stateの型">Stateの型</h1>
+
+<p>Stateの型も<code>reducers.ts</code>に書いておくのがいい。最もStateを触るのがReducerなので、近いところに書いておいて、変更しやすくする意図だ。</p>
+
+<p>ひとつの<code>reducers.ts</code>に書くのは、Stateのうち、duckが管轄する範囲のサブツリーの型だけ。
+例えば、</p>
+
+<p><code>src/state/ducks/user/reducers.ts</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">import</span> {
+  User,
+  NormalizedUsers,
+} from <span style="color:#ed9d13">&#39;./models&#39;</span>;
+
+<span style="color:#6ab825;font-weight:bold">export</span> type UserState = Readonly&lt;{
+  dataReady: <span style="color:#6ab825;font-weight:bold">boolean</span>;
+  data: {
+    ids: User[<span style="color:#ed9d13">&#39;id&#39;</span>][];
+    entities: NormalizedUsers;
+  };
+}&gt;;
+</code></pre></div>
+<p>こんな感じ。</p>
+
+<p>Stateにはドメインモデルのオブジェクトを入れることが多いけど、モデル自体の型(など)は<code>models.ts</code>に書いておいてimportする。
+(<code>models.ts</code>については別の記事で。)</p>
+
+<p>なお、Stateオブジェクトは<a href="https://github.com/reduxjs/redux-devtools">Redux DevTools</a>で扱えるようにシリアライズ可能に保つというのが<a href="https://redux.js.org/style-guide/style-guide#do-not-put-non-serializable-values-in-state-or-actions">Redux公式から強く推奨されている</a>のに注意。
+これはつまり、<a href="https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Map">Map</a>、<a href="https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Set">Set</a>、<a href="https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Promise">Promise</a>、クラスのインスタンス、関数オブジェクトをいれてはだめということ。</p>
+
+<h1 id="reducerの型">Reducerの型</h1>
+
+<p>immerのところに書いたReducerには型を付けてなかったけど、以下のように付けるといい。</p>
+
+<p><code>src/state/ducks/user/reducers.ts</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">import</span> produce, { Draft } from <span style="color:#ed9d13">&#39;immer&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> {
+  usersFetchSucceeded,
+  usersFetchFailed,
+} from <span style="color:#ed9d13">&#39;./actions&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> {
+  User,
+  NormalizedUsers,
+} from <span style="color:#ed9d13">&#39;./models&#39;</span>;
+
+<span style="color:#6ab825;font-weight:bold">export</span> type UserState = Readonly&lt;{
+  dataReady: <span style="color:#6ab825;font-weight:bold">boolean</span>;
+  data: {
+    ids: User[<span style="color:#ed9d13">&#39;id&#39;</span>][];
+    entities: NormalizedUsers;
+  };
+}&gt;;
+
+<span style="color:#6ab825;font-weight:bold">const</span> initialState: UserState = {
+  dataReady: <span style="color:#6ab825;font-weight:bold">false</span>,
+  data: { ids: [], entities: {} },
+};
+
+<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">const</span> userReducer = produce(
+  (
+    draft: Draft&lt;UserState&gt;,
+    action:
+      | ReturnType&lt;<span style="color:#6ab825;font-weight:bold">typeof</span> usersFetchSucceeded&gt;
+      | ReturnType&lt;<span style="color:#6ab825;font-weight:bold">typeof</span> usersFetchFailed&gt;,
+  ) =&gt; {
+  <span style="color:#6ab825;font-weight:bold">switch</span> (action.type) {
+    <span style="color:#6ab825;font-weight:bold">case</span> <span style="color:#ed9d13">&#39;user/entitiesFetchSucceeded&#39;</span>:
+      draft.entities = action.payload.user.entities;
+      draft.fetching = <span style="color:#6ab825;font-weight:bold">false</span>;
+      <span style="color:#6ab825;font-weight:bold">break</span>;
+    <span style="color:#6ab825;font-weight:bold">case</span> <span style="color:#ed9d13">&#39;user/entitiesFetchFailed&#39;</span>:
+      draft.fetching = <span style="color:#6ab825;font-weight:bold">false</span>;
+      <span style="color:#6ab825;font-weight:bold">break</span>;
+    <span style="color:#6ab825;font-weight:bold">default</span>:
+      <span style="color:#6ab825;font-weight:bold">const</span> _: never = action;
+  };
+}, initialState)
+</code></pre></div>
+<p>ポイントは3つ。</p>
 
 <ul>
-<li>そのデータを(主に)扱うduckの名前空間をトップレベルに作って、データは名前空間の下にいれるといい。一つのActionが複数のduckに処理される場合、複数の名前空間を作ってデータを分ける。こうしておくと、データ構造を経由したduck間の暗黙的依存が無くなってうれしい。</li>
+<li><code>draft</code>の型は、immerが提供する<code>Draft</code>という型に、Stateの型をパラメータとして渡すと作れる。</li>
+
+<li><p><code>action</code>の型は、Reducerが扱うべきAction一通りのAction Creatorを<code>actoins.ts</code>からimportして、それらに<a href="https://www.typescriptlang.org/docs/handbook/utility-types.html#returntypet">ReturnType</a>を適用してActionの型を抽出し、<a href="https://www.typescriptlang.org/docs/handbook/advanced-types.html#union-types">Union型</a>でまとめる形で付ける。</p>
+
+<p><a href="https://www.kaitoy.xyz/2020/07/05/re-ducks-actions/#action-creator">Actionの型は文字列リテラル型</a>なので、これでcase文に書く<code>type</code>に補完と型チェックが利く。</p></li>
+
+<li><p>default節で<code>action</code>を<a href="https://www.typescriptlang.org/docs/handbook/basic-types.html#never">never型</a>に代入することで、<code>action</code>のUnion型に入れたActionがすべてcase文で受けられていることを保証できる。つまり、caseが足らないと、default節に入るactionの可能性が残り、never型に代入できないのでエラーになる。</p></li>
 </ul>
 
-<p><br></p>
+<p><code>action</code>の型をReducerが扱うものに限定はしているけど、Reducerは実際にはすべてのActionのdispatchに対して呼び出されるということに注意。
+default節で<code>console.log(action)</code>しておくと、Actionがじゃんじゃん表示されることが確認できる。</p>
 
-<p><code>error</code>は、</p>
+<h1 id="stateの型とreducerをduckからexport">Stateの型とReducerをduckからexport</h1>
 
-<ul>
-<li><p>あまり使い道はない。まず、FSAは、ある操作の成功と失敗を同じ<code>type</code>のActionとして、<code>payload</code>と<code>error</code>で見分けるというのを推奨している。</p>
+<p><code>reducers.ts</code>があるディレクトリに置いた<code>index.ts</code>でStateの型とReducerを再exportしておくと捗る。</p>
 
-<p>例えば成功のActionが</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript">{
-  type: <span style="color:#ed9d13">&#39;todo/entityAdded&#39;</span>,
-  payload: {
-    todo: {
-      text: <span style="color:#ed9d13">&#39;Do something.&#39;</span>
-    },
-  },
+<p><code>src/state/ducks/user/index.ts</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">export</span> { UserState, userReducer } from <span style="color:#ed9d13">&#39;./reducers&#39;</span>;
+</code></pre></div>
+<h1 id="stateとreducerの統合">StateとReducerの統合</h1>
+
+<p>各duckからexportしたStateの型とReducerは、ducksディレクトリ直下の<code>index.ts</code>でまとめる。</p>
+
+<p><code>src/state/ducks/index.ts</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">import</span> { UserState userReducer as user } from <span style="color:#ed9d13">&#39;./user&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> { ArticleState, articleReducer as article } from <span style="color:#ed9d13">&#39;./article&#39;</span>;
+
+<span style="color:#6ab825;font-weight:bold">export</span> type StoreState = Readonly&lt;{
+  user: UserState;
+  article: ArticleState;
+}&gt;;
+
+<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">const</span> reducers = {
+  user,
+  article,
+};
+</code></pre></div>
+<p>このファイルはduckが増えたときだけ修正が必要。
+ここでexportした<code>reducers</code>は<code>store.ts</code>で<code>combineReducers()</code>に入れて統合し、Storeに登録する。</p>
+
+<p><code>src/state/store.ts</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">import</span> { createStore, applyMiddleware, compose, combineReducers } from <span style="color:#ed9d13">&#39;redux&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> { reducers } from <span style="color:#ed9d13">&#39;./ducks&#39;</span>;
+
+<span style="color:#6ab825;font-weight:bold">const</span> rootReducer = combineReducers(reducers);
+
+<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">default</span> <span style="color:#6ab825;font-weight:bold">function</span> configureStore() {
+  <span style="color:#6ab825;font-weight:bold">const</span> middlewares = [];
+  <span style="color:#6ab825;font-weight:bold">const</span> composeEnhancers = (<span style="color:#24909d">window</span> as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+  <span style="color:#6ab825;font-weight:bold">const</span> store = createStore(rootReducer, composeEnhancers(applyMiddleware(...middlewares)));
+  <span style="color:#6ab825;font-weight:bold">return</span> store;
 }
 </code></pre></div>
-<p>こんな感じで、失敗のActionが</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript">{
-  type: <span style="color:#ed9d13">&#39;todo/entityAdded&#39;</span>,
-  payload: <span style="color:#6ab825;font-weight:bold">new</span> <span style="color:#24909d">Error</span>(),
-  error: <span style="color:#6ab825;font-weight:bold">true</span>
+<p>このファイルは一回書いたら修正は不要。</p>
+
+<p><code>middlewares</code>はredux-sagaを入れるんだけど、それについては別の記事で書く。</p>
+
+<p>因みにこの<code>configureStore()</code>は、ソースのルートの<code>index.tsx</code>で使う。</p>
+
+<p><code>src/index.tsx</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">import</span> React from <span style="color:#ed9d13">&#39;react&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> ReactDOM from <span style="color:#ed9d13">&#39;react-dom&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> { Provider } from <span style="color:#ed9d13">&#39;react-redux&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> configureStore from <span style="color:#ed9d13">&#39;~/state/store&#39;</span>;
+
+
+<span style="color:#6ab825;font-weight:bold">const</span> root = <span style="color:#24909d">document</span>.getElementById(<span style="color:#ed9d13">&#39;root&#39;</span>);
+<span style="color:#6ab825;font-weight:bold">const</span> store = configureStore();
+
+<span style="color:#6ab825;font-weight:bold">if</span> (root) {
+  ReactDOM.render(
+    &lt;Provider store={store}&gt;
+      &lt;AppRoutes /&gt;
+    &lt;<span style="color:#a61717;background-color:#e3d2d2">/Provider&gt;,</span>
+    root,
+  );
 }
-</code></pre></div>
-<p>というように、同じ<code>type</code>のもの。</p>
-
-<p>しかしこれだと、payloadの型が<code>error</code>フラグによって変わる、つまりUnionになっちゃうのが扱いにくくて微妙。
-それに、これらを受け取るReducerなりSagaなりは<code>error</code>をif文で見て処理をわけろということなんだろうけど、だったら最初から<code>type</code>分けとけばいいんじゃないの?
-という疑問が絶えない。
-なので<code>type</code>は成功と失敗とで変えるとして、<code>error</code>はあってもなくてもという感じ。
-任意のActionについて<code>error</code>がtrueならログに吐くみたいな共通処理をしたい場合にはつけといてもいいかも。</p></li>
-
-<li><p><code>error</code>が<code>true</code>のとき(というかActionが失敗をあらわすとき)は<code>payload</code>に<a href="https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>オブジェクトを入れるのが作法。</p></li>
-</ul>
-
-<p><br></p>
-
-<p><code>meta</code>の使い道は不明。なにか統計的な情報を入れてログに吐くとか?</p>
-
-<p><br></p>
-
-<p>以上まとめると、例えば、Userモデルのフェッチに成功したときのアクションは以下のような感じになる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript">{
-  type: <span style="color:#ed9d13">&#39;user/entitiesFetchSucceeded&#39;</span>,
-  payload: {
-    user: {
-      entities: [
-        { <span style="color:#ed9d13">&#39;id&#39;</span>: <span style="color:#3677a9">1</span>, <span style="color:#ed9d13">&#39;name&#39;</span>: <span style="color:#ed9d13">&#39;うんこ たれ蔵&#39;</span> },
-        { <span style="color:#ed9d13">&#39;id&#39;</span>: <span style="color:#3677a9">2</span>, <span style="color:#ed9d13">&#39;name&#39;</span>: <span style="color:#ed9d13">&#39;山本 菅助&#39;</span> },
-      ],
-    },
-  },
-}
-</code></pre></div>
-<p><br></p>
-
-<p>なお、Actionオブジェクトはイミュータブル扱いにしておくべし。
-Actionオブジェクトは色んなコンポーネントがみるので、中身をいじるとどこに影響するかが分からないからだ。
-ただ、Reduxのミドルウェアがメタ情報を付加したりすることがあるので、<a href="https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze">freeze</a>はしないほうがいい。</p>
-
-<p>また、Actionオブジェクトは<a href="https://github.com/reduxjs/redux-devtools">Redux DevTools</a>で扱えるようにシリアライズ可能に保つというのが<a href="https://redux.js.org/style-guide/style-guide#do-not-put-non-serializable-values-in-state-or-actions">Redux公式から強く推奨されている</a>。
-これはつまり、<code>payload</code>とかに<a href="https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Map">Map</a>、<a href="https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Set">Set</a>、<a href="https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Promise">Promise</a>、クラスのインスタンス、関数オブジェクトをいれてはだめということ。</p>
-
-<h1 id="action-creator">Action Creator</h1>
-
-<p>前節にも書いたけど、Action CreatorはReduxのStoreにdispatchするActionを生成して返す関数。</p>
-
-<p>Action CreatorはシンプルにActionオブジェクトを作るだけにして、ロジックは何も書かず、副作用も起こさず、参照透過にしておくべし。
-複雑なことはReducerやSagaとかに任せておくのがいい。</p>
-
-<p>前節の最後に書いたActionのAction Creatorは以下のような感じ。</p>
-
-<p><code>src/state/ducks/user/actions.ts</code>:</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">const</span> usersFetchSucceeded = (
-  users: User[],
-): Readonly&lt;{
-  type: <span style="color:#ed9d13">&#39;user/entitiesFetchSucceeded&#39;</span>;
-  payload: { user: { entities: User[] } };
-}&gt; =&gt; ({
-  type: <span style="color:#ed9d13">&#39;user/entitiesFetchSucceeded&#39;</span>,
-  payload: {
-    user: { entities: users },
-  },
-});
-</code></pre></div>
-<p>受け取ったUserのリストをpayloadに詰めて返すだけ。</p>
-
-<p>よく、Actionの<code>type</code>を文字列定数でexportして他から参照できるようにするのを見るけど、その必要はない。
-上記Action Creatorのように、<code>type</code>は文字列リテラル型にしておけば、エディタの補完やTypeScriptの型チェックが利くのでそれで充分。</p>
-
-<p>上記Action Creatorには、Actionの型を戻り値の型として直接記述しているけど、その型を別途定義してexportしてもいい。
-しなくても、TypeScriptのUtilityタイプの<a href="https://www.typescriptlang.org/docs/handbook/utility-types.html#returntypet">ReturnType</a>を使って、<code>ReturnType&lt;typeof usersFetchSucceeded&gt;</code>のようにAction Creator経由で参照できるので、こちらのほうがすっきりしていていい気がする。</p>
-
-<p><br></p>
-
-<p><code>actions.ts</code>の解説だけでいいボリュームになったので、ほかのモジュールについては別記事に書く。</p></div>
+</code></pre></div></div>
 
         <section class="share-buttons">
           <div class="share-button">
-            <div class="fb-share-button" data-href="https://www.kaitoy.xyz/2020/07/05/re-ducks-actions/" data-layout="box_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fwww.kaitoy.xyz%2f2020%2f07%2f05%2fre-ducks-actions%2f&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Share</a></div>
+            <div class="fb-share-button" data-href="https://www.kaitoy.xyz/2020/07/11/re-ducks-reducers-with-immer/" data-layout="box_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fwww.kaitoy.xyz%2f2020%2f07%2f11%2fre-ducks-reducers-with-immer%2f&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Share</a></div>
           </div>
           <div class="share-button">
             <a class="twitter-share-button"
-              href="https://twitter.com/intent/tweet?text=Redux%e3%81%ae%e3%83%a2%e3%82%b8%e3%83%a5%e3%83%bc%e3%83%ab%e3%82%a2%e3%83%bc%e3%82%ad%e3%83%86%e3%82%af%e3%83%81%e3%83%a3%e3%83%91%e3%82%bf%e3%83%bc%e3%83%b3re-ducks%e3%81%ae%e5%ae%9f%e8%b7%b5%20%e2%80%95%20Action%20Creator&amp;url=https%3a%2f%2fwww.kaitoy.xyz%2f2020%2f07%2f05%2fre-ducks-actions%2f"
+              href="https://twitter.com/intent/tweet?text=Redux%e3%81%ae%e3%83%a2%e3%82%b8%e3%83%a5%e3%83%bc%e3%83%ab%e3%82%a2%e3%83%bc%e3%82%ad%e3%83%86%e3%82%af%e3%83%81%e3%83%a3%e3%83%91%e3%82%bf%e3%83%bc%e3%83%b3re-ducks%e3%81%ae%e5%ae%9f%e8%b7%b5%20%e2%80%95%20Reducer%20with%20immer&amp;url=https%3a%2f%2fwww.kaitoy.xyz%2f2020%2f07%2f11%2fre-ducks-reducers-with-immer%2f"
               data-size="large">
             Tweet</a>
           </div>
@@ -494,20 +599,15 @@ Actionオブジェクトは色んなコンポーネントがみるので、中�
         <div class="col-sm-6">
           <div class="prev">
             
-            <a href="https://www.kaitoy.xyz/2020/05/27/re-ducks/">
+            <a href="https://www.kaitoy.xyz/2020/07/05/re-ducks-actions/">
               <i class="fa fa-angle-left"></i>
-              Reduxのモジュールアーキテクチャパターン ― re-ducks
+              Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Action Creator
             </a>
             
           </div>
         </div>
         <div class="col-sm-6">
           <div class="next text-right">
-            
-            <a href="https://www.kaitoy.xyz/2020/07/11/re-ducks-reducers-with-immer/">
-              Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Reducer with immer
-              <i class="fa fa-angle-right"></i>
-            </a>
             
           </div>
         </div>
@@ -531,8 +631,8 @@ Actionオブジェクトは色んなコンポーネントがみるので、中�
     
     
 
-    <h4 class="post-title"><a href="/2020/07/11/re-ducks-reducers-with-immer/">Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Reducer with immer</a></h4>
-    <h5>Sat, Jul 11, 2020</h5>
+    <h4 class="post-title"><a href="/2020/07/05/re-ducks-actions/">Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Action Creator</a></h4>
+    <h5>Sun, Jul 5, 2020</h5>
     
     <a href="https://www.kaitoy.xyz/tags/react"><kbd class="item-tag">react</kbd></a>
     
@@ -541,8 +641,6 @@ Actionオブジェクトは色んなコンポーネントがみるので、中�
     <a href="https://www.kaitoy.xyz/tags/re-ducks"><kbd class="item-tag">re-ducks</kbd></a>
     
     <a href="https://www.kaitoy.xyz/tags/typescript"><kbd class="item-tag">typescript</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/immer"><kbd class="item-tag">immer</kbd></a>
     
 
 </div>

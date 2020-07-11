@@ -28,7 +28,9 @@ highlightLanguages = []
 つまり以下のような感じ。
 
 - src/
+    - index.tsx
     - views/
+        - AppRoutes.tsx
         - atoms/
         - molecules/
         - organisms/
@@ -44,6 +46,7 @@ highlightLanguages = []
         - ducks/
             - index.ts
             - user/
+                - index.ts
                 - actions.ts
                 - apis.ts
                 - reducers.ts
@@ -163,6 +166,9 @@ Actionは[Flux Standard Action (FSA)](https://github.com/redux-utilities/flux-st
 Actionオブジェクトは色んなコンポーネントがみるので、中身をいじるとどこに影響するかが分からないからだ。
 ただ、Reduxのミドルウェアがメタ情報を付加したりすることがあるので、[freeze](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze)はしないほうがいい。
 
+また、Actionオブジェクトは[Redux DevTools](https://github.com/reduxjs/redux-devtools)で扱えるようにシリアライズ可能に保つというのが[Redux公式から強く推奨されている](https://redux.js.org/style-guide/style-guide#do-not-put-non-serializable-values-in-state-or-actions)。
+これはつまり、`payload`とかに[Map](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Map)、[Set](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Set)、[Promise](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Promise)、クラスのインスタンス、関数オブジェクトをいれてはだめということ。
+
 # Action Creator
 前節にも書いたけど、Action CreatorはReduxのStoreにdispatchするActionを生成して返す関数。
 
@@ -171,6 +177,7 @@ Action CreatorはシンプルにActionオブジェクトを作るだけにして
 
 前節の最後に書いたActionのAction Creatorは以下のような感じ。
 
+`src/state/ducks/user/actions.ts`:
 ```javascript
 export const usersFetchSucceeded = (
   users: User[],
@@ -186,7 +193,6 @@ export const usersFetchSucceeded = (
 ```
 
 受け取ったUserのリストをpayloadに詰めて返すだけ。
-こういうのを`src/state/ducks/user/actions.ts`に書いていけばいい。
 
 よく、Actionの`type`を文字列定数でexportして他から参照できるようにするのを見るけど、その必要はない。
 上記Action Creatorのように、`type`は文字列リテラル型にしておけば、エディタの補完やTypeScriptの型チェックが利くのでそれで充分。
