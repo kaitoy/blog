@@ -142,6 +142,7 @@ srcディレクトリの下に一段stateディレクトリを設けているの
             - app/
             - ui/
             - user/
+                - index.ts
                 - actions.ts
                 - apis.ts
                 - reducers.ts

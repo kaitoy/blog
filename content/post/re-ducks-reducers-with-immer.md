@@ -245,7 +245,7 @@ export { UserState, userReducer } from './reducers';
 
 `src/state/ducks/index.ts`:
 ```javascript
-import { UserState userReducer as user } from './user';
+import { UserState, userReducer as user } from './user';
 import { ArticleState, articleReducer as article } from './article';
 
 export type StoreState = Readonly<{

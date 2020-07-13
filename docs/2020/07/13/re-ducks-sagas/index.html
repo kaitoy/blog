@@ -12,25 +12,27 @@
 </script>
 
 <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
-<meta property="og:url" content="https://www.kaitoy.xyz/2018/08/22/creating-react-redux-app-from-scratch-02/">
+<meta property="og:url" content="https://www.kaitoy.xyz/2020/07/13/re-ducks-sagas/">
 <meta property="og:site_name" content="To Be Decided">
 <meta name="twitter:card" content="summary"></meta>
-<link rel="canonical" href="https://www.kaitoy.xyz/2018/08/22/creating-react-redux-app-from-scratch-02/">
+<link rel="canonical" href="https://www.kaitoy.xyz/2020/07/13/re-ducks-sagas/">
 
 
 
   <meta property="og:type" content="article">
-  <meta property="og:title" content="React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その2: React | To Be Decided">
-  <title>React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その2: React | To Be Decided</title>
-  <meta property="og:description" content="ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
-(最終的な成果はGitHubに置いた。)
+  <meta property="og:title" content="Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Saga | To Be Decided">
+  <title>Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Saga | To Be Decided</title>
+  <meta property="og:description" content="2018年後半にスクラッチから作ったReactとReduxのプロジェクトテンプレートを2020年版として色々アップデートしているなかで、re-ducksパターンに則ってステート管理のモジュール構成を整理しなおしたり、ステート管理に使うライブラリを見直したりした。
 
-前回はNode.jsとYarnとBabelとwebpackをセットアップした。">
-  <meta name="description" content="ReactとReduxを学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
-(最終的な成果はGitHubに置いた。)
+この記事では、前回に続いて、React-Redux、Redux Saga、immer、normalizr、reselectを使ったre-ducksパターンの実践について書く。
 
-前回はNode.jsとYarnとBabelとwebpackをセットアップした。">
-  <meta property="og:image" content="https://www.kaitoy.xyz/images/react.png">
+言語はTypeScript。">
+  <meta name="description" content="2018年後半にスクラッチから作ったReactとReduxのプロジェクトテンプレートを2020年版として色々アップデートしているなかで、re-ducksパターンに則ってステート管理のモジュール構成を整理しなおしたり、ステート管理に使うライブラリを見直したりした。
+
+この記事では、前回に続いて、React-Redux、Redux Saga、immer、normalizr、reselectを使ったre-ducksパターンの実践について書く。
+
+言語はTypeScript。">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/redux-saga.png">
 
 
 
@@ -136,7 +138,7 @@
 
                 <div class="navbar-header">
 
-                    <a class="navbar-brand visible-xs" href="#">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その2: React</a>
+                    <a class="navbar-brand visible-xs" href="#">Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Saga</a>
 
                     <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
                         <span class="icon-bar"></span>
@@ -195,20 +197,26 @@
     
     
 
-    <h4 class="post-title"><a href="/2018/08/22/creating-react-redux-app-from-scratch-02/">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その2: React</a></h4>
-    <h5>Wed, Aug 22, 2018</h5>
+    <h4 class="post-title"><a href="/2020/07/13/re-ducks-sagas/">Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Saga</a></h4>
+    <h5>Mon, Jul 13, 2020</h5>
     
     <a href="https://www.kaitoy.xyz/tags/react"><kbd class="item-tag">react</kbd></a>
     
-    <a href="https://www.kaitoy.xyz/tags/frontend"><kbd class="item-tag">frontend</kbd></a>
+    <a href="https://www.kaitoy.xyz/tags/redux"><kbd class="item-tag">redux</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/re-ducks"><kbd class="item-tag">re-ducks</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/typescript"><kbd class="item-tag">typescript</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/redux-saga"><kbd class="item-tag">redux-saga</kbd></a>
     
 
 </div>
 
 
         <div class="cover">
-            <a href="/2018/08/22/creating-react-redux-app-from-scratch-02/">
-                <img src="https://www.kaitoy.xyz/images/react.png" alt="React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その2: React">
+            <a href="/2020/07/13/re-ducks-sagas/">
+                <img src="https://www.kaitoy.xyz/images/redux-saga.png" alt="Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Saga">
             </a>
         </div>
 
@@ -217,34 +225,25 @@
         <aside>
             <nav id="TableOfContents">
 <ul>
-<li><a href="#reactとは">Reactとは</a>
+<li><a href="#モジュール構成">モジュール構成</a></li>
+<li><a href="#worker-saga">Worker Saga</a></li>
+<li><a href="#ajax通信">Ajax通信</a>
 <ul>
-<li><a href="#virtual-dom">Virtual DOM</a></li>
-<li><a href="#jsx">JSX</a></li>
-<li><a href="#コンポーネント">コンポーネント</a></li>
-<li><a href="#props">props</a></li>
-<li><a href="#prop-types">prop-types</a></li>
+<li><a href="#watcher-saga">Watcher Saga</a></li>
 </ul></li>
-<li><a href="#reactのインストール">Reactのインストール</a></li>
-<li><a href="#ソース構成">ソース構成</a></li>
-<li><a href="#reactコンポーネント作成">Reactコンポーネント作成</a></li>
-<li><a href="#htmlファイル作成">HTMLファイル作成</a></li>
+<li><a href="#watcher-sagaをduckからexport">Watcher Sagaをduckからexport</a></li>
+<li><a href="#sagaの統合">Sagaの統合</a></li>
 </ul>
 </nav>
         </aside>
         <hr>
         
 
-        <br> <div class="text-justify"><p><a href="https://reactjs.org/">React</a>と<a href="https://redux.js.org/">Redux</a>を学ぶために、開発環境というかプロジェクトテンプレートをスクラッチから作っている。
-(最終的な成果は<a href="https://github.com/kaitoy/react-redux-scaffold">GitHub</a>に置いた。)</p>
+        <br> <div class="text-justify"><p><a href="https://www.kaitoy.xyz/2018/11/26/creating-react-redux-app-from-scratch-11/">2018年後半</a>にスクラッチから作った<a href="https://github.com/kaitoy/react-redux-scaffold">ReactとReduxのプロジェクトテンプレート</a>を2020年版として色々アップデートしているなかで、<a href="https://github.com/alexnm/re-ducks">re-ducks</a>パターンに則ってステート管理のモジュール構成を整理しなおしたり、ステート管理に使うライブラリを見直したりした。</p>
 
-<p><a href="https://www.kaitoy.xyz/2018/08/19/creating-react-redux-app-from-scratch-01/">前回</a>はNode.jsとYarnとBabelとwebpackをセットアップした。</p>
+<p>この記事では、<a href="https://www.kaitoy.xyz/2020/07/11/re-ducks-reducers-with-immer/">前回</a>に続いて、<a href="https://react-redux.js.org/">React-Redux</a>、<a href="https://redux-saga.js.org/">Redux Saga</a>、<a href="https://immerjs.github.io/immer/docs/introduction">immer</a>、<a href="https://github.com/paularmstrong/normalizr">normalizr</a>、<a href="https://github.com/reduxjs/reselect">reselect</a>を使ったre-ducksパターンの実践について書く。</p>
 
-<p>(2018/11/21更新)</p>
-
-
-
-
+<p>言語は<a href="https://www.typescriptlang.org/">TypeScript</a>。</p>
 
 <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 <ins class="adsbygoogle"
@@ -257,226 +256,262 @@
 </script>
 
 
-<h1 id="reactとは">Reactとは</h1>
+<h1 id="モジュール構成">モジュール構成</h1>
 
-<p>以前にも同じような事を書いたけど、改めてReactについて書く。
-ちょっとコーディングの詳細にも触れながら。</p>
+<p>次節以降の解説の前提として、React・Redux・React-Redux・redux-sagaのコンポーネントアーキテクチャ図とモジュール構成を再掲しておく。</p>
 
-<p>ReactはViewを記述するためのライブラリで、特徴は<a href="https://reactjs.org/docs/faq-internals.html">Virtual DOM</a>と<a href="https://reactjs.org/docs/introducing-jsx.html">JSX</a>。</p>
+<p>アーキテクチャ図はこれ:</p>
 
-<h2 id="virtual-dom">Virtual DOM</h2>
+<p><img src="/images/re-ducks/saga.png" alt="react-redux-saga" /></p>
 
-<p>Virtual DOMはDOMを仮想化するもので、JavaScriptからVirtual DOMでUIを記述してやると、それが実DOMに効率的に反映されるようになっている。</p>
+<p>モジュールはviewsとstateに分かれていて、viewsの下はReactコンポーネントが<a href="https://www.kaitoy.xyz/2020/05/05/atomic-design/">Atomicデザイン風</a>に整理されていて、stateの下はReduxステート管理モジュールがre-ducksパターンで整理されている。</p>
 
-<h2 id="jsx">JSX</h2>
-
-<p>Virtual DOMはJSXというHTMLみたいな言語で記述できる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-jsx" data-lang="jsx"><span style="color:#6ab825;font-weight:bold">import</span> React from <span style="color:#ed9d13">&#39;react&#39;</span>;
-<span style="color:#6ab825;font-weight:bold">import</span> ReactDOM from <span style="color:#ed9d13">&#39;react-dom&#39;</span>;
-
-ReactDOM.render(
-  &lt;<span style="color:#6ab825;font-weight:bold">h1</span>&gt;Hello, world!&lt;/<span style="color:#6ab825;font-weight:bold">h1</span>&gt;,
-  <span style="color:#24909d">document</span>.getElementById(<span style="color:#ed9d13">&#39;root&#39;</span>)
-);</code></pre></div>
-<p>こんな風に書くと、idが<code>root</code>であるHTML要素の中に、<code>&lt;h1&gt;Hello, world!&lt;/h1&gt;</code>がレンダリングされる。
-上記コードの<code>&lt;h1&gt;Hello, world!&lt;/h1&gt;</code>の部分がJSX。</p>
-
-<h2 id="コンポーネント">コンポーネント</h2>
-
-<p>JSXではコンポーネントを定義して新たなタグとして使うことができるので、再利用できるコンポーネントを作って、それらを組み合わせてUIを構築することで、効率的な開発ができる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-jsx" data-lang="jsx"><span style="color:#6ab825;font-weight:bold">import</span> React from <span style="color:#ed9d13">&#39;react&#39;</span>;
-<span style="color:#6ab825;font-weight:bold">import</span> ReactDOM from <span style="color:#ed9d13">&#39;react-dom&#39;</span>;
-
-<span style="color:#999;font-style:italic">// Welcomeコンポーネントの定義
-</span><span style="color:#999;font-style:italic"></span><span style="color:#6ab825;font-weight:bold">function</span> Welcome() {
-  <span style="color:#6ab825;font-weight:bold">return</span> &lt;<span style="color:#6ab825;font-weight:bold">h1</span>&gt;Hello, World&lt;/<span style="color:#6ab825;font-weight:bold">h1</span>&gt;;
-}
-
-<span style="color:#999;font-style:italic">// Welcomeコンポーネントのレンダリング
-</span><span style="color:#999;font-style:italic"></span>ReactDOM.render(
-  &lt;<span style="color:#6ab825;font-weight:bold">Welcome</span> /&gt;,
-  <span style="color:#24909d">document</span>.getElementById(<span style="color:#ed9d13">&#39;root&#39;</span>)
-);</code></pre></div>
-<p>上記コードではコンポーネントをfunctionで定義しているが、アロー関数で書いても全く一緒。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-jsx" data-lang="jsx"><span style="color:#6ab825;font-weight:bold">const</span> Welcome = () =&gt; (
-  &lt;<span style="color:#6ab825;font-weight:bold">h1</span>&gt;Hello, World&lt;/<span style="color:#6ab825;font-weight:bold">h1</span>&gt;;
-);</code></pre></div>
-<p><br></p>
-
-<p>関数の代わりにclassで定義することもできる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-jsx" data-lang="jsx"><span style="color:#6ab825;font-weight:bold">class</span> Welcome <span style="color:#6ab825;font-weight:bold">extends</span> React.Component {
-  render() {
-    <span style="color:#6ab825;font-weight:bold">return</span> &lt;<span style="color:#6ab825;font-weight:bold">h1</span>&gt;Hello, World&lt;/<span style="color:#6ab825;font-weight:bold">h1</span>&gt;;
-  }
-}</code></pre></div>
-<p>関数による定義とclassによる定義はおおむね変わらないが、<a href="https://reactjs.org/docs/state-and-lifecycle.html">stateとライフサイクルメソッド</a>を使いたいときはclassにする必要がある。</p>
-
-<p>関数で定義したコンポーネントをFunction Component、クラスのものをClass Componentと呼ぶ。
-(前者は昔はStateless Functional ComponentとかSFCとかFunctional Componentと呼ばれていた。後者はStateful Componentと呼ばれることもあるけど、<a href="https://reactjs.org/docs/hooks-intro.html">React Hooks</a>が出た今、Class Componentの方が適切な呼び方だろう。)</p>
-
-<h2 id="props">props</h2>
-
-<p>コンポーネントはレンダリングの際に<code>props</code>というパラメータを受け取って使うことができるので、上手く設計すれば汎用的なコンポーネントが書ける。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-jsx" data-lang="jsx"><span style="color:#6ab825;font-weight:bold">import</span> React from <span style="color:#ed9d13">&#39;react&#39;</span>;
-<span style="color:#6ab825;font-weight:bold">import</span> ReactDOM from <span style="color:#ed9d13">&#39;react-dom&#39;</span>;
-
-<span style="color:#999;font-style:italic">// Welcomeコンポーネントの定義 (props付き)
-</span><span style="color:#999;font-style:italic"></span><span style="color:#6ab825;font-weight:bold">function</span> Welcome(props) {
-  <span style="color:#6ab825;font-weight:bold">return</span> &lt;<span style="color:#6ab825;font-weight:bold">h1</span>&gt;Hello, {props.name}&lt;/<span style="color:#6ab825;font-weight:bold">h1</span>&gt;;
-}
-
-<span style="color:#999;font-style:italic">// Welcomeコンポーネントのレンダリング (props付き)
-</span><span style="color:#999;font-style:italic"></span>ReactDOM.render(
-  &lt;<span style="color:#6ab825;font-weight:bold">Welcome</span> <span style="color:#bbb">name</span>=<span style="color:#ed9d13">&#34;Kaitoy&#34;</span> /&gt;,
-  <span style="color:#24909d">document</span>.getElementById(<span style="color:#ed9d13">&#39;root&#39;</span>)
-);</code></pre></div>
-<p><br></p>
-
-<p><code>props</code>はイミュータブルにしてコンポーネント内で変更しない(i.e. コンポーネントをpureにする)のが定石。</p>
-
-<h2 id="prop-types">prop-types</h2>
-
-<p><a href="https://github.com/facebook/prop-types">prop-types</a>を使うと、コンポーネントに渡される<code>props</code>に期待する型を定義することができる。</p>
-
-<p>前節で作ったWelcomeコンポーネントの<code>props</code>の<code>name</code>はStringオブジェクトを受け取ることを期待するので、prop-typesを以下のように定義する。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-jsx" data-lang="jsx"><span style="color:#6ab825;font-weight:bold">function</span> Welcome(props) {
-  <span style="color:#6ab825;font-weight:bold">return</span> &lt;<span style="color:#6ab825;font-weight:bold">h1</span>&gt;Hello, {props.name}&lt;/<span style="color:#6ab825;font-weight:bold">h1</span>&gt;;
-}
-
-Welcome.propTypes = {
-  name: PropTypes.string.isRequired,
-};</code></pre></div>
-<p>こうしておくと、実行時に型チェックが走り、型が合わないとコンソールに警告がでるようになる。</p>
-
-<h1 id="reactのインストール">Reactのインストール</h1>
-
-<p>上記のコードを実行するためのライブラリを一通りプロジェクトに追加する。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ yarn add react react-dom prop-types</code></pre></div>
-<p>Reactはv16.6.3が入った。</p>
-
-<h1 id="ソース構成">ソース構成</h1>
-
-<p>ソースを入れる<code>src</code>ディレクトリの構成は、<a href="https://qiita.com/numanomanu/items/af97312f34cf1388cee6#%E5%AE%9F%E9%9A%9B%E3%81%AE%E3%83%97%E3%83%AD%E3%83%80%E3%82%AF%E3%83%88%E3%81%AE%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E6%A7%8B%E6%88%90">Qiitaの記事</a>を参考に以下のようにする。</p>
-
-<ul>
-<li>react-redux-scaffold/
+<p>つまり以下のような感じ。</p>
 
 <ul>
 <li>src/
 
 <ul>
-<li>actions/</li>
-<li>components/</li>
-<li>containers/</li>
-<li>reducers/</li>
-<li>sagas/</li>
-<li>services/</li>
-<li>index.jsx</li>
-</ul></li>
-</ul></li>
-</ul>
-
-<p><br></p>
-
-<p>今のところ使うのは<code>index.jsx</code>と<code>components</code>だけ。</p>
-
-<p><code>index.jsx</code>は<a href="https://www.kaitoy.xyz/2018/08/19/creating-react-redux-app-from-scratch-01/#webpack%E8%A8%AD%E5%AE%9A%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB">前回</a>書いた通り、webpackが初めにロードするファイル。</p>
-
-<p><code>components</code>にはReactのコンポーネントを入れる。</p>
-
-<p>その他のディレクトリについては追って説明する。</p>
-
-<h1 id="reactコンポーネント作成">Reactコンポーネント作成</h1>
-
-<p>最初のReactコンポーネントとして、適当なものを作る。</p>
-
-<p><code>src/components/App.jsx</code>:</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-jsx" data-lang="jsx"><span style="color:#6ab825;font-weight:bold">import</span> React from <span style="color:#ed9d13">&#39;react&#39;</span>;
-
-<span style="color:#6ab825;font-weight:bold">const</span> App = () =&gt; (
-  &lt;<span style="color:#6ab825;font-weight:bold">div</span>&gt;
-    HOGE
-  &lt;/<span style="color:#6ab825;font-weight:bold">div</span>&gt;
-);
-
-<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">default</span> App;</code></pre></div>
-<p>で、これを<code>index.jsx</code>でインポートしてレンダリングしてやる。</p>
-
-<p><code>src/index.jsx</code>:</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-jsx" data-lang="jsx"><span style="color:#6ab825;font-weight:bold">import</span> React from <span style="color:#ed9d13">&#39;react&#39;</span>;
-<span style="color:#6ab825;font-weight:bold">import</span> ReactDOM from <span style="color:#ed9d13">&#39;react-dom&#39;</span>;
-<span style="color:#6ab825;font-weight:bold">import</span> App from <span style="color:#ed9d13">&#39;./components/App&#39;</span>;
-
-<span style="color:#6ab825;font-weight:bold">const</span> root = <span style="color:#24909d">document</span>.getElementById(<span style="color:#ed9d13">&#39;root&#39;</span>);
-
-<span style="color:#6ab825;font-weight:bold">if</span> (root) {
-  ReactDOM.render(
-    &lt;<span style="color:#6ab825;font-weight:bold">App</span> /&gt;,
-    root,
-  );
-}</code></pre></div>
-<p>これで<code>yarn build</code>すると<code>dist/bundle.js</code>が生成される。</p>
-
-<p>実践的なコンポーネント構成の考え方については、公式の<a href="https://reactjs.org/docs/thinking-in-react.html">Thinking in React</a>が参考になる。</p>
-
-<h1 id="htmlファイル作成">HTMLファイル作成</h1>
-
-<p>bundle.jsを読み込むHTMLファイルを作る。</p>
-
-<p>HTMLファイルを書くときは、「<a href="https://hail2u.net/documents/html-best-practices.html">普通のHTMLの書き方</a>」の1～3章とか、「<a href="https://qiita.com/miya0001/items/8fff46c201bf9eaeba4a">フロントエンドチェックリスト</a>」のHead、HTML辺りが参考になる。
-まあ開発時にしか使わないだろうから実際は適当でいいし、なんなら<a href="https://webpack.js.org/plugins/html-webpack-plugin/">HtmlWebpackPlugin</a>で自動生成してもいい。</p>
-
-<p>作るファイルは、<a href="https://www.kaitoy.xyz/2018/08/19/creating-react-redux-app-from-scratch-01/#webpack-dev-server%E8%A8%AD%E5%AE%9A">webpackの設定に書いた</a>通り、<code>public/index.html</code>。</p>
-
-<p>内容は以下。</p>
-
-<p><code>public/index.html</code>:</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-html" data-lang="html"><span style="color:#cd2828;font-weight:bold">&lt;!doctype html&gt;</span>
-&lt;<span style="color:#6ab825;font-weight:bold">html</span> <span style="color:#bbb">lang</span>=<span style="color:#ed9d13">&#34;en&#34;</span>&gt;
-  &lt;<span style="color:#6ab825;font-weight:bold">head</span>&gt;
-    &lt;<span style="color:#6ab825;font-weight:bold">meta</span> <span style="color:#bbb">charset</span>=<span style="color:#ed9d13">&#34;utf-8&#34;</span> /&gt;
-    &lt;<span style="color:#6ab825;font-weight:bold">meta</span> <span style="color:#bbb">http-equiv</span>=<span style="color:#ed9d13">&#34;x-ua-compatible&#34;</span> <span style="color:#bbb">content</span>=<span style="color:#ed9d13">&#34;ie=edge&#34;</span>&gt;
-    &lt;<span style="color:#6ab825;font-weight:bold">meta</span> <span style="color:#bbb">name</span>=<span style="color:#ed9d13">&#34;viewport&#34;</span> <span style="color:#bbb">content</span>=<span style="color:#ed9d13">&#34;width=device-width, initial-scale=1&#34;</span>&gt;
-    &lt;<span style="color:#6ab825;font-weight:bold">title</span>&gt;React Redux&lt;/<span style="color:#6ab825;font-weight:bold">title</span>&gt;
-    &lt;<span style="color:#6ab825;font-weight:bold">meta</span> <span style="color:#bbb">name</span>=<span style="color:#ed9d13">&#34;description&#34;</span> <span style="color:#bbb">content</span>=<span style="color:#ed9d13">&#34;React Redux Scaffold&#34;</span>&gt;
-  &lt;/<span style="color:#6ab825;font-weight:bold">head</span>&gt;
-  &lt;<span style="color:#6ab825;font-weight:bold">body</span>&gt;
-    &lt;<span style="color:#6ab825;font-weight:bold">div</span> <span style="color:#bbb">id</span>=<span style="color:#ed9d13">&#34;root&#34;</span>&gt;&lt;/<span style="color:#6ab825;font-weight:bold">div</span>&gt;
-    &lt;<span style="color:#6ab825;font-weight:bold">noscript</span>&gt;
-      You need to enable JavaScript to run this app.
-    &lt;/<span style="color:#6ab825;font-weight:bold">noscript</span>&gt;
-    &lt;<span style="color:#6ab825;font-weight:bold">script</span> <span style="color:#bbb">src</span>=<span style="color:#ed9d13">&#34;./bundle.js&#34;</span>&gt;&lt;/<span style="color:#6ab825;font-weight:bold">script</span>&gt;
-  &lt;/<span style="color:#6ab825;font-weight:bold">body</span>&gt;
-&lt;/<span style="color:#6ab825;font-weight:bold">html</span>&gt;</code></pre></div>
-<p><br></p>
-
-<p>ポイントは2点。</p>
+<li>index.tsx</li>
+<li>views/
 
 <ul>
-<li><p><code>&lt;body&gt;</code>の最初に<code>id=root</code>の<code>&lt;div&gt;</code>を書く</p>
+<li>AppRoutes.tsx</li>
+<li>atoms/</li>
+<li>molecules/</li>
+<li>organisms/
 
-<p>上で書いた<code>index.jsx</code>で、<code>id</code>が<code>root</code>の要素を取得して<code>ReactDOM.render()</code>に渡しているので、この<code>&lt;div&gt;</code>要素のなかに全てのWeb UIがレンダリングされることになる。</p></li>
+<ul>
+<li>DataTable.tsx</li>
+</ul></li>
+<li>ecosystems/
 
-<li><p><code>&lt;body&gt;</code>の最後に<code>&lt;script src=&quot;./bundle.js&quot;&gt;&lt;/script&gt;</code>を書く</p>
+<ul>
+<li>user/
 
-<p>この<code>&lt;script&gt;</code>要素により、bundle.jsがWebサーバからダウンロードされて実行される。</p></li>
+<ul>
+<li>UserDataTable.tsx</li>
+</ul></li>
+</ul></li>
+<li>natures/
+
+<ul>
+<li>user/
+
+<ul>
+<li>UserListView.tsx</li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>state/
+
+<ul>
+<li>store.ts</li>
+<li>ducks/
+
+<ul>
+<li>index.ts</li>
+<li>user/
+
+<ul>
+<li>index.ts</li>
+<li>actions.ts</li>
+<li>apis.ts</li>
+<li>reducers.ts</li>
+<li>models.ts</li>
+<li>sagas.ts</li>
+<li>selectors.ts</li>
+<li>watcherSagas.ts</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
 </ul>
 
-<p><br></p>
+<p>これらのモジュールの中身について解説していく。
+<a href="https://www.kaitoy.xyz/2020/07/05/re-ducks-actions/">前回</a>は<code>actions.ts</code>を解説した。
+今回は<code>sagas.ts</code>と<code>apis.ts</code>と<code>watcherSagas.ts</code>について書く。</p>
 
-<p>以上でReactは一通り。</p>
+<h1 id="worker-saga">Worker Saga</h1>
 
-<p><code>yarn start</code>してブラウザで<code>http://localhost:3000</code>にアクセスするとHOGEと表示されるはず。</p>
+<p><code>sagas.ts</code>にはAjaxコールなどの副作用やUUID生成などの不安定な処理を実行する<a href="https://redux-saga.js.org/docs/introduction/BeginnerTutorial.html">Saga</a>をredux-sagaで書く。</p>
 
-<p><a href="https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/">次回</a>はフォーマッタとリンタを導入する。</p></div>
+<p>redux-sagaについては<a href="https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/">以前の記事</a>にも書いたのでさらっとだけ説明すると、Reduxのミドルウェアとして動き、Actionの取得、副作用の実行、Actionのdispatchといった処理をReducerの外で実行できるライブラリ。
+これらの処理はSagaと呼ぶ<a href="https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Statements/function*">ジェネレータ関数</a>に書く。</p>
+
+<p>Sagaには大きく次の二種類がある。</p>
+
+<ul>
+<li>Watcher Saga: StoreへのActionのdispatchをwatchしてActionを取得するSaga。</li>
+<li>Worker Saga: Watcher Sagaからフォークして実際に副作用とかの処理を実行するSaga。</li>
+</ul>
+
+<p><code>sagas.ts</code>に書くのはWorker Sagaの方で、例えばREST APIをコールするSagaは以下のような感じ。</p>
+
+<p><code>src/state/ducks/user/sagas.ts</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">import</span> { call, put, SagaReturnType } from <span style="color:#ed9d13">&#39;redux-saga/effects&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> {
+  usersFetchSucceeded,
+  usersFetchFailed,
+} from <span style="color:#ed9d13">&#39;./actions&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> * as apis from <span style="color:#ed9d13">&#39;./apis&#39;</span>;
+
+<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">function</span>* fetchUsers() {
+  <span style="color:#6ab825;font-weight:bold">try</span> {
+    <span style="color:#6ab825;font-weight:bold">const</span> users: SagaReturnType&lt;<span style="color:#6ab825;font-weight:bold">typeof</span> apis.getUsers&gt; = <span style="color:#6ab825;font-weight:bold">yield</span> call(apis.getUsers);
+    <span style="color:#6ab825;font-weight:bold">yield</span> put(usersFetchSucceeded(users));
+  } <span style="color:#6ab825;font-weight:bold">catch</span> (ex) {
+    <span style="color:#6ab825;font-weight:bold">yield</span> put(usersFetchFailed(ex));
+  }
+}
+</code></pre></div>
+<p>apisモジュール(<code>apis.ts</code>)からPromiseを返す関数をimportして<a href="https://redux-saga.js.org/docs/api/#callfn-args">call</a>し、その結果をactionsモジュールからimportした<a href="https://www.kaitoy.xyz/2020/07/05/re-ducks-actions/">Action Creator</a>に渡してActionを生成し、<a href="https://redux-saga.js.org/docs/api/#putaction">put</a>でStoreにdispatchする。
+これが基本形。</p>
+
+<p><a href="https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/#saga%E3%81%AE%E5%AE%9F%E8%A3%85">以前の記事</a>と違うのは、<code>SagaReturnType</code>を使って非同期APIコールのPromiseが解決する値の型を抽出して使っているところ。
+apisモジュールを<code>*</code>でインポートしているのは、apisモジュールの関数名がsagasモジュールのものと被りやすいので名前空間を分ける意図なんだけど、そこは別にどうでもいい。</p>
+
+<h1 id="ajax通信">Ajax通信</h1>
+
+<p><code>apis.ts</code>にはAjax通信を実行してPromiseを返す関数を書いておく。</p>
+
+<p><code>src/state/ducks/user/apis.ts</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">import</span> axios from <span style="color:#ed9d13">&#39;axios&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> { User, validateUserList } from <span style="color:#ed9d13">&#39;./models&#39;</span>;
+
+<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">const</span> client = axios.create({
+  timeout: <span style="color:#3677a9">2000</span>,
+});
+
+<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">const</span> API_USERS = <span style="color:#ed9d13">&#39;/api/v1/users&#39;</span>;
+
+<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">const</span> getUsers = () =&gt;
+  client.get&lt;User[]&gt;(API_USERS).then((res) =&gt; validateKiyoshiList(res.data));
+</code></pre></div>
+<p>ここではAjaxライブラリに<a href="https://github.com/axios/axios">axios</a>を使っているけど、Promise返すならなんでもいい。</p>
+
+<p>axios使う場合は、Ajax通信を実行する関数(この例だと<code>get()</code>)の型パラメータでPromiseが解決する値の型を指定できる。
+Ajax通信のレスポンスが実際にその型であることを保証するために、ここでバリデーションをしておくべし。
+上の例のようにモデルオブジェクトを取得するような場合、モデルオブジェクトのバリデーションはmodelsモジュール(<code>models.ts</code>)の責務なので、そこからバリデーション関数をimportして使う形になる。</p>
+
+<p><code>models.ts</code>についてはまた別の記事で書く。</p>
+
+<h2 id="watcher-saga">Watcher Saga</h2>
+
+<p>Watcher Sagaは<code>watcherSagas.ts</code>に書く。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">import</span> { takeLeading } from <span style="color:#ed9d13">&#39;redux-saga/effects&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> {
+  usersBeingFetched,
+} from <span style="color:#ed9d13">&#39;./actions&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> { fetchUsers } from <span style="color:#ed9d13">&#39;./sagas&#39;</span>;
+
+<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">function</span>* watchUsersBeingFetched() {
+  <span style="color:#6ab825;font-weight:bold">yield</span> takeLeading(
+    ({ type }: Pick&lt;ReturnType&lt;<span style="color:#6ab825;font-weight:bold">typeof</span> usersBeingFetched&gt;, <span style="color:#ed9d13">&#39;type&#39;</span>&gt;) =&gt;
+      type === <span style="color:#ed9d13">&#39;user/entitiesBeingFetched&#39;</span>,
+    fetchUsers,
+  );
+}
+</code></pre></div>
+<p>Actionをwatchするのに、ここでは<a href="https://redux-saga.js.org/docs/api/#takeleadingpattern-saga-args">takeLeading</a>使ってるけど、他にも使えるAPIはいくつもあるのでそこは要件に合わせて。
+いずれもwatchするActionの<code>type</code>を第一引数に指定するようなAPIで、単なる文字列で指定することもできるけど、文字列リテラル型による補完と型チェックを利かせたくて上記例のようにしている。
+つまり、第一引数に関数を渡すと、その関数にはdispatchされたActionが渡されるので、そこから<code>type</code>を抽出しつつ型を付けて、<code>type === 'user/entitiesBeingFetched'</code>のところで補完と型チェックを利かせている。</p>
+
+<p><code>watcherSagas.ts</code>にはこのようなwatcher関数を処理したいActionの数だけ書いてexportしておく。
+逆に、Watcher Sagaじゃないものはこのモジュールからはexportしない。
+これは次節の<code>index.ts</code>で再exportしやすくするため。</p>
+
+<h1 id="watcher-sagaをduckからexport">Watcher Sagaをduckからexport</h1>
+
+<p>Watcher Sagaは、<code>watcherSagas.ts</code>があるディレクトリに置いた<code>index.ts</code>でまとめて再exportしておくと捗る。</p>
+
+<p><code>src/state/ducks/user/index.ts</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"><span style="color:#589819">+import * as watcherSagas from &#39;./watcherSagas&#39;;
+</span><span style="color:#589819">+
+</span><span style="color:#589819">+export const userWatcherSagas = Object.values(watcherSagas);
+</span><span style="color:#589819">+
+</span><span style="color:#589819"></span> export { UserState, userReducer } from &#39;./reducers&#39;;
+</code></pre></div>
+<p>一番下の行は<a href="https://www.kaitoy.xyz/2020/07/11/re-ducks-reducers-with-immer/#state%E3%81%AE%E5%9E%8B%E3%81%A8reducer%E3%82%92duck%E3%81%8B%E3%82%89export">前回の記事</a>で書いたRedcuerとStateの再exportなのでここでは気にしなくていい。</p>
+
+<p>duckのディレクトリ内の<code>index.ts</code>は、上記の3文を書いてしまえば、その後修正の必要性は出てこない。</p>
+
+<h1 id="sagaの統合">Sagaの統合</h1>
+
+<p>各duckからexportしたReducerは、ducksディレクトリ直下の<code>index.ts</code>でまとめる。</p>
+
+<p><code>src/state/ducks/index.ts</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"><span style="color:#589819">+import { all, spawn, call } from &#39;redux-saga/effects&#39;;
+</span><span style="color:#589819"></span><span style="color:#d22323">-import { UserState, userReducer as user } from &#39;./user&#39;;
+</span><span style="color:#d22323">-import { ArticleState, articleReducer as article } from &#39;./article&#39;;
+</span><span style="color:#d22323"></span><span style="color:#589819">+import { UserState, userReducer as user, userWatcherSagas } from &#39;./user&#39;;
+</span><span style="color:#589819">+import { ArticleState, articleReducer as article, articleWatcherSagas } from &#39;./article&#39;;
+</span><span style="color:#589819"></span>
+ export type StoreState = Readonly&lt;{
+   user: UserState;
+   article: ArticleState;
+ }&gt;;
+
+ export const reducers = {
+   user,
+   article,
+ };
+
+<span style="color:#589819">+export function* rootSaga() {
+</span><span style="color:#589819">+  const watchers = [...userWatcherSagas, ...articleWatcherSagas];
+</span><span style="color:#589819">+
+</span><span style="color:#589819">+  yield all(
+</span><span style="color:#589819">+    watchers.map((saga) =&gt;
+</span><span style="color:#589819">+      spawn(function* () {
+</span><span style="color:#589819">+        while (true) {
+</span><span style="color:#589819">+          try {
+</span><span style="color:#589819">+            yield call(saga);
+</span><span style="color:#589819">+            break;
+</span><span style="color:#589819">+          } catch (ex) {
+</span><span style="color:#589819">+            console.exception(ex);
+</span><span style="color:#589819">+          }
+</span><span style="color:#589819">+        }
+</span><span style="color:#589819">+      }),
+</span><span style="color:#589819">+    ),
+</span><span style="color:#589819">+  );
+</span><span style="color:#589819">+}
+</span></code></pre></div>
+<p><code>StoreState</code>と<code>reducers</code>は<a href="https://www.kaitoy.xyz/2020/07/11/re-ducks-reducers-with-immer/#state%E3%81%AE%E5%9E%8B%E3%81%A8reducer%E3%82%92duck%E3%81%8B%E3%82%89export">前回の記事</a>で書いたRedcuerとStateの統合なのでここでは気にしなくていい。</p>
+
+<p>各duckのWatcher Sagaの束をimportして、<code>rootSaga()</code>にそれらをまとめて<code>call</code>する処理を書いている。
+これはredux-sagaのマニュアルで紹介されている<a href="https://redux-saga.js.org/docs/advanced/RootSaga.html#keeping-everything-alive">Root Saga Patternのひとつ</a>で、watcher Sagaが何かしらのエラーで死んでしまったときにも再起動して動き続けられる仕組み。</p>
+
+<p>この<code>rootSaga()</code>をexportしておいて、<code>store.ts</code>で生成するSaga Middlewareで実行する。</p>
+
+<p><code>src/state/store.ts</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> import { createStore, applyMiddleware, compose, combineReducers } from &#39;redux&#39;;
+<span style="color:#589819">+import createSagaMiddleware from &#39;redux-saga&#39;;
+</span><span style="color:#589819"></span><span style="color:#d22323">-import { reducers } from &#39;./ducks&#39;;
+</span><span style="color:#d22323"></span><span style="color:#589819">+import { reducers, rootSaga } from &#39;./ducks&#39;;
+</span><span style="color:#589819"></span>
+ const rootReducer = combineReducers(reducers);
+<span style="color:#589819">+const sagaMiddleware = createSagaMiddleware();
+</span><span style="color:#589819"></span>
+ export default function configureStore() {
+   const middlewares = [];
+<span style="color:#589819">+  middlewares.push(sagaMiddleware);
+</span><span style="color:#589819"></span>   const composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+   const store = createStore(rootReducer, composeEnhancers(applyMiddleware(...middlewares)));
+<span style="color:#589819">+  sagaMiddleware.run(rootSaga);
+</span><span style="color:#589819"></span>   return store;
+ }
+</code></pre></div>
+<p>これでSagaも動くようになった。</p>
+
+<p><code>store.ts</code>はここまで書けば塩漬けできる。</p></div>
 
         <section class="share-buttons">
           <div class="share-button">
-            <div class="fb-share-button" data-href="https://www.kaitoy.xyz/2018/08/22/creating-react-redux-app-from-scratch-02/" data-layout="box_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f08%2f22%2fcreating-react-redux-app-from-scratch-02%2f&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Share</a></div>
+            <div class="fb-share-button" data-href="https://www.kaitoy.xyz/2020/07/13/re-ducks-sagas/" data-layout="box_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fwww.kaitoy.xyz%2f2020%2f07%2f13%2fre-ducks-sagas%2f&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Share</a></div>
           </div>
           <div class="share-button">
             <a class="twitter-share-button"
-              href="https://twitter.com/intent/tweet?text=React%20%2b%20Redux%e3%82%a2%e3%83%97%e3%83%aa%e3%82%b1%e3%83%bc%e3%82%b7%e3%83%a7%e3%83%b3%e3%83%97%e3%83%ad%e3%82%b8%e3%82%a7%e3%82%af%e3%83%88%e3%81%ae%e3%83%86%e3%83%b3%e3%83%97%e3%83%ac%e3%83%bc%e3%83%88%e3%82%92%e4%bd%9c%e3%82%8b%20%e2%80%95%20%e3%81%9d%e3%81%ae2%3a%20React&amp;url=https%3a%2f%2fwww.kaitoy.xyz%2f2018%2f08%2f22%2fcreating-react-redux-app-from-scratch-02%2f"
+              href="https://twitter.com/intent/tweet?text=Redux%e3%81%ae%e3%83%a2%e3%82%b8%e3%83%a5%e3%83%bc%e3%83%ab%e3%82%a2%e3%83%bc%e3%82%ad%e3%83%86%e3%82%af%e3%83%81%e3%83%a3%e3%83%91%e3%82%bf%e3%83%bc%e3%83%b3re-ducks%e3%81%ae%e5%ae%9f%e8%b7%b5%20%e2%80%95%20Saga&amp;url=https%3a%2f%2fwww.kaitoy.xyz%2f2020%2f07%2f13%2fre-ducks-sagas%2f"
               data-size="large">
             Tweet</a>
           </div>
@@ -505,20 +540,15 @@ Welcome.propTypes = {
         <div class="col-sm-6">
           <div class="prev">
             
-            <a href="https://www.kaitoy.xyz/2018/08/19/creating-react-redux-app-from-scratch-01/">
+            <a href="https://www.kaitoy.xyz/2020/07/11/re-ducks-reducers-with-immer/">
               <i class="fa fa-angle-left"></i>
-              React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その1: Node.jsとYarnとBabelとwebpack
+              Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Reducer with immer
             </a>
             
           </div>
         </div>
         <div class="col-sm-6">
           <div class="next text-right">
-            
-            <a href="https://www.kaitoy.xyz/2018/08/23/creating-react-redux-app-from-scratch-03/">
-              React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その3: PrettierとESLint
-              <i class="fa fa-angle-right"></i>
-            </a>
             
           </div>
         </div>
@@ -534,30 +564,6 @@ Welcome.propTypes = {
 
         <div class="related-links">
            <div class="item">
-
-    
-    
-    
-
-    
-    
-
-    <h4 class="post-title"><a href="/2020/07/13/re-ducks-sagas/">Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Saga</a></h4>
-    <h5>Mon, Jul 13, 2020</h5>
-    
-    <a href="https://www.kaitoy.xyz/tags/react"><kbd class="item-tag">react</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/redux"><kbd class="item-tag">redux</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/re-ducks"><kbd class="item-tag">re-ducks</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/typescript"><kbd class="item-tag">typescript</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/redux-saga"><kbd class="item-tag">redux-saga</kbd></a>
-    
-
-</div>
-  <div class="item">
 
     
     
@@ -906,6 +912,24 @@ Welcome.propTypes = {
     <a href="https://www.kaitoy.xyz/tags/eslint"><kbd class="item-tag">eslint</kbd></a>
     
     <a href="https://www.kaitoy.xyz/tags/prettier"><kbd class="item-tag">prettier</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/08/22/creating-react-redux-app-from-scratch-02/">React &#43; Reduxアプリケーションプロジェクトのテンプレートを作る ― その2: React</a></h4>
+    <h5>Wed, Aug 22, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/react"><kbd class="item-tag">react</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/frontend"><kbd class="item-tag">frontend</kbd></a>
     
 
 </div>
