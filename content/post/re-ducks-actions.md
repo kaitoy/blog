@@ -204,4 +204,5 @@ export const usersFetchSucceeded = (
 
 `actions.ts`の解説だけでいいボリュームになったので、ほかのモジュールについては別記事に書く。
 
-* `reducers.tsとstore.ts`: https://www.kaitoy.xyz/2020/07/11/re-ducks-reducers-with-immer/
+* `reducers.ts`と`store.ts`: https://www.kaitoy.xyz/2020/07/11/re-ducks-reducers-with-immer/
+* `sagas.ts`と`apis.ts`と`watcherSagas.ts`: https://www.kaitoy.xyz/2020/07/13/re-ducks-sagas/

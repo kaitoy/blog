@@ -279,7 +279,7 @@ export default function configureStore() {
 
 このファイルは一回書いたら修正は不要。
 
-`middlewares`はredux-sagaを入れるんだけど、それについては別の記事で書く。
+`middlewares`はredux-sagaを入れるんだけど、それについては[別の記事](https://www.kaitoy.xyz/2020/07/13/re-ducks-sagas/)で書く。
 
 因みにこの`configureStore()`は、ソースのルートの`index.tsx`で使う。
 
