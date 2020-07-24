@@ -12,16 +12,16 @@
 </script>
 
 <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
-<meta property="og:url" content="https://www.kaitoy.xyz/2020/07/13/re-ducks-sagas/">
+<meta property="og:url" content="https://www.kaitoy.xyz/2020/07/24/re-ducks-normalizr/">
 <meta property="og:site_name" content="To Be Decided">
 <meta name="twitter:card" content="summary"></meta>
-<link rel="canonical" href="https://www.kaitoy.xyz/2020/07/13/re-ducks-sagas/">
+<link rel="canonical" href="https://www.kaitoy.xyz/2020/07/24/re-ducks-normalizr/">
 
 
 
   <meta property="og:type" content="article">
-  <meta property="og:title" content="Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Saga | To Be Decided">
-  <title>Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Saga | To Be Decided</title>
+  <meta property="og:title" content="Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― normalizr | To Be Decided">
+  <title>Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― normalizr | To Be Decided</title>
   <meta property="og:description" content="2018年後半にスクラッチから作ったReactとReduxのプロジェクトテンプレートを2020年版として色々アップデートしているなかで、re-ducksパターンに則ってステート管理のモジュール構成を整理しなおしたり、ステート管理に使うライブラリを見直したりした。
 
 この記事では、前回に続いて、React-Redux、Redux Saga、immer、normalizr、reselectを使ったre-ducksパターンの実践について書く。
@@ -32,7 +32,7 @@
 この記事では、前回に続いて、React-Redux、Redux Saga、immer、normalizr、reselectを使ったre-ducksパターンの実践について書く。
 
 言語はTypeScript。">
-  <meta property="og:image" content="https://www.kaitoy.xyz/images/redux-saga.png">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/redux.png">
 
 
 
@@ -138,7 +138,7 @@
 
                 <div class="navbar-header">
 
-                    <a class="navbar-brand visible-xs" href="#">Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Saga</a>
+                    <a class="navbar-brand visible-xs" href="#">Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― normalizr</a>
 
                     <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
                         <span class="icon-bar"></span>
@@ -197,8 +197,8 @@
     
     
 
-    <h4 class="post-title"><a href="/2020/07/13/re-ducks-sagas/">Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Saga</a></h4>
-    <h5>Mon, Jul 13, 2020</h5>
+    <h4 class="post-title"><a href="/2020/07/24/re-ducks-normalizr/">Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― normalizr</a></h4>
+    <h5>Fri, Jul 24, 2020</h5>
     
     <a href="https://www.kaitoy.xyz/tags/react"><kbd class="item-tag">react</kbd></a>
     
@@ -208,15 +208,15 @@
     
     <a href="https://www.kaitoy.xyz/tags/typescript"><kbd class="item-tag">typescript</kbd></a>
     
-    <a href="https://www.kaitoy.xyz/tags/redux-saga"><kbd class="item-tag">redux-saga</kbd></a>
+    <a href="https://www.kaitoy.xyz/tags/normalizr"><kbd class="item-tag">normalizr</kbd></a>
     
 
 </div>
 
 
         <div class="cover">
-            <a href="/2020/07/13/re-ducks-sagas/">
-                <img src="https://www.kaitoy.xyz/images/redux-saga.png" alt="Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Saga">
+            <a href="/2020/07/24/re-ducks-normalizr/">
+                <img src="https://www.kaitoy.xyz/images/redux.png" alt="Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― normalizr">
             </a>
         </div>
 
@@ -226,13 +226,9 @@
             <nav id="TableOfContents">
 <ul>
 <li><a href="#モジュール構成">モジュール構成</a></li>
-<li><a href="#worker-saga">Worker Saga</a></li>
-<li><a href="#ajax通信">Ajax通信</a>
-<ul>
-<li><a href="#watcher-saga">Watcher Saga</a></li>
-</ul></li>
-<li><a href="#watcher-sagaをduckからexport">Watcher Sagaをduckからexport</a></li>
-<li><a href="#sagaの統合">Sagaの統合</a></li>
+<li><a href="#モデルと正規化">モデルと正規化</a></li>
+<li><a href="#normalizr">normalizr</a></li>
+<li><a href="#models-ts">models.ts</a></li>
 </ul>
 </nav>
         </aside>
@@ -241,7 +237,7 @@
 
         <br> <div class="text-justify"><p><a href="https://www.kaitoy.xyz/2018/11/26/creating-react-redux-app-from-scratch-11/">2018年後半</a>にスクラッチから作った<a href="https://github.com/kaitoy/react-redux-scaffold">ReactとReduxのプロジェクトテンプレート</a>を2020年版として色々アップデートしているなかで、<a href="https://github.com/alexnm/re-ducks">re-ducks</a>パターンに則ってステート管理のモジュール構成を整理しなおしたり、ステート管理に使うライブラリを見直したりした。</p>
 
-<p>この記事では、<a href="https://www.kaitoy.xyz/2020/07/11/re-ducks-reducers-with-immer/">前回</a>に続いて、<a href="https://react-redux.js.org/">React-Redux</a>、<a href="https://redux-saga.js.org/">Redux Saga</a>、<a href="https://immerjs.github.io/immer/docs/introduction">immer</a>、<a href="https://github.com/paularmstrong/normalizr">normalizr</a>、<a href="https://github.com/reduxjs/reselect">reselect</a>を使ったre-ducksパターンの実践について書く。</p>
+<p>この記事では、<a href="https://www.kaitoy.xyz/2020/07/13/re-ducks-sagas/">前回</a>に続いて、<a href="https://react-redux.js.org/">React-Redux</a>、<a href="https://redux-saga.js.org/">Redux Saga</a>、<a href="https://immerjs.github.io/immer/docs/introduction">immer</a>、<a href="https://github.com/paularmstrong/normalizr">normalizr</a>、<a href="https://github.com/reduxjs/reselect">reselect</a>を使ったre-ducksパターンの実践について書く。</p>
 
 <p>言語は<a href="https://www.typescriptlang.org/">TypeScript</a>。</p>
 
@@ -329,189 +325,363 @@
 </ul>
 
 <p>これらのモジュールの中身について解説していく。
-<a href="https://www.kaitoy.xyz/2020/07/05/re-ducks-actions/">前回</a>は<code>actions.ts</code>を解説した。
-今回は<code>sagas.ts</code>と<code>apis.ts</code>と<code>watcherSagas.ts</code>について書く。</p>
+<a href="https://www.kaitoy.xyz/2020/07/13/re-ducks-sagas/">前回</a>は<code>sagas.ts</code>と<code>apis.ts</code>と<code>watcherSagas.ts</code>を解説した。
+今回は<code>models.ts</code>について書く。</p>
 
-<h1 id="worker-saga">Worker Saga</h1>
+<h1 id="モデルと正規化">モデルと正規化</h1>
 
-<p><code>sagas.ts</code>にはAjaxコールなどの副作用やUUID生成などの不安定な処理を実行する<a href="https://redux-saga.js.org/docs/introduction/BeginnerTutorial.html">Saga</a>をredux-sagaで書く。</p>
+<p><code>models.ts</code>の中身について書く前に、ReduxのStoreに入れるモデルとその正規化について書いておく。</p>
 
-<p>redux-sagaについては<a href="https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/">以前の記事</a>にも書いたのでさらっとだけ説明すると、Reduxのミドルウェアとして動き、Actionの取得、副作用の実行、Actionのdispatchといった処理をReducerの外で実行できるライブラリ。
-これらの処理はSagaと呼ぶ<a href="https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Statements/function*">ジェネレータ関数</a>に書く。</p>
+<p>ここでいうモデルとは、<a href="https://ja.wikipedia.org/wiki/%E3%83%89%E3%83%A1%E3%82%A4%E3%83%B3%E9%A7%86%E5%8B%95%E8%A8%AD%E8%A8%88">DDD</a>におけるエンティティとか値オブジェクトに近いもので、アプリケーションが扱う問題領域の特定の概念を、プログラムで扱えるデータ形式として表したもの。
+サーバサイドでは、モデルをRDBのテーブルとして表現したり、Classにしてそのインスタンスに対して処理を書いたりするわけだけど、クライアントサイドのアプリケーションでも、GUIを描画するためのデータをサーバサイドのモデルに合わせて扱うと捗る。</p>
 
-<p>Sagaには大きく次の二種類がある。</p>
+<p>re-ducksでは、モデルごとに状態管理処理や型定義をduckとしてまとめる形で整理し、ReduxのStateには、duckごとに分けた名前空間に、対応するモデルのオブジェクトを入れて管理することになる。
+このとき、Stateにはモデルオブジェクトを正規化した形で入れておくことが<a href="https://redux.js.org/style-guide/style-guide#normalize-complex-nestedrelational-state">Redux公式の推奨になっている</a>。</p>
 
-<ul>
-<li>Watcher Saga: StoreへのActionのdispatchをwatchしてActionを取得するSaga。</li>
-<li>Worker Saga: Watcher Sagaからフォークして実際に副作用とかの処理を実行するSaga。</li>
-</ul>
+<p>正規化というのは、<a href="https://ja.wikipedia.org/wiki/%E9%96%A2%E4%BF%82%E3%81%AE%E6%AD%A3%E8%A6%8F%E5%8C%96">RDBにおけるテーブルの正規化</a>と同じような概念。
+ReduxのStateはクライアントアプリケーションにとってのDBで、とくにモデルオブジェクトについては、サーバサイドでは大抵RDBで管理されているものなので、モデル間の関係性を意識してRDBのデータのように扱うといい。
+つまり、モデルオブジェクトは正規化してStateに入れておくことで、冗長性を排除し、一貫性を保ちやすくなる。</p>
 
-<p><code>sagas.ts</code>に書くのはWorker Sagaの方で、例えばREST APIをコールするSagaは以下のような感じ。</p>
+<p><br></p>
 
-<p><code>src/state/ducks/user/sagas.ts</code>:</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">import</span> { call, put, SagaReturnType } from <span style="color:#ed9d13">&#39;redux-saga/effects&#39;</span>;
-<span style="color:#6ab825;font-weight:bold">import</span> {
-  usersFetchSucceeded,
-  usersFetchFailed,
-} from <span style="color:#ed9d13">&#39;./actions&#39;</span>;
-<span style="color:#6ab825;font-weight:bold">import</span> * as apis from <span style="color:#ed9d13">&#39;./apis&#39;</span>;
+<p>例えば、ブログ記事を管理するサイトで、サーバサイドでは記事がArticleというモデルで表され、その著者がUserというモデルで表されているとする。
+RDBのテーブルがモデルごとにあって、第3正規形になっている。</p>
 
-<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">function</span>* fetchUsers() {
-  <span style="color:#6ab825;font-weight:bold">try</span> {
-    <span style="color:#6ab825;font-weight:bold">const</span> users: SagaReturnType&lt;<span style="color:#6ab825;font-weight:bold">typeof</span> apis.getUsers&gt; = <span style="color:#6ab825;font-weight:bold">yield</span> call(apis.getUsers);
-    <span style="color:#6ab825;font-weight:bold">yield</span> put(usersFetchSucceeded(users));
-  } <span style="color:#6ab825;font-weight:bold">catch</span> (ex) {
-    <span style="color:#6ab825;font-weight:bold">yield</span> put(usersFetchFailed(ex));
+<p>articleテーブル:</p>
+
+<table>
+<thead>
+<tr>
+<th>記事ID</th>
+<th>タイトル</th>
+<th>コンテンツ</th>
+<th>著者</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>1</td>
+<td>Reactを触ってみた</td>
+<td>Reactすごい</td>
+<td>1</td>
+</tr>
+
+<tr>
+<td>2</td>
+<td>Reduxとre-ducks</td>
+<td>Reduxむずい</td>
+<td>1</td>
+</tr>
+
+<tr>
+<td>3</td>
+<td>Vueに入門した</td>
+<td>Vueやばい</td>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+
+<p><br></p>
+
+<p>userテーブル:</p>
+
+<table>
+<thead>
+<tr>
+<th>ユーザID</th>
+<th>名前</th>
+<th>誕生日</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>1</td>
+<td>Linus Torvalds</td>
+<td>1969/12/28</td>
+</tr>
+
+<tr>
+<td>2</td>
+<td>Jeff Dean</td>
+<td>1968/7/23</td>
+</tr>
+
+<tr>
+<td>3</td>
+<td>Larry Wall</td>
+<td>1954/9/27</td>
+</tr>
+</tbody>
+</table>
+
+<p><br></p>
+
+<p>articleテーブルの著者列はユーザIDを外部キーで参照している。</p>
+
+<p><br></p>
+
+<p>で、クライアントアプリが記事一覧を著者のプロフィール付きで表示したくて、ArticleとUserをREST APIで取得する状況を考える。</p>
+
+<p>最初に全Articleを取得して、各Articleの著者をみて、そのIDでUserを逐一取得する方法だと、N+1問題が発生してスケールしない。
+全Articleと全Userをそれぞれ取得して、クライアント側でjoinする方法だと、Userを無駄に取りすぎるきらいがある。</p>
+
+<p>ということで、サーバ側でArticleにUserを埋め込んで、以下のような形で返してくれるREST APIを用意することがよくある。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">[
+  {
+    <span style="color:#6ab825;font-weight:bold">&#34;id&#34;</span>: <span style="color:#3677a9">1</span>,
+    <span style="color:#6ab825;font-weight:bold">&#34;title&#34;</span>: <span style="color:#ed9d13">&#34;Reactを触ってみた&#34;</span>,
+    <span style="color:#6ab825;font-weight:bold">&#34;contents&#34;</span>: <span style="color:#ed9d13">&#34;Reactすごい&#34;</span>,
+    <span style="color:#6ab825;font-weight:bold">&#34;author&#34;</span>: {
+      <span style="color:#6ab825;font-weight:bold">&#34;id&#34;</span>: <span style="color:#3677a9">1</span>,
+      <span style="color:#6ab825;font-weight:bold">&#34;name&#34;</span>: <span style="color:#ed9d13">&#34;Linus Torvalds&#34;</span>,
+      <span style="color:#6ab825;font-weight:bold">&#34;dob&#34;</span>: <span style="color:#ed9d13">&#34;1969/12/28&#34;</span>
+    }
+  },
+  {
+    <span style="color:#6ab825;font-weight:bold">&#34;id&#34;</span>: <span style="color:#3677a9">2</span>,
+    <span style="color:#6ab825;font-weight:bold">&#34;title&#34;</span>: <span style="color:#ed9d13">&#34;Reduxとre-ducks&#34;</span>,
+    <span style="color:#6ab825;font-weight:bold">&#34;contents&#34;</span>: <span style="color:#ed9d13">&#34;Reduxむずい&#34;</span>,
+    <span style="color:#6ab825;font-weight:bold">&#34;author&#34;</span>: {
+      <span style="color:#6ab825;font-weight:bold">&#34;id&#34;</span>: <span style="color:#3677a9">1</span>,
+      <span style="color:#6ab825;font-weight:bold">&#34;name&#34;</span>: <span style="color:#ed9d13">&#34;Linus Torvalds&#34;</span>,
+      <span style="color:#6ab825;font-weight:bold">&#34;dob&#34;</span>: <span style="color:#ed9d13">&#34;1969/12/28&#34;</span>
+    }
+  },
+  {
+    <span style="color:#6ab825;font-weight:bold">&#34;id&#34;</span>: <span style="color:#3677a9">3</span>,
+    <span style="color:#6ab825;font-weight:bold">&#34;title&#34;</span>: <span style="color:#ed9d13">&#34;Vueに入門した&#34;</span>,
+    <span style="color:#6ab825;font-weight:bold">&#34;contents&#34;</span>: <span style="color:#ed9d13">&#34;Vueやばい&#34;</span>,
+    <span style="color:#6ab825;font-weight:bold">&#34;author&#34;</span>: {
+      <span style="color:#6ab825;font-weight:bold">&#34;id&#34;</span>: <span style="color:#3677a9">2</span>,
+      <span style="color:#6ab825;font-weight:bold">&#34;name&#34;</span>: <span style="color:#ed9d13">&#34;Jeff Dean&#34;</span>,
+      <span style="color:#6ab825;font-weight:bold">&#34;dob&#34;</span>: <span style="color:#ed9d13">&#34;1968/7/23&#34;</span>
+    }
   }
+]</code></pre></div>
+<p>この形は非正規形なので、このままStateに入れるとRDBの非正規形テーブルを扱うときのような問題が出てくる。
+それにStateはduckごとに分けるので、ArticleとUserという別々のduckが扱うべきデータが混ざっていると、責務が混ざってしまって処理を書くのに困る。</p>
+
+<p>こうしたデータをクライアントアプリで取得した後、ArticleデータからUserデータを切り離して以下のような形にするのがクライアントサイドでの正規化ということになる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript">{
+  articles: {
+    <span style="color:#3677a9">1</span>: {
+      id: <span style="color:#3677a9">1</span>,
+      title: <span style="color:#ed9d13">&#34;Reactを触ってみた&#34;</span>,
+      contents: <span style="color:#ed9d13">&#34;Reactすごい&#34;</span>,
+      author: <span style="color:#3677a9">1</span>,
+    },
+    <span style="color:#3677a9">2</span>: {
+      id: <span style="color:#3677a9">2</span>,
+      title: <span style="color:#ed9d13">&#34;Reduxとre-ducks&#34;</span>,
+      contents: <span style="color:#ed9d13">&#34;Reduxむずい&#34;</span>,
+      author: <span style="color:#3677a9">1</span>,
+    },
+    <span style="color:#3677a9">3</span>: {
+      id: <span style="color:#3677a9">3</span>,
+      title: <span style="color:#ed9d13">&#34;Vueに入門した&#34;</span>,
+      contents: <span style="color:#ed9d13">&#34;Vueやばい&#34;</span>,
+      author: <span style="color:#3677a9">2</span>,
+    },
+  },
+  users: {
+    <span style="color:#3677a9">1</span>: {
+      id: <span style="color:#3677a9">1</span>,
+      name: <span style="color:#ed9d13">&#34;Linus Torvalds&#34;</span>,
+      dob: <span style="color:#ed9d13">&#34;1969/12/28&#34;</span>,
+    },
+    <span style="color:#3677a9">2</span>: {
+      id: <span style="color:#3677a9">2</span>,
+      name: <span style="color:#ed9d13">&#34;Jeff Dean&#34;</span>,
+      dob: <span style="color:#ed9d13">&#34;1968/7/23&#34;</span>,
+    },
+  },
 }
 </code></pre></div>
-<p>apisモジュール(<code>apis.ts</code>)からPromiseを返す関数をimportして<a href="https://redux-saga.js.org/docs/api/#callfn-args">call</a>し、その結果をactionsモジュールからimportした<a href="https://www.kaitoy.xyz/2020/07/05/re-ducks-actions/">Action Creator</a>に渡してActionを生成し、<a href="https://redux-saga.js.org/docs/api/#putaction">put</a>でStoreにdispatchする。
-これが基本形。</p>
+<p>ArticleからUserを切り離しているだけでなく、主キーであるidとモデルオブジェクトのMap形式になっていることに注目したい。
+モデルデータにアクセスするときは、大抵は主キーで検索することになるので、こうしておくことでかなり扱いやすくなる。
+ただ、Map形式にすることでもともとのList形式にあったデータの順序性がなくなるので、順序性を維持するために主キーのリストを別途持っておく必要はある。</p>
 
-<p><a href="https://www.kaitoy.xyz/2018/10/07/creating-react-redux-app-from-scratch-08/#saga%E3%81%AE%E5%AE%9F%E8%A3%85">以前の記事</a>と違うのは、<code>SagaReturnType</code>を使って非同期APIコールのPromiseが解決する値の型を抽出して使っているところ。
-apisモジュールを<code>*</code>でインポートしているのは、apisモジュールの関数名がsagasモジュールのものと被りやすいので名前空間を分ける意図なんだけど、そこは別にどうでもいい。</p>
+<h1 id="normalizr">normalizr</h1>
 
-<h1 id="ajax通信">Ajax通信</h1>
+<p>前節で解説したようなクライアントサイドでのモデルデータ正規化をするためのライブラリがnormalizr。
+normalizrは、モデルのどのプロパティが主キーで、どれが外部キーかといったことを表現するスキーマを定義してやると、それに従って正規化(normalize)やその逆の非正規化(denormalize)をしてくれる。</p>
 
-<p><code>apis.ts</code>にはAjax通信を実行してPromiseを返す関数を書いておく。</p>
+<p>割とシンプルなライブラリで、使い方は<a href="https://github.com/paularmstrong/normalizr#quick-start">README</a>をみればすぐわかるので、ここでは解説しない。</p>
 
-<p><code>src/state/ducks/user/apis.ts</code>:</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">import</span> axios from <span style="color:#ed9d13">&#39;axios&#39;</span>;
-<span style="color:#6ab825;font-weight:bold">import</span> { User, validateUserList } from <span style="color:#ed9d13">&#39;./models&#39;</span>;
+<h1 id="models-ts">models.ts</h1>
 
-<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">const</span> client = axios.create({
-  timeout: <span style="color:#3677a9">2000</span>,
+<p><code>models.ts</code>には、正規化・非正規化を含むモデル周りの処理や、モデルの型定義を書く。
+モデルのプロパティに変更があったときに修正すべき部分が<code>models.ts</code>になるべくまとまっているとよい。</p>
+
+<p><code>src/state/ducks/article/models.ts</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">import</span> { schema, normalize, denormalize } from <span style="color:#ed9d13">&#39;normalizr&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> joi from <span style="color:#ed9d13">&#39;@hapi/joi&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">import</span> {
+  User,
+  userJoiSchema,
+  userNormalizrSchema,
+  userNormalizrSchemaKey,
+  NormalizedUsers,
+} from <span style="color:#ed9d13">&#39;~/state/ducks/user/models&#39;</span>;
+
+<span style="color:#999;font-style:italic">// Userが埋め込まれたArticleの型。
+</span><span style="color:#999;font-style:italic"></span><span style="color:#6ab825;font-weight:bold">export</span> type Article = {
+  id: string;
+  title: string;
+  content: string;
+  author: User;
+};
+
+<span style="color:#999;font-style:italic">// 正規化されたArticle単体の型。
+</span><span style="color:#999;font-style:italic">// つまり、ArticleのauthorがUserのidになった型。
+</span><span style="color:#999;font-style:italic"></span><span style="color:#6ab825;font-weight:bold">export</span> type NormalizedArticle = Omit&lt;Article, <span style="color:#ed9d13">&#39;author&#39;</span>&gt; &amp; {
+  author: User[<span style="color:#ed9d13">&#39;id&#39;</span>];
+};
+
+<span style="color:#999;font-style:italic">// 正規化されたArticleの集合の型。
+</span><span style="color:#999;font-style:italic">// つまり、idとArticleオブジェクトのMap形式の型。
+</span><span style="color:#999;font-style:italic"></span><span style="color:#6ab825;font-weight:bold">export</span> type NormalizedArticles = {
+  [id: number]: NormalizedArticle;
+};
+
+<span style="color:#999;font-style:italic">// normalizrのスキーマ定義。
+</span><span style="color:#999;font-style:italic"></span><span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">const</span> articleNormalizrSchemaKey = <span style="color:#ed9d13">&#39;articles&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">const</span> articleNormalizrSchema = <span style="color:#6ab825;font-weight:bold">new</span> schema.Entity&lt;Article&gt;(
+  articleNormalizrSchemaKey,
+  { author: userNormalizrSchema },
+  {
+    idAttribute: <span style="color:#ed9d13">&#39;id&#39;</span>,
+  },
+);
+
+<span style="color:#999;font-style:italic">// 正規化関数。
+</span><span style="color:#999;font-style:italic">// Userを埋め込んだArticleのリストを渡すと正規化して返してくれる。
+</span><span style="color:#999;font-style:italic"></span><span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">const</span> normalizeArticles = (articles: Article[]) =&gt;
+  normalize&lt;
+    Article,
+    {
+      [articleNormalizrSchemaKey]: NormalizedArticles;
+      [userNormalizrSchemaKey]: NormalizedUsers;
+    },
+    Article[<span style="color:#ed9d13">&#39;id&#39;</span>][]
+  &gt;(articles, [articleNormalizrSchema]);
+
+<span style="color:#999;font-style:italic">// 非正規化関数。
+</span><span style="color:#999;font-style:italic">// normalizeArticles()の戻り値(i.e. 正規化したArticleの集合)を渡すと非正規化して返してくれる。
+</span><span style="color:#999;font-style:italic">// Userを埋め込んだArticleのリストを返してくれる。
+</span><span style="color:#999;font-style:italic"></span><span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">const</span> denormalizeArticles = (articles: ReturnType&lt;<span style="color:#6ab825;font-weight:bold">typeof</span> normalizeArticles&gt;): Article[] =&gt;
+  denormalize(articles.result, [articleNormalizrSchema], articles.entities);
+
+<span style="color:#999;font-style:italic">// Articleのサンプルオブジェクト。
+</span><span style="color:#999;font-style:italic">// ユニットテストに使えるのと、モデルの理解の助けにもなる。
+</span><span style="color:#999;font-style:italic"></span><span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">const</span> articleSamples: Article[] = [
+  {
+    id: <span style="color:#3677a9">1</span>,
+    title: <span style="color:#ed9d13">&#34;Reactを触ってみた&#34;</span>,
+    contents: <span style="color:#ed9d13">&#34;Reactすごい&#34;</span>,
+    author: {
+      id: <span style="color:#3677a9">1</span>,
+      name: <span style="color:#ed9d13">&#34;Linus Torvalds&#34;</span>,
+      dob: <span style="color:#ed9d13">&#34;1969/12/28&#34;</span>,
+    },
+  },
+  {
+    id: <span style="color:#3677a9">2</span>,
+    title: <span style="color:#ed9d13">&#34;Reduxとre-ducks&#34;</span>,
+    contents: <span style="color:#ed9d13">&#34;Reduxむずい&#34;</span>,
+    author: {
+      id: <span style="color:#3677a9">1</span>,
+      name: <span style="color:#ed9d13">&#34;Linus Torvalds&#34;</span>,
+      dob: <span style="color:#ed9d13">&#34;1969/12/28&#34;</span>,
+    },
+  },
+  {
+    id: <span style="color:#3677a9">3</span>,
+    title: <span style="color:#ed9d13">&#34;Vueに入門した&#34;</span>,
+    contents: <span style="color:#ed9d13">&#34;Vueやばい&#34;</span>,
+    author: {
+      id: <span style="color:#3677a9">2</span>,
+      name: <span style="color:#ed9d13">&#34;Jeff Dean&#34;</span>,
+      dob: <span style="color:#ed9d13">&#34;1968/7/23&#34;</span>,
+    },
+  },
+];
+
+<span style="color:#999;font-style:italic">// ここ以下はREST APIで取得したArticleオブジェクトのバリデーション関数の定義。詳細は割愛する。
+</span><span style="color:#999;font-style:italic">// joi (https://github.com/sideway/joi)を使ってるけど、
+</span><span style="color:#999;font-style:italic">// Yup (https://github.com/jquense/yup)とかAjv (https://github.com/ajv-validator/ajv)もよさそう。
+</span><span style="color:#999;font-style:italic"></span><span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">const</span> articleJoiSchema = joi.object({
+  id: joi.number().integer(),
+  title: joi.string().required(),
+  content: joi.string().required(),
+  author: userJoiSchema.required(),
 });
 
-<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">const</span> API_USERS = <span style="color:#ed9d13">&#39;/api/v1/users&#39;</span>;
+<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">const</span> validateArticle = (obj: any) =&gt; {
+  joi.assert(obj, articleJoiSchema.required());
+  <span style="color:#6ab825;font-weight:bold">return</span> obj as Article;
+};
 
-<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">const</span> getUsers = () =&gt;
-  client.get&lt;User[]&gt;(API_USERS).then((res) =&gt; validateKiyoshiList(res.data));
+<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">const</span> validateArticleList = (obj: any) =&gt; {
+  joi.assert(obj, joi.array().items(articleJoiSchema).required());
+  <span style="color:#6ab825;font-weight:bold">return</span> obj as Article[];
+};
 </code></pre></div>
-<p>ここではAjaxライブラリに<a href="https://github.com/axios/axios">axios</a>を使っているけど、Promise返すならなんでもいい。</p>
+<p><code>models.ts</code>はこんな感じになる。</p>
 
-<p>axios使う場合は、Ajax通信を実行する関数(この例だと<code>get()</code>)の型パラメータでPromiseが解決する値の型を指定できる。
-Ajax通信のレスポンスが実際にその型であることを保証するために、ここでバリデーションをしておくべし。
-上の例のようにモデルオブジェクトを取得するような場合、モデルオブジェクトのバリデーションはmodelsモジュール(<code>models.ts</code>)の責務なので、そこからバリデーション関数をimportして使う形になる。</p>
-
-<p><code>models.ts</code>についてはまた別の記事で書く。</p>
-
-<h2 id="watcher-saga">Watcher Saga</h2>
-
-<p>Watcher Sagaは<code>watcherSagas.ts</code>に書く。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#6ab825;font-weight:bold">import</span> { takeLeading } from <span style="color:#ed9d13">&#39;redux-saga/effects&#39;</span>;
-<span style="color:#6ab825;font-weight:bold">import</span> {
-  usersBeingFetched,
-} from <span style="color:#ed9d13">&#39;./actions&#39;</span>;
-<span style="color:#6ab825;font-weight:bold">import</span> { fetchUsers } from <span style="color:#ed9d13">&#39;./sagas&#39;</span>;
-
-<span style="color:#6ab825;font-weight:bold">export</span> <span style="color:#6ab825;font-weight:bold">function</span>* watchUsersBeingFetched() {
-  <span style="color:#6ab825;font-weight:bold">yield</span> takeLeading(
-    ({ type }: Pick&lt;ReturnType&lt;<span style="color:#6ab825;font-weight:bold">typeof</span> usersBeingFetched&gt;, <span style="color:#ed9d13">&#39;type&#39;</span>&gt;) =&gt;
-      type === <span style="color:#ed9d13">&#39;user/entitiesBeingFetched&#39;</span>,
-    fetchUsers,
-  );
+<p><code>normalizeArticles()</code>は以下のようなオブジェクトを返す。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript">{
+  result: [<span style="color:#3677a9">1</span>, <span style="color:#3677a9">2</span>, <span style="color:#3677a9">3</span>],
+  entities: {
+    articles: {
+      <span style="color:#3677a9">1</span>: {
+        id: <span style="color:#3677a9">1</span>,
+        title: <span style="color:#ed9d13">&#34;Reactを触ってみた&#34;</span>,
+        contents: <span style="color:#ed9d13">&#34;Reactすごい&#34;</span>,
+        author: <span style="color:#3677a9">1</span>,
+      },
+      <span style="color:#3677a9">2</span>: {
+        id: <span style="color:#3677a9">2</span>,
+        title: <span style="color:#ed9d13">&#34;Reduxとre-ducks&#34;</span>,
+        contents: <span style="color:#ed9d13">&#34;Reduxむずい&#34;</span>,
+        author: <span style="color:#3677a9">1</span>,
+      },
+      <span style="color:#3677a9">3</span>: {
+        id: <span style="color:#3677a9">3</span>,
+        title: <span style="color:#ed9d13">&#34;Vueに入門した&#34;</span>,
+        contents: <span style="color:#ed9d13">&#34;Vueやばい&#34;</span>,
+        author: <span style="color:#3677a9">2</span>,
+      },
+    },
+    users: {
+      <span style="color:#3677a9">1</span>: {
+        id: <span style="color:#3677a9">1</span>,
+        name: <span style="color:#ed9d13">&#34;Linus Torvalds&#34;</span>,
+        dob: <span style="color:#ed9d13">&#34;1969/12/28&#34;</span>,
+      },
+      <span style="color:#3677a9">2</span>: {
+        id: <span style="color:#3677a9">2</span>,
+        name: <span style="color:#ed9d13">&#34;Jeff Dean&#34;</span>,
+        dob: <span style="color:#ed9d13">&#34;1968/7/23&#34;</span>,
+      },
+    },
+  },
 }
 </code></pre></div>
-<p>Actionをwatchするのに、ここでは<a href="https://redux-saga.js.org/docs/api/#takeleadingpattern-saga-args">takeLeading</a>使ってるけど、他にも使えるAPIはいくつもあるのでそこは要件に合わせて。
-いずれもwatchするActionの<code>type</code>を第一引数に指定するようなAPIで、単なる文字列で指定することもできるけど、文字列リテラル型による補完と型チェックを利かせたくて上記例のようにしている。
-つまり、第一引数に関数を渡すと、その関数にはdispatchされたActionが渡されるので、そこから<code>type</code>を抽出しつつ型を付けて、<code>type === 'user/entitiesBeingFetched'</code>のところで補完と型チェックを利かせている。</p>
-
-<p><code>watcherSagas.ts</code>にはこのようなwatcher関数を処理したいActionの数だけ書いてexportしておく。
-逆に、Watcher Sagaじゃないものはこのモジュールからはexportしない。
-これは次節の<code>index.ts</code>で再exportしやすくするため。</p>
-
-<h1 id="watcher-sagaをduckからexport">Watcher Sagaをduckからexport</h1>
-
-<p>Watcher Sagaは、<code>watcherSagas.ts</code>があるディレクトリに置いた<code>index.ts</code>でまとめて再exportしておくと捗る。</p>
-
-<p><code>src/state/ducks/user/index.ts</code>:</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"><span style="color:#589819">+import * as watcherSagas from &#39;./watcherSagas&#39;;
-</span><span style="color:#589819">+
-</span><span style="color:#589819">+export const userWatcherSagas = Object.values(watcherSagas);
-</span><span style="color:#589819">+
-</span><span style="color:#589819"></span> export { UserState, userReducer } from &#39;./reducers&#39;;
-</code></pre></div>
-<p>一番下の行は<a href="https://www.kaitoy.xyz/2020/07/11/re-ducks-reducers-with-immer/#state%E3%81%AE%E5%9E%8B%E3%81%A8reducer%E3%82%92duck%E3%81%8B%E3%82%89export">前回の記事</a>で書いたRedcuerとStateの再exportなのでここでは気にしなくていい。</p>
-
-<p>duckのディレクトリ内の<code>index.ts</code>は、上記の3文を書いてしまえば、その後修正の必要性は出てこない。</p>
-
-<h1 id="sagaの統合">Sagaの統合</h1>
-
-<p>各duckからexportしたReducerは、ducksディレクトリ直下の<code>index.ts</code>でまとめる。</p>
-
-<p><code>src/state/ducks/index.ts</code>:</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"><span style="color:#589819">+import { all, spawn, call } from &#39;redux-saga/effects&#39;;
-</span><span style="color:#589819"></span><span style="color:#d22323">-import { UserState, userReducer as user } from &#39;./user&#39;;
-</span><span style="color:#d22323">-import { ArticleState, articleReducer as article } from &#39;./article&#39;;
-</span><span style="color:#d22323"></span><span style="color:#589819">+import { UserState, userReducer as user, userWatcherSagas } from &#39;./user&#39;;
-</span><span style="color:#589819">+import { ArticleState, articleReducer as article, articleWatcherSagas } from &#39;./article&#39;;
-</span><span style="color:#589819"></span>
- export type StoreState = Readonly&lt;{
-   user: UserState;
-   article: ArticleState;
- }&gt;;
-
- export const reducers = {
-   user,
-   article,
- };
-
-<span style="color:#589819">+export function* rootSaga() {
-</span><span style="color:#589819">+  const watchers = [...userWatcherSagas, ...articleWatcherSagas];
-</span><span style="color:#589819">+
-</span><span style="color:#589819">+  yield all(
-</span><span style="color:#589819">+    watchers.map((saga) =&gt;
-</span><span style="color:#589819">+      spawn(function* () {
-</span><span style="color:#589819">+        while (true) {
-</span><span style="color:#589819">+          try {
-</span><span style="color:#589819">+            yield call(saga);
-</span><span style="color:#589819">+            break;
-</span><span style="color:#589819">+          } catch (ex) {
-</span><span style="color:#589819">+            console.exception(ex);
-</span><span style="color:#589819">+          }
-</span><span style="color:#589819">+        }
-</span><span style="color:#589819">+      }),
-</span><span style="color:#589819">+    ),
-</span><span style="color:#589819">+  );
-</span><span style="color:#589819">+}
-</span></code></pre></div>
-<p><code>StoreState</code>と<code>reducers</code>は<a href="https://www.kaitoy.xyz/2020/07/11/re-ducks-reducers-with-immer/#state%E3%81%AE%E5%9E%8B%E3%81%A8reducer%E3%82%92duck%E3%81%8B%E3%82%89export">前回の記事</a>で書いたRedcuerとStateの統合なのでここでは気にしなくていい。</p>
-
-<p>各duckのWatcher Sagaの束をimportして、<code>rootSaga()</code>にそれらをまとめて<code>call</code>する処理を書いている。
-これはredux-sagaのマニュアルで紹介されている<a href="https://redux-saga.js.org/docs/advanced/RootSaga.html#keeping-everything-alive">Root Saga Patternのひとつ</a>で、watcher Sagaが何かしらのエラーで死んでしまったときにも再起動して動き続けられる仕組み。</p>
-
-<p>この<code>rootSaga()</code>をexportしておいて、<code>store.ts</code>で生成するSaga Middlewareで実行する。</p>
-
-<p><code>src/state/store.ts</code>:</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> import { createStore, applyMiddleware, compose, combineReducers } from &#39;redux&#39;;
-<span style="color:#589819">+import createSagaMiddleware from &#39;redux-saga&#39;;
-</span><span style="color:#589819"></span><span style="color:#d22323">-import { reducers } from &#39;./ducks&#39;;
-</span><span style="color:#d22323"></span><span style="color:#589819">+import { reducers, rootSaga } from &#39;./ducks&#39;;
-</span><span style="color:#589819"></span>
- const rootReducer = combineReducers(reducers);
-<span style="color:#589819">+const sagaMiddleware = createSagaMiddleware();
-</span><span style="color:#589819"></span>
- export default function configureStore() {
-   const middlewares = [];
-<span style="color:#589819">+  middlewares.push(sagaMiddleware);
-</span><span style="color:#589819"></span>   const composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
-   const store = createStore(rootReducer, composeEnhancers(applyMiddleware(...middlewares)));
-<span style="color:#589819">+  sagaMiddleware.run(rootSaga);
-</span><span style="color:#589819"></span>   return store;
- }
-</code></pre></div>
-<p>これでSagaも動くようになった。</p>
-
-<p><code>store.ts</code>はここまで書けば塩漬けできる。</p></div>
+<p><code>entities</code>プロパティには前節の最後に書いたのと同じオブジェクトが入っている。
+<code>entities</code>の下でモデルを分けているプ<code>articles</code>と<code>users</code>というロパティ名はそれぞれ、<code>models.ts</code>に書いた<code>articleNormalizrSchemaKey</code>と<code>userNormalizrSchemaKey</code>から来ている。
+<code>result</code>プロパティに入っている配列は、正規化前の配列の順序性を保持するための主キー(i.e. <code>Article.id</code>)の配列。</p></div>
 
         <section class="share-buttons">
           <div class="share-button">
-            <div class="fb-share-button" data-href="https://www.kaitoy.xyz/2020/07/13/re-ducks-sagas/" data-layout="box_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fwww.kaitoy.xyz%2f2020%2f07%2f13%2fre-ducks-sagas%2f&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Share</a></div>
+            <div class="fb-share-button" data-href="https://www.kaitoy.xyz/2020/07/24/re-ducks-normalizr/" data-layout="box_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fwww.kaitoy.xyz%2f2020%2f07%2f24%2fre-ducks-normalizr%2f&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Share</a></div>
           </div>
           <div class="share-button">
             <a class="twitter-share-button"
-              href="https://twitter.com/intent/tweet?text=Redux%e3%81%ae%e3%83%a2%e3%82%b8%e3%83%a5%e3%83%bc%e3%83%ab%e3%82%a2%e3%83%bc%e3%82%ad%e3%83%86%e3%82%af%e3%83%81%e3%83%a3%e3%83%91%e3%82%bf%e3%83%bc%e3%83%b3re-ducks%e3%81%ae%e5%ae%9f%e8%b7%b5%20%e2%80%95%20Saga&amp;url=https%3a%2f%2fwww.kaitoy.xyz%2f2020%2f07%2f13%2fre-ducks-sagas%2f"
+              href="https://twitter.com/intent/tweet?text=Redux%e3%81%ae%e3%83%a2%e3%82%b8%e3%83%a5%e3%83%bc%e3%83%ab%e3%82%a2%e3%83%bc%e3%82%ad%e3%83%86%e3%82%af%e3%83%81%e3%83%a3%e3%83%91%e3%82%bf%e3%83%bc%e3%83%b3re-ducks%e3%81%ae%e5%ae%9f%e8%b7%b5%20%e2%80%95%20normalizr&amp;url=https%3a%2f%2fwww.kaitoy.xyz%2f2020%2f07%2f24%2fre-ducks-normalizr%2f"
               data-size="large">
             Tweet</a>
           </div>
@@ -540,20 +710,15 @@ Ajax通信のレスポンスが実際にその型であることを保証する�
         <div class="col-sm-6">
           <div class="prev">
             
-            <a href="https://www.kaitoy.xyz/2020/07/11/re-ducks-reducers-with-immer/">
+            <a href="https://www.kaitoy.xyz/2020/07/13/re-ducks-sagas/">
               <i class="fa fa-angle-left"></i>
-              Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Reducer with immer
+              Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Saga
             </a>
             
           </div>
         </div>
         <div class="col-sm-6">
           <div class="next text-right">
-            
-            <a href="https://www.kaitoy.xyz/2020/07/24/re-ducks-normalizr/">
-              Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― normalizr
-              <i class="fa fa-angle-right"></i>
-            </a>
             
           </div>
         </div>
@@ -577,8 +742,8 @@ Ajax通信のレスポンスが実際にその型であることを保証する�
     
     
 
-    <h4 class="post-title"><a href="/2020/07/24/re-ducks-normalizr/">Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― normalizr</a></h4>
-    <h5>Fri, Jul 24, 2020</h5>
+    <h4 class="post-title"><a href="/2020/07/13/re-ducks-sagas/">Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― Saga</a></h4>
+    <h5>Mon, Jul 13, 2020</h5>
     
     <a href="https://www.kaitoy.xyz/tags/react"><kbd class="item-tag">react</kbd></a>
     
@@ -588,7 +753,7 @@ Ajax通信のレスポンスが実際にその型であることを保証する�
     
     <a href="https://www.kaitoy.xyz/tags/typescript"><kbd class="item-tag">typescript</kbd></a>
     
-    <a href="https://www.kaitoy.xyz/tags/normalizr"><kbd class="item-tag">normalizr</kbd></a>
+    <a href="https://www.kaitoy.xyz/tags/redux-saga"><kbd class="item-tag">redux-saga</kbd></a>
     
 
 </div>
