@@ -128,7 +128,7 @@ axios使う場合は、Ajax通信を実行する関数(この例だと`get()`)�
 Ajax通信のレスポンスが実際にその型であることを保証するために、ここでバリデーションをしておくべし。
 上の例のようにモデルオブジェクトを取得するような場合、モデルオブジェクトのバリデーションはmodelsモジュール(`models.ts`)の責務なので、そこからバリデーション関数をimportして使う形になる。
 
-`models.ts`についてはまた別の記事で書く。
+`models.ts`についてはまた[別の記事](https://www.kaitoy.xyz/2020/07/24/re-ducks-normalizr/)で書く。
 
 ## Watcher Saga
 Watcher Sagaは`watcherSagas.ts`に書く。

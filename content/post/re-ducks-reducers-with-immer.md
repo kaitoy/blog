@@ -165,7 +165,7 @@ export type UserState = Readonly<{
 こんな感じ。
 
 Stateにはドメインモデルのオブジェクトを入れることが多いけど、モデル自体の型(など)は`models.ts`に書いておいてimportする。
-(`models.ts`については別の記事で。)
+(`models.ts`については[[別の記事](https://www.kaitoy.xyz/2020/07/24/re-ducks-normalizr/)で。)
 
 なお、Stateオブジェクトは[Redux DevTools](https://github.com/reduxjs/redux-devtools)で扱えるようにシリアライズ可能に保つというのが[Redux公式から強く推奨されている](https://redux.js.org/style-guide/style-guide#do-not-put-non-serializable-values-in-state-or-actions)のに注意。
 これはつまり、[Map](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Map)、[Set](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Set)、[Promise](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Promise)、クラスのインスタンス、関数オブジェクトをいれてはだめということ。
