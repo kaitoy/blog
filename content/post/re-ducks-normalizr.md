@@ -369,3 +369,11 @@ export const validateArticleList = (obj: any) => {
 `entities`プロパティには前節の最後に書いたのと同じオブジェクトが入っている。
 `entities`の下でモデルを分けているプ`articles`と`users`というロパティ名はそれぞれ、`models.ts`に書いた`articleNormalizrSchemaKey`と`userNormalizrSchemaKey`から来ている。
 `result`プロパティに入っている配列は、正規化前の配列の順序性を保持するための主キー(i.e. `Article.id`)の配列。
+
+<br>
+
+`normalizeArticles()`のような正規化関数は[以前の記事](https://www.kaitoy.xyz/2020/07/13/re-ducks-sagas/)で解説したSagaで使う。
+`denormalizeArticles()`のような非正規化関数は次回の記事で書くSelectorで使う。
+
+因みに、REST APIが単一のモデルしか返さないときにも正規化・非正規化関数を書いてSagaやSelectorで使っておくのがいい。
+モデルオブジェクトのリストを主キーとオブジェクトのMap形式にするだけでも価値があるので。
