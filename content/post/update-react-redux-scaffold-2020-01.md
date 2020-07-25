@@ -192,7 +192,7 @@ npm install -S @material-ui/icons @material-ui/pickers
 # React Redux
 [React Redux](https://react-redux.js.org/)はv5.0.7からv7.1.3にメジャーバージョンアップして、React Hooksに対応。
 Presentational Components と Container Componentsという考え方は変わらないし、従来の`connect()`も一応変わらず使えるけど、新しいAPIである`useSelector()`や`useDispatch()`を使うと、よりきれいに書けたりロジックの再利用がしやすくなったりする。
-詳しくは別記事で書く。
+詳しくは[別記事](https://www.kaitoy.xyz/2020/07/25/re-ducks-react-redux-with-reselect/)で書く。
 
 また、この機に[reselect](https://github.com/reduxjs/reselect)と[immer](https://immerjs.github.io/immer/docs/introduction)と[normalizr](https://github.com/paularmstrong/normalizr)を追加。
 

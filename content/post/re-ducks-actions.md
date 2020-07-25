@@ -208,3 +208,5 @@ export const usersFetchSucceeded = (
 
 * `reducers.ts`と`store.ts`: https://www.kaitoy.xyz/2020/07/11/re-ducks-reducers-with-immer/
 * `sagas.ts`と`apis.ts`と`watcherSagas.ts`: https://www.kaitoy.xyz/2020/07/13/re-ducks-sagas/
+* `models.ts`: https://www.kaitoy.xyz/2020/07/24/re-ducks-normalizr/
+* `selectors.ts`: https://www.kaitoy.xyz/2020/07/25/re-ducks-react-redux-with-reselect/
