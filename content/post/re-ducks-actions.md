@@ -41,6 +41,8 @@ highlightLanguages = []
         - natures/
             - user/
                 - UserListView.tsx
+            - article/
+                - ArticleListView.tsx
     - state/
         - store.ts
         - ducks/

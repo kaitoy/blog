@@ -134,6 +134,7 @@ srcディレクトリの下に一段stateディレクトリを設けているの
             - user/
                 - UserFormView.tsx
             - article/
+                - ArticleListView.tsx
         - hooks/
     - state/
         - store.ts
