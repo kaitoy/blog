@@ -25,11 +25,15 @@
   <meta property="og:description" content="Kubernetesを仕事で使い始めて1年たったので、これまで使ったり見聞きして気になったKubernetesまわりのエコシステムについていくつかの記事にまとめていきたい。
 第一弾はコンテナランタイム編。
 
-DockerとかcontainerdとかKata ContainersとかgVisorとかの話。">
+DockerとかcontainerdとかKata ContainersとかgVisorとかの話。
+
+(2020/8/27更新。)">
   <meta name="description" content="Kubernetesを仕事で使い始めて1年たったので、これまで使ったり見聞きして気になったKubernetesまわりのエコシステムについていくつかの記事にまとめていきたい。
 第一弾はコンテナランタイム編。
 
-DockerとかcontainerdとかKata ContainersとかgVisorとかの話。">
+DockerとかcontainerdとかKata ContainersとかgVisorとかの話。
+
+(2020/8/27更新。)">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
 
 
@@ -240,6 +244,7 @@ DockerとかcontainerdとかKata ContainersとかgVisorとかの話。">
 <li><a href="#gvisor">gVisor</a></li>
 <li><a href="#nabla-containers">Nabla Containers</a></li>
 <li><a href="#containerd-shim">containerd-shim</a></li>
+<li><a href="#firecracker-containerd">firecracker-containerd</a></li>
 <li><a href="#crun">crun</a></li>
 </ul></li>
 <li><a href="#まとめ">まとめ</a></li>
@@ -253,6 +258,8 @@ DockerとかcontainerdとかKata ContainersとかgVisorとかの話。">
 第一弾はコンテナランタイム編。</p>
 
 <p>DockerとかcontainerdとかKata ContainersとかgVisorとかの話。</p>
+
+<p>(2020/8/27更新。)</p>
 
 <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 <ins class="adsbygoogle"
@@ -583,15 +590,19 @@ Sentryはファイルシステムにアクセスできないので、ファイ�
 <p><a href="https://nabla-containers.github.io/">Nabla Containers</a>(ナブラコンテイナーズ)はIBM Researchが開発したもう一つのコンテナランタイム。
 2018年7月に<a href="https://japan.zdnet.com/article/35122760/">発表</a>された。</p>
 
-<p>コンテナをホストカーネルから分離するために間に仮想化レイヤを挟むという点はgVisorやKata Containersと似ているけど、プロセスとしての<a href="https://en.wikipedia.org/wiki/Unikernel">Unikernel</a>というアイデアに基づいているのが最大の特徴。</p>
+<p>コンテナをホストカーネルから分離するために間に仮想化レイヤを挟むという点はgVisorやKata Containersと似ているけど、プロセスとしての<a href="https://en.wikipedia.org/wiki/Unikernel">Unikernel</a>というアイデアに基づいているのが特徴。</p>
 
-<p>Unikernelは、<a href="https://en.wikipedia.org/wiki/Operating_system#Library">ライブラリOS</a>というOSの個々の機能をライブラリ化したものと、アプリケーションのコードを一つにビルドして生成する、軽量な単一目的なVMイメージと捉えられる。
-Unikernelは特殊なハイパバイザの上で直接起動し、<a href="https://en.wikipedia.org/wiki/Single_address_space_operating_system">単一アドレス空間</a>で動くので、仮想メモリのオーバヘッドやユーザ空間とカーネル空間との間のメモリコピーなどが無くて高速。</p>
+<p>Unikernelは、<a href="https://en.wikipedia.org/wiki/Operating_system#Library">ライブラリOS</a>というカーネルの機能をライブラリ化したものを使ってアプリケーションをビルドして生成する、軽量な単一目的なVMイメージっぽいもの。
+UnikernelはゲストOS無しで直接起動できるのでリソース効率がよく、また<a href="https://en.wikipedia.org/wiki/Single_address_space_operating_system">単一アドレス空間</a>で動くので、仮想メモリのオーバヘッドやユーザ空間とカーネル空間との間のメモリコピーなどが無くて高速。</p>
 
-<p>Nabla ContainersはこれもIBM Research製の<a href="https://github.com/Solo5/solo5">Solo5</a>というハイパバイザ上で、<a href="https://github.com/rumpkernel/rumprun">Rumprun</a>(等)ベースのUnikernelを実行する。
-Unikernelからのカーネル機能実行(hypercall)はSolo5によってホストカーネルへのシステムコールに変換されるんだけど、Solo5は7つのシステムコールしか使わないのでかなりセキュア。</p>
+<p>Nabla Containersは<a href="https://github.com/rumpkernel/rumprun">Rumprun</a>などをベースとしたUnikernelを実行するんだけど、その実行環境として<a href="https://github.com/Solo5/solo5">Solo5</a>を使う。</p>
 
-<p>Nabla Containers用のOCIランタイムとして、<a href="https://github.com/nabla-containers/runnc">runnc</a>が提供されている。
+<p>Solo5はIBM Research製のサンドボックス実行環境で、アプリとそれを実行するホストシステム間の抽象レイヤを提供する。
+Solo5のAPIを使ってUnikernel(とかのアプリ)を作ると、Solo5がサポートするサンドボックス技術(e.g. KVM、seccomp)上で実行できるというもの。
+Solo5がホストカーネルに発行するシステムコールは7種類しかないのでかなりセキュア。
+Nabla Containersは現時点ではSolo5のフォークを使っていて、サンドボックス技術にはseccompを使う。</p>
+
+<p>Nabla ContainersはOCIランタイムとして<a href="https://github.com/nabla-containers/runnc">runnc</a>を提供していて、これがコンテナとしてSolo5でUnikernelを起動してくれる。
 ランタイムはOCI準拠なのでDockerからも使えるけど、コンテナイメージがOCI準拠じゃないので、Dockerイメージは動かせない。
 特殊なベースイメージからビルドしなおす必要がある。</p>
 
@@ -612,6 +623,21 @@ shim APIの実装は<a href="https://github.com/containerd/containerd/tree/maste
 <p>OCIランタイムは、containerd-shimから実行されてコンテナを起動するとexitする。
 containerd-shimは<a href="http://man7.org/linux/man-pages/man2/prctl.2.html">subreaper</a>として動いていて、<a href="https://github.com/crosbymichael/dockercon-2016/blob/master/Creating%20Containerd.pdf">そのコンテナの親プロセス役を引き継ぎ、コンテナのexitまで面倒をみる</a>。
 この機能により、containerd-shimさえ動いていれば、dockerdやcontainerdが死んでもコンテナが動き続けられるので、コンテナ無停止のDockerアップデートが可能になるなど利点がある。</p>
+
+<h2 id="firecracker-containerd">firecracker-containerd</h2>
+
+<p>shim API v2の公開を受けてか、2018年11月27日、AWSが<a href="https://github.com/firecracker-microvm/firecracker-containerd">firecracker-containerd</a>というプロジェクトを<a href="https://aws.amazon.com/jp/blogs/opensource/firecracker-open-source-secure-fast-microvm-serverless/">発表した</a>。</p>
+
+<p>これは、マイクロVMである<a href="https://github.com/firecracker-microvm/firecracker">Firecracker</a>の中でコンテナを起動して管理するコンテナランタイム。
+containerdに<a href="https://github.com/firecracker-microvm/firecracker-containerd/tree/1cad9d98086719b8247b9cf2413988debfae9a95/firecracker-control">FirecrackerのVMを管理するためのプラグイン (FC control plugin)</a>を組み込んだものと、<a href="https://github.com/firecracker-microvm/firecracker-containerd/tree/1cad9d98086719b8247b9cf2413988debfae9a95/runtime">shim API v2の実装であるFC runtime (aka FC-containerd-shim)</a>と、VM内でコンテナを(runCで)管理する<a href="https://github.com/firecracker-microvm/firecracker-containerd/tree/1cad9d98086719b8247b9cf2413988debfae9a95/agent">FC agent (aka guest shim)</a>から成る。</p>
+
+<p>アーキテクチャはKata Containersと同じ感じだけど、containerdにcriプラグインが入ってないので、Kubernetesとは話せない。
+現状は<a href="https://aws.amazon.com/jp/fargate/">AWS Fargate</a>が主なユースケースで、<a href="https://aws.amazon.com/jp/lambda/">Lambda</a>でも使われてるかもしれない。</p>
+
+<p><img src="/images/k8s-ecosystem-container-runtimes/firecracker-containerd.png" alt="firecracker-containerd.png" /></p>
+
+<p>FC control pluginを入れる都合上、オリジナルのcontainerdのバイナリと別になってるのと、criプラグインを組み込めなくてKubernetesとかECSとかと連携できないところが大きな課題で、今後の発展に期待。
+というかFirecracker使うならKata Containersでいいのではという気はする。</p>
 
 <h2 id="crun">crun</h2>
 

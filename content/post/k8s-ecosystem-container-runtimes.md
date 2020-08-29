@@ -13,6 +13,8 @@ Kubernetesを仕事で使い始めて1年たったので、これまで使った
 
 DockerとかcontainerdとかKata ContainersとかgVisorとかの話。
 
+(2020/8/27更新。)
+
 <!--more-->
 
 {{< google-adsense >}}
@@ -309,15 +311,19 @@ Sentryはファイルシステムにアクセスできないので、ファイ�
 [Nabla Containers](https://nabla-containers.github.io/)(ナブラコンテイナーズ)はIBM Researchが開発したもう一つのコンテナランタイム。
 2018年7月に[発表](https://japan.zdnet.com/article/35122760/)された。
 
-コンテナをホストカーネルから分離するために間に仮想化レイヤを挟むという点はgVisorやKata Containersと似ているけど、プロセスとしての[Unikernel](https://en.wikipedia.org/wiki/Unikernel)というアイデアに基づいているのが最大の特徴。
+コンテナをホストカーネルから分離するために間に仮想化レイヤを挟むという点はgVisorやKata Containersと似ているけど、プロセスとしての[Unikernel](https://en.wikipedia.org/wiki/Unikernel)というアイデアに基づいているのが特徴。
 
-Unikernelは、[ライブラリOS](https://en.wikipedia.org/wiki/Operating_system#Library)というOSの個々の機能をライブラリ化したものと、アプリケーションのコードを一つにビルドして生成する、軽量な単一目的なVMイメージと捉えられる。
-Unikernelは特殊なハイパバイザの上で直接起動し、[単一アドレス空間](https://en.wikipedia.org/wiki/Single_address_space_operating_system)で動くので、仮想メモリのオーバヘッドやユーザ空間とカーネル空間との間のメモリコピーなどが無くて高速。
+Unikernelは、[ライブラリOS](https://en.wikipedia.org/wiki/Operating_system#Library)というカーネルの機能をライブラリ化したものを使ってアプリケーションをビルドして生成する、軽量な単一目的なVMイメージっぽいもの。
+UnikernelはゲストOS無しで直接起動できるのでリソース効率がよく、また[単一アドレス空間](https://en.wikipedia.org/wiki/Single_address_space_operating_system)で動くので、仮想メモリのオーバヘッドやユーザ空間とカーネル空間との間のメモリコピーなどが無くて高速。
 
-Nabla ContainersはこれもIBM Research製の[Solo5](https://github.com/Solo5/solo5)というハイパバイザ上で、[Rumprun](https://github.com/rumpkernel/rumprun)(等)ベースのUnikernelを実行する。
-Unikernelからのカーネル機能実行(hypercall)はSolo5によってホストカーネルへのシステムコールに変換されるんだけど、Solo5は7つのシステムコールしか使わないのでかなりセキュア。
+Nabla Containersは[Rumprun](https://github.com/rumpkernel/rumprun)などをベースとしたUnikernelを実行するんだけど、その実行環境として[Solo5](https://github.com/Solo5/solo5)を使う。
 
-Nabla Containers用のOCIランタイムとして、[runnc](https://github.com/nabla-containers/runnc)が提供されている。
+Solo5はIBM Research製のサンドボックス実行環境で、アプリとそれを実行するホストシステム間の抽象レイヤを提供する。
+Solo5のAPIを使ってUnikernel(とかのアプリ)を作ると、Solo5がサポートするサンドボックス技術(e.g. KVM、seccomp)上で実行できるというもの。
+Solo5がホストカーネルに発行するシステムコールは7種類しかないのでかなりセキュア。
+Nabla Containersは現時点ではSolo5のフォークを使っていて、サンドボックス技術にはseccompを使う。
+
+Nabla ContainersはOCIランタイムとして[runnc](https://github.com/nabla-containers/runnc)を提供していて、これがコンテナとしてSolo5でUnikernelを起動してくれる。
 ランタイムはOCI準拠なのでDockerからも使えるけど、コンテナイメージがOCI準拠じゃないので、Dockerイメージは動かせない。
 特殊なベースイメージからビルドしなおす必要がある。
 
@@ -337,6 +343,20 @@ shim APIの実装は[containerd-shim](https://github.com/containerd/containerd/t
 OCIランタイムは、containerd-shimから実行されてコンテナを起動するとexitする。
 containerd-shimは[subreaper](http://man7.org/linux/man-pages/man2/prctl.2.html)として動いていて、[そのコンテナの親プロセス役を引き継ぎ、コンテナのexitまで面倒をみる](https://github.com/crosbymichael/dockercon-2016/blob/master/Creating%20Containerd.pdf)。
 この機能により、containerd-shimさえ動いていれば、dockerdやcontainerdが死んでもコンテナが動き続けられるので、コンテナ無停止のDockerアップデートが可能になるなど利点がある。
+
+## firecracker-containerd
+shim API v2の公開を受けてか、2018年11月27日、AWSが[firecracker-containerd](https://github.com/firecracker-microvm/firecracker-containerd)というプロジェクトを[発表した](https://aws.amazon.com/jp/blogs/opensource/firecracker-open-source-secure-fast-microvm-serverless/)。
+
+これは、マイクロVMである[Firecracker](https://github.com/firecracker-microvm/firecracker)の中でコンテナを起動して管理するコンテナランタイム。
+containerdに[FirecrackerのVMを管理するためのプラグイン (FC control plugin)](https://github.com/firecracker-microvm/firecracker-containerd/tree/1cad9d98086719b8247b9cf2413988debfae9a95/firecracker-control)を組み込んだものと、[shim API v2の実装であるFC runtime (aka FC-containerd-shim)](https://github.com/firecracker-microvm/firecracker-containerd/tree/1cad9d98086719b8247b9cf2413988debfae9a95/runtime)と、VM内でコンテナを(runCで)管理する[FC agent (aka guest shim)](https://github.com/firecracker-microvm/firecracker-containerd/tree/1cad9d98086719b8247b9cf2413988debfae9a95/agent)から成る。
+
+アーキテクチャはKata Containersと同じ感じだけど、containerdにcriプラグインが入ってないので、Kubernetesとは話せない。
+現状は[AWS Fargate](https://aws.amazon.com/jp/fargate/)が主なユースケースで、[Lambda](https://aws.amazon.com/jp/lambda/)でも使われてるかもしれない。
+
+![firecracker-containerd.png](/images/k8s-ecosystem-container-runtimes/firecracker-containerd.png)
+
+FC control pluginを入れる都合上、オリジナルのcontainerdのバイナリと別になってるのと、criプラグインを組み込めなくてKubernetesとかECSとかと連携できないところが大きな課題で、今後の発展に期待。
+というかFirecracker使うならKata Containersでいいのではという気はする。
 
 ## crun
 [crun](https://github.com/giuseppe/crun)は2019年1月に公開されたOCIランタイム。
