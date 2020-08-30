@@ -61,7 +61,7 @@ Dockerと一言で言っても、実際にコンテナを実行する低レベ�
 
 初期のKubernetes(1.2まで?)はコンテナランタイムはDocker一択で、kubeletからdockerdの内部APIを呼ぶような密連携をしていたそうな。
 
-![cr1.png](/images/k8s-ecosystem-container-runtimes/cr1.png)
+<img src="/images/k8s-ecosystem-container-runtimes/cr1.png" alt="cr1.png" style="padding: 0 15%;">
 
 ## rkt
 [rkt](https://github.com/rkt/rkt)はCoreOS社(現Red Hat)が[2014年12月に発表した](https://coreos.com/blog/rocket.html)コンテナランタイム。
@@ -75,7 +75,7 @@ rktはコンテナを様々な隔離レベルで起動できるのが特徴で�
 もう一つの特徴として、Podをネイティブサポートしていることがある。
 つまりrktでは、Kubernetes無しでもコンテナはPod内で実行される。
 
-![cr13.png](/images/k8s-ecosystem-container-runtimes/cr13.png)
+<img src="/images/k8s-ecosystem-container-runtimes/cr13.png" alt="cr13.png" style="padding: 0 15%;">
 
 図のstage 1の部分がプラガブルで、[そこを入れ替えることでコンテナの隔離レベルが変わる](https://github.com/rkt/rkt/blob/master/Documentation/devel/architecture.md)。
 [fly](https://github.com/rkt/rkt/blob/master/Documentation/running-fly-stage1.md)というのは一番緩いstage 1実装。
@@ -91,7 +91,7 @@ Windows ContainersはWindows上でWindowsとLinuxのコンテナを動かせる�
 その後[2017年1月](https://techcommunity.microsoft.com/t5/Containers/Introducing-the-Host-Compute-Service-HCS/ba-p/382332)、Windows Containersを実現するための機能を提供するサービスであるHost Compute Service (HCS)が発表された。
 この頃はWindows版DockerはこのHCSにべったりな実装だった。
 
-![cr7.png](/images/k8s-ecosystem-container-runtimes/cr7.png)
+<img src="/images/k8s-ecosystem-container-runtimes/cr7.png" alt="cr7.png" style="padding: 0 15%;">
 
 ## Open Container Initiative (OCI)
 Dockerが流行り過ぎて、コンテナ技術を独占するなオープンにしろという圧力が高まったため、2015年6月、Docker社がしぶしぶ[Open Container Initiative (OCI)](https://www.opencontainers.org/)という団体を立ち上げ、コンテナ技術の標準化に乗り出した。
@@ -107,7 +107,7 @@ CoreOS社もOCIに立ち上げから加わり、appcは2016年後半くらいに
 OCIの発足と同時に、Docker社がOCIランタイムのリファレンス実装として[runC](https://github.com/opencontainers/runc)(ランシー)を[発表](https://blog.docker.com/2015/06/runc/)。
 もともとdockerdに組み込まれていたコンテナランタイムを切り出したもので、Dockerの下請けとしても動くが、[単体で実行してコンテナを起動することもできる](https://www.kaitoy.xyz/2015/07/19/pcap4j-container-with-runc/)。
 
-![cr2.png](/images/k8s-ecosystem-container-runtimes/cr2.png)
+<img src="/images/k8s-ecosystem-container-runtimes/cr2.png" alt="cr2.png" style="padding: 0 15%;">
 
 この図ではrunCがコンテナの親プロセスみたいに見えるけど、実際はrunCはコンテナを起動するとexitして、コンテナの親プロセスはdockerdになる。
 
@@ -141,7 +141,7 @@ containerdはrunCを使ってコンテナを起動して監視する他、コン
 
 [2016年4月](https://blog.docker.com/2016/04/docker-engine-1-11-runc/)にリリースされたDocker 1.11が、containerdとrunCをベースとした初のバージョンとなった。
 
-![cr3.png](/images/k8s-ecosystem-container-runtimes/cr3.png)
+<img src="/images/k8s-ecosystem-container-runtimes/cr3.png" alt="cr3.png" style="padding: 0 15%;">
 
 (containerd-shimについては後述。)
 
@@ -163,7 +163,7 @@ ImageServiceはコンテナイメージのpull、解析、削除を担当し、R
 
 CRIの最初の実装は、kubelet組み込みの[dockershim](https://github.com/kubernetes/kubernetes/tree/v1.14.3/pkg/kubelet/dockershim)というコンポーネントで、kubeletがCRI対応していないdockerdと話すためのもの。
 
-![cr4.png](/images/k8s-ecosystem-container-runtimes/cr4.png)
+<img src="/images/k8s-ecosystem-container-runtimes/cr4.png" alt="cr4.png" style="padding: 0 15%;">
 
 ## CRI-O
 少し遡って[2016年9月22日](https://www.redhat.com/en/blog/running-production-applications-containers-introducing-ocid)、Red HatがOCIDというコンテナランタイムを発表した。
@@ -180,7 +180,7 @@ CRI-Oは[2017年10月に1.0.0リリースを迎えた](https://medium.com/cri-o/
 
 で、[2019年2月](https://www.redhat.com/ja/blog/red-hat-enterprise-linux-8-beta-new-set-container-tools)についに、RHEL 8からDockerパッケージが無くなることが発表された。
 
-![cr12.png](/images/k8s-ecosystem-container-runtimes/cr12.png)
+<img src="/images/k8s-ecosystem-container-runtimes/cr12.png" alt="cr12.png" style="padding: 0 15%;">
 
 [conmon](https://github.com/containers/conmon)というのはcontainerd-shim (後述)と同様の働きをするデーモン。
 
@@ -229,7 +229,7 @@ Fraktiとかとは異なり、コンテナを仮想マシンでラップする�
 virtlet用の[PodのKubernetesマニフェスト](https://docs.virtlet.cloud/reference/vm-pod-spec/)はCRDじゃなくて標準の形式だけど、`containers`の`image`に書かれたものは、コンテナイメージとしてDocker Hubとかからpullされるのではなく、[qcow2](https://www.linux-kvm.org/page/Qcow2)のイメージとしてvirtletのレジストリからダウンロードされる。
 [CRI Proxy](https://github.com/Mirantis/criproxy)を使うことで、一つのKubernetesクラスタ上で普通のコンテナワークロードとvirtletの仮想マシンワークロードを同居させられる。
 
-![cr11.png](/images/k8s-ecosystem-container-runtimes/cr11.png)
+<img src="/images/k8s-ecosystem-container-runtimes/cr11.png" alt="cr11.png" style="padding: 0 15%;">
 
 virtlet managerがCRIクライアント(e.g. kubelet)からのリクエストを受けて、vmwrapperがvirtlet managerからのリクエストを受けて[libvirt](https://ja.wikipedia.org/wiki/Libvirt)で仮想マシンの起動などのライフサイクル管理する。
 CRI Proxyの下で動くdockershimはkubelet組み込みのやつで、kubeletに特定のオプションを付けて起動するもの。
@@ -241,11 +241,11 @@ CRI Proxyの下で動くdockershimはkubelet組み込みのやつで、kubelet�
 [cri-containerd](https://github.com/containerd/cri)はkubeletから独立したCRI実装(cf. dockershim)で、[2017年9月](https://kubernetes.io/blog/2017/11/containerd-container-runtime-options-kubernetes/)にKubernetes 1.8とcontainerd 1.0.0とともにv1.0.0のα版がリリースされた。
 containerdと直接話せるので、Kubernetesにはdockerdが要らなくなった。
 
-![cr5.png](/images/k8s-ecosystem-container-runtimes/cr5.png)
+<img src="/images/k8s-ecosystem-container-runtimes/cr5.png" alt="cr5.png" style="padding: 0 15%;">
 
 cri-containerdは、2018年3月にv1.0.0のRC版として出た時にはcriプラグインという形に変わっていて、containerd 1.1.0に組み込まれた。
 
-![cr6.png](/images/k8s-ecosystem-container-runtimes/cr6.png)
+<img src="/images/k8s-ecosystem-container-runtimes/cr6.png" alt="cr6.png" style="padding: 0 15%;">
 
 ## Kata Containers
 [2017年12月](https://www.openstack.org/news/view/365/kata-containers-project-launches-to-build-secure-container-infrastructure)、インテルのClear ContainersとHyper社のrunVの技術を組み合わせたコンテナランタイムのプロジェクトとして、[Kata Containers](https://katacontainers.io/)がOpenStack Foundationのもとで立ち上げられた。
@@ -258,14 +258,14 @@ Clear Linux(等)の仮想マシンでコンテナを動かすのはClear Contain
 
 当初のKata Containersのコンポーネントには、OCIランタイムのkata-runtimeと、containerd-shimに対してコンテナのふりをするkata-shimと、仮想マシン上で動いてコンテナの面倒を見るkata-agentと、kata-shimとkata-agentとの間の通信を仲介するkata-proxyがあった。
 
-![cr9.png](/images/k8s-ecosystem-container-runtimes/cr9.png)
+<img src="/images/k8s-ecosystem-container-runtimes/cr9.png" alt="cr9.png" style="padding: 0 15%;">
 
 kata-runtimeはコンテナ(とkata-proxyと仮想マシンとkata-shim)を起動したらexitするはず。
 kata-runtimeとkata-shimはコンテナごとに起動されて、kata-proxyと仮想マシンとkata-agentはPodごとに起動される。
 
 Kata Containers 1.5では、shim API (後述)が出たので、その実装であるcontainerd-shim-kata-v2がkata-runtimeとkata-shimとkata-proxyの役割を兼ねるようになり、起動するプロセス数がかなり減ったけど、containerdべったりになった。
 
-![cr10.png](/images/k8s-ecosystem-container-runtimes/cr10.png)
+<img src="/images/k8s-ecosystem-container-runtimes/cr10.png" alt="cr10.png" style="padding: 0 15%;">
 
 containerd-shim-kata-v2のOCIランタイムの上位とのAPIは要らない形になって多分なくなった。
 CRI-Oとかと連携するためには従来のkata-runtime、kata-shim、kata-proxyを使う模様。
@@ -279,7 +279,7 @@ hcsshimは下記shim API実装のrunhcs向け版。
 
 KubernetesのWindows Containers対応は、2019年3月にリリースされた[Kubernetes 1.14](https://kubernetes.io/blog/2019/03/25/kubernetes-1-14-release-announcement/)でGAになった。
 
-![cr8.png](/images/k8s-ecosystem-container-runtimes/cr8.png)
+<img src="/images/k8s-ecosystem-container-runtimes/cr8.png" alt="cr8.png" style="padding: 0 15%;">
 
 ## runq
 [runq](https://github.com/gotoz/runq)はIBM Researchが開発し、[2018年3月](http://containerz.blogspot.com/2018/03/runq.html)に公開したOCIランタイム。
@@ -302,7 +302,7 @@ Node.js、Java、MySQL、Apache HTTP Server、Redisなんかは動くらしい�
 
 システムコールが本当のカーネルよりも遅いので、じゃんじゃんシステムコールするアプリには向かない。
 
-![gvisor-descr.png](/images/k8s-ecosystem-container-runtimes/gvisor-descr.png)
+<img src="/images/k8s-ecosystem-container-runtimes/gvisor-descr.png" alt="gvisor-descr.png" style="padding: 0 15%;">
 
 [Sentry](https://gvisor.dev/docs/architecture_guide/overview/#sentry)がユーザーランドで動くカーネル。
 Sentryはファイルシステムにアクセスできないので、ファイルシステム周りの処理は9Pというプロトコルを介して[Gofer](https://gvisor.dev/docs/architecture_guide/overview/#gofer)に移譲する。
@@ -316,7 +316,7 @@ Sentryはファイルシステムにアクセスできないので、ファイ�
 Unikernelは、[ライブラリOS](https://en.wikipedia.org/wiki/Operating_system#Library)というカーネルの機能をライブラリ化したものを使ってアプリケーションをビルドして生成する、軽量な単一目的なVMイメージっぽいもの。
 UnikernelはゲストOS無しで直接起動できるのでリソース効率がよく、また[単一アドレス空間](https://en.wikipedia.org/wiki/Single_address_space_operating_system)で動くので、仮想メモリのオーバヘッドやユーザ空間とカーネル空間との間のメモリコピーなどが無くて高速。
 
-Nabla Containersは[Rumprun](https://github.com/rumpkernel/rumprun)などをベースとしたUnikernelを実行するんだけど、その実行環境として[Solo5](https://github.com/Solo5/solo5)を使う。
+Nabla Containersは[Rumprun](https://github.com/rumpkernel/rumprun)をベースとしたUnikernelを実行するんだけど、その実行環境として[Solo5](https://github.com/Solo5/solo5)を使う。
 
 Solo5はIBM Research製のサンドボックス実行環境で、アプリとそれを実行するホストシステム間の抽象レイヤを提供する。
 Solo5のAPIを使ってUnikernel(とかのアプリ)を作ると、Solo5がサポートするサンドボックス技術(e.g. KVM、seccomp)上で実行できるというもの。
@@ -327,12 +327,13 @@ Nabla ContainersはOCIランタイムとして[runnc](https://github.com/nabla-c
 ランタイムはOCI準拠なのでDockerからも使えるけど、コンテナイメージがOCI準拠じゃないので、Dockerイメージは動かせない。
 特殊なベースイメージからビルドしなおす必要がある。
 
-![nabla-descr.png](/images/k8s-ecosystem-container-runtimes/nabla-descr.png)
+<img src="/images/k8s-ecosystem-container-runtimes/nabla-descr.png" alt="nabla-descr.png" style="padding: 0 15%;">
 
 Nabla Containersはまだまだ開発途上で、そもそもUnikernel自体が成熟した技術ではないのもあって制限事項が沢山ある。
 書き込めるファイルシステムが`/tmp`しかないとか、ボリュームマウントできないとか、[提供されているパッケージ](https://github.com/rumpkernel/rumprun-packages)が全然少ないとか、プロセスforkできないとか。
-
 ちょっとまだ使い物にならない…
+
+RumprunはNetBSDなんだけど、[Linux Kernel Library](https://github.com/lkl)を使って[LinuxをNabla Containersで動かす](https://retrage.github.io/2020/04/18/lkl-nabla-en.html)という試みもある。
 
 ## containerd-shim
 2018年10月、[containerd v1.2.0](https://github.com/containerd/containerd/releases/tag/v1.2.0)がリリースされ、同時に[Runtime v2](https://github.com/containerd/containerd/blob/v1.2.6/runtime/v2/README.md)という名のもとにshim API v2を公開した。(v1はクローズドだったので公開APIとしては初版。)
@@ -353,7 +354,7 @@ containerdに[FirecrackerのVMを管理するためのプラグイン (FC contro
 アーキテクチャはKata Containersと同じ感じだけど、containerdにcriプラグインが入ってないので、Kubernetesとは話せない。
 現状は[AWS Fargate](https://aws.amazon.com/jp/fargate/)が主なユースケースで、[Lambda](https://aws.amazon.com/jp/lambda/)でも使われてるかもしれない。
 
-![firecracker-containerd.png](/images/k8s-ecosystem-container-runtimes/firecracker-containerd.png)
+<img src="/images/k8s-ecosystem-container-runtimes/firecracker-containerd.png" alt="firecracker-containerd.png" style="padding: 0 15%;">
 
 FC control pluginを入れる都合上、オリジナルのcontainerdのバイナリと別になってるのと、criプラグインを組み込めなくてKubernetesとかECSとかと連携できないところが大きな課題で、今後の発展に期待。
 というかFirecracker使うならKata Containersでいいのではという気はする。
@@ -366,6 +367,17 @@ Cで書かれているのが特徴で、Goで書かれているruncより倍ぐ�
 CRI-Oでサポートされているので先は結構明るい。
 
 Red Hatによるコンテナエコシステムに唯一残っているDocker社の痕跡がrunCなので、これを排除するための刺客なのではなかろうか。
+
+## μKontainer
+[μKontainer](https://github.com/ukontainer)は[Linux Kernel Library (LKL)](https://github.com/lkl)というLinuxのライブラリOSを使ったコンテナランタイム。
+今のところIIJ技術研究所の[田崎創さん](https://www.iij-ii.co.jp/en/members/tazaki.html)がほぼ一人で開発しているっぽい。
+
+Unikernelをコンテナとして動かすランタイムなので、やりたいことはNabla Containersと似てると思うんだけど、もともとの動機がMacOSネイティブなコンテナランタイムを作ることっぽくて、OCIランタイムである[runu](https://github.com/ukontainer/runu)の他、MacOS上で仮想化無しで動く[dockerd](https://github.com/ukontainer/dockerd-darwin)や[containerd](https://github.com/ukontainer/containerd)も開発している。
+
+μKontainerが最初に紹介されたのは多分、2019年9月14日にμKontainer開発者の一人によって公開された[ブログ記事](https://www.anikethgirish.in/blog/dockerd_port_part_1)。
+日本では2020年8月22日の[Container Runtime Meetup #2](https://runtime.connpass.com/event/180172/)で[紹介された](https://speakerdeck.com/thehajime/container-runtime-meetup-202008-lkl)。
+
+<img src="/images/k8s-ecosystem-container-runtimes/ukontainer.png" alt="ukontainer.png" style="padding: 0 15%;">
 
 # まとめ
 コンテナランタイムは奥が深くてまだ進化の過程。
