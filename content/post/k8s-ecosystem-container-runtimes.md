@@ -281,6 +281,18 @@ KubernetesのWindows Containers対応は、2019年3月にリリースされた[K
 
 <img src="/images/k8s-ecosystem-container-runtimes/cr8.png" alt="cr8.png" style="padding: 0 15%;">
 
+## PouchContainer
+[PouchContainer](https://pouchcontainer.io/)はAlibabaによって開発されているOSSのコンテナエンジン。
+2018年1月17日に初バージョンの0.1.0がGitHubでリリースされた。
+
+dockerdを置き換えるような形でporchdというのが動き、Docker CLIやDocker Swarmで操作できるほか、CRIも実装しているのでKubernetesともdockershim無しで話せる。
+実際にコンテナを管理する部分にはcontainerd、runC、Kata Containersなどを使う。
+
+OSSではないっぽいけど、プロジェクトとしてrunlxcというOCIランタイムも提供している。
+これはOCIランタイムのインターフェースでLXCをラップしてやるもので、runCとかが動かない古いLinuxカーネル(kernel 2.6.32+)でも動くので、レガシーな環境でもモダンなコンテナエコシステムを使いたいというユースケースに応える。
+
+<img src="https://raw.githubusercontent.com/alibaba/pouch/1.3.0/docs/static_files/pouch_ecosystem_architecture_no_logo.png" alt="pouch_ecosystem_architecture_no_logo.png">
+
 ## runq
 [runq](https://github.com/gotoz/runq)はIBM Researchが開発し、[2018年3月](http://containerz.blogspot.com/2018/03/runq.html)に公開したOCIランタイム。
 もともと[IBM Blockchain Platform](https://www.ibm.com/blockchain/platform)で使われていたものをOSS化したもの。
@@ -367,6 +379,28 @@ Cで書かれているのが特徴で、Goで書かれているruncより倍ぐ�
 CRI-Oでサポートされているので先は結構明るい。
 
 Red Hatによるコンテナエコシステムに唯一残っているDocker社の痕跡がrunCなので、これを排除するための刺客なのではなかろうか。
+
+## crio-lxc
+[crio-lxc](https://github.com/lxc/crio-lxc)はLXCプロジェクトで開発されているOCIランタイム。
+2019年1月21日に初バージョンの0.0.1がGitHubでリリースされた。
+
+PouchContainerのrunlxcと同じく、LXCをOCIランタイムのインターフェースでラップするもの。
+名前の通りCRI-Oで使うのを想定して開発されたんだけど、OCIランタイムなので別にCRI-Oじゃなくても動きそう。
+
+2020年2月頃に開発止まったっぽい。
+
+## Inclavare Containers
+[Inclavare Containers](https://github.com/alibaba/inclavare-containers)はAlibabaによるOSSのコンテナランタイム。
+2020年6月30日に初バージョンがGitHubでリリースされた。
+
+OCIランタイムのruneと、containerdのshim API v2の実装であるcontainerd-shim-rune-v2などを開発している。
+主にPouchContainerで使うために作られたっぽいけど、他のコンテナエンジンでも使えるはず。
+
+runeが実行するのは普通のコンテナではなく、Inclavare Containersプロジェクトでenclaveと呼ばれる隔離度の高い環境。
+enclaveは[Enclave Runtime PAL API](https://github.com/alibaba/inclavare-containers/blob/master/rune/libenclave/internal/runtime/pal/spec_v2.md)を実装した[enclave runtime](https://github.com/alibaba/inclavare-containers#enclave-runtime)により起動されるコンテナで、runeはつまりこのAPIを呼ぶOCIランタイム。
+enclave runtimeはライブラリOSで実装されることが想定されていて、今のところ[Occlum](https://github.com/occlum/occlum)か[Graphene](https://grapheneproject.io/)ベースのコンテナイメージがサポートされているっぽい。
+
+<img src="https://raw.githubusercontent.com/alibaba/inclavare-containers/v0.3.0/shim/docs/images/shim-rune.png" alt="shim-rune.png">
 
 ## μKontainer
 [μKontainer](https://github.com/ukontainer)は[Linux Kernel Library (LKL)](https://github.com/lkl)というLinuxのライブラリOSを使ったコンテナランタイム。

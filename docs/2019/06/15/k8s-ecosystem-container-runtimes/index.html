@@ -240,12 +240,15 @@ DockerとかcontainerdとかKata ContainersとかgVisorとかの話。
 <li><a href="#cri-containerd">cri-containerd</a></li>
 <li><a href="#kata-containers">Kata Containers</a></li>
 <li><a href="#hcsshim-runhcs">hcsshim、runhcs</a></li>
+<li><a href="#pouchcontainer">PouchContainer</a></li>
 <li><a href="#runq">runq</a></li>
 <li><a href="#gvisor">gVisor</a></li>
 <li><a href="#nabla-containers">Nabla Containers</a></li>
 <li><a href="#containerd-shim">containerd-shim</a></li>
 <li><a href="#firecracker-containerd">firecracker-containerd</a></li>
 <li><a href="#crun">crun</a></li>
+<li><a href="#crio-lxc">crio-lxc</a></li>
+<li><a href="#inclavare-containers">Inclavare Containers</a></li>
 <li><a href="#μkontainer">μKontainer</a></li>
 </ul></li>
 <li><a href="#まとめ">まとめ</a></li>
@@ -558,6 +561,19 @@ hcsshimは下記shim API実装のrunhcs向け版。</p>
 
 <p><img src="/images/k8s-ecosystem-container-runtimes/cr8.png" alt="cr8.png" style="padding: 0 15%;"></p>
 
+<h2 id="pouchcontainer">PouchContainer</h2>
+
+<p><a href="https://pouchcontainer.io/">PouchContainer</a>はAlibabaによって開発されているOSSのコンテナエンジン。
+2018年1月17日に初バージョンの0.1.0がGitHubでリリースされた。</p>
+
+<p>dockerdを置き換えるような形でporchdというのが動き、Docker CLIやDocker Swarmで操作できるほか、CRIも実装しているのでKubernetesともdockershim無しで話せる。
+実際にコンテナを管理する部分にはcontainerd、runC、Kata Containersなどを使う。</p>
+
+<p>OSSではないっぽいけど、プロジェクトとしてrunlxcというOCIランタイムも提供している。
+これはOCIランタイムのインターフェースでLXCをラップしてやるもので、runCとかが動かない古いLinuxカーネル(kernel 2.6.32+)でも動くので、レガシーな環境でもモダンなコンテナエコシステムを使いたいというユースケースに応える。</p>
+
+<p><img src="https://raw.githubusercontent.com/alibaba/pouch/1.3.0/docs/static_files/pouch_ecosystem_architecture_no_logo.png" alt="pouch_ecosystem_architecture_no_logo.png"></p>
+
 <h2 id="runq">runq</h2>
 
 <p><a href="https://github.com/gotoz/runq">runq</a>はIBM Researchが開発し、<a href="http://containerz.blogspot.com/2018/03/runq.html">2018年3月</a>に公開したOCIランタイム。
@@ -650,6 +666,30 @@ Red Hatの中の人が開発しているが、現時点ではRed Hat公式のも
 CRI-Oでサポートされているので先は結構明るい。</p>
 
 <p>Red Hatによるコンテナエコシステムに唯一残っているDocker社の痕跡がrunCなので、これを排除するための刺客なのではなかろうか。</p>
+
+<h2 id="crio-lxc">crio-lxc</h2>
+
+<p><a href="https://github.com/lxc/crio-lxc">crio-lxc</a>はLXCプロジェクトで開発されているOCIランタイム。
+2019年1月21日に初バージョンの0.0.1がGitHubでリリースされた。</p>
+
+<p>PouchContainerのrunlxcと同じく、LXCをOCIランタイムのインターフェースでラップするもの。
+名前の通りCRI-Oで使うのを想定して開発されたんだけど、OCIランタイムなので別にCRI-Oじゃなくても動きそう。</p>
+
+<p>2020年2月頃に開発止まったっぽい。</p>
+
+<h2 id="inclavare-containers">Inclavare Containers</h2>
+
+<p><a href="https://github.com/alibaba/inclavare-containers">Inclavare Containers</a>はAlibabaによるOSSのコンテナランタイム。
+2020年6月30日に初バージョンがGitHubでリリースされた。</p>
+
+<p>OCIランタイムのruneと、containerdのshim API v2の実装であるcontainerd-shim-rune-v2などを開発している。
+主にPouchContainerで使うために作られたっぽいけど、他のコンテナエンジンでも使えるはず。</p>
+
+<p>runeが実行するのは普通のコンテナではなく、Inclavare Containersプロジェクトでenclaveと呼ばれる隔離度の高い環境。
+enclaveは<a href="https://github.com/alibaba/inclavare-containers/blob/master/rune/libenclave/internal/runtime/pal/spec_v2.md">Enclave Runtime PAL API</a>を実装した<a href="https://github.com/alibaba/inclavare-containers#enclave-runtime">enclave runtime</a>により起動されるコンテナで、runeはつまりこのAPIを呼ぶOCIランタイム。
+enclave runtimeはライブラリOSで実装されることが想定されていて、今のところ<a href="https://github.com/occlum/occlum">Occlum</a>か<a href="https://grapheneproject.io/">Graphene</a>ベースのコンテナイメージがサポートされているっぽい。</p>
+
+<p><img src="https://raw.githubusercontent.com/alibaba/inclavare-containers/v0.3.0/shim/docs/images/shim-rune.png" alt="shim-rune.png"></p>
 
 <h2 id="μkontainer">μKontainer</h2>
 
