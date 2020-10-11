@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+         
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+    google_ad_client: "ca-pub-6244473643910448",
+    enable_page_level_ads: true
+  });
+</script>
+
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/2020/10/11/rook-ceph/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/2020/10/11/rook-ceph/">
+
+
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Rook/CephでCephFSを試す | To Be Decided">
+  <title>Rook/CephでCephFSを試す | To Be Decided</title>
+  <meta property="og:description" content="Kubernetesの2ノードクラスタにRookをデプロイして、小さいCephクラスタを作ってCephFSのボリュームを切り出してみた。">
+  <meta name="description" content="Kubernetesの2ノードクラスタにRookをデプロイして、小さいCephクラスタを作ってCephFSのボリュームを切り出してみた。">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/rook.png">
+
+
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <style>
+
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+<script>
+  var webFontConfig = {
+    google: {
+      families: ['Noto Sans JP:400,700:japanese'],
+      active: function() {
+        sessionStorage.fonts = true;
+      }
+    },
+    timeout: 3000
+  };
+  WebFont.load(webFontConfig);
+</script>
+
+
+
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
+        
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
+    
+
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v3.2"></script>
+
+        <nav class="navbar navbar-default navbar-fixed-top">
+
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">Rook/CephでCephFSを試す</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    <div class="single-post">
+        <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/10/11/rook-ceph/">Rook/CephでCephFSを試す</a></h4>
+    <h5>Sun, Oct 11, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/rook"><kbd class="item-tag">rook</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ceph"><kbd class="item-tag">ceph</kbd></a>
+    
+
+</div>
+
+
+        <div class="cover">
+            <a href="/2020/10/11/rook-ceph/">
+                <img src="https://www.kaitoy.xyz/images/rook.png" alt="Rook/CephでCephFSを試す">
+            </a>
+        </div>
+
+        
+        <h4 class="page-header">Table of Contents</h4>
+        <aside>
+            <nav id="TableOfContents">
+<ul>
+<li><a href="#rook">Rook</a></li>
+<li><a href="#ceph">Ceph</a></li>
+<li><a href="#cephのストレージインターフェース">Cephのストレージインターフェース</a></li>
+<li><a href="#cephfs">CephFS</a></li>
+<li><a href="#pool">Pool</a></li>
+<li><a href="#osdのストレージバックエンド">OSDのストレージバックエンド</a></li>
+<li><a href="#rook-cephでcephfsのpvを作ってpostgresqlポッドで使う">Rook/CephでCephFSのPVを作ってPostgreSQLポッドで使う</a>
+<ul>
+<li><a href="#環境">環境</a></li>
+<li><a href="#osd用のpvをデプロイ">OSD用のPVをデプロイ</a></li>
+<li><a href="#rookの共通リソースをデプロイ">Rookの共通リソースをデプロイ</a></li>
+<li><a href="#rook-cephオペレータをデプロイ">Rook/Cephオペレータをデプロイ</a></li>
+<li><a href="#ceph-storage-clusterをデプロイ">Ceph Storage Clusterをデプロイ</a></li>
+<li><a href="#cephfsをデプロイ">CephFSをデプロイ</a></li>
+<li><a href="#cephダッシュボードを確認">Cephダッシュボードを確認</a></li>
+<li><a href="#cephfsのstorageclassを登録">CephFSのStorageClassを登録</a></li>
+<li><a href="#cephfsのpvを作成">CephFSのPVを作成</a></li>
+<li><a href="#cephfsのpvをpostgresqlのpodでマウントする">CephFSのPVをPostgreSQLのPodでマウントする</a></li>
+</ul></li>
+</ul>
+</nav>
+        </aside>
+        <hr>
+        
+
+        <br> <div class="text-justify"><p>Kubernetesの2ノードクラスタにRookをデプロイして、小さいCephクラスタを作ってCephFSのボリュームを切り出してみた。</p>
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+
+<h1 id="rook">Rook</h1>
+
+<p><a href="https://rook.github.io/">Rook</a>はKubernetes上に分散ストレージシステムをデプロイして管理するOSSの<a href="https://kubernetes.io/ja/docs/concepts/extend-kubernetes/operator/">オペレータ</a>。</p>
+
+<p>サポートしているストレージプロバイダは現在のv1.4時点でCeph、EdgeFS、Cassandra、CockroachDB、NFS、YugabyteDBだけど、StableなのはCephとEdgeFSだけで他はAlpha。
+さらに、EdgeFSがOSSじゃなくなって<a href="https://github.com/rook/rook/issues/5525">Rookがサポート落としかけた</a>こともあってRook/EdgeFSは先行き怪しいので、今のところRookは実質ほぼCeph専用と言っていいかもしれない。</p>
+
+<h1 id="ceph">Ceph</h1>
+
+<p><a href="https://ceph.io/">Ceph</a>は様々なインターフェースでアクセスできる分散オブジェクトストレージプラットフォーム。
+Red Hatが商用版を展開しているけど、OSSなので無料でも使える。</p>
+
+<p>CephのコアはRADOSという分散オブジェクトストア。
+RADOSは、<a href="https://docs.ceph.com/docs/master/glossary/#term-Ceph-OSD-Daemon">OSD</a>と<a href="https://docs.ceph.com/docs/master/glossary/#term-Ceph-Monitor">MON</a>によるクラスタ(<a href="https://docs.ceph.com/docs/master/rados/#ceph-storage-cluster">Ceph Storage Cluster</a>)として構成される。</p>
+
+<p>OSDはディスク単位で動いてそのディスクへのI/Oを司るデーモン。
+RADOSで管理するディスクの数だけ動く。</p>
+
+<p>MONはOSDの監視、クラスタの構成情報(<a href="https://docs.ceph.com/en/latest/architecture/#cluster-map">Cluster Map</a>)の管理、CLIクライアントに対するインターフェースの役割をするデーモン。
+普通は高可用性のために複数動き、<a href="https://ja.wikipedia.org/wiki/Paxos%E3%82%A2%E3%83%AB%E3%82%B4%E3%83%AA%E3%82%BA%E3%83%A0">Paxos</a>で合意形成する。</p>
+
+<p>Cephにはもう一つ新しめなコンポーネントとして、<a href="https://docs.ceph.com/docs/master/mgr/#ceph-manager-daemon">Ceph Manager (MGR)</a>というデーモンがある。
+これはMONと同じ数だけ同じノードで動いて、Ceph Storage Clusterの監視や管理のためのインターフェースとか<a href="https://docs.ceph.com/docs/master/mgr/dashboard/">Ceph Dashboard</a>を提供してくれるもの。
+Ceph v11ではオプショナルだったけど、Ceph v12からほぼ必須のデーモンになった。</p>
+
+<p>MGRの機能はモジュラー構成になっていて、以下のようなモジュールがビルトインされている。</p>
+
+<ul>
+<li><a href="https://docs.ceph.com/docs/master/mgr/dashboard/">Dashboard module</a>: Ceph Dashboard。</li>
+<li><a href="https://docs.ceph.com/docs/master/mgr/restful/">RESTful module</a>: クラスタステータスを取得するREST API。</li>
+<li><a href="https://docs.ceph.com/docs/master/mgr/zabbix/">Zabbix module</a>: Zabbixにクラスタステータスを定期的にpushしてくれるモジュール。</li>
+<li><a href="https://docs.ceph.com/docs/master/mgr/prometheus/">Prometheus module</a>: Prometheusからクラスタステータスを取れるようにするためのexporter。</li>
+<li><a href="https://docs.ceph.com/docs/master/mgr/telemetry/">Telemetry module</a>: クラスタの情報をCeph開発者コミュニティに送るモジュール。</li>
+<li><a href="https://docs.ceph.com/docs/master/mgr/crash/">Crash module</a>: Cephのデーモンのクラッシュダンプを集めてクラスタに保存してくれるモジュール。</li>
+<li><a href="https://docs.ceph.com/docs/master/mgr/rook/">Rook module</a>: CephとKubernetesを連携させるモジュール。</li>
+</ul>
+
+<h1 id="cephのストレージインターフェース">Cephのストレージインターフェース</h1>
+
+<p>RADOSにアクセスしてデータ読み書きする手段はいくつかあって、一番プリミティブなのが<a href="https://docs.ceph.com/docs/master/rados/api/librados-intro/">librados</a>というライブラリを使ってAPIを呼ぶものなんだけど、RADOSの上に実装されたストレージインターフェースもあって、そっち経由でアクセスするのが多分普通。</p>
+
+<p>ストレージインターフェースには以下の3つがある:</p>
+
+<ul>
+<li><p><a href="https://docs.ceph.com/docs/master/cephfs/">Ceph File System (CephFS)</a></p>
+
+<p>POSIX互換のファイルシステム。mount.cephでマウントできるほか、<a href="https://docs.ceph.com/docs/master/cephfs/nfs/">NFSとしてexportしてマウントすることもできる</a>。</p></li>
+
+<li><p><a href="https://docs.ceph.com/docs/master/rbd/">Ceph Block Device</a></p>
+
+<p>ブロックデバイス。シンプロビジョニングでリサイザブル。RBDとも呼ばれる。
+というかRBDと呼ばれることの方が多い。
+デバイスファイルにマッピングしたり、QEMU/KVMのVMやKubernetesのPodからマウントしたり、iSCSIでつないだりできる。</p></li>
+
+<li><p><a href="https://docs.ceph.com/docs/master/radosgw/">Ceph Object Gateway</a></p>
+
+<p>オブジェクトストレージ。AWSのS3やOpenStackのSwiftと互換性がある。RADOSGWとも呼ばれる。</p></li>
+</ul>
+
+<p><img src="https://docs.ceph.com/docs/master/_images/stack.png" alt="ceph" /></p>
+
+<p><br></p>
+
+<p>KubernetesのPodにマウントするストレージとしてはCephFSかRBDが使えるけど、CephFSのボリュームは複数のノードのPodでマウントできるのに対し、RBDのは単一のNodeでしかマウントできないので、CephFSのほうがユースケース広そう。</p>
+
+<p>なので今回はCephFSを試す。</p>
+
+<h1 id="cephfs">CephFS</h1>
+
+<p>CephFSはPOSIX互換のファイルシステムで、スケーラブルで高性能。
+性能を確保するために、ファイルの実態のI/Oを担当するOSDとは別に、ファイルのメタデータを扱うMDS (Metadata Server)というデーモンが動くアーキテクチャになっている。</p>
+
+<p><img src="https://docs.ceph.com/docs/master/_images/cephfs-architecture.svg" alt="cephfs" /></p>
+
+<h1 id="pool">Pool</h1>
+
+<p>PoolはCephのCeph Storage Clusterを論理的に分割するもの。
+Poolごとにデータの冗長性などの設定やCluster Mapが分けられる。</p>
+
+<p>Poolは少なくともストレージインターフェース毎に分かれる。
+CephFSはファイルシステムのメタデータ用とファイルの実データ用の二つのPoolを使う。</p>
+
+<h1 id="osdのストレージバックエンド">OSDのストレージバックエンド</h1>
+
+<p>割と余談なんだけど、OSDがRADOSのオブジェクトを永続化するためのバックエンドには、FileStoreとBlueStoreの二種類がある。</p>
+
+<p>FileStoreはXFSやBtrfsといったPOSIX互換のファイルシステムに依存するもの。
+BlueStoreはFileStoreより新しいやつで、ストレージデバイスに直接アクセスするので、ファイルシステムのオーバーヘッドが無い分FileStoreより性能がいい。</p>
+
+<p>Rookは現在最新のv1.4の時点でBlueStoreだけをサポートしている。</p>
+
+<h1 id="rook-cephでcephfsのpvを作ってpostgresqlポッドで使う">Rook/CephでCephFSのPVを作ってPostgreSQLポッドで使う</h1>
+
+<p>以降、実際にRookを触っていく。</p>
+
+<p>参考資料:</p>
+
+<ul>
+<li>Rookのマニュアル
+
+<ul>
+<li><a href="https://rook.github.io/docs/rook/v1.4/ceph-quickstart.html">https://rook.github.io/docs/rook/v1.4/ceph-quickstart.html</a></li>
+<li><a href="https://rook.github.io/docs/rook/v1.4/ceph-examples.html">https://rook.github.io/docs/rook/v1.4/ceph-examples.html</a></li>
+</ul></li>
+<li>Rookのサンプルマニフェスト
+
+<ul>
+<li><a href="https://github.com/rook/rook/tree/v1.4.5/cluster/examples/kubernetes/ceph">https://github.com/rook/rook/tree/v1.4.5/cluster/examples/kubernetes/ceph</a></li>
+</ul></li>
+<li>Cephの手動デプロイ手順
+
+<ul>
+<li><a href="https://docs.ceph.com/en/latest/install/manual-deployment/">https://docs.ceph.com/en/latest/install/manual-deployment/</a></li>
+</ul></li>
+</ul>
+
+<h2 id="環境">環境</h2>
+
+<p>VMware PlayerのVMを二つ使って、Oracle Linux 7.4をいれて2ノードのKubernetesクラスタを作って、そこにRookをデプロイする。</p>
+
+<p>VMはともにCPUコア一つメモリ4GBの貧弱なスペック。
+ホスト名は<code>k8s-master</code>と<code>k8s-node</code>。</p>
+
+<p>それぞれにOSD用の10GBの未フォーマットのディスクを追加した。
+追加したディスクのデバイスファイルはともに<code>/dev/sdb</code></p>
+
+<p>Kubernetesのバージョンは1.19.2。
+Rookのバージョンは1.4.5。
+Cephのバージョンは15.2.4。</p>
+
+<h2 id="osd用のpvをデプロイ">OSD用のPVをデプロイ</h2>
+
+<p>OSD用のストレージデバイスとしては、生のディスク全体、ディスクのパーティション、LVMの論理ボリューム(など?)が使えるんだけど、今回は生のディスク全体を使ってみる。</p>
+
+<p>RookでOSDに使わせるストレージデバイスは<a href="https://rook.github.io/docs/rook/v1.4/ceph-cluster-crd.html">CephCluster</a>というRookのカスタムリソースに指定する。
+指定する形式にHost-basedとPVC-basedと二種類ある。
+前者はノードのホスト名やデバイスファイル名をCephClusterに直接書く形式で、後者は<a href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/#raw-block-volume-support">Raw Block VolumeのPV</a>にバインドするPVC(のテンプレート)をCephClusterに書く形式。
+PVC-basedの方が新しいし、物理的なリソースとKubernetesのリソースとの分離がよりはっきりしていいので、そちらを使うことにする。</p>
+
+<p>Raw Block VolumeのPVは動的プロビジョニングできたらかっこいいけど、今回は簡単に前もって手動で作っておくことにする。
+<code>k8s-master</code>と<code>k8s-node</code>の分、合わせて二つとして以下をapplyした。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">---<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>PersistentVolume<span style="color:#666">
+</span><span style="color:#666"></span>apiVersion:<span style="color:#666"> </span>v1<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>k8s-master-sdb<span style="color:#666">
+</span><span style="color:#666">  </span>labels:<span style="color:#666">
+</span><span style="color:#666">    </span>osd:<span style="color:#666"> </span><span style="color:#ed9d13">&#34;true&#34;</span><span style="color:#666">
+</span><span style="color:#666"></span>spec:<span style="color:#666">
+</span><span style="color:#666">  </span>volumeMode:<span style="color:#666"> </span>Block<span style="color:#666">
+</span><span style="color:#666">  </span>capacity:<span style="color:#666">
+</span><span style="color:#666">    </span>storage:<span style="color:#666"> </span>10Gi<span style="color:#666">
+</span><span style="color:#666">  </span>local:<span style="color:#666">
+</span><span style="color:#666">    </span>path:<span style="color:#666"> </span>/dev/sdb<span style="color:#666">
+</span><span style="color:#666">  </span>accessModes:<span style="color:#666">
+</span><span style="color:#666">    </span>-<span style="color:#666"> </span>ReadWriteOnce<span style="color:#666">
+</span><span style="color:#666">  </span>persistentVolumeReclaimPolicy:<span style="color:#666"> </span>Retain<span style="color:#666">
+</span><span style="color:#666">  </span>nodeAffinity:<span style="color:#666">
+</span><span style="color:#666">    </span>required:<span style="color:#666">
+</span><span style="color:#666">      </span>nodeSelectorTerms:<span style="color:#666">
+</span><span style="color:#666">      </span>-<span style="color:#666"> </span>matchExpressions:<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>key:<span style="color:#666"> </span>kubernetes.io/hostname<span style="color:#666">
+</span><span style="color:#666">          </span>operator:<span style="color:#666"> </span>In<span style="color:#666">
+</span><span style="color:#666">          </span>values:<span style="color:#666">
+</span><span style="color:#666">          </span>-<span style="color:#666"> </span>k8s-master<span style="color:#666">
+</span><span style="color:#666"></span>---<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>PersistentVolume<span style="color:#666">
+</span><span style="color:#666"></span>apiVersion:<span style="color:#666"> </span>v1<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>k8s-node-sdb<span style="color:#666">
+</span><span style="color:#666">  </span>labels:<span style="color:#666">
+</span><span style="color:#666">    </span>osd:<span style="color:#666"> </span><span style="color:#ed9d13">&#34;true&#34;</span><span style="color:#666">
+</span><span style="color:#666"></span>spec:<span style="color:#666">
+</span><span style="color:#666">  </span>volumeMode:<span style="color:#666"> </span>Block<span style="color:#666">
+</span><span style="color:#666">  </span>capacity:<span style="color:#666">
+</span><span style="color:#666">    </span>storage:<span style="color:#666"> </span>10Gi<span style="color:#666">
+</span><span style="color:#666">  </span>local:<span style="color:#666">
+</span><span style="color:#666">    </span>path:<span style="color:#666"> </span>/dev/sdb<span style="color:#666">
+</span><span style="color:#666">  </span>accessModes:<span style="color:#666">
+</span><span style="color:#666">    </span>-<span style="color:#666"> </span>ReadWriteOnce<span style="color:#666">
+</span><span style="color:#666">  </span>persistentVolumeReclaimPolicy:<span style="color:#666"> </span>Retain<span style="color:#666">
+</span><span style="color:#666">  </span>nodeAffinity:<span style="color:#666">
+</span><span style="color:#666">    </span>required:<span style="color:#666">
+</span><span style="color:#666">      </span>nodeSelectorTerms:<span style="color:#666">
+</span><span style="color:#666">      </span>-<span style="color:#666"> </span>matchExpressions:<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>key:<span style="color:#666"> </span>kubernetes.io/hostname<span style="color:#666">
+</span><span style="color:#666">          </span>operator:<span style="color:#666"> </span>In<span style="color:#666">
+</span><span style="color:#666">          </span>values:<span style="color:#666">
+</span><span style="color:#666">          </span>-<span style="color:#666"> </span>k8s-node</code></pre></div>
+<p>ラベルの<code>osd: &quot;true&quot;</code>は、OSDのPVCとバインドするときにラベルセレクタで使う目印。</p>
+
+<p><code>volumeMode</code>が<code>Block</code>で、<code>path</code>にデバイスファイルを指定しているのがRaw Block VolumeのPVならでは。</p>
+
+<p>ボリュームプラグインが<a href="https://kubernetes.io/docs/concepts/storage/volumes/#local">local</a>なので<code>nodeAffinity</code>でホスト名を使ってノード名を指定している。</p>
+
+<h2 id="rookの共通リソースをデプロイ">Rookの共通リソースをデプロイ</h2>
+
+<p>ここからRookをデプロイしていく。
+まずは<a href="https://rook.github.io/docs/rook/v1.4/ceph-examples.html#common-resources">共通リソース</a>。</p>
+
+<p>RookのGitリポジトリにあるcommon.yamlをapplyすればいい。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# git clone https://github.com/rook/rook.git
+[root]# cd rook/cluster/examples/kubernetes/ceph
+[root]# git co v1.4.5
+[root]# kubectl apply -f common.yaml</code></pre></div>
+<p>これでRookのNamespaceとかCustomResourceDefinitionとかRoleとかが作られる。</p>
+
+<h2 id="rook-cephオペレータをデプロイ">Rook/Cephオペレータをデプロイ</h2>
+
+<p>Rook/Cephオペレータのマニフェストはcommon.yamlと同じディレクトリのoperator.yaml。
+そのままだとRBDとCephFS両方のCSIドライバが有効になってるけど、CephFSしか使わないのでRBDを無効にする。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"><span style="color:#d22323">--- a/cluster/examples/kubernetes/ceph/operator.yaml
+</span><span style="color:#d22323"></span><span style="color:#589819">+++ b/cluster/examples/kubernetes/ceph/operator.yaml
+</span><span style="color:#589819"></span><span style="color:#fff;text-decoration:underline">@@ -27,7 +27,7 @@ data:
+</span><span style="color:#fff;text-decoration:underline"></span>   # To run the non-default version of the CSI driver, see the override-able image properties in operator.yaml
+   ROOK_CSI_ENABLE_CEPHFS: &#34;true&#34;
+   # Enable the default version of the CSI RBD driver. To start another version of the CSI driver, see image properties below.
+<span style="color:#d22323">-  ROOK_CSI_ENABLE_RBD: &#34;true&#34;
+</span><span style="color:#d22323"></span><span style="color:#589819">+  ROOK_CSI_ENABLE_RBD: &#34;false&#34;
+</span><span style="color:#589819"></span>   ROOK_CSI_ENABLE_GRPC_METRICS: &#34;true&#34;
+
+   # Set logging level for csi containers.
+</code></pre></div>
+<p>また、OSDのデバイスをHost-basedで指定するときにしか使わないデーモンも有効になってるので無効化する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"><span style="color:#d22323">--- a/cluster/examples/kubernetes/ceph/operator.yaml
+</span><span style="color:#d22323"></span><span style="color:#589819">+++ b/cluster/examples/kubernetes/ceph/operator.yaml
+</span><span style="color:#589819"></span><span style="color:#fff;text-decoration:underline">@@ -399,7 +399,7 @@ spec:
+</span><span style="color:#fff;text-decoration:underline"></span>         # Whether to start the discovery daemon to watch for raw storage devices on nodes in the cluster.
+         # This daemon does not need to run if you are only going to create your OSDs based on StorageClassDeviceSets with PVCs.
+         - name: ROOK_ENABLE_DISCOVERY_DAEMON
+<span style="color:#d22323">-          value: &#34;true&#34;
+</span><span style="color:#d22323"></span><span style="color:#589819">+          value: &#34;false&#34;
+</span><span style="color:#589819"></span>
+         # Time to wait until the node controller will move Rook pods to other
+         # nodes after detecting an unreachable node.
+</code></pre></div>
+<p>また、嵌りどころだったんだけど、ホストのカーネルバージョンが古いとCephFSを使うPodが以下のようなエラーで立ち上がらない問題が発生する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-plaintext" data-lang="plaintext">Warning  FailedMount             4m42s (x12 over 29m)  kubelet, k8s-master      (combined from similar events): MountVolume.MountDevice failed for volume &#34;pvc-991cbae4-311f-4c8a-bfa9-6af99dde2575&#34; : rpc error: code = Internal desc = an error (exit status 32) occurred while running mount args: [-t ceph 10.0.170.252:6789:/volumes/csi/csi-vol-68a7996a-de9e-11ea-8dcc-e2634a1533d6/ad3ed71f-e4a3-4a2a-9f41-ed3f274a4b54 /var/lib/kubelet/plugins/kubernetes.io/csi/pv/pvc-991cbae4-311f-4c8a-bfa9-6af99dde2575/globalmount -o name=csi-cephfs-node,secretfile=/tmp/csi/keys/keyfile-909027452,mds_namespace=shared-fs,_netdev]</code></pre></div>
+<p>これは<a href="https://docs.ceph.com/en/latest/man/8/mount.ceph/">mount.ceph</a>のmds_namespaceオプションが使えないためで、カーネルバージョンが<a href="https://github.com/rook/rook/issues/5066#issuecomment-603219432">4.10未満だと踏むエラー</a>。
+(<a href="https://github.com/rook/rook/pull/1199/files#diff-efddded138f9e17f25eadec1330816b7">4.7未満説もある</a>。)</p>
+
+<p>Rook/Cephオペレータの設定を以下のように変えて、CephFSボリュームをカーネルドライバでマウントする代わりにceph-fuseでマウントするようにすればこの問題を回避できる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"><span style="color:#d22323">--- a/cluster/examples/kubernetes/ceph/operator.yaml
+</span><span style="color:#d22323"></span><span style="color:#589819">+++ b/cluster/examples/kubernetes/ceph/operator.yaml
+</span><span style="color:#589819"></span><span style="color:#fff;text-decoration:underline">@@ -38,7 +38,7 @@ data:
+</span><span style="color:#fff;text-decoration:underline"></span>   # If you disable the kernel client, your application may be disrupted during upgrade.
+   # See the upgrade guide: https://rook.io/docs/rook/master/ceph-upgrade.html
+   # NOTE! cephfs quota is not supported in kernel version &lt; 4.17
+<span style="color:#d22323">-  CSI_FORCE_CEPHFS_KERNEL_CLIENT: &#34;true&#34;
+</span><span style="color:#d22323"></span><span style="color:#589819">+  CSI_FORCE_CEPHFS_KERNEL_CLIENT: &#34;false&#34;
+</span><span style="color:#589819"></span>
+   # (Optional) Allow starting unsupported ceph-csi image
+   ROOK_CSI_ALLOW_UNSUPPORTED_VERSION: &#34;false&#34;
+</code></pre></div>
+<p>ここまで編集したらapply。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# kubectl apply -f operator.yaml</code></pre></div>
+<p><code>rook-ceph</code>というNamespaceでRook/Cephオペレータが動き出す。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# kubectl get po -n rook-ceph
+NAME                                            READY   STATUS      RESTARTS   AGE
+rook-ceph-operator-7c6fb4bf5f-8zn54             1/1     Running     1          4d3h</code></pre></div>
+<h2 id="ceph-storage-clusterをデプロイ">Ceph Storage Clusterをデプロイ</h2>
+
+<p>次はCephClusterをapplyしてCeph Storage Cluster(i.e. OSDとMONとMGR)をデプロイするんだけど、その前にCephの各デーモンの<a href="https://rook.io/docs/rook/v1.4/ceph-advanced-configuration.html#custom-cephconf-settings">カスタム設定</a>を作っておく。
+これは、<code>rook-config-override</code>という名前のConfigMapを作って<a href="https://docs.ceph.com/en/latest/rados/configuration/">Cephの設定</a>を書いておくと、Rookが作る設定を上書きできるというもの。
+作らなくても動くけど、今回作るCeph Storage ClusterはOSDの数が2つで推奨構成の3つ以上より少ないので、それについてだけ設定しておく。</p>
+
+<p>カスタム設定として以下のyamlファイルをapplyした。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">kind:<span style="color:#666"> </span>ConfigMap<span style="color:#666">
+</span><span style="color:#666"></span>apiVersion:<span style="color:#666"> </span>v1<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>rook-config-override<span style="color:#666">
+</span><span style="color:#666">  </span>namespace:<span style="color:#666"> </span>rook-ceph<span style="color:#666">
+</span><span style="color:#666"></span>data:<span style="color:#666">
+</span><span style="color:#666">  </span>config:<span style="color:#666"> </span><span style="color:#ed9d13">|
+</span><span style="color:#ed9d13">    [global]</span><span style="color:#666">
+</span><span style="color:#666">    </span>osd<span style="color:#666"> </span>pool<span style="color:#666"> </span>default<span style="color:#666"> </span>size<span style="color:#666"> </span>=<span style="color:#666"> </span><span style="color:#3677a9">2</span></code></pre></div>
+<p><br></p>
+
+<p>で、CephCluster。
+PVC-basedなCephClusterのマニフェストサンプルはcommon.yamlと同じディレクトリのcluster-on-pvc.yaml。
+CephClusterの内容で気にしたところは以下。</p>
+
+<ul>
+<li><p>データディレクトリ</p>
+
+<p>CephClusterの<code>spec.dataDirHostPath</code>にはデフォルトで<code>/var/lib/rook</code>が設定されていて、Kubernetesクラスタの各ノードのそのパスにはRookのログとかCephの設定ファイルとかが入る。</p>
+
+<p>これは今回そのままにしておく。</p></li>
+
+<li><p>MONの設定</p>
+
+<ul>
+<li><p>MONの数</p>
+
+<p><code>spec.mon.count</code>にMONを動かすPod数を書く。デフォルトでは3。MONはPaxosで合意形成をするために奇数個である必要がある。</p>
+
+<p>今回はKubernetesノードが二つしかないので、1にしておく。</p></li>
+
+<li><p>MONのデータストア</p>
+
+<p><code>spec.mon.volumeClaimTemplate</code>にMONがモニタリングのためのデータを格納するPVをマウントするためのPVC(のテンプレート)を書く。</p>
+
+<p>今回は何も指定しないことにする。
+指定しないと、<code>spec.dataDirHostPath</code>に指定したパスの下にデータが入る。</p></li>
+</ul></li>
+
+<li><p>OSDの設定</p>
+
+<ul>
+<li><p>PVC-basedの設定</p>
+
+<p>PVC-basedの場合、<code>spec.storage.storageClassDeviceSets</code>にOSDの設定を書く。</p>
+
+<p><code>spec.storage.storageClassDeviceSets.count</code>がOSDを動かすPod数なので、2にしておく。</p>
+
+<p><code>spec.storage.storageClassDeviceSets.volumeClaimTemplates</code>にさっきデプロイしたOSD用のPVをマウントするためのPVC(のテンプレート)を書く。
+今回は<code>osd: &quot;true&quot;</code>というラベルをキーにしてPVとPVCをバインドさせる。</p></li>
+</ul></li>
+</ul>
+
+<p>cluster-on-pvc.yamlの差分は以下。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"><span style="color:#d22323">--- a/cluster/examples/kubernetes/ceph/cluster-on-pvc.yaml
+</span><span style="color:#d22323"></span><span style="color:#589819">+++ b/cluster/examples/kubernetes/ceph/cluster-on-pvc.yaml
+</span><span style="color:#589819"></span><span style="color:#fff;text-decoration:underline">@@ -17,20 +17,8 @@ metadata:
+</span><span style="color:#fff;text-decoration:underline"></span> spec:
+   dataDirHostPath: /var/lib/rook
+   mon:
+<span style="color:#d22323">-    count: 3
+</span><span style="color:#d22323"></span><span style="color:#589819">+    count: 1
+</span><span style="color:#589819"></span>     allowMultiplePerNode: false
+<span style="color:#d22323">-    # A volume claim template can be specified in which case new monitors (and
+</span><span style="color:#d22323">-    # monitors created during fail over) will construct a PVC based on the
+</span><span style="color:#d22323">-    # template for the monitor&#39;s primary storage. Changes to the template do not
+</span><span style="color:#d22323">-    # affect existing monitors. Log data is stored on the HostPath under
+</span><span style="color:#d22323">-    # dataDirHostPath. If no storage requirement is specified, a default storage
+</span><span style="color:#d22323">-    # size appropriate for monitor data will be used.
+</span><span style="color:#d22323">-    volumeClaimTemplate:
+</span><span style="color:#d22323">-      spec:
+</span><span style="color:#d22323">-        storageClassName: gp2
+</span><span style="color:#d22323">-        resources:
+</span><span style="color:#d22323">-          requests:
+</span><span style="color:#d22323">-            storage: 10Gi
+</span><span style="color:#d22323"></span>   cephVersion:
+     image: ceph/ceph:v15.2.4
+     allowUnsupported: false
+<span style="color:#fff;text-decoration:underline">@@ -49,7 +37,7 @@ spec:
+</span><span style="color:#fff;text-decoration:underline"></span>     storageClassDeviceSets:
+     - name: set1
+       # The number of OSDs to create from this device set
+<span style="color:#d22323">-      count: 3
+</span><span style="color:#d22323"></span><span style="color:#589819">+      count: 2
+</span><span style="color:#589819"></span>       # IMPORTANT: If volumes specified by the storageClassName are not portable across nodes
+       # this needs to be set to false. For example, if using the local storage provisioner
+       # this should be false.
+<span style="color:#fff;text-decoration:underline">@@ -116,11 +104,12 @@ spec:
+</span><span style="color:#fff;text-decoration:underline"></span>       volumeClaimTemplates:
+       - metadata:
+           name: data
+           # if you are looking at giving your OSD a different CRUSH device class than the one detected by Ceph
+           # annotations:
+           #   crushDeviceClass: hybrid
+         spec:
+<span style="color:#589819">+          selector:
+</span><span style="color:#589819">+            matchLabels:
+</span><span style="color:#589819">+              osd: &#39;true&#39;
+</span><span style="color:#589819"></span>           resources:
+             requests:
+               storage: 10Gi
+<span style="color:#d22323">-          # IMPORTANT: Change the storage class depending on your environment (e.g. local-storage, gp2)
+</span><span style="color:#d22323">-          storageClassName: gp2
+</span><span style="color:#d22323"></span>           volumeMode: Block
+           accessModes:
+             - ReadWriteOnce
+</code></pre></div>
+<p>ここまで編集したらapply。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# kubectl apply -f cluster-on-pvc.yaml</code></pre></div>
+<p>Rook/Cephオペレータと同じく<code>rook-ceph</code>というNamespaceで、OSD、MON、MGRが動き出す。
+OSDのストレージデバイスを初期化するJobとかも実行される。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# kubectl get po -n rook-ceph
+NAME                                            READY   STATUS      RESTARTS   AGE
+csi-cephfsplugin-provisioner-7478b9dccf-6gnlp   6/6     Running     0          9m43s
+csi-cephfsplugin-provisioner-7478b9dccf-w2f6q   6/6     Running     6          8m58s
+csi-cephfsplugin-qdsl2                          3/3     Running     0          8m18s
+csi-cephfsplugin-jl2qj                          3/3     Running     0          7m51s
+rook-ceph-mgr-a-77cf85dc48-rhr4q                1/1     Running     0          6m36s
+rook-ceph-mon-a-7bc4d4d86b-jjbfc                1/1     Running     0          18s
+rook-ceph-operator-7c6fb4bf5f-8zn54             1/1     Running     1          4d21h
+rook-ceph-osd-0-74bb499d8-dnktb                 1/1     Running     0          3m34s
+rook-ceph-osd-1-844dccbc49-cvj7t                1/1     Running     1          4m9s
+rook-ceph-osd-prepare-set1-data-0-fzhq5-vjbs6   0/1     Completed   0          4d23h</code></pre></div>
+<p>Cephのデーモン以外にも動いているPodがいる。</p>
+
+<p>csi-cephfspluginはCephFSのボリュームをPVとして扱えるようにするCSIプラグインで、DaemonSetで全Kubernetesノード上でひとつずつ動く。</p>
+
+<p>csi-cephfsplugin-provisionerはCephFSのPVを動的プロビジョニングとかをしてくれるやつで、replicasが2のDeploymentで起動されている。
+このreplicasの値など、csi-cephfsplugin-provisionerのDeploymentマニフェストはカスタマイズできないっぽい。</p>
+
+<p><br></p>
+
+<p>MONのPodであるrook-ceph-mon-a-7bc4d4d86b-jjbfcを<code>kubectl describe</code>してみると、HostPathで<code>/var/lib/rook/mon-a/data</code>をマウントしているのが分かる。
+また、Node-Selectorsで<code>kubernetes.io/hostname=k8s-node</code>が設定されているので、常に<code>k8s-node</code>の方のノードで動くようになっている。
+MONのデータストアにPVを使うようにした場合はNode-Selectorsは付かないんだろうか。</p>
+
+<p>今回の構成の場合、MONは一つで、常に<code>k8s-node</code>上で動くので、<code>k8s-node</code>が落ちるとCeph Storage Clusterが機能しなくなる。
+真面目にやるときはMONを3つ以上にして複数ノードに分散させる必要がある。</p>
+
+<h2 id="cephfsをデプロイ">CephFSをデプロイ</h2>
+
+<p>CephFSをあらわすカスタムリソースは<a href="https://rook.github.io/docs/rook/v1.4/ceph-filesystem-crd.html">CephFilesystem</a>で、そのマニフェストサンプルはcommon.yamlと同じディレクトリのfilesystem.yaml。</p>
+
+<p>CephFilesystemには、MDSの設定と、二つのPoolの設定を書く。
+サンプルから変えたのは、各Poolのデータのレプリカ数をOSDの数に合わせたところだけ。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"><span style="color:#d22323">--- a/cluster/examples/kubernetes/ceph/filesystem.yaml
+</span><span style="color:#d22323"></span><span style="color:#589819">+++ b/cluster/examples/kubernetes/ceph/filesystem.yaml
+</span><span style="color:#589819"></span><span style="color:#fff;text-decoration:underline">@@ -13,7 +13,7 @@ spec:
+</span><span style="color:#fff;text-decoration:underline"></span>   # The metadata pool spec. Must use replication.
+   metadataPool:
+     replicated:
+<span style="color:#d22323">-      size: 3
+</span><span style="color:#d22323"></span><span style="color:#589819">+      size: 2
+</span><span style="color:#589819"></span>       requireSafeReplicaSize: true
+     parameters:
+       # Inline compression mode for the data pool
+<span style="color:#fff;text-decoration:underline">@@ -26,7 +26,7 @@ spec:
+</span><span style="color:#fff;text-decoration:underline"></span>   dataPools:
+     - failureDomain: host
+       replicated:
+<span style="color:#d22323">-        size: 3
+</span><span style="color:#d22323"></span><span style="color:#589819">+        size: 2
+</span><span style="color:#589819"></span>         # Disallow setting pool with replica 1, this could lead to data loss without recovery.
+         # Make sure you&#39;re *ABSOLUTELY CERTAIN* that is what you want
+         requireSafeReplicaSize: true
+</code></pre></div>
+<p>ここまで編集したらapply。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# kubectl apply -f filesystem.yaml</code></pre></div>
+<p>Rook/Cephオペレータと同じく<code>rook-ceph</code>というNamespaceでMDSが動き出す。
+MDSはActiveとStandyの二つのPodで動く。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# kubectl get po -n rook-ceph
+NAME                                            READY   STATUS      RESTARTS   AGE
+csi-cephfsplugin-provisioner-7478b9dccf-6gnlp   6/6     Running     16         8h
+csi-cephfsplugin-provisioner-7478b9dccf-w2f6q   6/6     Running     9          8h
+csi-cephfsplugin-qdsl2                          3/3     Running     0          8h
+csi-cephfsplugin-jl2qj                          3/3     Running     0          8h
+rook-ceph-mds-myfs-a-9cdd75c7d-qhpj9            1/1     Running     4          3d18h
+rook-ceph-mds-myfs-b-74fdc8f896-mdnps           1/1     Running     2          3d18h
+rook-ceph-mgr-a-77cf85dc48-rhr4q                1/1     Running     2          8h
+rook-ceph-mon-a-7bc4d4d86b-jjbfc                1/1     Running     0          8h
+rook-ceph-operator-7c6fb4bf5f-8zn54             1/1     Running     1          5d6h
+rook-ceph-osd-0-74bb499d8-dnktb                 1/1     Running     0          8h
+rook-ceph-osd-1-844dccbc49-cvj7t                1/1     Running     1          8h
+rook-ceph-osd-prepare-set1-data-0-fzhq5-vjbs6   0/1     Completed   0          5d8h</code></pre></div>
+<h2 id="cephダッシュボードを確認">Cephダッシュボードを確認</h2>
+
+<p>ここで、MGRの機能である<a href="https://docs.ceph.com/en/latest/mgr/dashboard/">Cephダッシュボード</a>にアクセスして、Ceph Storage Clusterの状態を確認してみる。</p>
+
+<p>Cephダッシュボードは<code>rook-ceph</code>のNamespaceにある<code>rook-ceph-mgr-dashboard</code>というServiceでKubernetesクラスタ内に公開されている。
+これにクラスタ外からアクセスするにはいくつか方法があるけど、簡単なのはKubernetesノード上で<code>kubectl port-forward</code>を使って<code>rook-ceph-mgr-dashboard</code>のポートを外部にフォワーディングする方法。</p>
+
+<p>以下のコマンドを実行すると、<code>https://&lt;ノードのIPアドレス&gt;:8443</code>でCephダッシュボードにアクセスできるようになる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# kubectl port-forward -n rook-ceph --address 0.0.0.0 svc/rook-ceph-mgr-dashboard  8443:8443</code></pre></div>
+<p>Cephダッシュボードにアクセスするとログイン画面が出る。</p>
+
+<p><img src="/images/rook-ceph/ceph-dashboard-login.png" alt="ceph-dashboard-login.png" /></p>
+
+<p>Usernameは<code>admin</code>で、Passwordは以下のコマンドで取得できる文字列を入れるとログインできる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# kubectl get -n rook-ceph secret rook-ceph-dashboard-password -o jsonpath=&#39;{.data.password}&#39;| base64 -d &amp;&amp; echo</code></pre></div>
+<p>ログインすると以下のような画面になる。
+MON、OSD、MGR、MDSがちゃんと動いていそうなことが見てとれる。</p>
+
+<p><img src="/images/rook-ceph/ceph-dashboard.png" alt="ceph-dashboard.png" /></p>
+
+<p>サイドバーのPoolsを開くと、CephFSのPoolである<code>myfs-data0</code> (実データ用)と<code>myfs-metadata</code> (メタデータ用)のPoolができていることが分かる。
+Pool名のプレフィックスの<code>myfs</code>は前節で作ったCephFilesystemのリソース名。</p>
+
+<p><img src="/images/rook-ceph/pools.png" alt="pools.png" /></p>
+
+<h2 id="cephfsのstorageclassを登録">CephFSのStorageClassを登録</h2>
+
+<p>CephFSのPVは、CephFSを要求するPVCを作るとcsi-cephfsplugin-provisionerが作ってくれる。
+CephFSを要求するPVCには、プロビジョナに<code>rook-ceph.cephfs.csi.ceph.com</code>を指定した<a href="https://rook.github.io/docs/rook/v1.4/ceph-filesystem.html#provision-storage">StorageClassを使う必要がある</a>ので、まずそのStorageClassを作る。</p>
+
+<p>CephFSのStorageClassのマニフェストサンプルは、RookのGitリポジトリのルートからみて<code>rook/cluster/examples/kubernetes/ceph/csi/cephfs/storageclass.yaml</code>。</p>
+
+<p>このファイルの中身は以下のようになっている。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>storage.k8s.io/v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>StorageClass<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>rook-cephfs<span style="color:#666">
+</span><span style="color:#666"></span>provisioner:<span style="color:#666"> </span>rook-ceph.cephfs.csi.ceph.com<span style="color:#666">
+</span><span style="color:#666"></span>parameters:<span style="color:#666">
+</span><span style="color:#666">  </span><span style="color:#999;font-style:italic"># clusterID is the namespace where operator is deployed.</span><span style="color:#666">
+</span><span style="color:#666">  </span>clusterID:<span style="color:#666"> </span>rook-ceph<span style="color:#666">
+</span><span style="color:#666">
+</span><span style="color:#666">  </span><span style="color:#999;font-style:italic"># CephFS filesystem name into which the volume shall be created</span><span style="color:#666">
+</span><span style="color:#666">  </span>fsName:<span style="color:#666"> </span>myfs<span style="color:#666">
+</span><span style="color:#666">
+</span><span style="color:#666">  </span><span style="color:#999;font-style:italic"># Ceph pool into which the volume shall be created</span><span style="color:#666">
+</span><span style="color:#666">  </span><span style="color:#999;font-style:italic"># Required for provisionVolume: &#34;true&#34;</span><span style="color:#666">
+</span><span style="color:#666">  </span>pool:<span style="color:#666"> </span>myfs-data0<span style="color:#666">
+</span><span style="color:#666">
+</span><span style="color:#666">  </span><span style="color:#999;font-style:italic"># Root path of an existing CephFS volume</span><span style="color:#666">
+</span><span style="color:#666">  </span><span style="color:#999;font-style:italic"># Required for provisionVolume: &#34;false&#34;</span><span style="color:#666">
+</span><span style="color:#666">  </span><span style="color:#999;font-style:italic"># rootPath: /absolute/path</span><span style="color:#666">
+</span><span style="color:#666">
+</span><span style="color:#666">  </span><span style="color:#999;font-style:italic"># The secrets contain Ceph admin credentials. These are generated automatically by the operator</span><span style="color:#666">
+</span><span style="color:#666">  </span><span style="color:#999;font-style:italic"># in the same namespace as the cluster.</span><span style="color:#666">
+</span><span style="color:#666">  </span>csi.storage.k8s.io/provisioner-secret-name:<span style="color:#666"> </span>rook-csi-cephfs-provisioner<span style="color:#666">
+</span><span style="color:#666">  </span>csi.storage.k8s.io/provisioner-secret-namespace:<span style="color:#666"> </span>rook-ceph<span style="color:#666">
+</span><span style="color:#666">  </span>csi.storage.k8s.io/controller-expand-secret-name:<span style="color:#666"> </span>rook-csi-cephfs-provisioner<span style="color:#666">
+</span><span style="color:#666">  </span>csi.storage.k8s.io/controller-expand-secret-namespace:<span style="color:#666"> </span>rook-ceph<span style="color:#666">
+</span><span style="color:#666">  </span>csi.storage.k8s.io/node-stage-secret-name:<span style="color:#666"> </span>rook-csi-cephfs-node<span style="color:#666">
+</span><span style="color:#666">  </span>csi.storage.k8s.io/node-stage-secret-namespace:<span style="color:#666"> </span>rook-ceph<span style="color:#666">
+</span><span style="color:#666">
+</span><span style="color:#666">  </span><span style="color:#999;font-style:italic"># (optional) The driver can use either ceph-fuse (fuse) or ceph kernel client (kernel)</span><span style="color:#666">
+</span><span style="color:#666">  </span><span style="color:#999;font-style:italic"># If omitted, default volume mounter will be used - this is determined by probing for ceph-fuse</span><span style="color:#666">
+</span><span style="color:#666">  </span><span style="color:#999;font-style:italic"># or by setting the default mounter explicitly via --volumemounter command-line argument.</span><span style="color:#666">
+</span><span style="color:#666">  </span><span style="color:#999;font-style:italic"># mounter: kernel</span><span style="color:#666">
+</span><span style="color:#666"></span>reclaimPolicy:<span style="color:#666"> </span>Delete<span style="color:#666">
+</span><span style="color:#666"></span>allowVolumeExpansion:<span style="color:#666"> </span><span style="color:#6ab825;font-weight:bold">true</span><span style="color:#666">
+</span><span style="color:#666"></span>mountOptions:<span style="color:#666">
+</span><span style="color:#666">  </span><span style="color:#999;font-style:italic"># uncomment the following line for debugging</span><span style="color:#666">
+</span><span style="color:#666">  </span><span style="color:#999;font-style:italic">#- debug</span></code></pre></div>
+<p>コメントをみてちょっと編集すれば使えるようになっている。
+特に気にすべきところは<code>parameters.fsName</code>と<code>parameters.pool</code>。それぞれ、CephFilesystemのリソース名と実データ用Pool名。
+あとは<code>reclaimPolicy</code>くらいを見ておけばいいか。</p>
+
+<p>今回はこのままでapplyすればいい。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# kubectl apply -f csi/cephfs/storageclass.yaml</code></pre></div>
+<p>これで<code>rook-cephfs</code>という名前のStorageClassが登録できた。</p>
+
+<h2 id="cephfsのpvを作成">CephFSのPVを作成</h2>
+
+<p>前節で登録したStorageClassを指定したPVCを作ると、自動でCephFSのPVが作られることを確認する。
+以下のPVCをapplyする。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>PersistentVolumeClaim<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>cephfs-pvc<span style="color:#666">
+</span><span style="color:#666"></span>spec:<span style="color:#666">
+</span><span style="color:#666">  </span>accessModes:<span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>ReadWriteMany<span style="color:#666">
+</span><span style="color:#666">  </span>resources:<span style="color:#666">
+</span><span style="color:#666">    </span>requests:<span style="color:#666">
+</span><span style="color:#666">      </span>storage:<span style="color:#666"> </span>1Gi<span style="color:#666">
+</span><span style="color:#666">  </span>storageClassName:<span style="color:#666"> </span>rook-cephfs</code></pre></div>
+<p>PVをgetしてみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# kubectl get pv
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                         STORAGECLASS   REASON   AGE
+k8s-master-sdb                             10Gi       RWO            Retain           Bound    rook-ceph/set1-data-0-fzhq5                           6d8h
+k8s-node-sdb                               10Gi       RWO            Retain           Bound    rook-ceph/set1-data-1-f6bm6                           6d8h
+pvc-c041509d-96da-4975-b3fc-51e0e66983a1   1Gi        RWX            Delete           Bound    default/cephfs-pvc            rook-cephfs             4d17h</code></pre></div>
+<p><code>pvc-c041509d-96da-4975-b3fc-51e0e66983a1</code>という名前のCephFSのPVが作られてた。</p>
+
+<h2 id="cephfsのpvをpostgresqlのpodでマウントする">CephFSのPVをPostgreSQLのPodでマウントする</h2>
+
+<p>前節で作られたCephFSのPVを実際にマウントして使ってみる。</p>
+
+<p>PostgreSQLのPodを一つ作るため、以下のマニフェストを使う。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">---<span style="color:#666">
+</span><span style="color:#666"></span>apiVersion:<span style="color:#666"> </span>rbac.authorization.k8s.io/v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>Role<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>psp:priv<span style="color:#666">
+</span><span style="color:#666"></span>rules:<span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span>apiGroups:<span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>policy<span style="color:#666">
+</span><span style="color:#666">  </span>resourceNames:<span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>privileged<span style="color:#666">
+</span><span style="color:#666">  </span>resources:<span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>podsecuritypolicies<span style="color:#666">
+</span><span style="color:#666">  </span>verbs:<span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>use<span style="color:#666">
+</span><span style="color:#666"></span>---<span style="color:#666">
+</span><span style="color:#666"></span>apiVersion:<span style="color:#666"> </span>rbac.authorization.k8s.io/v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>RoleBinding<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>default:psp:privileged<span style="color:#666">
+</span><span style="color:#666"></span>roleRef:<span style="color:#666">
+</span><span style="color:#666">  </span>apiGroup:<span style="color:#666"> </span>rbac.authorization.k8s.io<span style="color:#666">
+</span><span style="color:#666">  </span>kind:<span style="color:#666"> </span>Role<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>psp:priv<span style="color:#666">
+</span><span style="color:#666"></span>subjects:<span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span>kind:<span style="color:#666"> </span>ServiceAccount<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>default<span style="color:#666">
+</span><span style="color:#666">  </span>namespace:<span style="color:#666"> </span>default<span style="color:#666">
+</span><span style="color:#666"></span>---<span style="color:#666">
+</span><span style="color:#666"></span>apiVersion:<span style="color:#666"> </span>apps/v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>Deployment<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>postgresql-deployment<span style="color:#666">
+</span><span style="color:#666"></span>spec:<span style="color:#666">
+</span><span style="color:#666">  </span>selector:<span style="color:#666">
+</span><span style="color:#666">    </span>matchLabels:<span style="color:#666">
+</span><span style="color:#666">      </span>app:<span style="color:#666"> </span>postgresql<span style="color:#666">
+</span><span style="color:#666">  </span>replicas:<span style="color:#666"> </span><span style="color:#3677a9">1</span><span style="color:#666">
+</span><span style="color:#666">  </span>template:<span style="color:#666">
+</span><span style="color:#666">    </span>metadata:<span style="color:#666">
+</span><span style="color:#666">      </span>labels:<span style="color:#666">
+</span><span style="color:#666">        </span>app:<span style="color:#666"> </span>postgresql<span style="color:#666">
+</span><span style="color:#666">    </span>spec:<span style="color:#666">
+</span><span style="color:#666">      </span>containers:<span style="color:#666">
+</span><span style="color:#666">      </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>postgres<span style="color:#666">
+</span><span style="color:#666">        </span>image:<span style="color:#666"> </span>postgres:<span style="color:#3677a9">11.9</span><span style="color:#666">
+</span><span style="color:#666">        </span>ports:<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>containerPort:<span style="color:#666"> </span><span style="color:#3677a9">5432</span><span style="color:#666">
+</span><span style="color:#666">        </span>env:<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>POSTGRES_PASSWORD<span style="color:#666">
+</span><span style="color:#666">          </span>value:<span style="color:#666"> </span>admin<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>PGDATA<span style="color:#666">
+</span><span style="color:#666">          </span>value:<span style="color:#666"> </span>/var/lib/postgresql/data/pgdata<span style="color:#666">
+</span><span style="color:#666">        </span>volumeMounts:<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>cephfs-pvc<span style="color:#666">
+</span><span style="color:#666">          </span>mountPath:<span style="color:#666"> </span>/var/lib/postgresql/data<span style="color:#666">
+</span><span style="color:#666">      </span>volumes:<span style="color:#666">
+</span><span style="color:#666">      </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>cephfs-pvc<span style="color:#666">
+</span><span style="color:#666">        </span>persistentVolumeClaim:<span style="color:#666">
+</span><span style="color:#666">          </span>claimName:<span style="color:#666"> </span>cephfs-pvc</code></pre></div>
+<p>RoleとRoleBindingはPodSecurityPolicyが有効な環境でのおまじない。
+その下にDeploymentがあって、<code>postgres:11.9</code>のコンテナイメージを起動して、前節で作ったcephfs-pvcをマウントしてデータ領域(<code>PGDATA</code>)として使うようにしている。</p>
+
+<p>これをapplyするとPostgreSQLポッドが起動する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# kubectl get po
+NAME                                     READY   STATUS    RESTARTS   AGE
+postgresql-deployment-68ff869bcb-8jtn4   1/1     Running   2          3d6h</code></pre></div>
+<p>ちゃんと動いてるか見るため、Pod内にexecでbashを起動して簡単なSQLを叩いてみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# kubectl exec -it postgresql-deployment-68ff869bcb-8jtn4 -- bash
+root@postgresql-deployment-68ff869bcb-8jtn4:/# psql -U postgres postgres
+psql (11.9 (Debian 11.9-1.pgdg90+1))
+Type &#34;help&#34; for help.
+
+postgres=# create table test (id integer, name varchar(10));
+CREATE TABLE
+postgres=# insert into test values (1, &#39;hogehoge&#39;);
+INSERT 0 1
+postgres=# select * from test;
+ id |   name
+----+----------
+  1 | hogehoge
+(1 row)
+
+postgres=#</code></pre></div>
+<p>動いているっぽい。</p>
+
+<p>今回はここまで。</p></div>
+
+        <section class="share-buttons">
+          <div class="share-button">
+            <div class="fb-share-button" data-href="https://www.kaitoy.xyz/2020/10/11/rook-ceph/" data-layout="box_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fwww.kaitoy.xyz%2f2020%2f10%2f11%2frook-ceph%2f&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Share</a></div>
+          </div>
+          <div class="share-button">
+            <a class="twitter-share-button"
+              href="https://twitter.com/intent/tweet?text=Rook%2fCeph%e3%81%a7CephFS%e3%82%92%e8%a9%a6%e3%81%99&amp;url=https%3a%2f%2fwww.kaitoy.xyz%2f2020%2f10%2f11%2frook-ceph%2f"
+              data-size="large">
+            Tweet</a>
+          </div>
+          <div class="share-button">
+            <a href="http://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="vertical-normal" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+          </div>
+          <div class="share-button">
+            <a data-pocket-label="pocket" data-pocket-count="vertical" class="pocket-btn" data-lang="en"></a>
+            <script type="text/javascript">!function(d,i){if(!d.getElementById(i)){var j=d.createElement("script");j.id=i;j.src="https://widgets.getpocket.com/v1/j/btn.js?v=1";var w=d.getElementById(i);d.body.appendChild(j);}}(document,"pocket-btn-js");</script>
+          </div>
+        </section>
+    </div>
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-6244473643910448"
+         data-ad-slot="1845600530"
+         data-ad-format="auto"></ins>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+    <section class="tbd-pagination">
+      <div class="row">
+        <div class="col-sm-6">
+          <div class="prev">
+            
+            <a href="https://www.kaitoy.xyz/2020/07/25/re-ducks-react-redux-with-reselect/">
+              <i class="fa fa-angle-left"></i>
+              Reduxのモジュールアーキテクチャパターンre-ducksの実践 ― React-Redux with reselect
+            </a>
+            
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="next text-right">
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    
+
+    
+
+        <h4 class="page-header">Related</h4>
+
+        <div class="related-links">
+           <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/12/11/kong-ingress-controller/">Kong Ingress ControllerでKongの設定を管理する</a></h4>
+    <h5>Wed, Dec 11, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kong"><kbd class="item-tag">kong</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/12/05/k8s-on-centos8-with-containerd/">Kubernetes 1.16 のクラスタを CentOS 8 と containerd で構築する</a></h4>
+    <h5>Thu, Dec 5, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/containerd"><kbd class="item-tag">containerd</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/09/23/k8s-ecosystem-misc/">Kubernetesのエコシステム ー その他雑多</a></h4>
+    <h5>Mon, Sep 23, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/08/14/k8s-ecosystem-k8s-variations-and-container-host-oses/">Kubernetesのエコシステム ー KubernetesバリエーションとコンテナホストOS編</a></h4>
+    <h5>Wed, Aug 14, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/07/27/introduction-to-k8s/">Kubernetes入門</a></h4>
+    <h5>Sat, Jul 27, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/microservices"><kbd class="item-tag">microservices</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/07/26/k8s-meetup-tokyo-21/">Kubernetes Meetup Tokyo #21 - Cloud Native CI/CD に行ってきた</a></h4>
+    <h5>Fri, Jul 26, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/argo"><kbd class="item-tag">argo</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gitops"><kbd class="item-tag">gitops</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spinnaker"><kbd class="item-tag">spinnaker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/argo"><kbd class="item-tag">argo</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/06/23/k8s-ecosystem-preparing-k8s-cluster/">Kubernetesのエコシステム ー Kubernetesクラスタ構築編</a></h4>
+    <h5>Sun, Jun 23, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/06/15/k8s-ecosystem-container-runtimes/">Kubernetesのエコシステム ー コンテナランタイム編</a></h4>
+    <h5>Sat, Jun 15, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/containerd"><kbd class="item-tag">containerd</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/03/08/k8s-zundoko-operator/">ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</a></h4>
+    <h5>Fri, Mar 8, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubebuilder"><kbd class="item-tag">kubebuilder</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/golang"><kbd class="item-tag">golang</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/17/packer-k8s/">Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</a></h4>
+    <h5>Sun, Jun 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/packer"><kbd class="item-tag">packer</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/msys2"><kbd class="item-tag">msys2</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/03/build-k8s-cluster-by-ansible/">Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</a></h4>
+    <h5>Sun, Jun 3, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a></h4>
+    <h5>Sat, May 5, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a></h4>
+    <h5>Fri, May 4, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a></h4>
+    <h5>Tue, Apr 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/01/hello-skaffold/">Skaffoldを触ってみた</a></h4>
+    <h5>Sun, Apr 1, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/skaffold"><kbd class="item-tag">skaffold</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">Kubernetes 1.8のアクセス制御について。あとDashboard。</a></h4>
+    <h5>Tue, Oct 31, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a></h4>
+    <h5>Sat, Oct 21, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubeadm"><kbd class="item-tag">kubeadm</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></h4>
+    <h5>Wed, Oct 11, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a></h4>
+    <h5>Tue, Oct 10, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+ 
+        </div>
+    
+
+    
+
+        <h4 class="page-header">Comments</h4>
+
+        <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "kaitoy-tobedecided" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+
+</main>
+
+        <footer>
+
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script>window.twttr = (function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0],
+            t = window.twttr || {};
+          if (d.getElementById(id)) return t;
+          js = d.createElement(s);
+          js.id = id;
+          js.src = "https://platform.twitter.com/widgets.js";
+          fjs.parentNode.insertBefore(js, fjs);
+
+          t._e = [];
+          t.ready = function(f) {
+            t._e.push(f);
+          };
+
+          return t;
+        }(document, "script", "twitter-wjs"));</script>
+
+    </body>
+
+</html>
+
