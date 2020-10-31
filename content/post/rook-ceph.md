@@ -6,7 +6,9 @@ tags = ["kubernetes", "rook", "ceph"]
 draft = false
 cover = "rook.png"
 slug = "rook-ceph"
-highlight = false
+highlight = true
+highlightStyle = "monokai"
+highlightLanguages = []
 +++
 
 Kubernetesの2ノードクラスタにRookをデプロイして、小さいCephクラスタを作ってCephFSのボリュームを切り出してみた。

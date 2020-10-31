@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+         
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+    google_ad_client: "ca-pub-6244473643910448",
+    enable_page_level_ads: true
+  });
+</script>
+
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/2020/10/31/metallb/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/2020/10/31/metallb/">
+
+
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="MetalLB入門 ― オンプレKubernetesクラスタでLoadBalancerタイプのServiceを使う | To Be Decided">
+  <title>MetalLB入門 ― オンプレKubernetesクラスタでLoadBalancerタイプのServiceを使う | To Be Decided</title>
+  <meta property="og:description" content="自分で構築した2ノードのKubernetesクラスタにMetalLBをデプロイして、LoadBalancerタイプのService経由でPodにアクセスしてみた。">
+  <meta name="description" content="自分で構築した2ノードのKubernetesクラスタにMetalLBをデプロイして、LoadBalancerタイプのService経由でPodにアクセスしてみた。">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/metallb.png">
+
+
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <style>
+
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+<script>
+  var webFontConfig = {
+    google: {
+      families: ['Noto Sans JP:400,700:japanese'],
+      active: function() {
+        sessionStorage.fonts = true;
+      }
+    },
+    timeout: 3000
+  };
+  WebFont.load(webFontConfig);
+</script>
+
+
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"> 
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js"></script>
+
+    
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
+        
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
+    
+
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v3.2"></script>
+
+        <nav class="navbar navbar-default navbar-fixed-top">
+
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">MetalLB入門 ― オンプレKubernetesクラスタでLoadBalancerタイプのServiceを使う</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    <div class="single-post">
+        <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/10/31/metallb/">MetalLB入門 ― オンプレKubernetesクラスタでLoadBalancerタイプのServiceを使う</a></h4>
+    <h5>Sat, Oct 31, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/metallb"><kbd class="item-tag">metallb</kbd></a>
+    
+
+</div>
+
+
+        <div class="cover">
+            <a href="/2020/10/31/metallb/">
+                <img src="https://www.kaitoy.xyz/images/metallb.png" alt="MetalLB入門 ― オンプレKubernetesクラスタでLoadBalancerタイプのServiceを使う">
+            </a>
+        </div>
+
+        
+        <h4 class="page-header">Table of Contents</h4>
+        <aside>
+            <nav id="TableOfContents">
+<ul>
+<li><a href="#そもそもloadbalancerタイプのserviceとは">そもそもLoadBalancerタイプのServiceとは</a></li>
+<li><a href="#metallb">MetalLB</a>
+<ul>
+<li><a href="#metallbのモード">MetalLBのモード</a></li>
+<li><a href="#metallbとcniプラグイン">MetalLBとCNIプラグイン</a></li>
+</ul></li>
+<li><a href="#metallbを試す">MetalLBを試す</a>
+<ul>
+<li><a href="#環境">環境</a></li>
+<li><a href="#kubernetesクラスタの設定">Kubernetesクラスタの設定</a></li>
+<li><a href="#metallbのデプロイ">MetalLBのデプロイ</a></li>
+<li><a href="#metallbの設定">MetalLBの設定</a></li>
+<li><a href="#loadbalancer-serviceとpodのデプロイ">LoadBalancer ServiceとPodのデプロイ</a></li>
+<li><a href="#なぞのnodeport">なぞのNodePort</a></li>
+<li><a href="#loadbalancer-serviceの通信の妙">LoadBalancer Serviceの通信の妙</a></li>
+</ul></li>
+</ul>
+</nav>
+        </aside>
+        <hr>
+        
+
+        <br> <div class="text-justify"><p>自分で構築した2ノードのKubernetesクラスタにMetalLBをデプロイして、LoadBalancerタイプのService経由でPodにアクセスしてみた。</p>
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+
+<h1 id="そもそもloadbalancerタイプのserviceとは">そもそもLoadBalancerタイプのServiceとは</h1>
+
+<p>Kubernetesクラスタで動くPodにアクセスするには、まずServiceにアクセスして、ServiceからPodにルーティングされる、という形になるんだけど、デフォルトだとServiceのタイプがClusterIPで、クラスタ上のPodとかノードのホストからしかアクセスできない。</p>
+
+<p><img src="/images/metallb/cluster_ip.png" alt="cluster_ip.png" /></p>
+
+<p>Serviceを<a href="https://kubernetes.io/docs/concepts/services-networking/service/#nodeport">NodePort</a>タイプにすることでクラスタ外部からもアクセスできるようになる。
+NodePortにすると、Serviceに指定したポートがクラスタの各ノードで開いて、それらどのポートにアクセスしてもそのServiceにアクセスできるようになる。</p>
+
+<p><img src="/images/metallb/node_port.png" alt="node_port.png" /></p>
+
+<p>NodePortでクラスタ外部からアクセスできるようにはなるんだけど、ノードが落ちたり増えたり減ったりすることを考えると、クライアントはどのノードにアクセスすればいいかわからない。
+なので、普通はノードの手前にロードバランサをおいて、クライアントからのリクエストをロードバランサが適切なノードにルーティングする形にする必要がある。</p>
+
+<p><img src="/images/metallb/node_port_with_lb.png" alt="node_port_with_lb.png" /></p>
+
+<p>NodePortとロードバランサを組み合わせる場合、ロードバランサにノードの生死監視をいい感じにさせたり、ノード追加、削除に応じてロードバランサに設定したりする必要があるのが手間。
+この設定をKubernetesの機能としてよろしくやってくれるのが<a href="https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer">LoadBalancer</a>タイプのService。</p>
+
+<p>LoadBalancerタイプのServiceを作ると、Kubernetesクラスタ上で動くコントローラーの働きでクラスタ外のロードバランサが設定される。
+さらに、Kubernetesのノード監視結果がロードバランサ設定に反映されるので、ノードの増減などもよしなに対応してくれる。
+LoadBalancer Serviceを作ると、対応するNodePortが自動で作られて、クラスタ外のロードバランサからの通信はそのNodePortを通してPodにルーティングされる。</p>
+
+<p><img src="/images/metallb/load_balancer.png" alt="load_balancer.png" /></p>
+
+<p><br></p>
+
+<p>LoadBalancer Serviceが機能的には最高なんだけど、LoadBalancer Serviceを解釈してくれるコントローラーがKubernetesクラスタにデプロイされている必要があるのと、クラスタ外にロードバランサが要るのと、そのロードバランサがコントローラから設定可能なものでないといけないと、使用するハードルが高い。
+基本的にはEKSとかGKEとかのマネージドKubernetesで使われる想定になっている。</p>
+
+<h1 id="metallb">MetalLB</h1>
+
+<p>そんなLoadBalancer ServiceをオンプレKubernetesでも手軽に使えるようにしてくれるのが<a href="https://metallb.universe.tf/">MetalLB</a>。
+MetalLBをKubernetesクラスタにデプロイすると、LoadBalancer Serviceにクラスタ外からアクセス可能な仮想IPアドレスを割り振ってくれる。
+クライアントからその仮想IPアドレスへのルーティングは、一般的なプロトコルによって制御されるので、Kubernetesクラスタ外に特殊なロードバランサを用意する必要が無い。</p>
+
+<p>MetalLBはもともと個人が開発してたんだけど、2019年3月からGoogleが管理するようになった。
+すでにプロダクション環境で使われているケースもあるけど、現時点で最新バージョンは0.9.4で、<a href="https://metallb.universe.tf/concepts/maturity/">実はまだベータ</a>。</p>
+
+<h2 id="metallbのモード">MetalLBのモード</h2>
+
+<p>MetalLBは、あらかじめ指定された範囲のIPアドレスプールからLoadBalancer ServiceにIPアドレスを割り振って、そのIPアドレスを周辺の機器に周知する。
+周知に使うプロトコルはMetalLBのモードによって異なる。</p>
+
+<p>現時点では二つのモードがサポートされている</p>
+
+<ul>
+<li><p><a href="https://metallb.universe.tf/concepts/layer2/">L2モード</a></p>
+
+<p>MetalLBがARP(IPv4)とNDP(IPv6)をしゃべって、クライアントに対して仮想IPアドレスを解決してくれる。
+Kubernetesクラスタ外に何の要件も要らないけど、BGPモードに比べて次の制限がある。</p>
+
+<ul>
+<li>ロードバランシングはしない。ノードダウンしない限り、常に一定のノード(リーダーノード)にトラフィックが来る。</li>
+<li>リーダーノードが落ちた場合、別のノードがリーダーに選出されて、その旨(i.e. 仮想IPアドレスに紐づくMACアドレスが変わったこと)をARPとNDPをつかって周知するんだけど、これを無視するクライアントに関しては、クライアント側のARPキャッシュが期限切れになるまでフェールオーバーしてないように見える。ただ、無視するクライアントはすごい古い機器だけなのであまり気にしなくていいかも。</li>
+</ul></li>
+
+<li><p><a href="https://metallb.universe.tf/concepts/bgp/">BGPモード</a></p>
+
+<p>MetalLBがBGPをしゃべって、外部のBGPルータとBGP peeringして仮想IPアドレスへのルーティング情報を伝える。
+ルータ側の設定によってノード間でロードバランシングが可能なのがL2モードよりすぐれてるけど、Kubernetesクラスタ外にBGPルータが必要なのでちょっとハードルは上がる。</p></li>
+</ul>
+
+<p>今回はL2モードを試す。</p>
+
+<h2 id="metallbとcniプラグイン">MetalLBとCNIプラグイン</h2>
+
+<p>MetalLBを使う場合、<a href="https://metallb.universe.tf/installation/network-addons/">CNIプラグインとの互換性を気にする必要がある</a>。</p>
+
+<p>今回つかう<a href="https://www.weave.works/oss/net/">Weave Net</a>とはMostly Compatible。
+Mostlyというのは、<a href="https://metallb.universe.tf/configuration/weave/">externalTrafficPolicyが使えないという制限があるだけ</a>。</p>
+
+<p>ちなみに<a href="https://www.projectcalico.org/">Calico</a>もMostly Compatibleとなっているけど、<a href="https://metallb.universe.tf/configuration/calico/">CalicoのBGPピアリングがいい感じにできない</a>というだけの制限。</p>
+
+<h1 id="metallbを試す">MetalLBを試す</h1>
+
+<p>以降、実際にMetalLBを触っていく。</p>
+
+<p>参考資料:</p>
+
+<ul>
+<li>MetalLBのマニュアル
+
+<ul>
+<li><a href="https://metallb.universe.tf/installation/">https://metallb.universe.tf/installation/</a></li>
+<li><a href="https://metallb.universe.tf/configuration/">https://metallb.universe.tf/configuration/</a></li>
+</ul></li>
+<li>MetalLBのKubernetesマニフェスト
+
+<ul>
+<li><a href="https://github.com/metallb/metallb/tree/main/manifests">https://github.com/metallb/metallb/tree/main/manifests</a></li>
+</ul></li>
+</ul>
+
+<h2 id="環境">環境</h2>
+
+<p>MetalLBは<a href="https://metallb.universe.tf/installation/clouds/">クラウド環境では仮想IPアドレスの周知するためのプロトコルがいい感じに働かなくて基本的に動かない</a>ので、手元のKubernetesクラスタを使う。</p>
+
+<p>今回は、VMware PlayerのVMを二つ使って、Oracle Linux 7.4をいれて2ノードのKubernetesクラスタを作った。
+VMはともにCPUコア一つメモリ4GBの貧弱なスペック。
+ホスト名は<code>k8s-master</code>と<code>k8s-node</code>。</p>
+
+<p>Kubernetesのバージョンは1.19.2。
+MetalLBのバージョンは0.9.3。</p>
+
+<h2 id="kubernetesクラスタの設定">Kubernetesクラスタの設定</h2>
+
+<p>つくったKubernetesクラスタのkube-proxyのモードはipvsモードなんだけど、ipvs使う場合は<a href="https://metallb.universe.tf/installation/">strict ARPを有効にする必要がある</a>。
+strict ARPを有効にするには、kube-proxyの起動オプションに<code>--ipvs-strict-arp</code>を渡すか、KubeProxyConfigurationの<code>ipvs.strictARP</code>を<code>true</code>にする。</p>
+
+<p>今回のクラスタではKubeProxyConfigurationがホストのファイルにかかれていたのでそれに追記した。</p>
+
+<p>因みに、MetalLBプロジェクトとして<a href="https://metallb.universe.tf/installation/network-addons/#ipvs-mode-in-kube-proxy">ipvsモードでのテストはあんまりしてない</a>らしいのだけど、結論から言うと問題なく動いた。</p>
+
+<h2 id="metallbのデプロイ">MetalLBのデプロイ</h2>
+
+<p>MetalLBのデプロイは、基本的にGitHubに置かれているマニフェストをそのままapplyすればいい。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.3/manifests/namespace.yaml
+[root]# kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.3/manifests/metallb.yaml
+[root]# kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey=&#34;$(openssl rand -base64 128)&#34;</code></pre></div>
+<p>これで、<code>metallb-system</code>というNamespaceでMetalLBが動き出す。
+具体的には、DaemonSetでspeaker、Deploymentでcontrollerが動く。
+controllerはLoadBalancer ServiceへのIPアドレス割り当てを管理するデーモンで、speakerはARPとかBGPとかのプロトコルをしゃべるデーモン。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# kubectl get po -n metallb-system
+NAME                        READY   STATUS    RESTARTS   AGE
+controller-fb659dc8-l28gc   1/1     Running   0          1d
+speaker-767jn               1/1     Running   0          1d
+speaker-vjn6h               1/1     Running   0          1d</code></pre></div>
+<p>speakerはDaemonSetで、2ノードクラスタなので二つ動いている。
+controllerは一つなんだけど、冗長化できるかは不明。</p>
+
+<p>MetalLBのマニフェストのapply後に<code>memberlist</code>というSecretを作ってるのは、<a href="https://github.com/hashicorp/memberlist">memberlist</a>という機能のため。
+memberlistはspeaker間で互いに生死監視し、ノードダウンを検知するのに使われている。</p>
+
+<h2 id="metallbの設定">MetalLBの設定</h2>
+
+<p>MetalLBはデプロイしても<a href="https://metallb.universe.tf/configuration/">設定</a>を与えるまではなにもしない。
+MetalLBの設定は、<code>config</code>という名前のConfigMapを<code>metallb-system</code>のNamespaceに作ればいい。</p>
+
+<p>L2モードの設定内容は簡単。
+基本的に、LoadBalancer Serviceに割り振るIPアドレスの範囲を与えるだけでいい。
+今回は以下のマニフェストをapplyした。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>ConfigMap<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>namespace:<span style="color:#666"> </span>metallb-system<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>config<span style="color:#666">
+</span><span style="color:#666"></span>data:<span style="color:#666">
+</span><span style="color:#666">  </span>config:<span style="color:#666"> </span><span style="color:#ed9d13">|
+</span><span style="color:#ed9d13">    address-pools:</span><span style="color:#666">
+</span><span style="color:#666">    </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>default<span style="color:#666">
+</span><span style="color:#666">      </span>protocol:<span style="color:#666"> </span>layer2<span style="color:#666">
+</span><span style="color:#666">      </span>addresses:<span style="color:#666">
+</span><span style="color:#666">      </span>-<span style="color:#666"> </span><span style="color:#3677a9">192.168</span>.<span style="color:#3677a9">1.210</span>-<span style="color:#3677a9">192.168</span>.<span style="color:#3677a9">1.220</span></code></pre></div>
+<p>これでMetalLBの準備は完了。
+LoadBalancer Serviceが使えるようになった。</p>
+
+<h2 id="loadbalancer-serviceとpodのデプロイ">LoadBalancer ServiceとPodのデプロイ</h2>
+
+<p>実際にLoadBalancer Serviceを使ってみる。</p>
+
+<p>まず外部からアクセスしたいPodを作る。
+今回は適当なnginxサーバを立てるため、以下のマニフェストを使う。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">---<span style="color:#666">
+</span><span style="color:#666"></span>apiVersion:<span style="color:#666"> </span>rbac.authorization.k8s.io/v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>Role<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>psp:priv<span style="color:#666">
+</span><span style="color:#666"></span>rules:<span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span>apiGroups:<span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>policy<span style="color:#666">
+</span><span style="color:#666">  </span>resourceNames:<span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>privileged<span style="color:#666">
+</span><span style="color:#666">  </span>resources:<span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>podsecuritypolicies<span style="color:#666">
+</span><span style="color:#666">  </span>verbs:<span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>use<span style="color:#666">
+</span><span style="color:#666"></span>---<span style="color:#666">
+</span><span style="color:#666"></span>apiVersion:<span style="color:#666"> </span>rbac.authorization.k8s.io/v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>RoleBinding<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>default:psp:privileged<span style="color:#666">
+</span><span style="color:#666"></span>roleRef:<span style="color:#666">
+</span><span style="color:#666">  </span>apiGroup:<span style="color:#666"> </span>rbac.authorization.k8s.io<span style="color:#666">
+</span><span style="color:#666">  </span>kind:<span style="color:#666"> </span>Role<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>psp:priv<span style="color:#666">
+</span><span style="color:#666"></span>subjects:<span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span>kind:<span style="color:#666"> </span>ServiceAccount<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>default<span style="color:#666">
+</span><span style="color:#666">  </span>namespace:<span style="color:#666"> </span>default<span style="color:#666">
+</span><span style="color:#666"></span>---<span style="color:#666">
+</span><span style="color:#666"></span>apiVersion:<span style="color:#666"> </span>apps/v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>Deployment<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>nginx-deployment<span style="color:#666">
+</span><span style="color:#666"></span>spec:<span style="color:#666">
+</span><span style="color:#666">  </span>selector:<span style="color:#666">
+</span><span style="color:#666">    </span>matchLabels:<span style="color:#666">
+</span><span style="color:#666">      </span>app:<span style="color:#666"> </span>nginx<span style="color:#666">
+</span><span style="color:#666">  </span>replicas:<span style="color:#666"> </span><span style="color:#3677a9">2</span><span style="color:#666">
+</span><span style="color:#666">  </span>template:<span style="color:#666">
+</span><span style="color:#666">    </span>metadata:<span style="color:#666">
+</span><span style="color:#666">      </span>labels:<span style="color:#666">
+</span><span style="color:#666">        </span>app:<span style="color:#666"> </span>nginx<span style="color:#666">
+</span><span style="color:#666">    </span>spec:<span style="color:#666">
+</span><span style="color:#666">      </span>containers:<span style="color:#666">
+</span><span style="color:#666">      </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>nginx<span style="color:#666">
+</span><span style="color:#666">        </span>image:<span style="color:#666"> </span>nginx:<span style="color:#3677a9">1.19</span>.<span style="color:#3677a9">1</span>-alpine<span style="color:#666">
+</span><span style="color:#666">        </span>ports:<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>containerPort:<span style="color:#666"> </span><span style="color:#3677a9">80</span></code></pre></div>
+<p>RoleとRoleBindingはPodSecurityPolicyが有効な環境でのおまじない。
+その下にDeploymentがあって、<code>nginx:1.19.1-alpine</code>のコンテナを二つ起動して、ポート80で待機させている。
+これをapplyすると、nginxのPodが二つ動く。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# kubectl get po -o wide
+NAME                                READY   STATUS    RESTARTS   AGE   IP            NODE         NOMINATED NODE   READINESS GATES
+nginx-deployment-79d8d59989-4kkx6   1/1     Running   0          2m    10.32.0.4     k8s-master   &lt;none&gt;           &lt;none&gt;
+nginx-deployment-79d8d59989-jq5t2   1/1     Running   0          2m    10.32.192.2   k8s-node     &lt;none&gt;           &lt;none&gt;</code></pre></div>
+<p>LoadBalancer Serviceは以下をapplyした。
+ポート8080へのアクセスをnginxのPodのポート80にフォワードする設定。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>Service<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>nginx<span style="color:#666">
+</span><span style="color:#666"></span>spec:<span style="color:#666">
+</span><span style="color:#666">  </span>selector:<span style="color:#666">
+</span><span style="color:#666">    </span>app:<span style="color:#666"> </span>nginx<span style="color:#666">
+</span><span style="color:#666">  </span>ports:<span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>protocol:<span style="color:#666"> </span>TCP<span style="color:#666">
+</span><span style="color:#666">    </span>port:<span style="color:#666"> </span><span style="color:#3677a9">8080</span><span style="color:#666">
+</span><span style="color:#666">    </span>targetPort:<span style="color:#666"> </span><span style="color:#3677a9">80</span><span style="color:#666">
+</span><span style="color:#666">  </span>type:<span style="color:#666"> </span>LoadBalancer</code></pre></div>
+<p>LoadBalancer Serviceを作ったら、MetalLBがEXTERNAL-IPに<code>192.168.1.210</code>を割り振ってくれた。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# kubectl describe svc nginx
+Name:                     nginx
+Namespace:                default
+Labels:                   &lt;none&gt;
+Annotations:              &lt;none&gt;
+Selector:                 app=nginx
+Type:                     LoadBalancer
+IP:                       10.0.39.102
+LoadBalancer Ingress:     192.168.1.210
+Port:                     &lt;unset&gt;  8080/TCP
+TargetPort:               80/TCP
+NodePort:                 &lt;unset&gt;  32377/TCP
+Endpoints:                10.32.0.4:80,10.32.192.2:80
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Events:
+  Type    Reason        Age    From                Message
+  ----    ------        ----   ----                -------
+  Normal  IPAllocated   9m40s  metallb-controller  Assigned IP &#34;192.168.1.210&#34;
+  Normal  nodeAssigned  9m40s  metallb-speaker     announcing from node &#34;k8s-node&#34;</code></pre></div>
+<p>これで全部デプロイ官僚。</p>
+
+<p><br></p>
+
+<p>実際に、Kubernetesクラスタ外部(VMware Player VMのホスト)から<code>192.168.1.210:8080</code>にアクセスしたら、nginxにアクセスできて、デフォルトページが表示された。</p>
+
+<p><img src="/images/metallb/nginx.png" alt="nginx.png" /></p>
+
+<h2 id="なぞのnodeport">なぞのNodePort</h2>
+
+<p>不思議なことに、どちらのノードでも、実際にNICに割り当てているIPアドレスのポート8080にアクセスしてもつながらなかった。
+確認すると確かにポートは開いてない。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# ss -tln | grep 8080
+[root]#</code></pre></div>
+<p>代わりに、LoadBalancer ServiceのNodePortの32377が開いていて、ここにアクセスするとnginxのページにアクセスできる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# ss -tln | grep 32377
+LISTEN     0      128          *:32377                    *:*</code></pre></div>
+<p>LoadBalancer ServiceをdescribeするとNodePortが設定されていることが見えるので、それが開いていること自体は不思議ではないけど、applyしたマニフェストにはNodePortは指定していないのに設定されているのが奇怪。</p>
+
+<p>と思って調べたら、ClusterIP ServiceとNodePort ServiceとLoadBalancer Serviceは継承関係みたいになっていて、NodePort ServiceはClusterIP ServiceにNodePortを加えたもので、LoadBalancer ServiceはNodePort Serviceにロードバランサ―のIPアドレスを加えたものということだった。
+なのでLoadBalancer Serviceには自動的にNodePortが付いてくる。</p>
+
+<p>ただ<a href="https://github.com/metallb/metallb/issues/328">MetalLBのL2モードではこのNodePortは使ってないので要らない</a>らしい。
+MetalLB以外でもLoadBalancer ServiceにNodePortが要らないケースがあるようで、Kubernetesコミュニティに<a href="https://github.com/kubernetes/kubernetes/issues/69845">LoadBalancer ServiceのNodePortを無効にする機能が提案</a>されていて、<a href="https://github.com/kubernetes/kubernetes/pull/92744">目下実装中</a>。</p>
+
+<p>ということで、要らないポートが開いちゃってるけど現Kubernetesバージョンでは閉じることはできない。
+きもちわるいけど、今のところは、<a href="https://github.com/kubernetes/kubernetes/pull/89998#issuecomment-611590526">kube-proxyの設定に以下を追加して、NodePortを開くIPアドレスをローカルアドレスに限定する</a>ことで、外部にさらさないくらいのことしかできない。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">nodePortAddresses:<span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span><span style="color:#ed9d13">&#34;::1/128&#34;</span><span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span><span style="color:#3677a9">127.0</span>.<span style="color:#3677a9">0.1</span>/<span style="color:#3677a9">32</span></code></pre></div>
+<p>この設定するとKubernetesクラスタ内の全てのNodePortがローカルアドレスになってしまうけど。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# ss -tln|grep 32377
+LISTEN     0      128    127.0.0.1:32377                    *:*</code></pre></div>
+<h2 id="loadbalancer-serviceの通信の妙">LoadBalancer Serviceの通信の妙</h2>
+
+<p>話しをもどすと、ノードの8080が開いてないのに、なぜ仮想IPアドレスの8080にアクセスできるかというと、どうやらipvsのパワーのおかげっぽい。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root]# ipvsadm -Ln | head -n 6
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -&gt; RemoteAddress:Port           Forward Weight ActiveConn InActConn
+TCP  192.168.1.210:8080 rr
+  -&gt; 10.32.0.4:80                 Masq    1      0          0
+  -&gt; 10.32.192.2:80               Masq    1      0          0</code></pre></div>
+<p>このような形で、仮想IPアドレス192.168.1.210のポート8080への通信が、nginxポッドのクラスタIPのポート80にフォワードされているため、外からアクセスできる。</p></div>
+
+        <section class="share-buttons">
+          <div class="share-button">
+            <div class="fb-share-button" data-href="https://www.kaitoy.xyz/2020/10/31/metallb/" data-layout="box_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fwww.kaitoy.xyz%2f2020%2f10%2f31%2fmetallb%2f&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Share</a></div>
+          </div>
+          <div class="share-button">
+            <a class="twitter-share-button"
+              href="https://twitter.com/intent/tweet?text=MetalLB%e5%85%a5%e9%96%80%20%e2%80%95%20%e3%82%aa%e3%83%b3%e3%83%97%e3%83%acKubernetes%e3%82%af%e3%83%a9%e3%82%b9%e3%82%bf%e3%81%a7LoadBalancer%e3%82%bf%e3%82%a4%e3%83%97%e3%81%aeService%e3%82%92%e4%bd%bf%e3%81%86&amp;url=https%3a%2f%2fwww.kaitoy.xyz%2f2020%2f10%2f31%2fmetallb%2f"
+              data-size="large">
+            Tweet</a>
+          </div>
+          <div class="share-button">
+            <a href="http://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="vertical-normal" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+          </div>
+          <div class="share-button">
+            <a data-pocket-label="pocket" data-pocket-count="vertical" class="pocket-btn" data-lang="en"></a>
+            <script type="text/javascript">!function(d,i){if(!d.getElementById(i)){var j=d.createElement("script");j.id=i;j.src="https://widgets.getpocket.com/v1/j/btn.js?v=1";var w=d.getElementById(i);d.body.appendChild(j);}}(document,"pocket-btn-js");</script>
+          </div>
+        </section>
+    </div>
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-6244473643910448"
+         data-ad-slot="1845600530"
+         data-ad-format="auto"></ins>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+    <section class="tbd-pagination">
+      <div class="row">
+        <div class="col-sm-6">
+          <div class="prev">
+            
+            <a href="https://www.kaitoy.xyz/2020/10/11/rook-ceph/">
+              <i class="fa fa-angle-left"></i>
+              Rook/CephでCephFSを試す
+            </a>
+            
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="next text-right">
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    
+
+    
+
+        <h4 class="page-header">Related</h4>
+
+        <div class="related-links">
+           <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/10/11/rook-ceph/">Rook/CephでCephFSを試す</a></h4>
+    <h5>Sun, Oct 11, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/rook"><kbd class="item-tag">rook</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ceph"><kbd class="item-tag">ceph</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/12/11/kong-ingress-controller/">Kong Ingress ControllerでKongの設定を管理する</a></h4>
+    <h5>Wed, Dec 11, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kong"><kbd class="item-tag">kong</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/12/05/k8s-on-centos8-with-containerd/">Kubernetes 1.16 のクラスタを CentOS 8 と containerd で構築する</a></h4>
+    <h5>Thu, Dec 5, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/containerd"><kbd class="item-tag">containerd</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/09/23/k8s-ecosystem-misc/">Kubernetesのエコシステム ー その他雑多</a></h4>
+    <h5>Mon, Sep 23, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/08/14/k8s-ecosystem-k8s-variations-and-container-host-oses/">Kubernetesのエコシステム ー KubernetesバリエーションとコンテナホストOS編</a></h4>
+    <h5>Wed, Aug 14, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/07/27/introduction-to-k8s/">Kubernetes入門</a></h4>
+    <h5>Sat, Jul 27, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/microservices"><kbd class="item-tag">microservices</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/07/26/k8s-meetup-tokyo-21/">Kubernetes Meetup Tokyo #21 - Cloud Native CI/CD に行ってきた</a></h4>
+    <h5>Fri, Jul 26, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/argo"><kbd class="item-tag">argo</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gitops"><kbd class="item-tag">gitops</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spinnaker"><kbd class="item-tag">spinnaker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/argo"><kbd class="item-tag">argo</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/06/23/k8s-ecosystem-preparing-k8s-cluster/">Kubernetesのエコシステム ー Kubernetesクラスタ構築編</a></h4>
+    <h5>Sun, Jun 23, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/06/15/k8s-ecosystem-container-runtimes/">Kubernetesのエコシステム ー コンテナランタイム編</a></h4>
+    <h5>Sat, Jun 15, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/containerd"><kbd class="item-tag">containerd</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/03/08/k8s-zundoko-operator/">ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</a></h4>
+    <h5>Fri, Mar 8, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubebuilder"><kbd class="item-tag">kubebuilder</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/golang"><kbd class="item-tag">golang</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/17/packer-k8s/">Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</a></h4>
+    <h5>Sun, Jun 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/packer"><kbd class="item-tag">packer</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/msys2"><kbd class="item-tag">msys2</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/03/build-k8s-cluster-by-ansible/">Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</a></h4>
+    <h5>Sun, Jun 3, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a></h4>
+    <h5>Sat, May 5, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a></h4>
+    <h5>Fri, May 4, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a></h4>
+    <h5>Tue, Apr 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/01/hello-skaffold/">Skaffoldを触ってみた</a></h4>
+    <h5>Sun, Apr 1, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/skaffold"><kbd class="item-tag">skaffold</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">Kubernetes 1.8のアクセス制御について。あとDashboard。</a></h4>
+    <h5>Tue, Oct 31, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a></h4>
+    <h5>Sat, Oct 21, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubeadm"><kbd class="item-tag">kubeadm</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></h4>
+    <h5>Wed, Oct 11, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a></h4>
+    <h5>Tue, Oct 10, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+ 
+        </div>
+    
+
+    
+
+        <h4 class="page-header">Comments</h4>
+
+        <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "kaitoy-tobedecided" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+
+</main>
+
+        <footer>
+
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script>window.twttr = (function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0],
+            t = window.twttr || {};
+          if (d.getElementById(id)) return t;
+          js = d.createElement(s);
+          js.id = id;
+          js.src = "https://platform.twitter.com/widgets.js";
+          fjs.parentNode.insertBefore(js, fjs);
+
+          t._e = [];
+          t.ready = function(f) {
+            t._e.push(f);
+          };
+
+          return t;
+        }(document, "script", "twitter-wjs"));</script>
+
+    </body>
+
+</html>
+
