@@ -275,7 +275,7 @@ Events:
   Normal  nodeAssigned  9m40s  metallb-speaker     announcing from node "k8s-node"
 ```
 
-これで全部デプロイ官僚。
+これで全部デプロイ完了。
 
 <br>
 
