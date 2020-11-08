@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+         
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+    google_ad_client: "ca-pub-6244473643910448",
+    enable_page_level_ads: true
+  });
+</script>
+
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/2020/11/08/sqlalchemy-orm/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/2020/11/08/sqlalchemy-orm/">
+
+
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="SQLAlchemyを使ってPythonでORM ― SQLAlchemy ORMを知る | To Be Decided">
+  <title>SQLAlchemyを使ってPythonでORM ― SQLAlchemy ORMを知る | To Be Decided</title>
+  <meta property="og:description" content="前回の記事でSQLAlchemyのCoreについてざっくりおさえたので、今回はSQLAlchemy ORMの方をやっていく。">
+  <meta name="description" content="前回の記事でSQLAlchemyのCoreについてざっくりおさえたので、今回はSQLAlchemy ORMの方をやっていく。">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/sqlalchemy.png">
+
+
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <style>
+
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+<script>
+  var webFontConfig = {
+    google: {
+      families: ['Noto Sans JP:400,700:japanese'],
+      active: function() {
+        sessionStorage.fonts = true;
+      }
+    },
+    timeout: 3000
+  };
+  WebFont.load(webFontConfig);
+</script>
+
+
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"> 
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js"></script>
+
+    
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
+        
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
+    
+
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v3.2"></script>
+
+        <nav class="navbar navbar-default navbar-fixed-top">
+
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">SQLAlchemyを使ってPythonでORM ― SQLAlchemy ORMを知る</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    <div class="single-post">
+        <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/11/08/sqlalchemy-orm/">SQLAlchemyを使ってPythonでORM ― SQLAlchemy ORMを知る</a></h4>
+    <h5>Sun, Nov 8, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/python"><kbd class="item-tag">python</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/sqlalchemy"><kbd class="item-tag">sqlalchemy</kbd></a>
+    
+
+</div>
+
+
+        <div class="cover">
+            <a href="/2020/11/08/sqlalchemy-orm/">
+                <img src="https://www.kaitoy.xyz/images/sqlalchemy.png" alt="SQLAlchemyを使ってPythonでORM ― SQLAlchemy ORMを知る">
+            </a>
+        </div>
+
+        
+        <h4 class="page-header">Table of Contents</h4>
+        <aside>
+            <nav id="TableOfContents">
+<ul>
+<li><a href="#sqlalchemy-orm">SQLAlchemy ORM</a></li>
+<li><a href="#マッピングの定義">マッピングの定義</a></li>
+<li><a href="#session">Session</a>
+<ul>
+<li><a href="#sessionによるinsert">SessionによるINSERT</a></li>
+<li><a href="#sessionによるselect">SessionによるSELECT</a></li>
+<li><a href="#sessionによるupdate">SessionによるUPDATE</a></li>
+<li><a href="#sessionによるdelete">SessionによるDELETE</a></li>
+<li><a href="#sessionのautocommit">Sessionのautocommit</a></li>
+<li><a href="#sessionのautoflush">Sessionのautoflush</a></li>
+<li><a href="#scoped-session">scoped_session</a></li>
+</ul></li>
+</ul>
+</nav>
+        </aside>
+        <hr>
+        
+
+        <br> <div class="text-justify"><p><a href="https://www.kaitoy.xyz/2020/11/05/sqlalchemy-core/">前回の記事</a>でSQLAlchemyのCoreについてざっくりおさえたので、今回はSQLAlchemy ORMの方をやっていく。</p>
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+
+<h1 id="sqlalchemy-orm">SQLAlchemy ORM</h1>
+
+<p><a href="https://docs.sqlalchemy.org/en/13/orm/index.html">SQLAlchemy ORM</a>は<a href="https://docs.sqlalchemy.org/en/13/core/index.html">SQLAlchemy Core</a>の上に作られたコンポーネント。
+SQLAlchemy Coreはユーザが自分でSQL文を構築して実行するのを助けてくれるのに対して、SQLAlchemy ORMはSQLAlchemyがSQL文を構築してくれる感じ。</p>
+
+<p>SQLAlchemy ORMを使ってPythonのクラスとRDBのテーブルとのマッピングを定義してやると、そのクラスのインスタンスへの変更をSQLAlchemyがトラッキングしてくれて、透過的にRDBのレコードに反映してくれる。</p>
+
+<h1 id="マッピングの定義">マッピングの定義</h1>
+
+<p>PythonのクラスとRDBのテーブルとのマッピングは<a href="https://docs.sqlalchemy.org/en/13/orm/extensions/declarative/index.html">Declarative</a>というAPIで定義する。
+マッピングを定義するクラスはDeclarativeのBaseクラスを継承させる必要があるので、まずはそのBaseクラスを作る。</p>
+
+<p><code>orm/base.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">sqlalchemy.ext.declarative</span> <span style="color:#6ab825;font-weight:bold">import</span> declarative_base
+
+Base = declarative_base()</code></pre></div>
+<p>Baseクラスは、継承したクラスとかマッピングの定義とかを覚えてくれるので、普通は1つのアプリでは1つのBaseクラスだけを作って使いまわして、マッピングを集中管理させる。</p>
+
+<p>マッピングを定義するには、以下のようにBaseクラスを継承したクラス(mapped class)作って、テーブル名やカラムを定義すればいい。</p>
+
+<p><code>orm/user.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">sqlalchemy</span> <span style="color:#6ab825;font-weight:bold">import</span> Column, Integer, String
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">orm.base</span> <span style="color:#6ab825;font-weight:bold">import</span> Base
+
+<span style="color:#6ab825;font-weight:bold">class</span> <span style="color:#447fcf;text-decoration:underline">User</span>(Base):
+    __tablename__ = <span style="color:#ed9d13">&#39;user&#39;</span>
+
+    <span style="color:#24909d">id</span> = Column(Integer, primary_key=True)
+    name = Column(String)</code></pre></div>
+<p>このクラス定義は、Userクラスが<code>user</code>というテーブルと関連付いていて、<code>user</code>テーブルは<code>id</code>と<code>name</code>カラムを持つ、という意味。
+Userクラスをインスタンス化すると、そのプロパティとして<code>id</code>と<code>name</code>にアクセスできて、それらへの変更はインスタンスによってトラッキングされ、<code>user</code>テーブルに反映するためのSQL文が自動で構築される、という寸法。
+因みに<code>__init__()</code>メソッドは自動で作ってくれるので、自分で書かなくても<code>User(id=1, name='kaitoy')</code>みたいにインスタンス化できる。</p>
+
+<p><code>user</code>テーブルの情報(<a href="https://docs.sqlalchemy.org/en/13/glossary.html#term-table-metadata">テーブルメタデータ</a>)は<code>User.__table__</code>にバインドされる<a href="https://docs.sqlalchemy.org/en/13/core/metadata.html#sqlalchemy.schema.Table">Table</a>オブジェクトに保持されて、そのTableオブジェクトは<code>Base.metadata</code>にバインドされる<a href="https://docs.sqlalchemy.org/en/13/core/metadata.html#sqlalchemy.schema.MetaData">MetaData</a>に登録される。
+この<code>Base.metadata</code>からDDL文を発行してRDBにテーブルを作ることができる。</p>
+
+<p><code>orm/__init__.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">sqlalchemy</span> <span style="color:#6ab825;font-weight:bold">import</span> create_engine
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">orm.base</span> <span style="color:#6ab825;font-weight:bold">import</span> Base
+
+<span style="color:#999;font-style:italic"># UserクラスをBaseクラスに登録する</span>
+<span style="color:#6ab825;font-weight:bold">import</span> <span style="color:#447fcf;text-decoration:underline">orm.user</span>
+
+engine = create_engine(<span style="color:#ed9d13">&#34;postgresql://admin:passwd@localhost/test_db&#34;</span>)
+
+<span style="color:#999;font-style:italic"># Baseクラスに登録されたmapped classのテーブルを作る</span>
+Base.metadata.create_all(engine)</code></pre></div>
+<h1 id="session">Session</h1>
+
+<p>SQLAlchemy ORMではmapped classのインスタンスをいじることでSQL文が実行されるわけだけど、コネクションやトランザクションはどうなっているのかという話。</p>
+
+<p>SQLAlchemy CoreではConnectionとかTransactionを明示的に作ってやっていたけど、SQLAlchemy ORMでは代わりに<a href="https://docs.sqlalchemy.org/en/13/orm/session.html">Session</a>というのを使う。
+Sessionは任意の数のmapped classのインスタンスと紐づき、(大抵は)一つのTransactionを保持する。</p>
+
+<p><img src="http://aosabook.org/images/sqlalchemy/session-overview.png" alt="session-overview.png" /></p>
+
+<p>Sessionを使うには、前節のBaseと同様に、まずSessionクラスを作る。
+このクラスも普通は1つのアプリで1つ作ればいい。
+SessionクラスにはEngineインスタンスを持たせる。</p>
+
+<p><code>orm/__init__.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> from sqlalchemy import create_engine
+<span style="color:#589819">+from sqlalchemy.orm import sessionmaker
+</span><span style="color:#589819"></span> from orm.base import Base
+
+ # UserクラスをBaseクラスに登録する
+ import orm.user
+
+ engine = create_engine(&#34;postgresql://admin:passwd@localhost/test_db&#34;)
+
+ # Baseクラスに登録されたmapped classのテーブルを作る
+ Base.metadata.create_all(engine)
+
+<span style="color:#589819">+Session = sessionmaker(bind=engine)
+</span></code></pre></div>
+<p>Sessionクラスは普通にインスタンス化して使う。</p>
+
+<p><code>main.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">orm</span> <span style="color:#6ab825;font-weight:bold">import</span> Session
+
+session = Session()</code></pre></div>
+<p>Sessionオブジェクトを作っても、実際に使うまではRDBとのコネクションは張らない。</p>
+
+<h2 id="sessionによるinsert">SessionによるINSERT</h2>
+
+<p>この記事の冒頭で、オブジェクトへの変更をSQLAlchemy ORMが透過的にRDBに反映してくれるというのを書いたけど、それが適用されるのはSessionオブジェクトに紐づけられた(i.e. アタッチされた)mapped classのオブジェクトだけ。</p>
+
+<p>上記Userクラスのコンストラクタを呼べばmapped classのオブジェクトができるけど、その時点ではSessionオブジェクトにはアタッチされていない。
+アタッチするには<code>add()</code>する。</p>
+
+<p><code>main.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> from orm import Session
+<span style="color:#589819">+from orm.user import User
+</span><span style="color:#589819"></span>
+ session = Session()
+<span style="color:#589819">+user = User(id=1, name=&#39;kaitoy&#39;)
+</span><span style="color:#589819">+session.add(user)
+</span></code></pre></div>
+<p>この時点でもまだコネクションは張られないし、RDBにレコードが追加されることもない。
+userオブジェクトを永続化するには、<code>flush()</code>が必要。</p>
+
+<p><code>main.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> from orm import Session
+ from orm.user import User
+
+ session = Session()
+ user = User(id=1, name=&#39;kaitoy&#39;)
+ session.add(user)
+<span style="color:#589819">+session.flush()
+</span></code></pre></div>
+<p><code>flush()</code>した時点でコネクションが(張られていなければ)張られて、ConnectionオブジェクトがSessionオブジェクトに紐づき、またトランザクションが(すでに開始していなければ)開始して、TransactionのオブジェクトがSessionオブジェクトに紐づく。
+さらにSessionオブジェクトにアタッチされたオブジェクトの変更が計算されてRDBに反映される。
+上記の例だと、新たなuserオブジェクトが追加されているので、RDBにはUserテーブルへのINSERTが発行される。</p>
+
+<p><code>flush()</code>しただけだとまだトランザクションが閉じてないので、コミットもしてやる必要がある。</p>
+
+<p><code>main.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> from orm import Session
+ from orm.user import User
+
+ session = Session()
+ user = User(id=1, name=&#39;kaitoy&#39;)
+ session.add(user)
+ session.flush()
+<span style="color:#589819">+session.commit()
+</span></code></pre></div>
+<p>実際は、<code>commit()</code>すると<code>flush()</code>もされるので、<code>flush()</code>は省略できる。</p>
+
+<p><code>main.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> from orm import Session
+ from orm.user import User
+
+ session = Session()
+ user = User(id=1, name=&#39;kaitoy&#39;)
+ session.add(user)
+<span style="color:#d22323">-session.flush()
+</span><span style="color:#d22323"></span> session.commit()
+</code></pre></div>
+<p><code>commit()</code>するとトランザクションが閉じて、ConnectionがSessionオブジェクトからコネクションプールに返される。</p>
+
+<h2 id="sessionによるselect">SessionによるSELECT</h2>
+
+<p>INSERTしたレコードを取得するには、Sessionオブジェクトから<a href="https://docs.sqlalchemy.org/en/13/orm/query.html#sqlalchemy.orm.query.Query">Query</a>オブジェクトを作って、クエリを記述して実行する。</p>
+
+<p><code>main.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> from orm import Session
+ from orm.user import User
+
+ session = Session()
+ user = User(id=1, name=&#39;kaitoy&#39;)
+ session.add(user)
+ session.commit()
+<span style="color:#589819">+
+</span><span style="color:#589819">+retrieved_user = session.query(User).filter_by(name=&#39;kaitoy&#39;).first()
+</span><span style="color:#589819">+session.commit()
+</span></code></pre></div>
+<p>Queryを使ったクエリの書き方はここでは解説しないけど、SQLAlchemy Coreと違って、上記のようにメソッドチェインでオブジェクト志向な感じで書ける。
+クエリを発行した時点、つまり上の例だと<code>first()</code>が実行された時点でSessionオブジェクトがConnectionをプールから取得し、トランザクションを開始するので、後でちゃんとSessionを<code>commit()</code>してConnectionをプールに返してやるのが肝要。</p>
+
+<p>クエリを発行するタイミングで内部で<code>flush()</code>も実行されるので、<code>session.add(user)</code>のあとの<code>session.commit()</code>は無くてもいい。
+(実際には後述のSessionのautoflush設定によって挙動が変わる。)</p>
+
+<p><code>main.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> from orm import Session
+ from orm.user import User
+
+ session = Session()
+ user = User(id=1, name=&#39;kaitoy&#39;)
+ session.add(user)
+<span style="color:#d22323">-session.commit()
+</span><span style="color:#d22323"></span>
+ retrieved_user = session.query(User).filter_by(name=&#39;kaitoy&#39;).first()
+ session.commit()
+</code></pre></div>
+<p>最後の<code>commit()</code>の後など、アタッチされたオブジェクトのプロパティにトランザクションの外でアクセスすると、RDBのレコードとの同期を取るために自動でトランザクションが開始されてSELECTが発行されるので注意が必要。
+プロパティにアクセスしたら、トランザクションが不用に続かないように、<code>Session.commit()</code>してトランザクションを閉じて、コネクションをプールに返してやるべし。
+<a href="https://stackoverflow.com/questions/15397680/detaching-sqlalchemy-instance-so-no-refresh-happens">Sessionのexpire_on_commitをFalseにする</a>ことで、このような挙動を避けることもできる。</p>
+
+<p>因みに、取得した<code>retrieved_user</code>は、<code>user</code>と同じ参照になっていて、つまり<code>retrieved_user is user</code>は<code>True</code>になる。
+これはSessionオブジェクトが<a href="https://docs.sqlalchemy.org/en/13/glossary.html#term-identity-map">identity map</a>というのを管理していて、RDBの一つのレコードに対しては、一つのPythonオブジェクトしか作らないようにしているため。</p>
+
+<h2 id="sessionによるupdate">SessionによるUPDATE</h2>
+
+<p>アタッチされたオブジェクトのプロパティをいじってコミットすれば、レコードのUPDATEができる。</p>
+
+<p><code>main.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> from orm import Session
+ from orm.user import User
+
+ session = Session()
+ user = User(id=1, name=&#39;kaitoy&#39;)
+ session.add(user)
+
+ retrieved_user = session.query(User).filter_by(name=&#39;kaitoy&#39;).first()
+<span style="color:#589819">+retrieved_user.name = &#39;hogehoge&#39;
+</span><span style="color:#589819"></span> session.commit()
+</code></pre></div>
+<h2 id="sessionによるdelete">SessionによるDELETE</h2>
+
+<p>アタッチされたオブジェクトを<code>Session.delete()</code>に渡すと、レコードのDELETEができる。</p>
+
+<p><code>main.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> from orm import Session
+ from orm.user import User
+
+ session = Session()
+ user = User(id=1, name=&#39;kaitoy&#39;)
+ session.add(user)
+
+ retrieved_user = session.query(User).filter_by(name=&#39;kaitoy&#39;).first()
+ retrieved_user.name = &#39;hogehoge&#39;
+ session.commit()
+<span style="color:#589819">+
+</span><span style="color:#589819">+session.delete(retrieved_user)
+</span><span style="color:#589819">+session.commit()
+</span></code></pre></div>
+<p>実際にRDBにDELETEが発行されるのはflush時なので、上記コードだと最後の<code>session.commit()</code>のタイミング。</p>
+
+<p><code>Session.delete()</code>はメソッド名は<code>Session.add()</code>と対になってる風だけど、<a href="https://docs.sqlalchemy.org/en/13/orm/session_state_management.html#session-object-states">オブジェクトの状態</a>を削除にマークするだけで、Sessionからオブジェクトをデタッチするわけではない。
+(デタッチは<code>Session.expunge()</code>。)</p>
+
+<h2 id="sessionのautocommit">Sessionのautocommit</h2>
+
+<p>これまでに説明したように、SQLAlchemy ORMではトランザクションは必要に応じて自動で開始してくれる。
+SQLAlchemy Coreでは自分で<code>Connection.begin()</code>してトランザクションを明示的に開始しないといけないのとは対照的だ。</p>
+
+<p>実は、歴史的事情でSessionにも<code>begin()</code>メソッドがあって、役割も<code>Connection.begin()</code>と同じ。
+現在ではSessionの<code>begin()</code>はほぼ<a href="https://docs.sqlalchemy.org/en/13/orm/session_transaction.html#autocommit-mode">autocommitモード</a>でしか使わないものだけど、autocommitモードは非推奨になっててデフォルトでオフで、SQLAlchemy v2.0では廃止になるので忘れていい。</p>
+
+<p>トランザクションの開始はSQLAlchemy ORMに任せて、<code>Session.begin()</code>も忘れていい。</p>
+
+<h2 id="sessionのautoflush">Sessionのautoflush</h2>
+
+<p>autocommitと似てるような似てないような<a href="https://docs.sqlalchemy.org/en/13/orm/session_basics.html?highlight=autoflush#flushing">autoflush</a>というものがある。
+これもSessionの機能の一つで、デフォルトではオンだけど、オフにすると、Queryオブジェクトでクエリを発行する際に<code>Session.flush()</code>が実行されなくなる。</p>
+
+<p>それが何を意味するかというと、Sessionに<code>add()</code>したオブジェクトとか、アタッチされたオブジェクトに加えた変更とかが、コミットするまではクエリ結果に反映されないということ。</p>
+
+<p><code>main.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">orm</span> <span style="color:#6ab825;font-weight:bold">import</span> Session
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">orm.user</span> <span style="color:#6ab825;font-weight:bold">import</span> User
+
+session = Session(autoflush=False)  <span style="color:#999;font-style:italic"># autoflushをオフにしたSessionを作成。</span>
+user = User(<span style="color:#24909d">id</span>=<span style="color:#3677a9">1</span>, name=<span style="color:#ed9d13">&#39;kaitoy&#39;</span>)
+session.add(user)
+
+<span style="color:#999;font-style:italic"># session.flush()しない。</span>
+<span style="color:#999;font-style:italic"># session.commit()もしない。</span>
+
+<span style="color:#999;font-style:italic"># クエリ発行時にはflush()は実行されない。</span>
+retrieved_user = session.query(User).filter_by(name=<span style="color:#ed9d13">&#39;kaitoy&#39;</span>).first()</code></pre></div>
+<p>これはautoflushをオフにしたSessionを使った例だけど、明示的に<code>flush()</code>を呼んでないのでretrieved_userはNoneになる。</p>
+
+<p>大抵のユースケースではautoflushはオンのままでいいけど、パフォーマンスチューニングのためにオフにするケースがあるかもしれない。</p>
+
+<h2 id="scoped-session">scoped_session</h2>
+
+<p>実際にSessionを使ってアプリを書こうとすると、Sessionオブジェクトをいつ作っていつ破棄するのか(i.e. Sessionのスコープ)に<a href="https://docs.sqlalchemy.org/en/13/orm/session_basics.html#session-faq-whentocreate">迷う</a>はず。</p>
+
+<p>基本的な原則は、Sessionスコープの開始と終了は、そのSessionを使ってRDBアクセスする関数の外にするということ。
+<a href="https://www.kaitoy.xyz/2020/11/05/sqlalchemy-core/#%E3%83%88%E3%83%A9%E3%83%B3%E3%82%B6%E3%82%AF%E3%82%B7%E3%83%A7%E3%83%B3%E3%81%AE%E7%AE%A1%E7%90%86">SQLAlchemy Coreの記事のトランザクション管理</a>のところにも書いた話と似ていて、コードにすると以下のような感じ。</p>
+
+<p><code>main.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">orm</span> <span style="color:#6ab825;font-weight:bold">import</span> Session
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">orm.user</span> <span style="color:#6ab825;font-weight:bold">import</span> User
+
+<span style="color:#6ab825;font-weight:bold">def</span> <span style="color:#447fcf">delete_user</span>(session, name):
+  user = session.query(User).filter_by(name=name).first()
+  session.delete(user)
+
+<span style="color:#6ab825;font-weight:bold">def</span> <span style="color:#447fcf">main</span>():
+  session = Session()
+  <span style="color:#6ab825;font-weight:bold">try</span>:
+    delete_user(session, <span style="color:#ed9d13">&#39;kaitoy&#39;</span>)  <span style="color:#999;font-style:italic"># 外で作ったSessionオブジェクトを渡す。</span>
+    session.commit()  <span style="color:#999;font-style:italic"># SessionのコミットはSQL文を実行する関数の外でやる。</span>
+  <span style="color:#6ab825;font-weight:bold">except</span>:
+    session.rollback()
+    <span style="color:#6ab825;font-weight:bold">raise</span>
+  <span style="color:#6ab825;font-weight:bold">finally</span>:
+    session.close()</code></pre></div>
+<p>Webアプリにおいては、Sessionのスコープはリクエストのスコープと同じにしておけば間違いない。
+つまり、リクエストを受け付けたらSessionオブジェクトを作って、レスポンスを返す時に(必要に応じてコミットして)破棄すればいい。
+このパターンを簡単に実現するために、よく<a href="https://docs.sqlalchemy.org/en/13/orm/contextual.html#sqlalchemy.orm.scoping.scoped_session">scoped_session</a>が使われる。
+scoped_sessionを使うには、以下のようにSessionクラス作ればいいだけ。</p>
+
+<p><code>orm/__init__.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> from sqlalchemy import create_engine
+ from sqlalchemy.orm import sessionmaker
+<span style="color:#589819">+from sqlalchemy.orm import scoped_session
+</span><span style="color:#589819"></span> from orm.base import Base
+
+ # UserクラスをBaseクラスに登録する
+ import orm.user
+
+ engine = create_engine(&#34;postgresql://admin:passwd@localhost/test_db&#34;)
+
+ # Baseクラスに登録されたmapped classのテーブルを作る
+ Base.metadata.create_all(engine)
+
+<span style="color:#d22323">-Session = sessionmaker(bind=engine)
+</span><span style="color:#d22323"></span><span style="color:#589819">+Session = scoped_session(sessionmaker(bind=engine))
+</span></code></pre></div>
+<p>このようにして作ったSessionクラスは、何度インスタンス化しても同一のオブジェクトが返る。
+つまり、<code>Session() is Session()</code>が<code>True</code>になる。
+なのでmain.pyは以下のように書けるようになる。</p>
+
+<p><code>main.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> from orm import Session
+ from orm.user import User
+
+<span style="color:#d22323">-def delete_user(session, name):
+</span><span style="color:#d22323"></span><span style="color:#589819">+def delete_user(name):
+</span><span style="color:#589819">+  session = Session()
+</span><span style="color:#589819"></span>   user = session.query(User).filter_by(name=name).first()
+   session.delete(user)
+
+ def main():
+   session = Session()
+   try:
+<span style="color:#d22323">-    delete_user(session, &#39;kaitoy&#39;)  # 外で作ったSessionオブジェクトを渡す。
+</span><span style="color:#d22323"></span><span style="color:#589819">+    delete_user(&#39;kaitoy&#39;)  # 外で作ったSessionオブジェクトを渡さなくてもいい。
+</span><span style="color:#589819"></span>     session.commit()  # SessionのコミットはSQL文を実行する関数の外でやる。
+   except:
+     session.rollback()
+     raise
+   finally:
+     session.close()
+</code></pre></div>
+<p>正確に言うと、何度インスタンス化しても同一のオブジェクトが返るというのは、同一のスレッド内での話。
+別のスレッドでは別のオブジェクトになるので、スレッド間でSessionオブジェクトが共有されることはない。
+(Sessionは<a href="https://docs.sqlalchemy.org/en/13/orm/session_basics.html#is-the-session-thread-safe">スレッドセーフではない</a>。)</p>
+
+<p>Sessionオブジェクトを作り直したい場合は、<code>Session.remove()</code>を実行すれば既存のやつをクローズして破棄できる。
+Webアプリにおいては、レスポンスを返す時に<code>Session.remove()</code>しておけばいい。</p></div>
+
+        <section class="share-buttons">
+          <div class="share-button">
+            <div class="fb-share-button" data-href="https://www.kaitoy.xyz/2020/11/08/sqlalchemy-orm/" data-layout="box_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fwww.kaitoy.xyz%2f2020%2f11%2f08%2fsqlalchemy-orm%2f&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Share</a></div>
+          </div>
+          <div class="share-button">
+            <a class="twitter-share-button"
+              href="https://twitter.com/intent/tweet?text=SQLAlchemy%e3%82%92%e4%bd%bf%e3%81%a3%e3%81%a6Python%e3%81%a7ORM%20%e2%80%95%20SQLAlchemy%20ORM%e3%82%92%e7%9f%a5%e3%82%8b&amp;url=https%3a%2f%2fwww.kaitoy.xyz%2f2020%2f11%2f08%2fsqlalchemy-orm%2f"
+              data-size="large">
+            Tweet</a>
+          </div>
+          <div class="share-button">
+            <a href="http://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="vertical-normal" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+          </div>
+          <div class="share-button">
+            <a data-pocket-label="pocket" data-pocket-count="vertical" class="pocket-btn" data-lang="en"></a>
+            <script type="text/javascript">!function(d,i){if(!d.getElementById(i)){var j=d.createElement("script");j.id=i;j.src="https://widgets.getpocket.com/v1/j/btn.js?v=1";var w=d.getElementById(i);d.body.appendChild(j);}}(document,"pocket-btn-js");</script>
+          </div>
+        </section>
+    </div>
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-6244473643910448"
+         data-ad-slot="1845600530"
+         data-ad-format="auto"></ins>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+    <section class="tbd-pagination">
+      <div class="row">
+        <div class="col-sm-6">
+          <div class="prev">
+            
+            <a href="https://www.kaitoy.xyz/2020/11/05/sqlalchemy-core/">
+              <i class="fa fa-angle-left"></i>
+              SQLAlchemyを使ってPythonでORM ― SQLAlchemy Coreを知る
+            </a>
+            
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="next text-right">
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    
+
+    
+
+        <h4 class="page-header">Related</h4>
+
+        <div class="related-links">
+           <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/11/05/sqlalchemy-core/">SQLAlchemyを使ってPythonでORM ― SQLAlchemy Coreを知る</a></h4>
+    <h5>Thu, Nov 5, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/python"><kbd class="item-tag">python</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/sqlalchemy"><kbd class="item-tag">sqlalchemy</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/05/01/cython/">Cythonの浅漬け</a></h4>
+    <h5>Fri, May 1, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/python"><kbd class="item-tag">python</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/cython"><kbd class="item-tag">cython</kbd></a>
+    
+
+</div>
+ 
+        </div>
+    
+
+    
+
+        <h4 class="page-header">Comments</h4>
+
+        <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "kaitoy-tobedecided" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+
+</main>
+
+        <footer>
+
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script>window.twttr = (function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0],
+            t = window.twttr || {};
+          if (d.getElementById(id)) return t;
+          js = d.createElement(s);
+          js.id = id;
+          js.src = "https://platform.twitter.com/widgets.js";
+          fjs.parentNode.insertBefore(js, fjs);
+
+          t._e = [];
+          t.ready = function(f) {
+            t._e.push(f);
+          };
+
+          return t;
+        }(document, "script", "twitter-wjs"));</script>
+
+    </body>
+
+</html>
+
