@@ -218,4 +218,4 @@ DBAPIコネクションが切れた時、コネクションプールは何をし
 
 <br>
 
-SQLAlchemy ORMについてはまた別の記事で。
+SQLAlchemy ORMについては次回の記事で。
