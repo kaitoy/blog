@@ -301,22 +301,21 @@ Javaの<a href="https://hibernate.org/">Hibernate</a>などのORMライブラリ
 <ul>
 <li><p><a href="https://docs.sqlalchemy.org/en/13/core/engines.html">EngineとPool</a></p>
 
-<p>SQLAlchemyの使用は、まず<a href="https://docs.sqlalchemy.org/en/13/core/connections.html#sqlalchemy.engine.Engine">Engine</a>オブジェクトを作ることから始まる。
+<p>SQLAlchemyの使用は、まず<code>create_engine()</code>で<a href="https://docs.sqlalchemy.org/en/13/core/connections.html#sqlalchemy.engine.Engine">Engine</a>オブジェクトを作ることから始まる。
 Engineは、RDBとのコネクションを張るための設定やコネクションプールを管理するオブジェクトで、基本は1アプリで1つだけインスタンス化する。</p>
 
 <p><img src="https://docs.sqlalchemy.org/en/13/_images/sqla_engine_arch.png" alt="sqla_engine_arch.png" /></p>
 
-<p>Engineオブジェクトの<code>connect()</code>を呼んだり、後述の<code>execute()</code>などのRDBコネクションが必要なメソッドを呼ぶと、RDBとのコネクションが張られて、コネクションプールで管理される。
-コネクションプールは上図の<a href="https://docs.sqlalchemy.org/en/13/core/pooling.html#sqlalchemy.pool.Pool">Pool</a>というオブジェクトで表される。
+<p>Engineオブジェクトの<code>connect()</code>を呼んだり、後述の<code>execute()</code>などのRDBコネクションが必要なメソッドを呼ぶと、RDBとのDBAPIコネクションが張られて、コネクションプールで管理される。
+コネクションプールは上図の<a href="https://docs.sqlalchemy.org/en/13/core/pooling.html#sqlalchemy.pool.Pool">Pool</a>というオブジェクトで表されるもので、Engineが内部に一つ持つ。
 Poolは<a href="https://docs.sqlalchemy.org/en/13/core/engines.html#pooling">デフォルトで5~10個のコネクションを保持する</a>。</p>
 
 <p>上図の<a href="https://docs.sqlalchemy.org/en/13/core/internals.html#sqlalchemy.engine.interfaces.Dialect">Dialect</a>はRDBMSのRDBMSの種類の違いによるAPIの差異を抽象化してくれるオブジェクトだけど、あまり気にしなくていい。</p></li>
 
 <li><p><a href="https://docs.sqlalchemy.org/en/13/core/connections.html">Connection</a></p>
 
-<p>Engine(というかPool)によってRDBとのコネクションが張られると<a href="https://docs.sqlalchemy.org/en/13/core/connections.html#sqlalchemy.engine.Connection">Connection</a>というオブジェクトができる。
-ConnectionはDBAPIのコネクションのプロキシ。
-ConnectionがcloseされてもDBAPIコネクションがcloseされるわけではなく、ConnectionがPoolに返されてクリーンアップされて再利用される。</p>
+<p>Engine(というかPool)によってRDBとのDBAPIコネクションが張られると、<a href="https://docs.sqlalchemy.org/en/13/core/connections.html#sqlalchemy.engine.Connection">Connection</a>というオブジェクトでラップされ、Poolに入れられる。
+Connectionは使い終わったらcloseするんだけど、closeしてもConnectionオブジェクトが破棄されたりDBAPIコネクションが切れわけではなく、ConnectionオブジェクトはPoolに返されて、DBAPIコネクションはクリーンアップされて再利用される。</p>
 
 <p>Connectionはスレッドセーフではないしスレッド間で共有される想定の作りではないので、スレッドごとに取得するものと考えておけばいい。</p></li>
 
@@ -337,7 +336,6 @@ engine = create_engine(<span style="color:#ed9d13">&#34;postgresql://admin:passw
 <span style="color:#999;font-style:italic"># PoolがDBAPIを使ってRDBとのコネクションを張り、Connectionオブジェクトに入れて返してくれる。</span>
 connection = engine.connect()
 
-
 <span style="color:#999;font-style:italic"># トランザクションを開始。Transactionオブジェクトが返される。</span>
 transaction = connection.begin()
 connection.execute(<span style="color:#ed9d13">&#34;insert into hoge (a, b) values (1, 2)&#34;</span>)
@@ -357,7 +355,7 @@ engine = create_engine(<span style="color:#ed9d13">&#34;postgresql://admin:passw
 <span style="color:#6ab825;font-weight:bold">with</span> engine.connect() <span style="color:#6ab825;font-weight:bold">as</span> connection:
     <span style="color:#6ab825;font-weight:bold">with</span> connection.begin():
         connection.execute(<span style="color:#ed9d13">&#34;insert into hoge (a, b) values (1, 2)&#34;</span>)</code></pre></div>
-<p>さらに、<code>Engine.connect()</code>と<code>Connection.begin()</code>を同時にできるシンタックスシュガーである<code>Engine.begin()</code>を使うと、以下のようにかなり簡単に書くこともできる。</p>
+<p>さらに、<code>Engine.connect()</code>と<code>Connection.begin()</code>を同時にできる<code>Engine.begin()</code>を使うと、以下のようにかなり簡単に書くこともできる。</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">sqlalchemy</span> <span style="color:#6ab825;font-weight:bold">import</span> create_engine
 
 engine = create_engine(<span style="color:#ed9d13">&#34;postgresql://admin:passwd@localhost/test_db&#34;</span>)
@@ -373,8 +371,8 @@ engine = create_engine(<span style="color:#ed9d13">&#34;postgresql://admin:passw
 
 <h2 id="トランザクションの管理">トランザクションの管理</h2>
 
-<p>前節に書いたように、SQLAlchemyではユーザが明示的にトランザクションの開始と修了を管理する必要があるんだけど、SQLAlchemyを使ってDAO的なモジュールを作っていると、トランザクション管理をDAOですべきか、DAOを使う側ですべきかちょっと迷うかもしれない。
-DAOでやると、DAOを使う側でトランザクションを処理しなくていいので楽だけど、トランザクションの範囲はデータをどう処理したいかによって変わるので、現実的にはDAOを使う側で管理したくなることも多い。</p>
+<p>前節に書いたように、SQLAlchemyではユーザが明示的にトランザクションの開始と修了を管理する必要があるんだけど、SQLAlchemyを使ってDAO的なモジュールを作っていると、トランザクション管理をDAOの関数内ですべきか、DAOを使う側ですべきかちょっと迷うかもしれない。
+DAOの関数内でやると、DAOを使う側でトランザクションを処理しなくていいので楽だけど、トランザクションの範囲はデータをどう処理したいかによって変わるので、現実的にはDAOを使う側で管理したくなることも多い。</p>
 
 <p>(多分)そんな悩みを解消するため、SQLAlchemyではトランザクションのネストがサポートされている。
 ネストというのは、以下のように<code>with connection.begin()</code>で開始したトランザクションのなかで、再度<code>with connection.begin()</code>するようなやつ。</p>
@@ -416,7 +414,7 @@ SQLAlchemyは必要に応じてDBAPIコネクションを作ってコネクシ�
 
 <h2 id="dbapiコネクションの切断">DBAPIコネクションの切断</h2>
 
-<p>Connectionは、使うときはコネクションプールから取得して、使い終わったら<code>close()</code>してコネクションプールに返すんだけど、そのときDBAPIコネクションがcloseされるというわけではないよというのを上の方で書いた。
+<p>Connectionは、使うときはコネクションプールから取得して、使い終わったら<code>close()</code>してコネクションプールに返すんだけど、そのときDBAPIコネクションが切断されるというわけではないよというのを上の方で書いた。
 しかしそれはDBAPIコネクションがずっと繋がりっぱなしという意味ではない。
 RDBMS側でタイムアウトなどの理由で切ってくることもあるし、RDBMSが再起動したらプール内のコネクションは全部切れる。</p>
 
