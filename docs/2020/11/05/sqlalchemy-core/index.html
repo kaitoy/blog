@@ -222,11 +222,11 @@
 <li><a href="#sqlalchemy-core">SQLAlchemy Core</a>
 <ul>
 <li><a href="#主要なオブジェクト">主要なオブジェクト</a></li>
-</ul></li>
 <li><a href="#sqlalchemy-coreでのsql文実行">SQLAlchemy CoreでのSQL文実行</a></li>
 <li><a href="#トランザクションの管理">トランザクションの管理</a></li>
 <li><a href="#コネクションプールとプロセスフォーク">コネクションプールとプロセスフォーク</a></li>
 <li><a href="#dbapiコネクションの切断">DBAPIコネクションの切断</a></li>
+</ul></li>
 </ul></li>
 </ul>
 </nav>
@@ -325,7 +325,7 @@ Connectionは使い終わったらcloseするんだけど、closeしてもConnec
 トランザクションはTransactionの<code>commit()</code>か<code>rollback()</code>を呼ぶと終わらせられる。</p></li>
 </ul>
 
-<h2 id="sqlalchemy-coreでのsql文実行">SQLAlchemy CoreでのSQL文実行</h2>
+<h3 id="sqlalchemy-coreでのsql文実行">SQLAlchemy CoreでのSQL文実行</h3>
 
 <p>上記オブジェクトを組み合わせて、SQL文を実行する最も率直な例は以下:</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">sqlalchemy</span> <span style="color:#6ab825;font-weight:bold">import</span> create_engine
@@ -369,7 +369,7 @@ engine = create_engine(<span style="color:#ed9d13">&#34;postgresql://admin:passw
 
 <p>以降、ConnectionやTransactionについて留意したいことについて書いておく。</p>
 
-<h2 id="トランザクションの管理">トランザクションの管理</h2>
+<h3 id="トランザクションの管理">トランザクションの管理</h3>
 
 <p>前節に書いたように、SQLAlchemyではユーザが明示的にトランザクションの開始と修了を管理する必要があるんだけど、SQLAlchemyを使ってDAO的なモジュールを作っていると、トランザクション管理をDAOの関数内ですべきか、DAOを使う側ですべきかちょっと迷うかもしれない。
 DAOの関数内でやると、DAOを使う側でトランザクションを処理しなくていいので楽だけど、トランザクションの範囲はデータをどう処理したいかによって変わるので、現実的にはDAOを使う側で管理したくなることも多い。</p>
@@ -404,7 +404,7 @@ DAOの関数内でやると、DAOを使う側でトランザクションを処�
         <span style="color:#6ab825;font-weight:bold">with</span> connection.begin():  <span style="color:#999;font-style:italic"># トランザクション</span>
             add_hoge(<span style="color:#3677a9">1</span>, <span style="color:#3677a9">2</span>, connection)
             add_hoge(<span style="color:#3677a9">10</span>, <span style="color:#3677a9">20</span>, connection)</code></pre></div>
-<h2 id="コネクションプールとプロセスフォーク">コネクションプールとプロセスフォーク</h2>
+<h3 id="コネクションプールとプロセスフォーク">コネクションプールとプロセスフォーク</h3>
 
 <p>上の方で、基本的に一つのPythonアプリでは一つのEngineをインスタンス化するというのを書いたけど、それはつまりコネクションプールを一つにするということ。
 SQLAlchemyは必要に応じてDBAPIコネクションを作ってコネクションプールに保持させるわけだけど、それは具体的にはRDBMSと通信するためのソケットファイルを扱うファイルディスクリプタを保持させるということになる。</p>
@@ -412,7 +412,7 @@ SQLAlchemyは必要に応じてDBAPIコネクションを作ってコネクシ�
 <p>ということは、並列処理とかをするためにPythonプロセスをフォークして、Engineインスタンスとコネクションプールがコピーされると、同じファイルディスクリプタを複数のプロセスで持つことになる。
 それぞれのプロセスで同じファイルディスクリプタを読み書きすると当然問題になるので、フォークしたプロセスでは一旦Engineの<code>dispose()</code>を呼んで<a href="https://docs.sqlalchemy.org/en/13/core/pooling.html#using-connection-pools-with-multiprocessing-or-os-fork">コネクションプールを作り直さないといけない</a>。</p>
 
-<h2 id="dbapiコネクションの切断">DBAPIコネクションの切断</h2>
+<h3 id="dbapiコネクションの切断">DBAPIコネクションの切断</h3>
 
 <p>Connectionは、使うときはコネクションプールから取得して、使い終わったら<code>close()</code>してコネクションプールに返すんだけど、そのときDBAPIコネクションが切断されるというわけではないよというのを上の方で書いた。
 しかしそれはDBAPIコネクションがずっと繋がりっぱなしという意味ではない。
