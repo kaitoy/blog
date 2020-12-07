@@ -13,7 +13,7 @@ Kubernetesを仕事で使い始めて1年たったので、これまで使った
 
 DockerとかcontainerdとかKata ContainersとかgVisorとかの話。
 
-(2020/8/27更新。)
+(2020/12/7更新。)
 
 <!--more-->
 
@@ -412,6 +412,15 @@ Unikernelをコンテナとして動かすランタイムなので、やりた�
 日本では2020年8月22日の[Container Runtime Meetup #2](https://runtime.connpass.com/event/180172/)で[紹介された](https://speakerdeck.com/thehajime/container-runtime-meetup-202008-lkl)。
 
 <img src="/images/k8s-ecosystem-container-runtimes/ukontainer.png" alt="ukontainer.png" style="padding: 0 15%;">
+
+## cri-dockerd
+[cri-dockerd](https://github.com/Mirantis/cri-dockerd)はMirantis社とDocker社によるCRI実装。
+
+[Kubernetes 1.20でdockershimが非推奨になった](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.20.md#deprecation)のを受けて、dockershimの後継として[2020年12月4日に発表された](https://www.docker.com/blog/what-developers-need-to-know-about-docker-docker-engine-and-kubernetes-v1-20/)。
+
+これを使うことで、Kubernetesからdockershimが削除された後も、KubernetesでDockerを使うことができる。
+
+(筆者が触ってみたときのメモを[別の記事](https://www.kaitoy.xyz/2020/12/06/cri-dockerd/)に書いた。)
 
 # まとめ
 コンテナランタイムは奥が深くてまだ進化の過程。
