@@ -2,7 +2,7 @@
 categories = ["Programming"]
 title = "Kubernetesでdockershimが廃止されても、KubernetesでDockerが使えなくなるわけじゃないよ"
 date = "2020-12-06T17:11:46+09:00"
-tags = ["kubernetes"]
+tags = ["kubernetes", "docker"]
 draft = false
 cover = "kubernetes.png"
 slug = "cri-dockerd"
@@ -14,6 +14,8 @@ highlightLanguages = []
 最近世界中で騒ぎになっている通り、Kubernetes 1.20でDockerが非推奨になり、近いうちにdockershimが廃止されるんだけど、dockershimの後継としてcri-dockerdというのが開発されてるので、KubernetesでDockerが使えなくなるわけではなさそうという話し。
 
 <!--more-->
+
+[Kubernetes Advent Calendar 2020 その3](https://qiita.com/advent-calendar/2020/kubernetes3)の6日目の記事です。
 
 {{< google-adsense >}}
 
