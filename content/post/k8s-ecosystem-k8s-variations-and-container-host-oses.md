@@ -12,7 +12,7 @@ draft: false
 
 今回はKubernetesのバリエーションとコンテナホストOSについて書く。
 
-(2020/4/30更新)
+(2020/12/7更新)
 
 <!--more-->
 
@@ -120,6 +120,24 @@ HPEのストレージ、ネットワーク、サーバ、ネットワーク、HC
 
 upstream-alignedなKubernetesということなので、オリジナルのKubernetesからは多少手が入っていると思われる。
 また、[Fluentbit](https://fluentbit.io/)とか[Contour](https://projectcontour.io/)とかがデフォルトで乗ってくるのと、tkgという管理用コマンドライン(兼Web GUIサーバ)ツールが付いてくる。
+
+## k0s
+[k0s](https://k0sproject.io/)は2020年11月13日にMirantis社の中の人が[発表した](https://medium.com/@adamparco/announcing-k0s-the-smallest-simplest-kubernetes-distribution-3626c86575d5)Kubernetesディストリビューション。
+
+単一のバイナリを実行すると、etcd、Kubernetes、containerdなどのバイナリを展開し、k0sプロセスからそれらを子プロセスとして立ち上げてKubernetesクラスタを構築してくれる。
+Kubernetesとかはオリジナルのままで手が入っているわけではないし、オペレータとかサービスがもりもりデプロイされるわけでもないので、kubeadmみたいなKubernetesクラスタ構築ツールとして見てもいいかもしれない。
+
+因みにコンテナイメージはk0sバイナリに含まれてないので、CoreDNSとかが普通にpullされる。
+
+## EKS Distro (EKS-D)
+[EKS-D](https://distro.eks.amazonaws.com/)は2020年12月1日にAWSが[発表](https://aws.amazon.com/jp/blogs/opensource/introducing-amazon-eks-distro/)したKubernetesディストリビューション。
+[EKS](https://aws.amazon.com/jp/eks/)で使われてるやつ。
+
+Kubernetesにセキュリティ脆弱性等のパッチがあてられたもの、CoreDNS、etcd、metrics-server、CNIプラグイン、CSIプラグインとかが含まれていて、それらのコンテナイメージはAmazon Linux 2ベースになっている。
+
+オリジナルのKubernetesより長いサポートがAWSから提供されるのが大きな利点の一つ。
+といっても、最長14ヶ月。
+[オリジナルのKubernetesが1.19からサポート期間が1年になった](https://kubernetes.io/docs/setup/release/notes/#increase-the-kubernetes-support-window-to-one-year)ので、そんなに変わらないかも。
 
 # Kubernetes亜種
 
@@ -264,3 +282,9 @@ RancherOSと同様のアーキテクチャっぽくて、システムサービ�
 ## Bottlerocket
 [Bottlerocket](https://aws.amazon.com/jp/bottlerocket/)はAWSが2020年3月に発表したOSSのコンテナホストOS。
 現時点のものはLinux Kernel 5.4ベースで、EKSで使えるのはもちろん、ベアメタルにもインストールできる。
+
+## Talos
+[Talos](https://www.talos.dev/)はTalos Systems社によるKubernetesクラスタ向けOS。
+セキュアでイミュータブルでミニマル。
+
+shellがなく、全部APIで管理できるようになっている。
