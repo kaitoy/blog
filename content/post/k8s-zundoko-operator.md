@@ -8,7 +8,7 @@ tags = ["kubernetes", "kubebuilder", "zundoko", "golang"]
 title = "ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた"
 highlight = true
 highlightStyle = "monokai"
-highlightLanguages = []
+highlightLanguages = ["go"]
 
 +++
 
@@ -200,7 +200,7 @@ $ kubebuilder create api --group zundokokiyoshi --version v1beta1 --kind Kiyoshi
 以下はHikawaのAPI定義。
 
 `zundoko-operator/pkg/apis/zundokokiyoshi/v1beta1/hikawa_types.go`:
-```golang
+```go
 package v1beta1
 
 import (
@@ -265,7 +265,7 @@ Hikawa Controllerもテンプレートが生成されているので、それを
 まずはどのリソースをwatchするかを書く。
 
 `zundoko-operator/pkg/controller/hikawa/hikawa_controller.go`前半抜粋:
-```golang
+```go
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
 	c, err := controller.New("hikawa-controller", mgr, controller.Options{Reconciler: r})
