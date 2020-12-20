@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+         
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+    google_ad_client: "ca-pub-6244473643910448",
+    enable_page_level_ads: true
+  });
+</script>
+
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/2020/12/20/k8s-zundoko-ansible-operator/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/2020/12/20/k8s-zundoko-ansible-operator/">
+
+
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="ズンドコキヨシ with Kubernetes Ansible Operator - Operator SDKのAnsible Operatorを使ってみた | To Be Decided">
+  <title>ズンドコキヨシ with Kubernetes Ansible Operator - Operator SDKのAnsible Operatorを使ってみた | To Be Decided</title>
+  <meta property="og:description" content="久しぶりにズンドコしたくなったので、Operator SDKのAnsible operatorを使って、KubernetesクラスタでズンドコキヨシするZundoko Ansible Operatorを作った話し。">
+  <meta name="description" content="久しぶりにズンドコしたくなったので、Operator SDKのAnsible operatorを使って、KubernetesクラスタでズンドコキヨシするZundoko Ansible Operatorを作った話し。">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/operator-sdk.png">
+
+
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <style>
+
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+<script>
+  var webFontConfig = {
+    google: {
+      families: ['Noto Sans JP:400,700:japanese'],
+      active: function() {
+        sessionStorage.fonts = true;
+      }
+    },
+    timeout: 3000
+  };
+  WebFont.load(webFontConfig);
+</script>
+
+
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"> 
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js"></script>
+
+    
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
+        
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
+    
+
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v3.2"></script>
+
+        <nav class="navbar navbar-default navbar-fixed-top">
+
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">ズンドコキヨシ with Kubernetes Ansible Operator - Operator SDKのAnsible Operatorを使ってみた</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    <div class="single-post">
+        <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/12/20/k8s-zundoko-ansible-operator/">ズンドコキヨシ with Kubernetes Ansible Operator - Operator SDKのAnsible Operatorを使ってみた</a></h4>
+    <h5>Sun, Dec 20, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/operator-sdk"><kbd class="item-tag">operator-sdk</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+
+</div>
+
+
+        <div class="cover">
+            <a href="/2020/12/20/k8s-zundoko-ansible-operator/">
+                <img src="https://www.kaitoy.xyz/images/operator-sdk.png" alt="ズンドコキヨシ with Kubernetes Ansible Operator - Operator SDKのAnsible Operatorを使ってみた">
+            </a>
+        </div>
+
+        
+        <h4 class="page-header">Table of Contents</h4>
+        <aside>
+            <nav id="TableOfContents">
+<ul>
+<li><a href="#kubernetes-operatorとは">Kubernetes Operatorとは</a></li>
+<li><a href="#crdとは">CRDとは</a></li>
+<li><a href="#operatorの仕組み">Operatorの仕組み</a></li>
+<li><a href="#operator作成ツール">Operator作成ツール</a></li>
+<li><a href="#ansible-operator">Ansible operator</a></li>
+<li><a href="#zundoko-ansible-operator">Zundoko Ansible Operator</a></li>
+<li><a href="#ansible-operatorを使ったオペレータの書き方">Ansible operatorを使ったオペレータの書き方</a>
+<ul>
+<li><a href="#operator-sdkインストール">Operator SDKインストール</a></li>
+<li><a href="#zundoko-ansible-operatorプロジェクトテンプレート生成">Zundoko Ansible Operatorプロジェクトテンプレート生成</a></li>
+<li><a href="#crdのひな型生成">CRDのひな型生成</a></li>
+<li><a href="#crdの具体化">CRDの具体化</a></li>
+<li><a href="#監視するカスタムリソースとansible-roleの設定">監視するカスタムリソースとAnsible Roleの設定</a></li>
+<li><a href="#reconciliationループの実装">Reconciliationループの実装</a></li>
+<li><a href="#zundoko-ansible-operatorのコンテナイメージのビルド">Zundoko Ansible Operatorのコンテナイメージのビルド</a></li>
+<li><a href="#zundoko-ansible-operatorのデプロイ">Zundoko Ansible Operatorのデプロイ</a></li>
+<li><a href="#ズンドコきよし実行">ズンドコきよし実行</a></li>
+</ul></li>
+</ul>
+</nav>
+        </aside>
+        <hr>
+        
+
+        <br> <div class="text-justify"><p>久しぶりにズンドコしたくなったので、Operator SDKのAnsible operatorを使って、KubernetesクラスタでズンドコキヨシするZundoko Ansible Operatorを作った話し。</p>
+
+<p><blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">Javaの講義、試験が「自作関数を作り記述しなさい」って問題だったから<br>「ズン」「ドコ」のいずれかをランダムで出力し続けて「ズン」「ズン」「ズン」「ズン」「ドコ」の配列が出たら「キ・ヨ・シ！」って出力した後終了って関数作ったら満点で単位貰ってた</p>&mdash; てくも (@kumiromilk) <a href="https://twitter.com/kumiromilk/status/707437861881180160">2016年3月9日</a></blockquote>
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script></p>
+
+<p>書いたものは<a href="https://github.com/kaitoy/zundoko-ansible-operator">GitHub</a>に置いた。</p>
+
+<p><br></p>
+
+<p>なお、これは<a href="https://qiita.com/advent-calendar/2020/kubernetes2">Kubernetes Advent Calendar 2020 その2</a>の20日目の記事です。</p>
+
+
+
+
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+
+<h1 id="kubernetes-operatorとは">Kubernetes Operatorとは</h1>
+
+<p><a href="https://kubernetes.io/">Kubernetes</a>のOperatorというのは<a href="https://coreos.com/">CoreOS社</a>(現Red Hat)によって提唱された概念(実装パターン)で、KubernetesのAPIで登録される<a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/#understanding-kubernetes-objects">Kubernetesオブジェクト</a>の内容に従って何らかの処理をするController (e.g. <a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/">Deployment Controller</a>)の一種。
+Controllerが汎用的なのに対して、特定のアプリケーションに特化しているものがOperatorと呼ばれる。</p>
+
+<p>Operatorを実装しようとすると、アプリケーションごとの細かな設定をKubernetesオブジェクトで表現するためにKubernetesのAPIを拡張したくなるんだけど、そのための機能が<a href="https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/">Custom Resource Definition (CRD)</a>。</p>
+
+<h1 id="crdとは">CRDとは</h1>
+
+<p>KubernetesのAPIを簡単に拡張できる仕組みで、Kubernetesオブジェクト(aka. カスタムリソース)を定義するKubernetesオブジェクト。</p>
+
+<p>定義したいカスタムリソースの名前や型やバリデーションなんかをYAMLで書いてKubernetesに登録すると、そのカスタムリソースをKubernetesのREST APIとかkubectlで作成したり取得したりできるようになる。</p>
+
+<p>Kubernetes Advent Calendar 2020 その2の<a href="https://qiita.com/Hiroyuki_OSAKI/items/6319ed09be72ba8ac1d1">二日目の記事</a>を見ると分かりやすいかも。</p>
+
+<h1 id="operatorの仕組み">Operatorの仕組み</h1>
+
+<p>Operatorは、CRDで定義されたリソース(または組み込みのKubernetesオブジェクト)の作成、更新、削除を監視して、カスタムリソースの内容に応じた何らかの処理をするサービス。</p>
+
+<p>普通、カスタムリソースにはOperatorが管理するアプリケーションの状態を表現させて、Operatorはカスタムリソースの内容とアプリケーションの状態が同じになるように、Deploymentでアプリを起動したりアプリの設定をいじったりする。</p>
+
+<p>Operatorの処理は、カスタムリソースの作成、更新、削除のたびに呼び出される一つの関数の中に記述することになっている。
+同じ関数が何度も繰り返し呼ばれ、呼ばれる度にカスタムリソースの内容とアプリケーションの状態をそろえるような処理をすることから、Operatorの処理はReconciliationループと呼ばれる。</p>
+
+<h1 id="operator作成ツール">Operator作成ツール</h1>
+
+<p>Operatorを作るツールとして以下がある。</p>
+
+<ul>
+<li><p><a href="https://sdk.operatorframework.io/">Operator SDK</a></p>
+
+<p>オペレータのプロジェクトテンプレート生成、ビルド、デプロイをするCLIツール。Goのほか、<a href="https://www.ansible.com/">Ansible</a>や<a href="https://helm.sh/">Helm</a>でもOperatorを書けるのが面白い。<a href="https://github.com/operator-framework">Operator Framework</a>の一部として提供されていて、<a href="https://github.com/operator-framework/operator-lifecycle-manager">Lifecycle Manager</a>というオペレータのライフサイクルを管理するものがあったり、<a href="https://www.operatorhub.io/">OperatorHub.io</a>というコミュニティサイトがあったり、エコシステムが充実している。</p></li>
+
+<li><p><a href="https://book.kubebuilder.io/">Kubebuilder</a></p>
+
+<p>オペレータのプロジェクトテンプレート生成、ビルド、デプロイをするCLIツール。開発言語はGo。</p></li>
+
+<li><p><a href="https://metacontroller.app/">Metacontroller</a></p>
+
+<p>Metacontroller自体がオペレータを管理するオペレータ。オペレータの定義をKubernetesに登録すると、Reconciliationループを回してその中でWebフックを実行してくるので、それを受けて処理を実行するオペレータを任意の言語で書ける。</p></li>
+
+<li><p><a href="https://kudo.dev/">KUDO</a></p>
+
+<p>Kudoには標準的な処理を実装したオペレータが含まれていて、YAMLでワークフローを記述するだけで簡単にオペレータが実装できる。</p></li>
+</ul>
+
+<p><br></p>
+
+<p>以前は<a href="https://www.kaitoy.xyz/2019/03/08/k8s-zundoko-operator/">Kubebuilder (v1)でズンドコ</a>したんだけど、今回は<a href="https://sdk.operatorframework.io/docs/building-operators/ansible/">Operator SDKのAnsible operator</a>を使う。</p>
+
+<h1 id="ansible-operator">Ansible operator</h1>
+
+<p>Ansible operatorを使えばAnsible Playbookを書くだけでオペレータを実装できる。</p>
+
+<p>Ansible operatorは、<a href="https://sdk.operatorframework.io/docs/building-operators/ansible/reference/information-flow-ansible-operator/">Operator SDKのマニュアル</a>によると以下のようなアーキテクチャになっている。</p>
+
+<p><img src="https://sdk.operatorframework.io/ao-flow.png" alt="" /></p>
+
+<p>オペレータの監視対象のカスタムリソースに変化があるとControllerが検知し、カスタムリソースの内容をAnsible変数に詰めてAnsible Runnerを起動してAnsible Playbookを実行する。</p>
+
+<p>このAnsible Playbookではカスタムリソース(などのKubernetesオブジェクト)をいじるタスクを書くことができるんだけど、Kubernetesへのアクセスは全てProxyを介して行われる。
+Proxyは、カスタムリソースにOperator SDKの<a href="https://kubernetes.io/ja/docs/concepts/overview/working-with-objects/annotations/">アノテーション</a>や<a href="https://kubernetes.io/ja/docs/concepts/workloads/controllers/garbage-collection/#owners-and-dependents">オーナーリファレンス</a>を挿入したりしてくれる。</p>
+
+<h1 id="zundoko-ansible-operator">Zundoko Ansible Operator</h1>
+
+<p>Ansible operatorで実装するのはズンドコきよしを実行するZundoko Ansible Operator。
+Zundoko Ansible Operatorは、以前Kubebuilderで作ったやつと同様、以下のカスタムリソースを扱う。</p>
+
+<ul>
+<li><p><a href="https://github.com/kaitoy/zundoko-ansible-operator/blob/master/config/crd/bases/zundokokiyoshi.kaitoy.github.com_hikawas.yaml">Hikawa</a>: 作るとズンドコきよしを開始する。</p>
+
+<p>例:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>zundokokiyoshi.kaitoy.github.com/v1beta2<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>Hikawa<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>hikawa<span style="color:#666">
+</span><span style="color:#666"></span>spec:<span style="color:#666">
+</span><span style="color:#666">  </span>intervalMillis:<span style="color:#666"> </span><span style="color:#3677a9">500</span></code></pre></div>
+<p>後述の事情で一部のプロパティの型が変わったので、バージョンがv1beta2になっている。
+あと、今回は<code>intervalMillis</code>を考慮した処理にはできなかったので、<code>intervalMillis</code>は無意味なプロパティになり下がった。</p></li>
+
+<li><p><a href="https://github.com/kaitoy/zundoko-ansible-operator/blob/master/config/crd/bases/zundokokiyoshi.kaitoy.github.com_zundokoes.yaml">Zundoko</a>: 「ズン」か「ドコ」を表す。Hikawaがオーナー。</p>
+
+<p>例:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>zundokokiyoshi.kaitoy.github.com/v1beta1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>Zundoko<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>hikawa-zundoko-<span style="color:#3677a9">0001</span><span style="color:#666">
+</span><span style="color:#666"></span>spec:<span style="color:#666">
+</span><span style="color:#666">  </span>say:<span style="color:#666"> </span>Doko</code></pre></div></li>
+
+<li><p><a href="https://github.com/kaitoy/zundoko-ansible-operator/blob/master/config/crd/bases/zundokokiyoshi.kaitoy.github.com_kiyoshis.yaml">Kiyoshi</a>: 「キ・ヨ・シ！」を表す。Hikawaがオーナー。</p>
+
+<p>例:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>zundokokiyoshi.kaitoy.github.com/v1beta1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>Kiyoshi<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>hikawa-kiyoshi<span style="color:#666">
+</span><span style="color:#666"></span>spec:<span style="color:#666">
+</span><span style="color:#666">  </span>say:<span style="color:#666"> </span>Kiyoshi<span style="color:#666"> </span>!</code></pre></div></li>
+</ul>
+
+<p>Zundoko Ansible OperatorはHikawaが作成されるとReconciliationループを開始し、ランダムに「ズン」か「ドコ」をセットしたZundokoを作成する。
+「ズン」を4つ作ったあとに「ドコ」を作ったら、Kiyoshiを作成してReconciliationループを止める。</p>
+
+<h1 id="ansible-operatorを使ったオペレータの書き方">Ansible operatorを使ったオペレータの書き方</h1>
+
+<p>Ansible operatorを使ったオペレータを書くには、まずOperator SDKでプロジェクトテンプレートを生成する。</p>
+
+<h2 id="operator-sdkインストール">Operator SDKインストール</h2>
+
+<p>Operator SDKは、<a href="https://github.com/operator-framework/operator-sdk/releases/tag/v1.2.0">GitHubのリリースページ</a>からバイナリをひとつダウンロードしてPATHの通った場所に置くだけでインストールできる。
+今回はv1.2.0をインストールした。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root ~]# curl -Lo /usr/local/bin/operator-sdk https://github.com/operator-framework/operator-sdk/releases/download/v1.2.0/operator-sdk-v1.2.0-x86_64-linux-gnu</code></pre></div>
+<h2 id="zundoko-ansible-operatorプロジェクトテンプレート生成">Zundoko Ansible Operatorプロジェクトテンプレート生成</h2>
+
+<p>コマンドひとつでZundoko Ansible Operatorプロジェクトテンプレートを生成できる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root ~]# mkdir zundoko-ansible-operator
+[root ~]# cd zundoko-ansible-operator
+[root zundoko-ansible-operator]# operator-sdk init --plugins=ansible --domain=kaitoy.github.com</code></pre></div>
+<p>Ansible operatorを使うために<code>--plugins=ansible</code>を指定している。</p>
+
+<p><code>--domain</code>で指定しているドメインは、このプロジェクトのCRDで定義するカスタムリソースの<code>apiGroup</code>のサフィックスとして使われる。</p>
+
+<h2 id="crdのひな型生成">CRDのひな型生成</h2>
+
+<p>HikawaとZundokoとKiyoshiのCRDのひな型を生成する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root zundoko-ansible-operator]# operator-sdk create api --group zundokokiyoshi --version v1beta2 --kind Hikawa --generate-role
+[root zundoko-ansible-operator]# operator-sdk create api --group zundokokiyoshi --version v1beta1 --kind Zundoko --generate-role
+[root zundoko-ansible-operator]# operator-sdk create api --group zundokokiyoshi --version v1beta1 --kind Kiyoshi --generate-role</code></pre></div>
+<p>ここで<code>--group</code>で指定したやつと前節で<code>--domain</code>に指定したやつをjoinしたものがカスタムリソースの<code>apiGroup</code>になる。</p>
+
+<p>ここまでで以下のようなファイルが生成された。</p>
+
+<ul>
+<li><code>Dockerfile</code>: オペレータのコンテナイメージをビルドするDockerfile。</li>
+<li><code>Makefile</code>: コンテナイメージのビルド、CRDのレンダリング、オペレータのデプロイ等の操作を定義したMakefile。</li>
+<li><code>config/crd/bases/*.yaml</code>: 上記<code>operator-sdk create api</code>コマンドで生成したCRDのひな型。</li>
+<li><code>config/manager/manager.yaml</code>: オペレータのDeployment。</li>
+<li><code>config/rbac/*.yaml</code>: オペレータがカスタムリソース等にアクセスするためのRole系のマニフェスト。</li>
+<li><code>roles/{hikawa,zundoko,kiyoshi}/</code>: カスタムリソース毎のAnsible Roleのひな型。ここにReconciliationループの処理を書く。</li>
+<li><code>watches.yaml</code>: オペレータに監視させるカスタムリソース(などのKubernetesオブジェクト)と、対応させるAnsible Roleの定義。</li>
+<li><code>molecule/</code>: <a href="https://molecule.readthedocs.io/en/latest/">Ansible Molecule</a>によるE2Eテストのひな型。今回は触ってない。</li>
+</ul>
+
+<p>(プロジェクト構造は<a href="https://sdk.operatorframework.io/docs/building-operators/ansible/reference/scaffolding/">公式マニュアルにも載っている</a>。)</p>
+
+<p>今回いじるのは、<code>config/crd/bases/*.yaml</code>と<code>watches.yaml</code>と<code>roles/hikawa/</code>。</p>
+
+<h2 id="crdの具体化">CRDの具体化</h2>
+
+<p>生成された時点でのHikawaのCRDのひな型は以下のようになっている。</p>
+
+<p><code>config/crd/bases/zundokokiyoshi.kaitoy.github.com_hikawas.yaml</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">---<span style="color:#666">
+</span><span style="color:#666"></span>apiVersion:<span style="color:#666"> </span>apiextensions.k8s.io/v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>CustomResourceDefinition<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>hikawas.zundokokiyoshi.kaitoy.github.com<span style="color:#666">
+</span><span style="color:#666"></span>spec:<span style="color:#666">
+</span><span style="color:#666">  </span>group:<span style="color:#666"> </span>zundokokiyoshi.kaitoy.github.com<span style="color:#666">
+</span><span style="color:#666">  </span>names:<span style="color:#666">
+</span><span style="color:#666">    </span>kind:<span style="color:#666"> </span>Hikawa<span style="color:#666">
+</span><span style="color:#666">    </span>listKind:<span style="color:#666"> </span>HikawaList<span style="color:#666">
+</span><span style="color:#666">    </span>plural:<span style="color:#666"> </span>hikawas<span style="color:#666">
+</span><span style="color:#666">    </span>singular:<span style="color:#666"> </span>hikawa<span style="color:#666">
+</span><span style="color:#666">  </span>scope:<span style="color:#666"> </span>Namespaced<span style="color:#666">
+</span><span style="color:#666">  </span>versions:<span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>v1beta2<span style="color:#666">
+</span><span style="color:#666">    </span>schema:<span style="color:#666">
+</span><span style="color:#666">      </span>openAPIV3Schema:<span style="color:#666">
+</span><span style="color:#666">        </span>description:<span style="color:#666"> </span>Hikawa<span style="color:#666"> </span>is<span style="color:#666"> </span>the<span style="color:#666"> </span>Schema<span style="color:#666"> </span>for<span style="color:#666"> </span>the<span style="color:#666"> </span>hikawas<span style="color:#666"> </span>API<span style="color:#666">
+</span><span style="color:#666">        </span>properties:<span style="color:#666">
+</span><span style="color:#666">          </span>apiVersion:<span style="color:#666">
+</span><span style="color:#666">            </span>description:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;APIVersion defines the versioned schema of this representation
+</span><span style="color:#ed9d13">              of an object. Servers should convert recognized schemas to the latest
+</span><span style="color:#ed9d13">              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources&#39;</span><span style="color:#666">
+</span><span style="color:#666">            </span>type:<span style="color:#666"> </span>string<span style="color:#666">
+</span><span style="color:#666">          </span>kind:<span style="color:#666">
+</span><span style="color:#666">            </span>description:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;Kind is a string value representing the REST resource this
+</span><span style="color:#ed9d13">              object represents. Servers may infer this from the endpoint the client
+</span><span style="color:#ed9d13">              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds&#39;</span><span style="color:#666">
+</span><span style="color:#666">            </span>type:<span style="color:#666"> </span>string<span style="color:#666">
+</span><span style="color:#666">          </span>metadata:<span style="color:#666">
+</span><span style="color:#666">            </span>type:<span style="color:#666"> </span>object<span style="color:#666">
+</span><span style="color:#666">          </span>spec:<span style="color:#666">
+</span><span style="color:#666">            </span>description:<span style="color:#666"> </span>Spec<span style="color:#666"> </span>defines<span style="color:#666"> </span>the<span style="color:#666"> </span>desired<span style="color:#666"> </span>state<span style="color:#666"> </span>of<span style="color:#666"> </span>Hikawa<span style="color:#666">
+</span><span style="color:#666">            </span>type:<span style="color:#666"> </span>object<span style="color:#666">
+</span><span style="color:#666">            </span>x-kubernetes-preserve-unknown-fields:<span style="color:#666"> </span><span style="color:#6ab825;font-weight:bold">true</span><span style="color:#666">
+</span><span style="color:#666">          </span>status:<span style="color:#666">
+</span><span style="color:#666">            </span>description:<span style="color:#666"> </span>Status<span style="color:#666"> </span>defines<span style="color:#666"> </span>the<span style="color:#666"> </span>observed<span style="color:#666"> </span>state<span style="color:#666"> </span>of<span style="color:#666"> </span>Hikawa<span style="color:#666">
+</span><span style="color:#666">            </span>type:<span style="color:#666"> </span>object<span style="color:#666">
+</span><span style="color:#666">            </span>x-kubernetes-preserve-unknown-fields:<span style="color:#666"> </span><span style="color:#6ab825;font-weight:bold">true</span><span style="color:#666">
+</span><span style="color:#666">        </span>type:<span style="color:#666"> </span>object<span style="color:#666">
+</span><span style="color:#666">    </span>served:<span style="color:#666"> </span><span style="color:#6ab825;font-weight:bold">true</span><span style="color:#666">
+</span><span style="color:#666">    </span>storage:<span style="color:#666"> </span><span style="color:#6ab825;font-weight:bold">true</span><span style="color:#666">
+</span><span style="color:#666">    </span>subresources:<span style="color:#666">
+</span><span style="color:#666">      </span>status:<span style="color:#666"> </span>{}</code></pre></div>
+<p><code>openAPIV3Schema</code>以下に<a href="https://swagger.io/specification/">OpenAPI Specification</a>でカスタムリソースのプロパティを定義するんだけど、ひな型では当然なにも定義されてなくて、代わりに<a href="https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#controlling-pruning">x-kubernetes-preserve-unknown-fields: true</a>というのが書いてある。
+これはつまりどんなプロパティでも入れられるということで、そのままでも使えなくはないけど、バリデーションなどを利かせるためにはちゃんと中身を書いたほうがいい。</p>
+
+<p>Hikawaは以下のように変更した。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"><span style="color:#fff;font-weight:bold">diff --git a/config/crd/bases/zundokokiyoshi.kaitoy.github.com_hikawas.yaml b/config/crd/bases/zundokokiyoshi.kaitoy.github.com_hikawas.yaml
+</span><span style="color:#fff;font-weight:bold">index 4e5a3cb..91eb651 100644
+</span><span style="color:#fff;font-weight:bold"></span><span style="color:#d22323">--- a/config/crd/bases/zundokokiyoshi.kaitoy.github.com_hikawas.yaml
+</span><span style="color:#d22323"></span><span style="color:#589819">+++ b/config/crd/bases/zundokokiyoshi.kaitoy.github.com_hikawas.yaml
+</span><span style="color:#589819"></span><span style="color:#fff;text-decoration:underline">@@ -32,11 +32,29 @@ spec:
+</span><span style="color:#fff;text-decoration:underline"></span>           spec:
+             description: Spec defines the desired state of Hikawa
+             type: object
+<span style="color:#d22323">-            x-kubernetes-preserve-unknown-fields: true
+</span><span style="color:#d22323"></span><span style="color:#589819">+            properties:
+</span><span style="color:#589819">+              intervalMillis:
+</span><span style="color:#589819">+                type: integer
+</span><span style="color:#589819">+                format: int64
+</span><span style="color:#589819">+              numZundokos:
+</span><span style="color:#589819">+                type: string
+</span><span style="color:#589819">+                pattern: &#39;^\d+$&#39;
+</span><span style="color:#589819">+              sayKiyoshi:
+</span><span style="color:#589819">+                type: boolean
+</span><span style="color:#589819">+            required:
+</span><span style="color:#589819">+            - intervalMillis
+</span><span style="color:#589819"></span>           status:
+             description: Status defines the observed state of Hikawa
+<span style="color:#589819">+            properties:
+</span><span style="color:#589819">+              kiyoshied:
+</span><span style="color:#589819">+                type: boolean
+</span><span style="color:#589819">+              numZundokosSaid:
+</span><span style="color:#589819">+                type: string
+</span><span style="color:#589819">+                pattern: &#39;^\d+$&#39;
+</span><span style="color:#589819">+            required:
+</span><span style="color:#589819">+            - numZundokosSaid
+</span><span style="color:#589819">+            - kiyoshied
+</span><span style="color:#589819"></span>             type: object
+<span style="color:#d22323">-            x-kubernetes-preserve-unknown-fields: true
+</span><span style="color:#d22323"></span>         type: object
+     served: true
+     storage: true
+</code></pre></div>
+<p><code>spec.numZundokos</code>が期待するZundokoの数で、<code>status.numZundokosSaid</code>が実際のZundokoの数。
+Zundoko Ansible Operatorはこれらの差異を見てZundokoを生成する。
+<code>spec.sayKiyoshi</code>と<code>status.kiyoshied</code>も同じ関係。</p>
+
+<p>ここで、<code>spec.numZundokos</code>も<code>status.numZundokosSaid</code>も数値なのに型がstringになっているのは、<a href="https://github.com/ansible/ansible/issues/30366">AnsibleのPlaybookで変数を埋め込むときに使うことになるJinja2テンプレートが文字列しか返せない</a>から。
+以前書いたHikawaでは普通にintegerにしてたから、Ansible operatorの制約により型を変える羽目になった形。
+これがHikawaのバージョンがv1beta2に変わった理由。</p>
+
+<p>ZundokoとKiyoshiも<a href="https://github.com/kaitoy/zundoko-ansible-operator/commit/dc5f2b4ea0a8bfab2632050e8ea45c2387a892dd">適当にプロパティを定義した</a>。</p>
+
+<p>余談だけど、昔Kubebuilder v1でZundoko Operator作った時とはCRDのバージョンが変わっていて、v1beta1からv1に上がってた。
+大きく変わったところは、カスタムリソースの複数のバージョンのが書けるようになったところ。</p>
+
+<h2 id="監視するカスタムリソースとansible-roleの設定">監視するカスタムリソースとAnsible Roleの設定</h2>
+
+<p>オペレータに監視させるカスタムリソースは<code>watches.yaml</code>に定義する。
+自動で生成されたものは以下。</p>
+
+<p><code>watches.yaml</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">---<span style="color:#666">
+</span><span style="color:#666"></span><span style="color:#999;font-style:italic"># Use the &#39;create api&#39; subcommand to add watches to this file.</span><span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span>version:<span style="color:#666"> </span>v1beta2<span style="color:#666">
+</span><span style="color:#666">  </span>group:<span style="color:#666"> </span>zundokokiyoshi.kaitoy.github.com<span style="color:#666">
+</span><span style="color:#666">  </span>kind:<span style="color:#666"> </span>Hikawa<span style="color:#666">
+</span><span style="color:#666">  </span>role:<span style="color:#666"> </span>hikawa<span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span>version:<span style="color:#666"> </span>v1beta1<span style="color:#666">
+</span><span style="color:#666">  </span>group:<span style="color:#666"> </span>zundokokiyoshi.kaitoy.github.com<span style="color:#666">
+</span><span style="color:#666">  </span>kind:<span style="color:#666"> </span>Zundoko<span style="color:#666">
+</span><span style="color:#666">  </span>role:<span style="color:#666"> </span>zundoko<span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span>version:<span style="color:#666"> </span>v1beta1<span style="color:#666">
+</span><span style="color:#666">  </span>group:<span style="color:#666"> </span>zundokokiyoshi.kaitoy.github.com<span style="color:#666">
+</span><span style="color:#666">  </span>kind:<span style="color:#666"> </span>Kiyoshi<span style="color:#666">
+</span><span style="color:#666">  </span>role:<span style="color:#666"> </span>kiyoshi<span style="color:#666">
+</span><span style="color:#666"></span><span style="color:#999;font-style:italic"># +kubebuilder:scaffold:watch</span></code></pre></div>
+<p>これは、Hikawaに変化があったら<code>hikawa</code>というAnsible Roleを実行し、Zundokoに(以下略)という意味。
+実行されたRoleではカスタムリソースなどのKubernetesオブジェクトを作ったりするんだけど、そのとき、Roleの処理で作られたKubernetesオブジェクトには、そのRoleを起動したKubernetesへのオーナーリファレンスがProxyによって挿入される。</p>
+
+<p>Zundoko Ansible Operatorの場合は、Roleの処理でZundokoとKiyoshiを作るんだけど、それらのオーナーをHikawaにしたいので、RoleはHikawaから起動しないといけない。
+ので以下のように変更した。</p>
+
+<p><code>watches.yaml</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"><span style="color:#fff;font-weight:bold">diff --git a/watches.yaml b/watches.yaml
+</span><span style="color:#fff;font-weight:bold">index 9dadc5a..947c6f3 100644
+</span><span style="color:#fff;font-weight:bold"></span><span style="color:#d22323">--- a/watches.yaml
+</span><span style="color:#d22323"></span><span style="color:#589819">+++ b/watches.yaml
+</span><span style="color:#589819"></span><span style="color:#fff;text-decoration:underline">@@ -4,12 +4,6 @@
+</span><span style="color:#fff;text-decoration:underline"></span>   group: zundokokiyoshi.kaitoy.github.com
+   kind: Hikawa
+   role: hikawa
+<span style="color:#d22323">-- version: v1beta1
+</span><span style="color:#d22323">-  group: zundokokiyoshi.kaitoy.github.com
+</span><span style="color:#d22323">-  kind: Zundoko
+</span><span style="color:#d22323">-  role: zundoko
+</span><span style="color:#d22323">-- version: v1beta1
+</span><span style="color:#d22323">-  group: zundokokiyoshi.kaitoy.github.com
+</span><span style="color:#d22323">-  kind: Kiyoshi
+</span><span style="color:#d22323">-  role: kiyoshi
+</span><span style="color:#d22323"></span><span style="color:#589819">+  watchDependentResources: false
+</span><span style="color:#589819">+  manageStatus: false
+</span><span style="color:#589819"></span> # +kubebuilder:scaffold:watch
+</code></pre></div>
+<p><code>watchDependentResources</code>は、オーナーになってるリソース(i.e. オーナーリファレンスが挿入されたリソース)に変更があったときに、オーナーのリソース(i.e. オーナーリファレンスが指しているリソース)に対応するAnsible Roleを実行するかのフラグだけど、これはオフにした。
+ZundokoやKiyoshiは生成された後変わることはなく、監視する必要はないので。
+ZundokoやKiyoshiが生成されるタイミングでHikawaのAnsible Roleを呼んでくれたらちょっとうれしかったんだけど、<code>watchDependentResources</code>をオンにしてもそれはしてくれなかった。</p>
+
+<p><code>manageStatus</code>は、カスタムリソースの<code>status</code>のプロパティをAnsible operatorに自動でいれてもらうかのフラグ。
+Hikawaの<code>status</code>は自分で制御したかったのでオフにした。</p>
+
+<h2 id="reconciliationループの実装">Reconciliationループの実装</h2>
+
+<p>ReconciliationループはAnsible Roleの<code>hikawa</code>のタスクとして書く。</p>
+
+<p>タスクの記述には、Ansibleビルトインのモジュールの他、Kubernetesオブジェクトをapplyできる<a href="https://docs.ansible.com/ansible/2.10/collections/community/kubernetes/k8s_module.html">community.kubernetes.k8sモジュール</a>、Kubernetesオブジェクトをgetできる<a href="https://docs.ansible.com/ansible/2.10/collections/community/kubernetes/k8s_info_module.html">community.kubernetes.k8s_infoモジュール</a>、Kubernetesオブジェクトの<code>status</code>を更新できる<a href="https://galaxy.ansible.com/operator_sdk/util">operator_sdk.util.k8s_statusモジュール</a>などがデフォルトで使える。
+(オペレータのコンテナイメージのビルドの時に入れれば好きなAnsibleモジュールを使える。)</p>
+
+<p>また、Ansible Roleを起動したKubernetesオブジェクトのmetadataやプロパティが<a href="https://sdk.operatorframework.io/docs/building-operators/ansible/development-tips/#extra-vars-sent-to-ansible">Ansible変数として渡される</a>ので、タスクからそれを参照できる。</p>
+
+<p><code>hikawa</code>のタスクは以下のように書いた。</p>
+
+<p><code>roles/hikawa/tasks/main.yml</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#999;font-style:italic">#</span><span style="color:#666">
+</span><span style="color:#666"></span><span style="color:#999;font-style:italic"># Hikawaに属するZundokoの一覧を取得する。</span><span style="color:#666">
+</span><span style="color:#666"></span><span style="color:#999;font-style:italic">#</span><span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>Get<span style="color:#666"> </span>a<span style="color:#666"> </span>list<span style="color:#666"> </span>of<span style="color:#666"> </span>all<span style="color:#666"> </span>Zundokos<span style="color:#666">
+</span><span style="color:#666">  </span>community.kubernetes.k8s_info:<span style="color:#666">
+</span><span style="color:#666">    </span>api_version:<span style="color:#666">  </span>zundokokiyoshi.kaitoy.github.com/v1beta1<span style="color:#666">
+</span><span style="color:#666">    </span>kind:<span style="color:#666"> </span>Zundoko<span style="color:#666">
+</span><span style="color:#666">    </span>namespace:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;{{ ansible_operator_meta.namespace }}&#39;</span><span style="color:#666">
+</span><span style="color:#666">    </span>label_selectors:<span style="color:#666">
+</span><span style="color:#666">    </span>-<span style="color:#666"> </span>hikawa.zundokokiyoshi.kaitoy.github.com<span style="color:#666"> </span>=<span style="color:#666"> </span>{{<span style="color:#666"> </span>ansible_operator_meta.name<span style="color:#666"> </span>}}<span style="color:#666">
+</span><span style="color:#666">  </span>register:<span style="color:#666"> </span>zundoko_list<span style="color:#666">
+</span><span style="color:#666">
+</span><span style="color:#666"></span><span style="color:#999;font-style:italic">#</span><span style="color:#666">
+</span><span style="color:#666"></span><span style="color:#999;font-style:italic"># 実際のZundokoの数をもとにHikawaのstatusを更新する。</span><span style="color:#666">
+</span><span style="color:#666"></span><span style="color:#999;font-style:italic">#</span><span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>Update<span style="color:#666"> </span>Hikawa<span style="color:#666"> </span>status<span style="color:#666">
+</span><span style="color:#666">  </span>when:<span style="color:#666"> </span>_zundokokiyoshi_kaitoy_github_com_hikawa.status.kiyoshied<span style="color:#666"> </span>is<span style="color:#666"> </span>not<span style="color:#666"> </span>defined<span style="color:#666"> </span>or<span style="color:#666"> </span>not<span style="color:#666"> </span>_zundokokiyoshi_kaitoy_github_com_hikawa.status.kiyoshied<span style="color:#666">
+</span><span style="color:#666">  </span>operator_sdk.util.k8s_status:<span style="color:#666">
+</span><span style="color:#666">    </span>api_version:<span style="color:#666"> </span>zundokokiyoshi.kaitoy.github.com/v1beta2<span style="color:#666">
+</span><span style="color:#666">    </span>kind:<span style="color:#666"> </span>Hikawa<span style="color:#666">
+</span><span style="color:#666">    </span>name:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;{{ ansible_operator_meta.name }}&#39;</span><span style="color:#666">
+</span><span style="color:#666">    </span>namespace:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;{{ ansible_operator_meta.namespace }}&#39;</span><span style="color:#666">
+</span><span style="color:#666">    </span>status:<span style="color:#666">
+</span><span style="color:#666">      </span>numZundokosSaid:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;{{ zundoko_list.resources | length }}&#39;</span><span style="color:#666">
+</span><span style="color:#666">      </span>kiyoshied:<span style="color:#666"> </span><span style="color:#6ab825;font-weight:bold">false</span><span style="color:#666">
+</span><span style="color:#666">
+</span><span style="color:#666"></span><span style="color:#999;font-style:italic">#</span><span style="color:#666">
+</span><span style="color:#666"></span><span style="color:#999;font-style:italic"># Hikawaのspec.numZundokosとstatus.numZundokosSaidの差異が無くなるようにZundokoを生成する。</span><span style="color:#666">
+</span><span style="color:#666"></span><span style="color:#999;font-style:italic">#</span><span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>Create<span style="color:#666"> </span>a<span style="color:#666"> </span>Zundoko<span style="color:#666">
+</span><span style="color:#666">  </span>when:<span style="color:#666"> </span>(zundoko_list.resources<span style="color:#666"> </span>|<span style="color:#666"> </span>length<span style="color:#666"> </span>)<span style="color:#666"> </span>&lt;<span style="color:#666"> </span>(num_zundokos<span style="color:#666"> </span>|<span style="color:#666"> </span>int)<span style="color:#666">
+</span><span style="color:#666">  </span>block:<span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>Do<span style="color:#666"> </span>create<span style="color:#666"> </span>a<span style="color:#666"> </span>Zundoko<span style="color:#666">
+</span><span style="color:#666">    </span>community.kubernetes.k8s:<span style="color:#666">
+</span><span style="color:#666">      </span>state:<span style="color:#666"> </span>present<span style="color:#666">
+</span><span style="color:#666">      </span>definition:<span style="color:#666">
+</span><span style="color:#666">        </span>apiVersion:<span style="color:#666"> </span>zundokokiyoshi.kaitoy.github.com/v1beta1<span style="color:#666">
+</span><span style="color:#666">        </span>kind:<span style="color:#666"> </span>Zundoko<span style="color:#666">
+</span><span style="color:#666">        </span>metadata:<span style="color:#666">
+</span><span style="color:#666">          </span>name:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;{{ ansible_operator_meta.name }}-zundoko-{{ num_zundokos.zfill(4) }}&#39;</span><span style="color:#666">
+</span><span style="color:#666">          </span>namespace:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;{{ ansible_operator_meta.namespace }}&#39;</span><span style="color:#666">
+</span><span style="color:#666">          </span>labels:<span style="color:#666">
+</span><span style="color:#666">            </span>hikawa.zundokokiyoshi.kaitoy.github.com:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;{{ ansible_operator_meta.name }}&#39;</span><span style="color:#666">
+</span><span style="color:#666">        </span>spec:<span style="color:#666">
+</span><span style="color:#666">          </span>say:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;{{ [&#34;Zun&#34;, &#34;Doko&#34;] | random }}&#39;</span><span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>Go<span style="color:#666"> </span>to<span style="color:#666"> </span>next<span style="color:#666"> </span>loop<span style="color:#666">
+</span><span style="color:#666">    </span>fail:<span style="color:#666">
+</span><span style="color:#666">      </span>msg:<span style="color:#666"> </span>Fail<span style="color:#666"> </span>Intentionally<span style="color:#666"> </span>in<span style="color:#666"> </span>order<span style="color:#666"> </span>to<span style="color:#666"> </span>go<span style="color:#666"> </span>to<span style="color:#666"> </span>next<span style="color:#666"> </span>loop<span style="color:#666">
+</span><span style="color:#666">
+</span><span style="color:#666"></span><span style="color:#999;font-style:italic">#</span><span style="color:#666">
+</span><span style="color:#666"></span><span style="color:#999;font-style:italic"># Zundokoの一覧をみて、Kiyoshiを生成すべきか判定する。</span><span style="color:#666">
+</span><span style="color:#666"></span><span style="color:#999;font-style:italic"># 生成すべきでなければ、Hikawaのspec.numZundokosをインクリメントして、Zundokoの生成を促す。</span><span style="color:#666">
+</span><span style="color:#666"></span><span style="color:#999;font-style:italic"># 生成すべきであれば、Hikawaのspec.sayKiyoshiをtrueにして、Kiyoshiの生成を促す。</span><span style="color:#666">
+</span><span style="color:#666"></span><span style="color:#999;font-style:italic">#</span><span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>Judge<span style="color:#666">
+</span><span style="color:#666">  </span>when:<span style="color:#666"> </span>(zundoko_list.resources<span style="color:#666"> </span>|<span style="color:#666"> </span>length<span style="color:#666"> </span>|<span style="color:#666"> </span>string)<span style="color:#666"> </span>==<span style="color:#666"> </span>num_zundokos<span style="color:#666"> </span>and<span style="color:#666"> </span>not<span style="color:#666"> </span>say_kiyoshi<span style="color:#666">
+</span><span style="color:#666">  </span>vars:<span style="color:#666">
+</span><span style="color:#666">    </span>zundokos:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;{{ zundoko_list.resources | sort(attribute=&#34;metadata.name&#34;) | map(attribute=&#34;spec&#34;) | map(attribute=&#34;say&#34;) | join(&#34; &#34;) }}&#39;</span><span style="color:#666">
+</span><span style="color:#666">  </span>block:<span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>Increment<span style="color:#666"> </span>numZundokos<span style="color:#666">
+</span><span style="color:#666">    </span>when:<span style="color:#666"> </span>not<span style="color:#666"> </span>zundokos.endswith(<span style="color:#ed9d13">&#39;Zun Zun Zun Zun Doko&#39;</span>)<span style="color:#666">
+</span><span style="color:#666">    </span>community.kubernetes.k8s:<span style="color:#666">
+</span><span style="color:#666">      </span>state:<span style="color:#666"> </span>present<span style="color:#666">
+</span><span style="color:#666">      </span>definition:<span style="color:#666">
+</span><span style="color:#666">        </span>apiVersion:<span style="color:#666"> </span>zundokokiyoshi.kaitoy.github.com/v1beta2<span style="color:#666">
+</span><span style="color:#666">        </span>kind:<span style="color:#666"> </span>Hikawa<span style="color:#666">
+</span><span style="color:#666">        </span>metadata:<span style="color:#666">
+</span><span style="color:#666">          </span>name:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;{{ ansible_operator_meta.name }}&#39;</span><span style="color:#666">
+</span><span style="color:#666">          </span>namespace:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;{{ ansible_operator_meta.namespace }}&#39;</span><span style="color:#666">
+</span><span style="color:#666">        </span>spec:<span style="color:#666">
+</span><span style="color:#666">          </span>numZundokos:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;{{ (num_zundokos | int) + 1 }}&#39;</span><span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>Set<span style="color:#666"> </span>sayKiyoshi<span style="color:#666"> </span>to<span style="color:#666"> </span>True<span style="color:#666">
+</span><span style="color:#666">    </span>when:<span style="color:#666"> </span>zundokos.endswith(<span style="color:#ed9d13">&#39;Zun Zun Zun Zun Doko&#39;</span>)<span style="color:#666">
+</span><span style="color:#666">    </span>community.kubernetes.k8s:<span style="color:#666">
+</span><span style="color:#666">      </span>state:<span style="color:#666"> </span>present<span style="color:#666">
+</span><span style="color:#666">      </span>definition:<span style="color:#666">
+</span><span style="color:#666">        </span>apiVersion:<span style="color:#666"> </span>zundokokiyoshi.kaitoy.github.com/v1beta2<span style="color:#666">
+</span><span style="color:#666">        </span>kind:<span style="color:#666"> </span>Hikawa<span style="color:#666">
+</span><span style="color:#666">        </span>metadata:<span style="color:#666">
+</span><span style="color:#666">          </span>name:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;{{ ansible_operator_meta.name }}&#39;</span><span style="color:#666">
+</span><span style="color:#666">          </span>namespace:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;{{ ansible_operator_meta.namespace }}&#39;</span><span style="color:#666">
+</span><span style="color:#666">        </span>spec:<span style="color:#666">
+</span><span style="color:#666">          </span>sayKiyoshi:<span style="color:#666"> </span><span style="color:#6ab825;font-weight:bold">true</span><span style="color:#666">
+</span><span style="color:#666">
+</span><span style="color:#666"></span><span style="color:#999;font-style:italic">#</span><span style="color:#666">
+</span><span style="color:#666"></span><span style="color:#999;font-style:italic"># Hikawaのspec.sayKiyoshiがtrueになっていたらKiyoshiを生成する。</span><span style="color:#666">
+</span><span style="color:#666"></span><span style="color:#999;font-style:italic">#</span><span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>Kiyoshi<span style="color:#666"> </span>!<span style="color:#666">
+</span><span style="color:#666">  </span>when:<span style="color:#666"> </span>say_kiyoshi<span style="color:#666"> </span>and<span style="color:#666"> </span>not<span style="color:#666"> </span>_zundokokiyoshi_kaitoy_github_com_hikawa.status.kiyoshied<span style="color:#666">
+</span><span style="color:#666">  </span>block:<span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>Create<span style="color:#666"> </span>a<span style="color:#666"> </span>Kiyoshi<span style="color:#666">
+</span><span style="color:#666">    </span>community.kubernetes.k8s:<span style="color:#666">
+</span><span style="color:#666">      </span>state:<span style="color:#666"> </span>present<span style="color:#666">
+</span><span style="color:#666">      </span>definition:<span style="color:#666">
+</span><span style="color:#666">        </span>apiVersion:<span style="color:#666"> </span>zundokokiyoshi.kaitoy.github.com/v1beta1<span style="color:#666">
+</span><span style="color:#666">        </span>kind:<span style="color:#666"> </span>Kiyoshi<span style="color:#666">
+</span><span style="color:#666">        </span>metadata:<span style="color:#666">
+</span><span style="color:#666">          </span>name:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;{{ ansible_operator_meta.name }}-kiyoshi&#39;</span><span style="color:#666">
+</span><span style="color:#666">          </span>namespace:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;{{ ansible_operator_meta.namespace }}&#39;</span><span style="color:#666">
+</span><span style="color:#666">        </span>spec:<span style="color:#666">
+</span><span style="color:#666">          </span>say:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;Kiyoshi !&#39;</span><span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>Update<span style="color:#666"> </span>kiyoshied<span style="color:#666">
+</span><span style="color:#666">    </span>operator_sdk.util.k8s_status:<span style="color:#666">
+</span><span style="color:#666">      </span>api_version:<span style="color:#666"> </span>zundokokiyoshi.kaitoy.github.com/v1beta2<span style="color:#666">
+</span><span style="color:#666">      </span>kind:<span style="color:#666"> </span>Hikawa<span style="color:#666">
+</span><span style="color:#666">      </span>name:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;{{ ansible_operator_meta.name }}&#39;</span><span style="color:#666">
+</span><span style="color:#666">      </span>namespace:<span style="color:#666"> </span><span style="color:#ed9d13">&#39;{{ ansible_operator_meta.namespace }}&#39;</span><span style="color:#666">
+</span><span style="color:#666">      </span>status:<span style="color:#666">
+</span><span style="color:#666">        </span>kiyoshied:<span style="color:#666"> </span><span style="color:#6ab825;font-weight:bold">true</span></code></pre></div>
+<p>Hikawaがユーザによって登録されると、上記Roleが実行される。
+RoleのなかでHikawaの<code>spec</code>が更新されるので、それを契機にまた上記Roleが実行される、というのが、「キ・ヨ・シ！」に到達するまで続くという寸法。</p>
+
+<p>「Get a list of all Zundokos」タスクで、Roleを起動したHikawaに属するZundokoだけを取得するためにラベルセレクタを使っているのは、オーナーリファレンスで絞り込む方法が分からなかったから。
+KubebuilderでGoで書いたときは普通にオーナーリファレンスで絞れたんだけど…</p>
+
+<p>「Create a Zundoko」タスクで、Zundokoを作ったあとに<code>fail</code>させてるのは、Roleをエラーにして再実行を促すため。
+Hikawaの<code>watchDependentResources</code>を<code>true</code>にしておけば、Zundokoの作成を契機にRoleが実行されてくれると思ったんだけど、されなかったので、苦肉の策で<code>fail</code>させてる。
+Goで書いたときはどうだったっけな…</p>
+
+<h2 id="zundoko-ansible-operatorのコンテナイメージのビルド">Zundoko Ansible Operatorのコンテナイメージのビルド</h2>
+
+<p>オペレータのDockerfileはOperator SDKが生成したものをそのまま使えた。</p>
+
+<p><code>Dockerfile</code>:</p>
+
+<pre><code>FROM quay.io/operator-framework/ansible-operator:v1.2.0
+
+COPY requirements.yml ${HOME}/requirements.yml
+RUN ansible-galaxy collection install -r ${HOME}/requirements.yml \
+ &amp;&amp; chmod -R ug+rwx ${HOME}/.ansible
+
+COPY watches.yaml ${HOME}/watches.yaml
+COPY roles/ ${HOME}/roles/
+COPY playbooks/ ${HOME}/playbooks/
+</code></pre>
+
+<p>普通にDockerでビルドすればZundoko Ansible Operatorのコンテナイメージができる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root zundoko-ansible-operator]# docker build -t kaitoy/zundoko-ansible-operator:0.0.1 .</code></pre></div>
+<h2 id="zundoko-ansible-operatorのデプロイ">Zundoko Ansible Operatorのデプロイ</h2>
+
+<p>作ったオペレータのデプロイは、プロジェクトのルートディレクトリでコマンド一つ実行するだけでできる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root zundoko-ansible-operator]# export IMG=zundoko-ansible-operator:0.0.1
+[root zundoko-ansible-operator]# make deploy</code></pre></div>
+<p>これでZundoko Ansible Operatorが動き出した。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root zundoko-ansible-operator]# kubectl  get po --all-namespaces
+NAMESPACE                         NAME                                                           READY   STATUS    RESTARTS   AGE
+kube-system                       coredns-6b5cbb9f46-gzhgj                                       1/1     Running   2          3d21h
+kube-system                       coredns-6b5cbb9f46-v8p9q                                       1/1     Running   3          12d
+kube-system                       weave-net-28st9                                                2/2     Running   6          3d21h
+zundoko-ansible-operator-system   zundoko-ansible-operator-controller-manager-7bcbf96f56-ccvcs   2/2     Running   0          26s</code></pre></div>
+<p>上記<code>make deploy</code>の中では、<a href="https://kustomize.io/">kustomize</a>をダウンロードして、kustomizeでCRDとかDeploymentをレンダリングして、kubectlでそれらをapply、ということをしてくれてる。</p>
+
+<p>因みに、Operator SDKはオペレータのPodSecurityPolicyは作ってくれないので、PodSecurityPolicyが有効な環境では自前で作っておいてやる必要がある。</p>
+
+<h2 id="ズンドコきよし実行">ズンドコきよし実行</h2>
+
+<p>Hikawaを登録するとズンドコしはじめる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root zundoko-ansible-operator]# cat &lt;&lt;EOF | kubectl create -f -
+apiVersion: zundokokiyoshi.kaitoy.github.com/v1beta2
+kind: Hikawa
+metadata:
+  name: hikawa
+spec:
+  intervalMillis: 500
+EOF</code></pre></div>
+<p>末尾にデモ動画を張っておくけど、Zundoko Ansible Operatorの動作はすごく遅くて、30秒に一回くらいしかZundokoを生成できない。
+Ansible Roleの実行自体速くはないんだけど、多分Ansible Runnerの起動に時間がかかってるのが一番のボトルネック。</p>
+
+<p>Ansible operatorはズンドコきよしには向かないという結果だった。</p>
+
+<p><br></p>
+
+<div class="embed video-player" style="text-align: center">
+  <iframe class="youtube-player" type="text/html" width="320" height="193" src="https://www.youtube.com/embed/MNNNH-4lIZA" allowfullscreen frameborder="0">
+  </iframe>
+</div></div>
+
+        <section class="share-buttons">
+          <div class="share-button">
+            <div class="fb-share-button" data-href="https://www.kaitoy.xyz/2020/12/20/k8s-zundoko-ansible-operator/" data-layout="box_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fwww.kaitoy.xyz%2f2020%2f12%2f20%2fk8s-zundoko-ansible-operator%2f&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Share</a></div>
+          </div>
+          <div class="share-button">
+            <a class="twitter-share-button"
+              href="https://twitter.com/intent/tweet?text=%e3%82%ba%e3%83%b3%e3%83%89%e3%82%b3%e3%82%ad%e3%83%a8%e3%82%b7%20with%20Kubernetes%20Ansible%20Operator%20-%20Operator%20SDK%e3%81%aeAnsible%20Operator%e3%82%92%e4%bd%bf%e3%81%a3%e3%81%a6%e3%81%bf%e3%81%9f&amp;url=https%3a%2f%2fwww.kaitoy.xyz%2f2020%2f12%2f20%2fk8s-zundoko-ansible-operator%2f"
+              data-size="large">
+            Tweet</a>
+          </div>
+          <div class="share-button">
+            <a href="http://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="vertical-normal" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+          </div>
+          <div class="share-button">
+            <a data-pocket-label="pocket" data-pocket-count="vertical" class="pocket-btn" data-lang="en"></a>
+            <script type="text/javascript">!function(d,i){if(!d.getElementById(i)){var j=d.createElement("script");j.id=i;j.src="https://widgets.getpocket.com/v1/j/btn.js?v=1";var w=d.getElementById(i);d.body.appendChild(j);}}(document,"pocket-btn-js");</script>
+          </div>
+        </section>
+    </div>
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-6244473643910448"
+         data-ad-slot="1845600530"
+         data-ad-format="auto"></ins>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+    <section class="tbd-pagination">
+      <div class="row">
+        <div class="col-sm-6">
+          <div class="prev">
+            
+            <a href="https://www.kaitoy.xyz/2020/12/06/cri-dockerd/">
+              <i class="fa fa-angle-left"></i>
+              Kubernetesでdockershimが廃止されても、KubernetesでDockerが使えなくなるわけじゃないよ
+            </a>
+            
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="next text-right">
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    
+
+    
+
+        <h4 class="page-header">Related</h4>
+
+        <div class="related-links">
+           <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/12/06/cri-dockerd/">Kubernetesでdockershimが廃止されても、KubernetesでDockerが使えなくなるわけじゃないよ</a></h4>
+    <h5>Sun, Dec 6, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/10/31/metallb/">MetalLB入門 ― オンプレKubernetesクラスタでLoadBalancerタイプのServiceを使う</a></h4>
+    <h5>Sat, Oct 31, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/metallb"><kbd class="item-tag">metallb</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/10/11/rook-ceph/">Rook/CephでCephFSを試す</a></h4>
+    <h5>Sun, Oct 11, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/rook"><kbd class="item-tag">rook</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ceph"><kbd class="item-tag">ceph</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/12/11/kong-ingress-controller/">Kong Ingress ControllerでKongの設定を管理する</a></h4>
+    <h5>Wed, Dec 11, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kong"><kbd class="item-tag">kong</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/12/05/k8s-on-centos8-with-containerd/">Kubernetes 1.16 のクラスタを CentOS 8 と containerd で構築する</a></h4>
+    <h5>Thu, Dec 5, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/containerd"><kbd class="item-tag">containerd</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/09/23/k8s-ecosystem-misc/">Kubernetesのエコシステム ー その他雑多</a></h4>
+    <h5>Mon, Sep 23, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/08/14/k8s-ecosystem-k8s-variations-and-container-host-oses/">Kubernetesのエコシステム ー KubernetesバリエーションとコンテナホストOS編</a></h4>
+    <h5>Wed, Aug 14, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/07/27/introduction-to-k8s/">Kubernetes入門</a></h4>
+    <h5>Sat, Jul 27, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/microservices"><kbd class="item-tag">microservices</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/07/26/k8s-meetup-tokyo-21/">Kubernetes Meetup Tokyo #21 - Cloud Native CI/CD に行ってきた</a></h4>
+    <h5>Fri, Jul 26, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/argo"><kbd class="item-tag">argo</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gitops"><kbd class="item-tag">gitops</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spinnaker"><kbd class="item-tag">spinnaker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/argo"><kbd class="item-tag">argo</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/06/23/k8s-ecosystem-preparing-k8s-cluster/">Kubernetesのエコシステム ー Kubernetesクラスタ構築編</a></h4>
+    <h5>Sun, Jun 23, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/06/15/k8s-ecosystem-container-runtimes/">Kubernetesのエコシステム ー コンテナランタイム編</a></h4>
+    <h5>Sat, Jun 15, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/containerd"><kbd class="item-tag">containerd</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/03/08/k8s-zundoko-operator/">ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</a></h4>
+    <h5>Fri, Mar 8, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubebuilder"><kbd class="item-tag">kubebuilder</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/golang"><kbd class="item-tag">golang</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/17/packer-k8s/">Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</a></h4>
+    <h5>Sun, Jun 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/packer"><kbd class="item-tag">packer</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/msys2"><kbd class="item-tag">msys2</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/03/build-k8s-cluster-by-ansible/">Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</a></h4>
+    <h5>Sun, Jun 3, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a></h4>
+    <h5>Sat, May 5, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a></h4>
+    <h5>Fri, May 4, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a></h4>
+    <h5>Tue, Apr 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/01/hello-skaffold/">Skaffoldを触ってみた</a></h4>
+    <h5>Sun, Apr 1, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/skaffold"><kbd class="item-tag">skaffold</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">Kubernetes 1.8のアクセス制御について。あとDashboard。</a></h4>
+    <h5>Tue, Oct 31, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a></h4>
+    <h5>Sat, Oct 21, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubeadm"><kbd class="item-tag">kubeadm</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></h4>
+    <h5>Wed, Oct 11, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a></h4>
+    <h5>Tue, Oct 10, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/03/19/zundoko-kiyoshi-with-pcap4j/"> ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた</a></h4>
+    <h5>Sat, Mar 19, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+
+</div>
+ 
+        </div>
+    
+
+    
+
+        <h4 class="page-header">Comments</h4>
+
+        <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "kaitoy-tobedecided" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+
+</main>
+
+        <footer>
+
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script>window.twttr = (function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0],
+            t = window.twttr || {};
+          if (d.getElementById(id)) return t;
+          js = d.createElement(s);
+          js.id = id;
+          js.src = "https://platform.twitter.com/widgets.js";
+          fjs.parentNode.insertBefore(js, fjs);
+
+          t._e = [];
+          t.ready = function(f) {
+            t._e.push(f);
+          };
+
+          return t;
+        }(document, "script", "twitter-wjs"));</script>
+
+    </body>
+
+</html>
+
