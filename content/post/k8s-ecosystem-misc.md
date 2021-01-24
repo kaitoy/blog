@@ -15,7 +15,7 @@ Kubernetesの上で動くものであったり、Kubernetesクラスタに対し
 
 <!--more-->
 
-2020/2/8更新。
+2021/1/24更新。
 
 {{< google-adsense >}}
 
@@ -185,7 +185,7 @@ KubernetesのAPIを拡張できる[オペレータ](https://kubernetes.io/docs/c
 Goでオペレータを書くためのプロジェクトテンプレートやコードを生成してくれる。
 
 ## Operator Framework
-[Operator Framework](https://github.com/operator-framework)は、Kuberbuilderと同様の役割の[Operator SDK](https://github.com/operator-framework/operator-sdk)でGoでオペレータを書けるほか、[Operator Lifecycle Manager](https://github.com/operator-framework/operator-lifecycle-manager)でオペレータのデプロイやアップグレード周りを面倒見てくれる。
+[Operator Framework](https://github.com/operator-framework)は、Kuberbuilderと同様の役割の[Operator SDK](https://github.com/operator-framework/operator-sdk)でGo、Ansible、Helmでオペレータを書けるほか、[Operator Lifecycle Manager](https://github.com/operator-framework/operator-lifecycle-manager)でオペレータのデプロイやアップグレード周りを面倒見てくれる。
 
 Operator Lifecycle Managerを使えば[OperatorHub](https://operatorhub.io/)から手軽にオペレータを利用できるっぽい。
 
@@ -467,3 +467,11 @@ Ceph、Minio、Cassandra、NFSとかのサーバをデプロイして管理で�
 
 対象とする環境はAWSなどのクラウド上のKubernetesで、PersistentVolumeのバックアップはAWS EBSとかのスナップショット機能を使い、バックアップの保管先はAWS S3とかをサポートしている。
 PersistentVolumeも保管先もサポート範囲が狭く、まだまだ発展途上な印象。
+
+## Kanister
+[Kanister](https://www.kasten.io/kanister/)はアプリケーションレベルのデータ管理フレームワーク。
+[Kasten](https://www.kasten.io/product/)というデータ管理製品のベース。
+
+Kanisterの主なユースケースはVeleroと同じくバックアップ、リストアだけど、VeleroがPersistentVolume(i.e. インフラ層)を見るのに対して、Kanisterはアプリケーション層をみて、アプリケーション毎に特有の操作をしてくれる。
+
+アプリケーション毎の操作はBrueprintというCRで定義できて、ビルトインではCassandra、Elasticsearch、MongoDB、etcd、PostgreSQLなどに対応している。

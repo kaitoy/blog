@@ -12,7 +12,7 @@ draft: false
 
 今回はKubernetesのバリエーションとコンテナホストOSについて書く。
 
-(2020/12/7更新)
+(2021/1/24更新)
 
 <!--more-->
 
@@ -288,3 +288,6 @@ RancherOSと同様のアーキテクチャっぽくて、システムサービ�
 セキュアでイミュータブルでミニマル。
 
 shellがなく、全部APIで管理できるようになっている。
+
+## Flatcar Container Linux
+[Flatcar Container Linux](https://www.flatcar-linux.org/)は開発停止したContainer Linuxのフォーク。
