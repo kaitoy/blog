@@ -4,19 +4,19 @@
         <script data-ad-client="ca-pub-6244473643910448" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 
 <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
-<meta property="og:url" content="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">
+<meta property="og:url" content="https://www.kaitoy.xyz/2021/04/06/k8s-on-alma-linux-8/">
 <meta property="og:site_name" content="To Be Decided">
 <meta name="twitter:card" content="summary"></meta>
-<link rel="canonical" href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/">
+<link rel="canonical" href="https://www.kaitoy.xyz/2021/04/06/k8s-on-alma-linux-8/">
 
 
 
   <meta property="og:type" content="article">
-  <meta property="og:title" content="Kubernetes 1.10のクラスタにWeave Netをデプロイする | To Be Decided">
-  <title>Kubernetes 1.10のクラスタにWeave Netをデプロイする | To Be Decided</title>
-  <meta property="og:description" content="「Kubernetes 1.10をスクラッチから全手動で構築」で、Kubernetes 1.10のクラスタに、ネットワークプロバイダとしてflannelをデプロイしたけど、flannelはNetwork Policyをサポートしていないので、代わりにWeave Netをデプロイしてみた話。">
-  <meta name="description" content="「Kubernetes 1.10をスクラッチから全手動で構築」で、Kubernetes 1.10のクラスタに、ネットワークプロバイダとしてflannelをデプロイしたけど、flannelはNetwork Policyをサポートしていないので、代わりにWeave Netをデプロイしてみた話。">
-  <meta property="og:image" content="https://www.kaitoy.xyz/images/weave-k8s.png">
+  <meta property="og:title" content="Kubernetes 1.20 のクラスタを AlmaLinux 8で構築する | To Be Decided">
+  <title>Kubernetes 1.20 のクラスタを AlmaLinux 8で構築する | To Be Decided</title>
+  <meta property="og:description" content="CentOSの後継として開発されているAlmaLinuxの安定板がリリースされたので、Kubernetesの最新版をインストールしてみた話し。">
+  <meta name="description" content="CentOSの後継として開発されているAlmaLinuxの安定板がリリースされたので、Kubernetesの最新版をインストールしてみた話し。">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/kubernetes.png">
 
 
 
@@ -122,7 +122,7 @@
 
                 <div class="navbar-header">
 
-                    <a class="navbar-brand visible-xs" href="#">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a>
+                    <a class="navbar-brand visible-xs" href="#">Kubernetes 1.20 のクラスタを AlmaLinux 8で構築する</a>
 
                     <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
                         <span class="icon-bar"></span>
@@ -181,20 +181,20 @@
     
     
 
-    <h4 class="post-title"><a href="/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a></h4>
-    <h5>Fri, May 4, 2018</h5>
+    <h4 class="post-title"><a href="/2021/04/06/k8s-on-alma-linux-8/">Kubernetes 1.20 のクラスタを AlmaLinux 8で構築する</a></h4>
+    <h5>Tue, Apr 6, 2021</h5>
     
     <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
     
-    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    <a href="https://www.kaitoy.xyz/tags/alma-linux"><kbd class="item-tag">alma-linux</kbd></a>
     
 
 </div>
 
 
         <div class="cover">
-            <a href="/2018/05/04/kubernetes-with-weave-net/">
-                <img src="https://www.kaitoy.xyz/images/weave-k8s.png" alt="Kubernetes 1.10のクラスタにWeave Netをデプロイする">
+            <a href="/2021/04/06/k8s-on-alma-linux-8/">
+                <img src="https://www.kaitoy.xyz/images/kubernetes.png" alt="Kubernetes 1.20 のクラスタを AlmaLinux 8で構築する">
             </a>
         </div>
 
@@ -203,21 +203,17 @@
         <aside>
             <nav id="TableOfContents">
 <ul>
-<li><a href="#weave-netにした理由">Weave Netにした理由</a></li>
-<li><a href="#weave-netデプロイ">Weave Netデプロイ</a>
-<ul>
-<li><a href="#kubernetesマニフェスト">Kubernetesマニフェスト</a></li>
-<li><a href="#kubernetesコンポーネントの起動オプション">Kubernetesコンポーネントの起動オプション</a></li>
-<li><a href="#secret作成">Secret作成</a></li>
-<li><a href="#マニフェスト適用">マニフェスト適用</a></li>
-</ul></li>
+<li><a href="#centosの終焉">CentOSの終焉</a></li>
+<li><a href="#almalinux">AlmaLinux</a></li>
+<li><a href="#almalinuxのインストール">AlmaLinuxのインストール</a></li>
+<li><a href="#kubernetesクラスタ構築">Kubernetesクラスタ構築</a></li>
 </ul>
 </nav>
         </aside>
         <hr>
         
 
-        <br> <div class="text-justify"><p>「<a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a>」で、Kubernetes 1.10のクラスタに、ネットワークプロバイダとして<a href="https://github.com/coreos/flannel">flannel</a>をデプロイしたけど、flannelは<a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/">Network Policy</a>をサポートしていないので、代わりに<a href="https://www.weave.works/oss/net/">Weave Net</a>をデプロイしてみた話。</p>
+        <br> <div class="text-justify"><p>CentOSの後継として開発されているAlmaLinuxの安定板がリリースされたので、Kubernetesの最新版をインストールしてみた話し。</p>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 
@@ -232,120 +228,68 @@
 </script>
 
 
-<h1 id="weave-netにした理由">Weave Netにした理由</h1>
+<h1 id="centosの終焉">CentOSの終焉</h1>
 
-<p>Network Policyをサポートしているネットワークプロバイダには現時点で以下のものがある。</p>
+<p>2020年12月8日にCentOSの公式ブログで<a href="https://blog.centos.org/2020/12/future-is-centos-stream/">CentOSがCentOS Streamにシフトするというアナウンス</a>があった。</p>
 
-<ul>
-<li><a href="https://www.projectcalico.org/">Calico</a></li>
-<li><a href="https://github.com/cilium/cilium">Cilium</a></li>
-<li><a href="https://www.kube-router.io/">Kube-router</a></li>
-<li><a href="https://github.com/romana/romana">Romana</a></li>
-<li>Weave Net</li>
-</ul>
+<p>CentOS StreamはRHELの開発版みたいなもので、メジャーバージョンしかなく(i.e. マイナーバージョンが無い)、リポジトリのYUMパッケージが随時最新版に置き換わっていくので、追随していけば最新の機能や修正を取り入れていけるという感じのもの。
+逆に言えば固定的なバージョンが無いので、特定のバージョンをがっつり評価して導入みたいなことはできない。</p>
 
-<p>このなかで、よく名前を聞くのがCalicoとWeave Net。
-GitHubのスター数が圧倒的に多いのがWeave Net。
-<a href="https://engineering.skybettingandgaming.com/2017/02/03/overlay-network-performance-testing/">性能が比較的いい</a>のがWeave Net。</p>
+<p>ある時点のCentOS StreamからRHELの新バージョンがリリースされる。
+つまり、リリースされたRHELをもとに開発されていた従来のCentOSとは逆。</p>
 
-<p>ということでWeave Netにした。</p>
+<p>これまでRHELの代わりにCentOSを使っていたユーザは、基本的にはお金払ってRHELに移行してねというのがRed Hatの意向。
+実際、随時リポジトリのパッケージが入れ替わっていくCentOS Streamは、開発機くらいにしか使えない気がする。</p>
 
-<h1 id="weave-netデプロイ">Weave Netデプロイ</h1>
+<h1 id="almalinux">AlmaLinux</h1>
 
-<p>以下を参考に設定してデプロイする。</p>
+<p>CentOS終焉のアナウンスを受けて、従来のCentOSの後継として名乗りをあげたのが<a href="https://almalinux.org/">AlmaLinux</a>。
+従来のCentOS同様、リリースされたRHELをもとに開発されるOSSのRHELクローン。</p>
 
-<ul>
-<li><a href="https://www.weave.works/docs/net/latest/kubernetes/kube-addon/">https://www.weave.works/docs/net/latest/kubernetes/kube-addon/</a></li>
-<li><a href="https://www.weave.works/docs/net/latest/install/installing-weave/">https://www.weave.works/docs/net/latest/install/installing-weave/</a></li>
-<li><a href="https://github.com/weaveworks/weave/blob/master/prog/weave-kube/launch.sh">https://github.com/weaveworks/weave/blob/master/prog/weave-kube/launch.sh</a></li>
-</ul>
+<p>プロダクションレディで、RHELとバイナリ互換があって、固定的なバージョンがある。
+2029年までのサポートがコミットされている。
+完璧。</p>
 
-<h2 id="kubernetesマニフェスト">Kubernetesマニフェスト</h2>
+<p>これの初バージョンであるAlmaLinux 8.3が2021年3月30日に<a href="https://almalinux.org/blog/almalinux-os-stable-release-is-live/">リリースされた</a>ので、触りがてらKubernetesをインストールしてみる。</p>
 
-<p>Weave NetをKubernetesクラスタにデプロイするためのマニフェストは、<a href="https://github.com/weaveworks/weave/releases">GitHub Releases</a>か<code>https://cloud.weave.works</code>からダウンロードできる。
-今回は後者にする。</p>
+<p>因みに、同様にCentOSの後継として<a href="https://rockylinux.org/">Rocky Linux</a>というのも立ち上がったけど、<a href="https://github.com/rocky-linux/rocky/tree/0867e404a489ef3faca765fc94911ecfcc483145#frequently-asked-questions">まだビジョンを語っている程度で</a>ちょっと出遅れた感じ。</p>
 
-<p><code>https://cloud.weave.works</code>を使う場合、Kubernetesのバージョンなどのパラメータは<a href="https://www.weave.works/docs/net/latest/kubernetes/kube-addon/#-changing-configuration-options">クエリストリングで指定できる</a>。
-主なパラメータは以下。</p>
+<h1 id="almalinuxのインストール">AlmaLinuxのインストール</h1>
 
-<ul>
-<li>k8s-version: Kubernetesのバージョン。指定しないとlatest。</li>
-<li>password-secret: ノード間の<a href="https://www.weave.works/docs/net/latest/concepts/encryption/">Weave Net通信の暗号化</a>に使うパスワードを保持するSecret名。指定しないと平文。(参考: <a href="https://www.weave.works/docs/net/latest/tasks/manage/security-untrusted-networks/">https://www.weave.works/docs/net/latest/tasks/manage/security-untrusted-networks/</a>)</li>
-<li>IPALLOC_RANGE: Podに割り当てるIPアドレスの範囲。指定しないと10.32.0.0/12。</li>
-<li>CHECKPOINT_DISABLE: Weave Netのアップデートを<a href="https://www.weave.works/docs/net/latest/install/installing-weave/#checkpoint">定期的にチェック</a>する機能の無効化オプション。</li>
-<li>WEAVE_MTU: MTUを指定するオプション。<a href="https://www.weave.works/docs/net/latest/tasks/manage/fastdp/#packet-size-mtu">デフォルトで1376バイト</a>。</li>
-</ul>
+<p>AlmaLinuxのインストールメディアイメージは<a href="https://repo.almalinux.org/almalinux/8/isos/x86_64/">公式サイト上部のDownload ISOs</a>から取得できる。</p>
 
-<p><br></p>
+<p>VMware Playerで作ったメモリ4GB、CPU2コアのVMにダウンロードしたAlmaLinux-8.3-x86_64-dvd.isoを付けて起動したら、CentOSと全く同じ感じのインストール画面が出た。
+Minimalでインストールした。</p>
 
-<p>WEAVE_MTUはとりあえずデフォルトにしておいて、IPALLOC_RANGEもデフォルトにして、通信暗号化して、CHECKPOINT_DISABLEをtrueにするとすると、マニフェストは以下のようにダウンロードできる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># curl -fsSLo weave-daemonset.yaml &#34;https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d &#39;\n&#39;)&amp;env.CHECKPOINT_DISABLE=1&amp;password-secret=weave-passwd&#34;</code></pre></div>
-<p>(通信暗号化は単一ノードなら不要だと思うけどとりあえず設定しておく。)</p>
+<p>なんの問題もなくさっくり完了。</p>
 
-<h2 id="kubernetesコンポーネントの起動オプション">Kubernetesコンポーネントの起動オプション</h2>
+<h1 id="kubernetesクラスタ構築">Kubernetesクラスタ構築</h1>
 
-<p>kube-controller-managerの起動オプションの<code>--cluster-cidr</code>はIPALLOC_RANGEと同じにする必要がある。
-今回は10.32.0.0/12を指定する。</p>
+<p>インストールしたAlmaLinux 8.3にシングルノード(マスタコンポとノードコンポ同居)のKubernetseクラスタを構築する。</p>
 
-<p>また、kube-proxyの起動オプションの<a href="https://www.weave.works/docs/net/latest/kubernetes/kube-addon/#-things-to-watch-out-for">要件</a>は以下。</p>
+<p>構築に使うのは、いろいろカスタマイズするために自作したAnsibleプレイブックの<a href="https://github.com/kaitoy/ansible-k8s">ansible-k8s</a>。
+<a href="https://www.kaitoy.xyz/2019/12/05/k8s-on-centos8-with-containerd/">以前CentOS 8にKubernetes 1.16をいれた</a>ことがあるので、その手順をなぞる。
+今回入れるのはKubernetes 1.20.5。</p>
 
-<ul>
-<li><code>--masquerade-all</code>を指定してはいけない。</li>
-<li><code>--cluster-cidr</code>を指定する場合、IPALLOC_RANGEと同じにする必要がある。</li>
-</ul>
-
-<p>また、kube-apiserverとkube-controller-managerの起動オプションに<code>--allow-privileged</code>を付ける必要があるはず。</p>
-
-<h2 id="secret作成">Secret作成</h2>
-
-<p>password-secretに渡すSecretは以下のように作成できる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># WEAVE_PASSWORD=$(echo -n &#39;your_secure_password&#39; | base64)
-# cat &lt;&lt;EOF | kubectl create -f -
-apiVersion: v1
-kind: Secret
-metadata:
-  namespace: kube-system
-  name: weave-passwd
-type: Opaque
-data:
-  weave-passwd: ${WEAVE_PASSWORD}
-EOF</code></pre></div>
-<p><br></p>
-
-<p>これで準備完了。</p>
-
-<h2 id="マニフェスト適用">マニフェスト適用</h2>
-
-<p>以下のコマンドでマニフェストを適用し、Weave Netをデプロイできる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># kubectl apply -f weave-daemonset.yaml</code></pre></div>
-<p><code>weaveworks/weave-kube:2.3.0</code>と<code>weaveworks/weave-npc:2.3.0</code>がpullされる。
-前者が本体で、後者がNetwork Policy Controller。</p>
-
-<p><br></p>
-
-<p>マスタノード上で以下のコマンドを実行すると、Weave NetのAPIを叩いて状態を確認できる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console"># curl http://localhost:6784/status
-        Version: 2.3.0 (version check update disabled)
-
-        Service: router
-       Protocol: weave 1..2
-           Name: 92:44:35:3d:f8:d8(k8s-master)
-     Encryption: enabled
-  PeerDiscovery: enabled
-        Targets: 1
-    Connections: 1 (1 failed)
-          Peers: 1
- TrustedSubnets: none
-
-        Service: ipam
-         Status: ready
-          Range: 10.32.0.0/12
-  DefaultSubnet: 10.32.0.0/12</code></pre></div></div>
+<p>すっと行くかと思ったら途中で<code>Module nf_conntrack_ipv4 not found in directory /lib/modules/4.18.0-240.el8.x86_64</code>というエラーがでた。
+どうもRHEL 8.3で<a href="https://github.com/kubernetes-sigs/kubespray/issues/6934">nf_conntrack_ipv4はnf_conntrackにマージされた消え去った</a>らしいので、ansible-k8sのextra_vars.ymlに以下を追記してnf_conntrackをロードするようにする。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">k8s_node__kernel_modules_to_load_for_ipvs:<span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span>ip_vs<span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span>ip_vs_rr<span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span>ip_vs_wrr<span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span>ip_vs_sh<span style="color:#666">
+</span><span style="color:#666"></span>-<span style="color:#666"> </span>nf_conntrack</code></pre></div>
+<p>再度トライしたらインストール成功した。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@k8s-master ~]# cat /etc/almalinux-release
+AlmaLinux release 8.3 (Purple Manul)
+[root@k8s-master ~]# kubectl get node
+NAME               STATUS   ROLES    AGE    VERSION
+k8s-master.local   Ready    &lt;none&gt;   2d4h   v1.20.5</code></pre></div></div>
 
         <section class="share-buttons">
-          <div class="fb-share-button share-button" data-href="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/" data-layout="button_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">シェア</a></div>
+          <div class="fb-share-button share-button" data-href="https://www.kaitoy.xyz/2021/04/06/k8s-on-alma-linux-8/" data-layout="button_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">シェア</a></div>
           <div class="share-button">
-            <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-text="Kubernetes 1.10のクラスタにWeave Netをデプロイする" data-url="https://www.kaitoy.xyz/2018/05/04/kubernetes-with-weave-net/" data-show-count="true" data-count="horizontal">Tweet</a>
+            <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-text="Kubernetes 1.20 のクラスタを AlmaLinux 8で構築する" data-url="https://www.kaitoy.xyz/2021/04/06/k8s-on-alma-linux-8/" data-show-count="true" data-count="horizontal">Tweet</a>
           </div>
           <div class="share-button">
             <a href="https://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="basic-label-counter" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
@@ -372,20 +316,15 @@ EOF</code></pre></div>
         <div class="col-sm-6">
           <div class="prev">
             
-            <a href="https://www.kaitoy.xyz/2018/04/17/kubernetes110-from-scratch/">
+            <a href="https://www.kaitoy.xyz/2020/12/20/k8s-zundoko-ansible-operator/">
               <i class="fa fa-angle-left"></i>
-              Kubernetes 1.10をスクラッチから全手動で構築
+              ズンドコキヨシ with Kubernetes Ansible Operator - Operator SDKのAnsible Operatorを使ってみた
             </a>
             
           </div>
         </div>
         <div class="col-sm-6">
           <div class="next text-right">
-            
-            <a href="https://www.kaitoy.xyz/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">
-              Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える
-              <i class="fa fa-angle-right"></i>
-            </a>
             
           </div>
         </div>
@@ -401,24 +340,6 @@ EOF</code></pre></div>
 
         <div class="related-links">
            <div class="item">
-
-    
-    
-    
-
-    
-    
-
-    <h4 class="post-title"><a href="/2021/04/06/k8s-on-alma-linux-8/">Kubernetes 1.20 のクラスタを AlmaLinux 8で構築する</a></h4>
-    <h5>Tue, Apr 6, 2021</h5>
-    
-    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/alma-linux"><kbd class="item-tag">alma-linux</kbd></a>
-    
-
-</div>
-  <div class="item">
 
     
     
@@ -737,6 +658,24 @@ EOF</code></pre></div>
     
     
 
+    <h4 class="post-title"><a href="/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a></h4>
+    <h5>Fri, May 4, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
     <h4 class="post-title"><a href="/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a></h4>
     <h5>Tue, Apr 17, 2018</h5>
     
@@ -845,184 +784,6 @@ EOF</code></pre></div>
     <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
     
     <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
-    
-
-</div>
-  <div class="item">
-
-    
-    
-    
-
-    
-    
-
-    <h4 class="post-title"><a href="/2017/08/14/webdriverio-chrome/">WebdriverIOとChromeのヘッドレスモードで自動ブラウザテストするDockerイメージ: webdriverio-chrome</a></h4>
-    <h5>Mon, Aug 14, 2017</h5>
-    
-    <a href="https://www.kaitoy.xyz/tags/servicenow"><kbd class="item-tag">servicenow</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/selenium"><kbd class="item-tag">selenium</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/webdriverio"><kbd class="item-tag">webdriverio</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
-    
-
-</div>
-  <div class="item">
-
-    
-    
-    
-
-    
-    
-
-    <h4 class="post-title"><a href="/2016/09/15/pcap4j-on-hyper-v-container-on-win10/">Pcap4J on Nano Server on Hyper-V Containers on Windows 10 on VMware Playerにトライ</a></h4>
-    <h5>Thu, Sep 15, 2016</h5>
-    
-    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag">windows</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/nanoserver"><kbd class="item-tag">nanoserver</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
-    
-
-</div>
-  <div class="item">
-
-    
-    
-    
-
-    
-    
-
-    <h4 class="post-title"><a href="/2016/09/12/unzip-on-nanoserver/">Hyper-Vコンテナ(Nano Server)でunzipしたいならjarを使え</a></h4>
-    <h5>Mon, Sep 12, 2016</h5>
-    
-    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag">windows</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/nanoserver"><kbd class="item-tag">nanoserver</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
-    
-
-</div>
-  <div class="item">
-
-    
-    
-    
-
-    
-    
-
-    <h4 class="post-title"><a href="/2016/07/31/docker-for-windows/">Docker for Windowsがコレジャナかった</a></h4>
-    <h5>Sun, Jul 31, 2016</h5>
-    
-    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag"> windows</kbd></a>
-    
-
-</div>
-  <div class="item">
-
-    
-    
-    
-
-    
-    
-
-    <h4 class="post-title"><a href="/2016/07/11/windows_containers_on_tp5/">Windows Server 2016 TP5でWindows Containersにリトライ</a></h4>
-    <h5>Mon, Jul 11, 2016</h5>
-    
-    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag">windows</kbd></a>
-    
-
-</div>
-  <div class="item">
-
-    
-    
-    
-
-    
-    
-
-    <h4 class="post-title"><a href="/2016/01/22/pcap4j-meets-windows-containers/">Pcap4J Meets Windows Containers</a></h4>
-    <h5>Fri, Jan 22, 2016</h5>
-    
-    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/windows"><kbd class="item-tag">windows</kbd></a>
-    
-
-</div>
-  <div class="item">
-
-    
-    
-    
-
-    
-    
-
-    <h4 class="post-title"><a href="/2015/07/27/another-way-to-capture-lan-packets-with-pcap4j-container/">Another way to capture LAN packets with pcap4j container</a></h4>
-    <h5>Mon, Jul 27, 2015</h5>
-    
-    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
-    
-
-</div>
-  <div class="item">
-
-    
-    
-    
-
-    
-    
-
-    <h4 class="post-title"><a href="/2015/07/25/how-to-capture-packets-on-a-local-network-with-pcap4j-container/">How to capture packets on a local network with Pcap4J container</a></h4>
-    <h5>Sat, Jul 25, 2015</h5>
-    
-    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
-    
-
-</div>
-  <div class="item">
-
-    
-    
-    
-
-    
-    
-
-    <h4 class="post-title"><a href="/2015/07/19/pcap4j-container-with-runc/">Pcap4J container with runC</a></h4>
-    <h5>Sun, Jul 19, 2015</h5>
-    
-    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/runc"><kbd class="item-tag">runc</kbd></a>
     
     <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
     
