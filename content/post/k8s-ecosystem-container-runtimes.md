@@ -13,7 +13,7 @@ Kubernetesを仕事で使い始めて1年たったので、これまで使った
 
 DockerとかcontainerdとかKata ContainersとかgVisorとかの話。
 
-(2020/12/7更新。)
+(2021/6/27更新。)
 
 <!--more-->
 
@@ -421,6 +421,14 @@ Unikernelをコンテナとして動かすランタイムなので、やりた�
 これを使うことで、Kubernetesからdockershimが削除された後も、KubernetesでDockerを使うことができる。
 
 (筆者が触ってみたときのメモを[別の記事](https://www.kaitoy.xyz/2020/12/06/cri-dockerd/)に書いた。)
+
+## runj
+[runj](https://github.com/samuelkarp/runj)はAWSの中のひとが個人的に開発したFreeBSD用のOCIランタイム。
+2021年3月16日に[発表された](https://samuel.karp.dev/blog/2021/03/runj-a-new-oci-runtime-for-freebsd-jails/)。
+
+Linuxのcgroupsとかnamespacesとかの代わりに[FreeBSD jail](https://ja.wikipedia.org/wiki/FreeBSD_jail)を使ってコンテナを起動する。
+
+実験的実装とされながらもcontainerd-shimもついてて手厚い。
 
 # まとめ
 コンテナランタイムは奥が深くてまだ進化の過程。
