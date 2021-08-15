@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+        <script data-ad-client="ca-pub-6244473643910448" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/2021/08/15/k3s-on-on-premises-k8s/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/2021/08/15/k3s-on-on-premises-k8s/">
+
+
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="k3sをオンプレの手製Kubernetesクラスタで動かす | To Be Decided">
+  <title>k3sをオンプレの手製Kubernetesクラスタで動かす | To Be Decided</title>
+  <meta property="og:description" content="手元のVMで動くKubernetesクラスタにk3s serverをデプロイして、別のVMのk3s agentとでクラスタを組んでみた話。">
+  <meta name="description" content="手元のVMで動くKubernetesクラスタにk3s serverをデプロイして、別のVMのk3s agentとでクラスタを組んでみた話。">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/k3s.svg">
+
+
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <style>
+
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+<script>
+  var webFontConfig = {
+    google: {
+      families: ['Noto Sans JP:400,700:japanese'],
+      active: function() {
+        sessionStorage.fonts = true;
+      }
+    },
+    timeout: 3000
+  };
+  WebFont.load(webFontConfig);
+</script>
+
+
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"> 
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js"></script>
+
+    
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
+        
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
+    
+
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v9.0" nonce="WjvU2Pqv"></script>
+
+        <nav class="navbar navbar-default navbar-fixed-top">
+
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">k3sをオンプレの手製Kubernetesクラスタで動かす</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    <div class="single-post">
+        <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2021/08/15/k3s-on-on-premises-k8s/">k3sをオンプレの手製Kubernetesクラスタで動かす</a></h4>
+    <h5>Sun, Aug 15, 2021</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/k3s"><kbd class="item-tag">k3s</kbd></a>
+    
+
+</div>
+
+
+        <div class="cover">
+            <a href="/2021/08/15/k3s-on-on-premises-k8s/">
+                <img src="https://www.kaitoy.xyz/images/k3s.svg" alt="k3sをオンプレの手製Kubernetesクラスタで動かす">
+            </a>
+        </div>
+
+        
+        <h4 class="page-header">Table of Contents</h4>
+        <aside>
+            <nav id="TableOfContents">
+<ul>
+<li><a href="#k3sとは">k3sとは</a></li>
+<li><a href="#k3sのアーキテクチャ">k3sのアーキテクチャ</a></li>
+<li><a href="#今回構築したい構成">今回構築したい構成</a></li>
+<li><a href="#構築環境">構築環境</a></li>
+<li><a href="#k3sコンテナイメージ">k3sコンテナイメージ</a></li>
+<li><a href="#k3s-serverをkubernetesにデプロイ">k3s serverをKubernetesにデプロイ</a></li>
+<li><a href="#ノードトークンの取得">ノードトークンの取得</a></li>
+<li><a href="#k3s-agentの起動とk3s-serverへの登録">k3s agentの起動とk3s serverへの登録</a></li>
+<li><a href="#k3s-agentのアンインストール">k3s agentのアンインストール</a></li>
+</ul>
+</nav>
+        </aside>
+        <hr>
+        
+
+        <br> <div class="text-justify"><p>手元のVMで動くKubernetesクラスタにk3s serverをデプロイして、別のVMのk3s agentとでクラスタを組んでみた話。</p>
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+
+<h1 id="k3sとは">k3sとは</h1>
+
+<p><a href="https://k3s.io/">k3s</a>はRancherが開発しているKubernetesのディストリビューションの一つ。(オリジナルのKubernetesにソースレベルで手が入っているはずなので、フォークに近いかもしれない。)
+主にIoTデバイスなどのエッジで動くことを目的として開発されているもの。</p>
+
+<p>そのための大きな特徴が省リソース。
+k3sは単一のバイナリだけで完結していて、その中にKubernetesを構成するkube-apiserver、kube-controller-manager、kube-scheduler、kube-proxy、kubelet、kubectlのほか、コンテナランタイムのcontainerd、runcやCNIプラグインのFlannelが詰まっていて、起動するプロセスが少なく、省メモリで動ける。
+(メモリの最小要件は512MB。)</p>
+
+<p>もう一つの大きな特徴が、etcdの代わりにSQLiteで動けること。
+オリジナルのKubernetesは、3ノードとかのetcdクラスタを用意しておいて、そこにkube-apiserverをつないでリソースオブジェクトなどを永続化するのに対して、k3sはSQLiteを呼ぶだけなので、メモリ使用量が少なく、構築・運用も簡単。
+k3sのバイナリにはetcdも組み込まれていて、etcdに切り替えてHA構成を組むこともできる。
+別プロセスにはなるけど、PostgreSQLかMySQLかMariaDBを使うこともできる。</p>
+
+<p>また、k3sのバイナリにはiptablesなどのOSコマンドも組み込まれていて、起動時にk3sのデータディレクトリに展開して使う形になっているので、ホストOSの前提条件が少なく、構築・運用が楽。</p>
+
+<p>構築・運用という観点では、<a href="https://rancher.com/docs/k3s/latest/en/installation/airgap/">Air-Gapインストール (i.e. オフラインインストール)</a>、<a href="https://rancher.com/docs/k3s/latest/en/installation/uninstall/">アンインストール</a>、<a href="https://rancher.com/docs/k3s/latest/en/upgrades/killall/">サービス停止</a>、<a href="https://rancher.com/docs/k3s/latest/en/backup-restore/">バックアップ・リストア</a>、<a href="https://rancher.com/docs/k3s/latest/en/upgrades/automated/">自動アップグレード</a>あたりが公式にカバーされているのもうれしい。</p>
+
+<h1 id="k3sのアーキテクチャ">k3sのアーキテクチャ</h1>
+
+<p>k3sには大きくserverコマンドとagentコマンドがある。
+serverでKubernetesのマスタコンポーネントを起動して、agentでノードコンポーネントを起動する感じ。</p>
+
+<p>公式サイトのアーキテクチャダイアグラム:
+<img src="https://k3s.io/images/how-it-works-k3s.svg" alt="k3s-architecture" /></p>
+
+<p>この図で、Tunnel Proxyというのはk3s独自のコンポーネント。
+マニュアルには説明がないんだけど、<a href="https://github.com/k3s-io/k3s/blob/v1.21.3%2Bk3s1/pkg/agent/proxy/apiproxy.go">ソース</a>を見た感じではどちらかというとKubernetesのAPI(i.e. kube-apiserver)やk3sのAPIに対するロードバランサっぽい。
+つまり、serverを複数動かしたときに、agentはそのなかのいずれか一つに接続できれば動けるので、その間にロードバランサがあると都合がいいんだけど、それをk3sプロセス内の処理として実現するためのコンポーネントがTunnel Proxy。</p>
+
+<p>ノードコンポーネントからkube-apiserverに通信するとき、kube-apiserverがバインドしたポートじゃなくて、Tunnel Proxyがバインドしたポートにつなぐ形になるので、k3sクラスタ構築時に注意する必要がある。</p>
+
+<h1 id="今回構築したい構成">今回構築したい構成</h1>
+
+<p>k3sは、<code>k3s server</code>というコマンドを実行するだけでagentも起動してクラスタを構成し、CoreDNSとかのインフラ的Podもデプロイしてくれて手軽に使えるんだけど、今回は以下のような構成でserverをKubernetes上で動かし、agentを別のホストで動かすというのをやりたい。</p>
+
+<p><img src="/images/k3s-on-on-premises-k8s/k3s_cluster.png" alt="k3s_cluster.png" /></p>
+
+<p>この構成は、Kubernetesの特定のワークロードだけ特定のノード(上の図で言うとVM-2)で動かしたいような用途を想定したもの。
+そういうワークロードを、Kubernetesの代わりにk3sにデプロイすることで、k3sの方のノードで動かせる。</p>
+
+<p>単にPodを動かすノードを指定したいなら<a href="https://kubernetes.io/ja/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/">Node Affinity</a>でもいいんだけど、セキュリティなどの都合上、そのノードをKubernetesクラスタにはjoinさせたくなかったり、KubernetesのAPIをそのノードのネットワークにさらしたくなかったりするとき、Podで隔離したk3s serverをそのノード用に使えるという点が上記構成のポイント。</p>
+
+<p>例えば、AWSのEKSでKubernetesクラスタを運用していて、オンプレのマシンで動かしたいPodがある場合、上記構成ならEKSのAPIをさらさなくても実現できる。</p>
+
+<h1 id="構築環境">構築環境</h1>
+
+<p>ノートPCでVMWare PlayerでCentOS 7.9のVMを二つ作って、一方のVMに<a href="https://github.com/kaitoy/ansible-k8s">手製のAnsible Playbook</a>を使って1ノードのKubernetesクラスタを構築した。</p>
+
+<p>Kubernetesのバージョンは1.21.2。</p>
+
+<p>それぞれのVMはホストネットワークにブリッジ接続していて、互いに疎通がある。</p>
+
+<h1 id="k3sコンテナイメージ">k3sコンテナイメージ</h1>
+
+<p>k3s serverをKubernetesにデプロイするにはなにはともあれk3sのコンテナイメージが要るが、<a href="https://hub.docker.com/r/rancher/k3s">k3s公式のもの</a>はagent用っぽいので自分で作ってDocker Hubに上げておいた。
+イメージ名は<a href="https://hub.docker.com/r/kaitoy/k3s">kaitoy/k3s:1.21.2</a>。
+(無料ユーザなのでそのうち消えるかも。)</p>
+
+<p><a href="https://github.com/kaitoy/docker-k3s/blob/master/Dockerfile">Dockerfile</a>は以下の内容。</p>
+
+<pre><code>FROM alpine:3.14 as k3s
+
+RUN wget https://github.com/k3s-io/k3s/releases/download/v1.21.2%2Bk3s1/k3s -O /usr/local/bin/k3s \
+    &amp;&amp; \
+    chmod +x /usr/local/bin/k3s
+
+FROM scratch
+
+COPY --from=k3s /usr/local/bin/k3s /k3s
+
+EXPOSE 6443
+
+ENTRYPOINT [&quot;/k3s&quot;]
+CMD [&quot;server&quot;, &quot;--disable-agent&quot;, &quot;--disable-cloud-controller&quot;, &quot;-d&quot;, &quot;/var/lib/rancher/k3s&quot;]
+</code></pre>
+
+<p>k3sのGitHub Releasesからk3sのバイナリをダウンロードして、scratchのルートに置いただけ。
+これだけでk3s serverは動く。</p>
+
+<p>前述のようにk3sは起動するときにOSコマンドをデータディレクトリに展開するんだけど、そのなかにlsとかpsとかcatとかが含まれるので、scratchベースであってもそれらのコマンドを使ってコンテナ内の様子を見られるのが地味に便利。</p>
+
+<p>k3sが展開するコマンドは<a href="https://github.com/buildroot/buildroot">buildroot</a>ベースのもの。
+以下に全コマンドのリストを張っておく。(パス半ばのハッシュ値みたいな部分はk3sのバージョンによって違うかも。毎回の起動で変わるわけではない。)</p>
+
+<pre><code>/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/[
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/[[
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/addgroup
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/adduser
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ar
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/arch
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/arp
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/arping
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ash
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/arptables
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/arptables-nft
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/arptables-nft-restore
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/arptables-nft-save
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/arptables-restore
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/arptables-save
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ebtables
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ebtables-legacy
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ebtables-nft
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ebtables-nft-restore
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ebtables-nft-save
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ebtables-restore
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ebtables-save
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ebtablesd
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ebtablesu
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ip6tables
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ip6tables-apply
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ip6tables-legacy
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ip6tables-legacy-restore
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ip6tables-legacy-save
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ip6tables-nft
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ip6tables-nft-restore
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ip6tables-nft-save
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ip6tables-restore
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ip6tables-restore-translate
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ip6tables-save
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/ip6tables-translate
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/iptables
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/iptables-detect.sh
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/iptables-legacy
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/iptables-legacy-restore
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/iptables-legacy-save
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/iptables-nft
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/iptables-nft-restore
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/iptables-nft-save
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/iptables-restore
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/iptables-restore-translate
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/iptables-save
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/iptables-translate
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/wg-add.sh
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/xtables-legacy-multi
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/xtables-monitor
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/xtables-nft-multi
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/xtables-set-mode.sh
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/mount
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/aux/modprobe
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/awk
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/b2sum
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/base32
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/base64
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/basename
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/basenc
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/bc
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/blkid
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/bridge
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/bunzip2
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/busybox
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/bzcat
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/cat
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/charon
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/chattr
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/chcon
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/check-config
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/chgrp
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/chmod
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/chown
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/chroot
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/chrt
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/chvt
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/cksum
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/clear
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/cmp
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/cni
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/comm
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/conntrack
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/containerd
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/containerd-shim
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/containerd-shim-runc-v2
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/coreutils
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/cp
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/cpio
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/crictl
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/crond
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/crontab
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/csplit
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ctr
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/cut
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/date
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/dc
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/dd
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/deallocvt
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/delgroup
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/deluser
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/devmem
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/df
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/diff
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/dir
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/dircolors
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/dirname
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/dnsd
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/dnsdomainname
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/dos2unix
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/du
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/dumpkmap
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/echo
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/egrep
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/eject
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/env
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ether-wake
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ethtool
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/expand
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/expr
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/factor
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/fallocate
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/false
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/fbset
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/fdflush
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/fdformat
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/fgrep
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/find
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/flannel
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/fmt
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/fold
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/free
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/freeramdisk
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/fsck
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/fsfreeze
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/fuse-overlayfs
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/fuser
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/getopt
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/getty
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/grep
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/groups
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/gunzip
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/gzip
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/halt
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/hdparm
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/head
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/hexedit
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/host-local
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/hostid
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/hostname
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/hwclock
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/i2cdetect
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/i2cdump
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/i2cget
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/i2cset
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/i2ctransfer
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/id
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ifconfig
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ifdown
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ifup
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/inetd
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/init
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/insmod
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/install
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ip
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ipaddr
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ipcrm
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ipcs
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/iplink
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ipneigh
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/iproute
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/iprule
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ipset
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/iptunnel
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/join
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/k3s
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/k3s-agent
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/k3s-etcd-snapshot
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/k3s-server
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/kill
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/killall
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/killall5
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/klogd
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/kubectl
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/last
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/less
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/link
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/linux32
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/linux64
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/linuxrc
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ln
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/loadfont
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/loadkmap
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/logger
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/login
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/logname
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/loopback
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/losetup
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ls
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/lsattr
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/lsmod
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/lsof
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/lspci
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/lsscsi
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/lsusb
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/lzcat
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/lzma
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/lzopcat
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/makedevs
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/md5sum
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/mdev
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/mesg
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/microcom
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/mim
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/mkdir
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/mkdosfs
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/mke2fs
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/mkfifo
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/mknod
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/mkpasswd
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/mktemp
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/more
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/mountpoint
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/mt
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/mv
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/nameif
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/nice
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/netstat
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/nl
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/nohup
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/nologin
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/nproc
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/nsenter
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/nslookup
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/nuke
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/numfmt
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/od
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/openvt
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/partprobe
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/passwd
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/paste
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/patch
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/pathchk
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/pidof
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/pigz
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ping
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/pinky
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/pipe_progress
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/pivot_root
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/portmap
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/poweroff
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/pr
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/printenv
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/printf
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ps
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ptx
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/pwd
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/rdate
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/readlink
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/realpath
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/reboot
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/reset
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/resize
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/resume
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/rm
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/rmdir
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/rmmod
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/route
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/run-init
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/run-parts
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/runc
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/runcon
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/runlevel
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/sed
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/seq
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/setarch
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/setconsole
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/setfattr
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/setkeycodes
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/setlogcons
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/setpriv
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/setserial
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/sh
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/sha1sum
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/sha224sum
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/sha256sum
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/sha384sum
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/sha3sum
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/sha512sum
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/shred
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/shuf
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/sleep
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/slirp4netns
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/socat
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/sort
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/split
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/start-stop-daemon
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/stat
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/strings
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/stty
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/su
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/sulogin
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/sum
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/svc
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/svok
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/swanctl
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/switch_root
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/sync
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/sysctl
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/syslogd
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/tac
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/tail
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/tar
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/tee
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/telnet
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/test
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/tftp
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/time
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/timeout
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/top
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/touch
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/tr
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/traceroute
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/true
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/truncate
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ts
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/tsort
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/tty
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/ubirename
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/udhcpc
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/uevent
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/umount
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/uname
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/unexpand
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/uniq
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/unix2dos
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/unlink
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/unlzma
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/unlzop
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/unpigz
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/unxz
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/unzip
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/uptime
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/users
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/usleep
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/uudecode
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/uuencode
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/vconfig
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/vdir
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/vi
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/vlock
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/w
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/watch
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/watchdog
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/wc
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/wget
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/which
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/who
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/whoami
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/xxd
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/xz
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/xzcat
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/yes
+/var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/zcat
+</code></pre>
+
+<h1 id="k3s-serverをkubernetesにデプロイ">k3s serverをKubernetesにデプロイ</h1>
+
+<p>k3s serverをデプロイするKubernetesマニフェストは以下。
+k3s serverのポートはNodePortで公開している。
+データの永続化は気にしてない。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">---<span style="color:#666">
+</span><span style="color:#666"></span>apiVersion:<span style="color:#666"> </span>apps/v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>Deployment<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>k3s<span style="color:#666">
+</span><span style="color:#666">  </span>labels:<span style="color:#666">
+</span><span style="color:#666">    </span>app:<span style="color:#666"> </span>k3s<span style="color:#666">
+</span><span style="color:#666"></span>spec:<span style="color:#666">
+</span><span style="color:#666">  </span>replicas:<span style="color:#666"> </span><span style="color:#3677a9">1</span><span style="color:#666">
+</span><span style="color:#666">  </span>selector:<span style="color:#666">
+</span><span style="color:#666">    </span>matchLabels:<span style="color:#666">
+</span><span style="color:#666">      </span>app:<span style="color:#666"> </span>k3s<span style="color:#666">
+</span><span style="color:#666">  </span>template:<span style="color:#666">
+</span><span style="color:#666">    </span>metadata:<span style="color:#666">
+</span><span style="color:#666">      </span>labels:<span style="color:#666">
+</span><span style="color:#666">        </span>app:<span style="color:#666"> </span>k3s<span style="color:#666">
+</span><span style="color:#666">    </span>spec:<span style="color:#666">
+</span><span style="color:#666">      </span>containers:<span style="color:#666">
+</span><span style="color:#666">      </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>k3s<span style="color:#666">
+</span><span style="color:#666">        </span>image:<span style="color:#666"> </span>kaitoy/k3s:<span style="color:#3677a9">1.21</span>.<span style="color:#3677a9">2</span><span style="color:#666">
+</span><span style="color:#666">        </span>command:<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>/k3s<span style="color:#666">
+</span><span style="color:#666">        </span>args:<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>server<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>--disable-agent<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>--disable-cloud-controller<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>--node-external-ip<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span><span style="color:#3677a9">192.168</span>.<span style="color:#3677a9">1.200</span><span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>--https-listen-port<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span><span style="color:#ed9d13">&#34;30443&#34;</span><span style="color:#666">
+</span><span style="color:#666">        </span>ports:<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>containerPort:<span style="color:#666"> </span><span style="color:#3677a9">30443</span><span style="color:#666">
+</span><span style="color:#666"></span>---<span style="color:#666">
+</span><span style="color:#666"></span>apiVersion:<span style="color:#666"> </span>v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>Service<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>k3s<span style="color:#666">
+</span><span style="color:#666"></span>spec:<span style="color:#666">
+</span><span style="color:#666">  </span>type:<span style="color:#666"> </span>NodePort<span style="color:#666">
+</span><span style="color:#666">  </span>selector:<span style="color:#666">
+</span><span style="color:#666">    </span>app:<span style="color:#666"> </span>k3s<span style="color:#666">
+</span><span style="color:#666">  </span>ports:<span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>port:<span style="color:#666"> </span><span style="color:#3677a9">30443</span><span style="color:#666">
+</span><span style="color:#666">    </span>targetPort:<span style="color:#666"> </span><span style="color:#3677a9">30443</span><span style="color:#666">
+</span><span style="color:#666">    </span>nodePort:<span style="color:#666"> </span><span style="color:#3677a9">30443</span></code></pre></div>
+<p>肝はDeploymentの<code>args</code>で<code>k3s server</code>コマンドに渡しているオプション。
+まず<code>--disable-agent</code>について。</p>
+
+<p><code>k3s server</code>コマンドは、その名に反して、デフォルトではagentも起動してインフラ系Podまでデプロイする動きをする。
+今回はagentは別のVMで動かしたいし、Pod内でagentが起動してもどうせ機能しないので起動しないでほしい。
+ので<code>--disable-agent</code>を付けているが、<a href="https://github.com/k3s-io/k3s/blob/v1.21.2+k3s1/pkg/cli/cmds/server.go#L452">実は隠しオプション</a>。なぜ?</p>
+
+<p><code>--disable-cloud-controller</code>は、クラウドじゃないのでcloud-controller要らないから付けてるけど、たぶん付けなくてもcloud-controllerは起動しないような気がする。</p>
+
+<p><code>--node-external-ip</code>で指定しているIPアドレスは、KubernetesのホストVMのIPアドレスで、k3s server(正確にはその中のkube-apiserver)がAPIのクライアントにadvertiseするIPアドレスとして使われるもの。
+もう少し具体的に言うと、k3sクラスタのdefaultネームスペースのkubernetesサービスのEndpointになるIPアドレス。
+指定しないとk3sのPodに割り当てられたクラスタIPになってしまうんだけど、k3s agentはkubernetesサービスのEndpointをメインの接続先にするように動くので、NodePortで公開するポートに対応するIPアドレス(i.e. ノードの外部IPアドレス)を指定しておかないとまずい。</p>
+
+<p><code>--https-listen-port</code>もk3s serverがadvertiseするポートなので、NodePortで公開するポートと同じになるように指定している。
+k3s serverのポート(i.e. kube-apiserverのポート)はデフォルトでは6443なんだけど、そのポートはホストのKubernetesのkube-apiserverが使っているので変える必要があって30443にした。</p>
+
+<p><br></p>
+
+<p>このマニフェストをapplyすると、k3s serverが起動し、ホストVMのポート30443でアクセスできるようになる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# kubectl apply -f k3s.yaml
+deployment.apps/k3s created
+service/k3s created
+[root@vm-1 ~]# kubectl get po
+NAME                   READY   STATUS    RESTARTS   AGE
+k3s-57d95d5c47-7p4s8   1/1     Running   0          25s
+[root@vm-1 ~]# curl -k https://192.168.1.200:30443
+{
+  &#34;kind&#34;: &#34;Status&#34;,
+  &#34;apiVersion&#34;: &#34;v1&#34;,
+  &#34;metadata&#34;: {
+
+  },
+  &#34;status&#34;: &#34;Failure&#34;,
+  &#34;message&#34;: &#34;Unauthorized&#34;,
+  &#34;reason&#34;: &#34;Unauthorized&#34;,
+  &#34;code&#34;: 401
+}</code></pre></div>
+<h1 id="ノードトークンの取得">ノードトークンの取得</h1>
+
+<p>k3s serverにk3s agentをjoinさせるには、serverからノードトークンを取得しておく必要がある。
+(多分Kubernetesの<a href="https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-tls-bootstrapping/">ブートストラップトークン</a>のようなもの。)
+デフォルトでは、ノードトークンはserverのデータディレクトリの<code>/var/lib/rancher/k3s/server/node-token</code>に書かれているので、catしてやれば見れる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# kubectl get po
+NAME                   READY   STATUS    RESTARTS   AGE
+k3s-57d95d5c47-v5bnh   1/1     Running   0          8h
+[root@vm-1 ~]# kubectl exec -it k3s-57d95d5c47-v5bnh -- /var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/cat /var/lib/rancher/k3s/server/node-token
+K1084e50461f4838e53746168882e59ad0db873c6b55ea1ef24521fa6022c2c2684::server:5d0fbc7644d4854c984f03a40a8f4d8a</code></pre></div>
+<p>ノードトークンはserverの起動オプション(<code>--agent-token</code>)で指定もできるっぽいので、実運用ならそれかも。</p>
+
+<h1 id="k3s-agentの起動とk3s-serverへの登録">k3s agentの起動とk3s serverへの登録</h1>
+
+<p>k3s agentは、Kubernetesが入ってないほうのVMで直接起動する。</p>
+
+<p>起動する前に、<a href="https://rancher.com/docs/k3s/latest/en/installation/installation-requirements/#networking">agentがserverと通信するポート</a>を開ける必要があるけど、面倒なので<a href="https://rancher.com/docs/k3s/latest/en/advanced/#additional-preparation-for-red-hat-centos-enterprise-linux">firewalldを止めておく</a>。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-2 ~]# systemctl disable firewalld --now</code></pre></div>
+<p>また、SELinuxも無効にしておく。(<a href="https://rancher.com/docs/k3s/latest/en/advanced/#selinux-support">公式が指定しているrpmパッケージを入れれば有効でも動く</a>はずだけど。)</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-2 ~]# setenforce 0
+[root@vm-2 ~]# sed -i s/SELINUX=enforcing/SELINUX=disabled/ /etc/selinux/config</code></pre></div>
+<p>あとはインストールスクリプトをダウンロードして、環境変数でk3s serverのURLとノードトークンとかを指定して実行してやればいい。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-2 ~]# curl -sSL https://get.k3s.io/ -o install.sh
+[root@vm-2 ~]# chmod +x install.sh
+[root@vm-2 ~]# export INSTALL_K3S_SKIP_SELINUX_RPM=true
+[root@vm-2 ~]# export INSTALL_K3S_SELINUX_WARN=true
+[root@vm-2 ~]# export K3S_URL=https://192.168.1.200:30443
+[root@vm-2 ~]# export K3S_TOKEN=K1084e50461f4838e53746168882e59ad0db873c6b55ea1ef24521fa6022c2c2684::server:5d0fbc7644d4854c984f03a40a8f4d8a
+[root@vm-2 ~]# ./install.sh
+[INFO]  Finding release for channel stable
+[INFO]  Using v1.21.3+k3s1 as release
+[INFO]  Downloading hash https://github.com/k3s-io/k3s/releases/download/v1.21.3+k3s1/sha256sum-amd64.txt
+[INFO]  Downloading binary https://github.com/k3s-io/k3s/releases/download/v1.21.3+k3s1/k3s
+[INFO]  Verifying binary download
+[INFO]  Installing k3s to /usr/local/bin/k3s
+[INFO]  Skipping installation of SELinux RPM
+[WARN]  Failed to find the k3s-selinux policy, please install:
+    yum install -y container-selinux selinux-policy-base
+    yum install -y https://rpm.rancher.io/k3s/stable/common/centos/7/noarch/k3s-selinux-0.2-1.el7_8.noarch.rpm
+
+[INFO]  Creating /usr/local/bin/kubectl symlink to k3s
+[INFO]  Creating /usr/local/bin/crictl symlink to k3s
+[INFO]  Creating /usr/local/bin/ctr symlink to k3s
+[INFO]  Creating killall script /usr/local/bin/k3s-killall.sh
+[INFO]  Creating uninstall script /usr/local/bin/k3s-agent-uninstall.sh
+[INFO]  env: Creating environment file /etc/systemd/system/k3s-agent.service.env
+[INFO]  systemd: Creating service file /etc/systemd/system/k3s-agent.service
+[INFO]  systemd: Enabling k3s-agent unit
+Created symlink from /etc/systemd/system/multi-user.target.wants/k3s-agent.service to /etc/systemd/system/k3s-agent.service.
+[INFO]  systemd: Starting k3s-agent</code></pre></div>
+<p>上記インストールログを見ても分かる通り、インストールスクリプトは以下をしてくれる。</p>
+
+<ul>
+<li>k3sバイナリのダウンロード。</li>
+<li>停止スクリプトの生成。</li>
+<li>アンインストールスクリプトの生成。</li>
+<li>k3s agentを起動するためのsystemdのユニットファイルを生成。</li>
+<li>k3s agentサービスの有効化、起動。</li>
+</ul>
+
+<p>起動完了すると、k3s serverにノードとして登録され、インフラ系Podを起動する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# kubectl  exec -it k3s-57d95d5c47-v5bnh -- /k3s kubectl get node
+NAME             STATUS   ROLES    AGE     VERSION
+k8s-node.local   Ready    &lt;none&gt;   4m38s   v1.21.3+k3s1
+[root@vm-1 ~]# kubectl  exec -it k3s-57d95d5c47-v5bnh -- /k3s kubectl get po -A
+NAMESPACE     NAME                                      READY   STATUS      RESTARTS   AGE
+kube-system   metrics-server-86cbb8457f-gcshq           1/1     Running     0          9h
+kube-system   local-path-provisioner-5ff76fc89d-smkvb   1/1     Running     0          9h
+kube-system   coredns-7448499f4d-fs7sq                  1/1     Running     0          9h
+kube-system   helm-install-traefik-crd-pgzkk            0/1     Completed   0          9h
+kube-system   helm-install-traefik-tbgz7                0/1     Completed   1          9h
+kube-system   svclb-traefik-vtrtg                       2/2     Running     0          18m
+kube-system   traefik-97b44b794-6wvqt                   1/1     Running     0          18m</code></pre></div>
+<h1 id="k3s-agentのアンインストール">k3s agentのアンインストール</h1>
+
+<p>アンインストールが公式にサポートされているのがKubernetesにないk3sの特徴なので、アンインストールもしてみる。</p>
+
+<p>アンインストールは、インストール時に生成されたアンインストールスクリプトを実行するだけでいい。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-2 ~]# k3s-agent-uninstall.sh</code></pre></div>
+<p>スクリプトを見ると、バイナリやデータディレクトリやサービスユニットファイルを削除するだけでなくて、コンテナプロセスのkill、コンテナのファイルシステムのアンマウント、コンテナの<code>/run/</code>にあるステートディレクトリの削除、CNIプラグインが作る仮想ネットワークブリッジの削除、iptables設定の復元なんかもやってくれて、なかなか手が込んでいる。</p>
+
+<p>但し、k3s serverからノードの削除をしてくれるわけではないので、それは別途手動でやる必要がある。</p></div>
+
+        <section class="share-buttons">
+          <div class="fb-share-button share-button" data-href="https://www.kaitoy.xyz/2021/08/15/k3s-on-on-premises-k8s/" data-layout="button_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">シェア</a></div>
+          <div class="share-button">
+            <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-text="k3sをオンプレの手製Kubernetesクラスタで動かす" data-url="https://www.kaitoy.xyz/2021/08/15/k3s-on-on-premises-k8s/" data-show-count="true" data-count="horizontal">Tweet</a>
+          </div>
+          <div class="share-button">
+            <a href="https://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="basic-label-counter" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+          </div>
+          <div class="share-button">
+            <a data-pocket-label="pocket" data-pocket-count="horizontal" class="pocket-btn" data-lang="en"></a>
+            <script type="text/javascript">!function(d,i){if(!d.getElementById(i)){var j=d.createElement("script");j.id=i;j.src="https://widgets.getpocket.com/v1/j/btn.js?v=1";var w=d.getElementById(i);d.body.appendChild(j);}}(document,"pocket-btn-js");</script>
+          </div>
+        </section>
+    </div>
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-6244473643910448"
+         data-ad-slot="1845600530"
+         data-ad-format="auto"></ins>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+    <section class="tbd-pagination">
+      <div class="row">
+        <div class="col-sm-6">
+          <div class="prev">
+            
+            <a href="https://www.kaitoy.xyz/2021/04/06/k8s-on-alma-linux-8/">
+              <i class="fa fa-angle-left"></i>
+              Kubernetes 1.20 のクラスタを AlmaLinux 8で構築する
+            </a>
+            
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="next text-right">
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    
+
+    
+
+        <h4 class="page-header">Related</h4>
+
+        <div class="related-links">
+           <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2021/04/06/k8s-on-alma-linux-8/">Kubernetes 1.20 のクラスタを AlmaLinux 8で構築する</a></h4>
+    <h5>Tue, Apr 6, 2021</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/alma-linux"><kbd class="item-tag">alma-linux</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/12/20/k8s-zundoko-ansible-operator/">ズンドコキヨシ with Kubernetes Ansible Operator - Operator SDKのAnsible Operatorを使ってみた</a></h4>
+    <h5>Sun, Dec 20, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/operator-sdk"><kbd class="item-tag">operator-sdk</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/12/06/cri-dockerd/">Kubernetesでdockershimが廃止されても、KubernetesでDockerが使えなくなるわけじゃないよ</a></h4>
+    <h5>Sun, Dec 6, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/10/31/metallb/">MetalLB入門 ― オンプレKubernetesクラスタでLoadBalancerタイプのServiceを使う</a></h4>
+    <h5>Sat, Oct 31, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/metallb"><kbd class="item-tag">metallb</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/10/11/rook-ceph/">Rook/CephでCephFSを試す</a></h4>
+    <h5>Sun, Oct 11, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/rook"><kbd class="item-tag">rook</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ceph"><kbd class="item-tag">ceph</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/12/11/kong-ingress-controller/">Kong Ingress ControllerでKongの設定を管理する</a></h4>
+    <h5>Wed, Dec 11, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kong"><kbd class="item-tag">kong</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/12/05/k8s-on-centos8-with-containerd/">Kubernetes 1.16 のクラスタを CentOS 8 と containerd で構築する</a></h4>
+    <h5>Thu, Dec 5, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/containerd"><kbd class="item-tag">containerd</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/09/23/k8s-ecosystem-misc/">Kubernetesのエコシステム ー その他雑多</a></h4>
+    <h5>Mon, Sep 23, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/08/14/k8s-ecosystem-k8s-variations-and-container-host-oses/">Kubernetesのエコシステム ー KubernetesバリエーションとコンテナホストOS編</a></h4>
+    <h5>Wed, Aug 14, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/07/27/introduction-to-k8s/">Kubernetes入門</a></h4>
+    <h5>Sat, Jul 27, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/microservices"><kbd class="item-tag">microservices</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/07/26/k8s-meetup-tokyo-21/">Kubernetes Meetup Tokyo #21 - Cloud Native CI/CD に行ってきた</a></h4>
+    <h5>Fri, Jul 26, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/argo"><kbd class="item-tag">argo</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gitops"><kbd class="item-tag">gitops</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spinnaker"><kbd class="item-tag">spinnaker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/argo"><kbd class="item-tag">argo</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/06/23/k8s-ecosystem-preparing-k8s-cluster/">Kubernetesのエコシステム ー Kubernetesクラスタ構築編</a></h4>
+    <h5>Sun, Jun 23, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/06/15/k8s-ecosystem-container-runtimes/">Kubernetesのエコシステム ー コンテナランタイム編</a></h4>
+    <h5>Sat, Jun 15, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/containerd"><kbd class="item-tag">containerd</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/03/08/k8s-zundoko-operator/">ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</a></h4>
+    <h5>Fri, Mar 8, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubebuilder"><kbd class="item-tag">kubebuilder</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/golang"><kbd class="item-tag">golang</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/17/packer-k8s/">Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</a></h4>
+    <h5>Sun, Jun 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/packer"><kbd class="item-tag">packer</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/msys2"><kbd class="item-tag">msys2</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/03/build-k8s-cluster-by-ansible/">Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</a></h4>
+    <h5>Sun, Jun 3, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a></h4>
+    <h5>Sat, May 5, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a></h4>
+    <h5>Fri, May 4, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a></h4>
+    <h5>Tue, Apr 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/01/hello-skaffold/">Skaffoldを触ってみた</a></h4>
+    <h5>Sun, Apr 1, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/skaffold"><kbd class="item-tag">skaffold</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">Kubernetes 1.8のアクセス制御について。あとDashboard。</a></h4>
+    <h5>Tue, Oct 31, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a></h4>
+    <h5>Sat, Oct 21, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubeadm"><kbd class="item-tag">kubeadm</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></h4>
+    <h5>Wed, Oct 11, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a></h4>
+    <h5>Tue, Oct 10, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+ 
+        </div>
+    
+
+    
+
+        <h4 class="page-header">Comments</h4>
+
+        <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "kaitoy-tobedecided" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+
+</main>
+
+        <footer>
+
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+    </body>
+
+</html>
+
