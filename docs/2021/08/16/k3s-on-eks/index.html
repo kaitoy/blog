@@ -4,18 +4,18 @@
         <script data-ad-client="ca-pub-6244473643910448" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 
 <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
-<meta property="og:url" content="https://www.kaitoy.xyz/2021/08/15/k3s-on-on-premises-k8s/">
+<meta property="og:url" content="https://www.kaitoy.xyz/2021/08/16/k3s-on-eks/">
 <meta property="og:site_name" content="To Be Decided">
 <meta name="twitter:card" content="summary"></meta>
-<link rel="canonical" href="https://www.kaitoy.xyz/2021/08/15/k3s-on-on-premises-k8s/">
+<link rel="canonical" href="https://www.kaitoy.xyz/2021/08/16/k3s-on-eks/">
 
 
 
   <meta property="og:type" content="article">
-  <meta property="og:title" content="k3sをオンプレの手製Kubernetesクラスタで動かす | To Be Decided">
-  <title>k3sをオンプレの手製Kubernetesクラスタで動かす | To Be Decided</title>
-  <meta property="og:description" content="手元のVMで動くKubernetesクラスタにk3s serverをデプロイして、別のVMのk3s agentとでクラスタを組んでみた話。">
-  <meta name="description" content="手元のVMで動くKubernetesクラスタにk3s serverをデプロイして、別のVMのk3s agentとでクラスタを組んでみた話。">
+  <meta property="og:title" content="EKSとオンプレVMとの間でk3sクラスタを組む | To Be Decided">
+  <title>EKSとオンプレVMとの間でk3sクラスタを組む | To Be Decided</title>
+  <meta property="og:description" content="AWSのEKSにk3s serverをデプロイして、オンプレのVMのk3s agentとでクラスタを組んでみた話。">
+  <meta name="description" content="AWSのEKSにk3s serverをデプロイして、オンプレのVMのk3s agentとでクラスタを組んでみた話。">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/k3s.svg">
 
 
@@ -122,7 +122,7 @@
 
                 <div class="navbar-header">
 
-                    <a class="navbar-brand visible-xs" href="#">k3sをオンプレの手製Kubernetesクラスタで動かす</a>
+                    <a class="navbar-brand visible-xs" href="#">EKSとオンプレVMとの間でk3sクラスタを組む</a>
 
                     <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
                         <span class="icon-bar"></span>
@@ -181,20 +181,24 @@
     
     
 
-    <h4 class="post-title"><a href="/2021/08/15/k3s-on-on-premises-k8s/">k3sをオンプレの手製Kubernetesクラスタで動かす</a></h4>
-    <h5>Sun, Aug 15, 2021</h5>
+    <h4 class="post-title"><a href="/2021/08/16/k3s-on-eks/">EKSとオンプレVMとの間でk3sクラスタを組む</a></h4>
+    <h5>Mon, Aug 16, 2021</h5>
     
     <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
     
     <a href="https://www.kaitoy.xyz/tags/k3s"><kbd class="item-tag">k3s</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">aws</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/eks"><kbd class="item-tag">eks</kbd></a>
     
 
 </div>
 
 
         <div class="cover">
-            <a href="/2021/08/15/k3s-on-on-premises-k8s/">
-                <img src="https://www.kaitoy.xyz/images/k3s.svg" alt="k3sをオンプレの手製Kubernetesクラスタで動かす">
+            <a href="/2021/08/16/k3s-on-eks/">
+                <img src="https://www.kaitoy.xyz/images/k3s.svg" alt="EKSとオンプレVMとの間でk3sクラスタを組む">
             </a>
         </div>
 
@@ -203,22 +207,21 @@
         <aside>
             <nav id="TableOfContents">
 <ul>
-<li><a href="#k3sとは">k3sとは</a></li>
-<li><a href="#k3sのアーキテクチャ">k3sのアーキテクチャ</a></li>
-<li><a href="#今回構築したい構成">今回構築したい構成</a></li>
-<li><a href="#構築環境">構築環境</a></li>
-<li><a href="#k3sコンテナイメージ">k3sコンテナイメージ</a></li>
-<li><a href="#k3s-serverをkubernetesにデプロイ">k3s serverをKubernetesにデプロイ</a></li>
+<li><a href="#eksセットアップ">EKSセットアップ</a></li>
+<li><a href="#k3s-serverのデプロイ">k3s serverのデプロイ</a></li>
+<li><a href="#loadbalancerのデプロイ">LoadBalancerのデプロイ</a></li>
 <li><a href="#ノードトークンの取得">ノードトークンの取得</a></li>
 <li><a href="#k3s-agentの起動とk3s-serverへの登録">k3s agentの起動とk3s serverへの登録</a></li>
-<li><a href="#k3s-agentのアンインストール">k3s agentのアンインストール</a></li>
+<li><a href="#デモ">デモ</a></li>
 </ul>
 </nav>
         </aside>
         <hr>
         
 
-        <br> <div class="text-justify"><p>手元のVMで動くKubernetesクラスタにk3s serverをデプロイして、別のVMのk3s agentとでクラスタを組んでみた話。</p>
+        <br> <div class="text-justify"><p>AWSのEKSにk3s serverをデプロイして、オンプレのVMのk3s agentとでクラスタを組んでみた話。</p>
+
+<p><a href="https://www.kaitoy.xyz/2021/08/15/k3s-on-on-premises-k8s/">昨日の記事</a>でやったやつの、KubernetesがEKSになった版。</p>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 
@@ -233,100 +236,89 @@
 </script>
 
 
-<h1 id="k3sとは">k3sとは</h1>
+<h1 id="eksセットアップ">EKSセットアップ</h1>
 
-<p><a href="https://k3s.io/">k3s</a>はRancherが開発しているKubernetesのディストリビューションの一つ。(オリジナルのKubernetesにソースレベルで手が入っているはずなので、フォークに近いかもしれない。)
-主にIoTデバイスなどのエッジで動くことを目的として開発されているもの。</p>
+<p>EKSは手軽に<a href="https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/getting-started-eksctl.html">eksctl</a>で、1ノードの小さいやつを作った。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# eksctl create cluster --name k3s-test --region ap-northeast-1 --with-oidc --ssh-access --ssh-public-key eks-nodes --managed -t t3.medium -N 1 -m 1 -M 1 --node-volume-size 20
+2021-08-12 08:19:53 [?]  eksctl version 0.60.0
+2021-08-12 08:19:53 [?]  using region ap-northeast-1
+2021-08-12 08:19:53 [?]  setting availability zones to [ap-northeast-1a ap-northeast-1c ap-northeast-1d]
+2021-08-12 08:19:53 [?]  subnets for ap-northeast-1a - public:192.168.0.0/19 private:192.168.96.0/19
+2021-08-12 08:19:53 [?]  subnets for ap-northeast-1c - public:192.168.32.0/19 private:192.168.128.0/19
+2021-08-12 08:19:53 [?]  subnets for ap-northeast-1d - public:192.168.64.0/19 private:192.168.160.0/19
+2021-08-12 08:19:53 [?]  nodegroup &#34;ng-fe1794d5&#34; will use &#34;&#34; [AmazonLinux2/1.20]
+2021-08-12 08:19:53 [?]  using EC2 key pair %!q(*string=&lt;nil&gt;)
+2021-08-12 08:19:53 [?]  using Kubernetes version 1.20
+2021-08-12 08:19:53 [?]  creating EKS cluster &#34;k3s-test&#34; in &#34;ap-northeast-1&#34; region with managed nodes
+2021-08-12 08:19:53 [?]  will create 2 separate CloudFormation stacks for cluster itself and the initial managed nodegroup
+2021-08-12 08:19:53 [?]  if you encounter any issues, check CloudFormation console or try &#39;eksctl utils describe-stacks --region=ap-northeast-1 --cluster=k3s-test&#39;
+2021-08-12 08:19:53 [?]  CloudWatch logging will not be enabled for cluster &#34;k3s-test&#34; in &#34;ap-northeast-1&#34;
+2021-08-12 08:19:53 [?]  you can enable it with &#39;eksctl utils update-cluster-logging --enable-types={SPECIFY-YOUR-LOG-TYPES-HERE (e.g. all)} --region=ap-northeast-1 --cluster=k3s-test&#39;
+2021-08-12 08:19:53 [?]  Kubernetes API endpoint access will use default of {publicAccess=true, privateAccess=false} for cluster &#34;k3s-test&#34; in &#34;ap-northeast-1&#34;
+2021-08-12 08:19:53 [?]  2 sequential tasks: { create cluster control plane &#34;k3s-test&#34;, 3 sequential sub-tasks: { 4 sequential sub-tasks: { wait for control plane to become ready, associate IAM OIDC provider, 2 sequential sub-tasks: { create IAM role for serviceaccount &#34;kube-system/aws-node&#34;, create serviceaccount &#34;kube-system/aws-node&#34; }, restart daemonset &#34;kube-system/aws-node&#34; }, 1 task: { create addons }, create managed nodegroup &#34;ng-fe1794d5&#34; } }
+2021-08-12 08:19:53 [?]  building cluster stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:19:54 [?]  deploying stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:20:24 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:20:54 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:21:54 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:22:54 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:23:54 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:24:54 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:25:55 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:26:55 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:27:55 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:28:55 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:29:55 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:30:55 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:31:55 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:32:56 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:33:56 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:34:56 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:35:56 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:36:56 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:37:56 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-cluster&#34;
+2021-08-12 08:41:59 [?]  building iamserviceaccount stack &#34;eksctl-k3s-test-addon-iamserviceaccount-kube-system-aws-node&#34;
+2021-08-12 08:41:59 [?]  deploying stack &#34;eksctl-k3s-test-addon-iamserviceaccount-kube-system-aws-node&#34;
+2021-08-12 08:41:59 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-addon-iamserviceaccount-kube-system-aws-node&#34;
+2021-08-12 08:42:15 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-addon-iamserviceaccount-kube-system-aws-node&#34;
+2021-08-12 08:42:32 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-addon-iamserviceaccount-kube-system-aws-node&#34;
+2021-08-12 08:42:33 [?]  serviceaccount &#34;kube-system/aws-node&#34; already exists
+2021-08-12 08:42:33 [?]  updated serviceaccount &#34;kube-system/aws-node&#34;
+2021-08-12 08:42:33 [?]  daemonset &#34;kube-system/aws-node&#34; restarted
+2021-08-12 08:44:34 [?]  building managed nodegroup stack &#34;eksctl-k3s-test-nodegroup-ng-fe1794d5&#34;
+2021-08-12 08:44:34 [?]  deploying stack &#34;eksctl-k3s-test-nodegroup-ng-fe1794d5&#34;
+2021-08-12 08:44:34 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-nodegroup-ng-fe1794d5&#34;
+2021-08-12 08:44:50 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-nodegroup-ng-fe1794d5&#34;
+2021-08-12 08:45:07 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-nodegroup-ng-fe1794d5&#34;
+2021-08-12 08:45:23 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-nodegroup-ng-fe1794d5&#34;
+2021-08-12 08:45:40 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-nodegroup-ng-fe1794d5&#34;
+2021-08-12 08:45:56 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-nodegroup-ng-fe1794d5&#34;
+2021-08-12 08:46:13 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-nodegroup-ng-fe1794d5&#34;
+2021-08-12 08:46:29 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-nodegroup-ng-fe1794d5&#34;
+2021-08-12 08:46:47 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-nodegroup-ng-fe1794d5&#34;
+2021-08-12 08:47:06 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-nodegroup-ng-fe1794d5&#34;
+2021-08-12 08:47:24 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-nodegroup-ng-fe1794d5&#34;
+2021-08-12 08:47:42 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-nodegroup-ng-fe1794d5&#34;
+2021-08-12 08:48:00 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-nodegroup-ng-fe1794d5&#34;
+2021-08-12 08:48:15 [?]  waiting for CloudFormation stack &#34;eksctl-k3s-test-nodegroup-ng-fe1794d5&#34;
+2021-08-12 08:48:15 [?]  waiting for the control plane availability...
+2021-08-12 08:48:15 [?]  saved kubeconfig as &#34;/root/.kube/config&#34;
+2021-08-12 08:48:15 [?]  no tasks
+2021-08-12 08:48:15 [?]  all EKS cluster resources for &#34;k3s-test&#34; have been created
+2021-08-12 08:48:16 [?]  nodegroup &#34;ng-fe1794d5&#34; has 1 node(s)
+2021-08-12 08:48:16 [?]  node &#34;ip-192-168-46-72.ap-northeast-1.compute.internal&#34; is ready
+2021-08-12 08:48:16 [?]  waiting for at least 1 node(s) to become ready in &#34;ng-fe1794d5&#34;
+2021-08-12 08:48:16 [?]  nodegroup &#34;ng-fe1794d5&#34; has 1 node(s)
+2021-08-12 08:48:16 [?]  node &#34;ip-192-168-46-72.ap-northeast-1.compute.internal&#34; is ready
+2021-08-12 08:50:21 [?]  kubectl command should work with &#34;/root/.kube/config&#34;, try &#39;kubectl get nodes&#39;
+2021-08-12 08:50:21 [?]  EKS cluster &#34;k3s-test&#34; in &#34;ap-northeast-1&#34; region is ready
+[root@vm-1 ~]# kubectl get node
+NAME                                               STATUS   ROLES    AGE   VERSION
+ip-192-168-46-72.ap-northeast-1.compute.internal   Ready    &lt;none&gt;   30h   v1.20.4-eks-6b7464</code></pre></div>
+<h1 id="k3s-serverのデプロイ">k3s serverのデプロイ</h1>
 
-<p>そのための大きな特徴が省リソース。
-k3sは単一のバイナリだけで完結していて、その中にKubernetesを構成するkube-apiserver、kube-controller-manager、kube-scheduler、kube-proxy、kubelet、kubectlのほか、コンテナランタイムのcontainerd、runcやCNIプラグインのFlannelが詰まっていて、起動するプロセスが少なく、省メモリで動ける。
-(メモリの最小要件は512MB。)</p>
-
-<p>もう一つの大きな特徴が、etcdの代わりにSQLiteで動けること。
-オリジナルのKubernetesは、3ノードとかのetcdクラスタを用意しておいて、そこにkube-apiserverをつないでリソースオブジェクトなどを永続化するのに対して、k3sはSQLiteを呼ぶだけなので、メモリ使用量が少なく、構築・運用も簡単。
-k3sのバイナリにはetcdも組み込まれていて、etcdに切り替えてHA構成を組むこともできる。
-別プロセスにはなるけど、PostgreSQLかMySQLかMariaDBを使うこともできる。</p>
-
-<p>また、k3sのバイナリにはiptablesなどのOSコマンドも組み込まれていて、起動時にk3sのデータディレクトリに展開して使う形になっているので、ホストOSの前提条件が少なく、構築・運用が楽。</p>
-
-<p>構築・運用という観点では、<a href="https://rancher.com/docs/k3s/latest/en/installation/airgap/">Air-Gapインストール (i.e. オフラインインストール)</a>、<a href="https://rancher.com/docs/k3s/latest/en/installation/uninstall/">アンインストール</a>、<a href="https://rancher.com/docs/k3s/latest/en/upgrades/killall/">サービス停止</a>、<a href="https://rancher.com/docs/k3s/latest/en/backup-restore/">バックアップ・リストア</a>、<a href="https://rancher.com/docs/k3s/latest/en/upgrades/automated/">自動アップグレード</a>あたりが公式にカバーされているのもうれしい。</p>
-
-<h1 id="k3sのアーキテクチャ">k3sのアーキテクチャ</h1>
-
-<p>k3sには大きくserverコマンドとagentコマンドがある。
-serverでKubernetesのマスタコンポーネントを起動して、agentでノードコンポーネントを起動する感じ。</p>
-
-<p>公式サイトのアーキテクチャダイアグラム:
-<img src="https://k3s.io/images/how-it-works-k3s.svg" alt="k3s-architecture" /></p>
-
-<p>この図で、Tunnel Proxyというのはk3s独自のコンポーネント。
-マニュアルには説明がないんだけど、<a href="https://github.com/k3s-io/k3s/blob/v1.21.3%2Bk3s1/pkg/agent/proxy/apiproxy.go">ソース</a>を見た感じではどちらかというとKubernetesのAPI(i.e. kube-apiserver)やk3sのAPIに対するロードバランサっぽい。
-つまり、serverを複数動かしたときに、agentはそのなかのいずれか一つに接続できれば動けるので、その間にロードバランサがあると都合がいいんだけど、それをk3sプロセス内の処理として実現するためのコンポーネントがTunnel Proxy。</p>
-
-<p>ノードコンポーネントからkube-apiserverに通信するとき、kube-apiserverがバインドしたポートじゃなくて、Tunnel Proxyがバインドしたポートにつなぐ形になるので、k3sクラスタ構築時に注意する必要がある。</p>
-
-<h1 id="今回構築したい構成">今回構築したい構成</h1>
-
-<p>k3sは、<code>k3s server</code>というコマンドを実行するだけでagentも起動してクラスタを構成し、CoreDNSとかのインフラ的Podもデプロイしてくれて手軽に使えるんだけど、今回は以下のような構成でserverをKubernetes上で動かし、agentを別のホストで動かすというのをやりたい。</p>
-
-<p><img src="/images/k3s-on-on-premises-k8s/k3s_cluster.png" alt="k3s_cluster.png" /></p>
-
-<p>この構成は、Kubernetesの特定のワークロードだけ特定のノード(上の図で言うとVM-2)で動かしたいような用途を想定したもの。
-そういうワークロードを、Kubernetesの代わりにk3sにデプロイすることで、k3sの方のノードで動かせる。</p>
-
-<p>単にPodを動かすノードを指定したいなら<a href="https://kubernetes.io/ja/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/">Node Affinity</a>でもいいんだけど、セキュリティなどの都合上、そのノードをKubernetesクラスタにはjoinさせたくなかったり、KubernetesのAPIをそのノードのネットワークにさらしたくなかったりするとき、Podで隔離したk3s serverをそのノード用に使えるという点が上記構成のポイント。</p>
-
-<p>例えば、AWSのEKSでKubernetesクラスタを運用していて、オンプレのマシンで動かしたいPodがある場合、上記構成ならEKSのAPIをさらさなくても実現できる。</p>
-
-<h1 id="構築環境">構築環境</h1>
-
-<p>ノートPCでVMWare PlayerでCentOS 7.9のVMを二つ作って、一方のVMに<a href="https://github.com/kaitoy/ansible-k8s">手製のAnsible Playbook</a>を使って1ノードのKubernetesクラスタを構築した。</p>
-
-<p>Kubernetesのバージョンは1.21.2。</p>
-
-<p>それぞれのVMはホストネットワークにブリッジ接続していて、互いに疎通がある。</p>
-
-<h1 id="k3sコンテナイメージ">k3sコンテナイメージ</h1>
-
-<p>k3s serverをKubernetesにデプロイするにはなにはともあれk3sのコンテナイメージが要るが、<a href="https://hub.docker.com/r/rancher/k3s">k3s公式のもの</a>はagent用っぽいので自分で作ってDocker Hubに上げておいた。
-イメージ名は<a href="https://hub.docker.com/r/kaitoy/k3s">kaitoy/k3s:1.21.2</a>。
-(無料ユーザなのでそのうち消えるかも。)</p>
-
-<p><a href="https://github.com/kaitoy/docker-k3s/blob/master/Dockerfile">Dockerfile</a>は以下の内容。</p>
-
-<pre><code>FROM alpine:3.14 as k3s
-
-RUN wget https://github.com/k3s-io/k3s/releases/download/v1.21.2%2Bk3s1/k3s -O /usr/local/bin/k3s \
-    &amp;&amp; \
-    chmod +x /usr/local/bin/k3s
-
-FROM scratch
-
-COPY --from=k3s /usr/local/bin/k3s /k3s
-
-EXPOSE 6443
-
-ENTRYPOINT [&quot;/k3s&quot;]
-CMD [&quot;server&quot;, &quot;--disable-agent&quot;, &quot;--disable-cloud-controller&quot;, &quot;-d&quot;, &quot;/var/lib/rancher/k3s&quot;]
-</code></pre>
-
-<p>k3sのGitHub Releasesからk3sのバイナリをダウンロードして、scratchのルートに置いただけ。
-これだけでk3s serverは動く。</p>
-
-<p>前述のようにk3sは起動するときにOSコマンドをデータディレクトリに展開するんだけど、そのなかにlsとかpsとかcatとかが含まれるので、scratchベースであってもそれらのコマンドを使ってコンテナ内の様子を見られるのが地味に便利。</p>
-
-<p>k3sが展開するコマンドは<a href="https://github.com/buildroot/buildroot">buildroot</a>ベースのもの。
-以下に全コマンドのリストを張っておく。(パス半ばのハッシュ値みたいな部分はk3sのバージョンによって違うかも。毎回の起動で変わるわけではない。)</p>
-
-<iframe src="https://pastebin.pl/view/embed/31f45e4c" style="border:none;width:100%"></iframe>
-
-<h1 id="k3s-serverをkubernetesにデプロイ">k3s serverをKubernetesにデプロイ</h1>
-
-<p>k3s serverをデプロイするKubernetesマニフェストは以下。
-k3s serverのポートはNodePortで公開している。
-データの永続化は気にしてない。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">---<span style="color:#666">
-</span><span style="color:#666"></span>apiVersion:<span style="color:#666"> </span>apps/v1<span style="color:#666">
+<p>k3s serverをデプロイするKubernetesマニフェストは以下。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>apps/v1<span style="color:#666">
 </span><span style="color:#666"></span>kind:<span style="color:#666"> </span>Deployment<span style="color:#666">
 </span><span style="color:#666"></span>metadata:<span style="color:#666">
 </span><span style="color:#666">  </span>name:<span style="color:#666"> </span>k3s<span style="color:#666">
@@ -345,57 +337,66 @@ k3s serverのポートはNodePortで公開している。
 </span><span style="color:#666">      </span>containers:<span style="color:#666">
 </span><span style="color:#666">      </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>k3s<span style="color:#666">
 </span><span style="color:#666">        </span>image:<span style="color:#666"> </span>kaitoy/k3s:<span style="color:#3677a9">1.21</span>.<span style="color:#3677a9">2</span><span style="color:#666">
-</span><span style="color:#666">        </span>command:<span style="color:#666">
-</span><span style="color:#666">        </span>-<span style="color:#666"> </span>/k3s<span style="color:#666">
 </span><span style="color:#666">        </span>args:<span style="color:#666">
 </span><span style="color:#666">        </span>-<span style="color:#666"> </span>server<span style="color:#666">
 </span><span style="color:#666">        </span>-<span style="color:#666"> </span>--disable-agent<span style="color:#666">
 </span><span style="color:#666">        </span>-<span style="color:#666"> </span>--disable-cloud-controller<span style="color:#666">
-</span><span style="color:#666">        </span>-<span style="color:#666"> </span>--node-external-ip<span style="color:#666">
-</span><span style="color:#666">        </span>-<span style="color:#666"> </span><span style="color:#3677a9">192.168</span>.<span style="color:#3677a9">1.200</span><span style="color:#666">
-</span><span style="color:#666">        </span>-<span style="color:#666"> </span>--https-listen-port<span style="color:#666">
-</span><span style="color:#666">        </span>-<span style="color:#666"> </span><span style="color:#ed9d13">&#34;30443&#34;</span><span style="color:#666">
 </span><span style="color:#666">        </span>ports:<span style="color:#666">
-</span><span style="color:#666">        </span>-<span style="color:#666"> </span>containerPort:<span style="color:#666"> </span><span style="color:#3677a9">30443</span><span style="color:#666">
-</span><span style="color:#666"></span>---<span style="color:#666">
-</span><span style="color:#666"></span>apiVersion:<span style="color:#666"> </span>v1<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>containerPort:<span style="color:#666"> </span><span style="color:#3677a9">6443</span></code></pre></div>
+<p>オンプレでデプロイしたときは<code>--https-listen-port</code>でポートをデフォルトの6443から変えたけど、EKSの場合はKubernetesノードとは別のところでkube-apiserverが動いているので、変える必要が無い。</p>
+
+<p><code>--node-external-ip</code>の方は必要だけど、あとでデプロイするLoadBalancerのIPアドレスを指定するので最初は省いている。</p>
+
+<p>上記マニフェストをEKSにapplyすると、k3s serverのPodが起動する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# kubectl apply -f deploy.yaml
+deployment.apps/k3s created
+[root@vm-1 ~]# kubectl get po
+NAME                   READY   STATUS    RESTARTS   AGE
+k3s-6db866548b-vxc84   1/1     Running   0          5s</code></pre></div>
+<h1 id="loadbalancerのデプロイ">LoadBalancerのデプロイ</h1>
+
+<p>デプロイしたk3s serverにオンプレからアクセスできるようにするために、以下のLoadBalancerのKubernetesマニフェストを使う。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>v1<span style="color:#666">
 </span><span style="color:#666"></span>kind:<span style="color:#666"> </span>Service<span style="color:#666">
 </span><span style="color:#666"></span>metadata:<span style="color:#666">
 </span><span style="color:#666">  </span>name:<span style="color:#666"> </span>k3s<span style="color:#666">
+</span><span style="color:#666">  </span>annotations:<span style="color:#666">
+</span><span style="color:#666">    </span>service.beta.kubernetes.io/aws-load-balancer-type:<span style="color:#666"> </span><span style="color:#ed9d13">&#34;nlb&#34;</span><span style="color:#666">
 </span><span style="color:#666"></span>spec:<span style="color:#666">
-</span><span style="color:#666">  </span>type:<span style="color:#666"> </span>NodePort<span style="color:#666">
+</span><span style="color:#666">  </span>type:<span style="color:#666"> </span>LoadBalancer<span style="color:#666">
 </span><span style="color:#666">  </span>selector:<span style="color:#666">
 </span><span style="color:#666">    </span>app:<span style="color:#666"> </span>k3s<span style="color:#666">
 </span><span style="color:#666">  </span>ports:<span style="color:#666">
-</span><span style="color:#666">  </span>-<span style="color:#666"> </span>port:<span style="color:#666"> </span><span style="color:#3677a9">30443</span><span style="color:#666">
-</span><span style="color:#666">    </span>targetPort:<span style="color:#666"> </span><span style="color:#3677a9">30443</span><span style="color:#666">
-</span><span style="color:#666">    </span>nodePort:<span style="color:#666"> </span><span style="color:#3677a9">30443</span></code></pre></div>
-<p>肝はDeploymentの<code>args</code>で<code>k3s server</code>コマンドに渡しているオプション。
-まず<code>--disable-agent</code>について。</p>
-
-<p><code>k3s server</code>コマンドは、その名に反して、デフォルトではagentも起動してインフラ系Podまでデプロイする動きをする。
-今回はagentは別のVMで動かしたいし、Pod内でagentが起動してもどうせ機能しないので起動しないでほしい。
-ので<code>--disable-agent</code>を付けているが、<a href="https://github.com/k3s-io/k3s/blob/v1.21.2+k3s1/pkg/cli/cmds/server.go#L452">実は隠しオプション</a>。なぜ?</p>
-
-<p><code>--disable-cloud-controller</code>は、クラウドじゃないのでcloud-controller要らないから付けてるけど、たぶん付けなくてもcloud-controllerは起動しないような気がする。</p>
-
-<p><code>--node-external-ip</code>で指定しているIPアドレスは、KubernetesのホストVMのIPアドレスで、k3s server(正確にはその中のkube-apiserver)がAPIのクライアントにadvertiseするIPアドレスとして使われるもの。
-もう少し具体的に言うと、k3sクラスタのdefaultネームスペースのkubernetesサービスのEndpointになるIPアドレス。
-指定しないとk3sのPodに割り当てられたクラスタIPになってしまうんだけど、k3s agentはkubernetesサービスのEndpointをメインの接続先にするように動くので、NodePortで公開するポートに対応するIPアドレス(i.e. ノードの外部IPアドレス)を指定しておかないとまずい。</p>
-
-<p><code>--https-listen-port</code>もk3s serverがadvertiseするポートなので、NodePortで公開するポートと同じになるように指定している。
-k3s serverのポート(i.e. kube-apiserverのポート)はデフォルトでは6443なんだけど、そのポートはホストのKubernetesのkube-apiserverが使っているので変える必要があって30443にした。</p>
-
-<p><br></p>
-
-<p>このマニフェストをapplyすると、k3s serverが起動し、ホストVMのポート30443でアクセスできるようになる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# kubectl apply -f k3s.yaml
-deployment.apps/k3s created
+</span><span style="color:#666">    </span>-<span style="color:#666"> </span>protocol:<span style="color:#666"> </span>TCP<span style="color:#666">
+</span><span style="color:#666">      </span>port:<span style="color:#666"> </span><span style="color:#3677a9">6443</span><span style="color:#666">
+</span><span style="color:#666">      </span>targetPort:<span style="color:#666"> </span><span style="color:#3677a9">6443</span></code></pre></div>
+<p>このLoadBalancerをapplyすると、AWSのNLBがデプロイされて、6443ポートへの通信をk3sポッドの6443にフォワードしてくれるようになる。
+(EKSにLoadBalancerをapplyすると、デフォルトではCLBが作られるけど、なんとなくNLBにしたかったので<code>service.beta.kubernetes.io/aws-load-balancer-type: &quot;nlb&quot;</code>をつけている。)</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# kubectl apply -f svc.yaml
 service/k3s created
-[root@vm-1 ~]# kubectl get po
-NAME                   READY   STATUS    RESTARTS   AGE
-k3s-57d95d5c47-7p4s8   1/1     Running   0          25s
-[root@vm-1 ~]# curl -k https://192.168.1.200:30443
+[root@vm-1 ~]# kubectl get svc k3s
+NAME   TYPE           CLUSTER-IP      EXTERNAL-IP                                                                          PORT(S)          AGE
+k3s    LoadBalancer   10.100.132.48   a0bcc8fbc39504085bdbe260c4878110-edabcaa6675dec5b.elb.ap-northeast-1.amazonaws.com   6443:31795/TCP   9s</code></pre></div>
+<p><code>EXTERNAL-IP</code>のところに表示される<code>a0bcc8fbc39504085bdbe260c4878110-edabcaa6675dec5b.elb.ap-northeast-1.amazonaws.com</code>がNLBのDNS名。
+けどそれでアクセスすると、TLS接続エラーになる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# curl -k https://a0bcc8fbc39504085bdbe260c4878110-edabcaa6675dec5b.elb.ap-northeast-1.amazonaws.com:6443
+curl: (35) Peer reports it experienced an internal error.</code></pre></div>
+<p>多分k3s serverが起動時に生成するTLSサーバ証明書のSANにNLBのDNS名が入ってないからな気がする。
+(curlに<code>-k</code>付けてはいるけど。)</p>
+
+<p>IPアドレスでのアクセスはなぜかできる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# nslookup a0bcc8fbc39504085bdbe260c4878110-edabcaa6675dec5b.elb.ap-northeast-1.amazonaws.com
+Server:         8.8.8.8
+Address:        8.8.8.8#53
+Non-authoritative answer:
+Name:   a0bcc8fbc39504085bdbe260c4878110-edabcaa6675dec5b.elb.ap-northeast-1.amazonaws.com
+Address: 52.194.178.128
+Name:   a0bcc8fbc39504085bdbe260c4878110-edabcaa6675dec5b.elb.ap-northeast-1.amazonaws.com
+Address: 52.68.116.248
+Name:   a0bcc8fbc39504085bdbe260c4878110-edabcaa6675dec5b.elb.ap-northeast-1.amazonaws.com
+Address: 35.75.204.162
+
+[root@vm-1 ~]# curl -k https://35.75.204.162:6443
 {
   &#34;kind&#34;: &#34;Status&#34;,
   &#34;apiVersion&#34;: &#34;v1&#34;,
@@ -407,93 +408,50 @@ k3s-57d95d5c47-7p4s8   1/1     Running   0          25s
   &#34;reason&#34;: &#34;Unauthorized&#34;,
   &#34;code&#34;: 401
 }</code></pre></div>
+<p>k3s serverに<code>--tls-san</code>というオプションがあるので、それでNLBのDNS名指定してやればDNS名でアクセスできるようになるかも。
+ただ、ちゃんとやるなら、k3sが自動生成するオレオレ証明書は使わないだろうし、LoadBalancerで管理するNLBより別途デプロイしたALBで証明書管理したりアクセス制限したりしたほうがよさそう。</p>
+
 <h1 id="ノードトークンの取得">ノードトークンの取得</h1>
 
-<p>k3s serverにk3s agentをjoinさせるには、serverからノードトークンを取得しておく必要がある。
-(多分Kubernetesの<a href="https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-tls-bootstrapping/">ブートストラップトークン</a>のようなもの。)
-デフォルトでは、ノードトークンはserverのデータディレクトリの<code>/var/lib/rancher/k3s/server/node-token</code>に書かれているので、catしてやれば見れる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# kubectl get po
-NAME                   READY   STATUS    RESTARTS   AGE
-k3s-57d95d5c47-v5bnh   1/1     Running   0          8h
-[root@vm-1 ~]# kubectl exec -it k3s-57d95d5c47-v5bnh -- /var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/cat /var/lib/rancher/k3s/server/node-token
-K1084e50461f4838e53746168882e59ad0db873c6b55ea1ef24521fa6022c2c2684::server:5d0fbc7644d4854c984f03a40a8f4d8a</code></pre></div>
-<p>ノードトークンはserverの起動オプション(<code>--agent-token</code>)で指定もできるっぽいので、実運用ならそれかも。</p>
-
+<p>ノードトークンはオンプレでやったときと同じようにとれるけど、その前に<code>--node-external-ip</code>にNLBのIPアドレスを指定してk3s serverのPodを再起動しておく。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# sed -i &#39;/--disable-cloud-controller/a\        - --node-external-ip&#39; deploy.yaml
+[root@vm-1 ~]# sed -i &#39;/--node-external-ip/a\        - 35.75.204.162&#39; deploy.yaml
+[root@vm-1 ~]# kubectl apply -f deploy.yaml
+deployment.apps/k3s configured</code></pre></div>
+<p>Pod再起動後に再生成されたトークンをとる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# kubectl exec -it k3s-765b64bddf-7fvwt -- /var/lib/rancher/k3s/data/57d64d4b123cea8e276484f00ab3dfa7178a00a35368aa6b43df3e3bd8ce032d/bin/cat /var/lib/rancher/k3s/server/node-token
+K10507cce4a8c388e0d7ec6bf8275a27f5ccb415583840b08f13822105e88b9352c::server:b30aefea0cc931e54f0fb77265b957ef</code></pre></div>
 <h1 id="k3s-agentの起動とk3s-serverへの登録">k3s agentの起動とk3s serverへの登録</h1>
 
-<p>k3s agentは、Kubernetesが入ってないほうのVMで直接起動する。</p>
+<p>k3s agentは手元のCentOS 7.9のVMで動かす。</p>
 
-<p>起動する前に、<a href="https://rancher.com/docs/k3s/latest/en/installation/installation-requirements/#networking">agentがserverと通信するポート</a>を開ける必要があるけど、面倒なので<a href="https://rancher.com/docs/k3s/latest/en/advanced/#additional-preparation-for-red-hat-centos-enterprise-linux">firewalldを止めておく</a>。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-2 ~]# systemctl disable firewalld --now</code></pre></div>
-<p>また、SELinuxも無効にしておく。(<a href="https://rancher.com/docs/k3s/latest/en/advanced/#selinux-support">公式が指定しているrpmパッケージを入れれば有効でも動く</a>はずだけど。)</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-2 ~]# setenforce 0
-[root@vm-2 ~]# sed -i s/SELINUX=enforcing/SELINUX=disabled/ /etc/selinux/config</code></pre></div>
-<p>あとはインストールスクリプトをダウンロードして、環境変数でk3s serverのURLとノードトークンとかを指定して実行してやればいい。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-2 ~]# curl -sSL https://get.k3s.io/ -o install.sh
-[root@vm-2 ~]# chmod +x install.sh
-[root@vm-2 ~]# export INSTALL_K3S_SKIP_SELINUX_RPM=true
-[root@vm-2 ~]# export INSTALL_K3S_SELINUX_WARN=true
-[root@vm-2 ~]# export K3S_URL=https://192.168.1.200:30443
-[root@vm-2 ~]# export K3S_TOKEN=K1084e50461f4838e53746168882e59ad0db873c6b55ea1ef24521fa6022c2c2684::server:5d0fbc7644d4854c984f03a40a8f4d8a
-[root@vm-2 ~]# ./install.sh
-[INFO]  Finding release for channel stable
-[INFO]  Using v1.21.3+k3s1 as release
-[INFO]  Downloading hash https://github.com/k3s-io/k3s/releases/download/v1.21.3+k3s1/sha256sum-amd64.txt
-[INFO]  Downloading binary https://github.com/k3s-io/k3s/releases/download/v1.21.3+k3s1/k3s
-[INFO]  Verifying binary download
-[INFO]  Installing k3s to /usr/local/bin/k3s
-[INFO]  Skipping installation of SELinux RPM
-[WARN]  Failed to find the k3s-selinux policy, please install:
-    yum install -y container-selinux selinux-policy-base
-    yum install -y https://rpm.rancher.io/k3s/stable/common/centos/7/noarch/k3s-selinux-0.2-1.el7_8.noarch.rpm
+<p><a href="https://www.kaitoy.xyz/2021/08/15/k3s-on-on-premises-k8s/">昨日の記事</a>ではk3sをインストールスクリプトで起動したけど、今回は手動でやってみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# systemctl disable firewalld --now
+[root@vm-1 ~]# setenforce 0
+[root@vm-1 ~]# sed -i s/SELINUX=enforcing/SELINUX=disabled/ /etc/selinux/config
+[root@vm-1 ~]# curl -L https://github.com/k3s-io/k3s/releases/download/v1.21.2%2Bk3s1/k3s -o /usr/local/bin/k3s
+[root@vm-1 ~]# chmod +x /usr/local/bin/k3s
+[root@vm-1 ~]# /sbin/modprobe br_netfilter
+[root@vm-1 ~]# /sbin/modprobe overlay
+[root@vm-1 ~]# echo br_netfilter &gt; /etc/modules-load.d/containerd.conf
+[root@vm-1 ~]# echo overlay &gt;&gt; /etc/modules-load.d/containerd.conf
+[root@vm-1 ~]# k3s agent --token K10507cce4a8c388e0d7ec6bf8275a27f5ccb415583840b08f13822105e88b9352c::server:b30aefea0cc931e54f0fb77265b957ef -s https://35.75.204.162:6443 &gt; k3s.log 2&gt;&amp;1 &amp;
+[1] 12682</code></pre></div>
+<p>これでしばらくするとk3s agentが起動し、自身をk3s serverに登録してくれる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# kubectl exec -it k3s-765b64bddf-7fvwt -- /k3s kubectl get node
+NAME             STATUS   ROLES    AGE    VERSION
+k8s-node.local   Ready    &lt;none&gt;   116s   v1.21.2+k3s1</code></pre></div>
+<h1 id="デモ">デモ</h1>
 
-[INFO]  Creating /usr/local/bin/kubectl symlink to k3s
-[INFO]  Creating /usr/local/bin/crictl symlink to k3s
-[INFO]  Creating /usr/local/bin/ctr symlink to k3s
-[INFO]  Creating killall script /usr/local/bin/k3s-killall.sh
-[INFO]  Creating uninstall script /usr/local/bin/k3s-agent-uninstall.sh
-[INFO]  env: Creating environment file /etc/systemd/system/k3s-agent.service.env
-[INFO]  systemd: Creating service file /etc/systemd/system/k3s-agent.service
-[INFO]  systemd: Enabling k3s-agent unit
-Created symlink from /etc/systemd/system/multi-user.target.wants/k3s-agent.service to /etc/systemd/system/k3s-agent.service.
-[INFO]  systemd: Starting k3s-agent</code></pre></div>
-<p>上記インストールログを見ても分かる通り、インストールスクリプトは以下をしてくれる。</p>
+<p>この記事でやったことを<a href="https://asciinema.org">asciinema</a>でデモにした。
+デモでは最後にnginxをデプロイしてみている。</p>
 
-<ul>
-<li>k3sバイナリのダウンロード。</li>
-<li>停止スクリプトの生成。</li>
-<li>アンインストールスクリプトの生成。</li>
-<li>k3s agentを起動するためのsystemdのユニットファイルを生成。</li>
-<li>k3s agentサービスの有効化、起動。</li>
-</ul>
-
-<p>起動完了すると、k3s serverにノードとして登録され、インフラ系Podを起動する。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# kubectl  exec -it k3s-57d95d5c47-v5bnh -- /k3s kubectl get node
-NAME             STATUS   ROLES    AGE     VERSION
-k8s-node.local   Ready    &lt;none&gt;   4m38s   v1.21.3+k3s1
-[root@vm-1 ~]# kubectl  exec -it k3s-57d95d5c47-v5bnh -- /k3s kubectl get po -A
-NAMESPACE     NAME                                      READY   STATUS      RESTARTS   AGE
-kube-system   metrics-server-86cbb8457f-gcshq           1/1     Running     0          9h
-kube-system   local-path-provisioner-5ff76fc89d-smkvb   1/1     Running     0          9h
-kube-system   coredns-7448499f4d-fs7sq                  1/1     Running     0          9h
-kube-system   helm-install-traefik-crd-pgzkk            0/1     Completed   0          9h
-kube-system   helm-install-traefik-tbgz7                0/1     Completed   1          9h
-kube-system   svclb-traefik-vtrtg                       2/2     Running     0          18m
-kube-system   traefik-97b44b794-6wvqt                   1/1     Running     0          18m</code></pre></div>
-<h1 id="k3s-agentのアンインストール">k3s agentのアンインストール</h1>
-
-<p>アンインストールが公式にサポートされているのがKubernetesにないk3sの特徴なので、アンインストールもしてみる。</p>
-
-<p>アンインストールは、インストール時に生成されたアンインストールスクリプトを実行するだけでいい。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-2 ~]# k3s-agent-uninstall.sh</code></pre></div>
-<p>スクリプトを見ると、バイナリやデータディレクトリやサービスユニットファイルを削除するだけでなくて、コンテナプロセスのkill、コンテナのファイルシステムのアンマウント、コンテナの<code>/run/</code>にあるステートディレクトリの削除、CNIプラグインが作る仮想ネットワークブリッジの削除、iptables設定の復元なんかもやってくれて、なかなか手が込んでいる。</p>
-
-<p>但し、k3s serverからノードの削除をしてくれるわけではないので、それは別途手動でやる必要がある。</p></div>
+<script id="asciicast-430269" src="https://asciinema.org/a/430269.js" async></script></div>
 
         <section class="share-buttons">
-          <div class="fb-share-button share-button" data-href="https://www.kaitoy.xyz/2021/08/15/k3s-on-on-premises-k8s/" data-layout="button_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">シェア</a></div>
+          <div class="fb-share-button share-button" data-href="https://www.kaitoy.xyz/2021/08/16/k3s-on-eks/" data-layout="button_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">シェア</a></div>
           <div class="share-button">
-            <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-text="k3sをオンプレの手製Kubernetesクラスタで動かす" data-url="https://www.kaitoy.xyz/2021/08/15/k3s-on-on-premises-k8s/" data-show-count="true" data-count="horizontal">Tweet</a>
+            <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-text="EKSとオンプレVMとの間でk3sクラスタを組む" data-url="https://www.kaitoy.xyz/2021/08/16/k3s-on-eks/" data-show-count="true" data-count="horizontal">Tweet</a>
           </div>
           <div class="share-button">
             <a href="https://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="basic-label-counter" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
@@ -520,20 +478,15 @@ kube-system   traefik-97b44b794-6wvqt                   1/1     Running     0   
         <div class="col-sm-6">
           <div class="prev">
             
-            <a href="https://www.kaitoy.xyz/2021/04/06/k8s-on-alma-linux-8/">
+            <a href="https://www.kaitoy.xyz/2021/08/15/k3s-on-on-premises-k8s/">
               <i class="fa fa-angle-left"></i>
-              Kubernetes 1.20 のクラスタを AlmaLinux 8で構築する
+              k3sをオンプレの手製Kubernetesクラスタで動かす
             </a>
             
           </div>
         </div>
         <div class="col-sm-6">
           <div class="next text-right">
-            
-            <a href="https://www.kaitoy.xyz/2021/08/16/k3s-on-eks/">
-              EKSとオンプレVMとの間でk3sクラスタを組む
-              <i class="fa fa-angle-right"></i>
-            </a>
             
           </div>
         </div>
@@ -557,16 +510,12 @@ kube-system   traefik-97b44b794-6wvqt                   1/1     Running     0   
     
     
 
-    <h4 class="post-title"><a href="/2021/08/16/k3s-on-eks/">EKSとオンプレVMとの間でk3sクラスタを組む</a></h4>
-    <h5>Mon, Aug 16, 2021</h5>
+    <h4 class="post-title"><a href="/2021/08/15/k3s-on-on-premises-k8s/">k3sをオンプレの手製Kubernetesクラスタで動かす</a></h4>
+    <h5>Sun, Aug 15, 2021</h5>
     
     <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
     
     <a href="https://www.kaitoy.xyz/tags/k3s"><kbd class="item-tag">k3s</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">aws</kbd></a>
-    
-    <a href="https://www.kaitoy.xyz/tags/eks"><kbd class="item-tag">eks</kbd></a>
     
 
 </div>
@@ -1035,6 +984,34 @@ kube-system   traefik-97b44b794-6wvqt                   1/1     Running     0   
     <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
     
     <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/12/11/goslings-development-memo0-intro-design/">Goslings開発メモ - その0: 紹介と概要と設計編</a></h4>
+    <h5>Sun, Dec 11, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring"><kbd class="item-tag">spring</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring-boot"><kbd class="item-tag">spring-boot</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/jgit"><kbd class="item-tag">jgit</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">aws</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws-ecs"><kbd class="item-tag">aws-ecs</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/git"><kbd class="item-tag">git</kbd></a>
     
 
 </div>
