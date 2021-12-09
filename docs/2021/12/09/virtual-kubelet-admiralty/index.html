@@ -225,6 +225,8 @@
 
         <br> <div class="text-justify"><p>KubernetesクラスタにAdmiraltyのvirtual-kubeletでk3sクラスタを仮想ノードとしてつなげてみた話。</p>
 
+<p>なおこれは、<a href="https://qiita.com/advent-calendar/2021/kubernetes">QiitaのKubernetes Advent Calendar 2021</a>の9日目の記事である。</p>
+
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 
 <ins class="adsbygoogle"
@@ -407,6 +409,14 @@ vm-2.local   Ready    &lt;none&gt;   45h   v1.21.5+k3s2</code></pre></div>
 
 <p>AdmiraltyのChartからは、cert-managerのCR(i.e. IssureとCertificate)と、WebhookConfigurationを消しておく。</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 multicluster-scheduler]# rm -f templates/cert.yaml templates/issuer.yaml templates/webhook.yaml</code></pre></div>
+<p><br></p>
+
+<p>cert-managerがCertificateに対して作るSecretはAdmiraltyのWebhookサーバがマウントして使うんだけど、cert-managerを入れてないのでそのSecretが作られない一方、Webhookサーバはmulticluster-scheduler-controller-manager Pod(i.e. multicluster-scheduler-agentプロセス)に他の必要なコントローラとごった煮になってて止められないので、multicluster-scheduler-controller-managerがSecretのマウントに失敗して落ちないように適当なSecretを作っておく。</p>
+
+<p>ソースクラスタからCertificateのSecretを持ってきて名前だけ変えればいい。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 multicluster-scheduler]# kubectl get secret hoge-multicluster-scheduler-cert -o yaml &gt; /tmp/cert.yaml
+[root@vm-1 multicluster-scheduler]# sed -e &#39;s/hoge-multicluster-scheduler-cert/foo-multicluster-scheduler-cert/&#39; -i /tmp/cert.yaml
+[root@vm-1 multicluster-scheduler]# kubectl --kubeconfig ./k3s.yaml apply -f /tmp/cert.yaml</code></pre></div>
 <p><br></p>
 
 <p>Admiraltyをインストール。</p>

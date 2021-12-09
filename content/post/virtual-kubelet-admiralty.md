@@ -15,6 +15,8 @@ KubernetesクラスタにAdmiraltyのvirtual-kubeletでk3sクラスタを仮想�
 
 <!--more-->
 
+なおこれは、[QiitaのKubernetes Advent Calendar 2021](https://qiita.com/advent-calendar/2021/kubernetes)の9日目の記事である。
+
 {{< google-adsense >}}
 
 # virtual-kubeletとは
@@ -203,6 +205,18 @@ AdmiraltyのChartからは、cert-managerのCR(i.e. IssureとCertificate)と、W
 
 ```console
 [root@vm-1 multicluster-scheduler]# rm -f templates/cert.yaml templates/issuer.yaml templates/webhook.yaml
+```
+
+<br>
+
+cert-managerがCertificateに対して作るSecretはAdmiraltyのWebhookサーバがマウントして使うんだけど、cert-managerを入れてないのでそのSecretが作られない一方、Webhookサーバはmulticluster-scheduler-controller-manager Pod(i.e. multicluster-scheduler-agentプロセス)に他の必要なコントローラとごった煮になってて止められないので、multicluster-scheduler-controller-managerがSecretのマウントに失敗して落ちないように適当なSecretを作っておく。
+
+ソースクラスタからCertificateのSecretを持ってきて名前だけ変えればいい。
+
+```console
+[root@vm-1 multicluster-scheduler]# kubectl get secret hoge-multicluster-scheduler-cert -o yaml > /tmp/cert.yaml
+[root@vm-1 multicluster-scheduler]# sed -e 's/hoge-multicluster-scheduler-cert/foo-multicluster-scheduler-cert/' -i /tmp/cert.yaml
+[root@vm-1 multicluster-scheduler]# kubectl --kubeconfig ./k3s.yaml apply -f /tmp/cert.yaml
 ```
 
 <br>
