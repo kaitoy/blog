@@ -260,8 +260,8 @@ k3s agentは手元のCentOS 7.9のVMで動かす。
 
 ```console
 [root@vm-1 ~]# kubectl exec -it k3s-765b64bddf-7fvwt -- /k3s kubectl get node
-NAME             STATUS   ROLES    AGE    VERSION
-k8s-node.local   Ready    <none>   116s   v1.21.2+k3s1
+NAME         STATUS   ROLES    AGE    VERSION
+vm-2.local   Ready    <none>   116s   v1.21.2+k3s1
 ```
 
 # デモ

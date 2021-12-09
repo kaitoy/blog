@@ -270,8 +270,8 @@ Created symlink from /etc/systemd/system/multi-user.target.wants/k3s-agent.servi
 
 ```console
 [root@vm-1 ~]# kubectl  exec -it k3s-57d95d5c47-v5bnh -- /k3s kubectl get node
-NAME             STATUS   ROLES    AGE     VERSION
-k8s-node.local   Ready    <none>   4m38s   v1.21.3+k3s1
+NAME         STATUS   ROLES    AGE     VERSION
+vm-2.local   Ready    <none>   4m38s   v1.21.3+k3s1
 [root@vm-1 ~]# kubectl  exec -it k3s-57d95d5c47-v5bnh -- /k3s kubectl get po -A
 NAMESPACE     NAME                                      READY   STATUS      RESTARTS   AGE
 kube-system   metrics-server-86cbb8457f-gcshq           1/1     Running     0          9h
