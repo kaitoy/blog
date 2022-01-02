@@ -159,7 +159,7 @@ IssuerとCertificateのAPIバージョンが古いので直す。
 apply。
 
 ```console
-[root@vm-1 multicluster-scheduler]# helm template -n hoge . | kubectl apply -f -
+[root@vm-1 multicluster-scheduler]# helm template --name-template hoge . | kubectl apply -f -
 [root@vm-1 multicluster-scheduler]# kubectl get po
 NAME                                                              READY   STATUS    RESTARTS   AGE
 hoge-multicluster-scheduler-candidate-scheduler-7994c546d8cnm29   1/1     Running   0          22m
@@ -216,7 +216,7 @@ cert-managerがCertificateに対して作るSecretはAdmiraltyのWebhookサー�
 ```console
 [root@vm-1 multicluster-scheduler]# kubectl get secret hoge-multicluster-scheduler-cert -o yaml > /tmp/cert.yaml
 [root@vm-1 multicluster-scheduler]# sed -e 's/hoge-multicluster-scheduler-cert/foo-multicluster-scheduler-cert/' -i /tmp/cert.yaml
-[root@vm-1 multicluster-scheduler]# kubectl --kubeconfig ./k3s.yaml apply -f /tmp/cert.yaml
+[root@vm-1 multicluster-scheduler]# kubectl --kubeconfig /tmp/k3s.yaml apply -f /tmp/cert.yaml
 ```
 
 <br>
@@ -225,7 +225,7 @@ Admiraltyをインストール。
 
 ```console
 [root@vm-1 multicluster-scheduler]# find crds/ -name "*.yaml" | xargs -I {} kubectl --kubeconfig /tmp/k3s.yaml apply -f {}
-[root@vm-1 multicluster-scheduler]# helm template -n foo . | kubectl --kubeconfig /tmp/k3s.yaml apply -f -
+[root@vm-1 multicluster-scheduler]# helm template --name-template foo . | kubectl --kubeconfig /tmp/k3s.yaml apply -f -
 [root@vm-1 multicluster-scheduler]# kubectl --kubeconfig /tmp/k3s.yaml get po
 NAME                                                              READY   STATUS    RESTARTS   AGE
 foo-multicluster-scheduler-controller-manager-788dc65475-lwgbc   1/1     Running   0          96s

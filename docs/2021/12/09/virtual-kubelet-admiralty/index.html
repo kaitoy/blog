@@ -370,7 +370,7 @@ cert-manager-webhook-6668fbb57d-m5nlv     1/1     Running   0          5m3s</cod
 [root@vm-1 multicluster-scheduler]# sed -i -e &#34;s/v1alpha2/v1/&#34; templates/cert.yaml
 [root@vm-1 multicluster-scheduler]# sed -i -e &#34;s/replicas: 2/replicas: 1/&#34; values.yaml</code></pre></div>
 <p>apply。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 multicluster-scheduler]# helm template -n hoge . | kubectl apply -f -
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 multicluster-scheduler]# helm template --name-template hoge . | kubectl apply -f -
 [root@vm-1 multicluster-scheduler]# kubectl get po
 NAME                                                              READY   STATUS    RESTARTS   AGE
 hoge-multicluster-scheduler-candidate-scheduler-7994c546d8cnm29   1/1     Running   0          22m
@@ -416,12 +416,12 @@ vm-2.local   Ready    &lt;none&gt;   45h   v1.21.5+k3s2</code></pre></div>
 <p>ソースクラスタからCertificateのSecretを持ってきて名前だけ変えればいい。</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 multicluster-scheduler]# kubectl get secret hoge-multicluster-scheduler-cert -o yaml &gt; /tmp/cert.yaml
 [root@vm-1 multicluster-scheduler]# sed -e &#39;s/hoge-multicluster-scheduler-cert/foo-multicluster-scheduler-cert/&#39; -i /tmp/cert.yaml
-[root@vm-1 multicluster-scheduler]# kubectl --kubeconfig ./k3s.yaml apply -f /tmp/cert.yaml</code></pre></div>
+[root@vm-1 multicluster-scheduler]# kubectl --kubeconfig /tmp/k3s.yaml apply -f /tmp/cert.yaml</code></pre></div>
 <p><br></p>
 
 <p>Admiraltyをインストール。</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 multicluster-scheduler]# find crds/ -name &#34;*.yaml&#34; | xargs -I {} kubectl --kubeconfig /tmp/k3s.yaml apply -f {}
-[root@vm-1 multicluster-scheduler]# helm template -n foo . | kubectl --kubeconfig /tmp/k3s.yaml apply -f -
+[root@vm-1 multicluster-scheduler]# helm template --name-template foo . | kubectl --kubeconfig /tmp/k3s.yaml apply -f -
 [root@vm-1 multicluster-scheduler]# kubectl --kubeconfig /tmp/k3s.yaml get po
 NAME                                                              READY   STATUS    RESTARTS   AGE
 foo-multicluster-scheduler-controller-manager-788dc65475-lwgbc   1/1     Running   0          96s

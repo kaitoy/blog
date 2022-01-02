@@ -260,8 +260,9 @@ serverでKubernetesのマスタコンポーネントを起動して、agentで�
 <img src="https://k3s.io/images/how-it-works-k3s.svg" alt="k3s-architecture" /></p>
 
 <p>この図で、Tunnel Proxyというのはk3s独自のコンポーネント。
-マニュアルには説明がないんだけど、<a href="https://github.com/k3s-io/k3s/blob/v1.21.3%2Bk3s1/pkg/agent/proxy/apiproxy.go">ソース</a>を見た感じではどちらかというとKubernetesのAPI(i.e. kube-apiserver)やk3sのAPIに対するロードバランサっぽい。
-つまり、serverを複数動かしたときに、agentはそのなかのいずれか一つに接続できれば動けるので、その間にロードバランサがあると都合がいいんだけど、それをk3sプロセス内の処理として実現するためのコンポーネントがTunnel Proxy。</p>
+マニュアルには説明がないんだけど、<a href="https://www.suse.com/c/rancher_blog/introduction-to-k3s/#k3s-architecture">Rancherブログ</a>と<a href="https://github.com/k3s-io/k3s/blob/v1.21.3%2Bk3s1/pkg/agent/proxy/apiproxy.go">ソース</a>を見た感じでは、kube-apiserverからkubeletへの通信(e.g. <code>kubectl logs</code>、<code>kubectl exec</code>)のためのリバーストンネリングをしたり、KubernetesのAPIやk3sのAPIに対するロードバランシングをするものっぽい。
+前者は、ファイアウォールとかNATによってkube-apiserverからkubeletへの通信が阻まれている環境でうれしい。
+後者は、serverを複数動かしたとき、agentはそのなかのいずれか一つに接続したいんだけど、外付けのロードバランサ無しでつなげてうれしい。</p>
 
 <p>ノードコンポーネントからkube-apiserverに通信するとき、kube-apiserverがバインドしたポートじゃなくて、Tunnel Proxyがバインドしたポートにつなぐ形になるので、k3sクラスタ構築時に注意する必要がある。</p>
 
