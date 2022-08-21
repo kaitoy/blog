@@ -4,18 +4,18 @@
         <script data-ad-client="ca-pub-6244473643910448" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 
 <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
-<meta property="og:url" content="https://www.kaitoy.xyz/2021/12/09/virtual-kubelet-admiralty/">
+<meta property="og:url" content="https://www.kaitoy.xyz/2021/12/09/virtual-kubelet-liqo/">
 <meta property="og:site_name" content="To Be Decided">
 <meta name="twitter:card" content="summary"></meta>
-<link rel="canonical" href="https://www.kaitoy.xyz/2021/12/09/virtual-kubelet-admiralty/">
+<link rel="canonical" href="https://www.kaitoy.xyz/2021/12/09/virtual-kubelet-liqo/">
 
 
 
   <meta property="og:type" content="article">
-  <meta property="og:title" content="Admiraltyのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする | To Be Decided">
-  <title>Admiraltyのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする | To Be Decided</title>
-  <meta property="og:description" content="KubernetesクラスタにAdmiraltyのvirtual-kubeletでk3sクラスタを仮想ノードとしてつなげてみた話。">
-  <meta name="description" content="KubernetesクラスタにAdmiraltyのvirtual-kubeletでk3sクラスタを仮想ノードとしてつなげてみた話。">
+  <meta property="og:title" content="Liqoのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする | To Be Decided">
+  <title>Liqoのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする | To Be Decided</title>
+  <meta property="og:description" content="KubernetesクラスタにAdmiraltyのLiqoでk3sクラスタを仮想ノードとしてつなげてみた話。">
+  <meta name="description" content="KubernetesクラスタにAdmiraltyのLiqoでk3sクラスタを仮想ノードとしてつなげてみた話。">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/admiralty.png">
 
 
@@ -122,7 +122,7 @@
 
                 <div class="navbar-header">
 
-                    <a class="navbar-brand visible-xs" href="#">Admiraltyのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする</a>
+                    <a class="navbar-brand visible-xs" href="#">Liqoのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする</a>
 
                     <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
                         <span class="icon-bar"></span>
@@ -181,7 +181,7 @@
     
     
 
-    <h4 class="post-title"><a href="/2021/12/09/virtual-kubelet-admiralty/">Admiraltyのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする</a></h4>
+    <h4 class="post-title"><a href="/2021/12/09/virtual-kubelet-liqo/">Liqoのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする</a></h4>
     <h5>Thu, Dec 9, 2021</h5>
     
     <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
@@ -190,15 +190,15 @@
     
     <a href="https://www.kaitoy.xyz/tags/virtual-kubelet"><kbd class="item-tag">virtual-kubelet</kbd></a>
     
-    <a href="https://www.kaitoy.xyz/tags/admiralty"><kbd class="item-tag">admiralty</kbd></a>
+    <a href="https://www.kaitoy.xyz/tags/liqo"><kbd class="item-tag">liqo</kbd></a>
     
 
 </div>
 
 
         <div class="cover">
-            <a href="/2021/12/09/virtual-kubelet-admiralty/">
-                <img src="https://www.kaitoy.xyz/images/admiralty.png" alt="Admiraltyのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする">
+            <a href="/2021/12/09/virtual-kubelet-liqo/">
+                <img src="https://www.kaitoy.xyz/images/admiralty.png" alt="Liqoのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする">
             </a>
         </div>
 
@@ -207,12 +207,13 @@
         <aside>
             <nav id="TableOfContents">
 <ul>
-<li><a href="#virtual-kubeletとは">virtual-kubeletとは</a></li>
-<li><a href="#admiraltyの仕組み">Admiraltyの仕組み</a></li>
-<li><a href="#admiraltyをためす">Admiraltyをためす</a>
+<li><a href="#liqoとは">Liqoとは</a></li>
+<li><a href="#liqoの仕組み">Liqoの仕組み</a></li>
+<li><a href="#liqoのコンポーネント">Liqoのコンポーネント</a></li>
+<li><a href="#liqoをためす">Liqoをためす</a>
 <ul>
 <li><a href="#環境">環境</a></li>
-<li><a href="#ソースクラスタへのadmiraltyインストール">ソースクラスタへのAdmiraltyインストール</a></li>
+<li><a href="#homeクラスタへのliqoインストール">HomeクラスタへのLiqoインストール</a></li>
 <li><a href="#ターゲットクラスタへのadmiraltyインストール">ターゲットクラスタへのAdmiraltyインストール</a></li>
 <li><a href="#admiraltyの設定">Admiraltyの設定</a></li>
 <li><a href="#仮想ノードへのpodのデプロイ">仮想ノードへのPodのデプロイ</a></li>
@@ -223,9 +224,7 @@
         <hr>
         
 
-        <br> <div class="text-justify"><p>KubernetesクラスタにAdmiraltyのvirtual-kubeletでk3sクラスタを仮想ノードとしてつなげてみた話。</p>
-
-<p>なおこれは、<a href="https://qiita.com/advent-calendar/2021/kubernetes">QiitaのKubernetes Advent Calendar 2021</a>の9日目の記事である。</p>
+        <br> <div class="text-justify"><p>KubernetesクラスタにAdmiraltyのLiqoでk3sクラスタを仮想ノードとしてつなげてみた話。</p>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 
@@ -240,128 +239,90 @@
 </script>
 
 
-<h1 id="virtual-kubeletとは">virtual-kubeletとは</h1>
+<h1 id="liqoとは">Liqoとは</h1>
 
-<p><a href="https://github.com/virtual-kubelet/virtual-kubelet">virtual-kubelet</a>はkubeletのAPIを実装したもの。</p>
+<p><a href="https://liqo.io/">Liqo</a>は、<a href="https://www.kaitoy.xyz/2021/12/09/virtual-kubelet-admiralty/">前回の記事</a>で使った<a href="https://admiralty.io/">Admiralty</a>と同様の<a href="https://github.com/virtual-kubelet/virtual-kubelet">virtual-kubelet</a>実装で、Kubernetesクラスタのノードとして別のKubernetesクラスタを接続してくれるもの。</p>
 
-<p>普通のkubeletがKubernetesクラスタにコンテナランタイムを乗せた1マシンを1ノードとして追加するのに対して、virtual-kubeletは別の何かを1ノードとして追加し、ノードとして振舞わせる。
-ノードの役割はPodを実行することなので、virtual-kubeletはつまり普通の1マシン以外の環境でPodを実行するために使われる。</p>
+<p>Liqoに目を付けたのは、AdmiraltyがEKSではKubernetes APIのバージョンの不整合(<a href="https://github.com/admiraltyio/admiralty/issues/130">これ</a>とか<a href="https://github.com/admiraltyio/admiralty/issues/120">これ</a>)でうまく動かない問題があるのに対し、開発が停滞気味で修正されるかあやしかったため。</p>
 
-<p>virtual-kubeletはプラガブルなアーキテクチャになっていて、<a href="https://virtual-kubelet.io/docs/providers/#current-providers">provider</a>を変えることでPodを実行する環境を変えることができる。
-providerには、PodをAWS Fargateで実行するものとか、Azure Container Instancesで実行するものとかがあるが、この記事では、別のKubernetesクラスタで実行するAdmiraltyを試す。</p>
+<p>Liqoはかなり活発に開発されていて、機能的にはAdmirartyを超えているっぽくて、最新のKubernetes APIに追従してくれている。</p>
 
-<h1 id="admiraltyの仕組み">Admiraltyの仕組み</h1>
+<h1 id="liqoの仕組み">Liqoの仕組み</h1>
 
-<p><a href="https://admiralty.io/">Admiralty</a>は、Kubernetesクラスタのノードとして別のKubernetesクラスタを接続する。
-前者はソースクラスタ、後者はターゲットクラスタ、ソースクラスタにAdmiraltyが作るノードは仮想ノードと呼ばれ、仮想ノードにスケジューリングされたPodがターゲットクラスタのいずれかのノードで実行される。</p>
+<p>LiqoはAdmirartyと同様に、Kubernetesクラスタのノードとして別のKubernetesクラスタを接続する。
+前者はHomeクラスタ、後者はForeignクラスタ、HomeクラスタにLiqoが作るノードは仮想ノードと呼ばれ、仮想ノードにスケジューリングされたPodがForeignクラスタのいずれかのノードで実行される。</p>
 
-<p>Admiraltyの仕組みは以下のシーケンス図を見るとわかりやすい。</p>
+<p>Admiraltyは、ソースクラスタで特殊なスケジューラを動かして、PodChaperonを介してターゲットクラスタにPodをデプロイすることで、オフロードするPodがより確実に実行されるようにスケジューリングを頑張っている感じだったけど、Liqoはそのあたりは割とシンプル。
+単に、仮想ノードにスケジューリングされたPodに対応するPodを、ForeignクラスタにReplicaSet経由で作るだけ。
+ForeignクラスタにそのPodを実際に実行できるノードがあるとは限らないので、仮想ノードへのスケジューリングが不適当な結果になることもあるかも。</p>
 
-<p><img src="https://raw.githubusercontent.com/admiraltyio/admiralty/v0.14.1/docs/concepts/scheduling.svg" alt="" /></p>
+<p>代わりに(?)Liqoが頑張っているのはPod間ネットワーク。
+ForeignクラスタとHomeクラスタをVPNでつなぎ、それらのClusterIP間で通信できるようにしてくれる<a href="https://doc.liqo.io/concepts/networking/">ゲートウェイ機能をもっている</a>。</p>
 
-<p>図で、白文字のアクタがPodとして起動されるAdmiraltyのデーモンで、青文字のアクタがKubernetesのリソース。
-Kubernetesリソースは色々あるように見えるけど、PodChaperonだけがカスタムリソースで、他は役割が違うだけの普通のPod。</p>
+<p>このVPNは、<a href="https://github.com/liqotech/liqo/blob/v0.3.2/deployments/liqo/crds/net.liqo.io_tunnelendpoints.yaml">TunnelEndpoint</a>というCRにしたがって<a href="https://doc.liqo.io/concepts/networking/components/gateway/#tunnel-operator">Tunnel Operator</a>がセットアップする作りになっている。
+Tunnel Operatorが使うVPN実装は、現時点のLiqo 0.3.2では<a href="https://www.wireguard.com/">WireGuard</a>だけだけど、VPN実装を入れ替えられるプラガブルなアーキテクチャになっているので、頑張って<a href="https://github.com/liqotech/liqo/blob/v0.3.2/pkg/liqonet/tunnel/driver.go">ドライバ</a>を書けば別の実装を使える。</p>
 
-<p>まず、DeploymentとかJobとかの登録とかを契機に、Podを登録するリクエストがソースクラスタのkube-apiserverに投げられたとする。
-このPodが図中でSource Podと書かれているもの。
-この時点では全く普通のPod。</p>
-
-<p>kube-apiserverは、そのPodを登録する前に、ソースクラスタで動いているMutating Pod Admission WebhookにそのPodを投げる。
-その後そのkube-apiserverは、Mutating Pod Admission Webhookが編集したPodをレスポンスで受け取り、登録する。
-この登録されるPodは図中で<a href="https://admiralty.io/docs/concepts/scheduling/#proxy-pods">Proxy Pod</a>と書かれているもので、以下のようなもの。</p>
+<h1 id="liqoのコンポーネント">Liqoのコンポーネント</h1>
 
 <ul>
-<li>仮想ノードにスケジュールされて、ターゲットノードで実際に実行されるPodのstatusをミラーする。</li>
-<li>アノテーションの<code>multicluster.admiralty.io/sourcepod-manifest</code>にもとのPodが入っている。</li>
-<li>仮想ノードにスケジュールされるように、以下のように編集されている。
+<li>auth</li>
+<li>controller-manager</li>
+<li>crd-replicator</li>
 
-<ul>
-<li><a href="https://kubernetes.io/ja/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector">nodeSelector</a>に<code>virtual-kubelet.io/provider: admiralty</code>が設定されている。</li>
-<li><a href="https://kubernetes.io/ja/docs/concepts/scheduling-eviction/taint-and-toleration/">tolerations</a>に<code>virtual-kubelet.io/provider: admiralty</code>に対する許容が設定されている。(<code>virtual-kubelet.io/provider: admiralty</code>はAdmiraltyによる仮想ノードに付くtaint。)</li>
-<li><a href="https://kubernetes.io/ja/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity">affinity</a>と<a href="https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/">topologySpreadConstraints</a>が削除されている。</li>
-</ul></li>
-<li><a href="https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/#specify-schedulers-for-pods">schedulerName</a>に<code>admiralty-proxy</code>が設定され、下記Proxy Schedulerで処理されるようになっている。</li>
+<li><p><a href="https://doc.liqo.io/concepts/networking/components/gateway/">Liqo-Gateway</a></p>
+
+<p>いくつかのオペレータを実行し、VPNトンネルの確立とかNATとかの役割をする。</p></li>
+
+<li><p>network-manager</p></li>
+
+<li><p>route</p></li>
+
+<li><p>webhook</p></li>
 </ul>
 
-<p>Proxy Podがソースクラスタに登録されると、そのschedulerNameの指定に従ってProxy Schedulerが読み取り、全ターゲットクラスタに<a href="https://admiralty.io/docs/concepts/scheduling/#pod-chaperons">PodChaperon</a>を登録する。
-PodChaperonは以下のようなもの。</p>
+<h1 id="liqoをためす">Liqoをためす</h1>
 
-<ul>
-<li>型は普通のPodと同じ。</li>
-<li>Proxy Podのアノテーションの<code>multicluster.admiralty.io/sourcepod-manifest</code>の値を基に、Source Podと同様のspecを表現する。</li>
-<li>schedulerNameに<code>admiralty-candidate</code>が設定されている。</li>
-<li>Proxy Podと後述のCandidate Podとの間の中間オブジェクト。</li>
-<li>Podに似ているけどPodではないので、スケジューラやkubeletには処理されない。</li>
-</ul>
-
-<p>PodChaperonが登録されると、それぞれのターゲットクラスタのPod Chaperon Controllerがそれを読み取り、同じspecでPodを登録する。
-このPodが図中の<a href="https://admiralty.io/docs/concepts/scheduling/#candidate-pods">Candidate Pod</a>。
-Podではあるけど、この時点ではまだ名前の通り候補に過ぎず、ノードにスケジューリングされていないので、コンテナは実行されない。
-スケジューリングは、schedulerNameで指定されたCandidate Schedulerが実行する。</p>
-
-<p>Candidate SchedulerはCandidate Podに対し、通常のスケジューラのように、ノードの空きリソース、Podの要求リソース、Podのaffinityとかをみて割り当てるノードを決める。
-ただし通常のスケジューラとは違い、Candidate Podに実際にノードを割り当てる(i.e. <a href="https://kubernetes.io/ja/docs/concepts/scheduling-eviction/assign-pod-node/#nodename">nodeName</a>にノード名を入れる)ことはせず、代わりに対応するPodChaperonにアノテーションとして<code>multicluster.admiralty.io/is-reserved: true</code>を設定する。</p>
-
-<p>ソースクラスタのProxy Schedulerは、<code>multicluster.admiralty.io/is-reserved: true</code>が付いたPodChaperonのなかからひとつ選んで、アノテーションに<code>multicluster.admiralty.io/is-allowed: &quot;true&quot;</code>を付け、ひとつのCandidate SchedulerにPodの実行を許可する。</p>
-
-<p>許可されたCandidate Schedulerは、そのPodChaperonに対応するCandidate PodのnodeNameを入れて、実際にノードに割り当てる。
-この段階でこのCandidate Podはもう「候補」ではないので、<a href="https://github.com/admiraltyio/admiralty/blob/1e0300fe3d49fa220f9a3bcd0158df36f72d935c/docs/concepts/scheduling.md#delegate-pods">Delegate Pod</a>と呼ばれるものになり、Source Podの代わりにコンテナを実行する。</p>
-
-<p>コンテナが実行されると、Delegate Podのstatusが更新されていくが、これはPod Chaperon Controllerによって対応するPodChaperonのstatusに反映され、さらに(図に書かれてないけどソースクラスタで動いているFeedback Controllerによって)Proxy Podのstatusに反映される。</p>
-
-<p>Proxy Schedulerは、PodChaperonのstatusを見て、無事Delegate Podが実行開始したのを見届けたら、他のPodChaperonを削除する。
-Pod Chaperon Controllerは、PodChaperonが削除されたら対応するCandidate Podを削除する。</p>
-
-<p><br></p>
-
-<p>以上のような感じでターゲットクラスタでPodが実行される。
-なんでソースクラスタのコントローラでターゲットクラスタのPodを直接触らないで、PodChaperonを介しているかというと、PodChaperonを境にソースクラスタとターゲットクラスタの責務を分離するためらしい。
-つまり、実際にコンテナを起動し得るPodをいじるのは、そのPodがいるクラスタのコントローラの責務にして、セキュリティ上のリスクをおさえるため。
-また、PodはevictionとかによってAdmiraltyの知らないところで消えたりもするので、より安定なPodChaperonを介することでAdmiraltyが制御を失わないようにする目的もある。</p>
-
-<p><br></p>
-
-<p>図ではPodのことしか書いてないけど、Source Podが依存するConfigMapやSecret、Podに紐づくServiceやIngressもしっかりターゲットクラスタにコピーされ、Delegate Podに紐づけられる。</p>
-
-<p>また、Source Podに対するkubectl logsやkubectl execもDelegate Podにフォワードされて期待通りに動く。</p>
-
-<h1 id="admiraltyをためす">Admiraltyをためす</h1>
-
-<p>二つのクラスタをAdmiraltyでつなげて、簡単なJobを実行してみる。</p>
+<p>二つのクラスタをLiqoでつなげて、Nginxを実行してみる。</p>
 
 <h2 id="環境">環境</h2>
 
-<p>ためす環境は、<a href="https://www.kaitoy.xyz/2021/08/15/k3s-on-on-premises-k8s/">前々回</a>の記事で作った、Kubernetes 1.21.2とk3s 1.21.2による以下のようなもの。</p>
+<p>ためす環境はAdmiraltyのと同じで、Kubernetes 1.21.2とk3s 1.21.2による以下のようなもの。</p>
 
 <p><img src="/images/k3s-on-on-premises-k8s/k3s_cluster.png" alt="k3s_cluster.png" /></p>
 
 <p>k3sクラスタのマスタ(i.e. k3s server)がKubernetesクラスタのPodで動いていて、別マシンがk3sクラスタのノードになっている。</p>
 
-<p>Kubernetesクラスタをソースクラスタ、k3sクラスタをターゲットクラスタとする。</p>
+<p>KubernetesクラスタをHomeクラスタ、k3sクラスタをForeignクラスタとする。</p>
 
-<h2 id="ソースクラスタへのadmiraltyインストール">ソースクラスタへのAdmiraltyインストール</h2>
+<h2 id="homeクラスタへのliqoインストール">HomeクラスタへのLiqoインストール</h2>
 
-<p>まずソースクラスタにAdmiraltyをインストールしたいんだけど、Admiraltyは前述のMutating Pod Admission Webhook(とか)のAdmission WebhookをHTTPSで動かすので、そのTLSサーバ証明書が必要で、Admiraltyの公式インストール手順ではそれを<a href="https://cert-manager.io/docs/">cert-manager</a>に作らせるようになっているので、とりあえずcert-managerを入れる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.6.1/cert-manager.yaml
-[root@vm-1 ~]# kubectl get po -n cert-manager
-NAME                                      READY   STATUS    RESTARTS   AGE
-cert-manager-55658cdf68-bbcnf             1/1     Running   0          5m3s
-cert-manager-cainjector-967788869-dwl5z   1/1     Running   0          5m3s
-cert-manager-webhook-6668fbb57d-m5nlv     1/1     Running   0          5m3s</code></pre></div>
-<p>cert-managerがソースクラスタで動いた。
-因みにcert-managerは、TLS証明書をKubernetsのカスタムリソースで管理できるオペレータで、<a href="https://cert-manager.io/docs/concepts/issuer/">Issuer</a>でLet’s Encryptとかの証明書発行者を登録しておいて、<a href="https://cert-manager.io/docs/concepts/certificate/">Certificate</a>を登録すると、<a href="https://cert-manager.io/docs/concepts/certificaterequest/">CertificateRequest</a>を作って実際にその発行者にCRを投げて証明書を取得し、それを格納したSecretをCertificateに紐づけてくれたり、特定のアノテーションをつけた<a href="https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#mutatingadmissionwebhook">WebhookConfiguration</a>(とか)にCA証明書を挿入してくれたりする。</p>
-
-<p><br></p>
-
-<p>本題に戻って、ソースクラスタにAdmiraltyをいれる。
-いれるのはv0.14.1。</p>
+<p>HomeクラスタへのLiqoをいれる。
+いれるのはv0.3.2。</p>
 
 <p>GitHubにあるHelm Chartを取得。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# git clone https://github.com/admiraltyio/admiralty.git
-[root@vm-1 ~]# cd admiralty/charts/multicluster-scheduler/
-[root@vm-1 multicluster-scheduler]# git checkout v0.14.1</code></pre></div>
-<p>CRDを先にいれる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 multicluster-scheduler]# find crds/ -name &#34;*.yaml&#34; | xargs -I {} kubectl apply -f {}</code></pre></div>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# git clone https://github.com/liqotech/liqo.git
+[root@vm-1 ~]# cd liqo/deployments/liqo/
+[root@vm-1 liqo]# git checkout v0.3.2</code></pre></div>
+<p>Chartのパラメータを指定するファイルを作る。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 multicluster-scheduler]# cat &lt;&lt;EOF &gt; values_override.yaml
+apiServer:
+  address: &#34;https://192.168.1.200:6443&#34;
+gateway:
+  service:
+    type: NodePort
+networkManager:
+  config:
+    podCIDR: 10.32.0.0/16
+    serviceCIDR: 10.0.0.0/16
+discovery:
+  config:
+    clusterName: k8s
+auth:
+  service:
+    type: NodePort
+storage:
+  enable: false
+EOF</code></pre></div><div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 multicluster-scheduler]# find crds/ -name &#34;*.yaml&#34; | xargs -I {} kubectl apply -f {}</code></pre></div>
 <p>公式の手順ではhelm installするんだけど、なんとなくhelm templateでマニフェストをレンダリングしてapplyしたいので、<a href="https://helm.sh/docs/topics/charts_hooks/">Chart Hook</a>を消しておく。</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 multicluster-scheduler]# rm -rf templates/post-delete/</code></pre></div>
 <p>IssuerとCertificateのAPIバージョンが古いので直す。
@@ -528,9 +489,9 @@ hogeeeee</code></pre></div>
 <p>ソースクラスタの<code>test-cz5mp</code>に対してkubectl logsもできることが確認できた。</p></div>
 
         <section class="share-buttons">
-          <div class="fb-share-button share-button" data-href="https://www.kaitoy.xyz/2021/12/09/virtual-kubelet-admiralty/" data-layout="button_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">シェア</a></div>
+          <div class="fb-share-button share-button" data-href="https://www.kaitoy.xyz/2021/12/09/virtual-kubelet-liqo/" data-layout="button_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">シェア</a></div>
           <div class="share-button">
-            <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-text="Admiraltyのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする" data-url="https://www.kaitoy.xyz/2021/12/09/virtual-kubelet-admiralty/" data-show-count="true" data-count="horizontal">Tweet</a>
+            <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-text="Liqoのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする" data-url="https://www.kaitoy.xyz/2021/12/09/virtual-kubelet-liqo/" data-show-count="true" data-count="horizontal">Tweet</a>
           </div>
           <div class="share-button">
             <a href="https://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="basic-label-counter" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
@@ -557,15 +518,20 @@ hogeeeee</code></pre></div>
         <div class="col-sm-6">
           <div class="prev">
             
-            <a href="https://www.kaitoy.xyz/2021/12/09/virtual-kubelet-liqo/">
+            <a href="https://www.kaitoy.xyz/2021/08/16/k3s-on-eks/">
               <i class="fa fa-angle-left"></i>
-              Liqoのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする
+              EKSとオンプレVMとの間でk3sクラスタを組む
             </a>
             
           </div>
         </div>
         <div class="col-sm-6">
           <div class="next text-right">
+            
+            <a href="https://www.kaitoy.xyz/2021/12/09/virtual-kubelet-admiralty/">
+              Admiraltyのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする
+              <i class="fa fa-angle-right"></i>
+            </a>
             
           </div>
         </div>
@@ -589,7 +555,7 @@ hogeeeee</code></pre></div>
     
     
 
-    <h4 class="post-title"><a href="/2021/12/09/virtual-kubelet-liqo/">Liqoのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする</a></h4>
+    <h4 class="post-title"><a href="/2021/12/09/virtual-kubelet-admiralty/">Admiraltyのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする</a></h4>
     <h5>Thu, Dec 9, 2021</h5>
     
     <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
@@ -598,7 +564,7 @@ hogeeeee</code></pre></div>
     
     <a href="https://www.kaitoy.xyz/tags/virtual-kubelet"><kbd class="item-tag">virtual-kubelet</kbd></a>
     
-    <a href="https://www.kaitoy.xyz/tags/liqo"><kbd class="item-tag">liqo</kbd></a>
+    <a href="https://www.kaitoy.xyz/tags/admiralty"><kbd class="item-tag">admiralty</kbd></a>
     
 
 </div>

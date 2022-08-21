@@ -430,6 +430,13 @@ Linuxのcgroupsとかnamespacesとかの代わりに[FreeBSD jail](https://ja.wi
 
 実験的実装とされながらもcontainerd-shimもついてて手厚い。
 
+## Sysbox
+[Sysbox](https://github.com/nestybox/sysbox)はNestyboxによって開発されたOCIランタイム。
+2022/5/10にDocker社がNestyboxの買収を[発表](https://www.docker.com/blog/docker-advances-container-isolation-and-workloads-with-acquisition-of-nestybox/)して注目された。
+
+Sysboxはruncに比べてコンテナをホストOSからより強く分離し、VMに近いセキュリティと使い勝手を実現する。
+Sysboxを使うと、非特権コンテナで、ルートレスモード無しでもDockerとかKubernetesを動かせるらしい。
+
 # まとめ
 コンテナランタイムは奥が深くてまだ進化の過程。
 
