@@ -2,7 +2,7 @@
 categories = ["Programming"]
 title = "EKSの外でIAM Roles for Service Accountsっぽいことを実現するMutating Admission Webhookを作った"
 date = "2022-09-04T22:14:29+09:00"
-tags = ["kubernetes", "eks", "irsa-emu", "localstack", "vault"]
+tags = ["kubernetes", "eks", "irsa-emu", "localstack", "vault", "aws", "iam"]
 draft = false
 cover = "eks.png"
 slug = "irsa-emu"
@@ -32,7 +32,7 @@ LocalStackの[AWS Service Feature Coverage](https://docs.localstack.cloud/aws/fe
 # IAM Roles for Service Accounts (IRSA)とは
 [IAM Roles for Service Accounts (IRSA)](https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/iam-roles-for-service-accounts.html)は、IAMロールをEKSのServiceAccountに紐づける機能。
 
-IRSAを使うには、EKSとIAMにOIDCプロバイダの設定をちょろっとして、特定の信頼ポリシーを付けたIAMロールを作っておいて、ServiceAccountのアノテーションに`eks.amazonaws.com/role-arn: <IAMロールのARN>`を付けるだけ。
+IRSAを使うには、IAMにOIDCプロバイダの設定をちょろっとして、特定の信頼ポリシーを付けたIAMロールを作っておいて、ServiceAccountのアノテーションに`eks.amazonaws.com/role-arn: <IAMロールのARN>`を付けるだけ。
 そうしておくと、そのServiceAccountを付けたPodがそのIAMロールの権限でAWSサービスにアクセスできる。
 
 IRSAの仕組みは、EKSで動くとある[Mutating Admission Webhook](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#mutatingadmissionwebhook)が、[Service Account Token Volume Projection](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#service-account-token-volume-projection)を利用してPodにOIDCのIDトークンを挿入して、Pod上のAWS SDKがそのIDトークンで[AssumeRoleWithWebIdentity](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithWebIdentity.html)してIAMロールのアクセスクレデンシャルを取得する、という感じ。
