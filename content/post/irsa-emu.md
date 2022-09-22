@@ -36,7 +36,7 @@ IRSAを使うには、IAMにOIDCプロバイダの設定をちょろっとして
 そうしておくと、そのServiceAccountを付けたPodがそのIAMロールの権限でAWSサービスにアクセスできる。
 
 IRSAの仕組みは、EKSで動くとある[Mutating Admission Webhook](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#mutatingadmissionwebhook)が、[Service Account Token Volume Projection](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#service-account-token-volume-projection)を利用してPodにOIDCのIDトークンを挿入して、Pod上のAWS SDKがそのIDトークンで[AssumeRoleWithWebIdentity](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithWebIdentity.html)してIAMロールのアクセスクレデンシャルを取得する、という感じ。
-詳しくは別の記事で書くかも。
+詳しくは[別の記事](https://www.kaitoy.xyz/2022/09/17/aws-irsa/)で書いた。
 
 # LocalStackとは
 [LocalStack](https://localstack.cloud/)はAWSサービスのモックを提供するアプリ。
@@ -366,7 +366,7 @@ server:
   serviceAccount:
     create: true
     annotations:
-      eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/Vault-AWSKMS
+      eks.amazonaws.com/role-arn: arn:aws:iam::000000000000:role/Hoge
 ```
 
 このYamlで`helm install`して、そのあとVaultの初期化もする。
