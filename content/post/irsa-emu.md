@@ -28,6 +28,7 @@ LocalStackの[AWS Service Feature Coverage](https://docs.localstack.cloud/aws/fe
 と思ったのがこの記事に書いた取り組みのきっかけ。
 
 あとでよく調べて考え直したら、[Amazon EKS Pod Identity Webhook](https://github.com/aws/amazon-eks-pod-identity-webhook)でもっとシュッと解決できそうだったので、それについてはまた別の記事で書きたい。
+([書いた](https://www.kaitoy.xyz/2022/09/25/amazon-eks-pod-identity-webhook/)けど、あまりシュッとはしなかった。)
 
 # IAM Roles for Service Accounts (IRSA)とは
 [IAM Roles for Service Accounts (IRSA)](https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/iam-roles-for-service-accounts.html)は、IAMロールをEKSのServiceAccountに紐づける機能。
