@@ -76,7 +76,10 @@ IRSAを使うには、IAMにOIDCプロバイダの設定をちょろっとして
 
 ![irsa.png](/images/aws-irsa/irsa.png)
 
-IRSAを図にするとこんな感じになるはず。細かい間違いはあるかも。
+IRSAを図にするとこんな感じになるはず。
+左側がEKSの世界で、右側がIAMの世界。青い実線矢印はHTTPS通信。
+
+処理の流れは、細かい間違いはあるかもしれないけど以下のような感じのはず。
 
 1. EKSのkube-apiserverにPodを作るリクエストが来たら、kube-apiserverがその内容をPIdWに送る。
 2. PIdWは、Podに紐づくServiceAccountを取得し、そのアノテーションに`eks.amazonaws.com/role-arn`が付いてたら、Podの定義をいじってService Account Token Volume Projectionと、環境変数の`AWS_WEB_IDENTITY_TOKEN_FILE`とか`AWS_ROLE_ARN`とかを挿入する。

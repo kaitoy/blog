@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+        <script data-ad-client="ca-pub-6244473643910448" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/2022/09/25/amazon-eks-pod-identity-webhook/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/2022/09/25/amazon-eks-pod-identity-webhook/">
+
+
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="IAM Roles for Service AccountsをLocalStackとAmazon EKS Pod Identity Webhookで実装する | To Be Decided">
+  <title>IAM Roles for Service AccountsをLocalStackとAmazon EKS Pod Identity Webhookで実装する | To Be Decided</title>
+  <meta property="og:description" content="AWS EKSのIAM Roles for Service AccountsをローカルのバニラなKubernetesで実現したくて、LocalStackとAmazon EKS Pod Identity Webhookでやってみたら意外と苦労した話。">
+  <meta name="description" content="AWS EKSのIAM Roles for Service AccountsをローカルのバニラなKubernetesで実現したくて、LocalStackとAmazon EKS Pod Identity Webhookでやってみたら意外と苦労した話。">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/eks.png">
+
+
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <style>
+
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+<script>
+  var webFontConfig = {
+    google: {
+      families: ['Noto Sans JP:400,700:japanese'],
+      active: function() {
+        sessionStorage.fonts = true;
+      }
+    },
+    timeout: 3000
+  };
+  WebFont.load(webFontConfig);
+</script>
+
+
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"> 
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js"></script>
+
+    
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
+        
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
+    
+
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v9.0" nonce="WjvU2Pqv"></script>
+
+        <nav class="navbar navbar-default navbar-fixed-top">
+
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">IAM Roles for Service AccountsをLocalStackとAmazon EKS Pod Identity Webhookで実装する</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    <div class="single-post">
+        <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2022/09/25/amazon-eks-pod-identity-webhook/">IAM Roles for Service AccountsをLocalStackとAmazon EKS Pod Identity Webhookで実装する</a></h4>
+    <h5>Sun, Sep 25, 2022</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">aws</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/eks"><kbd class="item-tag">eks</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/iam"><kbd class="item-tag">iam</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/irsa"><kbd class="item-tag">irsa</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/localstack"><kbd class="item-tag">localstack</kbd></a>
+    
+
+</div>
+
+
+        <div class="cover">
+            <a href="/2022/09/25/amazon-eks-pod-identity-webhook/">
+                <img src="https://www.kaitoy.xyz/images/eks.png" alt="IAM Roles for Service AccountsをLocalStackとAmazon EKS Pod Identity Webhookで実装する">
+            </a>
+        </div>
+
+        
+        <h4 class="page-header">Table of Contents</h4>
+        <aside>
+            <nav id="TableOfContents">
+<ul>
+<li><a href="#iam-roles-for-service-accounts-irsa-とは">IAM Roles for Service Accounts (IRSA)とは</a></li>
+<li><a href="#irsaの仕組み">IRSAの仕組み</a></li>
+<li><a href="#localstackとは">LocalStackとは</a></li>
+<li><a href="#localstackに対するirsaの実装">LocalStackに対するIRSAの実装</a>
+<ul>
+<li><a href="#amazon-eks-pod-identity-webhookのデプロイ">Amazon EKS Pod Identity Webhookのデプロイ</a></li>
+<li><a href="#localstackのデプロイ">LocalStackのデプロイ</a></li>
+<li><a href="#vaultのデプロイ">Vaultのデプロイ</a></li>
+<li><a href="#vaultのstsエンドポイントの変更方法">VaultのSTSエンドポイントの変更方法</a></li>
+<li><a href="#corednsの設定">CoreDNSの設定</a></li>
+<li><a href="#localstackのポート設定">LocalStackのポート設定</a></li>
+<li><a href="#localstackのtlsサーバ証明書設定">LocalStackのTLSサーバ証明書設定</a></li>
+<li><a href="#vaultのca証明書バンドル設定">VaultのCA証明書バンドル設定</a></li>
+</ul></li>
+</ul>
+</nav>
+        </aside>
+        <hr>
+        
+
+        <br> <div class="text-justify"><p>AWS EKSのIAM Roles for Service AccountsをローカルのバニラなKubernetesで実現したくて、LocalStackとAmazon EKS Pod Identity Webhookでやってみたら意外と苦労した話。</p>
+
+<p><a href="https://www.kaitoy.xyz/2022/09/04/irsa-emu/">以前の記事の「EKSの外でIAM Roles for Service Accountsっぽいことを実現するMutating Admission Webhookを作った」</a>と実現したいことは同じだけど、そのとき作ったirsa-emuの代わりに、今回はAWS製のAmazon EKS Pod Identity Webhookを使う。</p>
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+
+<h1 id="iam-roles-for-service-accounts-irsa-とは">IAM Roles for Service Accounts (IRSA)とは</h1>
+
+<p><a href="https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/iam-roles-for-service-accounts.html">IAM Roles for Service Accounts (IRSA)</a>は、IAMロールをEKSのServiceAccountに紐づける機能。</p>
+
+<p>IRSAを使うには、IAMにOIDCプロバイダの設定をちょろっとして、特定の信頼ポリシーを付けたIAMロールを作っておいて、ServiceAccountのアノテーションに<code>eks.amazonaws.com/role-arn: &lt;IAMロールのARN&gt;</code>を付けるだけ。
+そうしておくと、そのServiceAccountを付けたPodがそのIAMロールの権限でAWSサービスにアクセスできる。</p>
+
+<h1 id="irsaの仕組み">IRSAの仕組み</h1>
+
+<p>詳しくは<a href="https://www.kaitoy.xyz/2022/09/17/aws-irsa/">ひとつ前の記事</a>で書いたのでここでは簡単に説明すると、<a href="https://github.com/aws/amazon-eks-pod-identity-webhook/">Amazon EKS Pod Identity Webhook</a>がPodにServiceAccountトークンを挿入して、それを使ってPod内のAWSクライアントが<a href="https://docs.aws.amazon.com/ja_jp/IAM/latest/UserGuide/id_credentials_temp_request.html#api_assumerolewithwebidentity">AssumeRoleWithWebIdentity</a>を実行して、<code>eks.amazonaws.com/role-arn</code>で指定したIAMロールの<a href="https://docs.aws.amazon.com/ja_jp/IAM/latest/UserGuide/id_credentials_temp_use-resources.html">一時的な認証情報</a>を取得して、AWSサービスにアクセスするというもの。</p>
+
+<h1 id="localstackとは">LocalStackとは</h1>
+
+<p><a href="https://localstack.cloud/">LocalStack</a>はAWSサービスのモックを提供するアプリ。
+有償なPro版と無償版があって、無償版でもIAM、S3、KMS、DynamoDB、Kinesisとかのモックが使えてすごい。</p>
+
+<p>けどEKSは有償版でしかサポートしてないし、<a href="https://docs.aws.amazon.com/ja_jp/IAM/latest/UserGuide/id_roles_providers.html">IAMのOIDCプロバイダとかフェデレーション</a>はどちらの版でもサポートしてないので、ちゃんとしたIRSAをぱっと実現できるようにはなっていない。</p>
+
+<p>ただ、無償版のLocalStackのIAMの実装がいい感じに雑で、AssumeRoleWithWebIdentityをどんなトークンで実行しても、任意のIAMロールの認証情報を取得できるので、雑なIRSAは実現できるはずと考えたのがこの記事の取り組みのきっかけ。</p>
+
+<p>つまり、ひとつ前の記事でIRSAの処理の流れを書いた下図でいうと、#6~9をすっとばすので、Amazon EKS Pod Identity WebhookさえあればIAMのOIDCプロバイダとかフェデレーションなんかとは関係なく動くはず、ということ。</p>
+
+<p><img src="/images/aws-irsa/irsa.png" alt="irsa.png" /></p>
+
+<h1 id="localstackに対するirsaの実装">LocalStackに対するIRSAの実装</h1>
+
+<p>irsa-emuのときと同様に、手元のバニラなKubernetes 1.21.2のクラスタにLocalStackをデプロイして、そのKMSで<a href="https://www.vaultproject.io/">HashiCorp Vault</a>の<a href="https://www.vaultproject.io/docs/configuration/seal/awskms">awskms Seal</a>を動かすことをめざす。</p>
+
+<h2 id="amazon-eks-pod-identity-webhookのデプロイ">Amazon EKS Pod Identity Webhookのデプロイ</h2>
+
+<p>まずAmazon EKS Pod Identity Webhookをデプロイするんだけど、そのWebhookサーバのTLS証明書を作るために<a href="https://cert-manager.io/docs/">cert-manager</a>が要るので、それを先に入れる。</p>
+
+<p>cert-managerはGitHubに上がっているマニフェストをapplyするだけでデプロイできる。
+v1.9.1を入れる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.9.1/cert-manager.yaml
+[root@vm-1 ~]# kubectl get po -n cert-manager
+NAME                                      READY   STATUS    RESTARTS   AGE
+cert-manager-55649d64b4-xcmlx             1/1     Running   0          23s
+cert-manager-cainjector-666db4777-vsz2q   1/1     Running   0          23s
+cert-manager-webhook-6466bc8f4-x24mp      1/1     Running   0          23s</code></pre></div>
+<p><br></p>
+
+<p>Amazon EKS Pod Identity Webhookはv0.4.0を使う。
+makeでデプロイできる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# git clone https://github.com/aws/amazon-eks-pod-identity-webhook.git
+[root@vm-1 ~]# cd amazon-eks-pod-identity-webhook/
+[root@vm-1 amazon-eks-pod-identity-webhook]# git checkout v0.4.0
+[root@vm-1 amazon-eks-pod-identity-webhook]# make cluster-up IMAGE=amazon/amazon-eks-pod-identity-webhook:v0.4.0</code></pre></div>
+<p>makeを実行すると、<a href="https://github.com/aws/amazon-eks-pod-identity-webhook/blob/v0.4.0/Makefile#L86">Waiting for CSR to be created</a>というメッセージが出続けて処理が終わらないけど、これはSIGINTで止めていい。
+CSRというのはWebhookサーバのTLS証明書を生成するためのもので、v0.3.0以前はその処理を<a href="https://github.com/aws/amazon-eks-pod-identity-webhook/blob/v0.4.0/pkg/cert/request.go">Kubernetesのclient-goのcertificate.Manager</a>で実装していて、つまりKubernetesの<a href="https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/">Certificates API</a>を使っていた。
+v0.4.0では<a href="https://github.com/aws/amazon-eks-pod-identity-webhook/blob/v0.4.0/README.md?plain=1#L248">Certificates APIからcert-managerに移行済み</a>だし、「Waiting for CSR to be created」のあとの処理もCSRの承認しかないので、止めてしまって問題ない。
+以下のようにちゃんとデプロイできている。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 amazon-eks-pod-identity-webhook]# kubectl get po
+NAME                                    READY   STATUS    RESTARTS   AGE
+pod-identity-webhook-665f8649bc-t86cq   1/1     Running   1          57s</code></pre></div>
+<h2 id="localstackのデプロイ">LocalStackのデプロイ</h2>
+
+<p>LocalStackはirsa-emuのときと同様にHelmでデプロイする。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# helm repo add localstack-repo https://helm.localstack.cloud
+[root@vm-1 ~]# helm install localstack localstack-repo/localstack
+[root@vm-1 ~]# kubectl get po
+NAME                                    READY   STATUS    RESTARTS   AGE
+pod-identity-webhook-665f8649bc-t86cq   1/1     Running   0          11m
+localstack-6498fc9748-dbph6             1/1     Running   0          31s
+[root@vm-1 ~]# kubectl get svc localstack
+NAME         TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)                        AGE
+localstack   NodePort   10.0.170.148   &lt;none&gt;        4566:31566/TCP,4571:31571/TCP   57s</code></pre></div>
+<p>ちゃんと動いたっぽいので、Vaultのawskms Sealで使うKMSのキーを作っておく。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# export LS_PORT=$(kubectl get --namespace default -o jsonpath=&#34;{.spec.ports[0].nodePort}&#34; services localstack)
+[root@vm-1 ~]# export LS_IP=$(kubectl get nodes --namespace default -o jsonpath=&#34;{.items[0].status.addresses[0].address}&#34;)
+[root@vm-1 ~]# echo ${LS_IP}:${LS_PORT}
+192.168.11.201:31566
+[root@vm-1 ~]# export AWS_ACCESS_KEY_ID=hoge
+[root@vm-1 ~]# export AWS_SECRET_ACCESS_KEY=huga
+[root@vm-1 ~]# aws --endpoint-url=http://$LS_IP:$LS_PORT kms create-key --region us-east-1 --key-spec SYMMETRIC_DEFAULT --origin AWS_KMS
+{
+    &#34;KeyMetadata&#34;: {
+        &#34;AWSAccountId&#34;: &#34;000000000000&#34;,
+        &#34;KeyId&#34;: &#34;160aead1-b4ab-4d21-834e-518b45669775&#34;,
+        &#34;Arn&#34;: &#34;arn:aws:kms:us-east-1:000000000000:key/160aead1-b4ab-4d21-834e-518b45669775&#34;,
+        &#34;CreationDate&#34;: &#34;2022-09-24T09:19:48.986462+09:00&#34;,
+        &#34;Enabled&#34;: true,
+        &#34;Description&#34;: &#34;&#34;,
+        &#34;KeyState&#34;: &#34;Enabled&#34;,
+        &#34;Origin&#34;: &#34;AWS_KMS&#34;,
+        &#34;KeyManager&#34;: &#34;CUSTOMER&#34;,
+        &#34;CustomerMasterKeySpec&#34;: &#34;SYMMETRIC_DEFAULT&#34;,
+        &#34;KeySpec&#34;: &#34;SYMMETRIC_DEFAULT&#34;,
+        &#34;EncryptionAlgorithms&#34;: [
+            &#34;SYMMETRIC_DEFAULT&#34;
+        ],
+        &#34;SigningAlgorithms&#34;: [
+            &#34;RSASSA_PKCS1_V1_5_SHA_256&#34;,
+            &#34;RSASSA_PKCS1_V1_5_SHA_384&#34;,
+            &#34;RSASSA_PKCS1_V1_5_SHA_512&#34;,
+            &#34;RSASSA_PSS_SHA_256&#34;,
+            &#34;RSASSA_PSS_SHA_384&#34;,
+            &#34;RSASSA_PSS_SHA_512&#34;
+        ]
+    }
+}</code></pre></div>
+<h2 id="vaultのデプロイ">Vaultのデプロイ</h2>
+
+<p>Vaultもirsa-emuのときと同様にデプロイする。
+肝はawskmsのendpointをLocalStackのNodePortに向けること。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# cat &lt;&lt;&#39;EOF&#39; &gt; /tmp/vault.overrides.yaml
+injector:
+  enabled: false
+
+server:
+  authDelegator:
+    enabled: false
+  service:
+    type: NodePort
+    nodePort: 30000
+  dataStorage:
+    enabled: false
+  auditStorage:
+    enabled: false
+  standalone:
+    config: |
+      ui = true
+      listener &#34;tcp&#34; {
+        tls_disable = 1
+        address = &#34;[::]:8200&#34;
+        cluster_address = &#34;[::]:8201&#34;
+      }
+      storage &#34;file&#34; {
+        path = &#34;/home/vault&#34;
+      }
+      seal &#34;awskms&#34; {
+        region     = &#34;us-east-1&#34;
+        kms_key_id = &#34;160aead1-b4ab-4d21-834e-518b45669775&#34;
+        endpoint   = &#34;http://192.168.11.201:31566&#34;
+      }
+  serviceAccount:
+    create: true
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::000000000000:role/Hoge
+EOF
+[root@vm-1 ~]# helm install vault -n kube-system -f /tmp/vault.overrides.yaml hashicorp/vault</code></pre></div>
+<p>これだけでawskmsが動くと思いきや、Vaultに以下のエラーが出た。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">2022-09-19T09:25:20.789Z [WARN]  seal.awskms: error assuming role: roleARN=arn:aws:iam::000000000000:role/Hoge tokenPath=/var/run/secrets/eks.amazonaws.com/serviceaccount/token sessionName=&#34;&#34;
+  err=
+  | WebIdentityErr: failed to retrieve credentials
+  | caused by: InvalidIdentityToken: The ID Token provided is not a valid JWT. (You may see this error if you sent an Access Token)
+  |     status code: 400, request id: f6ae9d75-da22-4e7f-bacc-09c6d20ddbff</code></pre></div>
+<p>AssumeRoleWithWebIdentityしたときにトークンが不正というエラーが返ってきたというメッセージだけど、上に書いたようにLocalStackはトークンのバリデーションなんてしないのでおかしい。
+調べたら、awskmsのendpointで指定できるのはKMSのAPIのエンドポイントだけなのに対して、AssumeRoleWithWebIdentityはSTSのAPIなので、AWSに対して実行してしまっていた。あたりまえといえばあたりまえかも。</p>
+
+<p>awskmsの設定には、sts_endpointみたいなのがありそうで無い。
+AWS SDKの環境変数で設定できそうだと思って見てみたら、正に現在<a href="https://github.com/kdaily/aws-sdk/blob/endpoint-url-configuration-proposal/proposals/configure-endpoint-url.md#configuration-via-environment-variables">AWS_STS_ENDPOINT_URL</a>という環境変数で設定できるようにする<a href="https://github.com/aws/aws-sdk/pull/230">PR</a>がレビュー中だった。
+のでそれがマージされて、リリースされて、Vaultに取り込まれるまでの別の解を探さないといけない。</p>
+
+<h2 id="vaultのstsエンドポイントの変更方法">VaultのSTSエンドポイントの変更方法</h2>
+
+<p>Vaultの視点ではKMSのAPIを実行しようとするだけ。その先でAWS SDKがAWS_WEB_IDENTITY_TOKEN_FILEを見てSTSのエンドポイントである<code>https://sts.amazonaws.com</code>にAssumeRoleWithWebIdentityしに行くわけだけど、そのAWS SDKがSTSエンドポイントを指定するインターフェースを備えていない(っぽい)ので、<code>sts.amazonaws.com</code>につないじゃうのはどうにもならない。</p>
+
+<p>なら、<code>sts.amazonaws.com</code>がLocalStackのIPアドレス(i.e k8sノードのIPアドレスか、LocalStackのPodのIPアドレスか、LocalStackのServiceのClusterIP)に解決されるようにすればいい。
+VaultのPod内のAWS SDKがDNSクエリを投げる先はKubernetesクラスタのDNSで、つまりPodで動いている<a href="https://coredns.io/">CoreDNS</a>だし、VaultのPodのDNS設定も手の内なので、ドメイン名解決はなんとでもできる。</p>
+
+<p>考えられる策は以下。</p>
+
+<ol>
+<li>VaultのPodの<a href="https://kubernetes.io/ja/docs/tasks/network/customize-hosts-file-for-pods/#%E8%BF%BD%E5%8A%A0%E3%82%A8%E3%83%B3%E3%83%88%E3%83%AA%E3%83%BC%E3%82%92hostaliases%E3%81%AB%E8%BF%BD%E5%8A%A0%E3%81%99%E3%82%8B">hostAliases</a>をいじって、VaultのPodのhostsファイルに<code>&lt;k8sノードのIPアドレス&gt; sts.amazonaws.com</code>を追加する。</li>
+<li>VaultのPodの<a href="https://kubernetes.io/ja/docs/concepts/services-networking/dns-pod-service/#pod-dns-config">dnsConfig</a>をいじって、ネームサーバを変えて、そのネームサーバの設定で<code>sts.amazonaws.com</code>をいいように解決する。</li>
+<li><code>sts.amazonaws.com</code>を<code>localstack.default.svc.cluster.local</code>(LocalStackのServiceのFQDN)にマッピングする<a href="https://kubernetes.io/ja/docs/concepts/services-networking/service/#externalname">ExternalName</a>を作る。</li>
+<li>LocalStackをデプロイするNamespaceを<code>com</code>に変えたうえで、LocalStackのPodの<a href="https://kubernetes.io/ja/docs/concepts/services-networking/dns-pod-service/#pod%E3%81%AEhostname%E3%81%A8subdomain%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89">hostnameとsubdomain</a>をいじることで、LocalStackのFQDNを<code>sts.amazonaws.com.svc.cluster.local</code>にする。</li>
+<li>CoreDNSの<a href="https://coredns.io/plugins/hosts/">hostsプラグイン</a>で、<code>sts.amazonaws.com</code>をk8sノードのIPアドレスに解決するAレコードを追加する。</li>
+<li>CoreDNSの<a href="https://coredns.io/plugins/file/">fileプラグイン</a>で、<code>sts.amazonaws.com</code>をk8sノードのIPアドレスに解決するAレコードを追加する。</li>
+<li>CoreDNSの<a href="https://coredns.io/plugins/file/">fileプラグイン</a>で、<code>sts.amazonaws.com</code>を<code>localstack.default.svc.cluster.local</code>の別名として登録するCNAMEレコードを追加する。</li>
+</ol>
+
+<p>これらの内、<code>sts.amazonaws.com</code>をk8sノードのIPアドレスに解決する#1、#5、#6は、EKS環境とかだとk8sノードのIPアドレスがノード再起動とかで変わるのでいまいち。</p>
+
+<p>#2はネームサーバを用意して設定するのが面倒。</p>
+
+<p>#3は実は、ServiceとかNamespaceの名前にドットを入れられないので無理。</p>
+
+<p>#4はトリッキーすぎ。変なNamespaceを作ったり、Podのhostnameを変なのにするのがなんとなく微妙。
+(諸事情でCoreDNSの設定がいじれない場合は、この#4が有力になりそうではあるが。)</p>
+
+<p>ということで#7にする。</p>
+
+<h2 id="corednsの設定">CoreDNSの設定</h2>
+
+<p>まず、fileプラグインに渡すdbファイルを、以下のようなConfigMapで登録しておく。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>ConfigMap<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>coredns-db-file<span style="color:#666">
+</span><span style="color:#666">  </span>namespace:<span style="color:#666"> </span>kube-system<span style="color:#666">
+</span><span style="color:#666"></span>data:<span style="color:#666">
+</span><span style="color:#666">  </span>db.amazonaws.com:<span style="color:#666"> </span><span style="color:#ed9d13">|
+</span><span style="color:#ed9d13">    $ORIGIN amazonaws.com.</span><span style="color:#666">
+</span><span style="color:#666">    </span>@<span style="color:#666">	</span><span style="color:#3677a9">3600</span><span style="color:#666"> </span>IN<span style="color:#666">	</span>SOA<span style="color:#666"> </span>kube-dns.kube-system.svc.cluster.local.<span style="color:#666"> </span>hoge.foo.bar.<span style="color:#666"> </span><span style="color:#3677a9">20220920</span><span style="color:#666"> </span><span style="color:#3677a9">7200</span><span style="color:#666"> </span><span style="color:#3677a9">3600</span><span style="color:#666"> </span><span style="color:#3677a9">1209600</span><span style="color:#666"> </span><span style="color:#3677a9">3600</span><span style="color:#666">
+</span><span style="color:#666">
+</span><span style="color:#666">    </span>sts<span style="color:#666">	</span>IN<span style="color:#666"> </span>CNAME<span style="color:#666"> </span>localstack.default.svc.cluster.local.</code></pre></div>
+<p>このConfigMapのdb.amazonaws.comを、CoreDNSのDeploymentをいじってそのPodの<code>/etc/coredns/db.amazonaws.com</code>にマウントするようにしておいて、Corefileに以下のようなブロックを追加する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">sts.amazonaws.com {
+    log
+    errors
+    file /etc/coredns/db.amazonaws.com {
+      upstream
+    }
+}</code></pre></div>
+<p>これでsts.amazonaws.comゾーンに目的のCNAMEレコードが追加されて、<code>sts.amazonaws.com</code>から読み替えられた<code>localstack.default.svc.cluster.local</code>もLocalStackのServiceのClusterIPにちゃんと解決される。</p>
+
+<p>因みにCoreDNSの設定でひとつ注意すべきなのが、LocalStackが起動時に本物のS3(<code>s3-eu-west-2.amazonaws.com</code>)からランタイムをダウンロードするので、<code>amazonaws.com</code>を全部LocalStackに向けるようにしてはだめということ。</p>
+
+<h2 id="localstackのポート設定">LocalStackのポート設定</h2>
+
+<p>AWS SDKは<code>https://sts.amazonaws.com</code>にアクセスするので、つまり443ポートにつなぎに行くんだけど、LocalStackはデフォルトでHTTPもHTTPSも4566ポートで待つので、変えておかないといけない。</p>
+
+<p>LocalStackのServiceのportを443にすればそれでいいはずだけど、LocalStackのChartにそのための変数がないので、起動ポートを443に変える。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# cat &lt;&lt;&#39;EOF&#39; &gt; /tmp/localstack.overrides.yaml
+service:
+  edgeService:
+    targetPort: 443
+
+extraEnvVars:
+  - name: EDGE_PORT
+    value: &#34;443&#34;
+EOF
+[root@vm-1 ~]# helm upgrade -f /tmp/localstack.overrides.yaml localstack localstack-repo/localstack</code></pre></div>
+<p>これでawskmsが動くと思いきや、Vaultに以下のエラーが出た。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">2022-09-21T02:28:37.403Z [WARN]  seal.awskms: error assuming role: roleARN=arn:aws:iam::000000000000:role/Hoge tokenPath=/var/run/secrets/eks.amazonaws.com/serviceaccount/token sessionName=&#34;&#34;
+  err=
+  | WebIdentityErr: failed to retrieve credentials
+  | caused by: RequestError: send request failed
+  | caused by: Post &#34;https://sts.amazonaws.com/&#34;: x509: certificate is valid for *.amplifyapp.localhost.localstack.cloud, *.cloudfront.localhost.localstack.cloud, *.execute-api.localhost.localstack.cloud, *.localhost.localstack.cloud, *.opensearch.localhost.localstack.cloud, *.s3.localhost.localstack.cloud, *.scm.localhost.localstack.cloud, localhost.localstack.cloud, not sts.amazonaws.com</code></pre></div>
+<p>LocalStackのTLSサーバ証明書のSANがまずい。
+そりゃそうか。</p>
+
+<h2 id="localstackのtlsサーバ証明書設定">LocalStackのTLSサーバ証明書設定</h2>
+
+<p>LocalStackには、現v1.1.0の時点でTLSサーバ証明書を指定する設定がない。
+デフォルトでは<a href="https://github.com/localstack/localstack/blob/v1.1.0/localstack/services/generic_proxy.py#L1099">どこかからダウンロードしてくる</a>。
+環境変数<a href="https://docs.localstack.cloud/localstack/configuration/#miscellaneous">SKIP_SSL_CERT_DOWNLOAD</a>に<code>1</code>を設定しておくと、ダウンロードする代わりに<a href="https://github.com/localstack/localstack/blob/v1.1.0/localstack/utils/crypto.py#L79">起動時に自動生成する</a>けど、生成パラメータは全部ハードコードでSANとか指定できない。</p>
+
+<p>LocalStackはWebアプリケーションフレームワークに<a href="https://pgjones.gitlab.io/hypercorn/">Hypercorn</a>を使っているのでその<a href="https://pgjones.gitlab.io/hypercorn/how_to_guides/configuring.html">設定</a>も見たけど、環境変数とかで外から証明書を指定することはできなそう。</p>
+
+<p><code>/opt/code/localstack/.filesystem/var/lib/localstack/cache/server.test.pem</code>にPEM形式の秘密鍵と証明書を改行でつなげてあらかじめおいておけば<a href="https://github.com/localstack/localstack/blob/v1.1.0/localstack/utils/crypto.py#L61">使ってくれる</a>ようなので、そこをハックすることにする。</p>
+
+<p>まず、適当なキーペアと、SANに<code>sts.amazonaws.com</code>を入れたTLSサーバ証明書をPEMで作っておいて、以下のようなConfigMapで登録する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>ConfigMap<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>localstack-cert<span style="color:#666">
+</span><span style="color:#666"></span>data:<span style="color:#666">
+</span><span style="color:#666">  </span>server.test.pem:<span style="color:#666"> </span><span style="color:#ed9d13">|
+</span><span style="color:#ed9d13">    -----BEGIN PRIVATE KEY-----</span><span style="color:#666">
+</span><span style="color:#666">    </span>MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCnwG/0HJ8twnuy<span style="color:#666">
+</span><span style="color:#666">    </span>lv27E9enAB0ZdnDd9zZLDDXrL68wfJ8bcPWaNIz12NGbDi/IbBwdezyCoppY6y/b<span style="color:#666">
+</span><span style="color:#666">    </span>jyRR8B21XzPQmCupGl930U9XO2O0pnEkXhxUQtoxsRbfEF10f4qFZOm15e2N8Q5w<span style="color:#666">
+</span><span style="color:#666">    </span>EY69Hb6dIpBwUbTfG2gGuy8wdnshVTA+qENmuqL5oziEAVSYT4UNIC/frQjjPxWF<span style="color:#666">
+</span><span style="color:#666">    </span>5KVOjiri7U88GWHyZEMzRicy1T3igli9yScOVkVLnEgNEXH/9OGUu7g8e4jsUhTq<span style="color:#666">
+</span><span style="color:#666">    </span>POwq7+q0jwK7Wxgf9gY1QUg/bxcQa9SM9wjmWNtJIK+00HK7CtaIipeEpAHkGgrA<span style="color:#666">
+</span><span style="color:#666">    </span>tqkhUnN3AgMBAAECggEAIkVpWdjjGEksVk8MpUSngSG/0CznYCGaQPjMpzDFvMUp<span style="color:#666">
+</span><span style="color:#666">    </span>CEUqmAd2aN+T6vaaAns7vzYnJZUsrU/XJib3R5ojp6M8hbgg61pM+MCVUf/7HbQH<span style="color:#666">
+</span><span style="color:#666">    </span>V2O2q+xAgXhpcMb6IMvRs/Dq4lOIFcCSr4iWvcIu6BFgquG2bwI9XWqueFssSqG0<span style="color:#666">
+</span><span style="color:#666">    </span>7MZrNs8vuLgAxHKOehT1QdSgu2Pm4/MXQ+ELWT9zB0O1FdZfWhg9TpG0hnSgBk5a<span style="color:#666">
+</span><span style="color:#666">    </span>+mDQJvmAGiuQ0DCryTB0cZN/CuPlUA+cfcXDzgEDX/t4fnUL2+UxA5fLtlgd9pE1<span style="color:#666">
+</span><span style="color:#666">    </span>t3JSacTDybERgmilVIGzDdyOIBZBdeo9NaHri1gs2QKBgQDBvUvghs5Mh6Lxhu1j<span style="color:#666">
+</span><span style="color:#666">    </span>JT8EdTnyq53B5LhpZpTRNduJWK8eyakwpE+InIrRQ+w3USpsgHspEMkxTp1gft1y<span style="color:#666">
+</span><span style="color:#666">    </span>HnnYI5QV2PUBeC2kp1auOKZGL3PNVru1iXr0A6/3UJgIsi5myFILrU159UKgWq4L<span style="color:#666">
+</span><span style="color:#666">    </span>qq5kXu+GtY4ebZRVBlScrmgI3QKBgQDdqSmabv3mIp6QXPp+42gCRTnXQRZnXhbL<span style="color:#666">
+</span><span style="color:#666">    </span>zhVayuHt1cDoPSQ+X9As5JHcujZRv+TQXgrZ4GFeLks7iTQYeNTQKEn7QH+fc0iL<span style="color:#666">
+</span><span style="color:#666">    </span>xJYsviGd7G9FVzWCut2PkZfA+Xlhab867yXcnwcupoHvZKXDX4mFRZ/OxlI4qMG5<span style="color:#666">
+</span><span style="color:#666">    </span>yLOXwN++YwKBgAo2r4xbrv6L3AQ9p8AlU4gpoe9wKrXxF+O+m7PX0gYQndLSsM+<span style="color:#3677a9">2</span><span style="color:#666">
+</span><span style="color:#666">    </span>qda64fqcSRS1e7YSo+uLTgACc/uFVKlSf/vsDD+Gm4wDSOy4QbKXm/RxRfqaSvUM<span style="color:#666">
+</span><span style="color:#666">    </span>FWZN13YDUrCKrDWQ8/pXnZEDZArOHQTSb7Us6BXC9oYWIs7Esas86pElAoGBANvZ<span style="color:#666">
+</span><span style="color:#666">    </span>7uO39qiN6cuyDNpR31VxJ/9yFTCNR/r4+oFE/XWSL3WpPwuGqMn+IxZUs4+9zstE<span style="color:#666">
+</span><span style="color:#666">    </span>m2qifLCXJhN08HDdV+bmLwq/XFXgWDIY2AKkyl8CpRKXfwGdKig99dB3IIcYBY4E<span style="color:#666">
+</span><span style="color:#666">    </span>qP771HnWuMWihC8V0SaYefrzBZYg+5Szlj2MFd+VAoGBAMEI3JufIFoxZxEqB4ng<span style="color:#666">
+</span><span style="color:#666">    </span>IZ1wGrk9DmDj8hL3IERWHuNJ/OucGE7aLmktSNXwLcQIO83+U7nE2zu7z95gCbWg<span style="color:#666">
+</span><span style="color:#666">    </span>8sL8Vy1zUVzIC04f77r3UpxEAkqx5OZfT9Hl7Ii3t5lWekjxWs3hUZQw5090Xo/<span style="color:#3677a9">6</span><span style="color:#666">
+</span><span style="color:#666">    </span>LS7d8V/WmpvXaWOKVQzmnASs<span style="color:#666">
+</span><span style="color:#666">    </span>-----END<span style="color:#666"> </span>PRIVATE<span style="color:#666"> </span>KEY----<span style="color:#ed9d13">-
+</span><span style="color:#ed9d13">    -----BEGIN CERTIFICATE-----</span><span style="color:#666">
+</span><span style="color:#666">    </span>MIID2DCCAsCgAwIBAgICA+kwDQYJKoZIhvcNAQELBQAwgYExCzAJBgNVBAYTAkFV<span style="color:#666">
+</span><span style="color:#666">    </span>MRMwEQYDVQQIDApTb21lLVN0YXRlMRYwFAYDVQQHDA1Tb21lLUxvY2FsaXR5MRcw<span style="color:#666">
+</span><span style="color:#666">    </span>FQYDVQQKDA5Mb2NhbFN0YWNrIE9yZzEQMA4GA1UECwwHVGVzdGluZzEaMBgGA1UE<span style="color:#666">
+</span><span style="color:#666">    </span>AwwRc3RzLmFtYXpvbmF3cy5jb20wIBcNMjIwOTIxMDc0NjIxWhgPMjEyMjA4Mjgw<span style="color:#666">
+</span><span style="color:#666">    </span>NzQ2MjFaMIGBMQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEWMBQG<span style="color:#666">
+</span><span style="color:#666">    </span>A1UEBwwNU29tZS1Mb2NhbGl0eTEXMBUGA1UECgwOTG9jYWxTdGFjayBPcmcxEDAO<span style="color:#666">
+</span><span style="color:#666">    </span>BgNVBAsMB1Rlc3RpbmcxGjAYBgNVBAMMEXN0cy5hbWF6b25hd3MuY29tMIIBIjAN<span style="color:#666">
+</span><span style="color:#666">    </span>BgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp8Bv9ByfLcJ7spb9uxPXpwAdGXZw<span style="color:#666">
+</span><span style="color:#666">    </span>3fc2Sww16y+vMHyfG3D1mjSM9djRmw4vyGwcHXs8gqKaWOsv248kUfAdtV8z0Jgr<span style="color:#666">
+</span><span style="color:#666">    </span>qRpfd9FPVztjtKZxJF4cVELaMbEW3xBddH+KhWTpteXtjfEOcBGOvR2+nSKQcFG0<span style="color:#666">
+</span><span style="color:#666">    </span>3xtoBrsvMHZ7IVUwPqhDZrqi+aM4hAFUmE+FDSAv360I4z8VheSlTo4q4u1PPBlh<span style="color:#666">
+</span><span style="color:#666">    </span>8mRDM0YnMtU94oJYvcknDlZFS5xIDRFx//ThlLu4PHuI7FIU6jzsKu/qtI8Cu1sY<span style="color:#666">
+</span><span style="color:#666">    </span>H/YGNUFIP28XEGvUjPcI5ljbSSCvtNByuwrWiIqXhKQB5BoKwLapIVJzdwIDAQAB<span style="color:#666">
+</span><span style="color:#666">    </span>o1YwVDAcBgNVHREEFTATghFzdHMuYW1hem9uYXdzLmNvbTAMBgNVHRMBAf8EAjAA<span style="color:#666">
+</span><span style="color:#666">    </span>MA4GA1UdDwEB/wQEAwIF4DAWBgNVHSUBAf8EDDAKBggrBgEFBQcDATANBgkqhkiG<span style="color:#666">
+</span><span style="color:#666">    </span>9w0BAQsFAAOCAQEAPL+Op5byzTH82Walz2z+<span style="color:#3677a9">9</span>+Qx0GiHEINkXUbboqprnO1lawxb<span style="color:#666">
+</span><span style="color:#666">    </span>BdvrtMIjr11R5x5WmnSJ/+8B4fUcn/VmGjLZOtecyk7lRk/buX+usScA3lIySsKN<span style="color:#666">
+</span><span style="color:#666">    </span>Of3yQjSuiDdLeB3cSHm4ah5SF6DKv77CjsQp0es6sikJweUlLNaYN0cYoBl/KeAw<span style="color:#666">
+</span><span style="color:#666">    </span>DULWZfWusp1GsMke3nNZC7/9KwFyNeEjIuCNpGFED/Cb28Ym0yKr2hEY+6Rroer<span style="color:#ed9d13">+
+</span><span style="color:#ed9d13">    f91XlXIUhXnbcmCtc0cEtPJUo77ZdTEMPUdDcy1v5aKZ6VpKaOITJjLI98qoMMGu</span><span style="color:#666">
+</span><span style="color:#666">    </span>BaCodVAdOzrPn4yy3IXhWFW5S+KHltoMc2qHdg==<span style="color:#666">
+</span><span style="color:#666">    </span>-----END<span style="color:#666"> </span>CERTIFICATE-----</code></pre></div>
+<p>因みにこれは100年有効なオレオレ証明書。</p>
+
+<p>このConfigMapのserver.test.pemを、LocalStackのDeploymentをいじってそのPodの<code>/opt/code/localstack/.filesystem/var/lib/localstack/cache/server.test.pem</code>にマウントするようにしておいて、<code>SKIP_SSL_CERT_DOWNLOAD</code>を設定する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# cat &lt;&lt;&#39;EOF&#39; &gt; /tmp/localstack.overrides.yaml
+service:
+  edgeService:
+    targetPort: 443
+
+extraEnvVars:
+  - name: EDGE_PORT
+    value: &#34;443&#34;
+  - name: SKIP_SSL_CERT_DOWNLOAD
+    value: &#34;1&#34;
+EOF
+[root@vm-1 ~]# helm upgrade -f /tmp/localstack.overrides.yaml localstack localstack-repo/localstack</code></pre></div>
+<p>これでawskmsが動くと思いきや、Vaultに以下のエラーが出た。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">2022-09-21T23:36:56.414Z [WARN]  seal.awskms: error assuming role: roleARN=arn:aws:iam::000000000000:role/Hoge tokenPath=/var/run/secrets/eks.amazonaws.com/serviceaccount/token sessionName=&#34;&#34;
+  err=
+  | WebIdentityErr: failed to retrieve credentials
+  | caused by: RequestError: send request failed
+  | caused by: Post &#34;https://sts.amazonaws.com/&#34;: x509: certificate signed by unknown authority</code></pre></div>
+<p>AWS SDKはオレオレ証明書を許してくれない。</p>
+
+<h2 id="vaultのca証明書バンドル設定">VaultのCA証明書バンドル設定</h2>
+
+<p>AWS SDKは<a href="https://docs.aws.amazon.com/ja_jp/cli/latest/userguide/cli-configure-envvars.html#envvars-list-AWS_CA_BUNDLE">AWS_CA_BUNDLE</a>という環境変数でCA証明書バンドルを指定できるので、VaultのPodにこれを設定してオレオレ証明書を信頼させる。</p>
+
+<p>まず、さっき作ったserver.test.pemから証明書だけ切り出して以下のようなConfigMapを作る。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>ConfigMap<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>localstack-ca-cert<span style="color:#666">
+</span><span style="color:#666">  </span>namespace:<span style="color:#666"> </span>kube-system<span style="color:#666">
+</span><span style="color:#666"></span>data:<span style="color:#666">
+</span><span style="color:#666">  </span>server.test.pem.crt:<span style="color:#666"> </span><span style="color:#ed9d13">|
+</span><span style="color:#ed9d13">    -----BEGIN CERTIFICATE-----</span><span style="color:#666">
+</span><span style="color:#666">    </span>MIID2DCCAsCgAwIBAgICA+kwDQYJKoZIhvcNAQELBQAwgYExCzAJBgNVBAYTAkFV<span style="color:#666">
+</span><span style="color:#666">    </span>MRMwEQYDVQQIDApTb21lLVN0YXRlMRYwFAYDVQQHDA1Tb21lLUxvY2FsaXR5MRcw<span style="color:#666">
+</span><span style="color:#666">    </span>FQYDVQQKDA5Mb2NhbFN0YWNrIE9yZzEQMA4GA1UECwwHVGVzdGluZzEaMBgGA1UE<span style="color:#666">
+</span><span style="color:#666">    </span>AwwRc3RzLmFtYXpvbmF3cy5jb20wIBcNMjIwOTIxMDc0NjIxWhgPMjEyMjA4Mjgw<span style="color:#666">
+</span><span style="color:#666">    </span>NzQ2MjFaMIGBMQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEWMBQG<span style="color:#666">
+</span><span style="color:#666">    </span>A1UEBwwNU29tZS1Mb2NhbGl0eTEXMBUGA1UECgwOTG9jYWxTdGFjayBPcmcxEDAO<span style="color:#666">
+</span><span style="color:#666">    </span>BgNVBAsMB1Rlc3RpbmcxGjAYBgNVBAMMEXN0cy5hbWF6b25hd3MuY29tMIIBIjAN<span style="color:#666">
+</span><span style="color:#666">    </span>BgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp8Bv9ByfLcJ7spb9uxPXpwAdGXZw<span style="color:#666">
+</span><span style="color:#666">    </span>3fc2Sww16y+vMHyfG3D1mjSM9djRmw4vyGwcHXs8gqKaWOsv248kUfAdtV8z0Jgr<span style="color:#666">
+</span><span style="color:#666">    </span>qRpfd9FPVztjtKZxJF4cVELaMbEW3xBddH+KhWTpteXtjfEOcBGOvR2+nSKQcFG0<span style="color:#666">
+</span><span style="color:#666">    </span>3xtoBrsvMHZ7IVUwPqhDZrqi+aM4hAFUmE+FDSAv360I4z8VheSlTo4q4u1PPBlh<span style="color:#666">
+</span><span style="color:#666">    </span>8mRDM0YnMtU94oJYvcknDlZFS5xIDRFx//ThlLu4PHuI7FIU6jzsKu/qtI8Cu1sY<span style="color:#666">
+</span><span style="color:#666">    </span>H/YGNUFIP28XEGvUjPcI5ljbSSCvtNByuwrWiIqXhKQB5BoKwLapIVJzdwIDAQAB<span style="color:#666">
+</span><span style="color:#666">    </span>o1YwVDAcBgNVHREEFTATghFzdHMuYW1hem9uYXdzLmNvbTAMBgNVHRMBAf8EAjAA<span style="color:#666">
+</span><span style="color:#666">    </span>MA4GA1UdDwEB/wQEAwIF4DAWBgNVHSUBAf8EDDAKBggrBgEFBQcDATANBgkqhkiG<span style="color:#666">
+</span><span style="color:#666">    </span>9w0BAQsFAAOCAQEAPL+Op5byzTH82Walz2z+<span style="color:#3677a9">9</span>+Qx0GiHEINkXUbboqprnO1lawxb<span style="color:#666">
+</span><span style="color:#666">    </span>BdvrtMIjr11R5x5WmnSJ/+8B4fUcn/VmGjLZOtecyk7lRk/buX+usScA3lIySsKN<span style="color:#666">
+</span><span style="color:#666">    </span>Of3yQjSuiDdLeB3cSHm4ah5SF6DKv77CjsQp0es6sikJweUlLNaYN0cYoBl/KeAw<span style="color:#666">
+</span><span style="color:#666">    </span>DULWZfWusp1GsMke3nNZC7/9KwFyNeEjIuCNpGFED/Cb28Ym0yKr2hEY+6Rroer<span style="color:#ed9d13">+
+</span><span style="color:#ed9d13">    f91XlXIUhXnbcmCtc0cEtPJUo77ZdTEMPUdDcy1v5aKZ6VpKaOITJjLI98qoMMGu</span><span style="color:#666">
+</span><span style="color:#666">    </span>BaCodVAdOzrPn4yy3IXhWFW5S+KHltoMc2qHdg==<span style="color:#666">
+</span><span style="color:#666">    </span>-----END<span style="color:#666"> </span>CERTIFICATE-----</code></pre></div>
+<p>で、それをVaultのPodにマウントして、そのパスを<code>AWS_CA_BUNDLE</code>で指すように、以下のように<code>vault.overrides.yaml</code>に追記して適用する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[root@vm-1 ~]# cat &lt;&lt;&#39;EOF&#39; &gt;&gt; /tmp/vault.overrides.yaml
+  extraEnvironmentVars:
+    AWS_CA_BUNDLE: /localstack/server.test.pem.crt
+  volumes:
+    - name: localstack-ca-cert
+      configMap:
+        name: localstack-ca-cert
+        items:
+          - key: server.test.pem.crt
+            path: server.test.pem.crt
+  volumeMounts:
+    - name: localstack-ca-cert
+      mountPath: /localstack
+      readOnly: true
+EOF
+[root@vm-1 ~]# helm upgrade vault -n kube-system -f /tmp/vault.overrides.yaml hashicorp/vault</code></pre></div>
+<p><br></p>
+
+<p>これでやっとVaultのawskmsが動いた。</p>
+
+<p>最後のCA証明書バンドル設定は、PodのMutating Admission Webhookでやってやると、Vault側からLocalStackを気にしなくてよくなってよさそう。</p></div>
+
+        <section class="share-buttons">
+          <div class="fb-share-button share-button" data-href="https://www.kaitoy.xyz/2022/09/25/amazon-eks-pod-identity-webhook/" data-layout="button_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">シェア</a></div>
+          <div class="share-button">
+            <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-text="IAM Roles for Service AccountsをLocalStackとAmazon EKS Pod Identity Webhookで実装する" data-url="https://www.kaitoy.xyz/2022/09/25/amazon-eks-pod-identity-webhook/" data-show-count="true" data-count="horizontal">Tweet</a>
+          </div>
+          <div class="share-button">
+            <a href="https://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="basic-label-counter" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+          </div>
+          <div class="share-button">
+            <a data-pocket-label="pocket" data-pocket-count="horizontal" class="pocket-btn" data-lang="en"></a>
+            <script type="text/javascript">!function(d,i){if(!d.getElementById(i)){var j=d.createElement("script");j.id=i;j.src="https://widgets.getpocket.com/v1/j/btn.js?v=1";var w=d.getElementById(i);d.body.appendChild(j);}}(document,"pocket-btn-js");</script>
+          </div>
+        </section>
+    </div>
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-6244473643910448"
+         data-ad-slot="1845600530"
+         data-ad-format="auto"></ins>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+    <section class="tbd-pagination">
+      <div class="row">
+        <div class="col-sm-6">
+          <div class="prev">
+            
+            <a href="https://www.kaitoy.xyz/2022/09/17/aws-irsa/">
+              <i class="fa fa-angle-left"></i>
+              AWS EKSのIAM Roles for Service Accountsを完全に理解した
+            </a>
+            
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="next text-right">
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    
+
+    
+
+        <h4 class="page-header">Related</h4>
+
+        <div class="related-links">
+           <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2022/09/17/aws-irsa/">AWS EKSのIAM Roles for Service Accountsを完全に理解した</a></h4>
+    <h5>Sat, Sep 17, 2022</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">aws</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/eks"><kbd class="item-tag">eks</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/iam"><kbd class="item-tag">iam</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/irsa"><kbd class="item-tag">irsa</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2022/09/10/crunchy-data-pgo-is-not-oss/">Crunchy DataのPostgreSQL Operator (PGO)はOSSじゃない</a></h4>
+    <h5>Sat, Sep 10, 2022</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/postgresql"><kbd class="item-tag">postgresql</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/pgo"><kbd class="item-tag">pgo</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/license"><kbd class="item-tag">license</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2022/09/04/irsa-emu/">EKSの外でIAM Roles for Service Accountsっぽいことを実現するMutating Admission Webhookを作った</a></h4>
+    <h5>Sun, Sep 4, 2022</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/eks"><kbd class="item-tag">eks</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/irsa-emu"><kbd class="item-tag">irsa-emu</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/localstack"><kbd class="item-tag">localstack</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/vault"><kbd class="item-tag">vault</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">aws</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/iam"><kbd class="item-tag">iam</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2021/12/09/virtual-kubelet-liqo/">Liqoのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする</a></h4>
+    <h5>Thu, Dec 9, 2021</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/k3s"><kbd class="item-tag">k3s</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/virtual-kubelet"><kbd class="item-tag">virtual-kubelet</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/liqo"><kbd class="item-tag">liqo</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2021/12/09/virtual-kubelet-admiralty/">Admiraltyのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする</a></h4>
+    <h5>Thu, Dec 9, 2021</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/k3s"><kbd class="item-tag">k3s</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/virtual-kubelet"><kbd class="item-tag">virtual-kubelet</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/admiralty"><kbd class="item-tag">admiralty</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2021/08/16/k3s-on-eks/">EKSとオンプレVMとの間でk3sクラスタを組む</a></h4>
+    <h5>Mon, Aug 16, 2021</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/k3s"><kbd class="item-tag">k3s</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">aws</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/eks"><kbd class="item-tag">eks</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2021/08/15/k3s-on-on-premises-k8s/">k3sをオンプレの手製Kubernetesクラスタで動かす</a></h4>
+    <h5>Sun, Aug 15, 2021</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/k3s"><kbd class="item-tag">k3s</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2021/04/06/k8s-on-alma-linux-8/">Kubernetes 1.20 のクラスタを AlmaLinux 8で構築する</a></h4>
+    <h5>Tue, Apr 6, 2021</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/alma-linux"><kbd class="item-tag">alma-linux</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/12/20/k8s-zundoko-ansible-operator/">ズンドコキヨシ with Kubernetes Ansible Operator - Operator SDKのAnsible Operatorを使ってみた</a></h4>
+    <h5>Sun, Dec 20, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/operator-sdk"><kbd class="item-tag">operator-sdk</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/12/06/cri-dockerd/">Kubernetesでdockershimが廃止されても、KubernetesでDockerが使えなくなるわけじゃないよ</a></h4>
+    <h5>Sun, Dec 6, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/10/31/metallb/">MetalLB入門 ― オンプレKubernetesクラスタでLoadBalancerタイプのServiceを使う</a></h4>
+    <h5>Sat, Oct 31, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/metallb"><kbd class="item-tag">metallb</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/10/11/rook-ceph/">Rook/CephでCephFSを試す</a></h4>
+    <h5>Sun, Oct 11, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/rook"><kbd class="item-tag">rook</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ceph"><kbd class="item-tag">ceph</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/12/11/kong-ingress-controller/">Kong Ingress ControllerでKongの設定を管理する</a></h4>
+    <h5>Wed, Dec 11, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kong"><kbd class="item-tag">kong</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/12/05/k8s-on-centos8-with-containerd/">Kubernetes 1.16 のクラスタを CentOS 8 と containerd で構築する</a></h4>
+    <h5>Thu, Dec 5, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/containerd"><kbd class="item-tag">containerd</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/09/23/k8s-ecosystem-misc/">Kubernetesのエコシステム ー その他雑多</a></h4>
+    <h5>Mon, Sep 23, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/08/14/k8s-ecosystem-k8s-variations-and-container-host-oses/">Kubernetesのエコシステム ー KubernetesバリエーションとコンテナホストOS編</a></h4>
+    <h5>Wed, Aug 14, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/07/27/introduction-to-k8s/">Kubernetes入門</a></h4>
+    <h5>Sat, Jul 27, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/microservices"><kbd class="item-tag">microservices</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/07/26/k8s-meetup-tokyo-21/">Kubernetes Meetup Tokyo #21 - Cloud Native CI/CD に行ってきた</a></h4>
+    <h5>Fri, Jul 26, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/argo"><kbd class="item-tag">argo</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gitops"><kbd class="item-tag">gitops</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spinnaker"><kbd class="item-tag">spinnaker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/argo"><kbd class="item-tag">argo</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/06/23/k8s-ecosystem-preparing-k8s-cluster/">Kubernetesのエコシステム ー Kubernetesクラスタ構築編</a></h4>
+    <h5>Sun, Jun 23, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/06/15/k8s-ecosystem-container-runtimes/">Kubernetesのエコシステム ー コンテナランタイム編</a></h4>
+    <h5>Sat, Jun 15, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/containerd"><kbd class="item-tag">containerd</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/03/08/k8s-zundoko-operator/">ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</a></h4>
+    <h5>Fri, Mar 8, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubebuilder"><kbd class="item-tag">kubebuilder</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/golang"><kbd class="item-tag">golang</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/17/packer-k8s/">Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</a></h4>
+    <h5>Sun, Jun 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/packer"><kbd class="item-tag">packer</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/msys2"><kbd class="item-tag">msys2</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/03/build-k8s-cluster-by-ansible/">Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</a></h4>
+    <h5>Sun, Jun 3, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a></h4>
+    <h5>Sat, May 5, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a></h4>
+    <h5>Fri, May 4, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a></h4>
+    <h5>Tue, Apr 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/01/hello-skaffold/">Skaffoldを触ってみた</a></h4>
+    <h5>Sun, Apr 1, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/skaffold"><kbd class="item-tag">skaffold</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">Kubernetes 1.8のアクセス制御について。あとDashboard。</a></h4>
+    <h5>Tue, Oct 31, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a></h4>
+    <h5>Sat, Oct 21, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubeadm"><kbd class="item-tag">kubeadm</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></h4>
+    <h5>Wed, Oct 11, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a></h4>
+    <h5>Tue, Oct 10, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/12/11/goslings-development-memo0-intro-design/">Goslings開発メモ - その0: 紹介と概要と設計編</a></h4>
+    <h5>Sun, Dec 11, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring"><kbd class="item-tag">spring</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring-boot"><kbd class="item-tag">spring-boot</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/jgit"><kbd class="item-tag">jgit</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">aws</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws-ecs"><kbd class="item-tag">aws-ecs</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/git"><kbd class="item-tag">git</kbd></a>
+    
+
+</div>
+ 
+        </div>
+    
+
+    
+
+        <h4 class="page-header">Comments</h4>
+
+        <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "kaitoy-tobedecided" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+
+</main>
+
+        <footer>
+
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+    </body>
+
+</html>
+
