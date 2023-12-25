@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+        <script data-ad-client="ca-pub-6244473643910448" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/2023/12/25/eks-pod-identity/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/2023/12/25/eks-pod-identity/">
+
+
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="IRSAに代わるEKS Pod Identityをさわる | To Be Decided">
+  <title>IRSAに代わるEKS Pod Identityをさわる | To Be Decided</title>
+  <meta property="og:description" content="いずれIRSAにとって代わると思われる、EKS Pod Identityをさわってみた記事。">
+  <meta name="description" content="いずれIRSAにとって代わると思われる、EKS Pod Identityをさわってみた記事。">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/eks.png">
+
+
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <style>
+
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+<script>
+  var webFontConfig = {
+    google: {
+      families: ['Noto Sans JP:400,700:japanese'],
+      active: function() {
+        sessionStorage.fonts = true;
+      }
+    },
+    timeout: 3000
+  };
+  WebFont.load(webFontConfig);
+</script>
+
+
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"> 
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js"></script>
+
+    
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
+        
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
+    
+
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v9.0" nonce="WjvU2Pqv"></script>
+
+        <nav class="navbar navbar-default navbar-fixed-top">
+
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">IRSAに代わるEKS Pod Identityをさわる</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    <div class="single-post">
+        <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2023/12/25/eks-pod-identity/">IRSAに代わるEKS Pod Identityをさわる</a></h4>
+    <h5>Mon, Dec 25, 2023</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">aws</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/eks"><kbd class="item-tag">eks</kbd></a>
+    
+
+</div>
+
+
+        <div class="cover">
+            <a href="/2023/12/25/eks-pod-identity/">
+                <img src="https://www.kaitoy.xyz/images/eks.png" alt="IRSAに代わるEKS Pod Identityをさわる">
+            </a>
+        </div>
+
+        
+        <h4 class="page-header">Table of Contents</h4>
+        <aside>
+            <nav id="TableOfContents">
+<ul>
+<li><a href="#eks-pod-identityとは">EKS Pod Identityとは</a></li>
+<li><a href="#irsaとは">IRSAとは</a></li>
+<li><a href="#eks-pod-identityの仕組み">EKS Pod Identityの仕組み</a></li>
+<li><a href="#eks-pod-identityを試す">EKS Pod Identityを試す</a>
+<ul>
+<li><a href="#eks構築">EKS構築</a></li>
+<li><a href="#eks-pod-identity-agentデプロイ">EKS Pod Identity Agentデプロイ</a></li>
+</ul></li>
+<li><a href="#iamロール作成">IAMロール作成</a>
+<ul>
+<li><a href="#serviceaccountとiamロールの紐づけ">ServiceAccountとIAMロールの紐づけ</a></li>
+<li><a href="#iamロールを使うpodのデプロイ">IAMロールを使うPodのデプロイ</a></li>
+</ul></li>
+</ul>
+</nav>
+        </aside>
+        <hr>
+        
+
+        <br> <div class="text-justify"><p>いずれIRSAにとって代わると思われる、EKS Pod Identityをさわってみた記事。</p>
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+
+<h1 id="eks-pod-identityとは">EKS Pod Identityとは</h1>
+
+<p><a href="https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/pod-identities.html">EKS Pod Identity</a>は、AWS EKSで動くPodにIAMロールを付与して、AWSリソースにアクセスできるようにするEKSの機能。
+以前からあった同様の機能である<a href="https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/iam-roles-for-service-accounts.html">IAM roles for service accounts (IRSA)</a>を改善したものとして、<a href="https://aws.amazon.com/jp/blogs/aws/amazon-eks-pod-identity-simplifies-iam-permissions-for-applications-on-amazon-eks-clusters/">2023/11/26にリリース</a>された。</p>
+
+<p>EKS Pod IdentityもIRSA同様に、ServiceAccountとIAMロールを紐づけておくと、ServiceAccountトークンでそのIAMロールがAssumeRoleされる。
+IRSAではPodがSTSと直接やり取りしてAssumeRoleするのに対して、EKS Pod Identityでは<a href="https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/pod-id-how-it-works.html#pod-id-agent-pod">EKS Pod Identity Agent</a>がPodの代わりにAssumeRoleを実行してくれる。</p>
+
+<h1 id="irsaとは">IRSAとは</h1>
+
+<p>IRSAについては<a href="https://www.kaitoy.xyz/2022/09/17/aws-irsa/">以前の記事</a>で詳しく解説した。
+IRSAは要は、EKSと<a href="https://docs.aws.amazon.com/ja_jp/IAM/latest/UserGuide/id_roles_providers_create_oidc.html">IAM OIDC IDプロバイダ</a>を連携させることで、EKSのKubernetesが発行するServiceAccountトークンをSTSで検証してAWS認証クレデンシャルに交換する仕組み。</p>
+
+<h1 id="eks-pod-identityの仕組み">EKS Pod Identityの仕組み</h1>
+
+<p><img src="/images/eks-pod-identity/eks-pod-identity.png" alt="eks-pod-identity.png" /></p>
+
+<p>EKS Pod Identityを図にするとこんな感じになるはず。
+青い実線矢印はHTTPS通信で、緑の実線矢印はHTTP通信。</p>
+
+<ol>
+<li>IRSAにも使われる<a href="https://github.com/aws/amazon-eks-pod-identity-webhook/">Amazon EKS Pod Identity Webhook (図中のPIdW)</a>がEKSコントロールプレーンで動いていて、Container Credentials ConfigファイルからServiceAccountとIAMロールのマッピングをロードする。</li>
+<li>EKSのkube-apiserverにPodを作るリクエストが来たら、kube-apiserverがその内容をPIdWに送る。</li>
+<li>PIdWは、Podに指定されたServiceAccount名がContainer Credentials Configにあった場合、Podの定義をいじってService Account Token Volume Projectionと、環境変数の<code>AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE</code>と<code>AWS_CONTAINER_CREDENTIALS_FULL_URI</code>を挿入する。
+
+<ul>
+<li><code>AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE</code>はPodにマウントされるService Account Tokenのパスを示す。</li>
+<li><code>AWS_CONTAINER_CREDENTIALS_FULL_URI</code>はEKS Pod Identity Agentのエンドポイント(リンクローカルアドレス)を示す。</li>
+</ul></li>
+<li>kubeletは挿入されたService Account Token Volume Projectionを見て、それに対応するServiceAccountトークンをkube-apiserverに発行してもらう。</li>
+<li>kubeletは、発行されたServiceAccountトークンをPodにマウントさせる。</li>
+<li>Pod内で起動したコンテナ(のAWS SDK)は、AWSリソースにアクセスする際に、<code>AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE</code>が指定する場所にマウントされたServiceAccountトークンと、自身のServiceAccount名を、<code>AWS_CONTAINER_CREDENTIALS_FULL_URI</code>が示すEKS Pod Identity Agentのエンドポイントに投げる。
+
+<ul>
+<li>この処理は、AWS SDKのCredential provider chainの<a href="https://docs.aws.amazon.com/sdkref/latest/guide/feature-container-credentials.html">Container credential provider</a>によるもの。</li>
+</ul></li>
+<li>EKS Pod Identity Agentは、受け取ったServiceAccountトークンとServiceAccount名を使って、EKS Auth APIに対してAssumeRoleForPodIdentityを実行し、AWS認証クレデンシャルを取得してPodに返す。</li>
+</ol>
+
+<p>#7のEKS Auth APIが裏でSTSと連携してくれてるんだろうけど、そのあたりは隠蔽されていて、IRSAみたいにIAM OIDC IDプロバイダをEKSクラスタごとに作って紐づける必要がないのが楽。
+IAM OIDC IDプロバイダはAWSアカウント内に最大で100個までしか作れないハードリミットがあるが、EKS Pod Identityはそれを気にしなくていいということにもなる。</p>
+
+<p>また、IRSAで使うIAMロールは、IAM OIDC IDプロバイダを指定する信頼ポリシーを付けないといけないので、対応するEKSクラスタ上のPod専用になってしまうけど、EKS Pod Identityで使うIAMロールはEKSクラスタ間で汎用的に使えるのが便利。</p>
+
+<p>EKS Pod Identity AgentのソースやそれをデプロイするためのChartが<a href="https://github.com/aws/containers-roadmap/issues/2239">公開されていない</a>のと、Container credential providerがAWS SDＫの新しめのバージョンでしか使えない点は懸念としてあるものの、IRSAよりかなり改善されているので、今後はなるべくEKS Pod Identityに移行していくのがいいと思われる。</p>
+
+<h1 id="eks-pod-identityを試す">EKS Pod Identityを試す</h1>
+
+<p>EKS Pod Identityを使ってPodにS3アクセスさせてみる。
+EKS Pod Identityは認証セッションにPodの情報を表す<a href="https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/pod-id-abac.html">タグ</a>を付与してくれるので、それをポリシーに活用するユースケースにする。</p>
+
+<p>アクセスするS3バケットは以下のような中身。
+<code>&lt;EKSクラスタ名&gt;/&lt;k8s namespace名&gt;/</code>というプレフィックスで、namespace毎にファイルを分けて管理しているイメージ。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">(aws) C:\Users\kaitoy&gt;aws s3 ls --recursive s3://kaitoy-epi-test/
+2023-12-22 18:57:28          0 epi-test/
+2023-12-22 18:58:22          0 epi-test/default/
+2023-12-22 18:59:41          0 epi-test/default/test.txt
+2023-12-22 18:58:39          0 epi-test/hoge/
+2023-12-22 19:00:06          0 epi-test/hoge/test.txt</code></pre></div>
+<p>因みにAWS CLIがv1しかEKS Pod Identityに対応してないので、今回は<a href="https://docs.conda.io/projects/miniconda/en/latest/">Miniconda</a>にv1をインストールした環境を新たに作って試している。</p>
+
+<h2 id="eks構築">EKS構築</h2>
+
+<p>EKSは<a href="https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/getting-started-eksctl.html">eksctl</a>で1ノードの小さいやつを作った。
+クラスタ名は<code>epi-test</code>で、IAM OIDC IDプロバイダ連携は無効で、PodのIMDSアクセスも無効。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">(aws) C:\Users\kaitoy&gt;eksctl create cluster --name epi-test --region us-east-1 --version 1.28 --managed -t t3.medium -N 1 -m 1 -M 1 --node-volume-size 20 --spot --disable-pod-imds
+2023-12-24 10:02:57 [ℹ]  eksctl version 0.167.0-rc.0
+2023-12-24 10:02:57 [ℹ]  using region us-east-1
+2023-12-24 10:03:03 [ℹ]  skipping us-east-1e from selection because it doesn&#39;t support the following instance type(s): t3.medium
+2023-12-24 10:03:03 [ℹ]  setting availability zones to [us-east-1b us-east-1f]
+2023-12-24 10:03:03 [ℹ]  subnets for us-east-1b - public:192.168.0.0/19 private:192.168.64.0/19
+2023-12-24 10:03:03 [ℹ]  subnets for us-east-1f - public:192.168.32.0/19 private:192.168.96.0/19
+2023-12-24 10:03:03 [ℹ]  nodegroup &#34;ng-f99c5c98&#34; will use &#34;&#34; [AmazonLinux2/1.28]
+2023-12-24 10:03:03 [ℹ]  using Kubernetes version 1.28
+2023-12-24 10:03:03 [ℹ]  creating EKS cluster &#34;epi-test&#34; in &#34;us-east-1&#34; region with managed nodes
+2023-12-24 10:03:03 [ℹ]  will create 2 separate CloudFormation stacks for cluster itself and the initial managed nodegroup
+2023-12-24 10:03:03 [ℹ]  if you encounter any issues, check CloudFormation console or try &#39;eksctl utils describe-stacks --region=us-east-1 --cluster=epi-test&#39;
+2023-12-24 10:03:03 [ℹ]  Kubernetes API endpoint access will use default of {publicAccess=true, privateAccess=false} for cluster &#34;epi-test&#34; in &#34;us-east-1&#34;
+2023-12-24 10:03:03 [ℹ]  CloudWatch logging will not be enabled for cluster &#34;epi-test&#34; in &#34;us-east-1&#34;
+2023-12-24 10:03:03 [ℹ]  you can enable it with &#39;eksctl utils update-cluster-logging --enable-types={SPECIFY-YOUR-LOG-TYPES-HERE (e.g. all)} --region=us-east-1 --cluster=epi-test&#39;
+2023-12-24 10:03:03 [ℹ]
+2 sequential tasks: { create cluster control plane &#34;epi-test&#34;,
+    2 sequential sub-tasks: {
+        wait for control plane to become ready,
+        create managed nodegroup &#34;ng-f99c5c98&#34;,
+    }
+}
+2023-12-24 10:03:03 [ℹ]  building cluster stack &#34;eksctl-epi-test-cluster&#34;
+2023-12-24 10:03:09 [ℹ]  deploying stack &#34;eksctl-epi-test-cluster&#34;
+2023-12-24 10:03:39 [ℹ]  waiting for CloudFormation stack &#34;eksctl-epi-test-cluster&#34;
+2023-12-24 10:04:15 [ℹ]  waiting for CloudFormation stack &#34;eksctl-epi-test-cluster&#34;
+2023-12-24 10:05:21 [ℹ]  waiting for CloudFormation stack &#34;eksctl-epi-test-cluster&#34;
+2023-12-24 10:06:27 [ℹ]  waiting for CloudFormation stack &#34;eksctl-epi-test-cluster&#34;
+2023-12-24 10:07:33 [ℹ]  waiting for CloudFormation stack &#34;eksctl-epi-test-cluster&#34;
+2023-12-24 10:08:38 [ℹ]  waiting for CloudFormation stack &#34;eksctl-epi-test-cluster&#34;
+2023-12-24 10:09:44 [ℹ]  waiting for CloudFormation stack &#34;eksctl-epi-test-cluster&#34;
+2023-12-24 10:10:50 [ℹ]  waiting for CloudFormation stack &#34;eksctl-epi-test-cluster&#34;
+2023-12-24 10:11:56 [ℹ]  waiting for CloudFormation stack &#34;eksctl-epi-test-cluster&#34;
+2023-12-24 10:13:02 [ℹ]  waiting for CloudFormation stack &#34;eksctl-epi-test-cluster&#34;
+2023-12-24 10:15:34 [ℹ]  building managed nodegroup stack &#34;eksctl-epi-test-nodegroup-ng-f99c5c98&#34;
+2023-12-24 10:15:40 [ℹ]  deploying stack &#34;eksctl-epi-test-nodegroup-ng-f99c5c98&#34;
+2023-12-24 10:15:41 [ℹ]  waiting for CloudFormation stack &#34;eksctl-epi-test-nodegroup-ng-f99c5c98&#34;
+2023-12-24 10:16:16 [ℹ]  waiting for CloudFormation stack &#34;eksctl-epi-test-nodegroup-ng-f99c5c98&#34;
+2023-12-24 10:17:11 [ℹ]  waiting for CloudFormation stack &#34;eksctl-epi-test-nodegroup-ng-f99c5c98&#34;
+2023-12-24 10:18:58 [ℹ]  waiting for CloudFormation stack &#34;eksctl-epi-test-nodegroup-ng-f99c5c98&#34;
+2023-12-24 10:18:58 [ℹ]  waiting for the control plane to become ready
+2023-12-24 10:18:59 [✔]  saved kubeconfig as &#34;C:\\Users\\kaitoy\\.kube\\config&#34;
+2023-12-24 10:18:59 [ℹ]  no tasks
+2023-12-24 10:18:59 [✔]  all EKS cluster resources for &#34;epi-test&#34; have been created
+2023-12-24 10:19:05 [ℹ]  nodegroup &#34;ng-f99c5c98&#34; has 1 node(s)
+2023-12-24 10:19:05 [ℹ]  node &#34;ip-192-168-41-38.ec2.internal&#34; is ready
+2023-12-24 10:19:05 [ℹ]  waiting for at least 1 node(s) to become ready in &#34;ng-f99c5c98&#34;
+2023-12-24 10:19:05 [ℹ]  nodegroup &#34;ng-f99c5c98&#34; has 1 node(s)
+2023-12-24 10:19:05 [ℹ]  node &#34;ip-192-168-41-38.ec2.internal&#34; is ready
+2023-12-24 10:19:09 [ℹ]  kubectl command should work with &#34;C:\\Users\\kaitoy\\.kube\\config&#34;, try &#39;kubectl get nodes&#39;
+2023-12-24 10:19:09 [✔]  EKS cluster &#34;epi-test&#34; in &#34;us-east-1&#34; region is ready</code></pre></div>
+<h2 id="eks-pod-identity-agentデプロイ">EKS Pod Identity Agentデプロイ</h2>
+
+<p>次にEKS Pod Identity Agentをデプロイする。</p>
+
+<p>EKS Pod Identity Agentは、EKS Auth APIにアクセスするための権限をノードロールを継承することで得るため、ノードロールには<a href="https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/pod-id-agent-setup.html#pod-id-agent-prereqs">前提条件</a>があるんだけど、先ほど作ったEKSクラスタのノードロールにはAmazonEKSWorkerNodePolicyがついていたので条件を満たしている。
+なお、プライベートクラスターにはした場合、EKS Pod Identity AgentがEKS Auth APIにアクセスするためのPrivateLinkが必要になるが、今回はしてないので不要。</p>
+
+<p>前述の通り、EKS Pod Identity AgentはChartとか公開されてないので、EKSのアドオンとしてデプロイする必要がある。
+以下のコマンドでデプロイできた。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">(aws) C:\Users\kaitoy&gt;aws eks create-addon --cluster-name epi-test --addon-name eks-pod-identity-agent --addon-version v1.0.0-eksbuild.1
+{
+    &#34;addon&#34;: {
+        &#34;addonName&#34;: &#34;eks-pod-identity-agent&#34;,
+        &#34;clusterName&#34;: &#34;epi-test&#34;,
+        &#34;status&#34;: &#34;CREATING&#34;,
+        &#34;addonVersion&#34;: &#34;v1.0.0-eksbuild.1&#34;,
+        &#34;health&#34;: {
+            &#34;issues&#34;: []
+        },
+        &#34;addonArn&#34;: &#34;arn:aws:eks:us-east-1:123456789012:addon/epi-test/eks-pod-identity-agent/aac64cc4-dd4b-c008-2c95-923d55db97f3&#34;,
+        &#34;createdAt&#34;: &#34;2023-12-24T10:56:29.610000+09:00&#34;,
+        &#34;modifiedAt&#34;: &#34;2023-12-24T10:56:29.641000+09:00&#34;,
+        &#34;tags&#34;: {}
+    }
+}
+(aws) C:\Users\kaitoy&gt;kubectl get po -n kube-system -l app.kubernetes.io/name=eks-pod-identity-agent
+NAME                           READY   STATUS    RESTARTS   AGE
+eks-pod-identity-agent-mzmrt   1/1     Running   0          88s
+(aws) C:\Users\kaitoy&gt;kubectl get daemonset -n kube-system eks-pod-identity-agent
+NAME                     DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
+eks-pod-identity-agent   1         1         1       1            1           &lt;none&gt;          2m32s</code></pre></div>
+<p>EKS Pod Identity AgentはDaemonSetとしてデプロイされていることがわかる。</p>
+
+<p>今回のクラスタではPodのIMDSアクセスを無効にしてあるが、EKS Pod Identity AgentのDaemonSetはhost networkで動くので、ノードロールを継承して動くことができる。</p>
+
+<h1 id="iamロール作成">IAMロール作成</h1>
+
+<p>今回の検証でS3アクセスのために使うIAMロールを作る。</p>
+
+<p>まずIAMポリシーは以下の感じ。</p>
+
+<p>epi-policy.json:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
+  <span style="color:#6ab825;font-weight:bold">&#34;Version&#34;</span>: <span style="color:#ed9d13">&#34;2012-10-17&#34;</span>,
+  <span style="color:#6ab825;font-weight:bold">&#34;Statement&#34;</span>: [
+    {
+      <span style="color:#6ab825;font-weight:bold">&#34;Effect&#34;</span>: <span style="color:#ed9d13">&#34;Allow&#34;</span>,
+      <span style="color:#6ab825;font-weight:bold">&#34;Action&#34;</span>: <span style="color:#ed9d13">&#34;s3:*&#34;</span>,
+      <span style="color:#6ab825;font-weight:bold">&#34;Resource&#34;</span>: <span style="color:#ed9d13">&#34;arn:aws:s3:::kaitoy-epi-test/${aws:PrincipalTag/eks-cluster-name}/${aws:PrincipalTag/kubernetes-namespace}/*&#34;</span>
+    }
+  ]
+}</code></pre></div>
+<p><code>aws:PrincipalTag/</code>がプレフィックスの変数が、EKS Pod Identityで取得したセッションに付けられるタグの値を利用する部分。
+上記で、kaitoy-epi-testバケット内の、EKSクラスタ名とk8s namespace名をプレフィックスに含む部分についてフルアクセスを与えるポリシーになる。
+これを<code>epi-s3</code>という名前で登録する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">(aws) C:\Users\kaitoy&gt;aws iam create-policy --policy-name epi-s3 --policy-document file://epi-policy.json
+{
+    &#34;Policy&#34;: {
+        &#34;PolicyName&#34;: &#34;epi-s3&#34;,
+        &#34;PolicyId&#34;: &#34;ANPA23E2UCQAPCZBKCPXL&#34;,
+        &#34;Arn&#34;: &#34;arn:aws:iam::123456789012:policy/epi-s3&#34;,
+        &#34;Path&#34;: &#34;/&#34;,
+        &#34;DefaultVersionId&#34;: &#34;v1&#34;,
+        &#34;AttachmentCount&#34;: 0,
+        &#34;PermissionsBoundaryUsageCount&#34;: 0,
+        &#34;IsAttachable&#34;: true,
+        &#34;CreateDate&#34;: &#34;2023-12-24T02:40:17+00:00&#34;,
+        &#34;UpdateDate&#34;: &#34;2023-12-24T02:40:17+00:00&#34;
+    }
+}</code></pre></div>
+<p><br></p>
+
+<p>Podに与えたいIAMロールに付ける信頼ポリシーは、IRSAと違って常に同じで、以下の内容でいい。</p>
+
+<p>epi-trust-policy.json:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
+  <span style="color:#6ab825;font-weight:bold">&#34;Version&#34;</span>: <span style="color:#ed9d13">&#34;2012-10-17&#34;</span>,
+  <span style="color:#6ab825;font-weight:bold">&#34;Statement&#34;</span>: [
+    {
+      <span style="color:#6ab825;font-weight:bold">&#34;Sid&#34;</span>: <span style="color:#ed9d13">&#34;AllowEksAuthToAssumeRoleForPodIdentity&#34;</span>,
+      <span style="color:#6ab825;font-weight:bold">&#34;Effect&#34;</span>: <span style="color:#ed9d13">&#34;Allow&#34;</span>,
+      <span style="color:#6ab825;font-weight:bold">&#34;Principal&#34;</span>: {
+        <span style="color:#6ab825;font-weight:bold">&#34;Service&#34;</span>: <span style="color:#ed9d13">&#34;pods.eks.amazonaws.com&#34;</span>
+      },
+      <span style="color:#6ab825;font-weight:bold">&#34;Action&#34;</span>: [
+        <span style="color:#ed9d13">&#34;sts:AssumeRole&#34;</span>,
+        <span style="color:#ed9d13">&#34;sts:TagSession&#34;</span>
+      ]
+    }
+  ]
+}</code></pre></div>
+<p><br></p>
+
+<p>これらのポリシーを使ってIAMロールを作る。
+ロール名は<code>epi-bucket-user</code>。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">(aws) C:\Users\kaitoy&gt;aws iam create-role --role-name epi-bucket-user --assume-role-policy-document file://epi-trust-policy.json
+{
+    &#34;Role&#34;: {
+        &#34;Path&#34;: &#34;/&#34;,
+        &#34;RoleName&#34;: &#34;epi-bucket-user&#34;,
+        &#34;RoleId&#34;: &#34;AROA23E2UCQACC2YRQMPX&#34;,
+        &#34;Arn&#34;: &#34;arn:aws:iam::123456789012:role/epi-bucket-user&#34;,
+        &#34;CreateDate&#34;: &#34;2023-12-24T03:01:48+00:00&#34;,
+        &#34;AssumeRolePolicyDocument&#34;: {
+            &#34;Version&#34;: &#34;2012-10-17&#34;,
+            &#34;Statement&#34;: [
+                {
+                    &#34;Sid&#34;: &#34;AllowEksAuthToAssumeRoleForPodIdentity&#34;,
+                    &#34;Effect&#34;: &#34;Allow&#34;,
+                    &#34;Principal&#34;: {
+                        &#34;Service&#34;: &#34;pods.eks.amazonaws.com&#34;
+                    },
+                    &#34;Action&#34;: [
+                        &#34;sts:AssumeRole&#34;,
+                        &#34;sts:TagSession&#34;
+                    ]
+                }
+            ]
+        }
+    }
+}
+(aws) C:\Users\kaitoy&gt;aws iam attach-role-policy --role-name epi-bucket-user --policy-arn=arn:aws:iam::123456789012:policy/epi-s3</code></pre></div>
+<h2 id="serviceaccountとiamロールの紐づけ">ServiceAccountとIAMロールの紐づけ</h2>
+
+<p>先ほど作ったIAMロールをServiceAccountに紐づける。
+まず紐づけるServiceAccountを作る。</p>
+
+<pre><code>(aws) C:\Users\kaitoy&gt;kubectl create serviceaccount aws-cli -n default
+serviceaccount/aws-cli created
+</code></pre>
+
+<p><code>aws-cli</code>という名前でnamespaceは<code>default</code>にした。</p>
+
+<p><br></p>
+
+<p>次にIAMロールへの紐づけを登録する。
+(この紐づけに使う<code>create-pod-identity-association</code>というサブコマンドがAWS CLI v2ではまだ実装されていない。)</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">(aws) C:\Users\kaitoy&gt;aws eks create-pod-identity-association --cluster-name epi-test --role-arn arn:aws:iam::123456789012:role/epi-bucket-user --namespace default --service-account aws-cli
+{
+    &#34;association&#34;: {
+        &#34;clusterName&#34;: &#34;epi-test&#34;,
+        &#34;namespace&#34;: &#34;default&#34;,
+        &#34;serviceAccount&#34;: &#34;aws-cli&#34;,
+        &#34;roleArn&#34;: &#34;arn:aws:iam::123456789012:role/epi-bucket-user&#34;,
+        &#34;associationArn&#34;: &#34;arn:aws:eks:us-east-1:123456789012:podidentityassociation/epi-test/a-4fwzdkmxwj5oml2oq&#34;,
+        &#34;associationId&#34;: &#34;a-4fwzdkmxwj5oml2oq&#34;,
+        &#34;tags&#34;: {},
+        &#34;createdAt&#34;: 1703388080.466,
+        &#34;modifiedAt&#34;: 1703388080.466
+    }
+}</code></pre></div>
+<p>この、ServiceAccountとIAMロールのマッピング情報は、EKS(i.e. AWS)上でだけ管理されて、k8sリソースとしては何も表現されないっぽい。
+k8sリソースと関係なく管理される情報なので、指定するnamespaceやServiceAccountは既存でなくてもいい。</p>
+
+<p>ここで登録したマッピング情報は、(たぶん)Container Credentials ConfigファイルとしてPIdWに渡される。</p>
+
+<p>因みにこの紐づけは<a href="https://eksctl.io/usage/pod-identity-associations/">eksctlでもできる</a>し、eksctlならIRSAからの移行コマンドもある。</p>
+
+<h2 id="iamロールを使うpodのデプロイ">IAMロールを使うPodのデプロイ</h2>
+
+<p>以上でEKS Pod Identityを使う準備ができたので、いよいよPodをデプロイしてみる。
+コンテナイメージは<a href="https://gallery.ecr.aws/aws-cli/aws-cli">AWS CLIの公式イメージ</a>。</p>
+
+<p>まず、ServiceAccountを指定しないでPodをdefault namespaceにデプロイし、S3バケット内のファイルにアクセスしてみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">(aws) C:\Users\kaitoy&gt;kubectl run -n default --rm -it aws-cli --image=public.ecr.aws/aws-cli/aws-cli:2.15.3 -- s3 cp s3://kaitoy-epi-test/epi-test/default/text.txt .
+If you don&#39;t see a command prompt, try pressing enter.
+
+
+Unable to locate credentials. You can configure credentials by running &#34;aws configure&#34;.
+Session ended, resume using &#39;kubectl attach aws-cli -c aws-cli -i -t&#39; command when the pod is running
+pod &#34;aws-cli&#34; deleted</code></pre></div>
+<p>予想通りAWSクレデンシャルが見つからないという結果に。</p>
+
+<p>次に、IAMロールを紐づけたServiceAccount(i.e. <code>aws-cli</code>)を指定する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">(aws) C:\Users\kaitoy&gt; kubectl run -n default --rm -it aws-cli --image=public.ecr.aws/aws-cli/aws-cli:2.15.3 --overrides=&#39;{ &#34;spec&#34;: { &#34;serviceAccount&#34;: &#34;aws-cli&#34; }  }&#39; -- s3 cp s3://kaitoy-epi-test/epi-test/default/test.txt .
+If you don&#39;t see a command prompt, try pressing enter.
+
+download: s3://kaitoy-epi-test/epi-test/default/test.txt to ./test.txt
+pod &#34;aws-cli&#34; deleted</code></pre></div>
+<p>ファイルの取得ができた。</p>
+
+<p>最後に、セッションタグによるアクセス制御が期待通りできていることを確かめるため、defaultじゃないパス(<code>/epi-test/hoge/test.txt</code>)にアクセスしてみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">(aws) C:\Users\kaitoy&gt; kubectl run -n default --rm -it aws-cli --image=public.ecr.aws/aws-cli/aws-cli:2.15.3 --overrides=&#39;{ &#34;spec&#34;: { &#34;serviceAccount&#34;: &#34;aws-cli&#34; }  }&#39; -- s3 cp s3://kaitoy-epi-test/epi-test/hoge/test.txt .
+If you don&#39;t see a command prompt, try pressing enter.
+
+fatal error: An error occurred (403) when calling the HeadObject operation: Forbidden
+pod &#34;aws-cli&#34; deleted</code></pre></div>
+<p>ちゃんとForbiddenになった。</p></div>
+
+        <section class="share-buttons">
+          <div class="fb-share-button share-button" data-href="https://www.kaitoy.xyz/2023/12/25/eks-pod-identity/" data-layout="button_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">シェア</a></div>
+          <div class="share-button">
+            <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-text="IRSAに代わるEKS Pod Identityをさわる" data-url="https://www.kaitoy.xyz/2023/12/25/eks-pod-identity/" data-show-count="true" data-count="horizontal">Tweet</a>
+          </div>
+          <div class="share-button">
+            <a href="https://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="basic-label-counter" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+          </div>
+          <div class="share-button">
+            <a data-pocket-label="pocket" data-pocket-count="horizontal" class="pocket-btn" data-lang="en"></a>
+            <script type="text/javascript">!function(d,i){if(!d.getElementById(i)){var j=d.createElement("script");j.id=i;j.src="https://widgets.getpocket.com/v1/j/btn.js?v=1";var w=d.getElementById(i);d.body.appendChild(j);}}(document,"pocket-btn-js");</script>
+          </div>
+        </section>
+    </div>
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-6244473643910448"
+         data-ad-slot="1845600530"
+         data-ad-format="auto"></ins>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+    <section class="tbd-pagination">
+      <div class="row">
+        <div class="col-sm-6">
+          <div class="prev">
+            
+            <a href="https://www.kaitoy.xyz/2022/09/25/amazon-eks-pod-identity-webhook/">
+              <i class="fa fa-angle-left"></i>
+              IAM Roles for Service AccountsをLocalStackとAmazon EKS Pod Identity Webhookで実装する
+            </a>
+            
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="next text-right">
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    
+
+    
+
+        <h4 class="page-header">Related</h4>
+
+        <div class="related-links">
+           <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2022/09/25/amazon-eks-pod-identity-webhook/">IAM Roles for Service AccountsをLocalStackとAmazon EKS Pod Identity Webhookで実装する</a></h4>
+    <h5>Sun, Sep 25, 2022</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">aws</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/eks"><kbd class="item-tag">eks</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/iam"><kbd class="item-tag">iam</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/irsa"><kbd class="item-tag">irsa</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/localstack"><kbd class="item-tag">localstack</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2022/09/17/aws-irsa/">AWS EKSのIAM Roles for Service Accountsを完全に理解した</a></h4>
+    <h5>Sat, Sep 17, 2022</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">aws</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/eks"><kbd class="item-tag">eks</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/iam"><kbd class="item-tag">iam</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/irsa"><kbd class="item-tag">irsa</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2022/09/10/crunchy-data-pgo-is-not-oss/">Crunchy DataのPostgreSQL Operator (PGO)はOSSじゃない</a></h4>
+    <h5>Sat, Sep 10, 2022</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/postgresql"><kbd class="item-tag">postgresql</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/pgo"><kbd class="item-tag">pgo</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/license"><kbd class="item-tag">license</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2022/09/04/irsa-emu/">EKSの外でIAM Roles for Service Accountsっぽいことを実現するMutating Admission Webhookを作った</a></h4>
+    <h5>Sun, Sep 4, 2022</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/eks"><kbd class="item-tag">eks</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/irsa-emu"><kbd class="item-tag">irsa-emu</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/localstack"><kbd class="item-tag">localstack</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/vault"><kbd class="item-tag">vault</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">aws</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/iam"><kbd class="item-tag">iam</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2021/12/09/virtual-kubelet-liqo/">Liqoのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする</a></h4>
+    <h5>Thu, Dec 9, 2021</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/k3s"><kbd class="item-tag">k3s</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/virtual-kubelet"><kbd class="item-tag">virtual-kubelet</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/liqo"><kbd class="item-tag">liqo</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2021/12/09/virtual-kubelet-admiralty/">Admiraltyのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする</a></h4>
+    <h5>Thu, Dec 9, 2021</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/k3s"><kbd class="item-tag">k3s</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/virtual-kubelet"><kbd class="item-tag">virtual-kubelet</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/admiralty"><kbd class="item-tag">admiralty</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2021/08/16/k3s-on-eks/">EKSとオンプレVMとの間でk3sクラスタを組む</a></h4>
+    <h5>Mon, Aug 16, 2021</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/k3s"><kbd class="item-tag">k3s</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">aws</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/eks"><kbd class="item-tag">eks</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2021/08/15/k3s-on-on-premises-k8s/">k3sをオンプレの手製Kubernetesクラスタで動かす</a></h4>
+    <h5>Sun, Aug 15, 2021</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/k3s"><kbd class="item-tag">k3s</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2021/04/06/k8s-on-alma-linux-8/">Kubernetes 1.20 のクラスタを AlmaLinux 8で構築する</a></h4>
+    <h5>Tue, Apr 6, 2021</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/alma-linux"><kbd class="item-tag">alma-linux</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/12/20/k8s-zundoko-ansible-operator/">ズンドコキヨシ with Kubernetes Ansible Operator - Operator SDKのAnsible Operatorを使ってみた</a></h4>
+    <h5>Sun, Dec 20, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/operator-sdk"><kbd class="item-tag">operator-sdk</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/12/06/cri-dockerd/">Kubernetesでdockershimが廃止されても、KubernetesでDockerが使えなくなるわけじゃないよ</a></h4>
+    <h5>Sun, Dec 6, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/10/31/metallb/">MetalLB入門 ― オンプレKubernetesクラスタでLoadBalancerタイプのServiceを使う</a></h4>
+    <h5>Sat, Oct 31, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/metallb"><kbd class="item-tag">metallb</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/10/11/rook-ceph/">Rook/CephでCephFSを試す</a></h4>
+    <h5>Sun, Oct 11, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/rook"><kbd class="item-tag">rook</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ceph"><kbd class="item-tag">ceph</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/12/11/kong-ingress-controller/">Kong Ingress ControllerでKongの設定を管理する</a></h4>
+    <h5>Wed, Dec 11, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kong"><kbd class="item-tag">kong</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/12/05/k8s-on-centos8-with-containerd/">Kubernetes 1.16 のクラスタを CentOS 8 と containerd で構築する</a></h4>
+    <h5>Thu, Dec 5, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/containerd"><kbd class="item-tag">containerd</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/09/23/k8s-ecosystem-misc/">Kubernetesのエコシステム ー その他雑多</a></h4>
+    <h5>Mon, Sep 23, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/08/14/k8s-ecosystem-k8s-variations-and-container-host-oses/">Kubernetesのエコシステム ー KubernetesバリエーションとコンテナホストOS編</a></h4>
+    <h5>Wed, Aug 14, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/07/27/introduction-to-k8s/">Kubernetes入門</a></h4>
+    <h5>Sat, Jul 27, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/microservices"><kbd class="item-tag">microservices</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/07/26/k8s-meetup-tokyo-21/">Kubernetes Meetup Tokyo #21 - Cloud Native CI/CD に行ってきた</a></h4>
+    <h5>Fri, Jul 26, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/argo"><kbd class="item-tag">argo</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gitops"><kbd class="item-tag">gitops</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spinnaker"><kbd class="item-tag">spinnaker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/argo"><kbd class="item-tag">argo</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/06/23/k8s-ecosystem-preparing-k8s-cluster/">Kubernetesのエコシステム ー Kubernetesクラスタ構築編</a></h4>
+    <h5>Sun, Jun 23, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/06/15/k8s-ecosystem-container-runtimes/">Kubernetesのエコシステム ー コンテナランタイム編</a></h4>
+    <h5>Sat, Jun 15, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/containerd"><kbd class="item-tag">containerd</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/03/08/k8s-zundoko-operator/">ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</a></h4>
+    <h5>Fri, Mar 8, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubebuilder"><kbd class="item-tag">kubebuilder</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/golang"><kbd class="item-tag">golang</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/17/packer-k8s/">Packer &#43; Ansible on Windows 10でKubernetes 1.10のクラスタ on VirtualBoxを全自動構築</a></h4>
+    <h5>Sun, Jun 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/packer"><kbd class="item-tag">packer</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/msys2"><kbd class="item-tag">msys2</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/06/03/build-k8s-cluster-by-ansible/">Kubernetes 1.10のクラスタを全手動で構築するのをAnsibleで全自動化した</a></h4>
+    <h5>Sun, Jun 3, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/05/kubernetes-kubelet-config-and-pod-sec-policy/">Kubernetes 1.10のkubeletの起動オプションをKubelet ConfigファイルとPodSecurityPolicyで置き換える</a></h4>
+    <h5>Sat, May 5, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/05/04/kubernetes-with-weave-net/">Kubernetes 1.10のクラスタにWeave Netをデプロイする</a></h4>
+    <h5>Fri, May 4, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/17/kubernetes110-from-scratch/">Kubernetes 1.10をスクラッチから全手動で構築</a></h4>
+    <h5>Tue, Apr 17, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2018/04/01/hello-skaffold/">Skaffoldを触ってみた</a></h4>
+    <h5>Sun, Apr 1, 2018</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/skaffold"><kbd class="item-tag">skaffold</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/31/retry-dashboard-on-k8s-cluster-by-kubeadm/">Kubernetes 1.8のアクセス制御について。あとDashboard。</a></h4>
+    <h5>Tue, Oct 31, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/21/build-kubernetes-cluster-by-kubeadm/">Kubernetes1.8のクラスタを構築する。kubeadmで。</a></h4>
+    <h5>Sat, Oct 21, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubeadm"><kbd class="item-tag">kubeadm</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/11/goslings-on-kubernetes-cont/">Kubernetesのチュートリアルをやる</a></h4>
+    <h5>Wed, Oct 11, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2017/10/10/goslings-on-kubernetes/">Kubernetes 1.8が出たので、Minikubeを触ってみる</a></h4>
+    <h5>Tue, Oct 10, 2017</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/minikube"><kbd class="item-tag">minikube</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/docker"><kbd class="item-tag">docker</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/12/11/goslings-development-memo0-intro-design/">Goslings開発メモ - その0: 紹介と概要と設計編</a></h4>
+    <h5>Sun, Dec 11, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring"><kbd class="item-tag">spring</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring-boot"><kbd class="item-tag">spring-boot</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/jgit"><kbd class="item-tag">jgit</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">aws</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws-ecs"><kbd class="item-tag">aws-ecs</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/git"><kbd class="item-tag">git</kbd></a>
+    
+
+</div>
+ 
+        </div>
+    
+
+    
+
+        <h4 class="page-header">Comments</h4>
+
+        <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "kaitoy-tobedecided" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+
+</main>
+
+        <footer>
+
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+    </body>
+
+</html>
+
