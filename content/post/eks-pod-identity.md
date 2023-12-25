@@ -169,7 +169,7 @@ EKS Pod Identity AgentはDaemonSetとしてデプロイされていることが�
 
 今回のクラスタではPodのIMDSアクセスを無効にしてあるが、EKS Pod Identity AgentのDaemonSetはhost networkで動くので、ノードロールを継承して動くことができる。
 
-# IAMロール作成
+## IAMロール作成
 今回の検証でS3アクセスのために使うIAMロールを作る。
 
 まずIAMポリシーは以下の感じ。
