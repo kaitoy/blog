@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+        <script data-ad-client="ca-pub-6244473643910448" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/2024/01/07/gpt-crawler/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/2024/01/07/gpt-crawler/">
+
+
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="GPT CrawlerとOpenAI Assistantsでシュッと作るAIアシスタント | To Be Decided">
+  <title>GPT CrawlerとOpenAI Assistantsでシュッと作るAIアシスタント | To Be Decided</title>
+  <meta property="og:description" content="日立製作所製の運用統合サービスであるOps IのWebマニュアルをGPT Crawlerでスクレイピングして、その結果をGPT-4に与えて、Ops Iユーザ向けAIアシスタントを作ってみた話。">
+  <meta name="description" content="日立製作所製の運用統合サービスであるOps IのWebマニュアルをGPT Crawlerでスクレイピングして、その結果をGPT-4に与えて、Ops Iユーザ向けAIアシスタントを作ってみた話。">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/openai.png">
+
+
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <style>
+
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+<script>
+  var webFontConfig = {
+    google: {
+      families: ['Noto Sans JP:400,700:japanese'],
+      active: function() {
+        sessionStorage.fonts = true;
+      }
+    },
+    timeout: 3000
+  };
+  WebFont.load(webFontConfig);
+</script>
+
+
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"> 
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js"></script>
+
+    
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
+        
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
+    
+
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v9.0" nonce="WjvU2Pqv"></script>
+
+        <nav class="navbar navbar-default navbar-fixed-top">
+
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">GPT CrawlerとOpenAI Assistantsでシュッと作るAIアシスタント</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    <div class="single-post">
+        <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/01/07/gpt-crawler/">GPT CrawlerとOpenAI Assistantsでシュッと作るAIアシスタント</a></h4>
+    <h5>Sun, Jan 7, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/opsi"><kbd class="item-tag">opsi</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gpt"><kbd class="item-tag">gpt</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/openai"><kbd class="item-tag">openai</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">genai</kbd></a>
+    
+
+</div>
+
+
+        <div class="cover">
+            <a href="/2024/01/07/gpt-crawler/">
+                <img src="https://www.kaitoy.xyz/images/openai.png" alt="GPT CrawlerとOpenAI Assistantsでシュッと作るAIアシスタント">
+            </a>
+        </div>
+
+        
+        <h4 class="page-header">Table of Contents</h4>
+        <aside>
+            <nav id="TableOfContents">
+<ul>
+<li><a href="#gpt-crawlerとは">GPT Crawlerとは</a></li>
+<li><a href="#カスタムgptとは">カスタムGPTとは</a></li>
+<li><a href="#openai-assistantsとは">OpenAI Assistantsとは</a></li>
+<li><a href="#ops-iとは">Ops Iとは</a></li>
+<li><a href="#ops-iマニュアルのスクレイピング">Ops Iマニュアルのスクレイピング</a></li>
+<li><a href="#openaiのアシスタント作成">OpenAIのアシスタント作成</a>
+<ul>
+<li><a href="#ナイーブなアシスタント">ナイーブなアシスタント</a></li>
+<li><a href="#ops-iアシスタント">Ops Iアシスタント</a></li>
+</ul></li>
+</ul>
+</nav>
+        </aside>
+        <hr>
+        
+
+        <br> <div class="text-justify"><p>日立製作所製の運用統合サービスであるOps IのWebマニュアルをGPT Crawlerでスクレイピングして、その結果をGPT-4に与えて、Ops Iユーザ向けAIアシスタントを作ってみた話。</p>
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+
+<h1 id="gpt-crawlerとは">GPT Crawlerとは</h1>
+
+<p><a href="https://github.com/BuilderIO/gpt-crawler">GPT Crawler</a>は、Builder.ioが開発したTypeScript製のWebスクレイピングツール。<a href="https://www.builder.io/blog/custom-gpt">2023年11月14日</a>に発表された。</p>
+
+<p>URLを与えて実行すると、その先をクローリングしてスクレイピングしてテキストを抽出してJSONに吐いてくれるので、それを使って簡単にカスタムGPTを作れるというもの。
+スクレイピングにはヘッドレスChromeと<a href="https://playwright.dev/">Playwright</a>を使ってるっぽい。</p>
+
+<h1 id="カスタムgptとは">カスタムGPTとは</h1>
+
+<p>カスタムGPTは、ChatGPTのGPTsという機能で作ったチャットボットのこと。
+GPTsは2023/11/7にOpen AI DevDayで<a href="https://openai.com/blog/introducing-gpts">発表</a>された新しい機能で、ChatGPTに追加の知識を与えて、特定の用途に向けてカスタマイズできる機能。</p>
+
+<p>GPTsを使うには、月額$20のChatGPT Plusにアップグレードする必要があって、ちょっとお試しでっていうのには高い。
+ので、今回は代わりにOpenAIのAssistantsを使う。</p>
+
+<h1 id="openai-assistantsとは">OpenAI Assistantsとは</h1>
+
+<p>OpenAIの<a href="https://platform.openai.com/docs/assistants/overview">Assistants</a>は、GPTにカスタムインストラクションを与えて各種ツールと連携させて、特定の用途向けチャットボット(アシスタント)を作れる機能。
+サポートしているツールに<a href="https://platform.openai.com/docs/assistants/tools/knowledge-retrieval">Knowledge Retrieval</a>があり、それでGPT Crawlerの出力を扱うことができる。</p>
+
+<p>Knowledge Retrievalは、OpenAIにアップロードしたテキストファイルをベクトルデータベースにいれて、アシスタントに対する質問に回答する際に検索してくれるというもの。
+アップロードしたデータ量に対して課金され、1アシスタント1日あたり$0.20/GBとお手頃。しかも今のところ<a href="https://openai.com/pricing#language-models">2024/1/12まで無料</a>。(少し前まで2023/12まで無料だった気がするのでちょっと延びた?)</p>
+
+<p>アシスタントへのクエリに対する課金も、1kトークン当たり数円と安いので、お試しにちょうどいい。</p>
+
+<h1 id="ops-iとは">Ops Iとは</h1>
+
+<p>Ops Iは<a href="https://www.hitachi.co.jp/Prod/comp/soft1/jp1/feature/jp1_cloud_operations_integration/index.html">JP1 Cloud Service/Operations Integration</a>の略で、日立製作所製の運用統合サービス。</p>
+
+<p>Operations as Codeが特長で、運用自動化コードやワークフローをGitで集約管理して、ハイブリッド環境における様々なシステム運用の自動化と統合を推進できる。</p>
+
+<p><br></p>
+
+<div class="embed video-player" style="text-align: center">
+  <iframe class="youtube-player" type="text/html" width="320" height="193" src="https://www.youtube.com/embed/arzY4xQlUb0" allowfullscreen frameborder="0">
+  </iframe>
+</div>
+
+
+<p><br></p>
+
+<p><a href="https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/index.html">Ops Iのマニュアル</a>は<a href="https://gohugo.io/">Hugo</a>という静的サイトジェネレータで作られてWebサイトで公開されてるので、スクレイピングしやすい。</p>
+
+<h1 id="ops-iマニュアルのスクレイピング">Ops Iマニュアルのスクレイピング</h1>
+
+<p>Ops IマニュアルをGPT Crawlerでスクレイピングする。</p>
+
+<p>GPT Crawlerは、設定ファイル書いてnpm startするとスクレイピングを実行して結果をファイルに吐くシンプルなツールなので、Nodeさえあれば実行できるんだけど、<a href="https://github.com/BuilderIO/gpt-crawler/blob/v1.2.1/Dockerfile">Dockerfile</a>があるのでコンテナで実行してみる。</p>
+
+<p>まずコンテナイメージをビルドする。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ git clone https://github.com/BuilderIO/gpt-crawler.git
+$ cd gpt-crawler/containerapp/
+$ git checkout v1.2.1
+$ docker build -t kaitoy/gpt-crawler:1.2.1 .</code></pre></div>
+<p>ビルドしたイメージは<a href="https://hub.docker.com/r/kaitoy/gpt-crawler">Docker Hub</a>に上げた。</p>
+
+<p><br></p>
+
+<p>ビルドしたイメージでシェルを起動して、GPT Crawlerの設定ファイルをコンテナ内の<code>/home/gpt-crawler/config.ts</code>に書く。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ docker run -it --entrypoint bash kaitoy/gpt-crawler:1.2.1
+root@d8fee4ed8924:/home# cd gpt-crawler
+root@d8fee4ed8924:/home/gpt-crawler# cat&lt;&lt;EOF&gt;config.ts
+import { Config } from &#34;./src/config&#34;;
+
+export const defaultConfig: Config = {
+  url: &#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/index.html&#34;,
+  match: &#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/**&#34;,
+  selector: &#34;#body-inner&#34;,
+  maxPagesToCrawl: 1000,
+  outputFileName: &#34;output.json&#34;,
+};
+EOF</code></pre></div>
+<p>上記<code>config.ts</code>に書く<a href="https://github.com/BuilderIO/gpt-crawler#configure-the-crawler">Config</a>オブジェクトには、<code>url</code>にクローリングを開始するURLを指定して、<code>match</code>にスクレイピングするURLのパターンを<a href="https://www.npmjs.com/package/glob#glob-primer">glob</a>で指定して、<code>selector</code>にスクレイピングするHTML要素のセレクタを指定して、あとはちょこちょこパラメータ指定したりしなかったりする。
+<code>match</code>には配列で複数パターン指定もできる。</p>
+
+<p><br></p>
+
+<p>設定書いたら<code>npm start</code>で実行。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">root@d8fee4ed8924:/home/gpt-crawler# npm start
+
+&gt; @builder.io/gpt-crawler@1.2.1 start
+&gt; npm run start:dev
+
+
+&gt; @builder.io/gpt-crawler@1.2.1 start:dev
+&gt; cross-env NODE_ENV=development npm run build &amp;&amp; node dist/src/main.js
+
+
+&gt; @builder.io/gpt-crawler@1.2.1 build
+&gt; tsc
+
+INFO  PlaywrightCrawler: Starting the crawler.
+INFO  PlaywrightCrawler: Crawling: Page 1 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 2 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/introduction/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 3 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/history/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 4 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/outline/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 5 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/table-of-contents/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 6 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/outline/opsi_outline/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 7 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/outline/opsi_forte/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 8 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/outline/method/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 9 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/outline/note_restriction/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 10 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/outline/note_restriction/restriction/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 11 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/outline/note_restriction/note/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 12 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/setting/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 13 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/setting/setting_pre/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 14 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/setting/setting_pre/action/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 15 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/setting/setting_pre/manage/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 16 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/setting/advance/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 17 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/setting/setting_pre/relation/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 18 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/setting/advance/login/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 19 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/setting/user/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 20 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/setting/advance/mfa/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 21 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/setting/user/opsi_user/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 22 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/setting/user/role_setting/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 23 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/setting/organization/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 24 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/setting/outpost/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 25 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/setting/outpost/rpmpkg/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 26 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/setting/repository/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 27 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 28 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/basic/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 29 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/basic/account/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 30 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/task/workflow/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 31 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/task/servicecalalog/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 32 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/task/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 33 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/task/schedule/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 34 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/task/ticket/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 35 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/task/resource/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 36 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/document/distribution/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 37 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/document/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 38 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/document/container/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 39 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/system/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 40 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/system/org_management/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 41 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/system/outpost_management/index.html...
+INFO  Statistics: PlaywrightCrawler request statistics: {&#34;requestAvgFailedDurationMillis&#34;:null,&#34;requestAvgFinishedDurationMillis&#34;:5504,&#34;requestsFinishedPerMinute&#34;:40,&#34;requestsFailedPerMinute&#34;:0,&#34;requestTotalDurationMillis&#34;:220171,&#34;requestsTotal&#34;:40,&#34;crawlerRuntimeMillis&#34;:60134,&#34;retryHistogram&#34;:[40]}
+INFO  PlaywrightCrawler:AutoscaledPool: state {&#34;currentConcurrency&#34;:7,&#34;desiredConcurrency&#34;:8,&#34;systemStatus&#34;:{&#34;isSystemIdle&#34;:true,&#34;memInfo&#34;:{&#34;isOverloaded&#34;:false,&#34;limitRatio&#34;:0.2,&#34;actualRatio&#34;:0},&#34;eventLoopInfo&#34;:{&#34;isOverloaded&#34;:false,&#34;limitRatio&#34;:0.6,&#34;actualRatio&#34;:0.156},&#34;cpuInfo&#34;:{&#34;isOverloaded&#34;:false,&#34;limitRatio&#34;:0.4,&#34;actualRatio&#34;:0},&#34;clientInfo&#34;:{&#34;isOverloaded&#34;:false,&#34;limitRatio&#34;:0.3,&#34;actualRatio&#34;:0}}}
+WARN  PlaywrightCrawler:AutoscaledPool:Snapshotter: Memory is critically overloaded. Using 1325 MB of 698 MB (190%). Consider increasing available memory.
+INFO  PlaywrightCrawler: Crawling: Page 42 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/system/user_management/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 43 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/system/repository_management/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 44 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/itsm/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 45 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/itsm/mail/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 46 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/itsm/otobo/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 47 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/itsm/otobo_queue/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 48 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/secret/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 49 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/secret/secret_reg/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 50 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/secret/secret_change/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 51 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/secret/credential_reg/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 52 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/secret/credential_change/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 53 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/git/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 54 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/git/gitreg_gui/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 55 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/git/gitreg_cui/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 56 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/git/accesstoken/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 57 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/git/yaml_diff/index.html...
+WARN  PlaywrightCrawler: Reclaiming failed request back to the list or queue. page.waitForSelector: Timeout 1000ms exceeded.
+Call log:
+  - waiting for locator(&#39;#body-inner&#39;) to be visible
+
+    at PlaywrightCrawler.requestHandler (/home/gpt-crawler/dist/src/core.js:47:36) {&#34;id&#34;:&#34;DvNlBK8h68cC6Sa&#34;,&#34;url&#34;:&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/git/yaml_diff/index.html&#34;,&#34;retryCount&#34;:1}
+INFO  PlaywrightCrawler: Crawling: Page 58 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/git/yaml_ck/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 59 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/automation/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 60 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/automation/auth_reg/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 61 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/automation/project/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 62 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/automation/inventory/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 63 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/automation/job_template/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 64 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/automation/job_confirm/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 65 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 66 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/design_pre/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 67 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/design_pre/func_relation/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 68 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/design_pre/func_knowleage/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 69 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/design_pre/yaml_note/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 70 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/required/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 71 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/required/required_work/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 72 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/required/required_user/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 73 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/required/required_skill/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 74 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/required/required_document/index.html...
+INFO  Statistics: PlaywrightCrawler request statistics: {&#34;requestAvgFailedDurationMillis&#34;:null,&#34;requestAvgFinishedDurationMillis&#34;:4652,&#34;requestsFinishedPerMinute&#34;:36,&#34;requestsFailedPerMinute&#34;:0,&#34;requestTotalDurationMillis&#34;:339560,&#34;requestsTotal&#34;:73,&#34;crawlerRuntimeMillis&#34;:120136,&#34;retryHistogram&#34;:[73]}
+INFO  PlaywrightCrawler:AutoscaledPool: state {&#34;currentConcurrency&#34;:1,&#34;desiredConcurrency&#34;:2,&#34;systemStatus&#34;:{&#34;isSystemIdle&#34;:false,&#34;memInfo&#34;:{&#34;isOverloaded&#34;:true,&#34;limitRatio&#34;:0.2,&#34;actualRatio&#34;:1},&#34;eventLoopInfo&#34;:{&#34;isOverloaded&#34;:false,&#34;limitRatio&#34;:0.6,&#34;actualRatio&#34;:0},&#34;cpuInfo&#34;:{&#34;isOverloaded&#34;:false,&#34;limitRatio&#34;:0.4,&#34;actualRatio&#34;:0},&#34;clientInfo&#34;:{&#34;isOverloaded&#34;:false,&#34;limitRatio&#34;:0.3,&#34;actualRatio&#34;:0}}}
+WARN  PlaywrightCrawler:AutoscaledPool:Snapshotter: Memory is critically overloaded. Using 603 MB of 698 MB (86%). Consider increasing available memory.
+INFO  PlaywrightCrawler: Crawling: Page 75 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/work_design/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 76 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/work_design/datamodel_design/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 77 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/work_design/workflow_design/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 78 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/work_design/notice_design/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 79 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/work_design/document_storage/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 80 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/work_design/user_acl/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 81 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/work_design/skill_manage/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 82 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/work_design/design_auto/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 83 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/work_design/ticket_manage/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 84 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/uidesign/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 85 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/tips/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 86 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/tips/tips_library/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 87 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/tips/tips_application/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 88 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/tips/tips_ticketcustom/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 89 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/tips/tips_yamlcustom/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 90 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/reg_step/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 91 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/reg_step/process/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 92 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/reg_step/upload/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 93 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/reg_sequence/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 94 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/customer/outpost_step/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 95 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/operation/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 96 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/operation/license_usage/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 97 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/operation/data_migration/index.html...
+WARN  PlaywrightCrawler: Reclaiming failed request back to the list or queue. page.waitForSelector: Timeout 1000ms exceeded.
+Call log:
+  - waiting for locator(&#39;#body-inner&#39;) to be visible
+
+    at PlaywrightCrawler.requestHandler (/home/gpt-crawler/dist/src/core.js:47:36) {&#34;id&#34;:&#34;sntkmpLRlKgdDRI&#34;,&#34;url&#34;:&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/operation/data_migration/index.html&#34;,&#34;retryCount&#34;:1}
+INFO  PlaywrightCrawler: Crawling: Page 98 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/operation/data_migration/concept/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 99 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/operation/data_migration/gitrepo_data/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 100 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 101 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_workflow/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 102 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_workflow/parts/index.html...
+INFO  Statistics: PlaywrightCrawler request statistics: {&#34;requestAvgFailedDurationMillis&#34;:null,&#34;requestAvgFinishedDurationMillis&#34;:3975,&#34;requestsFinishedPerMinute&#34;:33,&#34;requestsFailedPerMinute&#34;:0,&#34;requestTotalDurationMillis&#34;:397456,&#34;requestsTotal&#34;:100,&#34;crawlerRuntimeMillis&#34;:180139,&#34;retryHistogram&#34;:[100]}
+INFO  PlaywrightCrawler:AutoscaledPool: state {&#34;currentConcurrency&#34;:1,&#34;desiredConcurrency&#34;:1,&#34;systemStatus&#34;:{&#34;isSystemIdle&#34;:false,&#34;memInfo&#34;:{&#34;isOverloaded&#34;:true,&#34;limitRatio&#34;:0.2,&#34;actualRatio&#34;:1},&#34;eventLoopInfo&#34;:{&#34;isOverloaded&#34;:false,&#34;limitRatio&#34;:0.6,&#34;actualRatio&#34;:0.02},&#34;cpuInfo&#34;:{&#34;isOverloaded&#34;:false,&#34;limitRatio&#34;:0.4,&#34;actualRatio&#34;:0},&#34;clientInfo&#34;:{&#34;isOverloaded&#34;:false,&#34;limitRatio&#34;:0.3,&#34;actualRatio&#34;:0}}}
+WARN  PlaywrightCrawler:AutoscaledPool:Snapshotter: Memory is critically overloaded. Using 595 MB of 698 MB (85%). Consider increasing available memory.
+INFO  PlaywrightCrawler: Crawling: Page 103 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_ui/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 104 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_datamodel/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 105 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_catalog/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 106 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_script/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 107 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_script/action_script/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 108 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_library/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 109 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_attachment/index.html...
+WARN  PlaywrightCrawler: Reclaiming failed request back to the list or queue. page.waitForSelector: Timeout 1000ms exceeded.
+Call log:
+  - waiting for locator(&#39;#body-inner&#39;) to be visible
+
+    at PlaywrightCrawler.requestHandler (/home/gpt-crawler/dist/src/core.js:47:36) {&#34;id&#34;:&#34;zcQb7uGxWJn2qbQ&#34;,&#34;url&#34;:&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_attachment/index.html&#34;,&#34;retryCount&#34;:1}
+INFO  PlaywrightCrawler: Crawling: Page 110 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_distribution/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 111 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_acl_statement/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 112 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_notification_notifier/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 113 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_application/index.html...
+WARN  PlaywrightCrawler: Reclaiming failed request back to the list or queue. page.waitForSelector: Timeout 1000ms exceeded.
+Call log:
+  - waiting for locator(&#39;#body-inner&#39;) to be visible
+
+    at PlaywrightCrawler.requestHandler (/home/gpt-crawler/dist/src/core.js:47:36) {&#34;id&#34;:&#34;QPceQzMQNmRGoFX&#34;,&#34;url&#34;:&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_application/index.html&#34;,&#34;retryCount&#34;:1}
+INFO  PlaywrightCrawler: Crawling: Page 114 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_skill_skillset/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 115 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/troubleshoot/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 116 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/troubleshoot/message_list/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 117 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/troubleshoot/error/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 118 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/troubleshoot/error/message/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 119 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/troubleshoot/error/yaml_error/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 120 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/role/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 121 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/role/role_function/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 122 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/role/api_role/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 123 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/appendix/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 124 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/appendix/oss_version/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 125 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/appendix/ver_history/index.html...
+WARN  PlaywrightCrawler: Reclaiming failed request back to the list or queue. Request blocked - received 401 status code.
+ {&#34;id&#34;:&#34;24TQyvMowniaUbJ&#34;,&#34;url&#34;:&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/system/user_management#user_management_002001&#34;,&#34;retryCount&#34;:1}
+WARN  PlaywrightCrawler: Reclaiming failed request back to the list or queue. Request blocked - received 401 status code.
+ {&#34;id&#34;:&#34;JuvVzvunemKV0Qn&#34;,&#34;url&#34;:&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_workflow/parts#parts_002&#34;,&#34;retryCount&#34;:1}
+INFO  PlaywrightCrawler: Crawling: Page 126 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/git/yaml_diff/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 127 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/operation/data_migration/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 128 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_attachment/index.html...
+INFO  PlaywrightCrawler: Crawling: Page 129 / 1000 - URL: https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_application/index.html...
+WARN  PlaywrightCrawler: Reclaiming failed request back to the list or queue. Request blocked - received 401 status code.
+ {&#34;id&#34;:&#34;24TQyvMowniaUbJ&#34;,&#34;url&#34;:&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/system/user_management#user_management_002001&#34;,&#34;retryCount&#34;:2}
+WARN  PlaywrightCrawler: Reclaiming failed request back to the list or queue. Request blocked - received 401 status code.
+ {&#34;id&#34;:&#34;JuvVzvunemKV0Qn&#34;,&#34;url&#34;:&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_workflow/parts#parts_002&#34;,&#34;retryCount&#34;:2}
+INFO  Statistics: PlaywrightCrawler request statistics: {&#34;requestAvgFailedDurationMillis&#34;:null,&#34;requestAvgFinishedDurationMillis&#34;:3617,&#34;requestsFinishedPerMinute&#34;:31,&#34;requestsFailedPerMinute&#34;:0,&#34;requestTotalDurationMillis&#34;:452072,&#34;requestsTotal&#34;:125,&#34;crawlerRuntimeMillis&#34;:240143,&#34;retryHistogram&#34;:[121,4]}
+INFO  PlaywrightCrawler:AutoscaledPool: state {&#34;currentConcurrency&#34;:1,&#34;desiredConcurrency&#34;:1,&#34;systemStatus&#34;:{&#34;isSystemIdle&#34;:false,&#34;memInfo&#34;:{&#34;isOverloaded&#34;:true,&#34;limitRatio&#34;:0.2,&#34;actualRatio&#34;:1},&#34;eventLoopInfo&#34;:{&#34;isOverloaded&#34;:false,&#34;limitRatio&#34;:0.6,&#34;actualRatio&#34;:0.052},&#34;cpuInfo&#34;:{&#34;isOverloaded&#34;:false,&#34;limitRatio&#34;:0.4,&#34;actualRatio&#34;:0},&#34;clientInfo&#34;:{&#34;isOverloaded&#34;:false,&#34;limitRatio&#34;:0.3,&#34;actualRatio&#34;:0}}}
+WARN  PlaywrightCrawler: Reclaiming failed request back to the list or queue. Request blocked - received 401 status code.
+ {&#34;id&#34;:&#34;24TQyvMowniaUbJ&#34;,&#34;url&#34;:&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/system/user_management#user_management_002001&#34;,&#34;retryCount&#34;:3}
+WARN  PlaywrightCrawler: Reclaiming failed request back to the list or queue. Request blocked - received 401 status code.
+ {&#34;id&#34;:&#34;JuvVzvunemKV0Qn&#34;,&#34;url&#34;:&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_workflow/parts#parts_002&#34;,&#34;retryCount&#34;:3}
+ERROR PlaywrightCrawler: Request failed and reached maximum retries. Error: Request blocked - received 401 status code.
+    at PlaywrightCrawler._throwOnBlockedRequest (/home/gpt-crawler/node_modules/@crawlee/basic/internals/basic-crawler.js:688:19)
+    at PlaywrightCrawler._responseHandler (/home/gpt-crawler/node_modules/@crawlee/browser/internals/browser-crawler.js:352:22)
+    at PlaywrightCrawler._runRequestHandler (/home/gpt-crawler/node_modules/@crawlee/browser/internals/browser-crawler.js:238:24)
+    at async PlaywrightCrawler._runRequestHandler (/home/gpt-crawler/node_modules/@crawlee/playwright/internals/playwright-crawler.js:109:9)
+    at async wrap (/home/gpt-crawler/node_modules/@apify/timeout/index.js:52:21) {&#34;id&#34;:&#34;24TQyvMowniaUbJ&#34;,&#34;url&#34;:&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/system/user_management#user_management_002001&#34;,&#34;method&#34;:&#34;GET&#34;,&#34;uniqueKey&#34;:&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/function/system/user_management&#34;}
+ERROR PlaywrightCrawler: Request failed and reached maximum retries. Error: Request blocked - received 401 status code.
+    at PlaywrightCrawler._throwOnBlockedRequest (/home/gpt-crawler/node_modules/@crawlee/basic/internals/basic-crawler.js:688:19)
+    at PlaywrightCrawler._responseHandler (/home/gpt-crawler/node_modules/@crawlee/browser/internals/browser-crawler.js:352:22)
+    at PlaywrightCrawler._runRequestHandler (/home/gpt-crawler/node_modules/@crawlee/browser/internals/browser-crawler.js:238:24)
+    at async PlaywrightCrawler._runRequestHandler (/home/gpt-crawler/node_modules/@crawlee/playwright/internals/playwright-crawler.js:109:9)
+    at async wrap (/home/gpt-crawler/node_modules/@apify/timeout/index.js:52:21) {&#34;id&#34;:&#34;JuvVzvunemKV0Qn&#34;,&#34;url&#34;:&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_workflow/parts#parts_002&#34;,&#34;method&#34;:&#34;GET&#34;,&#34;uniqueKey&#34;:&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_workflow/parts&#34;}
+INFO  PlaywrightCrawler: All requests from the queue have been processed, the crawler will shut down.
+INFO  PlaywrightCrawler: Final request statistics: {&#34;requestsFinished&#34;:125,&#34;requestsFailed&#34;:2,&#34;retryHistogram&#34;:[121,4,null,2],&#34;requestAvgFailedDurationMillis&#34;:705,&#34;requestAvgFinishedDurationMillis&#34;:3617,&#34;requestsFinishedPerMinute&#34;:31,&#34;requestsFailedPerMinute&#34;:0,&#34;requestTotalDurationMillis&#34;:453481,&#34;requestsTotal&#34;:127,&#34;crawlerRuntimeMillis&#34;:245509}
+INFO  PlaywrightCrawler: Error analysis: {&#34;totalErrors&#34;:2,&#34;uniqueErrors&#34;:1,&#34;mostCommonErrors&#34;:[&#34;2x: Request blocked - received 401 status code. (/home/gpt-crawler/node_modules/@crawlee/basic/internals/basic-crawler.js:688:19)&#34;]}
+INFO  PlaywrightCrawler: Finished! Total 127 requests: 125 succeeded, 2 failed. {&#34;terminal&#34;:true}
+Found 125 files to combine...
+Wrote 125 items to output-1.json
+root@d8fee4ed8924:/home/gpt-crawler# ls -lh output-1.json
+-rw-r--r--. 1 root root 580K Jan  5 03:28 output-1.json</code></pre></div>
+<p>マニュアル内のリンクミスか何かで一部エラーになったけど、125ページをスクレイピングして、580KBの出力(<code>output-1.json</code>)を得た。
+出力の中身は以下のような感じで、ページのタイトルとURLとコンテンツがJSON形式でまとまっている。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">[
+  {
+    <span style="color:#6ab825;font-weight:bold">&#34;title&#34;</span>: <span style="color:#ed9d13">&#34;6.11 Application :: JP1 Cloud Service 運用統合 利用ガイド&#34;</span>,
+    <span style="color:#6ab825;font-weight:bold">&#34;url&#34;</span>: <span style="color:#ed9d13">&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_application/index.html&#34;</span>,
+    <span style="color:#6ab825;font-weight:bold">&#34;html&#34;</span>: <span style="color:#ed9d13">&#34;6.11 Application\n\n以下にApplication定義と定義例を示します。Applicationの詳細については「Application」を参照してください\n\n …&#34;</span>
+  },
+  {
+    <span style="color:#6ab825;font-weight:bold">&#34;title&#34;</span>: <span style="color:#ed9d13">&#34;6.7 Attachment :: JP1 Cloud Service 運用統合 利用ガイド&#34;</span>,
+    <span style="color:#6ab825;font-weight:bold">&#34;url&#34;</span>: <span style="color:#ed9d13">&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/yaml/yaml_attachment/index.html&#34;</span>,
+    <span style="color:#6ab825;font-weight:bold">&#34;html&#34;</span>: <span style="color:#ed9d13">&#34;6.7 Attachment\n\n以下にAttachment定義と定義例を示します。Attachmentの詳細については「ドキュメントの保管方法」を参照してください。\n\n …&#34;</span>
+  },
+  <span style="color:#a61717;background-color:#e3d2d2">…</span>
+]</code></pre></div>
+<h1 id="openaiのアシスタント作成">OpenAIのアシスタント作成</h1>
+
+<p>OpenAIのアシスタントは、OpenAIにログインして、メニューから<a href="https://platform.openai.com/assistants">Assistants</a>をえらんで右上の<code>Create</code>ボタンを押して簡単なフォームを入力するだけで作れる。</p>
+
+<p>まずはナイーブなアシスタントを作ってみる。</p>
+
+<h2 id="ナイーブなアシスタント">ナイーブなアシスタント</h2>
+
+<p>アシスタント作成フォームでは、アシスタント名とインストラクションを入力して、モデルを選ぶだけ。
+まだツールは何も有効化しない。
+モデルは最新の<code>gpt-4-1106-preview</code>にした。</p>
+
+<p><img src="/images/gpt-crawler/create.png" alt="create.png" /></p>
+
+<p><code>Save</code>ボタンを押したらアシスタントができた。</p>
+
+<p><img src="/images/gpt-crawler/assistant.png" alt="assistant.png" /></p>
+
+<p><br></p>
+
+<p>作ったアシスタントは<a href="https://platform.openai.com/playground">Playground</a>で試しながらいじれて便利。
+試しにOps Iの特徴を聞いてみる。</p>
+
+<p><img src="/images/gpt-crawler/wo_rag.png" alt="wo_rag.png" /></p>
+
+<p>まだOps Iの情報を与えてないので、知らないながらも頑張って回答してくれた。</p>
+
+<h2 id="ops-iアシスタント">Ops Iアシスタント</h2>
+
+<p>ナイーブなアシスタントにGPT Crawlerで取得した<code>output-1.json</code>を与えて、Ops Iアシスタントにする。
+やりかたは、Playgroundで<code>Retrieval</code>を有効にして、<code>FILES</code>から<code>Add</code>して<code>Save</code>するだけ。</p>
+
+<p><img src="/images/gpt-crawler/upload.png" alt="upload.png" /></p>
+
+<p><br></p>
+
+<p>できたOps Iアシスタントに先ほどと同様にOps Iの特徴を聞いてみる。</p>
+
+<p><img src="/images/gpt-crawler/w_rag.png" alt="w_rag.png" /></p>
+
+<p>ちゃんとOps Iに詳しくなってる。</p>
+
+<p><br></p>
+
+<p>もう少し踏み込んで、Ops Iのアクセス権限管理をするためのロールについて聞いてみる。</p>
+
+<p><img src="/images/gpt-crawler/opsi_role.png" alt="opsi_role.png" /></p>
+
+<p>質問にOps Iと書かなくても、Ops Iのロールについて正確に答えてくれた。</p>
+
+<p>回答の最初に、ファイルアクセスでエラーが発生したとあるが、<a href="https://community.openai.com/t/assistant-not-able-to-access-uploaded-file/524495/5">たまにおこるもの</a>らしい。
+インストラクションに<a href="https://community.openai.com/t/assistant-not-able-to-access-uploaded-file/524495/6">エラーを無視して自分を信じろ</a>みたいなことを追記すると改善するという情報がある。</p>
+
+<p><br></p>
+
+<p>最後に、Ops Iの最新バージョンで実装された中継サーバ機能について聞いてみる。</p>
+
+<p><img src="/images/gpt-crawler/opsi_outpost.png" alt="opsi_outpost.png" /></p>
+
+<p>なぜか回答が英語になってしまったが、それっぽいことは回答してくれた。
+インストラクションに日本語で回答してって書けばよかったかも。</p></div>
+
+        <section class="share-buttons">
+          <div class="fb-share-button share-button" data-href="https://www.kaitoy.xyz/2024/01/07/gpt-crawler/" data-layout="button_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">シェア</a></div>
+          <div class="share-button">
+            <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-text="GPT CrawlerとOpenAI Assistantsでシュッと作るAIアシスタント" data-url="https://www.kaitoy.xyz/2024/01/07/gpt-crawler/" data-show-count="true" data-count="horizontal">Tweet</a>
+          </div>
+          <div class="share-button">
+            <a href="https://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="basic-label-counter" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+          </div>
+          <div class="share-button">
+            <a data-pocket-label="pocket" data-pocket-count="horizontal" class="pocket-btn" data-lang="en"></a>
+            <script type="text/javascript">!function(d,i){if(!d.getElementById(i)){var j=d.createElement("script");j.id=i;j.src="https://widgets.getpocket.com/v1/j/btn.js?v=1";var w=d.getElementById(i);d.body.appendChild(j);}}(document,"pocket-btn-js");</script>
+          </div>
+        </section>
+    </div>
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-6244473643910448"
+         data-ad-slot="1845600530"
+         data-ad-format="auto"></ins>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+    <section class="tbd-pagination">
+      <div class="row">
+        <div class="col-sm-6">
+          <div class="prev">
+            
+            <a href="https://www.kaitoy.xyz/2023/12/25/eks-pod-identity/">
+              <i class="fa fa-angle-left"></i>
+              IRSAに代わるEKS Pod Identityをさわる
+            </a>
+            
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="next text-right">
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    
+
+    
+
+    
+
+        <h4 class="page-header">Comments</h4>
+
+        <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "kaitoy-tobedecided" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+
+</main>
+
+        <footer>
+
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+    </body>
+
+</html>
+
