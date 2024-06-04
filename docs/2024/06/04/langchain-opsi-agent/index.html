@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+        <script data-ad-client="ca-pub-6244473643910448" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/2024/06/04/langchain-opsi-agent/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/2024/06/04/langchain-opsi-agent/">
+
+
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Webマニュアルから知識を得るRAGをLangChainで作る | To Be Decided">
+  <title>Webマニュアルから知識を得るRAGをLangChainで作る | To Be Decided</title>
+  <meta property="og:description" content="日立製作所製の運用統合サービスであるOps IのWebマニュアルを、スクレイピングして、その結果をGPTに与えて、Ops Iユーザ向けAIアシスタントとして動くLLMアプリをLangChainで作ってみた話。
+
+作っていくうちに、LangChainの思想やデータモデルについてなんとなく見えてきたので、そのあたりを交えて記す。">
+  <meta name="description" content="日立製作所製の運用統合サービスであるOps IのWebマニュアルを、スクレイピングして、その結果をGPTに与えて、Ops Iユーザ向けAIアシスタントとして動くLLMアプリをLangChainで作ってみた話。
+
+作っていくうちに、LangChainの思想やデータモデルについてなんとなく見えてきたので、そのあたりを交えて記す。">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/langchain.png">
+
+
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <style>
+
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+<script>
+  var webFontConfig = {
+    google: {
+      families: ['Noto Sans JP:400,700:japanese'],
+      active: function() {
+        sessionStorage.fonts = true;
+      }
+    },
+    timeout: 3000
+  };
+  WebFont.load(webFontConfig);
+</script>
+
+
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"> 
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js"></script>
+
+    
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
+        
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
+    
+
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v9.0" nonce="WjvU2Pqv"></script>
+
+        <nav class="navbar navbar-default navbar-fixed-top">
+
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">Webマニュアルから知識を得るRAGをLangChainで作る</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    <div class="single-post">
+        <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/06/04/langchain-opsi-agent/">Webマニュアルから知識を得るRAGをLangChainで作る</a></h4>
+    <h5>Tue, Jun 4, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ops-i"><kbd class="item-tag">Ops I</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/rag"><kbd class="item-tag">rag</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/openai"><kbd class="item-tag">openai</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gpt"><kbd class="item-tag">gpt</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langchain"><kbd class="item-tag">langchain</kbd></a>
+    
+
+</div>
+
+
+        <div class="cover">
+            <a href="/2024/06/04/langchain-opsi-agent/">
+                <img src="https://www.kaitoy.xyz/images/langchain.png" alt="Webマニュアルから知識を得るRAGをLangChainで作る">
+            </a>
+        </div>
+
+        
+        <h4 class="page-header">Table of Contents</h4>
+        <aside>
+            <nav id="TableOfContents">
+<ul>
+<li><a href="#langchainとは">LangChainとは</a></li>
+<li><a href="#ops-iとは">Ops Iとは</a></li>
+<li><a href="#ops-iエージェント">Ops Iエージェント</a>
+<ul>
+<li><a href="#langchain入門">LangChain入門</a></li>
+<li><a href="#シンプルなrag">シンプルなRAG</a></li>
+<li><a href="#retriever">Retriever</a></li>
+<li><a href="#システムプロンプト付きrag">システムプロンプト付きRAG</a></li>
+<li><a href="#retrieverとchainをつなぐ">Retrieverとchainをつなぐ</a></li>
+</ul></li>
+</ul>
+</nav>
+        </aside>
+        <hr>
+        
+
+        <br> <div class="text-justify"><p>日立製作所製の運用統合サービスであるOps IのWebマニュアルを、スクレイピングして、その結果をGPTに与えて、Ops Iユーザ向けAIアシスタントとして動くLLMアプリをLangChainで作ってみた話。</p>
+
+<p>作っていくうちに、LangChainの思想やデータモデルについてなんとなく見えてきたので、そのあたりを交えて記す。</p>
+
+<p><a href="https://www.kaitoy.xyz/2024/01/07/gpt-crawler/">以前の記事の「GPT CrawlerとOpenAI Assistantsでシュッと作るAIアシスタント」</a>と実現したいことは同じだけど、そのとき使った<a href="https://platform.openai.com/docs/assistants/overview">OpenAI Assistants</a>の代わりに、LangChainを使う。</p>
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+
+<h1 id="langchainとは">LangChainとは</h1>
+
+<p><a href="https://www.langchain.com/langchain">LangChain</a>は、LLMを使ったアプリケーションを開発するためのPythonのフレームワーク。
+LangChainを使うと、GPTやClaudeなどの様々なLLMのAPIを一貫したインターフェースで扱えて、PDF、Word、Webサイトなどから情報を取得するRAGを簡単に構築できて、チャットモデルやLLMエージェントも開発できる。</p>
+
+<p><a href="https://python.langchain.com/v0.2/docs/concepts/#langchain-expression-language-lcel">LangChain Expression Language (LCEL)</a>というのが特徴的な機能で、LLM実行やベクトルDBの検索や出力の成型など、様々な処理をどう組み合わせるかを宣言的に表現できる。
+LCELでつなぎ合わせた一連の処理をchainという。例えば以下のように書ける。</p>
+
+<pre><code>chain = prompt | llm | output_parser
+</code></pre>
+
+<p><br></p>
+
+<p>chainに組み込む個々の処理は<a href="https://python.langchain.com/v0.2/docs/concepts/#runnable-interface">Runnableインターフェース</a>を実装していて、入力パラメータと出力パラメータを合わせればRunnable間を自由につなげるし、chainもRunnableになるのでchainを組み合わせることもできるし、さまざまな処理をするRunnableを一貫した方法で実行できる。</p>
+
+<p>Runnableやchainの入出力の型は、型推論されて、Runnableのメソッドで<a href="https://docs.pydantic.dev/latest/">Pydantic</a>のスキーマとして取得できるので、入出力のバリデーションに使えたり、Pydanticを使うほかのライブラリとの連携に使えたりする。</p>
+
+<p>同様のフレームワークに<a href="https://www.llamaindex.ai/open-source">LlamaIndex</a>があり、こちらはPythonのほかTypeScript版もある。</p>
+
+<h1 id="ops-iとは">Ops Iとは</h1>
+
+<p>Ops Iは<a href="https://www.hitachi.co.jp/Prod/comp/soft1/jp1/feature/jp1_cloud_operations_integration/index.html">JP1 Cloud Service/Operations Integration</a>の略で、日立製作所製の運用統合サービス。</p>
+
+<p>Operations as Codeが特長で、運用自動化コードやワークフローをGitで集約管理して、ハイブリッド環境における様々なシステム運用の自動化と統合を推進できる。</p>
+
+<p><br></p>
+
+<div class="embed video-player" style="text-align: center">
+  <iframe class="youtube-player" type="text/html" width="320" height="193" src="https://www.youtube.com/embed/arzY4xQlUb0" allowfullscreen frameborder="0">
+  </iframe>
+</div>
+
+
+<p><br></p>
+
+<p><a href="https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020001/index.html">Ops Iのマニュアル</a>は<a href="https://gohugo.io/">Hugo</a>という静的サイトジェネレータで作られてWebサイトで公開されていて、sitemapもあるので、スクレイピングしやすい。</p>
+
+<h1 id="ops-iエージェント">Ops Iエージェント</h1>
+
+<p>ここから、Ops Iユーザ向けAIアシスタントとして動くLLMアプリであるOps Iエージェントを作っていく。
+使う主なPythonモジュールは以下。</p>
+
+<ul>
+<li>LangChain 0.2.1</li>
+<li>langchain-community 0.2.1</li>
+<li>langchain-openai 0.1.7</li>
+<li>openai 1.30.3</li>
+</ul>
+
+<p><br></p>
+
+<p>完成したコードは<a href="https://github.com/kaitoy/opsi-agent">GitHub</a>に置いた。</p>
+
+<h2 id="langchain入門">LangChain入門</h2>
+
+<p>まずは、LangChain入門として、最小のLLMアプリを作ってみる。
+LLMはOpenAIのを使うので、そのためのモジュールをインストールする。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ pip install langchain openai langchain-openai</code></pre></div>
+<p><br></p>
+
+<p>コマンドライン入力を、安いGPT-3.5 Turboに投げて回答を表示するコードを書く。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">import</span> <span style="color:#447fcf;text-decoration:underline">sys</span>
+
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_openai</span> <span style="color:#6ab825;font-weight:bold">import</span> ChatOpenAI
+
+<span style="color:#24909d">input</span> = sys.argv[<span style="color:#3677a9">1</span>]
+
+llm = ChatOpenAI(model=<span style="color:#ed9d13">&#34;gpt-3.5-turbo&#34;</span>)
+
+response = llm.invoke(<span style="color:#24909d">input</span>)
+<span style="color:#6ab825;font-weight:bold">print</span>(response)</code></pre></div>
+<p><br></p>
+
+<p>このコードで使っている<a href="https://python.langchain.com/v0.2/docs/integrations/chat/openai/">ChatOpenAI</a>は、<a href="https://python.langchain.com/v0.2/docs/integrations/chat/">Chat model</a>に分類されるクラス。
+Chat modelは、OpenAIの<a href="https://platform.openai.com/docs/guides/text-generation/chat-completions-api">Chat Completions API</a>を抽象化するために作られたAPIで、システムプロンプトやユーザプロンプトといったメッセージのリストを受け取り、回答を得るように設計されている。
+LangChainはもともと、OpenAIのレガシーな<a href="https://platform.openai.com/docs/guides/text-generation/completions-api">Completions API</a>を抽象化した<a href="https://python.langchain.com/v0.2/docs/integrations/llms/">LLM API</a>を中心に、構造化されてないシンプルなテキストをやりとりするように設計されていたので、そういった古いAPIとの<a href="https://blog.langchain.dev/chat-models/#how-do-these-align-with-our-objectives">相互運用性</a>のために、Chat modelは非構造化テキストも受け取れるようになっている。</p>
+
+<p>上のコードで、ChatOpenAIをインスタンス化した<code>llm</code>がRunnableで、RunnableのAPIである<code>invoke</code>を実行することでChatGptにクエリを送信している。
+ChatOpenAIはChat modelだけど、上記相互運用性の配慮のおかげで、コマンドプロンプトから受け取った非構造化テキストをそのまま渡せている。</p>
+
+<p>このChatOpenAIを使うためのOpenAIのAPIキーは、環境変数の<code>OPENAI_API_KEY</code>に入れておけばいい。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ export OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+$ python main.py &#34;Ops Iの機能を教えて&#34;
+content=&#39;Ops Iは、コンピューターシステムやネットワークの状態を監視し、問題が発生した際に自動で対処する機能を持つ自動化ツールです。具体的には、以下のような機能を持っています。\n\n1. システムの監視: ネットワークのトラフィック、サーバーの負荷 、データベースの応答時間などを監視し、問題が発生した際に通知します。\n\n2. 自動応答: 問題が発生した際に、設定された対処 方法を自動で実行することができます。例えば、サーバーの再起動や障害箇所の切り替えなど。\n\n3. インシデント管理: 発生した 問題や対処結果を記録し、過去のデータを元に解決策を改善することができます。\n\n4. レポーティング: 監視結果や対処結果をレ ポートとして出力することができ、システムの状態を把握しやすくなります。\n\n総じて、Ops Iはシステムの安定性や可用性を向上 させるための自動化ツールとして活用されます。&#39; response_metadata={&#39;token_usage&#39;: {&#39;completion_tokens&#39;: 402, &#39;prompt_tokens&#39;: 18, &#39;total_tokens&#39;: 420}, &#39;model_name&#39;: &#39;gpt-3.5-turbo&#39;, &#39;system_fingerprint&#39;: None, &#39;finish_reason&#39;: &#39;stop&#39;, &#39;logprobs&#39;: None} id=&#39;run-e7a3e917-b864-4b61-9e73-4d1443dc6286-0&#39;</code></pre></div>
+<p>Ops Iについては何も教えてないので、「Ops Iの機能を教えて」という質問に対してそれっぽい回答が得られたが、内容は全く間違ってる。</p>
+
+<h2 id="シンプルなrag">シンプルなRAG</h2>
+
+<p>次に、Ops IのWebマニュアルをスクレイピングしてベクトルDBに入れて、それをもとに回答をつくるRAGを書いてみる。</p>
+
+<p>ベクトルDBのインデックスは<a href="https://api.python.langchain.com/en/latest/indexes/langchain.indexes.vectorstore.VectorstoreIndexCreator.html">VectorstoreIndexCreator</a>で構築できる。
+ベクトルDBには今回はデフォルトの<a href="https://api.python.langchain.com/en/latest/vectorstores/langchain_community.vectorstores.inmemory.InMemoryVectorStore.html">InMemoryVectorStore</a>を使うけど、<a href="https://www.trychroma.com/">Chroma</a>とか<a href="https://faiss.ai/">Faiss</a>とかも選べる。
+embeddingモデルは<a href="https://platform.openai.com/docs/guides/embeddings">OpenAIのやつ</a>を使う。</p>
+
+<p>VectorstoreIndexCreatorは、<a href="https://python.langchain.com/v0.2/docs/concepts/#documents">Document</a>オブジェクトにテキストをつめて渡してやると、チャンクに分割して、embeddingモデルに投げてベクトル化して、インデックスに保存してくれる。
+Documentの代わりに、データソースからDocumentを読み取る<a href="https://python.langchain.com/v0.2/docs/concepts/#document-loaders">Document loader</a>を渡すこともできるので、今回はその一種の<a href="https://python.langchain.com/latest/docs/integrations/document_loaders/sitemap/">SitemapLoader</a>を使う。
+Ops IのWebマニュアルサイトにはsitemapがあるので、SitemapLoaderでそのsitemapからWebページをたどってスクレイピングできる。</p>
+
+<p>InMemoryVectorStoreやSitemapLoaderは<code>langchain</code>モジュールには入ってなくて、<code>langchain-community</code>のほうに入ってるのと、SitemapLoaderが<a href="https://www.crummy.com/software/BeautifulSoup/">Beautiful Soup</a>とかに依存してるので、まずそれらをインストールする。</p>
+
+<pre><code>$ pip install langchain-community nest_asyncio lxml beautifulsoup4
+</code></pre>
+
+<p><br></p>
+
+<p>RAGのコードは以下のように書いた。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">import</span> <span style="color:#447fcf;text-decoration:underline">sys</span>
+
+<span style="color:#6ab825;font-weight:bold">import</span> <span style="color:#447fcf;text-decoration:underline">nest_asyncio</span>
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain.indexes</span> <span style="color:#6ab825;font-weight:bold">import</span> VectorstoreIndexCreator
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain.text_splitter</span> <span style="color:#6ab825;font-weight:bold">import</span> CharacterTextSplitter
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_community.document_loaders.sitemap</span> <span style="color:#6ab825;font-weight:bold">import</span> SitemapLoader
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_community.vectorstores.inmemory</span> <span style="color:#6ab825;font-weight:bold">import</span> InMemoryVectorStore
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_openai</span> <span style="color:#6ab825;font-weight:bold">import</span> OpenAI, OpenAIEmbeddings
+
+<span style="color:#24909d">input</span> = sys.argv[<span style="color:#3677a9">1</span>]
+
+nest_asyncio.<span style="color:#24909d">apply</span>()
+
+text_splitter = CharacterTextSplitter(
+    separator = <span style="color:#ed9d13">&#34;</span><span style="color:#ed9d13">\n</span><span style="color:#ed9d13">&#34;</span>,
+    chunk_size = <span style="color:#3677a9">400</span>,
+    chunk_overlap = <span style="color:#3677a9">0</span>,
+    length_function = <span style="color:#24909d">len</span>,
+)
+
+loader = SitemapLoader(web_path=<span style="color:#ed9d13">&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020002/sitemap.xml&#34;</span>)
+
+index = VectorstoreIndexCreator(
+    vectorstore_cls=InMemoryVectorStore,
+    embedding=OpenAIEmbeddings(),
+    text_splitter=text_splitter,
+).from_loaders([loader])
+
+response = index.query(<span style="color:#24909d">input</span>, OpenAI(temperature=<span style="color:#3677a9">0</span>))
+<span style="color:#6ab825;font-weight:bold">print</span>(response)</code></pre></div>
+<p>このコードで、VectorstoreIndexCreatorの<code>from_loaders()</code>を実行した結果の<code>index</code>はRunnableではなく、<code>invoke</code>はできない。
+代わりに、<code>query</code>というメソッドが生えてるので、そこにLLM APIのなんらかのクラスのインスタンスを渡して実行すると、チャットボットみたいな問い合わせができる。
+今回はOpenAIのやつを使った。</p>
+
+<p><br></p>
+
+<p>このコードを実行すると以下のようになる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ export OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+$ python main.py &#34;Ops Iの機能を教えて&#34;
+Fetching pages: 100%|################################################################| 122/122 [00:08&lt;00:00, 15.08it/s]
+ Ops Iの機能には、アカウント管理、タスクやリクエストの管理、サービスカタログ、ワークフロー、チケットなどがあります。</code></pre></div>
+<p>Webマニュアルの知識を得て、正しい回答を得られた。</p>
+
+<h2 id="retriever">Retriever</h2>
+
+<p>前節で使った<code>VectorstoreIndexCreator.from_loaders()</code>の結果の型は<a href="https://api.python.langchain.com/en/latest/indexes/langchain.indexes.vectorstore.VectorStoreIndexWrapper.html">VectorStoreIndexWrapper</a>で、Runnableではないんだけど、その<code>vectorstore</code>という属性が<a href="https://api.python.langchain.com/en/latest/vectorstores/langchain_core.vectorstores.VectorStore.html#langchain_core.vectorstores.VectorStore">VectorStore</a>クラスのインスタンスを持っていて、その<code>as_retriever()</code>を呼ぶとRunnableを取得できる。
+<code>as_retriever()</code>でとれるのは、正確にはRunnableを継承した<a href="https://python.langchain.com/v0.2/docs/concepts/#retrievers">Retriever</a>と呼ばれるクラスのインスタンスで、<code>invoke()</code>に非構造化テキストでクエリを渡すと、ベクトルDBから検索して結果をDocumentリストで返してくれる。</p>
+
+<p>前節のコードの最後の部分を少しいじって、LLM無しで、Ops IのWebマニュアルを入れたベクトルDBから単純にベクトル検索するコードにしてみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">import</span> <span style="color:#447fcf;text-decoration:underline">sys</span>
+
+<span style="color:#6ab825;font-weight:bold">import</span> <span style="color:#447fcf;text-decoration:underline">nest_asyncio</span>
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain.indexes</span> <span style="color:#6ab825;font-weight:bold">import</span> VectorstoreIndexCreator
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain.text_splitter</span> <span style="color:#6ab825;font-weight:bold">import</span> CharacterTextSplitter
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_community.document_loaders.sitemap</span> <span style="color:#6ab825;font-weight:bold">import</span> SitemapLoader
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_community.vectorstores.inmemory</span> <span style="color:#6ab825;font-weight:bold">import</span> InMemoryVectorStore
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_openai</span> <span style="color:#6ab825;font-weight:bold">import</span> OpenAIEmbeddings
+
+<span style="color:#24909d">input</span> = sys.argv[<span style="color:#3677a9">1</span>]
+
+nest_asyncio.<span style="color:#24909d">apply</span>()
+
+text_splitter = CharacterTextSplitter(
+    separator = <span style="color:#ed9d13">&#34;</span><span style="color:#ed9d13">\n</span><span style="color:#ed9d13">&#34;</span>,
+    chunk_size = <span style="color:#3677a9">400</span>,
+    chunk_overlap = <span style="color:#3677a9">0</span>,
+    length_function = <span style="color:#24909d">len</span>,
+)
+
+loader = SitemapLoader(web_path=<span style="color:#ed9d13">&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020002/sitemap.xml&#34;</span>)
+
+index = VectorstoreIndexCreator(
+    vectorstore_cls=InMemoryVectorStore,
+    embedding=OpenAIEmbeddings(),
+    text_splitter=text_splitter,
+).from_loaders([loader])
+
+retriever = index.vectorstore.as_retriever()
+
+response = retriever.invoke(<span style="color:#24909d">input</span>)
+<span style="color:#6ab825;font-weight:bold">print</span>(response)</code></pre></div>
+<p>(前節コードからの差分は<a href="https://github.com/kaitoy/opsi-agent/commit/76aad89e2206d5f4f60b72c69709c4537f6b6758">これ</a>)</p>
+
+<p><br></p>
+
+<p>これを実行すると、クエリに対してどのページがヒットしたのかがわかる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ export OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+$ python main.py &#34;Ops Iの機能を教えて&#34;
+Fetching pages: 100%|################################################################| 122/122 [00:08&lt;00:00, 14.49it/s]
+[Document(page_content=&#39;Ops Iは、システム運用に必要なスキル（資格など）の保有状況や作業実績をもとに、経験値を定量的に可 視化します。また、各要員のスケジュールも可視化します。それらの可視化により、適切な要員に適切な作業を割り当てることができます。たとえば、クラウドやアプリケーションの特定のスキルを要する作業が発生した場合に、Ops Iではそのスキルを保有する要員 とその要員のスケジュール状況を容易に把握できるため、作業に対して適切な要員を迅速に割り当てることができます。\n（図）適切な作業割り当てのイメージ図\n                OperationsIntegration\n              \n検索\n Home\nはじめに\n変更内容\n目次\n1. 概要\n1.1 Ops Iの概要\n1.2 Ops Iの特長\n1.3 利用方法の概要\n1.4 使用上の注意事項および一時的制限事項&#39;, metadata={&#39;source&#39;: &#39;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020002/outline/opsi_forte/index.html&#39;, &#39;loc&#39;: &#39;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020002/outline/opsi_forte/index.html&#39;}), Document(page_content=&#39;1.2 Ops Iの特長\n1.3 利 用方法の概要\n1.4 使用上の注意事項および一時的制限事項\n1.4.1 使用上の注意事項\n1.4.2 一時的制限事項\n2. 導入・設定\n2.1 前提知識\n2.1.1 導入・設定を実施するユーザー\n2.1.2 ユーザーと各機能の関連\n2.1.3 ユーザー管理機能\n2.2 事前準備\n2.2.1 Ops Iへの接続およびログイン \n2.2.2 ワンタイムコード設定 \n2.3 ユーザー作成\n2.3.1 Ops Iを利用するユーザーの作成\n2.3.2 作成したユーザーに対するロールの設定\n2.4 組織の設定\n2.5 中継サーバの設定\n2.5.1 RPMパッケージ\n2.6 リポジトリの設定\n3. 機能\n3.1 基本的な画面構成\n3.1.1 アカウント管理\n3.2 タスク、リクエスト\n3.2.1 サービスカタログ\n3.2.2 ワークフロー\n3.2.3 チケット&#39;, metadata={&#39;source&#39;: &#39;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020002/setting/repository/index.html&#39;, &#39;loc&#39;: &#39;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020002/setting/repository/index.html&#39;}), Document(page_content=&#39;1.2 Ops Iの特長\n1.3 利用方法の概要\n1.4 使用上の注意事項および一時的制限事項\n1.4.1 使用上の注意事項\n1.4.2 一時 的制限事項\n2. 導入・設定\n2.1 前提知識\n2.1.1 導入・設定を実施するユーザー\n2.1.2 ユーザーと各機能の関連\n2.1.3 ユーザ ー管理機能\n2.2 事前準備\n2.2.1 Ops Iへの接続およびログイン \n2.2.2 ワンタイムコード設定 \n2.3 ユーザー作成\n2.3.1 Ops Iを利用するユーザーの作成\n2.3.2 作成したユーザーに対するロールの設定\n2.4 組織の設定\n2.5 中継サーバの設定\n2.5.1 RPMパ ッケージ\n2.6 リポジトリの設定\n3. 機能\n3.1 基本的な画面構成\n3.1.1 アカウント管理\n3.2 タスク、リクエスト\n3.2.1 サー ビスカタログ\n3.2.2 ワークフロー\n3.2.3 チケット&#39;, metadata={&#39;source&#39;: &#39;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020002/yaml/yaml_application/index.html&#39;, &#39;loc&#39;: &#39;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020002/yaml/yaml_application/index.html&#39;}), Document(page_content=&#39;1.2 Ops Iの特長\n1.3 利用方法の概要\n1.4 使用上の注意事項および一時的制限事項\n1.4.1 使用上の注意事項\n1.4.2 一時的制限事項\n2. 導入・設定\n2.1 前提知識\n2.1.1 導入・設定を実施するユーザー\n2.1.2 ユーザーと各機能の関連\n2.1.3 ユーザー管理機能\n2.2 事前準備\n2.2.1 Ops Iへの接続およびログイン \n2.2.2 ワンタイムコー ド設定 \n2.3 ユーザー作成\n2.3.1 Ops Iを利用するユーザーの作成\n2.3.2 作成したユーザーに対するロールの設定\n2.4 組織の設定\n2.5 中継サーバの設定\n2.5.1 RPMパッケージ\n2.6 リポジトリの設定\n3. 機能\n3.1 基本的な画面構成\n3.1.1 アカウント管理\n3.2 タスク、リクエスト\n3.2.1 サービスカタログ\n3.2.2 ワークフロー\n3.2.3 チケット&#39;, metadata={&#39;source&#39;: &#39;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020002/function/basic/account/index.html&#39;, &#39;loc&#39;: &#39;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020002/function/basic/account/index.html&#39;})]</code></pre></div>
+<p>この検索結果をみると、各ページの内容に目次ペインが含まれてしまっていて、ノイズになってそう。無駄にトークン食うだろうし。</p>
+
+<p>SitemapLoaderはページをパースするときに<a href="https://python.langchain.com/v0.1/docs/integrations/document_loaders/sitemap/#add-custom-scraping-rules">中身をいじる機能</a>があるので、目次などを取り除いたほうがよかったかも。</p>
+
+<h2 id="システムプロンプト付きrag">システムプロンプト付きRAG</h2>
+
+<p>前節で取得したRetrieverは、Runnableなので、LCELでつないでいろいろできる。
+今度は、Retrieverで取得したDocumentリストをシステムプロンプトにいれて、クエリをユーザプロンプトに入れてChat modelに渡す処理を実装する。</p>
+
+<p>Chat modelやLLMに渡すプロンプトは、テキストだけでなく画像を渡す場合も含めて<a href="https://api.python.langchain.com/en/latest/prompt_values/langchain_core.prompt_values.PromptValue.html#langchain_core.prompt_values.PromptValue">PromptValue</a>というクラスで抽象化され、統一的に扱える。
+PromptValueはRunnableではないので、プロンプトをchainに組み込むため、PromptValueを生成する<a href="https://python.langchain.com/v0.2/docs/concepts/#prompt-templates">Prompt templates</a>というのが用意されている。
+Prompt templateは、あらかじめ設定されたテンプレート文字列を、<code>invoke()</code>の入力パラメータでレンダリングして出力してくれる。</p>
+
+<p>今回は、Chat modelを使うので、それ用のPrompt templateである<a href="https://api.python.langchain.com/en/latest/prompts/langchain_core.prompts.chat.ChatPromptTemplate.html">ChatPromptTemplate</a>をつかう。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">import</span> <span style="color:#447fcf;text-decoration:underline">sys</span>
+
+<span style="color:#6ab825;font-weight:bold">import</span> <span style="color:#447fcf;text-decoration:underline">nest_asyncio</span>
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain.chains.combine_documents</span> <span style="color:#6ab825;font-weight:bold">import</span> create_stuff_documents_chain
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain.indexes</span> <span style="color:#6ab825;font-weight:bold">import</span> VectorstoreIndexCreator
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain.text_splitter</span> <span style="color:#6ab825;font-weight:bold">import</span> CharacterTextSplitter
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_community.document_loaders.sitemap</span> <span style="color:#6ab825;font-weight:bold">import</span> SitemapLoader
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_community.vectorstores.inmemory</span> <span style="color:#6ab825;font-weight:bold">import</span> InMemoryVectorStore
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_core.prompts</span> <span style="color:#6ab825;font-weight:bold">import</span> ChatPromptTemplate
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_openai</span> <span style="color:#6ab825;font-weight:bold">import</span> ChatOpenAI, OpenAIEmbeddings
+
+<span style="color:#24909d">input</span> = sys.argv[<span style="color:#3677a9">1</span>]
+
+nest_asyncio.<span style="color:#24909d">apply</span>()
+
+text_splitter = CharacterTextSplitter(
+    separator = <span style="color:#ed9d13">&#34;</span><span style="color:#ed9d13">\n</span><span style="color:#ed9d13">&#34;</span>,
+    chunk_size = <span style="color:#3677a9">400</span>,
+    chunk_overlap = <span style="color:#3677a9">0</span>,
+    length_function = <span style="color:#24909d">len</span>,
+)
+
+loader = SitemapLoader(web_path=<span style="color:#ed9d13">&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020002/sitemap.xml&#34;</span>)
+
+index = VectorstoreIndexCreator(
+    vectorstore_cls=InMemoryVectorStore,
+    embedding=OpenAIEmbeddings(),
+    text_splitter=text_splitter,
+).from_loaders([loader])
+
+retriever = index.vectorstore.as_retriever()
+
+prompt = ChatPromptTemplate.from_messages([
+    (
+        <span style="color:#ed9d13">&#34;system&#34;</span>, <span style="color:#999;font-style:italic"># システムプロンプト</span>
+        <span style="color:#ed9d13">&#34;&#34;&#34;contextに基づいて、Ops Iの質問になるべく頑張って答えてください。ただし、Ops Iと関係ない質問に対しては、知るかボケと回答してもいいです:
+</span><span style="color:#ed9d13">
+</span><span style="color:#ed9d13">&lt;context&gt;
+</span><span style="color:#ed9d13">{context}
+</span><span style="color:#ed9d13">&lt;/context&gt;
+</span><span style="color:#ed9d13">&#34;&#34;&#34;</span>
+    ),
+    (
+        <span style="color:#ed9d13">&#34;human&#34;</span>, <span style="color:#999;font-style:italic"># ユーザプロンプト</span>
+        <span style="color:#ed9d13">&#34;質問: {input}&#34;</span>
+    )
+])
+llm = ChatOpenAI(model=<span style="color:#ed9d13">&#34;gpt-3.5-turbo&#34;</span>)
+chain = create_stuff_documents_chain(llm, prompt)
+
+response = chain.invoke({
+    <span style="color:#ed9d13">&#34;input&#34;</span>: <span style="color:#24909d">input</span>,
+    <span style="color:#ed9d13">&#34;context&#34;</span>: retriever.invoke(<span style="color:#24909d">input</span>),
+})
+<span style="color:#6ab825;font-weight:bold">print</span>(response)</code></pre></div>
+<p>(前節コードからの差分は<a href="https://github.com/kaitoy/opsi-agent/commit/1d3fda35afa85fe17b2f73280e67e25f26b43ad0">これ</a>)</p>
+
+<p>上のコードでは、ChatPromptTemplateにシステムプロンプトとユーザプロンプトを、それぞれ<code>context</code>と<code>input</code>というパラメータのテンプレート文字列で設定している。
+これがRunnableなので、<code>context</code>と<code>input</code>を入力して<code>invoke()</code>してやると、テンプレートにそれらを埋め込んだメッセージリストを生成して後続のRunnableに出力してくれる。</p>
+
+<p>そのChatPromptTemplateを、単にChatOpenAIにLCELでつないでやってもいんだけど、上のコードでは<a href="https://api.python.langchain.com/en/latest/chains/langchain.chains.combine_documents.stuff.create_stuff_documents_chain.html">create_stuff_documents_chain</a>というユーティリティ使ってchainを作った。
+<code>create_stuff_documents_chain</code>の中では要は<code>prompt | llm</code>みたいなことをしてるんだけど、その前方にDocumentリストをテキストに変換する処理を追加したり、後方にChatOpenAIの出力をシンプルなテキストに変換する処理を追加したり、使いやすいchainに仕上げてくれる。</p>
+
+<p>上のコードの最後の部分で、<code>create_stuff_documents_chain</code>で作ったchainを、クエリとRetrieverで取得したDocumentリストを入力して<code>invoke()</code>している。</p>
+
+<p>このコードを実行してOps Iの機能について質問してみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ export OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+$ python main.py &#34;Ops Iの機能を教えて&#34;
+Fetching pages: 100%|################################################################| 122/122 [00:08&lt;00:00, 15.18it/s]
+Ops Iにはいくつかの機能があります。その中で、主な機能は以下の通りです:
+- サービスカタログ: システムやアプリケーションなどのサービスを一覧化し、利用者が簡単に選択できるようにします。
+- ワークフロー: 作業の手順や流れを定義し、自動化されたプロセスを実行するための機能です。
+- チケット管理: 問題やリクエストをトラッキングし、適切に処理するための機能が提供されています。
+
+これらの機能を使うことで、効率的な業務運用やタスク管理が可能となります。</code></pre></div>
+<p>なかなかいい回答が得られた。</p>
+
+<p>次に、Ops Iと関係ない質問をしてみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ export OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+$ python main.py &#34;Ops Iの機能を教えて&#34;
+Fetching pages: 100%|################################################################| 122/122 [00:07&lt;00:00, 16.05it/s]
+知るかボケ</code></pre></div>
+<p>システムプロンプトで指定した通りのキレのある回答になった。</p>
+
+<h2 id="retrieverとchainをつなぐ">Retrieverとchainをつなぐ</h2>
+
+<p>前節のコードで一応動いたけど、Retrieverをchainの外で実行してしまってるので、ちゃんとつなぎたい。
+そのためになんとも都合のいい、<a href="https://api.python.langchain.com/en/latest/chains/langchain.chains.retrieval.create_retrieval_chain.html">create_retrieval_chain</a>というユーティリティがあるのでこれを使う。</p>
+
+<pre><code>import sys
+
+import nest_asyncio
+from langchain.chains import create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.indexes import VectorstoreIndexCreator
+from langchain.text_splitter import CharacterTextSplitter
+from langchain_community.document_loaders.sitemap import SitemapLoader
+from langchain_community.vectorstores.inmemory import InMemoryVectorStore
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+
+input = sys.argv[1]
+
+nest_asyncio.apply()
+
+text_splitter = CharacterTextSplitter(
+    separator = &quot;\n&quot;,
+    chunk_size = 400,
+    chunk_overlap = 0,
+    length_function = len,
+)
+
+loader = SitemapLoader(web_path=&quot;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020002/sitemap.xml&quot;)
+
+index = VectorstoreIndexCreator(
+    vectorstore_cls=InMemoryVectorStore,
+    embedding=OpenAIEmbeddings(),
+    text_splitter=text_splitter,
+).from_loaders([loader])
+
+retriever = index.vectorstore.as_retriever()
+
+prompt = ChatPromptTemplate.from_messages([
+    (
+        &quot;system&quot;,
+        &quot;&quot;&quot;contextに基づいて、Ops Iの質問になるべく頑張って答えてください。ただし、Ops Iと関係ない質問に対しては、知るかボケと回答してもいいです:
+
+&lt;context&gt;
+{context}
+&lt;/context&gt;
+&quot;&quot;&quot;
+    ),
+    (
+        &quot;human&quot;,
+        &quot;質問: {input}&quot;
+    )
+])
+llm = ChatOpenAI(model=&quot;gpt-3.5-turbo&quot;)
+chain = create_retrieval_chain(retriever, create_stuff_documents_chain(llm, prompt))
+
+response = chain.invoke({
+    &quot;input&quot;: input,
+})
+print(response)
+</code></pre>
+
+<p>(前節コードからの差分は<a href="https://github.com/kaitoy/opsi-agent/commit/827bc8c3b037b58c4ff536f0c62f5bf8885d9782">これ</a>)</p>
+
+<p><code>create_retrieval_chain</code>は、入力された<code>input</code>をRetrieverに与えて、その結果を<code>context</code>に、もともとの入力を<code>input</code>にいれて後続のRunnable (i.e. <code>create_stuff_documents_chain</code>の出力)に流してくれるので、
+前節とまったく同じ処理が<code>chain.invoke({&quot;input&quot;: input})</code>というすっきりとしたインターフェースで実行できるようになる。</p>
+
+<p>以上で、Retriever → Prompt → Chat modelというchainができた。</p></div>
+
+        <section class="share-buttons">
+          <div class="fb-share-button share-button" data-href="https://www.kaitoy.xyz/2024/06/04/langchain-opsi-agent/" data-layout="button_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">シェア</a></div>
+          <div class="share-button">
+            <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-text="Webマニュアルから知識を得るRAGをLangChainで作る" data-url="https://www.kaitoy.xyz/2024/06/04/langchain-opsi-agent/" data-show-count="true" data-count="horizontal">Tweet</a>
+          </div>
+          <div class="share-button">
+            <a href="https://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="basic-label-counter" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+          </div>
+          <div class="share-button">
+            <a data-pocket-label="pocket" data-pocket-count="horizontal" class="pocket-btn" data-lang="en"></a>
+            <script type="text/javascript">!function(d,i){if(!d.getElementById(i)){var j=d.createElement("script");j.id=i;j.src="https://widgets.getpocket.com/v1/j/btn.js?v=1";var w=d.getElementById(i);d.body.appendChild(j);}}(document,"pocket-btn-js");</script>
+          </div>
+        </section>
+    </div>
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-6244473643910448"
+         data-ad-slot="1845600530"
+         data-ad-format="auto"></ins>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+    <section class="tbd-pagination">
+      <div class="row">
+        <div class="col-sm-6">
+          <div class="prev">
+            
+            <a href="https://www.kaitoy.xyz/2024/04/28/ai-copyright-jp/">
+              <i class="fa fa-angle-left"></i>
+              AIと著作権
+            </a>
+            
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="next text-right">
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    
+
+    
+
+        <h4 class="page-header">Related</h4>
+
+        <div class="related-links">
+           <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/04/28/ai-copyright-jp/">AIと著作権</a></h4>
+    <h5>Sun, Apr 28, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/copyright"><kbd class="item-tag">copyright</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/01/07/gpt-crawler/">GPT CrawlerとOpenAI Assistantsでシュッと作るAIアシスタント</a></h4>
+    <h5>Sun, Jan 7, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/ops-i"><kbd class="item-tag">Ops I</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gpt"><kbd class="item-tag">gpt</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/openai"><kbd class="item-tag">openai</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+
+</div>
+ 
+        </div>
+    
+
+    
+
+        <h4 class="page-header">Comments</h4>
+
+        <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "kaitoy-tobedecided" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+
+</main>
+
+        <footer>
+
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+    </body>
+
+</html>
+

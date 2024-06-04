@@ -2,7 +2,7 @@
 categories = ["Programming"]
 title = "AIと著作権"
 date = "2024-04-28T19:07:16+09:00"
-tags = ["genai", "copyright"]
+tags = ["GenAI", "copyright"]
 draft = false
 cover = "ai-copyright-jp/ai.jpg"
 slug = "ai-copyright-jp"
