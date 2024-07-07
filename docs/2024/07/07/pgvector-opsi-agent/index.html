@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+        <script data-ad-client="ca-pub-6244473643910448" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/2024/07/07/pgvector-opsi-agent/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/2024/07/07/pgvector-opsi-agent/">
+
+
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="LangChainとPostgreSQL (pgvector)でRAGを作る | To Be Decided">
+  <title>LangChainとPostgreSQL (pgvector)でRAGを作る | To Be Decided</title>
+  <meta property="og:description" content="LangChainでPostgreSQLにWebマニュアルのベクトルデータベースを構築し、その内容を答えてくれるRAGを作ってみた話。
+Webマニュアルは、日立製作所製の運用統合サービスであるOps Iのやつ。">
+  <meta name="description" content="LangChainでPostgreSQLにWebマニュアルのベクトルデータベースを構築し、その内容を答えてくれるRAGを作ってみた話。
+Webマニュアルは、日立製作所製の運用統合サービスであるOps Iのやつ。">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/langchain.png">
+
+
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <style>
+
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+<script>
+  var webFontConfig = {
+    google: {
+      families: ['Noto Sans JP:400,700:japanese'],
+      active: function() {
+        sessionStorage.fonts = true;
+      }
+    },
+    timeout: 3000
+  };
+  WebFont.load(webFontConfig);
+</script>
+
+
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"> 
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js"></script>
+
+    
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
+        
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
+    
+
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v9.0" nonce="WjvU2Pqv"></script>
+
+        <nav class="navbar navbar-default navbar-fixed-top">
+
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">LangChainとPostgreSQL (pgvector)でRAGを作る</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    <div class="single-post">
+        <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/07/07/pgvector-opsi-agent/">LangChainとPostgreSQL (pgvector)でRAGを作る</a></h4>
+    <h5>Sun, Jul 7, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ops-i"><kbd class="item-tag">Ops I</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/rag"><kbd class="item-tag">rag</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/openai"><kbd class="item-tag">openai</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gpt"><kbd class="item-tag">gpt</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langchain"><kbd class="item-tag">langchain</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langserve"><kbd class="item-tag">langserve</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/postgresql"><kbd class="item-tag">postgresql</kbd></a>
+    
+
+</div>
+
+
+        <div class="cover">
+            <a href="/2024/07/07/pgvector-opsi-agent/">
+                <img src="https://www.kaitoy.xyz/images/langchain.png" alt="LangChainとPostgreSQL (pgvector)でRAGを作る">
+            </a>
+        </div>
+
+        
+        <h4 class="page-header">Table of Contents</h4>
+        <aside>
+            <nav id="TableOfContents">
+<ul>
+<li><a href="#postgresqlによるベクトルデータベースとは">PostgreSQLによるベクトルデータベースとは</a></li>
+<li><a href="#ops-iとは">Ops Iとは</a></li>
+<li><a href="#langchainとlangserveによるragのベクトルデータベースをpostgresqlにする">LangChainとLangServeによるRAGのベクトルデータベースをPostgreSQLにする</a>
+<ul>
+<li><a href="#langchainでpostgresqlにつなぐ">LangChainでPostgreSQLにつなぐ</a></li>
+<li><a href="#ops-iエージェントコンテナイメージ">Ops Iエージェントコンテナイメージ</a></li>
+<li><a href="#ops-iエージェントのhelm-chart">Ops IエージェントのHelm Chart</a></li>
+<li><a href="#kubernetesにデプロイ">Kubernetesにデプロイ</a></li>
+<li><a href="#ops-iエージェントのヘルスチェックapi修正">Ops IエージェントのヘルスチェックAPI修正</a></li>
+<li><a href="#pgvectorを非同期モードにする">PGVectorを非同期モードにする</a></li>
+<li><a href="#pgvectorのインデックス構築を非同期モードにする">PGVectorのインデックス構築を非同期モードにする</a></li>
+</ul></li>
+</ul>
+</nav>
+        </aside>
+        <hr>
+        
+
+        <br> <div class="text-justify"><p>LangChainでPostgreSQLにWebマニュアルのベクトルデータベースを構築し、その内容を答えてくれるRAGを作ってみた話。
+Webマニュアルは、日立製作所製の運用統合サービスであるOps Iのやつ。</p>
+
+<p><a href="https://www.kaitoy.xyz/2024/06/14/langserve-opsi-agent/">前回までの記事</a>でLangChainのRAGを作ってLangServeでWebサーバにしたので、今回でそのベクトルデータベースをPostgreSQLにする。</p>
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+
+<h1 id="postgresqlによるベクトルデータベースとは">PostgreSQLによるベクトルデータベースとは</h1>
+
+<p><a href="https://www.postgresql.org/">PostgreSQL</a>は昔からある人気のOSSのデータベースなんだけど、基本はRDB。
+今回はそれに<a href="https://github.com/pgvector/pgvector">pgvector</a>というエクステンションを入れたやつを使って、RAGのベクトルデータベースとして動かす。</p>
+
+<h1 id="ops-iとは">Ops Iとは</h1>
+
+<p>Ops Iは<a href="https://www.hitachi.co.jp/Prod/comp/soft1/jp1/feature/jp1_cloud_operations_integration/index.html">JP1 Cloud Service/Operations Integration</a>の略で、日立製作所製の運用統合サービス。</p>
+
+<p>Operations as Codeが特長で、運用自動化コードやワークフローをGitで集約管理して、ハイブリッド環境における様々なシステム運用の自動化と統合を推進できる。</p>
+
+<p><br></p>
+
+<div class="embed video-player" style="text-align: center">
+  <iframe class="youtube-player" type="text/html" width="320" height="193" src="https://www.youtube.com/embed/arzY4xQlUb0" allowfullscreen frameborder="0">
+  </iframe>
+</div>
+
+
+<p><br></p>
+
+<h1 id="langchainとlangserveによるragのベクトルデータベースをpostgresqlにする">LangChainとLangServeによるRAGのベクトルデータベースをPostgreSQLにする</h1>
+
+<p><a href="https://github.com/kaitoy/opsi-agent/tree/1f32ab7749a97b4a65368c7d126f026bf204115b">前回のコード</a>をPostgreSQLにつなぐように変更していく。</p>
+
+<h2 id="langchainでpostgresqlにつなぐ">LangChainでPostgreSQLにつなぐ</h2>
+
+<p>前回はLangChainのデフォルトのベクトルデータベースであるInMemoryVectorStoreを使ったけど、今回はPostgreSQLのpgvectorでデータベースを構築するために<a href="https://python.langchain.com/v0.2/docs/integrations/vectorstores/pgvector/">PGVector</a>を使う。
+PGVectorは<a href="https://github.com/langchain-ai/langchain-postgres/tree/main">langchain-postgres</a>モジュールに入っているので、とりあえずそれをインストールする。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ pip install langchain-postgres</code></pre></div>
+<p>入ったlangchain-postgresのバージョンは0.0.9。</p>
+
+<p>LangChainのコードは以下のように書き換える。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">import</span> <span style="color:#447fcf;text-decoration:underline">nest_asyncio</span>
+<span style="color:#6ab825;font-weight:bold">import</span> <span style="color:#447fcf;text-decoration:underline">uvicorn</span>
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">fastapi</span> <span style="color:#6ab825;font-weight:bold">import</span> FastAPI
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain.chains</span> <span style="color:#6ab825;font-weight:bold">import</span> create_retrieval_chain
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain.chains.combine_documents</span> <span style="color:#6ab825;font-weight:bold">import</span> create_stuff_documents_chain
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain.indexes</span> <span style="color:#6ab825;font-weight:bold">import</span> VectorstoreIndexCreator
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain.pydantic_v1</span> <span style="color:#6ab825;font-weight:bold">import</span> BaseModel
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain.text_splitter</span> <span style="color:#6ab825;font-weight:bold">import</span> CharacterTextSplitter
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_community.document_loaders.sitemap</span> <span style="color:#6ab825;font-weight:bold">import</span> SitemapLoader
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_core.prompts</span> <span style="color:#6ab825;font-weight:bold">import</span> ChatPromptTemplate
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_openai</span> <span style="color:#6ab825;font-weight:bold">import</span> ChatOpenAI, OpenAIEmbeddings
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_postgres.vectorstores</span> <span style="color:#6ab825;font-weight:bold">import</span> PGVector
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langserve</span> <span style="color:#6ab825;font-weight:bold">import</span> add_routes
+
+
+nest_asyncio.<span style="color:#24909d">apply</span>()
+
+text_splitter = CharacterTextSplitter(
+    separator = <span style="color:#ed9d13">&#34;</span><span style="color:#ed9d13">\n</span><span style="color:#ed9d13">&#34;</span>,
+    chunk_size = <span style="color:#3677a9">400</span>,
+    chunk_overlap = <span style="color:#3677a9">0</span>,
+    length_function = <span style="color:#24909d">len</span>,
+)
+
+loader = SitemapLoader(web_path=<span style="color:#ed9d13">&#34;https://itpfdoc.hitachi.co.jp/manuals/JCS/JCSM71020002/sitemap.xml&#34;</span>)
+
+index = VectorstoreIndexCreator(
+    vectorstore_cls=PGVector,
+    embedding=OpenAIEmbeddings(),
+    text_splitter=text_splitter,
+    vectorstore_kwargs={
+        <span style="color:#ed9d13">&#34;collection_name&#34;</span>: <span style="color:#ed9d13">&#34;opsi_manual&#34;</span>,
+        <span style="color:#ed9d13">&#34;connection&#34;</span>: <span style="color:#ed9d13">&#34;postgresql+psycopg://langchain:langchain@postgres:5432/langchain&#34;</span>,
+        <span style="color:#ed9d13">&#34;use_jsonb&#34;</span>: True,
+    }
+).from_loaders([loader])
+
+retriever = index.vectorstore.as_retriever()
+
+prompt = ChatPromptTemplate.from_messages([
+    (
+        <span style="color:#ed9d13">&#34;system&#34;</span>,
+        <span style="color:#ed9d13">&#34;&#34;&#34;contextに基づいて、Ops Iの質問になるべく頑張って答えてください。ただし、Ops Iと関係ない質問に対しては、知るかボケと回答してもいいです:
+</span><span style="color:#ed9d13">
+</span><span style="color:#ed9d13">&lt;context&gt;
+</span><span style="color:#ed9d13">{context}
+</span><span style="color:#ed9d13">&lt;/context&gt;
+</span><span style="color:#ed9d13">&#34;&#34;&#34;</span>
+    ),
+    (
+        <span style="color:#ed9d13">&#34;human&#34;</span>,
+        <span style="color:#ed9d13">&#34;質問: {input}&#34;</span>
+    )
+])
+llm = ChatOpenAI(model=<span style="color:#ed9d13">&#34;gpt-3.5-turbo&#34;</span>)
+chain = create_retrieval_chain(retriever, create_stuff_documents_chain(llm, prompt))
+
+<span style="color:#6ab825;font-weight:bold">class</span> <span style="color:#447fcf;text-decoration:underline">ChainInput</span>(BaseModel):
+    <span style="color:#24909d">input</span>: <span style="color:#24909d">str</span>
+app = FastAPI(
+    title=<span style="color:#ed9d13">&#34;Ops I Assistant&#34;</span>,
+    version=<span style="color:#ed9d13">&#34;1.0&#34;</span>,
+    description=<span style="color:#ed9d13">&#34;Ops I Assistant&#34;</span>,
+)
+add_routes(
+    app,
+    chain.with_types(input_type=ChainInput),
+    path=<span style="color:#ed9d13">&#34;/opsi&#34;</span>,
+)
+
+uvicorn.run(app, host=<span style="color:#ed9d13">&#34;0.0.0.0&#34;</span>, port=<span style="color:#3677a9">8080</span>)</code></pre></div>
+<p>(前回の記事のコードからの差分は<a href="https://github.com/kaitoy/opsi-agent/commit/50c6cd7e43ad248ba621bf4209378fc902e0c4ff">これ</a>)</p>
+
+<p>変更内容は、VectorstoreIndexCreatorに渡すVectorStoreクラスにPGVectorを指定して、PGVector固有のconnectionなどのパラメータを<code>vectorstore_kwargs</code>で渡すようにしただけ。</p>
+
+<p>ついでに、uvicornのバインドIPアドレスをlocalhostから0.0.0.0に変更もした。</p>
+
+<h2 id="ops-iエージェントコンテナイメージ">Ops Iエージェントコンテナイメージ</h2>
+
+<p>前回作ったOps Iエージェントは単一のPythonアプリで、OS上のpythonコマンドで直接起動したけど、今回はPostgreSQLサーバも起動する必要があるので、Kubernetesにデプロイすることにする。</p>
+
+<p>まずはOps Iエージェントのコンテナイメージを作る。Dockerfileはこれ:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-dockerfile" data-lang="dockerfile"><span style="color:#6ab825;font-weight:bold">FROM</span><span style="color:#ed9d13"> python:3.12.3-slim</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span>COPY requirements.txt requirements.lock /<span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#6ab825;font-weight:bold">RUN</span> apt-get update <span style="color:#ed9d13">\
+</span><span style="color:#ed9d13"></span>    &amp;&amp; <span style="color:#ed9d13">\
+</span><span style="color:#ed9d13"></span>    apt-get install -y --no-install-recommends <span style="color:#ed9d13">\
+</span><span style="color:#ed9d13"></span>      libpq5 <span style="color:#ed9d13">\
+</span><span style="color:#ed9d13"></span>    &amp;&amp; <span style="color:#ed9d13">\
+</span><span style="color:#ed9d13"></span>    apt-get -y clean <span style="color:#ed9d13">\
+</span><span style="color:#ed9d13"></span>    &amp;&amp; <span style="color:#ed9d13">\
+</span><span style="color:#ed9d13"></span>    rm -rf /var/lib/apt/lists/* <span style="color:#ed9d13">\
+</span><span style="color:#ed9d13"></span>    &amp;&amp; <span style="color:#ed9d13">\
+</span><span style="color:#ed9d13"></span>    pip install --no-cache-dir -r /requirements.txt -c /requirements.lock<span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span>COPY app /app<span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#6ab825;font-weight:bold">EXPOSE</span><span style="color:#ed9d13"> 8080</span><span style="color:#a61717;background-color:#e3d2d2">
+</span><span style="color:#a61717;background-color:#e3d2d2"></span><span style="color:#6ab825;font-weight:bold">ENTRYPOINT</span><span style="color:#ed9d13"> [ &#34;python&#34;, &#34;/app/main.py&#34; ]</span></code></pre></div>
+<p>Python公式のベースイメージに、LangChainとかをpipインストールして、PostgreSQLのクライアントライブラリをapt-getして、Pythonコードを入れただけ。</p>
+
+<p>これを<code>docker build</code>して、Docker Hubにpushした。
+イメージ名は<a href="https://hub.docker.com/repository/docker/kaitoy/opsi-agent/general">kaitoy/opsi-agent:0.0.1</a>。</p>
+
+<p><br></p>
+
+<p>PostgreSQLのほうは、pgvector公式イメージの<a href="https://hub.docker.com/layers/pgvector/pgvector/pg16/images/sha256-76ad3219f0eef5bc9e73c29c33c77b7d72ab076bac86797789cb85c1717a4b5e?context=explore">pgvector/pgvector:pg16</a>を使う。</p>
+
+<h2 id="ops-iエージェントのhelm-chart">Ops IエージェントのHelm Chart</h2>
+
+<p>KubernetesにデプロイするのにHelmを使いたいので、Helm chartも書く。</p>
+
+<p>PostgreSQLは、StatefulSetでレプリカ無しでデプロイする。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>apps/v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>StatefulSet<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>{{<span style="color:#666"> </span>include<span style="color:#666"> </span><span style="color:#ed9d13">&#34;opsi-agent.fullname&#34;</span><span style="color:#666"> </span>.<span style="color:#666"> </span>}}-postgres<span style="color:#666">
+</span><span style="color:#666">  </span>labels:<span style="color:#666">
+</span><span style="color:#666">    </span>{{-<span style="color:#666"> </span>include<span style="color:#666"> </span><span style="color:#ed9d13">&#34;opsi-agent-postgres.labels&#34;</span><span style="color:#666"> </span>.<span style="color:#666"> </span>|<span style="color:#666"> </span>nindent<span style="color:#666"> </span><span style="color:#3677a9">4</span><span style="color:#666"> </span>}}<span style="color:#666">
+</span><span style="color:#666"></span>spec:<span style="color:#666">
+</span><span style="color:#666">  </span>replicas:<span style="color:#666"> </span><span style="color:#3677a9">1</span><span style="color:#666">
+</span><span style="color:#666">  </span>selector:<span style="color:#666">
+</span><span style="color:#666">    </span>matchLabels:<span style="color:#666">
+</span><span style="color:#666">      </span>{{-<span style="color:#666"> </span>include<span style="color:#666"> </span><span style="color:#ed9d13">&#34;opsi-agent-postgres.selectorLabels&#34;</span><span style="color:#666"> </span>.<span style="color:#666"> </span>|<span style="color:#666"> </span>nindent<span style="color:#666"> </span><span style="color:#3677a9">6</span><span style="color:#666"> </span>}}<span style="color:#666">
+</span><span style="color:#666">  </span>serviceName:<span style="color:#666"> </span>{{<span style="color:#666"> </span>include<span style="color:#666"> </span><span style="color:#ed9d13">&#34;opsi-agent.fullname&#34;</span><span style="color:#666"> </span>.<span style="color:#666"> </span>}}-postgres<span style="color:#666">
+</span><span style="color:#666">  </span>template:<span style="color:#666">
+</span><span style="color:#666">    </span>metadata:<span style="color:#666">
+</span><span style="color:#666">      </span>labels:<span style="color:#666">
+</span><span style="color:#666">        </span>{{-<span style="color:#666"> </span>include<span style="color:#666"> </span><span style="color:#ed9d13">&#34;opsi-agent-postgres.selectorLabels&#34;</span><span style="color:#666"> </span>.<span style="color:#666"> </span>|<span style="color:#666"> </span>nindent<span style="color:#666"> </span><span style="color:#3677a9">8</span><span style="color:#666"> </span>}}<span style="color:#666">
+</span><span style="color:#666">    </span>spec:<span style="color:#666">
+</span><span style="color:#666">      </span>containers:<span style="color:#666">
+</span><span style="color:#666">      </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>postgres<span style="color:#666">
+</span><span style="color:#666">        </span>env:<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>POSTGRESQL_PORT_NUMBER<span style="color:#666">
+</span><span style="color:#666">          </span>value:<span style="color:#666"> </span><span style="color:#ed9d13">&#34;5432&#34;</span><span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>PGDATA<span style="color:#666">
+</span><span style="color:#666">          </span>value:<span style="color:#666"> </span>/var/lib/pgsql/data<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>POSTGRES_USER<span style="color:#666">
+</span><span style="color:#666">          </span>valueFrom:<span style="color:#666">
+</span><span style="color:#666">            </span>secretKeyRef:<span style="color:#666">
+</span><span style="color:#666">              </span>name:<span style="color:#666"> </span>{{<span style="color:#666"> </span>include<span style="color:#666"> </span><span style="color:#ed9d13">&#34;opsi-agent.fullname&#34;</span><span style="color:#666"> </span>.<span style="color:#666"> </span>}}-postgres<span style="color:#666">
+</span><span style="color:#666">              </span>key:<span style="color:#666"> </span>POSTGRES_USER<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>POSTGRES_PASSWORD<span style="color:#666">
+</span><span style="color:#666">          </span>valueFrom:<span style="color:#666">
+</span><span style="color:#666">            </span>secretKeyRef:<span style="color:#666">
+</span><span style="color:#666">              </span>name:<span style="color:#666"> </span>{{<span style="color:#666"> </span>include<span style="color:#666"> </span><span style="color:#ed9d13">&#34;opsi-agent.fullname&#34;</span><span style="color:#666"> </span>.<span style="color:#666"> </span>}}-postgres<span style="color:#666">
+</span><span style="color:#666">              </span>key:<span style="color:#666"> </span>POSTGRES_PASSWORD<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>POSTGRES_DB<span style="color:#666">
+</span><span style="color:#666">          </span>value:<span style="color:#666"> </span>{{<span style="color:#666"> </span>.Values.postgres.db<span style="color:#666"> </span>}}<span style="color:#666">
+</span><span style="color:#666">        </span>image:<span style="color:#666"> </span>pgvector/pgvector:<span style="color:#3677a9">0.7</span>.<span style="color:#3677a9">2</span>-pg16<span style="color:#666">
+</span><span style="color:#666">        </span>ports:<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>postgres<span style="color:#666">
+</span><span style="color:#666">          </span>containerPort:<span style="color:#666"> </span><span style="color:#3677a9">5432</span><span style="color:#666">
+</span><span style="color:#666">          </span>protocol:<span style="color:#666"> </span>TCP<span style="color:#666">
+</span><span style="color:#666">        </span>livenessProbe:<span style="color:#666">
+</span><span style="color:#666">          </span>exec:<span style="color:#666">
+</span><span style="color:#666">            </span>command:<span style="color:#666">
+</span><span style="color:#666">            </span>-<span style="color:#666"> </span>/bin/sh<span style="color:#666">
+</span><span style="color:#666">            </span>-<span style="color:#666"> </span>-c<span style="color:#666">
+</span><span style="color:#666">            </span>-<span style="color:#666"> </span>exec<span style="color:#666"> </span>pg_isready<span style="color:#666"> </span>-U<span style="color:#666"> </span><span style="color:#ed9d13">&#34;${POSTGRES_USER}&#34;</span><span style="color:#666"> </span>-h<span style="color:#666"> </span><span style="color:#3677a9">127.0</span>.<span style="color:#3677a9">0.1</span><span style="color:#666"> </span>-p<span style="color:#666"> </span><span style="color:#3677a9">5432</span><span style="color:#666">
+</span><span style="color:#666">        </span>readinessProbe:<span style="color:#666">
+</span><span style="color:#666">          </span>exec:<span style="color:#666">
+</span><span style="color:#666">            </span>command:<span style="color:#666">
+</span><span style="color:#666">            </span>-<span style="color:#666"> </span>/bin/sh<span style="color:#666">
+</span><span style="color:#666">            </span>-<span style="color:#666"> </span>-c<span style="color:#666">
+</span><span style="color:#666">            </span>-<span style="color:#666"> </span>exec<span style="color:#666"> </span>pg_isready<span style="color:#666"> </span>-U<span style="color:#666"> </span><span style="color:#ed9d13">&#34;${POSTGRES_USER}&#34;</span><span style="color:#666"> </span>-h<span style="color:#666"> </span><span style="color:#3677a9">127.0</span>.<span style="color:#3677a9">0.1</span><span style="color:#666"> </span>-p<span style="color:#666"> </span><span style="color:#3677a9">5432</span><span style="color:#666">
+</span><span style="color:#666">        </span>volumeMounts:<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>postgres<span style="color:#666">
+</span><span style="color:#666">          </span>mountPath:<span style="color:#666"> </span>/var/lib/pgsql/data<span style="color:#666">
+</span><span style="color:#666">  </span>volumeClaimTemplates:<span style="color:#666">
+</span><span style="color:#666">  </span>-<span style="color:#666"> </span>metadata:<span style="color:#666">
+</span><span style="color:#666">      </span>name:<span style="color:#666"> </span>postgres<span style="color:#666">
+</span><span style="color:#666">    </span>spec:<span style="color:#666">
+</span><span style="color:#666">      </span>accessModes:<span style="color:#666"> </span>{{<span style="color:#666"> </span>.Values.postgres.persistence.accessModes<span style="color:#666"> </span>}}<span style="color:#666">
+</span><span style="color:#666">      </span>storageClassName:<span style="color:#666"> </span>{{<span style="color:#666"> </span>.Values.postgres.persistence.storageClassName<span style="color:#666"> </span>}}<span style="color:#666">
+</span><span style="color:#666">      </span>resources:<span style="color:#666">
+</span><span style="color:#666">        </span>requests:<span style="color:#666">
+</span><span style="color:#666">          </span>storage:<span style="color:#666"> </span>{{<span style="color:#666"> </span>.Values.postgres.persistence.size<span style="color:#666"> </span>}}<span style="color:#666">
+</span><span style="color:#666">      </span>{{-<span style="color:#666"> </span>with<span style="color:#666"> </span>.Values.postgres.persistence.selectorLabels<span style="color:#666"> </span>}}<span style="color:#666">
+</span><span style="color:#666">      </span>selector:<span style="color:#666">
+</span><span style="color:#666">        </span>matchLabels:<span style="color:#666">
+</span><span style="color:#666">          </span>{{-<span style="color:#666"> </span>toYaml<span style="color:#666"> </span>.<span style="color:#666"> </span>|<span style="color:#666"> </span>nindent<span style="color:#666"> </span><span style="color:#3677a9">10</span><span style="color:#666"> </span>}}<span style="color:#666">
+</span><span style="color:#666">      </span>{{-<span style="color:#666"> </span>end<span style="color:#666"> </span>}}</code></pre></div>
+<p>pgvectorコンテナに<code>POSTGRES_USER</code>、<code>POSTGRES_PASSWORD</code>、<code>POSTGRES_DB</code>という環境変数を設定することで、PostgreSQL起動時にデフォルトで作成されるユーザとDBを、PGVectorのconnectionに指定したURIと合うように指定した。</p>
+
+<p><br></p>
+
+<p>opsi-agentコンテナは、Deploymentでデプロイする。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">apiVersion:<span style="color:#666"> </span>apps/v1<span style="color:#666">
+</span><span style="color:#666"></span>kind:<span style="color:#666"> </span>Deployment<span style="color:#666">
+</span><span style="color:#666"></span>metadata:<span style="color:#666">
+</span><span style="color:#666">  </span>name:<span style="color:#666"> </span>{{<span style="color:#666"> </span>include<span style="color:#666"> </span><span style="color:#ed9d13">&#34;opsi-agent.fullname&#34;</span><span style="color:#666"> </span>.<span style="color:#666"> </span>}}<span style="color:#666">
+</span><span style="color:#666">  </span>labels:<span style="color:#666">
+</span><span style="color:#666">    </span>{{-<span style="color:#666"> </span>include<span style="color:#666"> </span><span style="color:#ed9d13">&#34;opsi-agent.labels&#34;</span><span style="color:#666"> </span>.<span style="color:#666"> </span>|<span style="color:#666"> </span>nindent<span style="color:#666"> </span><span style="color:#3677a9">4</span><span style="color:#666"> </span>}}<span style="color:#666">
+</span><span style="color:#666"></span>spec:<span style="color:#666">
+</span><span style="color:#666">  </span>replicas:<span style="color:#666"> </span>{{<span style="color:#666"> </span>.Values.replicaCount<span style="color:#666"> </span>}}<span style="color:#666">
+</span><span style="color:#666">  </span>selector:<span style="color:#666">
+</span><span style="color:#666">    </span>matchLabels:<span style="color:#666">
+</span><span style="color:#666">      </span>{{-<span style="color:#666"> </span>include<span style="color:#666"> </span><span style="color:#ed9d13">&#34;opsi-agent.selectorLabels&#34;</span><span style="color:#666"> </span>.<span style="color:#666"> </span>|<span style="color:#666"> </span>nindent<span style="color:#666"> </span><span style="color:#3677a9">6</span><span style="color:#666"> </span>}}<span style="color:#666">
+</span><span style="color:#666">  </span>template:<span style="color:#666">
+</span><span style="color:#666">    </span>metadata:<span style="color:#666">
+</span><span style="color:#666">      </span>labels:<span style="color:#666">
+</span><span style="color:#666">        </span>{{-<span style="color:#666"> </span>include<span style="color:#666"> </span><span style="color:#ed9d13">&#34;opsi-agent.selectorLabels&#34;</span><span style="color:#666"> </span>.<span style="color:#666"> </span>|<span style="color:#666"> </span>nindent<span style="color:#666"> </span><span style="color:#3677a9">8</span><span style="color:#666"> </span>}}<span style="color:#666">
+</span><span style="color:#666">    </span>spec:<span style="color:#666">
+</span><span style="color:#666">      </span>containers:<span style="color:#666">
+</span><span style="color:#666">      </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>{{<span style="color:#666"> </span>.Chart.Name<span style="color:#666"> </span>}}<span style="color:#666">
+</span><span style="color:#666">        </span>image:<span style="color:#666"> </span><span style="color:#ed9d13">&#34;{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}&#34;</span><span style="color:#666">
+</span><span style="color:#666">        </span>env:<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>OPENAI_API_KEY<span style="color:#666">
+</span><span style="color:#666">          </span>valueFrom:<span style="color:#666">
+</span><span style="color:#666">            </span>secretKeyRef:<span style="color:#666">
+</span><span style="color:#666">              </span>name:<span style="color:#666"> </span>{{<span style="color:#666"> </span>include<span style="color:#666"> </span><span style="color:#ed9d13">&#34;opsi-agent.fullname&#34;</span><span style="color:#666"> </span>.<span style="color:#666"> </span>}}<span style="color:#666">
+</span><span style="color:#666">              </span>key:<span style="color:#666"> </span>OPENAI_API_KEY<span style="color:#666">
+</span><span style="color:#666">        </span>ports:<span style="color:#666">
+</span><span style="color:#666">        </span>-<span style="color:#666"> </span>name:<span style="color:#666"> </span>http<span style="color:#666">
+</span><span style="color:#666">          </span>containerPort:<span style="color:#666"> </span><span style="color:#3677a9">8080</span><span style="color:#666">
+</span><span style="color:#666">          </span>protocol:<span style="color:#666"> </span>TCP<span style="color:#666">
+</span><span style="color:#666">        </span>livenessProbe:<span style="color:#666">
+</span><span style="color:#666">          </span>httpGet:<span style="color:#666">
+</span><span style="color:#666">            </span>path:<span style="color:#666"> </span>/healthz<span style="color:#666">
+</span><span style="color:#666">            </span>port:<span style="color:#666"> </span>http<span style="color:#666">
+</span><span style="color:#666">          </span>timeoutSeconds:<span style="color:#666"> </span><span style="color:#3677a9">1</span><span style="color:#666">
+</span><span style="color:#666">          </span>periodSeconds:<span style="color:#666"> </span><span style="color:#3677a9">3</span><span style="color:#666">
+</span><span style="color:#666">          </span>initialDelaySeconds:<span style="color:#666"> </span><span style="color:#3677a9">30</span><span style="color:#666">
+</span><span style="color:#666">          </span>successThreshold:<span style="color:#666"> </span><span style="color:#3677a9">1</span><span style="color:#666">
+</span><span style="color:#666">          </span>failureThreshold:<span style="color:#666"> </span><span style="color:#3677a9">3</span><span style="color:#666">
+</span><span style="color:#666">        </span>readinessProbe:<span style="color:#666">
+</span><span style="color:#666">          </span>httpGet:<span style="color:#666">
+</span><span style="color:#666">            </span>path:<span style="color:#666"> </span>/healthz<span style="color:#666">
+</span><span style="color:#666">            </span>port:<span style="color:#666"> </span>http<span style="color:#666">
+</span><span style="color:#666">          </span>timeoutSeconds:<span style="color:#666"> </span><span style="color:#3677a9">1</span><span style="color:#666">
+</span><span style="color:#666">          </span>periodSeconds:<span style="color:#666"> </span><span style="color:#3677a9">5</span><span style="color:#666">
+</span><span style="color:#666">          </span>initialDelaySeconds:<span style="color:#666"> </span><span style="color:#3677a9">30</span><span style="color:#666">
+</span><span style="color:#666">          </span>successThreshold:<span style="color:#666"> </span><span style="color:#3677a9">1</span><span style="color:#666">
+</span><span style="color:#666">          </span>failureThreshold:<span style="color:#666"> </span><span style="color:#3677a9">1</span><span style="color:#666">
+</span><span style="color:#666">        </span>startupProbe:<span style="color:#666">
+</span><span style="color:#666">          </span>httpGet:<span style="color:#666">
+</span><span style="color:#666">            </span>path:<span style="color:#666"> </span>/healthz<span style="color:#666">
+</span><span style="color:#666">            </span>port:<span style="color:#666"> </span>http<span style="color:#666">
+</span><span style="color:#666">            </span>scheme:<span style="color:#666"> </span>HTTP<span style="color:#666">
+</span><span style="color:#666">          </span>timeoutSeconds:<span style="color:#666"> </span><span style="color:#3677a9">1</span><span style="color:#666">
+</span><span style="color:#666">          </span>periodSeconds:<span style="color:#666"> </span><span style="color:#3677a9">3</span><span style="color:#666">
+</span><span style="color:#666">          </span>initialDelaySeconds:<span style="color:#666"> </span><span style="color:#3677a9">30</span><span style="color:#666">
+</span><span style="color:#666">          </span>successThreshold:<span style="color:#666"> </span><span style="color:#3677a9">1</span><span style="color:#666">
+</span><span style="color:#666">          </span>failureThreshold:<span style="color:#666"> </span><span style="color:#3677a9">50</span></code></pre></div>
+<p>langchain-openaiのために、コンテナの環境変数のOPENAI_API_KEYでOpenAIのAPIキーを渡している。</p>
+
+<p>livenessProbe、readinessProbe、startupProbeでコンテナの起動状態をチェックするけど、FastAPIが動く前にベクトルデータベース構築するところで結構時間がかかるので、startupProbeのfailureThresholdを大きめにした。</p>
+
+<p>livenessProbe、readinessProbe、startupProbeでコンテナの<code>/healthz</code>をヘルスチェックAPIとして使うので、Ops Iエージェントにそれを実装する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">(snip)
+
+<span style="color:#6ab825;font-weight:bold">class</span> <span style="color:#447fcf;text-decoration:underline">HealthCheck</span>(BaseModel):
+    status: <span style="color:#24909d">str</span> = <span style="color:#ed9d13">&#34;OK&#34;</span>
+
+<span style="color:#ffa500">@app.get</span>(
+    <span style="color:#ed9d13">&#34;/healthz&#34;</span>,
+    tags=[<span style="color:#ed9d13">&#34;healthcheck&#34;</span>],
+    summary=<span style="color:#ed9d13">&#34;Perform a Health Check&#34;</span>,
+    response_description=<span style="color:#ed9d13">&#34;Return HTTP Status Code 200 (OK)&#34;</span>,
+    status_code=status.HTTP_200_OK,
+    response_model=HealthCheck,
+)
+<span style="color:#6ab825;font-weight:bold">def</span> <span style="color:#447fcf">get_health</span>() -&gt; HealthCheck:
+    <span style="color:#6ab825;font-weight:bold">return</span> HealthCheck(status=<span style="color:#ed9d13">&#34;OK&#34;</span>)
+
+uvicorn.run(app, host=<span style="color:#ed9d13">&#34;0.0.0.0&#34;</span>, port=<span style="color:#3677a9">8080</span>)</code></pre></div>
+<p><br></p>
+
+<p>あとは、Chart.yamlとかSecretとかServiceとか適当に書いて、Helm chartができた。</p>
+
+<p>(ヘルスチェックAPIとHelm chart追加による前節コードからの差分は<a href="https://github.com/kaitoy/opsi-agent/commit/fe28ca873c7ddb0da8c31219f71d9ffaf2d5fcea">これ</a>)</p>
+
+<h2 id="kubernetesにデプロイ">Kubernetesにデプロイ</h2>
+
+<p>Ops IエージェントをデプロイするKubernetesは、<a href="https://github.com/kaitoy/ansible-k8s">自作のKubernetesクラスタ構築playbook</a>で構築した。</p>
+
+<p>構築先はWindows 11上のVirtualBoxのOracle Linux9.3のVM。</p>
+
+<p>構築したのはKubernetes v1.30.2のシングルノードクラスタ。
+Helm v3.15.2入り。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ kubectl version
+Client Version: v1.30.2
+Kustomize Version: v5.0.4-0.20230601165947-6ce0bf390ce3
+Server Version: v1.30.2
+$ helm version
+version.BuildInfo{Version:&#34;v3.15.2&#34;, GitCommit:&#34;1a500d5625419a524fdae4b33de351cc4f58ec35&#34;, GitTreeState:&#34;clean&#34;, GoVersion:&#34;go1.22.4&#34;}</code></pre></div>
+<p><br></p>
+
+<p>この環境にさっき作ったchartをデプロイする。
+PostgreSQLのPVには<a href="https://kubernetes.io/ja/docs/concepts/storage/volumes/#local">local</a>を使って、VMの<code>/data</code>にDBを永続化する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ mkdir /data
+$ cat &lt;&lt;EOL | kubectl apply -f -
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: postgres
+spec:
+  storageClassName: local
+  capacity:
+    storage: 1Gi
+  accessModes:
+  - ReadWriteOnce
+  local:
+    path: /data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/os
+          operator: In
+          values:
+          - linux
+EOL
+persistentvolume/postgres created
+$ cd chart
+$ cat &lt;&lt;EOF &gt; ../values.yaml
+openai_api_key: sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxx
+service:
+  type: NodePort
+EOF
+$ helm install opsi-agent -f ../values.yaml .
+NAME: opsi-agent
+LAST DEPLOYED: Sat Jun 29 22:16:11 2024
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None</code></pre></div>
+<p>デプロイできた。</p>
+
+<h2 id="ops-iエージェントのヘルスチェックapi修正">Ops IエージェントのヘルスチェックAPI修正</h2>
+
+<p>デプロイは成功したけど、Ops IエージェントのpodがREADYにならず、livenessProbeにkillされてしまった。
+ログを見たら以下のように<code>TypeError: BaseModel.validate() takes 2 positional arguments but 3 were given</code>というエラーが出ていた。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">INFO:     10.0.2.100:52098 - &#34;GET /healthz HTTP/1.1&#34; 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File &#34;/usr/local/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py&#34;, line 411, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py&#34;, line 69, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/fastapi/applications.py&#34;, line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/applications.py&#34;, line 123, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py&#34;, line 186, in __call__
+    raise exc
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py&#34;, line 164, in __call__
+    await self.app(scope, receive, _send)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/middleware/exceptions.py&#34;, line 65, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py&#34;, line 64, in wrapped_app
+    raise exc
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py&#34;, line 53, in wrapped_app
+    await app(scope, receive, sender)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/routing.py&#34;, line 756, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/routing.py&#34;, line 776, in app
+    await route.handle(scope, receive, send)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/routing.py&#34;, line 297, in handle
+    await self.app(scope, receive, send)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/routing.py&#34;, line 77, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py&#34;, line 64, in wrapped_app
+    raise exc
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py&#34;, line 53, in wrapped_app
+    await app(scope, receive, sender)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/routing.py&#34;, line 72, in app
+    response = await func(request)
+               ^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/fastapi/routing.py&#34;, line 296, in app
+    content = await serialize_response(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/fastapi/routing.py&#34;, line 147, in serialize_response
+    value, errors_ = await run_in_threadpool(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/concurrency.py&#34;, line 42, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/anyio/to_thread.py&#34;, line 56, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py&#34;, line 2144, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/asyncio/futures.py&#34;, line 287, in __await__
+    yield self  # This tells Task to wait for completion.
+    ^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/asyncio/tasks.py&#34;, line 385, in __wakeup
+    future.result()
+  File &#34;/usr/local/lib/python3.12/asyncio/futures.py&#34;, line 203, in result
+    raise self._exception.with_traceback(self._exception_tb)
+  File &#34;/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py&#34;, line 851, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/fastapi/_compat.py&#34;, line 127, in validate
+    self._type_adapter.validate_python(value, from_attributes=True),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/pydantic/type_adapter.py&#34;, line 260, in validate_python
+    return self.validator.validate_python(object, strict=strict, from_attributes=from_attributes, context=context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: BaseModel.validate() takes 2 positional arguments but 3 were given</code></pre></div>
+<p>このエラーは、<a href="https://stackoverflow.com/a/78022180">Pydantic v2でバリデーションを実行する処理系にPydantic v1のモデルを渡したときに発生する</a>らしい。</p>
+
+<p>自分のコードを見直すと、FastAPIがPydantic v2で動くのに対して、LangChainパッケージ内のPydantic v1でヘルスチェックAPIのモデルを定義してたので、そこを直す。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> import nest_asyncio
+ import uvicorn
+ from fastapi import FastAPI, status
+ from langchain.chains import create_retrieval_chain
+ from langchain.chains.combine_documents import create_stuff_documents_chain
+ from langchain.indexes import VectorstoreIndexCreator
+ from langchain.pydantic_v1 import BaseModel
+ from langchain.text_splitter import CharacterTextSplitter
+ from langchain_community.document_loaders.sitemap import SitemapLoader
+ from langchain_core.prompts import ChatPromptTemplate
+ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+ from langchain_postgres.vectorstores import PGVector
+ from langserve import add_routes
+<span style="color:#589819">+from pydantic import BaseModel as BaseModelV2
+</span><span style="color:#589819"></span>
+(snip)
+
+<span style="color:#d22323">-class HealthCheck(BaseModel):
+</span><span style="color:#d22323"></span><span style="color:#589819">+class HealthCheck(BaseModelV2):
+</span><span style="color:#589819"></span>     status: str = &#34;OK&#34;
+
+ app.get(
+    &#34;/healthz&#34;,
+    tags=[&#34;healthcheck&#34;],
+    summary=&#34;Perform a Health Check&#34;,
+    response_description=&#34;Return HTTP Status Code 200 (OK)&#34;,
+    status_code=status.HTTP_200_OK,
+    response_model=HealthCheck,
+
+ ef get_health() -&gt; HealthCheck:
+    return HealthCheck(status=&#34;OK&#34;)
+</code></pre></div>
+<p>(前節コードからの実際の差分は<a href="https://github.com/kaitoy/opsi-agent/commit/5fa54fe70871e1a6f5ecf7c9d8f0b52dd291ba5e">これ</a>)</p>
+
+<h2 id="pgvectorを非同期モードにする">PGVectorを非同期モードにする</h2>
+
+<p>ヘルスチェックAPIを修正してpodのコンテナイメージを入れ替えたら無事READYになってLangServeが起動した。</p>
+
+<p>chainをinvokeするAPIを呼んでみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ curl -XPOST -H &#39;Content-Type:application/json&#39; -d &#39;{&#34;input&#34;: {&#34;input&#34;: &#34;Ops Iの機能を教えて&#34;}}&#39; http://$(hostname -i):$(kubectl get service opsi-agent -o jsonpath=&#39;{.spec.ports[0].nodePort}&#39;)/opsi/invoke
+Internal Server Error</code></pre></div>
+<p><code>Internal Server Error</code>になってしまった。
+podのログには以下のように、<code>AssertionError: _async_engine not found</code>というエラーが出ていた。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">INFO:     10.0.2.100:35662 - &#34;POST /opsi/invoke HTTP/1.1&#34; 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File &#34;/usr/local/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py&#34;, line 411, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py&#34;, line 69, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/fastapi/applications.py&#34;, line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/applications.py&#34;, line 123, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py&#34;, line 186, in __call__
+    raise exc
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py&#34;, line 164, in __call__
+    await self.app(scope, receive, _send)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/middleware/exceptions.py&#34;, line 65, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py&#34;, line 64, in wrapped_app
+    raise exc
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py&#34;, line 53, in wrapped_app
+    await app(scope, receive, sender)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/routing.py&#34;, line 756, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/routing.py&#34;, line 776, in app
+    await route.handle(scope, receive, send)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/routing.py&#34;, line 297, in handle
+    await self.app(scope, receive, send)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/routing.py&#34;, line 77, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py&#34;, line 64, in wrapped_app
+    raise exc
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py&#34;, line 53, in wrapped_app
+    await app(scope, receive, sender)
+  File &#34;/usr/local/lib/python3.12/site-packages/starlette/routing.py&#34;, line 72, in app
+    response = await func(request)
+               ^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/fastapi/routing.py&#34;, line 278, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/fastapi/routing.py&#34;, line 191, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langserve/server.py&#34;, line 530, in invoke
+    return await api_handler.invoke(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langserve/api_handler.py&#34;, line 833, in invoke
+    output = await invoke_coro
+             ^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_core/runnables/base.py&#34;, line 4439, in ainvoke
+    return await self.bound.ainvoke(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_core/runnables/base.py&#34;, line 2430, in ainvoke
+    input = await step.ainvoke(
+            ^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_core/runnables/passthrough.py&#34;, line 497, in ainvoke
+    return await self._acall_with_config(self._ainvoke, input, config, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_core/runnables/base.py&#34;, line 1553, in _acall_with_config
+    output: Output = await asyncio.create_task(coro, context=context)  # type: ignore
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/asyncio/futures.py&#34;, line 287, in __await__
+    yield self  # This tells Task to wait for completion.
+    ^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/asyncio/tasks.py&#34;, line 385, in __wakeup
+    future.result()
+  File &#34;/usr/local/lib/python3.12/asyncio/futures.py&#34;, line 203, in result
+    raise self._exception.with_traceback(self._exception_tb)
+  File &#34;/usr/local/lib/python3.12/asyncio/tasks.py&#34;, line 314, in __step_run_and_handle_result
+    result = coro.send(None)
+             ^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_core/runnables/passthrough.py&#34;, line 484, in _ainvoke
+    **await self.mapper.ainvoke(
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_core/runnables/base.py&#34;, line 3066, in ainvoke
+    results = await asyncio.gather(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/asyncio/tasks.py&#34;, line 385, in __wakeup
+    future.result()
+  File &#34;/usr/local/lib/python3.12/asyncio/tasks.py&#34;, line 314, in __step_run_and_handle_result
+    result = coro.send(None)
+             ^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_core/runnables/base.py&#34;, line 4439, in ainvoke
+    return await self.bound.ainvoke(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_core/runnables/base.py&#34;, line 2430, in ainvoke
+    input = await step.ainvoke(
+            ^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_core/retrievers.py&#34;, line 228, in ainvoke
+    return await self.aget_relevant_documents(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_core/_api/deprecation.py&#34;, line 157, in awarning_emitting_wrapper
+    return await wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_core/retrievers.py&#34;, line 387, in aget_relevant_documents
+    raise e
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_core/retrievers.py&#34;, line 380, in aget_relevant_documents
+    result = await self._aget_relevant_documents(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_core/vectorstores.py&#34;, line 716, in _aget_relevant_documents
+    docs = await self.vectorstore.asimilarity_search(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_postgres/vectorstores.py&#34;, line 919, in asimilarity_search
+    await self.__apost_init__()  # Lazy async init
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_postgres/vectorstores.py&#34;, line 462, in __apost_init__
+    await self.acreate_vector_extension()
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_postgres/vectorstores.py&#34;, line 480, in acreate_vector_extension
+    assert self._async_engine, &#34;_async_engine not found&#34;
+           ^^^^^^^^^^^^^^^^^^
+AssertionError: _async_engine not found</code></pre></div>
+<p>LangChainでベクトルデータベースを表す<a href="https://api.python.langchain.com/en/latest/vectorstores/langchain_core.vectorstores.VectorStore.html">VectorStore</a>という抽象クラスには、類似検索をするAPIとして同期の<code>similarity_search</code>と非同期の<code>asimilarity_search</code>とがあるんだけど、それを継承したPGVectorの実装は、インスタンス化のときに同期モードか非同期モードかを選んで、選んだほうのAPIしか使えないという不便なものになっていた。
+PGVectorのコンストラクタはデフォルトでは同期モードのインスタンスを作るけど、LangServeはchainを非同期でinvokeするので、エラーになったというわけ。</p>
+
+<p>ならばPGVectorを非同期モードにする。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> index = VectorstoreIndexCreator(
+     vectorstore_cls=PGVector,
+     embedding=OpenAIEmbeddings(),
+     text_splitter=text_splitter,
+     vectorstore_kwargs={
+         &#34;collection_name&#34;: &#34;opsi_manual&#34;,
+         &#34;connection&#34;: &#34;postgresql+psycopg://langchain:langchain@opsi-agent-postgres:5432/langchain&#34;,
+         &#34;use_jsonb&#34;: True,
+<span style="color:#589819">+        &#34;async_mode&#34;: True,
+</span><span style="color:#589819"></span>     }
+ ).from_loaders([loader])
+</code></pre></div>
+<p>(前節コードからの実際の差分は<a href="https://github.com/kaitoy/opsi-agent/commit/c2c6fcbd8f80050c5abca88086006610115d9af9">これ</a>)</p>
+
+<h2 id="pgvectorのインデックス構築を非同期モードにする">PGVectorのインデックス構築を非同期モードにする</h2>
+
+<p>PGVectorの非同期モードを修正してpodのコンテナイメージを入れ替えたら、今度は起動時に<code>AssertionError: This method must be called with sync_mode</code>というエラーでpodが落ちるようになった。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ kubectl logs opsi-agent-54bf89d7b5-bz267 -f
+Fetching pages: 100%|##########| 122/122 [00:16&lt;00:00,  7.51it/s]
+Traceback (most recent call last):
+  File &#34;/app/main.py&#34;, line 38, in &lt;module&gt;
+    ).from_loaders([loader])
+      ^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain/indexes/vectorstore.py&#34;, line 158, in from_loaders
+    return self.from_documents(docs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain/indexes/vectorstore.py&#34;, line 171, in from_documents
+    vectorstore = self.vectorstore_cls.from_documents(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_postgres/vectorstores.py&#34;, line 1731, in from_documents
+    return cls.from_texts(
+           ^^^^^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_postgres/vectorstores.py&#34;, line 1496, in from_texts
+    return cls.__from(
+           ^^^^^^^^^^^
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_postgres/vectorstores.py&#34;, line 670, in __from
+    store.add_embeddings(
+  File &#34;/usr/local/lib/python3.12/site-packages/langchain_postgres/vectorstores.py&#34;, line 733, in add_embeddings
+    assert not self._async_engine, &#34;This method must be called with sync_mode&#34;
+           ^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: This method must be called with sync_mode</code></pre></div>
+<p>PGVectorはVectorstoreIndexCreatorがインデックスを作るときとLangServeがchainを実行するときに呼ばれるんだけど、後者は前節で書いた通り非同期で呼ばれ、前者は同期で呼ばれる模様。
+前者が同期で呼ばれるのは、VectorstoreIndexCreatorの同期APIを使ってるからっぽい。
+VectorstoreIndexCreatorの非同期APIを使えば全部非同期で実行されるはず。
+また、PGVectorのソースを眺めていたら、インデックスを作るときに呼ぶクラスメソッドが同期なら同期モードのインスタンスができて、非同期なら非同期モードのインスタンスができるようなので、どうも外から<code>async_mode</code>を指定すべきではなかったようだった。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"><span style="color:#d22323">-index = VectorstoreIndexCreator(
+</span><span style="color:#d22323"></span><span style="color:#589819">+vic = VectorstoreIndexCreator(
+</span><span style="color:#589819"></span>     vectorstore_cls=PGVector,
+     embedding=OpenAIEmbeddings(),
+     text_splitter=text_splitter,
+     vectorstore_kwargs={
+         &#34;collection_name&#34;: &#34;opsi_manual&#34;,
+         &#34;connection&#34;: &#34;postgresql+psycopg://langchain:langchain@opsi-agent-postgres:5432/langchain&#34;,
+         &#34;use_jsonb&#34;: True,
+<span style="color:#d22323">-        &#34;async_mode&#34;: True,
+</span><span style="color:#d22323"></span>     }
+<span style="color:#d22323">-).from_loaders([loader])
+</span><span style="color:#d22323">-)
+</span><span style="color:#d22323"></span><span style="color:#589819">+index = asyncio.run(vic.afrom_loaders([loader]))
+</span></code></pre></div>
+<p>(前節コードからの実際の差分は<a href="https://github.com/kaitoy/opsi-agent/commit/45c79f64d1fb5975b55e6a6173bad75eb547f914">これ</a>)</p>
+
+<p><br></p>
+
+<p>この修正をしてpodのコンテナイメージを入れ替えたらちゃんと動いた。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ curl -XPOST -H &#39;Content-Type:application/json&#39; -d &#39;{&#34;input&#34;: {&#34;input&#34;: &#34;Ops Iの機能を教えて&#34;}}&#39; http://$(hostname -i):$(kubectl get service opsi-agent -o jsonpath=&#39;{.spec.ports[0].nodePort}&#39;)/opsi/invoke
+{&#34;output&#34;:{&#34;input&#34;:&#34;Ops Iの機能を教えて&#34;,&#34;answer&#34;:&#34;Ops Iの機能には、基本的な画面構成、アカウント管理、タスクやリクエストの管理、サービスカタログ、ワークフロー、 チケット管理などが含まれます。これらの機能を活用することで、システム運用に必要な作業を効率的に管理することができます。&#34;},&#34;metadata&#34;:{&#34;run_id&#34;:&#34;c6060122-f55b-48a5-8285-61bbd7e9bbe1&#34;,&#34;feedback_tokens&#34;:[]}}</code></pre></div></div>
+
+        <section class="share-buttons">
+          <div class="fb-share-button share-button" data-href="https://www.kaitoy.xyz/2024/07/07/pgvector-opsi-agent/" data-layout="button_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">シェア</a></div>
+          <div class="share-button">
+            <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-text="LangChainとPostgreSQL (pgvector)でRAGを作る" data-url="https://www.kaitoy.xyz/2024/07/07/pgvector-opsi-agent/" data-show-count="true" data-count="horizontal">Tweet</a>
+          </div>
+          <div class="share-button">
+            <a href="https://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="basic-label-counter" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+          </div>
+          <div class="share-button">
+            <a data-pocket-label="pocket" data-pocket-count="horizontal" class="pocket-btn" data-lang="en"></a>
+            <script type="text/javascript">!function(d,i){if(!d.getElementById(i)){var j=d.createElement("script");j.id=i;j.src="https://widgets.getpocket.com/v1/j/btn.js?v=1";var w=d.getElementById(i);d.body.appendChild(j);}}(document,"pocket-btn-js");</script>
+          </div>
+        </section>
+    </div>
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-6244473643910448"
+         data-ad-slot="1845600530"
+         data-ad-format="auto"></ins>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+    <section class="tbd-pagination">
+      <div class="row">
+        <div class="col-sm-6">
+          <div class="prev">
+            
+            <a href="https://www.kaitoy.xyz/2024/06/24/is-copilot-good/">
+              <i class="fa fa-angle-left"></i>
+              GitHub Copilotは本当に生産性を上げてくれたのか?
+            </a>
+            
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="next text-right">
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    
+
+    
+
+        <h4 class="page-header">Related</h4>
+
+        <div class="related-links">
+           <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/06/24/is-copilot-good/">GitHub Copilotは本当に生産性を上げてくれたのか?</a></h4>
+    <h5>Mon, Jun 24, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/copilot"><kbd class="item-tag">copilot</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/06/14/langserve-opsi-agent/">Webマニュアルから知識を得るLangChainのRAGをLangServeでWebサーバにする</a></h4>
+    <h5>Fri, Jun 14, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ops-i"><kbd class="item-tag">Ops I</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/rag"><kbd class="item-tag">rag</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/openai"><kbd class="item-tag">openai</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gpt"><kbd class="item-tag">gpt</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langchain"><kbd class="item-tag">langchain</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langserve"><kbd class="item-tag">langserve</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/06/04/langchain-opsi-agent/">Webマニュアルから知識を得るRAGをLangChainで作る</a></h4>
+    <h5>Tue, Jun 4, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ops-i"><kbd class="item-tag">Ops I</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/rag"><kbd class="item-tag">rag</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/openai"><kbd class="item-tag">openai</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gpt"><kbd class="item-tag">gpt</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langchain"><kbd class="item-tag">langchain</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/04/28/ai-copyright-jp/">AIと著作権</a></h4>
+    <h5>Sun, Apr 28, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/copyright"><kbd class="item-tag">copyright</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/01/07/gpt-crawler/">GPT CrawlerとOpenAI Assistantsでシュッと作るAIアシスタント</a></h4>
+    <h5>Sun, Jan 7, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/ops-i"><kbd class="item-tag">Ops I</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gpt"><kbd class="item-tag">gpt</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/openai"><kbd class="item-tag">openai</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2022/09/10/crunchy-data-pgo-is-not-oss/">Crunchy DataのPostgreSQL Operator (PGO)はOSSじゃない</a></h4>
+    <h5>Sat, Sep 10, 2022</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/postgresql"><kbd class="item-tag">postgresql</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/pgo"><kbd class="item-tag">pgo</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/license"><kbd class="item-tag">license</kbd></a>
+    
+
+</div>
+ 
+        </div>
+    
+
+    
+
+        <h4 class="page-header">Comments</h4>
+
+        <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "kaitoy-tobedecided" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+
+</main>
+
+        <footer>
+
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+    </body>
+
+</html>
+
