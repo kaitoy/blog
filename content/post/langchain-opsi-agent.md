@@ -2,7 +2,7 @@
 categories = ["Programming"]
 title = "Webマニュアルから知識を得るRAGをLangChainで作る"
 date = "2024-06-04T22:22:01+09:00"
-tags = ["GenAI", "Ops I", "rag", "openai", "gpt", "langchain"]
+tags = ["GenAI", "Ops I", "rag", "OpenAI", "GPT", "LangChain"]
 draft = false
 cover = "langchain.png"
 slug = "langchain-opsi-agent"

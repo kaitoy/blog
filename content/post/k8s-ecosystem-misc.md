@@ -4,7 +4,7 @@ title: "Kubernetesのエコシステム ー その他雑多"
 date: 2019-09-23
 cover: "kubernetes.png"
 slug: "k8s-ecosystem-misc"
-tags: ["kubernetes"]
+tags: ["Kubernetes"]
 draft: false
 ---
 

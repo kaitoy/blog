@@ -2,7 +2,7 @@
 categories = ["Programming"]
 title = "k3sをオンプレの手製Kubernetesクラスタで動かす"
 date = "2021-08-15T10:34:14+09:00"
-tags = ["kubernetes", "k3s"]
+tags = ["Kubernetes", "k3s"]
 draft = false
 cover = "k3s.svg"
 slug = "k3s-on-on-premises-k8s"

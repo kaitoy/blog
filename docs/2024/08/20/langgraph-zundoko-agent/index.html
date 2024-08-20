@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+        <script data-ad-client="ca-pub-6244473643910448" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/2024/08/20/langgraph-zundoko-agent/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/2024/08/20/langgraph-zundoko-agent/">
+
+
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="ズンドコキヨシ with LangGraph/LangChain - ズンドコキヨシするLLMマルチエージェントをつくった | To Be Decided">
+  <title>ズンドコキヨシ with LangGraph/LangChain - ズンドコキヨシするLLMマルチエージェントをつくった | To Be Decided</title>
+  <meta property="og:description" content="氷川きよしの芸能活動復帰を記念して、LangGraphとLangChainでズンドコキヨシするLLMマルチエージェントを作った話し。">
+  <meta name="description" content="氷川きよしの芸能活動復帰を記念して、LangGraphとLangChainでズンドコキヨシするLLMマルチエージェントを作った話し。">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/langgraph.svg">
+
+
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <style>
+
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+<script>
+  var webFontConfig = {
+    google: {
+      families: ['Noto Sans JP:400,700:japanese'],
+      active: function() {
+        sessionStorage.fonts = true;
+      }
+    },
+    timeout: 3000
+  };
+  WebFont.load(webFontConfig);
+</script>
+
+
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"> 
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js"></script>
+
+    
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
+        
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
+    
+
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v9.0" nonce="WjvU2Pqv"></script>
+
+        <nav class="navbar navbar-default navbar-fixed-top">
+
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">ズンドコキヨシ with LangGraph/LangChain - ズンドコキヨシするLLMマルチエージェントをつくった</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    <div class="single-post">
+        <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/08/20/langgraph-zundoko-agent/">ズンドコキヨシ with LangGraph/LangChain - ズンドコキヨシするLLMマルチエージェントをつくった</a></h4>
+    <h5>Tue, Aug 20, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/groq"><kbd class="item-tag">Groq</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/openai"><kbd class="item-tag">OpenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gpt"><kbd class="item-tag">GPT</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langchain"><kbd class="item-tag">LangChain</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langgraph"><kbd class="item-tag">LangGraph</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+
+</div>
+
+
+        <div class="cover">
+            <a href="/2024/08/20/langgraph-zundoko-agent/">
+                <img src="https://www.kaitoy.xyz/images/langgraph.svg" alt="ズンドコキヨシ with LangGraph/LangChain - ズンドコキヨシするLLMマルチエージェントをつくった">
+            </a>
+        </div>
+
+        
+        <h4 class="page-header">Table of Contents</h4>
+        <aside>
+            <nav id="TableOfContents">
+<ul>
+<li><a href="#langgraphとは">LangGraphとは</a></li>
+<li><a href="#langgraphの仕組み">LangGraphの仕組み</a></li>
+<li><a href="#zundokoエージェント">Zundokoエージェント</a>
+<ul>
+<li><a href="#zundokoアウトプットパーサ">Zundokoアウトプットパーサ</a></li>
+<li><a href="#zundoko生成ツール">Zundoko生成ツール</a></li>
+<li><a href="#グラフ定義">グラフ定義</a></li>
+<li><a href="#tools-node改善">tools Node改善</a></li>
+<li><a href="#toolnodeでツールをシーケンシャルに実行させる">ToolNodeでツールをシーケンシャルに実行させる</a></li>
+<li><a href="#zundokoエージェント完成">Zundokoエージェント完成</a></li>
+</ul></li>
+</ul>
+</nav>
+        </aside>
+        <hr>
+        
+
+        <br> <div class="text-justify"><p><a href="https://www.sanspo.com/article/20240817-A5S3KZHL3JJVDISUST7Q7DIC5Y/">氷川きよしの芸能活動復帰</a>を記念して、LangGraphとLangChainでズンドコキヨシするLLMマルチエージェントを作った話し。</p>
+
+<p><blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">Javaの講義、試験が「自作関数を作り記述しなさい」って問題だったから<br>「ズン」「ドコ」のいずれかをランダムで出力し続けて「ズン」「ズン」「ズン」「ズン」「ドコ」の配列が出たら「キ・ヨ・シ！」って出力した後終了って関数作ったら満点で単位貰ってた</p>&mdash; てくも (@kumiromilk) <a href="https://twitter.com/kumiromilk/status/707437861881180160">2016年3月9日</a></blockquote>
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script></p>
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+
+<h1 id="langgraphとは">LangGraphとは</h1>
+
+<p><a href="https://langchain-ai.github.io/langgraph/">LangGraph</a>はLLMエージェントを開発するためのライブラリで、<a href="https://www.langchain.com/langchain">LangChain</a>とシームレスに統合できる。</p>
+
+<p><a href="https://www.kaitoy.xyz/2024/07/24/langchain-k8s-agent/">以前の記事</a>で使ったLangChainの<a href="https://python.langchain.com/v0.2/docs/concepts/#agents">Agents</a>という機能でもLLMエージェントを作れるけど、Agentsは現時点で非推奨になっていて、LangGraphへの移行が推奨されている。
+LangGraphのほうがより柔軟に処理を書ける。</p>
+
+<p>LangChainではDAG状の、つまり有限の一方向の処理しか書けないのに対して、LangGraphでは循環グラフ状の処理を書けるのが大きな特徴。
+<a href="https://react-lm.github.io/">ReAct</a>みたいな、考えて、ツールで情報収集して、それをもとにまた考えて、みたいな、サイクリックなLLMエージェントを柔軟に書ける。</p>
+
+<p>LangGraphのエージェントでもAgentsと同様に、LangChainの<a href="https://python.langchain.com/v0.2/docs/integrations/tools/">Tool</a>や<a href="https://python.langchain.com/v0.2/docs/integrations/toolkits/">Toolkit</a>を利用できるんだけど、今回はそれらビルトインのツールの代わりに<a href="https://python.langchain.com/v0.2/docs/how_to/custom_tools/">カスタムツール</a>を作って使ってみる。</p>
+
+<h1 id="langgraphの仕組み">LangGraphの仕組み</h1>
+
+<p>LangGraphでは、<a href="https://langchain-ai.github.io/langgraph/concepts/low_level/#state">State</a>と<a href="https://langchain-ai.github.io/langgraph/concepts/low_level/#nodes">Node</a>を定義して、Node間を<a href="https://langchain-ai.github.io/langgraph/concepts/low_level/#edges">Edge</a>でつなぐことで、エージェントの処理フローを表すグラフを定義する。
+Edgeは、Stateの内容を見たり見なかったりして、次にどのNodeを実行するか(activeにするか)を決定する。</p>
+
+<p>StateはTypedDictかPydanticのモデルのオブジェクトで、基本はグラフにつき一つ定義する。</p>
+
+<p>NodeはStateを受け取って、Stateを更新するパッチを返す関数(もしくはその処理をする<a href="https://python.langchain.com/v0.2/docs/concepts/#runnable-interface">Runnable</a>)。
+Nodeが返すのはStateと同じ型のオブジェクトだけど、更新対象の属性にだけ値をいれたもので、グラフのStateはデフォルトではその属性で上書きされる。
+Stateの属性ごとに<a href="https://langchain-ai.github.io/langgraph/concepts/low_level/#reducers">Reducer</a>を設定しておくこともできて、設定された場合は、Nodeが返した属性はReducerで処理された後でStateにマージされる。</p>
+
+<p>LangGraphのグラフはLangChainのRunnableを実装していて、<code>invoke</code>すると<a href="https://langchain-ai.github.io/langgraph/concepts/low_level/#start-node">START Node</a>から実行を開始し、<a href="https://langchain-ai.github.io/langgraph/concepts/low_level/#end-node">End Node</a>に達すると処理終了し、最終的なStateを返す。</p>
+
+<p>エージェントの実行結果は、この最終的なStateから取り出せる。</p>
+
+<h1 id="zundokoエージェント">Zundokoエージェント</h1>
+
+<p>ここから実際に、ズンドコキヨシを実行するZundokoエージェントを作っていく。
+今回実装するグラフは以下の形。</p>
+
+<p><img src="/images/langgraph-zundoko-agent/graph.png" alt="graph.png" /></p>
+
+<p>NodeはSTART NodeとEnd Nodeのほかは<code>agent</code>と<code>tools</code>だけ。
+点線がStateによって条件分岐するEdgeで、実線が無条件のEdge。</p>
+
+<p>処理は<code>agent</code>から始まり、以下のように流れる。</p>
+
+<ol>
+<li><code>agent</code>ではLLMでズンドコキヨシのやり方を解釈し、ズンかドコを生成するために<code>tools</code>に遷移する。</li>
+<li><code>tools</code>では、カスタムツールでLLMを呼んでズンかドコを生成し、<code>agent</code>に遷移する。</li>
+<li><code>agent</code>ではキヨシ判定をして、判定できたら「キ・ヨ・シ！」を出力してEnd Nodeに遷移して終わる。判定できなかったら再度<code>tools</code>に遷移する。</li>
+</ol>
+
+<p>ステップ#1のLLMにはOpenAIの安くて速いモデルの<a href="https://openai.com/index/gpt-4o-mini-advancing-cost-efficient-intelligence/">GPT-4o mini</a>を使う。</p>
+
+<p>ステップ#2のカスタムツールでは、何度もLLMを呼ぶので、現時点で無料でAPIが使える<a href="https://groq.com/">Groq</a>のモデルである<a href="https://console.groq.com/docs/models#meta-llama-3-8b">Meta Llama 3 8B</a>を使う。</p>
+
+<p>複数のLLMを強調させるので、一応<a href="https://abvijaykumar.medium.com/multi-agent-architectures-e09c53c7fe0d">マルチエージェント</a>と言えよう。</p>
+
+<p>使う主なPythonモジュールは以下。</p>
+
+<ul>
+<li>LangChain 0.2.14</li>
+<li>LangGraph 0.2.4</li>
+<li>openai 1.40.8</li>
+<li>langchain-openai 0.1.21</li>
+<li>langchain-groq 0.1.9</li>
+</ul>
+
+<p>これらは以下のコマンドでインストールできる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ pip install langchain langgraph openai langchain-openai langchain-groq</code></pre></div>
+<p>ちなみにPythonのバージョンは3.12.3。</p>
+
+<p><br></p>
+
+<p>完成したコードは<a href="https://github.com/kaitoy/zundoko-agent">GitHub</a>に置いた。</p>
+
+<h2 id="zundokoアウトプットパーサ">Zundokoアウトプットパーサ</h2>
+
+<p>今回、ズンとドコはGroqのLLMで生成するんだけど、事前に試しにGroqのGUIから生成させてみたら以下のようになった。</p>
+
+<p><img src="/images/langgraph-zundoko-agent/groq.png" alt="groq.png" /></p>
+
+<p>プロンプトで「ズンかドコだけで回答してください」と指示しても、妙にテンションが高いようで、「!」や絵文字を含めて回答してくるので、そこから「ズン」か「ドコ」だけを抽出しないといけない。
+そのためにまず、LLMの出力を変換する<a href="https://python.langchain.com/v0.2/docs/how_to/output_parser_custom/">カスタムアウトプットパーサ</a>として、Zundokoアウトプットパーサを作る。</p>
+
+<p>カスタムアウトプットパーサの一番簡単な実装は、以下のように、LLMの出力を表す<a href="https://api.python.langchain.com/en/latest/messages/langchain_core.messages.ai.AIMessage.html">AIMessage</a>を受け取り、パースした結果を返す関数を定義するだけ。</p>
+
+<p><code>app/output_parsers/zundoko_parser.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_core.exceptions</span> <span style="color:#6ab825;font-weight:bold">import</span> OutputParserException
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_core.messages</span> <span style="color:#6ab825;font-weight:bold">import</span> AIMessage
+
+
+<span style="color:#6ab825;font-weight:bold">def</span> <span style="color:#447fcf">parse_zundoko</span>(ai_message: AIMessage) -&gt; <span style="color:#24909d">str</span>:
+    content = ai_message.content
+    <span style="color:#6ab825;font-weight:bold">if</span> <span style="color:#24909d">isinstance</span>(content, <span style="color:#24909d">str</span>):
+        <span style="color:#6ab825;font-weight:bold">if</span> content.find(<span style="color:#ed9d13">&#34;ズン&#34;</span>) &gt;= <span style="color:#3677a9">0</span>:
+            <span style="color:#6ab825;font-weight:bold">print</span>(<span style="color:#ed9d13">&#34;ズン&#34;</span>)
+            <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#ed9d13">&#34;ズン&#34;</span>
+        <span style="color:#6ab825;font-weight:bold">if</span> content.find(<span style="color:#ed9d13">&#34;ドコ&#34;</span>) &gt;= <span style="color:#3677a9">0</span>:
+            <span style="color:#6ab825;font-weight:bold">print</span>(<span style="color:#ed9d13">&#34;ドコ&#34;</span>)
+            <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#ed9d13">&#34;ドコ&#34;</span>
+        <span style="color:#6ab825;font-weight:bold">raise</span> OutputParserException(f<span style="color:#ed9d13">&#34;Can&#39;t parse AIMessage with non-zundoko content: {ai_message}&#34;</span>)
+    <span style="color:#6ab825;font-weight:bold">else</span>:
+        <span style="color:#6ab825;font-weight:bold">raise</span> OutputParserException(f<span style="color:#ed9d13">&#34;Can&#39;t parse AIMessage with content the type of which is not str: {ai_message}&#34;</span>)</code></pre></div>
+<p><code>AIMessage</code>の<code>content</code>属性にLLMの回答内容がstring(など)で入ってくるので、そこから「ズン」か「ドコ」を抽出する。</p>
+
+<p>ついでにズンドコを標準出力に出しておく。</p>
+
+<h2 id="zundoko生成ツール">Zundoko生成ツール</h2>
+
+<p>次に、Groqを使ってズンドコを生成して返すカスタムツールを作る。</p>
+
+<p>カスタムツールの一番簡単な実装は、LangChainの<a href="https://api.python.langchain.com/en/latest/tools/langchain_core.tools.tool.html">toolデコレータ</a>を付けた関数を定義するだけ。
+このデコレータが、単なる関数をLangChainのツールにしてくれて、関数名からツール名を設定し、関数のdocstringからツールのdescriptionを設定してくれる。</p>
+
+<p>GroqのLLMの呼び出しには、LangChainの<a href="https://python.langchain.com/v0.2/docs/concepts/#chat-models">チャットモデルAPI</a>の<a href="https://python.langchain.com/v0.2/docs/integrations/chat/groq/">ChatGroq</a>が使える。
+これに前節で作ったZundokoアウトプットパーサをつなげてchainを作り、プロンプトを与えて<code>invoke</code>すればズンドコを生成できる。</p>
+
+<p>Zundokoアウトプットパーサは単なる関数なんだけど、LCELでつなぐと自動で<a href="https://api.python.langchain.com/en/latest/runnables/langchain_core.runnables.base.RunnableLambda.html">RunnableLambda</a>でラップされるので、chainのなかでRunnableとして機能できる。</p>
+
+<p><code>app/tools/zundoko.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_core.tools</span> <span style="color:#6ab825;font-weight:bold">import</span> tool
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_groq</span> <span style="color:#6ab825;font-weight:bold">import</span> ChatGroq
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">output_parsers.zundoko_parser</span> <span style="color:#6ab825;font-weight:bold">import</span> parse_zundoko
+
+_llm = ChatGroq(
+    model=<span style="color:#ed9d13">&#34;llama3-8b-8192&#34;</span>,
+    temperature=<span style="color:#3677a9">0</span>,
+)
+_chain = _llm | parse_zundoko
+
+<span style="color:#ffa500">@tool</span>
+<span style="color:#6ab825;font-weight:bold">def</span> <span style="color:#447fcf">zundoko</span>() -&gt; <span style="color:#24909d">str</span>:
+    <span style="color:#ed9d13">&#34;&#34;&#34;ズンかドコを取得する。&#34;&#34;&#34;</span>
+    <span style="color:#6ab825;font-weight:bold">return</span> _chain.invoke([
+        (<span style="color:#ed9d13">&#34;system&#34;</span>, <span style="color:#ed9d13">&#34;ズンかドコだけで回答してください。&#34;</span>),
+        (<span style="color:#ed9d13">&#34;human&#34;</span>, <span style="color:#ed9d13">&#34;ズンかドコのどちらかをランダムに返してください。&#34;</span>),
+    ])</code></pre></div>
+<h2 id="グラフ定義">グラフ定義</h2>
+
+<p>次はLangGraphでグラフを定義する。
+最初のほうにも貼ったけど、定義したいのは以下のようなグラフ。</p>
+
+<p><img src="/images/langgraph-zundoko-agent/graph.png" alt="graph.png" /></p>
+
+<p>LangGraphでグラフ全体を表すクラスは<a href="https://langchain-ai.github.io/langgraph/concepts/low_level/#stategraph">StateGraph</a>。
+これにStateのスキーマを渡してインスタンス化することからLangGraphのグラフ定義は始まる。</p>
+
+<p>グラフのStateには、LangGraphに組み込みの<a href="https://github.com/langchain-ai/langgraph/blob/0.2.4/libs/langgraph/langgraph/graph/message.py#L150">MessagesState</a>を使って、LLMの入出力のメッセージのリストを履歴として保管するようにする。
+MessagesStateは具体的には、<code>{ messages: list[Union[AIMessage, HumanMessage, ...]] }</code>というような型の、<code>messages</code>というキーだけ持ったdict。
+(実はMessagesStateを使うなら、StateGraphの代わりに<a href="https://langchain-ai.github.io/langgraph/concepts/low_level/#messagegraph">MessageGraph</a>を使うとちょっとだけ楽だけど、StateGraphのほうが汎用的なので今回はこちらを使う。)</p>
+
+<p>agent Nodeでは、OpenAIの<a href="https://platform.openai.com/docs/guides/function-calling">Function calling</a>機能を呼び出して、プロンプトとメッセージ履歴をもとに、実行するツールとツールの引数を決める処理をする。
+OpenAI(など)のFunction callingは、LangChainの<a href="https://python.langchain.com/v0.1/docs/modules/model_io/chat/function_calling/">Tool calling</a>機能で簡単に呼び出すことができる。</p>
+
+<p>Tool calling機能は、LangChainのチャットモデルAPI(OpenAIの場合は<a href="https://python.langchain.com/v0.2/docs/integrations/chat/openai/">ChatOpenAI</a>)に実装されている<code>bind_tools()</code>に使いたいツールを渡すだけで使える。
+<code>bind_tools()</code>したLLMを<code>invoke</code>すると、どのツールを呼ぶべきかを表す<a href="https://api.python.langchain.com/en/latest/messages/langchain_core.messages.tool.ToolCall.html#langchain_core.messages.tool.ToolCall">ToolCall</a>オブジェクトを含むメッセージ返してくれるので、それをagent Nodeから出力してStateを更新する。</p>
+
+<p>agent NodeからのびるEdgeでは、agent Nodeの最新の出力メッセージにToolCallが含まれていれば、ツールを実行する必要があると判定してtools Nodeに遷移し、含まれてなければ最終回答を得たと判定してEND Nodeに遷移する。
+このような条件分岐するEdgeは、<a href="https://langchain-ai.github.io/langgraph/reference/graphs/#langgraph.graph.StateGraph.add_conditional_edges">StateGraph.add_conditional_edges()</a>に、遷移先のNode名を返す関数を渡してやれば定義できる。</p>
+
+<p>tools Nodeでは、Stateの最新メッセージからToolCallを取得して、それに従って実際にツールを実行し、その結果をメッセージとして返し、Stateを更新する。
+ToolCallをもとにツールを実行するNodeは、LangGraphに組み込みの<a href="https://langchain-ai.github.io/langgraph/reference/prebuilt/#toolnode">ToolNodeクラス</a>で使いたいツールをラップするだけで定義できる。
+今回使うツールは、前節で実装したZundoko生成ツールだけ。</p>
+
+<p>tools Nodeからagent Nodeへ無条件に遷移するEdgeは、<a href="https://langchain-ai.github.io/langgraph/reference/graphs/#langgraph.graph.StateGraph.add_edge">StateGraph.add_edge()</a>に遷移前後のNodeの名前を渡すことで定義できる。</p>
+
+<p>START NodeとEND Nodeは自分で定義したりグラフに追加する必要はなく、それらに出入りするEdgeだけ定義してやればいい。
+START Nodeから最初に実行するNode (i.e. agent Node)へのEdgeの定義は、上記<code>StateGraph.add_edge()</code>でもできるけど、<a href="https://langchain-ai.github.io/langgraph/reference/graphs/#langgraph.graph.StateGraph.set_entry_point">StateGraph.set_entry_point()</a>というシンタックスシュガーが用意されているので、こちらを使う。<code>StateGraph.set_entry_point()</code>には遷移先のNode名を渡すだけでいい。</p>
+
+<p><br></p>
+
+<p>以上を踏まえた実際の実装が以下。</p>
+
+<p><code>app/main.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_core.runnables</span> <span style="color:#6ab825;font-weight:bold">import</span> RunnableLambda
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langchain_openai</span> <span style="color:#6ab825;font-weight:bold">import</span> ChatOpenAI
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langgraph.graph</span> <span style="color:#6ab825;font-weight:bold">import</span> END, MessagesState, StateGraph
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">langgraph.prebuilt</span> <span style="color:#6ab825;font-weight:bold">import</span> ToolNode
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">tools.zundoko</span> <span style="color:#6ab825;font-weight:bold">import</span> zundoko
+
+tools = [zundoko]
+tool_node = ToolNode(tools)
+
+llm = ChatOpenAI(model=<span style="color:#ed9d13">&#34;gpt-4o-mini&#34;</span>).bind_tools(tools)
+agent_node = RunnableLambda(
+    <span style="color:#6ab825;font-weight:bold">lambda</span> state: {<span style="color:#ed9d13">&#34;messages&#34;</span>: [llm.invoke(state[<span style="color:#ed9d13">&#34;messages&#34;</span>])]}
+)
+
+graph = StateGraph(MessagesState)
+graph.add_node(<span style="color:#ed9d13">&#34;agent&#34;</span>, agent_node)
+graph.add_node(<span style="color:#ed9d13">&#34;tools&#34;</span>, tool_node)
+graph.set_entry_point(<span style="color:#ed9d13">&#34;agent&#34;</span>)
+graph.add_conditional_edges(
+    <span style="color:#ed9d13">&#34;agent&#34;</span>,
+    <span style="color:#6ab825;font-weight:bold">lambda</span> state: <span style="color:#ed9d13">&#34;tools&#34;</span> <span style="color:#6ab825;font-weight:bold">if</span> state[<span style="color:#ed9d13">&#34;messages&#34;</span>][-<span style="color:#3677a9">1</span>].tool_calls <span style="color:#6ab825;font-weight:bold">else</span> END,
+)
+graph.add_edge(<span style="color:#ed9d13">&#34;tools&#34;</span>, <span style="color:#ed9d13">&#34;agent&#34;</span>)
+
+zundoko_agent = graph.<span style="color:#24909d">compile</span>()
+
+final_state = zundoko_agent.invoke({
+    <span style="color:#ed9d13">&#34;messages&#34;</span>: [<span style="color:#ed9d13">&#34;ズンかドコを5つ取得して&#34;</span>]
+})
+
+<span style="color:#6ab825;font-weight:bold">print</span>(final_state[<span style="color:#ed9d13">&#34;messages&#34;</span>][-<span style="color:#3677a9">1</span>].content)</code></pre></div>
+<p>グラフを定義した後<code>StateGraph.compile()</code>してるけど、これはグラフ構造のバリデーションとかをして、Runnableに変換してくれるメソッド。
+<code>compile()</code>時に<a href="https://langchain-ai.github.io/langgraph/concepts/low_level/#checkpointer">Checkpointer</a>とか<a href="https://langchain-ai.github.io/langgraph/concepts/low_level/#breakpoints">Breakpoint</a>とかを設定できるみたいだけど、今回はやらない。</p>
+
+<p><code>compile()</code>してできたZundokoエージェントには、とりあえず試しに「ズンかドコを5つ取得して」というプロンプトを与えた。</p>
+
+<p>まずはこれで実行してみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ export OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+$ export GROQ_API_KEY=gsk_yyyyyyyyyyyyyyyyyyyyyy
+$ python app/main.py
+ズン
+ズン
+ズン
+ズン
+ズン
+取得したズンかドコは以下の通りです：
+
+1. ズン
+2. ズン
+3. ズン
+4. ズン
+5. ズン
+
+全て「ズン」でした！</code></pre></div>
+<p><br></p>
+
+<p>すべてズンか…</p>
+
+<h2 id="tools-node改善">tools Node改善</h2>
+
+<p>Zundoko生成ツールにはズンかドコをランダムに生成してほしかったんだけど、うまく動かなかった。
+Zundoko生成ツールには、ぱっと見て以下の2つの問題があるように見える。</p>
+
+<ol>
+<li>ChatGroqの<a href="https://www.promptingguide.ai/jp/introduction/settings">temperature</a>に<code>0</code>を指定しているが、これは最低値で、LLMの創造性・ランダム性が最小になっている。</li>
+<li>プロンプトが単純すぎ。</li>
+</ol>
+
+<p>一つ目の問題に対しては、temperatureを最大の<code>1</code>に設定してやることで改善できるはず。</p>
+
+<p>二つ目の問題に対しては、ズンドコ生成履歴をプロンプトに与えることで、履歴をもとにズンドコの割合を忖度してもらうようにする。
+ついでに、キヨシしやすいようにズンを多めにしてもらうことにする。</p>
+
+<p><code>app/tools/zundoko.py</code>の差分:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> _llm = ChatGroq(
+     model=&#34;llama3-8b-8192&#34;,
+<span style="color:#d22323">-    temperature=0,
+</span><span style="color:#d22323"></span><span style="color:#589819">+    temperature=1,
+</span><span style="color:#589819"></span> )
+ _chain = _llm | parse_zundoko
+
+<span style="color:#589819">+zundoko_history = []
+</span><span style="color:#589819">+
+</span><span style="color:#589819"></span> @tool
+ def zundoko() -&gt; str:
+     &#34;&#34;&#34;ズンかドコを取得する。&#34;&#34;&#34;
+<span style="color:#d22323">-    return _chain.invoke([
+</span><span style="color:#d22323"></span><span style="color:#589819">+    response = _chain.invoke([
+</span><span style="color:#589819"></span>         (&#34;system&#34;, &#34;ズンかドコだけで回答してください。&#34;),
+<span style="color:#d22323">-        (&#34;human&#34;, &#34;ズンかドコのどちらかをランダムに返してください。&#34;),
+</span><span style="color:#d22323"></span><span style="color:#589819">+        (&#34;human&#34;, &#34;ズンかドコのどちらかをランダムに返してください。以前の結果をもとに、ややズン多めでお願いします。&#34;),
+</span><span style="color:#589819">+        (&#34;human&#34;, f&#34;以前の結果: {zundoko_history}&#34;),
+</span><span style="color:#589819"></span>     ])
+<span style="color:#589819">+    zundoko_history.append(response)
+</span><span style="color:#589819">+    return response
+</span></code></pre></div>
+<p><br></p>
+
+<p>ただし、このズンドコ生成履歴の仕組みは、ズンドコ生成ツールがシーケンシャルに呼ばれることを前提にしていて、そこにまた課題がある。</p>
+
+<p>agent Nodeが「ズンかドコを5つ取得して」というプロンプトに対して、ズンドコ生成ツールに対するToolCallを5個一度に生成することがあって、その場合、ToolNodeは全ToolCallを並列に処理してしまう。
+ToolNodeのこの挙動を変える設定は今のところない。</p>
+
+<h2 id="toolnodeでツールをシーケンシャルに実行させる">ToolNodeでツールをシーケンシャルに実行させる</h2>
+
+<p>LangChainのツールはRunnableなんだけど、Runnableには<a href="https://api.python.langchain.com/en/latest/runnables/langchain_core.runnables.config.RunnableConfig.html">RunnableConfig</a>という設定があって、<a href="https://python.langchain.com/v0.2/docs/how_to/lcel_cheatsheet/#runnablewith_config">Runnable.with_config()</a>で設定値を指定することで挙動を変えることができる。</p>
+
+<p>この設定の一つに<code>max_concurrency</code>というのがあって、1に設定すればRunnableの並列実行を防げる。
+これをズンドコ生成ツールに設定してみる。</p>
+
+<p><code>app/tools/zundoko.py</code>の差分:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"><span style="color:#d22323">-@tool
+</span><span style="color:#d22323"></span> def zundoko() -&gt; str:
+     &#34;&#34;&#34;ズンかドコを取得する。&#34;&#34;&#34;
+     response = _chain.invoke([
+         (&#34;system&#34;, &#34;ズンかドコだけで回答してください。&#34;),
+         (&#34;human&#34;, &#34;ズンかドコのどちらかをランダムに返してください。以前の結果をもとに、ややズン多めでお願いします。&#34;),
+         (&#34;human&#34;, f&#34;以前の結果: {zundoko_history}&#34;),
+     ])
+     zundoko_history.append(response)
+     return response
+
+<span style="color:#589819">+zundoko = tool(zundoko).with_config({&#34;max_concurrency&#34;: 1})
+</span></code></pre></div>
+<p>結論から言えば、この修正はだめだった。実行時に以下のエラーになる。
+理由はよくわからないけど、とにかくtoolデコレータはRunnableConfigを渡せるようになってないっぽい。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ python app/main.py
+Traceback (most recent call last):
+  File &#34;/root/zundoko-agent/app/main.py&#34;, line 8, in &lt;module&gt;
+    tool_node = ToolNode(tools).with_config({&#34;max_concurrency&#34;: 1})
+                ^^^^^^^^^^^^^^^
+  File &#34;/root/zundoko-agent/zundoko-agent/lib/python3.12/site-packages/langgraph/prebuilt/tool_node.py&#34;, line 81, in __init__
+    tool_ = create_tool(tool_)
+            ^^^^^^^^^^^^^^^^^^
+  File &#34;/root/zundoko-agent/zundoko-agent/lib/python3.12/site-packages/langchain_core/tools/convert.py&#34;, line 224, in tool
+    raise ValueError(&#34;Too many arguments for tool decorator&#34;)
+ValueError: Too many arguments for tool decorator</code></pre></div>
+<p><br></p>
+
+<p>別のアプローチを探る。</p>
+
+<p>ToolNodeのソースをみると、複数のToolCallを処理するとき、<a href="https://github.com/langchain-ai/langchain/blob/75c3c81b8c3fe534bcdc1ebbc2147b41079156e0/libs/core/langchain_core/runnables/config.py#L552">RunnableConfigのmax_concurrencyの値をmax_workersにセットしたContextThreadPoolExecutorをつくり</a>、<a href="https://github.com/langchain-ai/langgraph/blob/0.2.4/libs/langgraph/langgraph/prebuilt/tool_node.py#L90">それで並列実行</a>していた。
+そのRunnableConfigがどこからくるかというと、ToolNode自体のRunnableConfigが渡ってきているようだったので、ToolNodeに<code>max_concurrency</code>を設定してやってもよさそう。
+あまりきれいじゃないけど、今回はToolNodeで実行するのがズンドコ生成ツールだけなので特に問題ない。</p>
+
+<p>(<a href="https://python.langchain.com/v0.2/api_reference/core/tools/langchain_core.tools.convert.convert_runnable_to_tool.html">convert_runnable_to_tool</a>というのがあったのでこれを使ったらもっときれいだったかも。)</p>
+
+<p><code>app/main.py</code>の差分:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> tools = [zundoko]
+<span style="color:#d22323">-tool_node = ToolNode(tools)
+</span><span style="color:#d22323"></span><span style="color:#589819">+tool_node = ToolNode(tools).with_config({&#34;max_concurrency&#34;: 1})
+</span><span style="color:#589819"></span>
+ llm = ChatOpenAI(model=&#34;gpt-4o-mini&#34;).bind_tools(tools)
+</code></pre></div>
+<p><br></p>
+
+<p>これで実行してみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ python app/main.py
+ズン
+ドコ
+ズン
+ズン
+ズン
+取得したズンかドコは以下の通りです：
+
+1. ズン
+2. ドコ
+3. ズン
+4. ズン
+5. ズン
+
+ご覧のように、ズンが多く取得されました。</code></pre></div>
+<p>ちょっとズンが多すぎな気がするがまあよし。</p>
+
+<h2 id="zundokoエージェント完成">Zundokoエージェント完成</h2>
+
+<p>最後にプロンプトをズンドコキヨシにする。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> zundoko_agent = graph.compile()
+
+<span style="color:#d22323">-final_state = zundoko_agent.invoke({
+</span><span style="color:#d22323">-    &#34;messages&#34;: [&#34;ズンかドコを5つ取得して&#34;]
+</span><span style="color:#d22323">-})
+</span><span style="color:#d22323"></span><span style="color:#589819">+msg = &#34;&#34;&#34;
+</span><span style="color:#589819">+以下を実行してください。
+</span><span style="color:#589819">+1. ズンかドコを一つだけ取得する。
+</span><span style="color:#589819">+2. 直近で取得した5つのズンとドコを、取得した順に並べる
+</span><span style="color:#589819">+3. その結果を確認し、はじめに4つのズンが連続し、最後がドコになっていたら「キ・ヨ・シ！」を出力した後終了する。そうでなければ最初の手順に戻る。
+</span><span style="color:#589819">+&#34;&#34;&#34;
+</span><span style="color:#589819">+final_state = zundoko_agent.invoke({&#34;messages&#34;: msg}, {&#34;recursion_limit&#34;: 50})
+</span><span style="color:#589819"></span>
+ print(final_state[&#34;messages&#34;][-1].content)
+</code></pre></div>
+<p>プロンプトは、冒頭のツイートの内容を与えてもあまりうまく動いてくれなかったので、ステップを刻んでやってほしいことを正確に伝えるようにした。</p>
+
+<p>また、ズンドコエージェントを<code>invoke()</code>するときに、RunnableConfigの<code>recursion_limit</code>をデフォルトの25より多めに設定して、キヨシ判定に至るまでズンドコできる猶予を増やした。
+ちなみにキヨシ判定が遅れてNodeの実行回数が<code>recursion_limit</code>に至ると、以下のエラーになってしまう。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">langgraph.errors.GraphRecursionError: Recursion limit of 25 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.</code></pre></div>
+<p><br></p>
+
+<p>これで実行してみる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">$ python app/main.py
+ドコ
+ズン
+ズン
+ドコ
+ズン
+ズン
+ズン
+ズン
+ズン
+ズン
+ズン
+ドコ
+取得したズンとドコの順番は以下の通りです：
+
+1. ズン
+2. ズン
+3. ズン
+4. ズン
+5. ドコ
+
+最初の4つがズンで、最後がドコですので、「キ・ヨ・シ！」を出力します。</code></pre></div>
+<p>なんかぎこちないけど一応ズンドコキヨシできた。</p>
+
+<p><br></p>
+
+<p>実際のところ、何度か試した結果、結構キヨシ判定を間違うことが多かったので、GPT-4o miniはズンドコキヨシに向いてなさそうという知見を得た。</p></div>
+
+        <section class="share-buttons">
+          <div class="fb-share-button share-button" data-href="https://www.kaitoy.xyz/2024/08/20/langgraph-zundoko-agent/" data-layout="button_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">シェア</a></div>
+          <div class="share-button">
+            <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-text="ズンドコキヨシ with LangGraph/LangChain - ズンドコキヨシするLLMマルチエージェントをつくった" data-url="https://www.kaitoy.xyz/2024/08/20/langgraph-zundoko-agent/" data-show-count="true" data-count="horizontal">Tweet</a>
+          </div>
+          <div class="share-button">
+            <a href="https://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="basic-label-counter" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+          </div>
+          <div class="share-button">
+            <a data-pocket-label="pocket" data-pocket-count="horizontal" class="pocket-btn" data-lang="en"></a>
+            <script type="text/javascript">!function(d,i){if(!d.getElementById(i)){var j=d.createElement("script");j.id=i;j.src="https://widgets.getpocket.com/v1/j/btn.js?v=1";var w=d.getElementById(i);d.body.appendChild(j);}}(document,"pocket-btn-js");</script>
+          </div>
+        </section>
+    </div>
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-6244473643910448"
+         data-ad-slot="1845600530"
+         data-ad-format="auto"></ins>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+    <section class="tbd-pagination">
+      <div class="row">
+        <div class="col-sm-6">
+          <div class="prev">
+            
+            <a href="https://www.kaitoy.xyz/2024/07/24/langchain-k8s-agent/">
+              <i class="fa fa-angle-left"></i>
+              LangChainのAgentでKubernetes操作は楽になるのか
+            </a>
+            
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="next text-right">
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    
+
+    
+
+        <h4 class="page-header">Related</h4>
+
+        <div class="related-links">
+           <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/07/24/langchain-k8s-agent/">LangChainのAgentでKubernetes操作は楽になるのか</a></h4>
+    <h5>Wed, Jul 24, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">Kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/openai"><kbd class="item-tag">OpenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gpt"><kbd class="item-tag">GPT</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langchain"><kbd class="item-tag">LangChain</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/07/07/pgvector-opsi-agent/">LangChainとPostgreSQL (pgvector)でRAGを作る</a></h4>
+    <h5>Sun, Jul 7, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ops-i"><kbd class="item-tag">Ops I</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/rag"><kbd class="item-tag">rag</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/openai"><kbd class="item-tag">OpenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gpt"><kbd class="item-tag">GPT</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langchain"><kbd class="item-tag">LangChain</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langserve"><kbd class="item-tag">langserve</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/postgresql"><kbd class="item-tag">postgresql</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/06/24/is-copilot-good/">GitHub Copilotは本当に生産性を上げてくれたのか?</a></h4>
+    <h5>Mon, Jun 24, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/copilot"><kbd class="item-tag">copilot</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/06/14/langserve-opsi-agent/">Webマニュアルから知識を得るLangChainのRAGをLangServeでWebサーバにする</a></h4>
+    <h5>Fri, Jun 14, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ops-i"><kbd class="item-tag">Ops I</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/rag"><kbd class="item-tag">rag</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/openai"><kbd class="item-tag">OpenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gpt"><kbd class="item-tag">GPT</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langchain"><kbd class="item-tag">LangChain</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langserve"><kbd class="item-tag">langserve</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/06/04/langchain-opsi-agent/">Webマニュアルから知識を得るRAGをLangChainで作る</a></h4>
+    <h5>Tue, Jun 4, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ops-i"><kbd class="item-tag">Ops I</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/rag"><kbd class="item-tag">rag</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/openai"><kbd class="item-tag">OpenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gpt"><kbd class="item-tag">GPT</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langchain"><kbd class="item-tag">LangChain</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/04/28/ai-copyright-jp/">AIと著作権</a></h4>
+    <h5>Sun, Apr 28, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/copyright"><kbd class="item-tag">copyright</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/01/07/gpt-crawler/">GPT CrawlerとOpenAI Assistantsでシュッと作るAIアシスタント</a></h4>
+    <h5>Sun, Jan 7, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/ops-i"><kbd class="item-tag">Ops I</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gpt"><kbd class="item-tag">GPT</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/openai"><kbd class="item-tag">OpenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/12/20/k8s-zundoko-ansible-operator/">ズンドコキヨシ with Kubernetes Ansible Operator - Operator SDKのAnsible Operatorを使ってみた</a></h4>
+    <h5>Sun, Dec 20, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">Kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/operator-sdk"><kbd class="item-tag">operator-sdk</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/03/08/k8s-zundoko-operator/">ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</a></h4>
+    <h5>Fri, Mar 8, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">Kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubebuilder"><kbd class="item-tag">kubebuilder</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/golang"><kbd class="item-tag">golang</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/03/19/zundoko-kiyoshi-with-pcap4j/"> ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた</a></h4>
+    <h5>Sat, Mar 19, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+
+</div>
+ 
+        </div>
+    
+
+    
+
+        <h4 class="page-header">Comments</h4>
+
+        <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "kaitoy-tobedecided" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+
+</main>
+
+        <footer>
+
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+    </body>
+
+</html>
+

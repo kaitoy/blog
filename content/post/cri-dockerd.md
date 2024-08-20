@@ -2,7 +2,7 @@
 categories = ["Programming"]
 title = "Kubernetesでdockershimが廃止されても、KubernetesでDockerが使えなくなるわけじゃないよ"
 date = "2020-12-06T17:11:46+09:00"
-tags = ["kubernetes", "docker"]
+tags = ["Kubernetes", "docker"]
 draft = false
 cover = "kubernetes.png"
 slug = "cri-dockerd"

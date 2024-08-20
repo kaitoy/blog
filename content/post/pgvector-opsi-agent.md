@@ -2,7 +2,7 @@
 categories = ["Programming"]
 title = "LangChainとPostgreSQL (pgvector)でRAGを作る"
 date = "2024-07-07T18:29:58+09:00"
-tags = ["GenAI", "Ops I", "rag", "openai", "gpt", "langchain", "langserve", "postgresql"]
+tags = ["GenAI", "Ops I", "rag", "OpenAI", "GPT", "LangChain", "langserve", "postgresql"]
 draft = false
 cover = "langchain.png"
 slug = "pgvector-opsi-agent"

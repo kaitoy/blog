@@ -2,7 +2,7 @@
 categories = ["Programming"]
 title = "LangChainのAgentでKubernetes操作は楽になるのか"
 date = "2024-07-24T22:47:18+09:00"
-tags = ["GenAI", "kubernetes", "openai", "gpt", "langchain"]
+tags = ["GenAI", "Kubernetes", "OpenAI", "GPT", "LangChain"]
 draft = false
 cover = "langchain.png"
 slug = "langchain-k8s-agent"

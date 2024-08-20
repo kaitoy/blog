@@ -3,7 +3,7 @@ categories: ["Programming"]
 title: "Kubernetes Meetup Tokyo #21 - Cloud Native CI/CD に行ってきた"
 date: 2019-07-26
 cover: "k8s-meetup-tokyo.png"
-tags: ["kubernetes", "argo", "gitops", "spinnaker", "argo"]
+tags: ["Kubernetes", "argo", "gitops", "spinnaker", "argo"]
 slug: "k8s-meetup-tokyo-21"
 draft: false
 ---

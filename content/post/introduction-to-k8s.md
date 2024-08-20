@@ -4,7 +4,7 @@ title: "Kubernetes入門"
 date: 2019-07-27
 cover: "kubernetes.png"
 slug: "introduction-to-k8s"
-tags: ["kubernetes", "docker", "microservices"]
+tags: ["Kubernetes", "docker", "microservices"]
 draft: false
 ---
 

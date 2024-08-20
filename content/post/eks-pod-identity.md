@@ -2,7 +2,7 @@
 categories = ["Programming"]
 title = "IRSAに代わるEKS Pod Identityをさわる"
 date = "2023-12-25T11:28:21+09:00"
-tags = ["kubernetes", "aws", "eks"]
+tags = ["Kubernetes", "AWS", "eks"]
 draft = false
 cover = "eks.png"
 slug = "eks-pod-identity"

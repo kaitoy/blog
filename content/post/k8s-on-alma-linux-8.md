@@ -4,7 +4,7 @@ title: "Kubernetes 1.20 のクラスタを AlmaLinux 8で構築する"
 date: 2021-04-06T22:50:50+09:00
 cover: "kubernetes.png"
 slug: "k8s-on-alma-linux-8"
-tags: ["kubernetes", "alma-linux"]
+tags: ["Kubernetes", "alma-linux"]
 draft: false
 highlight: true
 highlightStyle: "monokai"

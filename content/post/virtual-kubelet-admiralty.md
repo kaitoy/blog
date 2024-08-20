@@ -2,7 +2,7 @@
 categories = ["Programming"]
 title = "Admiraltyのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする"
 date = "2021-12-09T08:35:35+09:00"
-tags = ["kubernetes", "k3s", "virtual-kubelet", "admiralty"]
+tags = ["Kubernetes", "k3s", "virtual-kubelet", "admiralty"]
 draft = false
 cover = "admiralty.png"
 slug = "virtual-kubelet-admiralty"

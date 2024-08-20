@@ -4,7 +4,7 @@ title: "Kubernetesのエコシステム ー Kubernetesクラスタ構築編"
 date: 2019-06-23
 cover: "kubernetes.png"
 slug: "k8s-ecosystem-preparing-k8s-cluster"
-tags: ["kubernetes"]
+tags: ["Kubernetes"]
 draft: false
 ---
 

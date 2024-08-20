@@ -2,7 +2,7 @@
 categories = ["Programming"]
 title = "IAM Roles for Service AccountsをLocalStackとAmazon EKS Pod Identity Webhookで実装する"
 date = "2022-09-25T14:19:11+09:00"
-tags = ["aws", "eks", "iam", "irsa", "kubernetes", "localstack"]
+tags = ["AWS", "eks", "iam", "irsa", "Kubernetes", "localstack"]
 draft = false
 cover = "eks.png"
 slug = "amazon-eks-pod-identity-webhook"

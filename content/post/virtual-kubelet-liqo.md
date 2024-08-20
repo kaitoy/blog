@@ -2,7 +2,7 @@
 categories = ["Programming"]
 title = "Liqoのvirtual-kubeletでKubernetesクラスタからk3sにPodをオフロードする"
 date = "2021-12-09T08:35:35+09:00"
-tags = ["kubernetes", "k3s", "virtual-kubelet", "liqo"]
+tags = ["Kubernetes", "k3s", "virtual-kubelet", "liqo"]
 draft = false
 cover = "admiralty.png"
 slug = "virtual-kubelet-liqo"

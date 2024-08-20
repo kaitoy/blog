@@ -2,7 +2,7 @@
 categories = ["Programming"]
 title = "EKSの外でIAM Roles for Service Accountsっぽいことを実現するMutating Admission Webhookを作った"
 date = "2022-09-04T22:14:29+09:00"
-tags = ["kubernetes", "eks", "irsa-emu", "localstack", "vault", "aws", "iam"]
+tags = ["Kubernetes", "eks", "irsa-emu", "localstack", "vault", "AWS", "iam"]
 draft = false
 cover = "eks.png"
 slug = "irsa-emu"

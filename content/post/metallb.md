@@ -2,7 +2,7 @@
 categories = ["Programming"]
 title = "MetalLB入門 ― オンプレKubernetesクラスタでLoadBalancerタイプのServiceを使う"
 date = "2020-10-31T12:27:15+09:00"
-tags = ["kubernetes", "metallb"]
+tags = ["Kubernetes", "metallb"]
 draft = false
 cover = "metallb.png"
 slug = "metallb"

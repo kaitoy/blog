@@ -2,7 +2,7 @@
 categories = ["Programming"]
 title = "AWS EKSのIAM Roles for Service Accountsを完全に理解した"
 date = "2022-09-17T21:44:49+09:00"
-tags = ["aws", "eks", "iam", "irsa", "kubernetes"]
+tags = ["AWS", "eks", "iam", "irsa", "Kubernetes"]
 draft = false
 cover = "eks.png"
 slug = "aws-irsa"

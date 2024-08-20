@@ -2,7 +2,7 @@
 categories = ["Programming"]
 title = "EKSとオンプレVMとの間でk3sクラスタを組む"
 date = "2021-08-16T11:21:51+09:00"
-tags = ["kubernetes", "k3s", "aws", "eks"]
+tags = ["Kubernetes", "k3s", "AWS", "eks"]
 draft = false
 cover = "k3s.svg"
 slug = "k3s-on-eks"

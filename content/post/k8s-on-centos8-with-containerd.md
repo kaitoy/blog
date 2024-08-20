@@ -4,7 +4,7 @@ title: "Kubernetes 1.16 のクラスタを CentOS 8 と containerd で構築す�
 date: 2019-12-05T00:23:16+09:00
 cover: "kubernetes.png"
 slug: "k8s-on-centos8-with-containerd"
-tags: ["kubernetes", "containerd"]
+tags: ["Kubernetes", "containerd"]
 draft: false
 highlight: true
 highlightStyle: "monokai"

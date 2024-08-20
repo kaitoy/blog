@@ -2,7 +2,7 @@
 categories = ["Programming"]
 title = "Rook/CephでCephFSを試す"
 date = "2020-10-11T12:27:15+09:00"
-tags = ["kubernetes", "rook", "ceph"]
+tags = ["Kubernetes", "rook", "ceph"]
 draft = false
 cover = "rook.png"
 slug = "rook-ceph"

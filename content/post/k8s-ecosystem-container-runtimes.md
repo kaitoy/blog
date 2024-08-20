@@ -4,7 +4,7 @@ title: "Kubernetesのエコシステム ー コンテナランタイム編"
 date: 2019-06-15
 cover: "kubernetes.png"
 slug: "k8s-ecosystem-container-runtimes"
-tags: ["kubernetes", "docker", "containerd"]
+tags: ["Kubernetes", "docker", "containerd"]
 draft: false
 ---
 

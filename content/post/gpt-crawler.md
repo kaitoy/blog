@@ -2,7 +2,7 @@
 categories = ["Programming"]
 title = "GPT CrawlerとOpenAI Assistantsでシュッと作るAIアシスタント"
 date = "2024-01-07T13:22:19+09:00"
-tags = ["Ops I", "gpt", "openai", "GenAI"]
+tags = ["Ops I", "GPT", "OpenAI", "GenAI"]
 draft = false
 cover = "openai.png"
 slug = "gpt-crawler"

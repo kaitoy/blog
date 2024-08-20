@@ -2,7 +2,7 @@
 categories = ["Programming"]
 title = "Crunchy DataのPostgreSQL Operator (PGO)はOSSじゃない"
 date = "2022-09-10T10:41:01+09:00"
-tags = ["kubernetes", "postgresql", "pgo", "license"]
+tags = ["Kubernetes", "postgresql", "pgo", "license"]
 draft = false
 cover = "pgo.png"
 slug = "crunchy-data-pgo-is-not-oss"

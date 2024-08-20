@@ -4,7 +4,7 @@ title: "Kubernetesのエコシステム ー Kubernetesバリエーションと�
 date: 2019-08-14
 cover: "kubernetes.png"
 slug: "k8s-ecosystem-k8s-variations-and-container-host-oses"
-tags: ["kubernetes"]
+tags: ["Kubernetes"]
 draft: false
 ---
 
