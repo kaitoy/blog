@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+        <script data-ad-client="ca-pub-6244473643910448" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/2024/08/22/aws-open-proxy/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/2024/08/22/aws-open-proxy/">
+
+
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="AWSでEC2インスタンスの起動をブロックされたときにしたこと | To Be Decided">
+  <title>AWSでEC2インスタンスの起動をブロックされたときにしたこと | To Be Decided</title>
+  <meta property="og:description" content="AWSつかってたら、何もしてないのに壊れてEC2の起動ができなくなった話。
+
+AWSで(AWS以外でも)open proxyを立ててはいけないという話でもある。">
+  <meta name="description" content="AWSつかってたら、何もしてないのに壊れてEC2の起動ができなくなった話。
+
+AWSで(AWS以外でも)open proxyを立ててはいけないという話でもある。">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/aws.png">
+
+
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <style>
+
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+<script>
+  var webFontConfig = {
+    google: {
+      families: ['Noto Sans JP:400,700:japanese'],
+      active: function() {
+        sessionStorage.fonts = true;
+      }
+    },
+    timeout: 3000
+  };
+  WebFont.load(webFontConfig);
+</script>
+
+
+
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
+        
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
+    
+
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v9.0" nonce="WjvU2Pqv"></script>
+
+        <nav class="navbar navbar-default navbar-fixed-top">
+
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">AWSでEC2インスタンスの起動をブロックされたときにしたこと</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    <div class="single-post">
+        <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/08/22/aws-open-proxy/">AWSでEC2インスタンスの起動をブロックされたときにしたこと</a></h4>
+    <h5>Thu, Aug 22, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">AWS</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ec2"><kbd class="item-tag">EC2</kbd></a>
+    
+
+</div>
+
+
+        <div class="cover">
+            <a href="/2024/08/22/aws-open-proxy/">
+                <img src="https://www.kaitoy.xyz/images/aws.png" alt="AWSでEC2インスタンスの起動をブロックされたときにしたこと">
+            </a>
+        </div>
+
+        
+        <h4 class="page-header">Table of Contents</h4>
+        <aside>
+            <nav id="TableOfContents">
+<ul>
+<li><a href="#ec2インスタンスの起動ができない">EC2インスタンスの起動ができない</a></li>
+<li><a href="#aws-trust-safetyからのメール①">AWS Trust &amp; Safetyからのメール①</a></li>
+<li><a href="#open-proxyとは">Open Proxyとは</a></li>
+<li><a href="#aws-acceptable-use-policy">AWS Acceptable Use Policy</a></li>
+<li><a href="#aws-trust-safetyからのメール②">AWS Trust &amp; Safetyからのメール②</a></li>
+<li><a href="#aws-trust-safetyからのメール③">AWS Trust &amp; Safetyからのメール③</a></li>
+<li><a href="#aws-trust-safetyからの最終通告">AWS Trust &amp; Safetyからの最終通告</a></li>
+<li><a href="#対策と復旧と反省">対策と復旧と反省</a></li>
+</ul>
+</nav>
+        </aside>
+        <hr>
+        
+
+        <br> <div class="text-justify"><p>AWSつかってたら、何もしてないのに壊れてEC2の起動ができなくなった話。</p>
+
+<p>AWSで(AWS以外でも)open proxyを立ててはいけないという話でもある。</p>
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+
+<h1 id="ec2インスタンスの起動ができない">EC2インスタンスの起動ができない</h1>
+
+<p>7月のある日、いつもの通りAWSのマネジメントコンソールにログインしてCloud9の開発環境を立ち上げようとしたら、以下のエラーになった。</p>
+
+<blockquote>
+<p>Cloud9 could not connect to the EC2 instance. Please check your VPC configuration and network settings to troubleshoot the issue.</p>
+</blockquote>
+
+<p>Cloud9サービスから、EC2インスタンスに接続できなかったというエラー。
+VPCやネットワークの設定を見直せとあるが、いつも使っている環境なのでそこに問題はないはず。</p>
+
+<p>エラーになったCloud9環境に紐づいているEC2インスタンスを確認したら、起動してなかった。
+そのEC2インスタンスを直接マネジメントコンソールから起動してみたら、今度は以下のエラーになった。</p>
+
+<blockquote>
+<p>This request has been administratively disabled.</p>
+</blockquote>
+
+<p>インスタンスの起動が管理者によって禁止されてるらしい。</p>
+
+<p>管理者?</p>
+
+<h1 id="aws-trust-safetyからのメール①">AWS Trust &amp; Safetyからのメール①</h1>
+
+<p>あまり心当たりがないまま調べていたら、AWS Trust &amp; Safetyから気になるメールが何通か来ていたことに気づいた。</p>
+
+<p>7月10日に一通目:</p>
+
+<blockquote>
+<p>Your AWS Abuse Report from ec2-abuse@amazon.com</p>
+
+<p>We&rsquo;ve received a report(s) that your AWS resource(s) has been operating in a way that resembles an open proxy.
+Operating an open proxy is forbidden in the AWS Acceptable Use Policy (<a href="http://aws.amazon.com/aup/">http://aws.amazon.com/aup/</a>).
+We’ve included the original report below for your review.
+Please take action to stop the reported activity and reply directly to this email with details of the corrective action you have taken.
+If you do not consider the activity described in these reports to be abusive, please reply to this email with details of your use case.
+If you&rsquo;re unaware of this activity, it&rsquo;s possible that your environment has been compromised by an external attacker, or vulnerability is allowing your machine to be used in a way that it was not intended.</p>
+</blockquote>
+
+<p>要は、お前のAWSアカウントでopen proxyっぽいものが動いているっぽくて、AWS Acceptable Use Policyに違反しているから対策しろ、という連絡。</p>
+
+<h1 id="open-proxyとは">Open Proxyとは</h1>
+
+<p><a href="https://ja.wikipedia.org/wiki/%E5%85%AC%E9%96%8B%E3%83%97%E3%83%AD%E3%82%AD%E3%82%B7">open proxy</a>は、アクセス元やアクセス先を制限せず、認証もなしにだれでも使えるようなHTTPプロキシのこと。</p>
+
+<p>クラッカーがアクセス元を隠すために使ったり、スパムメール送信に使われたりするので、よろしくない。</p>
+
+<h1 id="aws-acceptable-use-policy">AWS Acceptable Use Policy</h1>
+
+<p><a href="http://aws.amazon.com/aup/">AWS Acceptable Use Policy</a> (AWS 利用規約)には以下のように書かれている。</p>
+
+<blockquote>
+<p>お客様は本サービスまたは AWS サイトを使用したり、他者の使用を助長したり、許可したりすることはできません。</p>
+
+<ul>
+<li>違法行為または不正行為のため、</li>
+<li>他者の権利を侵害すること、</li>
+<li>暴力、テロリズム、その他の重大な危害について、脅したり、煽ったり、促進したり、積極的に勧めたりすること、</li>
+<li>児童の性的搾取や虐待を助長するような内容や活動、</li>
+<li>ユーザー、ネットワーク、コンピュータ、通信システム、ソフトウェアアプリケーション、ネットワークデバイス、またはコンピューティングデバイスのセキュリティ、整合性、可用性を侵害すること、</li>
+<li>未承諾の大量電子メールまたはその他のメッセージ、プロモーション、広告、または勧誘 (または「スパム」) を配信、公開、送信、または送信を促進すること。</li>
+</ul>
+</blockquote>
+
+<p>確かに、open proxyは利用規約に挙げられている禁止項目のだいたいに抵触してるように見える。</p>
+
+<h1 id="aws-trust-safetyからのメール②">AWS Trust &amp; Safetyからのメール②</h1>
+
+<p>連絡を受けたAWSアカウントは70人以上で使ってる環境で、open proxyに関して自分では立ててない認識だったので、7/10の一通目をスルーしてたら、次の日に2通目が来ていた。</p>
+
+<blockquote>
+<p>We recently sent an abuse report for Open Proxy originating from instance i-xxxxxxxxxxxxxxxxx.
+We see the instance has been terminated.
+However, we’ve received an additional abuse report.
+We wanted to bring this to your attention as this report is for a different instance: i-yyyyyyyyyyyyy.
+I’ve added the report below for you to review.
+Please provide us with details on the corrective measures you have taken to prevent abuse from happening in the future.
+Once we have this information we can finish our investigation into this case and resolve it.
+Thank you for your attention in this matter.</p>
+</blockquote>
+
+<p>最初にopen proxyを検出したEC2インスタンスは消えたけど、別のインスタンスでもopen proxyが検出されたとのこと。</p>
+
+<p>二度とopen proxyが起動しないように対策しろとあるが、これも華麗にスルー。</p>
+
+<h1 id="aws-trust-safetyからのメール③">AWS Trust &amp; Safetyからのメール③</h1>
+
+<p>7月12日に3通目:</p>
+
+<blockquote>
+<p>If we have not heard back from you regarding this case.
+Please provide us an update of the steps you are taking to resolve this issue.
+Without confirmation that the matter has been successfully addressed, we may have to take action against your instance or account to mitigate the issue.
+Thank you for your attention in this matter.</p>
+</blockquote>
+
+<p>無視してないで対策の進捗を報告しろ。さもなくばお前のインスタンスかアカウントを制限するぞという警告。</p>
+
+<p>今見ると結構温まってきているようでやばそうなんだけど、当時は華金だったのでスルー。</p>
+
+<h1 id="aws-trust-safetyからの最終通告">AWS Trust &amp; Safetyからの最終通告</h1>
+
+<p>スルーし続けていたら、7月14日の日曜日に最終通告が来てた:</p>
+
+<blockquote>
+<p>FINAL NOTIFICATION</p>
+
+<p>Hello.
+We have not received a response regarding the abuse report implicating resources on your account.
+To mitigate the abuse, we have taken the following steps:</p>
+
+<p>Blocked the ability to Stop and Start EC2 Instances in ap-northeast-1 region</p>
+
+<p>AWS Account ID: 123456789
+Region(s): ap-northeast-1
+Reported Activity: Open Proxy
+Abuse Time: 10 Jul 2024 02:21:07 UTC</p>
+
+<p>The reported activity listed below violates the AWS Acceptable Use Policy (<a href="https://aws.amazon.com/aup/">https://aws.amazon.com/aup/</a>).
+In order to resolve this report please reply to this email with the corrective action token to cease the activity.
+Required Actions: Investigate root cause
+If you require further assistance with resolving this abuse report/complaint please see: <a href="https://aws.amazon.com/premiumsupport/knowledge-center/aws-abuse-report/">https://aws.amazon.com/premiumsupport/knowledge-center/aws-abuse-report/</a>
+If you do not consider the activity to be abusive, please reply to this email detailing the reasons why.</p>
+</blockquote>
+
+<p>連絡がなかったから、ap-northeast-1でのEC2インスタンスの起動停止をブロックした、解除してほしくば根本原因を調査しろとのこと。</p>
+
+<p>Hello.の時点でちょっと怖い。すみませんでした。</p>
+
+<h1 id="対策と復旧と反省">対策と復旧と反省</h1>
+
+<p>Open Proxyのインスタンスを削除して、経緯と今後の対策をメールで返信したら、すぐにブロックを解除してくれた。</p>
+
+<p>反省点としては、AWSでOpen Proxyを一時的にでも立てないことと、AWSからのメールには迅速に対応すること。</p>
+
+<p>AWSでHTTPプロキシ立てるときは、セキュリティグループでアクセス元IPアドレスを絞ったり、アウトバウンド通信のIPアドレスやポートを制限したり、認証付けたりすべし。</p></div>
+
+        <section class="share-buttons">
+          <div class="fb-share-button share-button" data-href="https://www.kaitoy.xyz/2024/08/22/aws-open-proxy/" data-layout="button_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">シェア</a></div>
+          <div class="share-button">
+            <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-text="AWSでEC2インスタンスの起動をブロックされたときにしたこと" data-url="https://www.kaitoy.xyz/2024/08/22/aws-open-proxy/" data-show-count="true" data-count="horizontal">Tweet</a>
+          </div>
+          <div class="share-button">
+            <a href="https://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="basic-label-counter" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+          </div>
+          <div class="share-button">
+            <a data-pocket-label="pocket" data-pocket-count="horizontal" class="pocket-btn" data-lang="en"></a>
+            <script type="text/javascript">!function(d,i){if(!d.getElementById(i)){var j=d.createElement("script");j.id=i;j.src="https://widgets.getpocket.com/v1/j/btn.js?v=1";var w=d.getElementById(i);d.body.appendChild(j);}}(document,"pocket-btn-js");</script>
+          </div>
+        </section>
+    </div>
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-6244473643910448"
+         data-ad-slot="1845600530"
+         data-ad-format="auto"></ins>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+    <section class="tbd-pagination">
+      <div class="row">
+        <div class="col-sm-6">
+          <div class="prev">
+            
+            <a href="https://www.kaitoy.xyz/2024/08/20/langgraph-zundoko-agent/">
+              <i class="fa fa-angle-left"></i>
+              ズンドコキヨシ with LangGraph/LangChain - ズンドコキヨシするLLMマルチエージェントをつくった
+            </a>
+            
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="next text-right">
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    
+
+    
+
+        <h4 class="page-header">Related</h4>
+
+        <div class="related-links">
+           <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2023/12/25/eks-pod-identity/">IRSAに代わるEKS Pod Identityをさわる</a></h4>
+    <h5>Mon, Dec 25, 2023</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">Kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">AWS</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/eks"><kbd class="item-tag">eks</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2022/09/25/amazon-eks-pod-identity-webhook/">IAM Roles for Service AccountsをLocalStackとAmazon EKS Pod Identity Webhookで実装する</a></h4>
+    <h5>Sun, Sep 25, 2022</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">AWS</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/eks"><kbd class="item-tag">eks</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/iam"><kbd class="item-tag">iam</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/irsa"><kbd class="item-tag">irsa</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">Kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/localstack"><kbd class="item-tag">localstack</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2022/09/17/aws-irsa/">AWS EKSのIAM Roles for Service Accountsを完全に理解した</a></h4>
+    <h5>Sat, Sep 17, 2022</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">AWS</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/eks"><kbd class="item-tag">eks</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/iam"><kbd class="item-tag">iam</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/irsa"><kbd class="item-tag">irsa</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">Kubernetes</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2022/09/04/irsa-emu/">EKSの外でIAM Roles for Service Accountsっぽいことを実現するMutating Admission Webhookを作った</a></h4>
+    <h5>Sun, Sep 4, 2022</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">Kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/eks"><kbd class="item-tag">eks</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/irsa-emu"><kbd class="item-tag">irsa-emu</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/localstack"><kbd class="item-tag">localstack</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/vault"><kbd class="item-tag">vault</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">AWS</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/iam"><kbd class="item-tag">iam</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2021/08/16/k3s-on-eks/">EKSとオンプレVMとの間でk3sクラスタを組む</a></h4>
+    <h5>Mon, Aug 16, 2021</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">Kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/k3s"><kbd class="item-tag">k3s</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">AWS</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/eks"><kbd class="item-tag">eks</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/12/11/goslings-development-memo0-intro-design/">Goslings開発メモ - その0: 紹介と概要と設計編</a></h4>
+    <h5>Sun, Dec 11, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/goslings"><kbd class="item-tag">goslings</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring"><kbd class="item-tag">spring</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/spring-boot"><kbd class="item-tag">spring-boot</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/jgit"><kbd class="item-tag">jgit</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws"><kbd class="item-tag">AWS</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/aws-ecs"><kbd class="item-tag">aws-ecs</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/git"><kbd class="item-tag">git</kbd></a>
+    
+
+</div>
+ 
+        </div>
+    
+
+    
+
+        <h4 class="page-header">Comments</h4>
+
+        <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "kaitoy-tobedecided" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+
+</main>
+
+        <footer>
+
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+    </body>
+
+</html>
+

@@ -1,9 +1,9 @@
 +++
 categories = ["Programming"]
 title = "AWSでEC2インスタンスの起動をブロックされたときにしたこと"
-date = "2024-08-21T16:49:30+09:00"
+date = "2024-08-22T16:49:30+09:00"
 tags = ["AWS", "EC2"]
-draft = true
+draft = false
 cover = "aws.png"
 slug = "aws-open-proxy"
 highlight = false
