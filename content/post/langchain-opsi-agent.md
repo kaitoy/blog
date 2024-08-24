@@ -337,7 +337,7 @@ Ops Iにはいくつかの機能があります。その中で、主な機能は
 
 ```console
 $ export OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-$ python main.py "Ops Iの機能を教えて"
+$ python main.py "ピカチュウの進化前は?"
 Fetching pages: 100%|################################################################| 122/122 [00:07<00:00, 16.05it/s]
 知るかボケ
 ```
