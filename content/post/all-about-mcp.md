@@ -163,7 +163,7 @@ MCPのクライアント機能には以下がある。
 
 * [Sampling](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
 
-    **MCPサーバーがMCPホスト側のLLMを利用できる機能。** samplingは、補完(completion)や生成(generation)を包含した言葉。
+    **MCPサーバーがMCPホスト側のLLMを利用するための機能。** samplingは、補完(completion)や生成(generation)を包含した言葉。
 
     MCPサーバーにAIエージェントみたいな、自然言語を扱う処理をさせたいけど、MCPサーバー提供者がLLMを用意できなかったりLLM利用費を持ちたくなかったするときに使える、と思う。
     MCPクライアントに`sampling/createMessage`リクエストでプロンプトを送ると、MCPホストのLLMでレスポンスを作ってMCPサーバーに返してくれる、という感じ。
@@ -188,7 +188,7 @@ MCPサーバ、MCPクライアントのどちらからでもリクエストで�
 
 * [Progress](https://modelcontextprotocol.io/specification/2025-06-18/basic/utilities/progress)
 
-    どちらかのコンポーネントが送ったリクエストを他方が処理中に、**その処理の進捗をリクエスト元に通知できる機能。**
+    どちらかのコンポーネントが送ったリクエストを他方が処理中に、**その処理の進捗をリクエスト元に通知するための機能。**
 
     リクエスト元が任意のリクエストオブジェクトに`progressToken`を入れて送ると、他方が`notifications/progress`という通知で、処理の全量(`total`)と完了した量(`progress`)を数値で知らせることができる。通知には進捗メッセージを入れることもできる。
 
