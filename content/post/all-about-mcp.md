@@ -1,17 +1,15 @@
 +++
 categories = ["Programming"]
-title = "ズンドコキヨシ with MCP - MCPの機能全部盛り (その1)"
+title = "ツールだけじゃない。MCPの全機能を完全に理解する"
 date = "2025-11-23T23:40:19+09:00"
-tags = ["MCP", "GenAI", "LLM", "zundoko"]
+tags = ["MCP", "GenAI", "LLM"]
 draft = false
 cover = "mcp.png"
-slug = "zundoko-mcp-server-1"
+slug = "all-about-mcp"
 highlight = false
 +++
 
-MCPの(ほぼ)全機能を実装したズンドコMCPサーバを実装し、MCPを完全に理解した話。
-長くなるので、複数の記事に分けて書く。
-この記事はMCPの解説まで。
+MCPの概要から全機能まで解説し、MCPを完全に理解できる記事。
 
 <!--more-->
 
@@ -57,7 +55,7 @@ Function Callingは関数呼び出しによって外部データの取得がで�
 
 具体的には、Function CallingでAWSのS3に格納されたデータを読むには、Function Callからバケット名とキーを取得して、それをboto3のS3 APIに渡してオブジェクトを読むみたいな処理を開発者が頑張って書く必要がある。
 
-![un-unified-access.png](/images/zundoko-mcp-server-1/un-unified-access.png)
+![un-unified-access.png](/images/all-about-mcp/un-unified-access.png)
 
 この図は、LLMからのFunction Callに応じて、AIアプリが外部システム毎に個別の処理でアクセスしないといけない煩雑さを表している。
 
@@ -69,7 +67,7 @@ Anthropicによって提唱され、AIアプリの開発効率を向上し、エ
 
 **MCPを活用すれば、AIアプリが統一されたインターフェースで外部システムと接続でき、前節で述べたような問題が解消される。**
 
-![unified-access.png](/images/zundoko-mcp-server-1/unified-access.png)
+![unified-access.png](/images/all-about-mcp/unified-access.png)
 
 なお、ここまでFunctionとか関数とか言ってたものは、MCPの世界ではToolとかツールとか呼ばれるので、以降ではそう呼ぶ。
 
@@ -207,6 +205,6 @@ MCPサーバ、MCPクライアントのどちらからでもリクエストで�
 Resourcesはたまに見るくらいで、Elicitationは[Azure MCPサーバー](https://learn.microsoft.com/ja-jp/azure/developer/azure-mcp-server/)が使ってるのを見た、くらい。
 PromptsはクライアントとしてはClaude Codeとかが対応しているけど、実装しているサーバーはあまり見た覚えがない。
 
-ということで、自分で実装して動きを確かめてみた。
+ということで、自分でMCPサーバーとクライアントを実装して動きを確かめてみた。
 題材はズンドコキヨシ。
-実装については次回以降の記事で。
+その実装についてはまた別の記事で。
