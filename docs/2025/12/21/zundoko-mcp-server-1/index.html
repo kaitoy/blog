@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+        <script data-ad-client="ca-pub-6244473643910448" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+<meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
+<meta property="og:url" content="https://www.kaitoy.xyz/2025/12/21/zundoko-mcp-server-1/">
+<meta property="og:site_name" content="To Be Decided">
+<meta name="twitter:card" content="summary"></meta>
+<link rel="canonical" href="https://www.kaitoy.xyz/2025/12/21/zundoko-mcp-server-1/">
+
+
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="ズンドコキヨシ with MCP - MCPの機能全部盛り (その1) | To Be Decided">
+  <title>ズンドコキヨシ with MCP - MCPの機能全部盛り (その1) | To Be Decided</title>
+  <meta property="og:description" content="MCPの(ほぼ)全機能を実装したズンドコMCPサーバーをFastMCP 2.0で実装し、MCPを完全に理解した話。
+長くなるので、複数の記事に分けて書く。">
+  <meta name="description" content="MCPの(ほぼ)全機能を実装したズンドコMCPサーバーをFastMCP 2.0で実装し、MCPを完全に理解した話。
+長くなるので、複数の記事に分けて書く。">
+  <meta property="og:image" content="https://www.kaitoy.xyz/images/fastmcp.png">
+
+
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <style>
+
+    html body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background-color: #fefefe;
+    }
+
+    :root {
+        --accent: #fa1e44;
+        --border-width:  5px ;
+    }
+
+</style>
+
+
+<link rel="stylesheet" href="https://www.kaitoy.xyz/css/main.css">
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+<script>
+  var webFontConfig = {
+    google: {
+      families: ['Noto Sans JP:400,700:japanese'],
+      active: function() {
+        sessionStorage.fonts = true;
+      }
+    },
+    timeout: 3000
+  };
+  WebFont.load(webFontConfig);
+</script>
+
+
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"> 
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+ 
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js"></script>
+
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/languages/python.min.js"></script>  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/languages/console.min.js"></script>  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/languages/diff.min.js"></script> 
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+
+<script>$(document).on('click', function() { $('.collapse').collapse('hide'); })</script>
+ <meta name="generator" content="Hugo 0.55.1" />
+        
+        
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-65248565-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments)};
+          gtag('js', new Date());
+
+          gtag('config', 'UA-65248565-1');
+        </script>
+        
+    </head>
+
+    
+
+    <body>
+         
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v9.0" nonce="WjvU2Pqv"></script>
+
+        <nav class="navbar navbar-default navbar-fixed-top">
+
+            <div class="container">
+
+                <div class="navbar-header">
+
+                    <a class="navbar-brand visible-xs" href="#">ズンドコキヨシ with MCP - MCPの機能全部盛り (その1)</a>
+
+                    <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                </div>
+
+                <div class="collapse navbar-collapse">
+
+                    
+                        <ul class="nav navbar-nav">
+                            
+                                <li><a href="/">Home</a></li>
+                            
+                                <li><a href="/post/">Posts</a></li>
+                            
+                                <li><a href="/tags/">Tags</a></li>
+                            
+                                <li><a href="/about/">About</a></li>
+                            
+                        </ul>
+                    
+
+                    
+                        <ul class="nav navbar-nav navbar-right">
+                            
+                                <li class="navbar-icon"><a href="mailto:kaitoy@pcap4j.org"><i class="fa fa-envelope-o"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://github.com/kaitoy"><i class="fa fa-github"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.linkedin.com/in/kaito-yamada-8558b913a"><i class="fa fa-linkedin"></i></a></li>
+                            
+                                <li class="navbar-icon"><a href="https://www.facebook.com/yamada.kaito.90"><i class="fa fa-facebook-square"></i></a></li>
+                            
+                        </ul>
+                    
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+<main>
+
+    <div class="single-post">
+        <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2025/12/21/zundoko-mcp-server-1/">ズンドコキヨシ with MCP - MCPの機能全部盛り (その1)</a></h4>
+    <h5>Sun, Dec 21, 2025</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/mcp"><kbd class="item-tag">MCP</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/llm"><kbd class="item-tag">LLM</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/fastmcp"><kbd class="item-tag">FastMCP</kbd></a>
+    
+
+</div>
+
+
+        <div class="cover">
+            <a href="/2025/12/21/zundoko-mcp-server-1/">
+                <img src="https://www.kaitoy.xyz/images/fastmcp.png" alt="ズンドコキヨシ with MCP - MCPの機能全部盛り (その1)">
+            </a>
+        </div>
+
+        
+        <h4 class="page-header">Table of Contents</h4>
+        <aside>
+            <nav id="TableOfContents">
+<ul>
+<li><a href="#mcpについて">MCPについて</a></li>
+<li><a href="#ズンドコmcpサーバー-クライアント">ズンドコMCPサーバー・クライアント</a></li>
+<li><a href="#fastmcp">FastMCP</a></li>
+<li><a href="#fastmcpの使い方">FastMCPの使い方</a>
+<ul>
+<li><a href="#fastmcpでtoolsを実装">FastMCPでToolsを実装</a></li>
+<li><a href="#fastmcpでresourcesを実装">FastMCPでResourcesを実装</a></li>
+<li><a href="#fastmcpでresource-templatesを実装">FastMCPでResource Templatesを実装</a></li>
+<li><a href="#fastmcpでリソース変更通知とクライアントを実装">FastMCPでリソース変更通知とクライアントを実装</a></li>
+<li><a href="#fastmcpでloggingを実装">FastMCPでLoggingを実装</a></li>
+<li><a href="#fastmcpでpromptsを実装">FastMCPでPromptsを実装</a></li>
+</ul></li>
+</ul>
+</nav>
+        </aside>
+        <hr>
+        
+
+        <br> <div class="text-justify"><p>MCPの(ほぼ)全機能を実装したズンドコMCPサーバーをFastMCP 2.0で実装し、MCPを完全に理解した話。
+長くなるので、複数の記事に分けて書く。</p>
+
+<p><blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">Javaの講義、試験が「自作関数を作り記述しなさい」って問題だったから<br>「ズン」「ドコ」のいずれかをランダムで出力し続けて「ズン」「ズン」「ズン」「ズン」「ドコ」の配列が出たら「キ・ヨ・シ！」って出力した後終了って関数作ったら満点で単位貰ってた</p>&mdash; てくも (@kumiromilk) <a href="https://twitter.com/kumiromilk/status/707437861881180160">2016年3月9日</a></blockquote>
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script></p>
+
+<p>なお、この記事には生成AIの出力が含まれる。</p>
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6244473643910448"
+     data-ad-slot="1845600530"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+
+<h1 id="mcpについて">MCPについて</h1>
+
+<p><a href="https://modelcontextprotocol.io/">Model Context Protocol (MCP)</a> は、AIアプリが外部システムとやりとりするためのプロトコル。</p>
+
+<p><a href="https://www.kaitoy.xyz/2025/11/23/all-about-mcp/">以前の記事</a>で詳しく解説した。</p>
+
+<h1 id="ズンドコmcpサーバー-クライアント">ズンドコMCPサーバー・クライアント</h1>
+
+<p>MCPのいろいろな機能を試すため、以下の機能を備えたズンドコMCPサーバーとズンドコクライアントを開発した。</p>
+
+<ul>
+<li>MCPサーバー機能
+
+<ul>
+<li>Tools
+
+<ul>
+<li><code>get_zundoko</code>: 「ズン」か「ドコ」をランダムにひとつ生成する。</li>
+<li><code>check_kiyoshi</code>: 「キ・ヨ・シ！」条件を満たすかチェックする。</li>
+<li><code>reset_zundoko_kiyoshi</code>: ズンドコ履歴とキヨシ状態をリセットする。</li>
+</ul></li>
+<li>Resources
+
+<ul>
+<li><code>zundoko://history</code>: <code>get_zundoko</code>で生成したズンドコの履歴。
+
+<ul>
+<li>ズンドコ履歴の変更通知に対応。</li>
+</ul></li>
+<li><code>zundoko://kiyoshi</code>: 「キ・ヨ・シ！」をしたことがあれば、その記録。（i.e. キヨシ状態）
+
+<ul>
+<li>キヨシ状態の変更通知に対応。</li>
+</ul></li>
+</ul></li>
+<li>Resource Templates
+
+<ul>
+<li><code>zundoko://history/{index}</code>: ズンドコ履歴内の特定の回次のズンドコ。</li>
+</ul></li>
+<li>Prompts
+
+<ul>
+<li><code>explain_zundoko_kiyoshi</code>: ズンドコキヨシのやりかたを説明するプロンプト。</li>
+</ul></li>
+<li>Logging
+
+<ul>
+<li>Tools処理中のログを送信する。</li>
+</ul></li>
+</ul></li>
+<li>MCPクライアント機能
+
+<ul>
+<li>Elicitation
+
+<ul>
+<li><code>check_kiyoshi</code>時にユーザーが「キ・ヨ・シ！」コールできる。</li>
+</ul></li>
+<li>Sampling
+
+<ul>
+<li><code>check_kiyoshi</code>時にユーザーが「キ・ヨ・シ！」以外のコールをしたとき、気の利いたレスポンスを返す。</li>
+</ul></li>
+</ul></li>
+<li>MCPユーティリティ機能
+
+<ul>
+<li>Ping
+
+<ul>
+<li>MCPサーバーの生存確認ができる。</li>
+</ul></li>
+<li>Progress
+
+<ul>
+<li><code>get_zundoko</code>リクエストの処理中に、「キ・ヨ・シ！」条件達成までの進捗をレポートする。</li>
+</ul></li>
+</ul></li>
+</ul>
+
+<p><br></p>
+
+<p>ズンドコクライアントはMCPホストにあたるアプリだけど、AIアプリではなく、決定論的に1秒間隔でズンドコMCPサーバーの<code>get_zundoko</code>を呼び、そのたびに<code>check_kiyoshi</code>で「キ・ヨ・シ！」条件判定をして、終了時に<code>reset_zundoko_kiyoshi</code>を呼ぶ単純な作り。</p>
+
+<p><img src="/images/zundoko-mcp-server-1/zundoko.gif" alt="zundoko.gif" /></p>
+
+<p>ズンドコMCPサーバーとズンドコクライアントはFastMCP 2.0 (<code>fastmcp==2.12.4</code>)で実装した。</p>
+
+<p>書いたソースは<a href="https://github.com/kaitoy/zundoko-mcp-server">GitHub</a>に置いた。</p>
+
+<h1 id="fastmcp">FastMCP</h1>
+
+<p><a href="https://gofastmcp.com/">FastMCP</a>は、MCPサーバーを開発するためのFastAPIベースのフレームワーク。MCPクライアントも実装できる。
+Pythonのワークフローオーケストレーションツールの<a href="https://www.prefect.io/">Prefect</a>の開発元のCEOであるjlowinが開発している。</p>
+
+<p>FastMCPはバージョン1.0のときにMCP本家の<a href="https://github.com/modelcontextprotocol/python-sdk">Python SDK</a>に取り込まれたけど、jlowinはPython SDK内のFastMCPのメンテをしつつ、バージョン2.0として独自の機能拡張もしている。</p>
+
+<p>2.0の独自機能としては、OpenAPIドキュメントやFastAPIアプリからのMCPツール生成や、GoogleやGitHabとかと連携したMCPサーバーへのソーシャルログインや、デプロイやユニットテストやクライアントライブラリのサポートなどがあり、プロダクション向けの開発がしやすくなっているとされている。</p>
+
+<p>今回、ズンドコMCPサーバー・クライアントにMCPのほぼ全機能を詰め込んだんだけど、CompletionとPaginationとCancellationはFastMCPが完全に対応してないようで、実装できなかった。
+Completionに関してはドキュメンテーションがなく、クライアントモジュールにリクエストを送るAPIはあるけど、サーバー側に実装するAPIは見当たらない。
+Paginationもドキュメンテーションがなく、APIも見当たらない。
+Cancellationもドキュメンテーションがなくて、クライアントモジュールにAPIはあるけど、APIの引数の<code>request_id</code>を取得するためのAPIがないので実質使えなさそう。</p>
+
+<p>RootsはFastMCPは対応してるけど、ズンドコキヨシと概念が合わなくて実装をさぼった。</p>
+
+<h1 id="fastmcpの使い方">FastMCPの使い方</h1>
+
+<p>FastMCPでMCPサーバーを書くには、FastAPIと同じ感じで、アプリケーションインスタンスを作って、そのインスタンスのデコレータをつけて関数を書いていけばいい。</p>
+
+<p><code>server.py</code>:</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">fastmcp</span> <span style="color:#6ab825;font-weight:bold">import</span> FastMCP
+
+mcp = FastMCP(<span style="color:#ed9d13">&#34;Demo 🚀&#34;</span>)  <span style="color:#999;font-style:italic"># アプリケーションインスタンス作成</span>
+
+<span style="color:#ffa500">@mcp.tool</span>  <span style="color:#999;font-style:italic"># MCPツールを追加するデコレータ</span>
+<span style="color:#6ab825;font-weight:bold">def</span> <span style="color:#447fcf">add</span>(a: <span style="color:#24909d">int</span>, b: <span style="color:#24909d">int</span>) -&gt; <span style="color:#24909d">int</span>:
+    <span style="color:#ed9d13">&#34;&#34;&#34;Add two numbers&#34;&#34;&#34;</span>
+    <span style="color:#6ab825;font-weight:bold">return</span> a + b
+
+<span style="color:#6ab825;font-weight:bold">if</span> __name__ == <span style="color:#ed9d13">&#34;__main__&#34;</span>:
+    mcp.run()</code></pre></div>
+<p>このコードを実行すると、<code>mcp.run()</code>によってMCPサーバーが起動する。</p>
+
+<p><code>mcp.run()</code>はデフォルトで<a href="https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#stdio">stdioトランスポート</a>でMCPサーバー起動する。
+このトランスポートは、MCPクライアントからサブプロセスとしてMCPサーバーを呼ぶ形で使われて、stdioとstdoutでMCP通信する。</p>
+
+<p>代わりに、<code>mcp.run(transport=&quot;http&quot;, host=&quot;127.0.0.1&quot;, port=8000)</code>のようにすることで、<a href="https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#streamable-http">Streamable HTTPトランスポート</a>でMCPサーバー起動することもできる。
+このトランスポートを使うと、MCPサーバーはWebサーバーとして起動して、HTTPでMCPクライアントと通信する。</p>
+
+<p>これら2種のトランスポートが今のMCPで規定されているものだけど、FastMCPではほかにも、昔のMCPで規定されていた<a href="https://gofastmcp.com/clients/transports#sse-transport-legacy">SSEトランスポート</a>や、1プロセスでサーバーもクライアントも起動するFastMCP独自の<a href="https://gofastmcp.com/clients/transports#in-memory-transport">Im-Memoryトランスポート</a>も使える。</p>
+
+<p><code>mcp.run()</code>でプログラムから直接起動するほかにも、FastMCPのCLIツールを使って、<code>fastmcp run server.py --transport http --port 8080 --host 127.0.0.1</code>みたいに起動することもできる。
+また、FastMCPのアプリケーションインスタンスは、<code>app = mcp.http_app()</code>のようにしてASGIアプリに変換できるので、uvicornなどのASGIサーバーで<code>uvicorn server:app --host 127.0.0.1 --port 8080</code>みたいに起動することもできる。
+プロダクション向けにはASGIサーバーを使うべし。</p>
+
+<p>この記事では以降、ズンドコMCPサーバー・クライアントの実装を例としてFastMCP 2.0の使い方詳細を紹介しつつ、MCPの各機能の動きを見ていく。</p>
+
+<h2 id="fastmcpでtoolsを実装">FastMCPでToolsを実装</h2>
+
+<p>まず、ランダムにズンかドコを生成するツール、<code>get_zundoko</code>を実装する。
+ツールを実装するには、ツールのインプットパラメータを引数で受け取り、アウトプットを戻り値として返す関数を定義して、<a href="https://gofastmcp.com/servers/tools#the-@tool-decorator">toolデコレータ</a>付ければいい。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">import</span> <span style="color:#447fcf;text-decoration:underline">random</span>
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">fastmcp</span> <span style="color:#6ab825;font-weight:bold">import</span> FastMCP
+
+mcp = FastMCP(<span style="color:#ed9d13">&#34;Zundoko Server&#34;</span>)
+
+<span style="color:#ffa500">@mcp.tool</span>
+<span style="color:#6ab825;font-weight:bold">def</span> <span style="color:#447fcf">get_zundoko</span>() -&gt; <span style="color:#24909d">str</span>:
+    <span style="color:#ed9d13">&#34;&#34;&#34;
+</span><span style="color:#ed9d13">    Returns either &#34;Zun&#34; or &#34;Doko&#34; randomly.
+</span><span style="color:#ed9d13">    &#34;&#34;&#34;</span>
+    choices = [<span style="color:#ed9d13">&#34;Zun&#34;</span>, <span style="color:#ed9d13">&#34;Doko&#34;</span>]
+    <span style="color:#6ab825;font-weight:bold">return</span> random.choice(choices)
+
+<span style="color:#6ab825;font-weight:bold">if</span> __name__ == <span style="color:#ed9d13">&#34;__main__&#34;</span>:
+    mcp.run()</code></pre></div>
+<p>これだけ。関数のdocstringに書いたものがツールのdescriptionになり、関数の戻り値の型ヒントがツールのoutputSchemaに反映される。
+デコレータの引数でツールのdescriptionを指定したり、タグやメタデータを付けたりもできる。
+関数に引数を付けた場合は、<a href="https://docs.python.org/ja/3/library/typing.html#typing.Annotated">型アノテーション</a>でツールのインプットパラメータのdescriptionsを書ける。</p>
+
+<p>このMCPサーバーをStreamable HTTPトランスポートで起動して、<a href="https://code.claude.com/docs/ja/overview">Claude Code</a>につなげば、<code>get_zundoko</code>を以下のように呼べる。</p>
+
+<p><img src="/images/zundoko-mcp-server-1/get_zundoko.png" alt="get_zundoko.png" /></p>
+
+<p>「ドコ」がとれた。</p>
+
+<h2 id="fastmcpでresourcesを実装">FastMCPでResourcesを実装</h2>
+
+<p>次に、生成したズンドコを履歴として管理して、履歴をリソースとして取得できるようにする。
+リソースは、ツール同様にデコレータで実装する方法と、<a href="https://gofastmcp.com/servers/resources#resource-classes">add_resourceで動的に追加する方法</a>の2通りある。
+ここではデコレータにする。</p>
+
+<p>デコレータでリソースを実装するには、リソースを返す関数に<a href="https://gofastmcp.com/servers/resources#the-%40resource-decorator">resourceデコレータ</a>を付ければいい。
+ズンドコ履歴を返す<code>get_history</code>を定義して、<code>zundoko://history</code>というURIで取得できるリソースにする。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">zundoko_history: <span style="color:#24909d">list</span>[<span style="color:#24909d">str</span>] = []
+
+<span style="color:#ffa500">@mcp.resource</span>(
+    <span style="color:#ed9d13">&#34;zundoko://history&#34;</span>,
+    mime_type=<span style="color:#ed9d13">&#34;application/json&#34;</span>,
+    annotations={<span style="color:#ed9d13">&#34;readOnlyHint&#34;</span>: True, <span style="color:#ed9d13">&#34;idempotentHint&#34;</span>: True}
+)
+<span style="color:#6ab825;font-weight:bold">def</span> <span style="color:#447fcf">get_history</span>() -&gt; <span style="color:#24909d">list</span>[<span style="color:#24909d">str</span>]:
+    <span style="color:#ed9d13">&#34;&#34;&#34;
+</span><span style="color:#ed9d13">    Returns the history of zundoko calls.
+</span><span style="color:#ed9d13">    &#34;&#34;&#34;</span>
+    <span style="color:#6ab825;font-weight:bold">return</span> zundoko_history</code></pre></div>
+<p>リソースの実装はこれだけ。
+<code>zundoko_history</code>がグローバル変数で、<code>get_zundoko</code>内でそこにズンドコを<code>append</code>する修正もしたけど割愛。</p>
+
+<p>リソースの関数のdocstringに書いたものがリソースのdescriptionになり、関数名がリソース名になる。
+デコレータの引数でリソースのURI、名前、タイトル、MIMEタイプなどを指定できる。</p>
+
+<p>このリソースはClaude Codeから以下のように取れる。</p>
+
+<p><img src="/images/zundoko-mcp-server-1/get_history.png" alt="get_history.png" /></p>
+
+<p>さっきとったドコだけが履歴にある。</p>
+
+<h2 id="fastmcpでresource-templatesを実装">FastMCPでResource Templatesを実装</h2>
+
+<p>ズンドコ履歴の中から、特定の回次のズンドコを取得したい。のでリソーステンプレートを実装する。
+リソーステンプレートもresourceデコレータで実装できて、デコレートする関数にはテンプレートを埋める値を受け取る引数を定義する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#ffa500">@mcp.resource</span>(<span style="color:#ed9d13">&#34;zundoko://history/{index}&#34;</span>)
+<span style="color:#6ab825;font-weight:bold">def</span> <span style="color:#447fcf">get_zundoko_from_history</span>(index: <span style="color:#24909d">int</span>) -&gt; <span style="color:#24909d">str</span>:
+    <span style="color:#ed9d13">&#34;&#34;&#34;
+</span><span style="color:#ed9d13">    Returns a specific zundoko from history by index.
+</span><span style="color:#ed9d13">    &#34;&#34;&#34;</span>
+    <span style="color:#6ab825;font-weight:bold">if</span> index &lt; <span style="color:#3677a9">1</span> <span style="color:#6ab825;font-weight:bold">or</span> index &gt; <span style="color:#24909d">len</span>(zundoko_history):
+        <span style="color:#6ab825;font-weight:bold">raise</span> <span style="color:#bbb">ValueError</span>(f<span style="color:#ed9d13">&#34;Invalid index: {index}&#34;</span>)
+    <span style="color:#6ab825;font-weight:bold">return</span> zundoko_history[index - <span style="color:#3677a9">1</span>]</code></pre></div>
+<p>これだけ。</p>
+
+<p>Claude Codeで初回のズンドコを取得してみる。</p>
+
+<p><img src="/images/zundoko-mcp-server-1/get_zundoko_from_history.png" alt="get_zundoko_from_history.png" /></p>
+
+<p>さっきとったドコがとれた。</p>
+
+<h2 id="fastmcpでリソース変更通知とクライアントを実装">FastMCPでリソース変更通知とクライアントを実装</h2>
+
+<p>リソースが実装できたので、リソースの変更通知を実装してみたい。
+ズンドコ履歴にズンドコを追加したらクライアントに通知するようにする。</p>
+
+<p>リソース変更通知は、FastMCPの<a href="https://gofastmcp.com/servers/context">Context</a>オブジェクトを取得して<code>send_resource_list_changed</code>を呼ぶと通知できる。
+Contextオブジェクトの取得方法にはいくつかあるけど、ここでは<code>Context</code>型の引数を定義してDIしてもらう方法を使う。
+(なお、この方法はFastMCP 2.14で非推奨になった模様。)</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"><span style="color:#d22323">-from fastmcp import FastMCP
+</span><span style="color:#d22323"></span><span style="color:#589819">+from fastmcp import FastMCP, Context
+</span><span style="color:#589819"></span>
+ mcp = FastMCP(&#34;Zundoko Server&#34;)
+
+ @mcp.tool
+<span style="color:#d22323">-def get_zundoko() -&gt; str:
+</span><span style="color:#d22323"></span><span style="color:#589819">+async def get_zundoko(ctx: Context) -&gt; str:
+</span><span style="color:#589819"></span>     &#34;&#34;&#34;
+     Returns either &#34;Zun&#34; or &#34;Doko&#34; randomly.
+     &#34;&#34;&#34;
+     choices = [&#34;Zun&#34;, &#34;Doko&#34;]
+     result = random.choice(choices)
+     zundoko_history.append(result)
+<span style="color:#589819">+    await ctx.send_resource_list_changed()
+</span><span style="color:#589819"></span>     return result
+</code></pre></div>
+<p><code>send_resource_list_changed</code>が非同期関数なので、<code>get_zundoko</code>をasync関数にした。</p>
+
+<p>実装した通知を受けてみたいけど、Claude Codeは通知に対応してないっぽいので自前のクライアントで受けることにする。</p>
+
+<p>FastMCPはクライアントライブラリも備えていて、<code>Client</code>インスタンスを作ればその<code>call_tool</code>メソッドで簡単にツールを実行できるし、インスタンスに<a href="https://gofastmcp.com/clients/messages#function-based-handler">メッセージハンドラ</a>を設定しておけば通知を受け取れる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">import</span> <span style="color:#447fcf;text-decoration:underline">asyncio</span>
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">fastmcp</span> <span style="color:#6ab825;font-weight:bold">import</span> Client
+
+
+async <span style="color:#6ab825;font-weight:bold">def</span> <span style="color:#447fcf">handle_message</span>(message):  <span style="color:#999;font-style:italic"># メッセージハンドラの実装</span>
+    <span style="color:#6ab825;font-weight:bold">print</span>(f<span style="color:#ed9d13">&#34;Received message: {message}&#34;</span>)
+
+
+async <span style="color:#6ab825;font-weight:bold">def</span> <span style="color:#447fcf">main</span>():
+    async <span style="color:#6ab825;font-weight:bold">with</span> Client(  <span style="color:#999;font-style:italic"># Clientインスタンス作成</span>
+        <span style="color:#ed9d13">&#34;http://127.0.0.1:8080/mcp&#34;</span>,
+        message_handler=handle_message  <span style="color:#999;font-style:italic"># メッセージハンドラを設定</span>
+    ) <span style="color:#6ab825;font-weight:bold">as</span> client:
+        await client.call_tool(<span style="color:#ed9d13">&#34;get_zundoko&#34;</span>, {})  <span style="color:#999;font-style:italic"># get_zundokoツールの呼び出し</span>
+
+
+<span style="color:#6ab825;font-weight:bold">if</span> __name__ == <span style="color:#ed9d13">&#34;__main__&#34;</span>:
+    asyncio.run(main())  <span style="color:#999;font-style:italic"># クライアント起動</span></code></pre></div>
+<p>このクライアントは、<code>get_zundoko</code>を一回呼び出し、サーバーからの通知を標準出力に吐く。
+このクライアントを実行すると以下の出力が得られる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">Received message: root=ResourceListChangedNotification(method=&#39;notifications/resources/list_changed&#39;, params=None, jsonrpc=&#39;2.0&#39;)</code></pre></div>
+<p>現時点でMCPのプロトコルとして、リソース変更通知には変更内容を含めることはできないので、これ以上のことはできない。</p>
+
+<h2 id="fastmcpでloggingを実装">FastMCPでLoggingを実装</h2>
+
+<p>MCPサーバーのログは通知と同様に、Contextオブジェクトのメソッドでクライアントに送信できる。
+ログ用メソッドにはログレベル毎に<code>debug</code>、<code>info</code>、<code>warning</code>、<code>error</code>がある。
+<code>log</code>というメソッドでログレベルやロガーを指定して送信することもできる。</p>
+
+<p>例えば、<code>get_zundoko</code>でズンドコ履歴の内容をログ送信するようにするには以下のように書き加えればいい。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> @mcp.tool
+ async def get_zundoko(ctx: Context) -&gt; str:
+     &#34;&#34;&#34;
+     Returns either &#34;Zun&#34; or &#34;Doko&#34; randomly.
+     &#34;&#34;&#34;
+     choices = [&#34;Zun&#34;, &#34;Doko&#34;]
+     result = random.choice(choices)
+     zundoko_history.append(result)
+     await ctx.send_resource_list_changed()
+<span style="color:#589819">+
+</span><span style="color:#589819">+    history_count = len(zundoko_history)
+</span><span style="color:#589819">+    await ctx.info(
+</span><span style="color:#589819">+        f&#34;Zundoko history now contains {history_count} item(s)&#34;,
+</span><span style="color:#589819">+        extra={&#34;count&#34;: history_count, &#34;latest&#34;: result}
+</span><span style="color:#589819">+    )
+</span><span style="color:#589819">+
+</span><span style="color:#589819"></span>     return result
+</code></pre></div>
+<p>この例のように、ログメソッドにはメッセージのほか、<code>extra</code>に構造化情報も含められる。</p>
+
+<p>FastMCPの<code>Client</code>インスタンスでは、メッセージハンドラでもログを受け取ることができるけど、ログハンドラを設定することでより扱いが楽にできる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">import</span> <span style="color:#447fcf;text-decoration:underline">asyncio</span>
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">fastmcp</span> <span style="color:#6ab825;font-weight:bold">import</span> Client
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">fastmcp.client.logging</span> <span style="color:#6ab825;font-weight:bold">import</span> LogMessage
+
+
+async <span style="color:#6ab825;font-weight:bold">def</span> <span style="color:#447fcf">handle_log</span>(message: LogMessage):  <span style="color:#999;font-style:italic"># ログハンドラ実装</span>
+    <span style="color:#6ab825;font-weight:bold">print</span>(f<span style="color:#ed9d13">&#34;[{message.level.upper()}] {message.data.get(&#39;msg&#39;)} {message.data.get(&#39;extra&#39;)}&#34;</span>)
+
+
+async <span style="color:#6ab825;font-weight:bold">def</span> <span style="color:#447fcf">main</span>():
+    async <span style="color:#6ab825;font-weight:bold">with</span> Client(  <span style="color:#999;font-style:italic"># Clientインスタンス作成</span>
+        <span style="color:#ed9d13">&#34;http://127.0.0.1:8080/mcp&#34;</span>,
+        log_handler=handle_log  <span style="color:#999;font-style:italic"># ログハンドラを設定</span>
+    ) <span style="color:#6ab825;font-weight:bold">as</span> client:
+        await client.call_tool(<span style="color:#ed9d13">&#34;get_zundoko&#34;</span>, {})  <span style="color:#999;font-style:italic"># get_zundokoツールの呼び出し</span>
+
+
+<span style="color:#6ab825;font-weight:bold">if</span> __name__ == <span style="color:#ed9d13">&#34;__main__&#34;</span>:
+    asyncio.run(main())  <span style="color:#999;font-style:italic"># クライアント起動</span></code></pre></div>
+<p>このクライアントは、<code>get_zundoko</code>を一回呼び出し、サーバーからのログメッセージをちょっと成型して標準出力に吐く。
+このクライアントを実行すると以下のような出力が得られる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">[INFO] Zundoko history now contains 3 item(s) {&#39;count&#39;: 3, &#39;latest&#39;: &#39;Zun&#39;}</code></pre></div>
+<h2 id="fastmcpでpromptsを実装">FastMCPでPromptsを実装</h2>
+
+<p>次に、ズンドコキヨシのやり方を支持するプロンプトを実装する。
+実装方法は、プロンプトの内容を返す関数に<a href="https://gofastmcp.com/servers/prompts#the-%40prompt-decorator">promptデコレータ</a>を付ければいい。
+関数が受け取った引数を使って返すプロンプトを動的に変えることもできるけど、今回はシンプルに固定値を返す。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#ffa500">@mcp.prompt</span>
+<span style="color:#6ab825;font-weight:bold">def</span> <span style="color:#447fcf">explain_zundoko_kiyoshi</span>() -&gt; <span style="color:#24909d">str</span>:
+    <span style="color:#ed9d13">&#34;&#34;&#34;
+</span><span style="color:#ed9d13">    Explains how to do Zundoko Kiyoshi.
+</span><span style="color:#ed9d13">    &#34;&#34;&#34;</span>
+    <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#ed9d13">&#34;&#34;&#34;
+</span><span style="color:#ed9d13">1. Randomly output either &#34;Zun&#34; or &#34;Doko&#34;
+</span><span style="color:#ed9d13">2. Continue until you get the sequence &#34;Zun Zun Zun Zun Doko&#34; (four &#34;Zun&#34;s followed by one &#34;Doko&#34;)
+</span><span style="color:#ed9d13">3. When this sequence appears, output &#34;Ki-yo-shi!&#34; and end the program
+</span><span style="color:#ed9d13">&#34;&#34;&#34;</span></code></pre></div>
+<p>これをClaude Codeから読み込んでみる。</p>
+
+<p><img src="/images/zundoko-mcp-server-1/explain_zundoko_kiyoshi.png" alt="explain_zundoko_kiyoshi.png" /></p>
+
+<p>関数名(i.e. プロンプト名)やdocstring(i.e. プロンプトのdescription)がよくなかったのか、ズンドコキヨシの説明をしてくれちゃったけど、一応ズンドコキヨシを一回やってくれたようだ。</p>
+
+<p>ついでにClaude Sonnet 4.5がズンドコキヨシをclassic programming exercise in Japanと認識してくれていることが判明した。</p>
+
+<p><br></p>
+
+<p>Elicitation、Sampling、Ping、Progressの実装については次回の記事で。</p></div>
+
+        <section class="share-buttons">
+          <div class="fb-share-button share-button" data-href="https://www.kaitoy.xyz/2025/12/21/zundoko-mcp-server-1/" data-layout="button_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">シェア</a></div>
+          <div class="share-button">
+            <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-text="ズンドコキヨシ with MCP - MCPの機能全部盛り (その1)" data-url="https://www.kaitoy.xyz/2025/12/21/zundoko-mcp-server-1/" data-show-count="true" data-count="horizontal">Tweet</a>
+          </div>
+          <div class="share-button">
+            <a href="https://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="basic-label-counter" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+          </div>
+        </section>
+    </div>
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-6244473643910448"
+         data-ad-slot="1845600530"
+         data-ad-format="auto"></ins>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+
+    <section class="tbd-pagination">
+      <div class="row">
+        <div class="col-sm-6">
+          <div class="prev">
+            
+            <a href="https://www.kaitoy.xyz/2025/11/23/all-about-mcp/">
+              <i class="fa fa-angle-left"></i>
+              ツールだけじゃない。MCPの全機能を完全に理解する
+            </a>
+            
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="next text-right">
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    
+
+    
+
+        <h4 class="page-header">Related</h4>
+
+        <div class="related-links">
+           <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2025/11/23/all-about-mcp/">ツールだけじゃない。MCPの全機能を完全に理解する</a></h4>
+    <h5>Sun, Nov 23, 2025</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/mcp"><kbd class="item-tag">MCP</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/llm"><kbd class="item-tag">LLM</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/08/20/langgraph-zundoko-agent/">ズンドコキヨシ with LangGraph/LangChain - ズンドコキヨシするLLMマルチエージェントをつくった</a></h4>
+    <h5>Tue, Aug 20, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/groq"><kbd class="item-tag">Groq</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/openai"><kbd class="item-tag">OpenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gpt"><kbd class="item-tag">GPT</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langchain"><kbd class="item-tag">LangChain</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langgraph"><kbd class="item-tag">LangGraph</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/07/24/langchain-k8s-agent/">LangChainのAgentでKubernetes操作は楽になるのか</a></h4>
+    <h5>Wed, Jul 24, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">Kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/openai"><kbd class="item-tag">OpenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gpt"><kbd class="item-tag">GPT</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langchain"><kbd class="item-tag">LangChain</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/07/07/pgvector-opsi-agent/">LangChainとPostgreSQL (pgvector)でRAGを作る</a></h4>
+    <h5>Sun, Jul 7, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ops-i"><kbd class="item-tag">Ops I</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/rag"><kbd class="item-tag">rag</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/openai"><kbd class="item-tag">OpenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gpt"><kbd class="item-tag">GPT</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langchain"><kbd class="item-tag">LangChain</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langserve"><kbd class="item-tag">langserve</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/postgresql"><kbd class="item-tag">postgresql</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/06/24/is-copilot-good/">GitHub Copilotは本当に生産性を上げてくれたのか?</a></h4>
+    <h5>Mon, Jun 24, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/copilot"><kbd class="item-tag">copilot</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/06/14/langserve-opsi-agent/">Webマニュアルから知識を得るLangChainのRAGをLangServeでWebサーバにする</a></h4>
+    <h5>Fri, Jun 14, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ops-i"><kbd class="item-tag">Ops I</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/rag"><kbd class="item-tag">rag</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/openai"><kbd class="item-tag">OpenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gpt"><kbd class="item-tag">GPT</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langchain"><kbd class="item-tag">LangChain</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langserve"><kbd class="item-tag">langserve</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/06/04/langchain-opsi-agent/">Webマニュアルから知識を得るRAGをLangChainで作る</a></h4>
+    <h5>Tue, Jun 4, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ops-i"><kbd class="item-tag">Ops I</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/rag"><kbd class="item-tag">rag</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/openai"><kbd class="item-tag">OpenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gpt"><kbd class="item-tag">GPT</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/langchain"><kbd class="item-tag">LangChain</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/04/28/ai-copyright-jp/">AIと著作権</a></h4>
+    <h5>Sun, Apr 28, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/copyright"><kbd class="item-tag">copyright</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2024/01/07/gpt-crawler/">GPT CrawlerとOpenAI Assistantsでシュッと作るAIアシスタント</a></h4>
+    <h5>Sun, Jan 7, 2024</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/ops-i"><kbd class="item-tag">Ops I</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/gpt"><kbd class="item-tag">GPT</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/openai"><kbd class="item-tag">OpenAI</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/genai"><kbd class="item-tag">GenAI</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2020/12/20/k8s-zundoko-ansible-operator/">ズンドコキヨシ with Kubernetes Ansible Operator - Operator SDKのAnsible Operatorを使ってみた</a></h4>
+    <h5>Sun, Dec 20, 2020</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">Kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/operator-sdk"><kbd class="item-tag">operator-sdk</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/ansible"><kbd class="item-tag">ansible</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2019/03/08/k8s-zundoko-operator/">ズンドコキヨシ with Kubernetes Operator - KubebuilderでKubernetes Operatorを作ってみた</a></h4>
+    <h5>Fri, Mar 8, 2019</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubernetes"><kbd class="item-tag">Kubernetes</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/kubebuilder"><kbd class="item-tag">kubebuilder</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/golang"><kbd class="item-tag">golang</kbd></a>
+    
+
+</div>
+  <div class="item">
+
+    
+    
+    
+
+    
+    
+
+    <h4 class="post-title"><a href="/2016/03/19/zundoko-kiyoshi-with-pcap4j/"> ズンドコキヨシ with Pcap4J - ZUNDOKOプロトコルを実装してみた</a></h4>
+    <h5>Sat, Mar 19, 2016</h5>
+    
+    <a href="https://www.kaitoy.xyz/tags/pcap4j"><kbd class="item-tag">pcap4j</kbd></a>
+    
+    <a href="https://www.kaitoy.xyz/tags/zundoko"><kbd class="item-tag">zundoko</kbd></a>
+    
+
+</div>
+ 
+        </div>
+    
+
+    
+
+        <h4 class="page-header">Comments</h4>
+
+        <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "kaitoy-tobedecided" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+
+</main>
+
+        <footer>
+
+            <p class="copyright text-muted">&copy; 2015 Kaito Yamada. Powered by <a href="https://gohugo.io">Hugo</a> and <a href="https://github.com/calintat/minimal">Minimal</a></p>
+
+        </footer>
+
+        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+    </body>
+
+</html>
+
