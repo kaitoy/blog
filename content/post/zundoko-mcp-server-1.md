@@ -14,6 +14,8 @@ highlightLanguages = ["python", "console", "diff"]
 MCPの(ほぼ)全機能を実装したズンドコMCPサーバーをFastMCP 2.0で実装し、MCPを完全に理解した話。
 長くなるので、複数の記事に分けて書く。
 
+今回は、MCPサーバー機能のTools、Resources、Resource Templates、Prompts、Loggingの実装について。
+
 <!--more-->
 
 <blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">Javaの講義、試験が「自作関数を作り記述しなさい」って問題だったから<br>「ズン」「ドコ」のいずれかをランダムで出力し続けて「ズン」「ズン」「ズン」「ズン」「ドコ」の配列が出たら「キ・ヨ・シ！」って出力した後終了って関数作ったら満点で単位貰ってた</p>&mdash; てくも (@kumiromilk) <a href="https://twitter.com/kumiromilk/status/707437861881180160">2016年3月9日</a></blockquote>
@@ -329,6 +331,10 @@ if __name__ == "__main__":
 ```console
 [INFO] Zundoko history now contains 3 item(s) {'count': 3, 'latest': 'Zun'}
 ```
+
+<br>
+
+因みに、`log_handler`を設定しない場合でも、FastMCPのデフォルトのログハンドラでいい感じに標準出力にログ出力してくれる。
 
 ## FastMCPでPromptsを実装
 次に、ズンドコキヨシのやり方を支持するプロンプトを実装する。
