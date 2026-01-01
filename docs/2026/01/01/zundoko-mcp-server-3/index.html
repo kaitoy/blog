@@ -4,24 +4,24 @@
         <script data-ad-client="ca-pub-6244473643910448" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 
 <meta name="google-site-verification" content="9qs7VjxtSrYMqw5OElxCdKv_gnssSRi6acB2iYlZnGA" />
-<meta property="og:url" content="https://www.kaitoy.xyz/2025/12/29/zundoko-mcp-server-2/">
+<meta property="og:url" content="https://www.kaitoy.xyz/2026/01/01/zundoko-mcp-server-3/">
 <meta property="og:site_name" content="To Be Decided">
 <meta name="twitter:card" content="summary"></meta>
-<link rel="canonical" href="https://www.kaitoy.xyz/2025/12/29/zundoko-mcp-server-2/">
+<link rel="canonical" href="https://www.kaitoy.xyz/2026/01/01/zundoko-mcp-server-3/">
 
 
 
   <meta property="og:type" content="article">
-  <meta property="og:title" content="ズンドコキヨシ with MCP - MCPの機能全部盛り (その2: Elicitation編) | To Be Decided">
-  <title>ズンドコキヨシ with MCP - MCPの機能全部盛り (その2: Elicitation編) | To Be Decided</title>
+  <meta property="og:title" content="ズンドコキヨシ with MCP - MCPの機能全部盛り (その3: Sampling編) | To Be Decided">
+  <title>ズンドコキヨシ with MCP - MCPの機能全部盛り (その3: Sampling編) | To Be Decided</title>
   <meta property="og:description" content="MCPの(ほぼ)全機能を実装したズンドコMCPサーバーをFastMCP 2.0で実装し、MCPを完全に理解した話の続き。
 前回の記事はこれ。
 
-今回は主にMCPクライアント機能のElicitationの実装について。">
+今回は主にMCPクライアント機能のSamplingの実装について。">
   <meta name="description" content="MCPの(ほぼ)全機能を実装したズンドコMCPサーバーをFastMCP 2.0で実装し、MCPを完全に理解した話の続き。
 前回の記事はこれ。
 
-今回は主にMCPクライアント機能のElicitationの実装について。">
+今回は主にMCPクライアント機能のSamplingの実装について。">
   <meta property="og:image" content="https://www.kaitoy.xyz/images/fastmcp.png">
 
 
@@ -128,7 +128,7 @@
 
                 <div class="navbar-header">
 
-                    <a class="navbar-brand visible-xs" href="#">ズンドコキヨシ with MCP - MCPの機能全部盛り (その2: Elicitation編)</a>
+                    <a class="navbar-brand visible-xs" href="#">ズンドコキヨシ with MCP - MCPの機能全部盛り (その3: Sampling編)</a>
 
                     <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse">
                         <span class="icon-bar"></span>
@@ -187,8 +187,8 @@
     
     
 
-    <h4 class="post-title"><a href="/2025/12/29/zundoko-mcp-server-2/">ズンドコキヨシ with MCP - MCPの機能全部盛り (その2: Elicitation編)</a></h4>
-    <h5>Mon, Dec 29, 2025</h5>
+    <h4 class="post-title"><a href="/2026/01/01/zundoko-mcp-server-3/">ズンドコキヨシ with MCP - MCPの機能全部盛り (その3: Sampling編)</a></h4>
+    <h5>Thu, Jan 1, 2026</h5>
     
     <a href="https://www.kaitoy.xyz/tags/mcp"><kbd class="item-tag">MCP</kbd></a>
     
@@ -205,8 +205,8 @@
 
 
         <div class="cover">
-            <a href="/2025/12/29/zundoko-mcp-server-2/">
-                <img src="https://www.kaitoy.xyz/images/fastmcp.png" alt="ズンドコキヨシ with MCP - MCPの機能全部盛り (その2: Elicitation編)">
+            <a href="/2026/01/01/zundoko-mcp-server-3/">
+                <img src="https://www.kaitoy.xyz/images/fastmcp.png" alt="ズンドコキヨシ with MCP - MCPの機能全部盛り (その3: Sampling編)">
             </a>
         </div>
 
@@ -217,12 +217,13 @@
 <ul>
 <li><a href="#ズンドコmcpサーバー-クライアント">ズンドコMCPサーバー・クライアント</a>
 <ul>
-<li><a href="#fastmcpでelicitationを実装">FastMCPでElicitationを実装</a>
+<li><a href="#fastmcpでsamplingを実装">FastMCPでSamplingを実装</a>
 <ul>
 <li><a href="#ズンドコmcpサーバー側の実装">ズンドコMCPサーバー側の実装</a></li>
 <li><a href="#ズンドコクライアント側の実装">ズンドコクライアント側の実装</a></li>
+<li><a href="#samplingフォールバックハンドラーの設定">Samplingフォールバックハンドラーの設定</a></li>
 </ul></li>
-<li><a href="#zundoko-kiyoshi-リソースと-reset-zundoko-kiyoshi-ツールの実装"><code>zundoko://kiyoshi</code>リソースと<code>reset_zundoko_kiyoshi</code>ツールの実装</a></li>
+<li><a href="#fastmcpでpingを実装">FastMCPでPingを実装</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -231,9 +232,9 @@
         
 
         <br> <div class="text-justify"><p>MCPの(ほぼ)全機能を実装したズンドコMCPサーバーをFastMCP 2.0で実装し、MCPを完全に理解した話の続き。
-前回の記事は<a href="https://www.kaitoy.xyz/2025/12/21/zundoko-mcp-server-1/">これ</a>。</p>
+前回の記事は<a href="https://www.kaitoy.xyz/2025/12/29/zundoko-mcp-server-2/">これ</a>。</p>
 
-<p>今回は主にMCPクライアント機能のElicitationの実装について。</p>
+<p>今回は主にMCPクライアント機能のSamplingの実装について。</p>
 
 <p><blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">Javaの講義、試験が「自作関数を作り記述しなさい」って問題だったから<br>「ズン」「ドコ」のいずれかをランダムで出力し続けて「ズン」「ズン」「ズン」「ズン」「ドコ」の配列が出たら「キ・ヨ・シ！」って出力した後終了って関数作ったら満点で単位貰ってた</p>&mdash; てくも (@kumiromilk) <a href="https://twitter.com/kumiromilk/status/707437861881180160">2016年3月9日</a></blockquote>
 <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script></p>
@@ -257,7 +258,7 @@
 
 <p>MCPのいろいろな機能を試すため、ズンドコMCPサーバーとズンドコクライアントを<a href="(https://gofastmcp.com/)">FastMCP 2.0</a>で開発した。</p>
 
-<p>前回の記事では以下のMCPサーバー機能の実装について書いた。</p>
+<p>前回までの記事では以下の機能の実装について書いた。</p>
 
 <ul>
 <li>MCPサーバー機能
@@ -267,6 +268,8 @@
 
 <ul>
 <li><code>get_zundoko</code>: 「ズン」か「ドコ」をランダムにひとつ生成する。</li>
+<li><code>check_kiyoshi</code>: 「キ・ヨ・シ！」条件を満たすかチェックする。</li>
+<li><code>reset_zundoko_kiyoshi</code>: ズンドコ履歴とキヨシ状態をリセットする。</li>
 </ul></li>
 <li>Resources
 
@@ -275,6 +278,11 @@
 
 <ul>
 <li>ズンドコ履歴の変更通知に対応。</li>
+</ul></li>
+<li><code>zundoko://kiyoshi</code>: 「キ・ヨ・シ！」をしたことがあれば、その記録。（i.e. キヨシ状態）
+
+<ul>
+<li>キヨシ状態の変更通知に対応。</li>
 </ul></li>
 </ul></li>
 <li>Resource Templates
@@ -293,30 +301,6 @@
 <li>Tools処理中のログを送信する。</li>
 </ul></li>
 </ul></li>
-</ul>
-
-<p>今回の記事では以下の実装について書く。</p>
-
-<ul>
-<li>MCPサーバー機能
-
-<ul>
-<li>Tools
-
-<ul>
-<li><code>check_kiyoshi</code>: 「キ・ヨ・シ！」条件を満たすかチェックする。</li>
-<li><code>reset_zundoko_kiyoshi</code>: ズンドコ履歴とキヨシ状態をリセットする。</li>
-</ul></li>
-<li>Resources
-
-<ul>
-<li><code>zundoko://kiyoshi</code>: 「キ・ヨ・シ！」をしたことがあれば、その記録。（i.e. キヨシ状態）
-
-<ul>
-<li>キヨシ状態の変更通知に対応。</li>
-</ul></li>
-</ul></li>
-</ul></li>
 <li>MCPクライアント機能
 
 <ul>
@@ -328,129 +312,122 @@
 </ul></li>
 </ul>
 
+<p>今回の記事では以下の実装について書く。</p>
+
+<ul>
+<li>MCPクライアント機能
+
+<ul>
+<li>Sampling
+
+<ul>
+<li><code>check_kiyoshi</code>時にユーザーが「キ・ヨ・シ！」以外のコールをしたとき、気の利いたレスポンスを返す。</li>
+</ul></li>
+</ul></li>
+<li>MCPユーティリティ機能
+
+<ul>
+<li>Ping
+
+<ul>
+<li>MCPサーバーの生存確認ができる。</li>
+</ul></li>
+</ul></li>
+</ul>
+
 <p>書いたソースは<a href="https://github.com/kaitoy/zundoko-mcp-server">GitHub</a>に置いてある。</p>
 
-<h2 id="fastmcpでelicitationを実装">FastMCPでElicitationを実装</h2>
+<h2 id="fastmcpでsamplingを実装">FastMCPでSamplingを実装</h2>
 
-<p>ElicitationはMCPクライアントの機能で、MCPサーバーから受信したリクエストに応じてユーザーに入力を求めて、入力結果をサーバーに返すことができる。
-ズンドコMCPサーバー・ズンドコクライアントにおいては、この機能をユーザーに「キ・ヨ・シ！」コールさせるために使う。</p>
+<p>SamplingはMCPクライアントの機能で、MCPサーバーから受信したリクエストに応じてMCPクライアントがLLMの推論を実行し、その結果をサーバーに返すことができる。
+MCPサーバーのリクエストには、推論に使うモデル名、temperature、システムプロンプト、ユーザプロンプトなどが含まれる。</p>
+
+<p>ズンドコMCPサーバー・ズンドコクライアントにおいては、この機能は、ユーザーが「キ・ヨ・シ！」コールのタイミングで「キ・ヨ・シ！」以外のコールをしたとき、サーバーから気の利いた突っ込みを返すために使う。</p>
 
 <h3 id="ズンドコmcpサーバー側の実装">ズンドコMCPサーバー側の実装</h3>
 
-<p>「キ・ヨ・シ！」は、「ズン」、「ズン」、「ズン」、「ズン」、「ドコ」の後にコールするので、いったんElicitationおいておいて、この「キ・ヨ・シ！」条件をズンドコ履歴が満たしているかを判定するだけのMCPツール<code>check_kiyoshi</code>を実装する。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#ffa500">@mcp.tool</span>
-async <span style="color:#6ab825;font-weight:bold">def</span> <span style="color:#447fcf">check_kiyoshi</span>(ctx: Context) -&gt; <span style="color:#24909d">str</span>:
-    <span style="color:#ed9d13">&#34;&#34;&#34;
-</span><span style="color:#ed9d13">    Checks if the zundoko history matches the winning pattern (Zun Zun Zun Zun Doko)
-</span><span style="color:#ed9d13">    and elicits &#34;Ki-yo-shi!&#34; from the user if it does.
-</span><span style="color:#ed9d13">    &#34;&#34;&#34;</span>
-    history_count = <span style="color:#24909d">len</span>(zundoko_history)
+<p>Samplingリクエストは、<a href="https://www.kaitoy.xyz/2025/12/29/zundoko-mcp-server-2/#%E3%82%BA%E3%83%B3%E3%83%89%E3%82%B3mcp%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E5%81%B4%E3%81%AE%E5%AE%9F%E8%A3%85">前回記事のElicitation</a>と同様に、Contextオブジェクトのメソッドで送れる。
+Samplingのメソッドは<a href="https://gofastmcp.com/servers/sampling#basic-sampling">sample()</a>。</p>
 
-    <span style="color:#6ab825;font-weight:bold">if</span> history_count &lt; <span style="color:#3677a9">5</span>:
-        <span style="color:#6ab825;font-weight:bold">return</span> f<span style="color:#ed9d13">&#34;History has only {history_count} item(s), need at least 5 to check for the pattern.&#34;</span>
+<p><code>check_kiyoshi</code>ツールの処理の中で、<code>elicit()</code>を呼んで、ユーザー入力を処理する部分で<code>sample()</code>を使うように修正する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff">         # Elicitationリクエスト送信
+         elicit_result = await ctx.elicit(
+             &#34;It&#39;s time to say Ki-yo-shi!&#34;,
+             response_type=str
+         )
 
-    <span style="color:#6ab825;font-weight:bold">if</span> zundoko_history[-<span style="color:#3677a9">5</span>:] == [<span style="color:#ed9d13">&#34;Zun&#34;</span>, <span style="color:#ed9d13">&#34;Zun&#34;</span>, <span style="color:#ed9d13">&#34;Zun&#34;</span>, <span style="color:#ed9d13">&#34;Zun&#34;</span>, <span style="color:#ed9d13">&#34;Doko&#34;</span>]:
-        <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#ed9d13">&#34;Pattern found!&#34;</span>
-    <span style="color:#6ab825;font-weight:bold">else</span>:
-        <span style="color:#6ab825;font-weight:bold">return</span> f<span style="color:#ed9d13">&#34;Pattern not found. Last 5 items: {zundoko_history[-5:]}&#34;</span></code></pre></div>
-<p>これはまだ単に「キ・ヨ・シ！」条件の判定結果を返すだけのツール。
-これを拡張して、「キ・ヨ・シ！」条件を満たしたときに即<code>&quot;Pattern found!&quot;</code>を返す代わりに、Elicitationでユーザーから返ってきたコールの内容によってレスポンスを変えるようにする。</p>
-
-<p>Elicitationリクエストは、<a href="https://www.kaitoy.xyz/2025/12/21/zundoko-mcp-server-1/#fastmcp%E3%81%A7logging%E3%82%92%E5%AE%9F%E8%A3%85">前回記事のLogging</a>と同様に、Contextオブジェクトのメソッドで送れる。
-Elicitationのメソッドは<a href="https://gofastmcp.com/servers/elicitation#method-signature">elicit()</a>で、ユーザーに向けたメッセージと、ユーザーに入力してほしい値の型を指定できる。</p>
-
-<p>Elicitationリクエストに対しては、<code>accept</code>、<code>decline</code>、<code>cancel</code>の3通りのレスポンスがプロトコルに規定されていて、<code>elicit()</code>の戻り値はそれらに対応した<a href="https://gofastmcp.com/servers/elicitation#elicitation-actions">AcceptedElicitation、DeclinedElicitation、CancelledElicitation</a>のいずれかになり、AcceptedElicitationのときだけユーザー入力を受け取れる。</p>
-
-<p><code>check_kiyoshi</code>ツールの処理の中で、「キ・ヨ・シ！」条件を満たしたときに<code>elicit()</code>を呼んで、その戻り値の型によってツールのレスポンスを変えるようにする。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> from fastmcp import FastMCP, Context
-<span style="color:#589819">+from fastmcp.server.elicitation import (
-</span><span style="color:#589819">+    AcceptedElicitation,
-</span><span style="color:#589819">+    DeclinedElicitation,
-</span><span style="color:#589819">+    CancelledElicitation,
-</span><span style="color:#589819">+)
-</span><span style="color:#589819"></span>
-&lt;snip&gt;
-
-     if zundoko_history[-5:] == [&#34;Zun&#34;, &#34;Zun&#34;, &#34;Zun&#34;, &#34;Zun&#34;, &#34;Doko&#34;]:
-<span style="color:#d22323">-        return &#34;Pattern found!&#34;
-</span><span style="color:#d22323"></span><span style="color:#589819">+        # Elicitationリクエスト送信
-</span><span style="color:#589819">+        elicit_result = await ctx.elicit(
-</span><span style="color:#589819">+            &#34;It&#39;s time to say Ki-yo-shi!&#34;,
-</span><span style="color:#589819">+            response_type=str
-</span><span style="color:#589819">+        )
-</span><span style="color:#589819">+
-</span><span style="color:#589819">+        # Elicitationレスポンスの処理
-</span><span style="color:#589819">+        match elicit_result:
-</span><span style="color:#589819">+            case AcceptedElicitation(data=response):
-</span><span style="color:#589819">+                # ユーザーの入力値のチェック
-</span><span style="color:#589819">+                if &#34;Ki-yo-shi!&#34; == response:
-</span><span style="color:#589819">+                    return &#34;Perfect!&#39;&#34;
-</span><span style="color:#589819">+                else:
-</span><span style="color:#589819">+                    return f&#34;Pattern found! But you said &#39;{response}&#39; instead of &#39;Ki-yo-shi!&#39;&#34;
-</span><span style="color:#589819">+            case DeclinedElicitation():
-</span><span style="color:#589819">+                return &#34;Pattern found! You declined to say &#39;Ki-yo-shi!&#39;&#34;
-</span><span style="color:#589819">+            case CancelledElicitation():
-</span><span style="color:#589819">+                return &#34;Pattern found! You cancelled Ki-yo-shi!&#34;
-</span><span style="color:#589819"></span>     else:
-         return f&#34;Pattern not found. Last 5 items: {zundoko_history[-5:]}&#34;
+         # Elicitationレスポンスの処理
+         match elicit_result:
+             case AcceptedElicitation(data=response):
+                 # ユーザーの入力値のチェック
+                 if &#34;Ki-yo-shi!&#34; == response:
+                     &lt;snip&gt;
+                 else:
+<span style="color:#d22323">-                    return f&#34;Pattern found! But you said &#39;{response}&#39; instead of &#39;Ki-yo-shi!&#39;&#34;
+</span><span style="color:#d22323"></span><span style="color:#589819">+                    prompt = (
+</span><span style="color:#589819">+                        f&#34;The user was supposed to say &#39;Ki-yo-shi!&#39; but instead said &#39;{response}&#39;. &#34;
+</span><span style="color:#589819">+                        &#34;Generate a humorous and creative warning message (one sentence) about their mistake.&#34;
+</span><span style="color:#589819">+                    )
+</span><span style="color:#589819">+                    # Samplingリクエスト送信
+</span><span style="color:#589819">+                    sampling_result = await ctx.sample(
+</span><span style="color:#589819">+                        messages=prompt,
+</span><span style="color:#589819">+                        max_tokens=5120,
+</span><span style="color:#589819">+                        temperature=1.0
+</span><span style="color:#589819">+                    )
+</span><span style="color:#589819">+                    return sampling_result.text
+</span><span style="color:#589819"></span>             case DeclinedElicitation():
 </code></pre></div>
-<p><code>elicit()</code>の結果が<code>AcceptedElicitation</code>の時は、ユーザーの入力値を取得して、入力値が<code>Ki-yo-shi!</code>かそれ以外によってツールのレスポンスを変えるようにした。</p>
+<p>こんな感じ。Samplingするプロンプトは、</p>
+
+<blockquote>
+<p>ユーザーが「キ・ヨ・シ！」と言うべきところで～と言ったのに対して、ユーモアな警告メッセージを生成して</p>
+</blockquote>
+
+<p>といった内容。
+LLMのモデルは指定しないけど、temperatureは最高にして、創造性を要求する。</p>
 
 <h3 id="ズンドコクライアント側の実装">ズンドコクライアント側の実装</h3>
 
-<p>Elicitationリクエストを処理するクライアントは、<a href="https://www.kaitoy.xyz/2025/12/21/zundoko-mcp-server-1/#fastmcp%E3%81%A7logging%E3%82%92%E5%AE%9F%E8%A3%85">前回記事のLogging</a>のクライアントをベースにする。</p>
+<p>Samplingリクエストを処理するクライアントは、<a href="https://www.kaitoy.xyz/2025/12/29/zundoko-mcp-server-2/#%E3%82%BA%E3%83%B3%E3%83%89%E3%82%B3%E3%82%AF%E3%83%A9%E3%82%A4%E3%82%A2%E3%83%B3%E3%83%88%E5%81%B4%E3%81%AE%E5%AE%9F%E8%A3%85">前回記事のElicitation</a>のクライアントをベースにする。</p>
 
-<p>Elicitationリクエストの処理は、Loggingやリソース変更通知同様に、<code>Client</code>インスタンスに設定するハンドラ関数に書くことができる。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">fastmcp.client.elicitation</span> <span style="color:#6ab825;font-weight:bold">import</span> ElicitResult
-
-
-kiyoshi_answered = False
+<p>Samplingリクエストの処理は、ElicitationやLoggingと同様に、<code>Client</code>インスタンスに設定するハンドラ関数に書くことができる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">fastmcp.client.sampling</span> <span style="color:#6ab825;font-weight:bold">import</span> SamplingMessage, SamplingParams, RequestContext
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">openai</span> <span style="color:#6ab825;font-weight:bold">import</span> AsyncOpenAI
 
 <span style="color:#999;font-style:italic"># ハンドラ関数の実装</span>
-async <span style="color:#6ab825;font-weight:bold">def</span> <span style="color:#447fcf">elicitation_handler</span>(message: <span style="color:#24909d">str</span>, response_type: <span style="color:#24909d">type</span>, params, context):
-    <span style="color:#6ab825;font-weight:bold">global</span> kiyoshi_answered
+async <span style="color:#6ab825;font-weight:bold">def</span> <span style="color:#447fcf">sampling_handler</span>(
+    messages: <span style="color:#24909d">list</span>[SamplingMessage],
+    params: SamplingParams,
+    context: RequestContext
+) -&gt; <span style="color:#24909d">str</span>:
+    <span style="color:#999;font-style:italic"># Samplingリクエストからプロンプトを取得</span>
+    message_content = messages[<span style="color:#3677a9">0</span>].content.text
 
-    <span style="color:#999;font-style:italic"># Elicitationリクエストのメッセージをコンソールに表示して、ユーザーの入力を受け取る</span>
-    user_input = <span style="color:#24909d">input</span>(f<span style="color:#ed9d13">&#34;{message}: &#34;</span>)
-    kiyoshi_answered = True
+    <span style="color:#999;font-style:italic"># OpenAIのモデルを呼んで推論を実行</span>
+    response = await AsyncOpenAI().responses.create(
+        model=<span style="color:#ed9d13">&#34;gpt-5-nano&#34;</span>,
+        <span style="color:#24909d">input</span>=message_content,
+        max_output_tokens=params.maxTokens <span style="color:#6ab825;font-weight:bold">or</span> <span style="color:#3677a9">5120</span>,
+        temperature=params.temperature <span style="color:#6ab825;font-weight:bold">or</span> <span style="color:#3677a9">1.0</span>,
+    )
 
-    <span style="color:#999;font-style:italic"># ズンドコMCPサーバーにユーザー入力を返す</span>
-    <span style="color:#6ab825;font-weight:bold">return</span> ElicitResult(action=<span style="color:#ed9d13">&#34;accept&#34;</span>, content=response_type(value=user_input))</code></pre></div>
-<p>ハンドラ関数の中身はこんな感じ。今回はレスポンスは<code>accept</code>一択。</p>
+    <span style="color:#999;font-style:italic"># 推論結果をMCPサーバーに返す</span>
+    <span style="color:#6ab825;font-weight:bold">return</span> response.output_text</code></pre></div>
+<p>ハンドラ関数の中身はこんな感じ。今回はGPT-5 Nanoで推論する。</p>
 
-<p>このハンドラ関数は、<code>Client</code>インスタンスの<code>elicitation_handler</code>プロパティに設定する。</p>
+<p>このハンドラ関数は、<code>Client</code>インスタンスの<code>sampling_handler</code>プロパティに設定する。</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> async def main():
      async with Client(
          &#34;http://127.0.0.1:8080/mcp&#34;,
          log_handler=handle_log,
-<span style="color:#589819">+        elicitation_handler=elicitation_handler,
+         elicitation_handler=elicitation_handler,
+<span style="color:#589819">+        sampling_handler=sampling_handler,
 </span><span style="color:#589819"></span>     ) as client:
-         await client.call_tool(&#34;get_zundoko&#34;, {})
+         while True:
 </code></pre></div>
-<p>クライアントの今の実装は、一回<code>get_zundoko</code>ツールを呼ぶだけになってるけど、これを一連のズンドコキヨシをするように直す。</p>
-<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff">         elicitation_handler=elicitation_handler,
-     ) as client:
-<span style="color:#d22323">-        await client.call_tool(&#34;get_zundoko&#34;, {})
-</span><span style="color:#d22323"></span><span style="color:#589819">+        while True:
-</span><span style="color:#589819">+            # 「キ・ヨ・シ！」条件達成まで無限ループ
-</span><span style="color:#589819">+            if kiyoshi_answered:
-</span><span style="color:#589819">+                break
-</span><span style="color:#589819">+
-</span><span style="color:#589819">+            try:
-</span><span style="color:#589819">+                # ズンドコを一つ取得
-</span><span style="color:#589819">+                zundoko = await client.call_tool(&#34;get_zundoko&#34;, {})
-</span><span style="color:#589819">+                print(zundoko.content[0].text)
-</span><span style="color:#589819">+
-</span><span style="color:#589819">+                # 「キ・ヨ・シ！」条件チェック
-</span><span style="color:#589819">+                kiyoshi_check_result = await client.call_tool(&#34;check_kiyoshi&#34;, {})
-</span><span style="color:#589819">+                print(kiyoshi_check_result.content[0].text)
-</span><span style="color:#589819">+
-</span><span style="color:#589819">+                await asyncio.sleep(1)
-</span><span style="color:#589819">+            except Exception as e:
-</span><span style="color:#589819">+                print(f&#34;Error: {e}&#34;)
-</span><span style="color:#589819">+                break
-</span></code></pre></div>
-<p>このクライアントを実行すると以下のような出力が得られる。(ログハンドラの出力除く。)</p>
+<p>クライアント側はこれだけでSampling対応完了。</p>
+
+<p>環境変数<code>OPENAI_API_KEY</code>にOpenAIのAPIキーを設定してこのクライアントを実行すると以下のような出力が得られる。(ログハンドラの出力除く。)</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">&lt;snip&gt;
 Zun
 Pattern not found. Last 5 items: [&#39;Zun&#39;, &#39;Doko&#39;, &#39;Zun&#39;, &#39;Zun&#39;, &#39;Zun&#39;]
@@ -458,27 +435,64 @@ Zun
 Pattern not found. Last 5 items: [&#39;Doko&#39;, &#39;Zun&#39;, &#39;Zun&#39;, &#39;Zun&#39;, &#39;Zun&#39;]
 Doko
 It&#39;s time to say Ki-yo-shi!:</code></pre></div>
-<p>ここで入力待ちになるので、「キ・ヨ・シ！」コールする。</p>
+<p>ここで入力待ちになるので、「キ・ヨ・シ！」コールの代わりに「ヤ・ス・シ！」コールしてみる。</p>
 <div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">&lt;snip&gt;
 Zun
 Pattern not found. Last 5 items: [&#39;Zun&#39;, &#39;Doko&#39;, &#39;Zun&#39;, &#39;Zun&#39;, &#39;Zun&#39;]
 Zun
 Pattern not found. Last 5 items: [&#39;Doko&#39;, &#39;Zun&#39;, &#39;Zun&#39;, &#39;Zun&#39;, &#39;Zun&#39;]
 Doko
-It&#39;s time to say Ki-yo-shi!: Ki-yo-shi!
-Perfect!&#39;</code></pre></div>
-<p>MCPサーバー側にコールを返せた。</p>
+It&#39;s time to say Ki-yo-shi!: Ya-su-shi!
+Warning: You mispronounced the sacred chant—&#39;Ya-su-shi!&#39;—and the dojo ninjas are filing a complaint with the Sushi Court; please retry with &#39;Ki-yo-shi!&#39; before the rice turns rebellious.</code></pre></div>
+<blockquote>
+<p>警告: 神聖な詠唱を「ヤ・ス・シ！」と間違って発音したため、道場の忍者が寿司裁判所に苦情を申し立てています。ご飯が反抗的になる前に「キ・ヨ・シ！」と言い直してください。</p>
+</blockquote>
 
-<h2 id="zundoko-kiyoshi-リソースと-reset-zundoko-kiyoshi-ツールの実装"><code>zundoko://kiyoshi</code>リソースと<code>reset_zundoko_kiyoshi</code>ツールの実装</h2>
+<p>アメリカンなウィットで返された。</p>
 
-<p>「キ・ヨ・シ！」コール済みか(i.e. キヨシ状態)をリソースとして取得したり、その状態やズンドコ履歴をリセットするツールを実装したけど、実装内容は前回の記事と大差ないので割愛。</p>
+<h3 id="samplingフォールバックハンドラーの設定">Samplingフォールバックハンドラーの設定</h3>
 
-<p>実装のコミットは<a href="https://github.com/kaitoy/zundoko-mcp-server/commit/6658e1597d5f7bbab22cb914925228b964391bd5">これ</a>。</p></div>
+<p>MCPクライアントにおいてSamplingの実装はオプショナルで、実際Samplingに対応したクライアントは見たことがない。
+今のズンドコMCPサーバーの実装だと、Sampling未対応のクライアントがズンドコした場合、Samplingリクエストを送るところで「Client does not support sampling」というエラーになってしまう。</p>
+
+<p>このエラーを防ぐため、ズンドコMCPサーバーにSamplingのフォールバックハンドラーを設定して、クライアントがSamplingをサポートしていない場合に己でSamplingリクエストの処理をするようにする。
+Samplingフォールバックハンドラーは、FastMCPのアプリケーションインスタンスの<code>sampling_handler</code>に設定する。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"><span style="color:#d22323">-mcp = FastMCP(&#34;Zundoko Server&#34;)
+</span><span style="color:#d22323"></span><span style="color:#589819">+mcp = FastMCP(
+</span><span style="color:#589819">+    &#34;Zundoko Server&#34;,
+</span><span style="color:#589819">+    sampling_handler=lambda *_: &#34;Correct answer is &#39;Ki-yo-shi!&#39;&#34;
+</span><span style="color:#589819">+)
+</span></code></pre></div>
+<p>Samplingフォールバックハンドラーは普通はSamplingリクエストの内容をもとにLLMに推論させるような処理を書くんだけど、今回はSamplingを使うのが一か所なので、そこに合う固定の結果を返すような関数にした。</p>
+
+<p><code>sampling_handler</code>に関係するパラメータに<code>sampling_handler_behavior</code>というのがあって、これのデフォルト値が<code>&quot;fallback&quot;</code>なので、<code>sampling_handler</code>に設定する関数がフォールバックハンドラー(i.e. Samplingリクエストを送れないときだけ呼ばれる関数)になるんだけど、<code>sampling_handler_behavior</code>に<code>&quot;always&quot;</code>を設定しておくと、<code>sampling_handler</code>に設定する関数はクライアントの実装にかかわらず常に使われるようになる。</p>
+
+<h2 id="fastmcpでpingを実装">FastMCPでPingを実装</h2>
+
+<p>MCPのPingはICMPのPingと同様に、送った相手の生死を確認するために使う。
+MCPのPingはMCPサーバーからもMCPクライアントからも送れて、セッション中は定期的に送って生死確認すべきとプロトコルで規定されている。</p>
+
+<p>今回の実装では、ズンドコクライアントを起動して、MCPのコネクションをはった後、ズンドコし始める前に一回Pingをサーバーに撃つようにする。</p>
+
+<p>Pingは<code>Client</code>インスタンスの<a href="https://gofastmcp.com/clients/client#server-connectivity">pingメソッド</a>で撃てる。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-diff" data-lang="diff"> async def main():
+     async with Client(
+         &#34;http://127.0.0.1:8080/mcp&#34;,
+         log_handler=handle_log,
+         elicitation_handler=elicitation_handler,
+         sampling_handler=sampling_handler,
+     ) as client:
+<span style="color:#589819">+        print(f&#34;Zundoko MCP Server is alive: {await client.ping()}&#34;)
+</span><span style="color:#589819">+
+</span><span style="color:#589819"></span>         while True:
+</code></pre></div>
+<p>このクライアントを実行すると、最初に以下のメッセージが標準出力に出る。</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-console" data-lang="console">Zundoko MCP Server is alive: True</code></pre></div></div>
 
         <section class="share-buttons">
-          <div class="fb-share-button share-button" data-href="https://www.kaitoy.xyz/2025/12/29/zundoko-mcp-server-2/" data-layout="button_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">シェア</a></div>
+          <div class="fb-share-button share-button" data-href="https://www.kaitoy.xyz/2026/01/01/zundoko-mcp-server-3/" data-layout="button_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">シェア</a></div>
           <div class="share-button">
-            <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-text="ズンドコキヨシ with MCP - MCPの機能全部盛り (その2: Elicitation編)" data-url="https://www.kaitoy.xyz/2025/12/29/zundoko-mcp-server-2/" data-show-count="true" data-count="horizontal">Tweet</a>
+            <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-text="ズンドコキヨシ with MCP - MCPの機能全部盛り (その3: Sampling編)" data-url="https://www.kaitoy.xyz/2026/01/01/zundoko-mcp-server-3/" data-show-count="true" data-count="horizontal">Tweet</a>
           </div>
           <div class="share-button">
             <a href="https://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="basic-label-counter" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
@@ -501,20 +515,15 @@ Perfect!&#39;</code></pre></div>
         <div class="col-sm-6">
           <div class="prev">
             
-            <a href="https://www.kaitoy.xyz/2025/12/21/zundoko-mcp-server-1/">
+            <a href="https://www.kaitoy.xyz/2025/12/29/zundoko-mcp-server-2/">
               <i class="fa fa-angle-left"></i>
-              ズンドコキヨシ with MCP - MCPの機能全部盛り (その1: 基本機能編)
+              ズンドコキヨシ with MCP - MCPの機能全部盛り (その2: Elicitation編)
             </a>
             
           </div>
         </div>
         <div class="col-sm-6">
           <div class="next text-right">
-            
-            <a href="https://www.kaitoy.xyz/2026/01/01/zundoko-mcp-server-3/">
-              ズンドコキヨシ with MCP - MCPの機能全部盛り (その3: Sampling編)
-              <i class="fa fa-angle-right"></i>
-            </a>
             
           </div>
         </div>
@@ -538,8 +547,8 @@ Perfect!&#39;</code></pre></div>
     
     
 
-    <h4 class="post-title"><a href="/2026/01/01/zundoko-mcp-server-3/">ズンドコキヨシ with MCP - MCPの機能全部盛り (その3: Sampling編)</a></h4>
-    <h5>Thu, Jan 1, 2026</h5>
+    <h4 class="post-title"><a href="/2025/12/29/zundoko-mcp-server-2/">ズンドコキヨシ with MCP - MCPの機能全部盛り (その2: Elicitation編)</a></h4>
+    <h5>Mon, Dec 29, 2025</h5>
     
     <a href="https://www.kaitoy.xyz/tags/mcp"><kbd class="item-tag">MCP</kbd></a>
     

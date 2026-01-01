@@ -1,6 +1,6 @@
 +++
 categories = ["Programming"]
-title = "ズンドコキヨシ with MCP - MCPの機能全部盛り (その1)"
+title = "ズンドコキヨシ with MCP - MCPの機能全部盛り (その1: 基本機能編)"
 date = "2025-12-21T12:12:01+09:00"
 tags = ["MCP", "GenAI", "LLM", "zundoko", "FastMCP"]
 draft = false
@@ -364,4 +364,4 @@ def explain_zundoko_kiyoshi() -> str:
 
 <br>
 
-Elicitation、Sampling、Ping、Progressの実装については次回の記事で。
+Elicitation、Sampling、Ping、Progressの実装については次回以降の記事で。

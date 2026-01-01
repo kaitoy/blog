@@ -1,6 +1,6 @@
 +++
 categories = ["Programming"]
-title = "ズンドコキヨシ with MCP - MCPの機能全部盛り (その2)"
+title = "ズンドコキヨシ with MCP - MCPの機能全部盛り (その2: Elicitation編)"
 date = "2025-12-29T16:57:46+09:00"
 tags = ["MCP", "GenAI", "LLM", "zundoko", "FastMCP"]
 draft = false
@@ -105,13 +105,16 @@ Elicitationリクエストに対しては、`accept`、`decline`、`cancel`の3�
 
      if zundoko_history[-5:] == ["Zun", "Zun", "Zun", "Zun", "Doko"]:
 -        return "Pattern found!"
++        # Elicitationリクエスト送信
 +        elicit_result = await ctx.elicit(
 +            "It's time to say Ki-yo-shi!",
 +            response_type=str
 +        )
 +
++        # Elicitationレスポンスの処理
 +        match elicit_result:
 +            case AcceptedElicitation(data=response):
++                # ユーザーの入力値のチェック
 +                if "Ki-yo-shi!" == response:
 +                    return "Perfect!'"
 +                else:
