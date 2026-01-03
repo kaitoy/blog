@@ -71,7 +71,7 @@ MCPサーバーのリクエストには、推論に使うモデル名、temperat
 Samplingリクエストは、[前回記事のElicitation](https://www.kaitoy.xyz/2025/12/29/zundoko-mcp-server-2/#%E3%82%BA%E3%83%B3%E3%83%89%E3%82%B3mcp%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E5%81%B4%E3%81%AE%E5%AE%9F%E8%A3%85)と同様に、Contextオブジェクトのメソッドで送れる。
 Samplingのメソッドは[sample()](https://gofastmcp.com/servers/sampling#basic-sampling)。
 
-`check_kiyoshi`ツールの処理の中で、`elicit()`を呼んで、ユーザー入力を処理する部分で`sample()`を使うように修正する。
+`check_kiyoshi`ツールの処理の中にある、`elicit()`の結果(i.e. ユーザー入力)を処理する部分で`sample()`を使うように修正する。
 
 ```diff
          # Elicitationリクエスト送信
